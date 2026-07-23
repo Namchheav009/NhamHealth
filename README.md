@@ -1,85 +1,111 @@
 # NhamHealth
 
-NhamHealth is a full-stack starter project with a Spring Boot API and a
-Flutter client. The two applications live in separate folders and are run in
-separate terminals.
+NhamHealth is an early-stage full-stack health application built with a Spring
+Boot API and a Flutter client. Both projects live in this repository and run as
+separate applications.
 
-> **Current status:** The repository contains the initial Spring Boot and
-> Flutter scaffolds. The Flutter client is not connected to the API yet.
+> [!NOTE]
+> The repository currently contains the initial backend and frontend scaffolds.
+> The API does not expose domain endpoints yet, and the Flutter client is not
+> connected to it.
 
 ## Project structure
 
 | Path | Description |
 | --- | --- |
-| `nhamhealth_api/` | Spring Boot API using Java 21, Spring Data JPA, Spring Security, H2, and PostgreSQL support |
-| `nhamhealth_flutter/` | Flutter application for Android, iOS, web, Windows, macOS, and Linux |
+| `nhamhealth_api/` | Java 21 and Spring Boot 4.1 API with Spring MVC, Security, JPA, H2, and PostgreSQL support |
+| `nhamhealth_app/` | Flutter application targeting Android, iOS, web, Windows, macOS, and Linux |
 
 ## Prerequisites
-
-Install the following tools before starting:
 
 - [Git](https://git-scm.com/downloads)
 - [JDK 21](https://adoptium.net/temurin/releases/?version=21)
 - [Apache Maven 3.9+](https://maven.apache.org/download.cgi) on Windows
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) with Dart 3.5.4 or newer
-- A platform toolchain for the device you want to use, such as Android Studio
-  and the Android SDK, Xcode on macOS, or Chrome for the web
+- [Flutter](https://docs.flutter.dev/get-started/install) with a Dart SDK that
+  satisfies `^3.5.4`
+- The platform toolchain for your target device, such as Android Studio and the
+  Android SDK, Xcode on macOS, or Chrome for web development
 
-Confirm that Java and Flutter are available:
+The included Maven Wrapper can be used on macOS and Linux.
+
+Check the installed tools before continuing:
 
 ```bash
 java -version
 flutter doctor
 ```
 
-Resolve any required platform issues reported by `flutter doctor` before
-running the client.
+Resolve any required platform issues reported by `flutter doctor`.
 
-## Clone the repository
+## Getting started
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/Namchheav009/NhamHealth.git
 cd NhamHealth
 ```
 
-## Run the API
+### Run the API
 
-Open the first terminal and enter the API directory:
+Open a terminal in the API directory:
 
 ```bash
 cd nhamhealth_api
 ```
 
-On Windows, run the API with Maven:
+Run the application on Windows:
 
 ```powershell
 mvn spring-boot:run
 ```
 
-On macOS or Linux, the included Maven wrapper can install the required Maven
-version automatically:
+Or on macOS and Linux:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-The API starts at [http://localhost:8080](http://localhost:8080). The runtime
-H2 dependency supplies an in-memory database for local startup, so PostgreSQL
-configuration is not currently required. Because Spring Security is enabled,
-the development password for the default `user` account is printed in the API
-terminal during startup.
+The API starts on `http://localhost:8080`. The default profile uses an in-memory
+H2 database, so no external database is needed for local development. Spring
+Security also creates a development `user` account and prints its generated
+password in the startup log.
 
-Stop the API with `Ctrl+C`.
+Stop the server with `Ctrl+C`.
 
-## Connect the API to Supabase PostgreSQL
+### Run the Flutter client
 
-The API uses H2 when the `supabase` profile is not active. To connect it to the
-NhamHealth Supabase PostgreSQL database:
+Keep the API terminal open, then open another terminal from the repository
+root:
 
-1. Open the NhamHealth project in Supabase.
-2. Select **Connect** and open **Session pooler** > **View parameters**.
-3. Copy the host, user, and database password shown by Supabase.
-4. In a terminal, enter `nhamhealth_api/` and create your local configuration:
+```bash
+cd nhamhealth_app
+flutter pub get
+flutter devices
+flutter run
+```
+
+If multiple devices are available, Flutter will ask you to select one. A target
+can also be selected explicitly:
+
+```bash
+flutter run -d chrome   # Web
+flutter run -d windows  # Windows desktop
+```
+
+For Android, start an emulator or connect a device before running
+`flutter devices`. Building and running the iOS client requires macOS and
+Xcode.
+
+## Supabase PostgreSQL
+
+The API uses H2 unless the `supabase` Spring profile is active. To connect the
+API to a Supabase PostgreSQL database:
+
+1. In the Supabase dashboard, open the project and select **Connect**.
+2. Open **Session pooler** > **View parameters** and copy the displayed host,
+   username, and database password.
+3. From `nhamhealth_api/`, create the local environment file:
 
    ```powershell
    # Windows PowerShell
@@ -91,18 +117,20 @@ NhamHealth Supabase PostgreSQL database:
    cp .env.example .env
    ```
 
-5. Edit `.env` and replace the placeholders with the copied values:
+4. Replace the placeholders in `.env` with the Supabase connection values:
 
    ```properties
    SUPABASE_DB_URL=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
    SUPABASE_DB_USERNAME=postgres.YOUR_PROJECT_REF
    SUPABASE_DB_PASSWORD=YOUR_DATABASE_PASSWORD
    JPA_DDL_AUTO=update
+   DB_POOL_MAX_SIZE=5
+   DB_POOL_MIN_IDLE=1
    ```
 
-   Keep the `jdbc:` prefix in the URL. Do not put quotes around the values.
+   Keep the `jdbc:` prefix and do not quote the values.
 
-6. Start Spring Boot with the Supabase profile:
+5. Start the API with the Supabase profile:
 
    ```powershell
    # Windows PowerShell
@@ -114,87 +142,62 @@ NhamHealth Supabase PostgreSQL database:
    ./mvnw spring-boot:run -Dspring-boot.run.profiles=supabase
    ```
 
-Spring Boot validates the database connection during startup. A successful
-startup ends with a `Started NhamhealthApiApplication` log message. Hibernate
-will create or update application tables in Supabase's `public` schema as JPA
-entities are added.
+A successful connection ends with a `Started NhamhealthApiApplication` message
+in the server log. Hibernate creates or updates application tables in the
+database's `public` schema as JPA entities are added.
 
-The `.env` file is ignored by Git. Never commit the Supabase database password.
-The committed `.env.example` contains placeholders only.
+The `.env` file is ignored by Git. Never commit database credentials; only the
+placeholder-based `.env.example` should be version controlled.
 
-For a network with IPv6 support, Supabase's direct connection can also be used:
+If the development machine has IPv6 connectivity, Supabase's direct connection
+can be used instead:
 
 ```properties
 SUPABASE_DB_URL=jdbc:postgresql://db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
 SUPABASE_DB_USERNAME=postgres
 ```
 
-Use the exact connection values displayed in the Supabase dashboard. The
-session pooler on port `5432` is the appropriate fallback for an IPv4 network;
-the transaction pooler on port `6543` is intended for short-lived or serverless
-applications.
-
-## Run the Flutter client
-
-Keep the API running, open a second terminal at the repository root, and run:
-
-```bash
-cd nhamhealth_flutter
-flutter pub get
-flutter devices
-flutter run
-```
-
-If more than one device is available, Flutter asks you to select one. You can
-also choose a target explicitly:
-
-```bash
-# Web
-flutter run -d chrome
-
-# Windows desktop (Windows only)
-flutter run -d windows
-```
-
-For Android, start an emulator or connect a device before running
-`flutter devices`. For iOS, use macOS with Xcode installed.
-
-Stop the client with `q` in the Flutter terminal or with `Ctrl+C`.
+Use the exact connection values shown by the Supabase dashboard. The session
+pooler on port `5432` is the usual option for IPv4 networks.
 
 ## Tests and checks
 
-Run the API tests from `nhamhealth_api/`:
+Run the API test suite from `nhamhealth_api/`:
 
-```bash
+```powershell
 # Windows
 mvn test
+```
 
+```bash
 # macOS/Linux
 ./mvnw test
 ```
 
-Run the Flutter checks from `nhamhealth_flutter/`:
+Run the Flutter checks from `nhamhealth_app/`:
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-## Build the applications
+## Build
 
 Build the API JAR from `nhamhealth_api/`:
 
-```bash
+```powershell
 # Windows
 mvn clean package
+```
 
+```bash
 # macOS/Linux
 ./mvnw clean package
 ```
 
-The JAR is written to `nhamhealth_api/target/`.
+The generated JAR is written to `nhamhealth_api/target/`.
 
-Build a Flutter release from `nhamhealth_flutter/` for the required platform:
+Build the Flutter application from `nhamhealth_app/` for the required platform:
 
 ```bash
 flutter build apk       # Android APK
@@ -205,14 +208,16 @@ flutter build web       # Web
 Desktop and iOS builds require their corresponding operating system and native
 toolchain.
 
-## Local API networking from Flutter
+## Local API addresses for Flutter
 
-When the client is connected to the API in future development, the correct API
-host depends on the Flutter target:
+When the Flutter client is connected to the backend, its API base URL will
+depend on the target:
 
-- Desktop, iOS simulator, and web: `http://localhost:8080`
-- Android emulator: `http://10.0.2.2:8080`
-- Physical device: `http://<your-computer-local-IP>:8080`
+| Flutter target | API base URL |
+| --- | --- |
+| Web, desktop, or iOS simulator | `http://localhost:8080` |
+| Android emulator | `http://10.0.2.2:8080` |
+| Physical device | `http://<YOUR_COMPUTER_LAN_IP>:8080` |
 
-The computer and physical device must be on the same network, and the firewall
-must allow the API port.
+For a physical device, the computer and device must be on the same network, and
+the computer's firewall must allow traffic to port `8080`.
