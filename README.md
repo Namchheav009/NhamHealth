@@ -5,9 +5,8 @@ Boot API and a Flutter client. Both projects live in this repository and run as
 separate applications.
 
 > [!NOTE]
-> The repository currently contains the initial backend and frontend scaffolds.
-> The API does not expose domain endpoints yet, and the Flutter client is not
-> connected to it.
+> The Flutter client is connected to the Spring REST API through a health-check
+> endpoint. Domain endpoints can now be added using the same service pattern.
 
 ## Project structure
 
@@ -73,6 +72,21 @@ password in the startup log.
 
 Stop the server with `Ctrl+C`.
 
+Verify the public REST endpoint in a browser or API client:
+
+```text
+GET http://localhost:8080/api/v1/health
+```
+
+It returns JSON containing `status`, `service`, and `timestamp`. Local Flutter
+web origins are enabled through the backend CORS configuration. Other Spring
+pages remain protected by Spring Security for the dashboard.
+
+Open the dashboard login UI at `http://localhost:8080/login`. During local
+development, sign in with username `user` and the generated password printed in
+the Spring startup log. This development account should be replaced by the
+application's real authentication flow before production.
+
 ### Run the Flutter client
 
 Keep the API terminal open, then open another terminal from the repository
@@ -83,6 +97,21 @@ cd nhamhealth_app
 flutter pub get
 flutter devices
 flutter run
+```
+
+The first screen calls the Spring health endpoint and shows the connection
+status. On a physical phone, provide the computer's LAN address:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080
+```
+
+Replace the example address with the computer's address on the same Wi-Fi
+network. Android debug and profile builds allow local HTTP traffic; release
+builds must use HTTPS. The same override can point to staging or production:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://api.example.com
 ```
 
 If multiple devices are available, Flutter will ask you to select one. A target
