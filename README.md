@@ -71,6 +71,69 @@ terminal during startup.
 
 Stop the API with `Ctrl+C`.
 
+## Connect the API to Supabase PostgreSQL
+
+The API uses H2 when the `supabase` profile is not active. To connect it to the
+NhamHealth Supabase PostgreSQL database:
+
+1. Open the NhamHealth project in Supabase.
+2. Select **Connect** and open **Session pooler** > **View parameters**.
+3. Copy the host, user, and database password shown by Supabase.
+4. In a terminal, enter `nhamhealth_api/` and create your local configuration:
+
+   ```powershell
+   # Windows PowerShell
+   Copy-Item .env.example .env
+   ```
+
+   ```bash
+   # macOS/Linux
+   cp .env.example .env
+   ```
+
+5. Edit `.env` and replace the placeholders with the copied values:
+
+   ```properties
+   SUPABASE_DB_URL=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
+   SUPABASE_DB_USERNAME=postgres.YOUR_PROJECT_REF
+   SUPABASE_DB_PASSWORD=YOUR_DATABASE_PASSWORD
+   JPA_DDL_AUTO=update
+   ```
+
+   Keep the `jdbc:` prefix in the URL. Do not put quotes around the values.
+
+6. Start Spring Boot with the Supabase profile:
+
+   ```powershell
+   # Windows PowerShell
+   mvn spring-boot:run "-Dspring-boot.run.profiles=supabase"
+   ```
+
+   ```bash
+   # macOS/Linux
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=supabase
+   ```
+
+Spring Boot validates the database connection during startup. A successful
+startup ends with a `Started NhamhealthApiApplication` log message. Hibernate
+will create or update application tables in Supabase's `public` schema as JPA
+entities are added.
+
+The `.env` file is ignored by Git. Never commit the Supabase database password.
+The committed `.env.example` contains placeholders only.
+
+For a network with IPv6 support, Supabase's direct connection can also be used:
+
+```properties
+SUPABASE_DB_URL=jdbc:postgresql://db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
+SUPABASE_DB_USERNAME=postgres
+```
+
+Use the exact connection values displayed in the Supabase dashboard. The
+session pooler on port `5432` is the appropriate fallback for an IPv4 network;
+the transaction pooler on port `6543` is intended for short-lived or serverless
+applications.
+
 ## Run the Flutter client
 
 Keep the API running, open a second terminal at the repository root, and run:
