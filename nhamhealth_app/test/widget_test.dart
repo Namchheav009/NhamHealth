@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nhamhealth_flutter/main.dart';
 import 'package:nhamhealth_flutter/models/api_health.dart';
-import 'package:nhamhealth_flutter/services/health_api.dart';
+import 'package:nhamhealth_flutter/core/services/health_api.dart';
 
 void main() {
   testWidgets('shows a successful API connection', (tester) async {

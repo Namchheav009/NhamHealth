@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../config/api_config.dart';
-import '../models/api_health.dart';
+import '../../config/api_config.dart';
+import '../../models/api_health.dart';
 import 'health_api.dart';
 
 class ApiService implements HealthApi {
