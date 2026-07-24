@@ -1,4 +1,4 @@
-import '../models/api_health.dart';
+import '../../models/api_health.dart';
 
 abstract interface class HealthApi {
   String get baseUrl;

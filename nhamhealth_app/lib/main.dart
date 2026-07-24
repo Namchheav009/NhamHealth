@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'models/api_health.dart';
-import 'services/api_service.dart';
-import 'services/health_api.dart';
+import 'core/services/api_service.dart';
+import 'core/services/health_api.dart';
 
 void main() {
   runApp(const NhamHealthApp());
