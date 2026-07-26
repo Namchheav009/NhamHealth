@@ -64,7 +64,7 @@
 
             <div class="notice notice-error" role="alert" th:if="${param.error}">
                 <span class="notice-symbol" aria-hidden="true">!</span>
-                <span>We couldn’t sign you in. Check your username and password.</span>
+                <span>Check your credentials and confirm this account has administrator access.</span>
             </div>
 
             <div class="notice notice-success" role="status" th:if="${param.logout}">
@@ -76,17 +76,17 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="field-group">
-                    <label for="username">Username</label>
+                    <label for="email">Email</label>
                     <div class="input-wrap">
                         <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/>
                         </svg>
                         <input
-                            id="username"
-                            name="username"
-                            type="text"
+                            id="email"
+                            name="email"
+                            type="email"
                             autocomplete="username"
-                            placeholder="Enter your username"
+                            placeholder="admin@example.com"
                             required
                             autofocus>
                     </div>

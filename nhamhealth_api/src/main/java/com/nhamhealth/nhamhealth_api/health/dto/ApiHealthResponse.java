@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.health;
+package com.nhamhealth.nhamhealth_api.health.dto;
 
 import java.time.Instant;
 
