@@ -66,9 +66,9 @@ Or on macOS and Linux:
 ```
 
 The API starts on `http://localhost:8080`. The default profile uses an in-memory
-H2 database, so no external database is needed for local development. Spring
-Security also creates a development `user` account and prints its generated
-password in the startup log.
+H2 database, so no external database is needed for local development. No user or
+administrator accounts are inserted automatically. Authentication uses the
+accounts already stored in the configured database.
 
 Stop the server with `Ctrl+C`.
 
@@ -82,10 +82,26 @@ It returns JSON containing `status`, `service`, and `timestamp`. Local Flutter
 web origins are enabled through the backend CORS configuration. Other Spring
 pages remain protected by Spring Security for the dashboard.
 
-Open the dashboard login UI at `http://localhost:8080/login`. During local
-development, sign in with username `user` and the generated password printed in
-the Spring startup log. This development account should be replaced by the
-application's real authentication flow before production.
+Open the dashboard login UI at `http://localhost:8080/login`. Only an active,
+verified user whose database role is `ADMIN` can sign in to this page. A normal
+`USER` account signs in through the Flutter-facing endpoint:
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{"email":"user@example.com","password":"your-password"}
+```
+
+The response contains an `accessToken`, `tokenType`, `expiresIn`, and the user
+summary. Flutter should send the token on protected API requests:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+`GET /api/v1/auth/me` can be used to verify the token and retrieve its current
+user identity. Passwords stored in `users.password_hash` must be BCrypt hashes.
 
 ### Run the Flutter client
 

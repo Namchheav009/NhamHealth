@@ -10,15 +10,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.nhamhealth.nhamhealth_api.config.SecurityConfig;
-
-@WebMvcTest(LoginController.class)
+@SpringBootTest
 @AutoConfigureMockMvc
-@Import(SecurityConfig.class)
 class LoginPageTests {
 
 	@Autowired
@@ -30,7 +26,7 @@ class LoginPageTests {
 				.andExpect(status().isOk())
 				.andExpect(view().name("login"))
 				.andExpect(content().string(containsString("Welcome back")))
-				.andExpect(content().string(containsString("name=\"username\"")))
+				.andExpect(content().string(containsString("name=\"email\"")))
 				.andExpect(content().string(containsString("name=\"password\"")))
 				.andExpect(content().string(containsString("name=\"_csrf\"")));
 	}

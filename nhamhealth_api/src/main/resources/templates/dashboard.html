@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard | NhamHealth</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, system-ui, sans-serif;
+        color: #18332d;
+        background: #f2f7f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+        color: white;
+        background: #0b6b57;
+      }
+      .brand {
+        font-size: 1.2rem;
+        font-weight: 750;
+      }
+      .account {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .account span {
+        opacity: 0.85;
+      }
+      button {
+        padding: 0.65rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        border-radius: 0.55rem;
+        color: white;
+        background: transparent;
+        cursor: pointer;
+      }
+      main {
+        width: min(1100px, calc(100% - 2rem));
+        margin: 4rem auto;
+      }
+      .eyebrow {
+        color: #0b6b57;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      h1 {
+        margin: 0.6rem 0;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+      }
+      p {
+        max-width: 650px;
+        color: #57706a;
+        line-height: 1.65;
+      }
+      .card {
+        margin-top: 2.5rem;
+        padding: 1.5rem;
+        border: 1px solid #dce9e5;
+        border-radius: 1rem;
+        background: white;
+        box-shadow: 0 16px 40px rgba(22, 67, 57, 0.08);
+      }
+      .card strong {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">NhamHealth Admin</div>
+      <div class="account">
+        <span th:text="${email}">admin@nhamhealth.local</span>
+        <form method="post" action="/logout" th:action="@{/logout}">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <button type="submit">Sign out</button>
+        </form>
+      </div>
+    </header>
+    <main>
+      <span class="eyebrow">Administration</span>
+      <h1>Dashboard</h1>
+      <p>
+        You are signed in through the protected administrator session. Add management modules here
+        as the application grows.
+      </p>
+      <section class="card">
+        <strong>Authentication is active</strong>
+        <span>Only accounts with the ADMIN role can open this dashboard.</span>
+      </section>
+    </main>
+  </body>
+</html>
