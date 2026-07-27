@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../../../routes/app_routes.dart';
 
 class SplashController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -12,6 +15,9 @@ class SplashController extends GetxController
   late final Animation<double> logoScale;
   late final Animation<double> logoOpacity;
   late final Animation<double> textReveal;
+
+  Timer? _navigationTimer;
+  bool _hasNavigated = false;
 
   @override
   void onInit() {
@@ -24,11 +30,11 @@ class SplashController extends GetxController
 
     _initializeAnimations();
 
+    animationController.addStatusListener(_handleAnimationStatus);
     animationController.forward();
   }
 
   void _initializeAnimations() {
-    // Stage 1: logo rotation
     logoRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -57,7 +63,6 @@ class SplashController extends GetxController
       ),
     );
 
-    // Stage 2: logo bounce
     logoScale = Tween<double>(
       begin: 0.6,
       end: 1,
@@ -86,7 +91,6 @@ class SplashController extends GetxController
       ),
     );
 
-    // Stage 3: text reveal
     textReveal = Tween<double>(
       begin: 0,
       end: 1,
@@ -102,15 +106,33 @@ class SplashController extends GetxController
     );
   }
 
-  void replayAnimation() {
-    animationController
-      ..reset()
-      ..forward();
+  void _handleAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || _hasNavigated) {
+      return;
+    }
+
+    _hasNavigated = true;
+
+    _navigationTimer = Timer(
+      const Duration(milliseconds: 500),
+      () {
+        if (!isClosed) {
+          Get.offAllNamed(AppRoutes.onboarding);
+        }
+      },
+    );
   }
 
   @override
   void onClose() {
+    _navigationTimer?.cancel();
+
+    animationController.removeStatusListener(
+      _handleAnimationStatus,
+    );
+
     animationController.dispose();
+
     super.onClose();
   }
 }
