@@ -5,7 +5,7 @@ import 'package:nhamhealth_flutter/core/services/health_api.dart';
 
 void main() {
   testWidgets('shows a successful API connection', (tester) async {
-    await tester.pumpWidget(NhamHealthApp(api: _FakeHealthApi()));
+    // await tester.pumpWidget(NhamHealthApp(api: _FakeHealthApi()));
     await tester.pumpAndSettle();
 
     expect(find.text('Connected to Spring API'), findsOneWidget);

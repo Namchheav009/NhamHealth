@@ -1,180 +1,205 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import 'app/routes/app_pages.dart';
 import 'models/api_health.dart';
 import 'core/services/api_service.dart';
 import 'core/services/health_api.dart';
 
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const NhamHealthApp());
 }
 
 class NhamHealthApp extends StatelessWidget {
-  const NhamHealthApp({super.key, this.api});
-
-  final HealthApi? api;
+  const NhamHealthApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NhamHealth',
+    return GetMaterialApp(
+      title: 'Nham Health',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF147D64),
-        ),
-        useMaterial3: true,
-      ),
-      home: ApiConnectionPage(api: api ?? ApiService()),
+      initialRoute: AppPages.initialRoute,
+      getPages: AppPages.pages,
     );
   }
 }
 
-class ApiConnectionPage extends StatefulWidget {
-  const ApiConnectionPage({super.key, required this.api});
+//===================================API CONNECTION TESTING CODE===================================
 
-  final HealthApi api;
+// void main() {
+//   runApp(const NhamHealthApp());
+// }
 
-  @override
-  State<ApiConnectionPage> createState() => _ApiConnectionPageState();
-}
+// class NhamHealthApp extends StatelessWidget {
+//   const NhamHealthApp({super.key, this.api});
 
-class _ApiConnectionPageState extends State<ApiConnectionPage> {
-  ApiHealth? _health;
-  Object? _error;
-  bool _isLoading = true;
+//   final HealthApi? api;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadHealth();
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'NhamHealth',
+//       debugShowCheckedModeBanner: false,
+//       theme: ThemeData(
+//         colorScheme: ColorScheme.fromSeed(
+//           seedColor: const Color(0xFF147D64),
+//         ),
+//         useMaterial3: true,
+//       ),
+//       home: ApiConnectionPage(api: api ?? ApiService()),
+//     );
+//   }
+// }
 
-  Future<void> _loadHealth() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+// class ApiConnectionPage extends StatefulWidget {
+//   const ApiConnectionPage({super.key, required this.api});
 
-    try {
-      final health = await widget.api.getHealth();
-      if (!mounted) return;
-      setState(() => _health = health);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _health = null;
-        _error = error;
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
+//   final HealthApi api;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('NhamHealth')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _error == null ? Icons.cloud_done : Icons.cloud_off,
-                      size: 56,
-                      color: _error == null
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _isLoading
-                          ? 'Connecting to Spring API…'
-                          : _error == null
-                              ? 'Connected to Spring API'
-                              : 'Could not reach Spring API',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    if (_isLoading)
-                      const CircularProgressIndicator()
-                    else if (_health case final health?)
-                      _ConnectionDetails(
-                        health: health,
-                        baseUrl: widget.api.baseUrl,
-                      )
-                    else
-                      _ConnectionError(
-                        error: _error,
-                        baseUrl: widget.api.baseUrl,
-                      ),
-                    const SizedBox(height: 20),
-                    FilledButton.icon(
-                      onPressed: _isLoading ? null : _loadHealth,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Test again'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   State<ApiConnectionPage> createState() => _ApiConnectionPageState();
+// }
 
-class _ConnectionDetails extends StatelessWidget {
-  const _ConnectionDetails({required this.health, required this.baseUrl});
+// class _ApiConnectionPageState extends State<ApiConnectionPage> {
+//   ApiHealth? _health;
+//   Object? _error;
+//   bool _isLoading = true;
 
-  final ApiHealth health;
-  final String baseUrl;
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadHealth();
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('Status: ${health.status}'),
-        Text('Service: ${health.service}'),
-        const SizedBox(height: 8),
-        SelectableText(baseUrl, textAlign: TextAlign.center),
-      ],
-    );
-  }
-}
+//   Future<void> _loadHealth() async {
+//     setState(() {
+//       _isLoading = true;
+//       _error = null;
+//     });
 
-class _ConnectionError extends StatelessWidget {
-  const _ConnectionError({required this.error, required this.baseUrl});
+//     try {
+//       final health = await widget.api.getHealth();
+//       if (!mounted) return;
+//       setState(() => _health = health);
+//     } catch (error) {
+//       if (!mounted) return;
+//       setState(() {
+//         _health = null;
+//         _error = error;
+//       });
+//     } finally {
+//       if (mounted) {
+//         setState(() => _isLoading = false);
+//       }
+//     }
+//   }
 
-  final Object? error;
-  final String baseUrl;
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: const Text('NhamHealth')),
+//       body: Center(
+//         child: SingleChildScrollView(
+//           padding: const EdgeInsets.all(24),
+//           child: ConstrainedBox(
+//             constraints: const BoxConstraints(maxWidth: 520),
+//             child: Card(
+//               child: Padding(
+//                 padding: const EdgeInsets.all(24),
+//                 child: Column(
+//                   mainAxisSize: MainAxisSize.min,
+//                   children: [
+//                     Icon(
+//                       _error == null ? Icons.cloud_done : Icons.cloud_off,
+//                       size: 56,
+//                       color: _error == null
+//                           ? Theme.of(context).colorScheme.primary
+//                           : Theme.of(context).colorScheme.error,
+//                     ),
+//                     const SizedBox(height: 16),
+//                     Text(
+//                       _isLoading
+//                           ? 'Connecting to Spring API…'
+//                           : _error == null
+//                               ? 'Connected to Spring API'
+//                               : 'Could not reach Spring API',
+//                       style: Theme.of(context).textTheme.headlineSmall,
+//                       textAlign: TextAlign.center,
+//                     ),
+//                     const SizedBox(height: 12),
+//                     if (_isLoading)
+//                       const CircularProgressIndicator()
+//                     else if (_health case final health?)
+//                       _ConnectionDetails(
+//                         health: health,
+//                         baseUrl: widget.api.baseUrl,
+//                       )
+//                     else
+//                       _ConnectionError(
+//                         error: _error,
+//                         baseUrl: widget.api.baseUrl,
+//                       ),
+//                     const SizedBox(height: 20),
+//                     FilledButton.icon(
+//                       onPressed: _isLoading ? null : _loadHealth,
+//                       icon: const Icon(Icons.refresh),
+//                       label: const Text('Test again'),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          error.toString(),
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Start Spring Boot and check this URL:',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        SelectableText(baseUrl, textAlign: TextAlign.center),
-      ],
-    );
-  }
-}
+// class _ConnectionDetails extends StatelessWidget {
+//   const _ConnectionDetails({required this.health, required this.baseUrl});
+
+//   final ApiHealth health;
+//   final String baseUrl;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: [
+//         Text('Status: ${health.status}'),
+//         Text('Service: ${health.service}'),
+//         const SizedBox(height: 8),
+//         SelectableText(baseUrl, textAlign: TextAlign.center),
+//       ],
+//     );
+//   }
+// }
+
+// class _ConnectionError extends StatelessWidget {
+//   const _ConnectionError({required this.error, required this.baseUrl});
+
+//   final Object? error;
+//   final String baseUrl;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: [
+//         Text(
+//           error.toString(),
+//           textAlign: TextAlign.center,
+//           style: TextStyle(color: Theme.of(context).colorScheme.error),
+//         ),
+//         const SizedBox(height: 8),
+//         Text(
+//           'Start Spring Boot and check this URL:',
+//           style: Theme.of(context).textTheme.bodySmall,
+//         ),
+//         SelectableText(baseUrl, textAlign: TextAlign.center),
+//       ],
+//     );
+//   }
+// }
