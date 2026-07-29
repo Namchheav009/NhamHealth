@@ -1,0 +1,62 @@
+<!-- Sidebar fragment -->
+<aside th:fragment="sidebar">
+  <div>
+    <div class="brand">
+      <span class="brand-mark">NH</span>
+      <span>NhamHealth</span>
+    </div>
+    <p class="brand-copy">Admin dashboard for managing meals, wellness records, and community reports.</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-heading">Main</div>
+    <ul class="nav-list">
+      <li><a class="nav-link active" href="/dashboard"><strong>Dashboard</strong><span>Overview</span></a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-heading">Account management</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#"><strong>Users</strong><span>Manage accounts</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Wellness profiles</strong><span>Patient records</span></a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-heading">Meal management</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#"><strong>Meals</strong><span>Meal catalog</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Meal categories</strong><span>Category groups</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Ingredients</strong><span>Nutrition sources</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Nutrients</strong><span>Macro details</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Tags</strong><span>Diet labels</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Serving sizes</strong><span>Portions</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Moods</strong><span>Meal moods</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Favorites</strong><span>Saved options</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Reviews</strong><span>Meal feedback</span></a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-heading">Health tracking</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#"><strong>Meal logs</strong><span>Daily intake</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Nutrient goals</strong><span>Goal progress</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Daily wellness</strong><span>Health checks</span></a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-heading">Community</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#"><strong>Posts</strong><span>Community feed</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Reports</strong><span>Flagged content</span></a></li>
+      <li><a class="nav-link" href="#"><strong>Follows</strong><span>User connections</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sidebar-footer">
+    Signed in as <strong th:text="${email}">admin@nhamhealth.local</strong>
+  </div>
+</aside>
