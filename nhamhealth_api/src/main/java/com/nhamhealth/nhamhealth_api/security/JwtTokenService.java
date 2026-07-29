@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.security;
+package com.nhamhealth.nhamhealth_api.security;
 
 import java.time.Duration;
 import java.time.Instant;

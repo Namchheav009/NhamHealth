@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.web.controller;
+package com.nhamhealth.nhamhealth_api.controller;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,8 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Controller
 public class DashboardController {

@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-import com.nhamhealth.nhamhealth_api.user.entity.Role;
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.RoleRepository;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.entity.Role;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @SpringBootTest
 @TestPropertySource(properties = {

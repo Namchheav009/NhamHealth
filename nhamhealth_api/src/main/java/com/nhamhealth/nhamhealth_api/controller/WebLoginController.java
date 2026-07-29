@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.web.controller;
+package com.nhamhealth.nhamhealth_api.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -15,6 +15,25 @@ separate applications.
 | `nhamhealth_api/` | Java 21 and Spring Boot 4.1 API with Spring MVC, Security, JPA, H2, and PostgreSQL support |
 | `nhamhealth_app/` | Flutter application targeting Android, iOS, web, Windows, macOS, and Linux |
 
+### API source layout
+
+The API uses a layer-based structure under
+`nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/`:
+
+| Folder | Responsibility |
+| --- | --- |
+| `config/` | Spring and security configuration |
+| `controller/` | All REST and web request controllers |
+| `dto/` | API request and response objects |
+| `entity/` | JPA database entities |
+| `exception/` | Application-specific exceptions |
+| `repository/` | Spring Data repositories |
+| `security/` | Authentication principals and JWT support |
+| `service/` | Business logic |
+
+Keep controllers in the single `controller/` folder so request-handling code is
+easy to locate and the source tree stays consistent.
+
 ## Prerequisites
 
 - [Git](https://git-scm.com/downloads)

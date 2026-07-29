@@ -1,12 +1,12 @@
-package com.nhamhealth.nhamhealth_api.auth.security;
+package com.nhamhealth.nhamhealth_api.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Service
 public class DatabaseUserDetailsService implements UserDetailsService {

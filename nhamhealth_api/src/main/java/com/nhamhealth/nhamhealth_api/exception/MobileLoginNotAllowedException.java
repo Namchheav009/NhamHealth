@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.exception;
+package com.nhamhealth.nhamhealth_api.exception;
 
 public class MobileLoginNotAllowedException extends RuntimeException {
 

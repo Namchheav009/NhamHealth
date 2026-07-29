@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.security;
+package com.nhamhealth.nhamhealth_api.security;
 
 import java.util.Collection;
 import java.util.List;
@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.nhamhealth.nhamhealth_api.user.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.User;
 
 public final class AppUserPrincipal implements UserDetails {
 

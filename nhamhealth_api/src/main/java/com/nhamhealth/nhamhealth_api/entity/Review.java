@@ -1,6 +1,6 @@
 package com.nhamhealth.nhamhealth_api.entity;
 
-import com.nhamhealth.nhamhealth_api.user.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

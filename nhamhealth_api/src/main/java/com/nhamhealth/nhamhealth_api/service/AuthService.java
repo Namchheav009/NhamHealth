@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.service;
+package com.nhamhealth.nhamhealth_api.service;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -9,14 +9,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nhamhealth.nhamhealth_api.auth.dto.AuthResponse;
-import com.nhamhealth.nhamhealth_api.auth.dto.AuthenticatedUserResponse;
-import com.nhamhealth.nhamhealth_api.auth.dto.LoginRequest;
-import com.nhamhealth.nhamhealth_api.auth.exception.MobileLoginNotAllowedException;
-import com.nhamhealth.nhamhealth_api.auth.security.AppUserPrincipal;
-import com.nhamhealth.nhamhealth_api.auth.security.JwtTokenService;
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.dto.AuthResponse;
+import com.nhamhealth.nhamhealth_api.dto.AuthenticatedUserResponse;
+import com.nhamhealth.nhamhealth_api.dto.LoginRequest;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.security.AppUserPrincipal;
+import com.nhamhealth.nhamhealth_api.security.JwtTokenService;
 
 @Service
 public class AuthService {

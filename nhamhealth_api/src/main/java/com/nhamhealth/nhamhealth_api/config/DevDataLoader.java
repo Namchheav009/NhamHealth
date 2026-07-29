@@ -6,10 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nhamhealth.nhamhealth_api.user.entity.Role;
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.RoleRepository;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.entity.Role;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Component
 public class DevDataLoader implements CommandLineRunner {
