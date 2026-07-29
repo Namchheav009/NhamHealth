@@ -1,471 +1,153 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard | NhamHealth</title>
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: Inter, system-ui, sans-serif;
-        background: #eff6f2;
-        color: #152d24;
-      }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Dashboard | Nham Health Admin</title>
 
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('dashboard')}"></div>
 
-      html,
-      body {
-        margin: 0;
-        min-height: 100%;
-      }
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
 
-      body {
-        background: #eff6f2;
-      }
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Dashboard</h1>
+                        <span>Welcome back, Admin!</span>
+                    </div>
+                    <p>Monitor users, meals, activity, and community reports.</p>
+                </div>
+                <button class="date-filter"><i class="bi bi-calendar3"></i> May 14 – May 20, 2026 <i class="bi bi-chevron-down"></i></button>
+            </div>
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Total Users</span>
+                        <strong th:text="${#numbers.formatInteger(totalUsers, 0, 'COMMA')}">24,583</strong>
+                        <small class="positive"><i class="bi bi-arrow-up"></i> 8.62% <em>vs last 7 days</em></small>
+                    </div>
+                </article>
 
-      .dashboard-layout {
-        display: grid;
-        grid-template-columns: 270px 1fr;
-        min-height: 100vh;
-      }
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-egg-fried"></i></div>
+                    <div class="stat-content">
+                        <span>Meals</span>
+                        <strong th:text="${#numbers.formatInteger(totalMeals, 0, 'COMMA')}">3,126</strong>
+                        <small class="positive"><i class="bi bi-arrow-up"></i> 9.35% <em>vs last 7 days</em></small>
+                    </div>
+                </article>
 
-      aside {
-        padding: 2rem 1.75rem;
-        background: #0d3b31;
-        color: #e9f7f1;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-      }
+                <article class="stat-card">
+                    <div class="stat-icon purple"><i class="bi bi-journal-richtext"></i></div>
+                    <div class="stat-content">
+                        <span>Meal Logs</span>
+                        <strong th:text="${#numbers.formatInteger(mealLogs, 0, 'COMMA')}">18,457</strong>
+                        <small class="positive"><i class="bi bi-arrow-up"></i> 9.34% <em>vs last 7 days</em></small>
+                    </div>
+                </article>
 
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.9rem;
-        font-size: 1.15rem;
-        font-weight: 800;
-      }
+                <article class="stat-card">
+                    <div class="stat-icon teal"><i class="bi bi-shield-exclamation"></i></div>
+                    <div class="stat-content">
+                        <span>Community Reports</span>
+                        <strong th:text="${#numbers.formatInteger(communityReports, 0, 'COMMA')}">312</strong>
+                        <small class="negative"><i class="bi bi-arrow-up"></i> 6.47% <em>vs last 7 days</em></small>
+                    </div>
+                </article>
+            </div>
 
-      .brand-mark {
-        width: 2.8rem;
-        height: 2.8rem;
-        border-radius: 1rem;
-        display: grid;
-        place-items: center;
-        background: #21a77a;
-        color: white;
-        font-weight: 800;
-      }
+            <div class="dashboard-grid dashboard-grid-main">
+                <article class="panel activity-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>User Activity Overview</h2>
+                            <div class="legend"><span><i class="dot green-dot"></i> Active Users</span><span><i class="dot blue-dot"></i> Meal Logs</span></div>
+                        </div>
+                        <button class="small-filter">Last 7 Days <i class="bi bi-chevron-down"></i></button>
+                    </div>
+                    <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+                </article>
 
-      .brand-copy {
-        margin-top: 1rem;
-        color: rgba(233, 247, 241, 0.9);
-        line-height: 1.7;
-        font-size: 0.95rem;
-      }
+                <article class="panel category-panel">
+                    <div class="panel-header"><h2>Meal Categories</h2></div>
+                    <div class="category-content">
+                        <div class="donut-wrap">
+                            <canvas id="categoryChart"></canvas>
+                            <div class="donut-center"><strong>3,126</strong><span>Total Meals</span></div>
+                        </div>
+                        <div class="category-list">
+                            <div><span><i class="dot breakfast"></i>Breakfast</span><b>24.8% (776)</b></div>
+                            <div><span><i class="dot lunch"></i>Lunch</span><b>22.2% (693)</b></div>
+                            <div><span><i class="dot dinner"></i>Dinner</span><b>21.5% (664)</b></div>
+                            <div><span><i class="dot snacks"></i>Snacks</span><b>14.2% (444)</b></div>
+                            <div><span><i class="dot desserts"></i>Desserts</span><b>9.3% (290)</b></div>
+                            <div><span><i class="dot beverages"></i>Beverages</span><b>8.0% (257)</b></div>
+                        </div>
+                    </div>
+                    <a class="panel-link" th:href="@{/admin/meal-categories}">View all categories <i class="bi bi-arrow-right"></i></a>
+                </article>
+            </div>
 
-      .nav-section {
-        display: grid;
-        gap: 0.85rem;
-      }
+            <div class="dashboard-grid dashboard-grid-bottom">
+                <article class="panel table-panel">
+                    <div class="panel-header"><h2>Recent Users</h2><a th:href="@{/admin/users}">View all <i class="bi bi-arrow-right"></i></a></div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Join Date</th></tr></thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(recentUsers)}">
+                                <td colspan="4">No users yet</td>
+                            </tr>
+                            <tr th:each="user, iter : ${recentUsers}">
+                                <td><span class="mini-avatar" th:text="${#strings.substring(user.email, 0, 1)}">S</span><span th:text="${user.email}">sarah.j@example.com</span></td>
+                                <td th:text="${user.email}">sarah.j@example.com</td>
+                                <td><span class="status-badge" th:classappend="${user.status == 'ACTIVE'} ? ' active-status' : ' pending-status'" th:text="${user.status}">ACTIVE</span></td>
+                                <td th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'MMM dd, yyyy') : '-'}">May 20, 2026</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
 
-      .nav-heading {
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        color: rgba(233, 247, 241, 0.65);
-        font-size: 0.78rem;
-      }
-
-      .nav-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        gap: 0.35rem;
-      }
-
-      .nav-link {
-        display: block;
-        padding: 0.82rem 1rem;
-        border-radius: 0.95rem;
-        color: #eef8f1;
-        transition: background 0.2s ease;
-      }
-
-      .nav-link:hover,
-      .nav-link.active {
-        background: rgba(255, 255, 255, 0.08);
-      }
-
-      .nav-link strong {
-        display: block;
-        font-size: 0.98rem;
-      }
-
-      .nav-link span {
-        display: block;
-        color: rgba(233, 247, 241, 0.75);
-        font-size: 0.88rem;
-      }
-
-      .sidebar-footer {
-        margin-top: auto;
-        border-top: 1px solid rgba(233, 247, 241, 0.08);
-        padding-top: 1rem;
-        color: rgba(233, 247, 241, 0.8);
-        font-size: 0.92rem;
-      }
-
-      .main {
-        padding: 1.75rem 2rem;
-      }
-
-      .topbar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .search-bar {
-        display: flex;
-        align-items: center;
-        gap: 0.85rem;
-        width: min(600px, 100%);
-        padding: 0.95rem 1rem;
-        border-radius: 999px;
-        background: white;
-        border: 1px solid rgba(16, 44, 34, 0.14);
-      }
-
-      .search-bar input {
-        border: none;
-        width: 100%;
-        font-size: 0.96rem;
-        color: #1f3d32;
-        background: transparent;
-        outline: none;
-      }
-
-      .top-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .top-actions button,
-      .profile-pill {
-        border: none;
-        border-radius: 999px;
-        padding: 0.95rem 1.1rem;
-        background: white;
-        color: #16332b;
-        font-weight: 700;
-        box-shadow: 0 12px 30px rgba(17, 44, 34, 0.08);
-        cursor: pointer;
-      }
-
-      .page-heading {
-        margin-bottom: 0.75rem;
-      }
-
-      .page-heading h1 {
-        margin: 0;
-        font-size: clamp(2rem, 2.7vw, 3rem);
-        color: #0f3b31;
-      }
-
-      .page-heading p {
-        margin: 0.75rem 0 0;
-        max-width: 42rem;
-        color: #4b6c63;
-        line-height: 1.7;
-      }
-
-      .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1.4rem;
-      }
-
-      .summary-card {
-        background: white;
-        border-radius: 1.3rem;
-        padding: 1.4rem;
-        border: 1px solid rgba(18, 54, 42, 0.1);
-        box-shadow: 0 22px 50px rgba(18, 51, 42, 0.04);
-      }
-
-      .summary-card h2 {
-        margin: 0 0 1rem;
-        font-size: 0.98rem;
-        color: #3f6056;
-        letter-spacing: 0.01em;
-      }
-
-      .summary-card .value {
-        margin: 0;
-        font-size: clamp(2.2rem, 3vw, 3rem);
-        color: #142d24;
-        font-weight: 800;
-      }
-
-      .summary-card p {
-        margin: 0.85rem 0 0;
-        color: #5b776c;
-        line-height: 1.7;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        gap: 1.5rem;
-      }
-
-      .dashboard-grid.two-col {
-        grid-template-columns: 1.6fr 1fr;
-      }
-
-      .chart-card,
-      .list-card {
-        background: white;
-        border-radius: 1.3rem;
-        padding: 1.5rem;
-        border: 1px solid rgba(18, 54, 42, 0.11);
-        box-shadow: 0 22px 50px rgba(18, 51, 42, 0.04);
-      }
-
-      .card-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .card-header h3 {
-        margin: 0;
-        font-size: 1rem;
-        color: #2f5b4f;
-      }
-
-      .card-header span {
-        color: #6a847a;
-        font-size: 0.92rem;
-      }
-
-      .chart-placeholder {
-        min-height: 250px;
-        border-radius: 1.2rem;
-        background: linear-gradient(180deg, rgba(31, 61, 49, 0.04), #f6faf6);
-        border: 1px solid rgba(26, 54, 42, 0.08);
-        display: grid;
-        place-items: center;
-        color: #4f7170;
-      }
-
-      .mini-panel {
-        background: #f5fbf7;
-        border-radius: 1.2rem;
-        padding: 1.35rem;
-      }
-
-      .mini-panel ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        gap: 0.85rem;
-      }
-
-      .mini-panel li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-        color: #385c50;
-      }
-
-      .legend-dot {
-        width: 0.95rem;
-        height: 0.95rem;
-        border-radius: 0.35rem;
-      }
-
-      .legend-dot.breakfast { background: #1e9368; }
-      .legend-dot.lunch { background: #3db187; }
-      .legend-dot.dinner { background: #6bc28f; }
-      .legend-dot.snacks { background: #c9c46c; }
-      .legend-dot.beverages { background: #6cb7a6; }
-
-      .table-scroll {
-        overflow-x: auto;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        padding: 0.95rem 0;
-        text-align: left;
-        border-bottom: 1px solid rgba(75, 108, 98, 0.12);
-      }
-
-      th {
-        color: #3f6658;
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-
-      td {
-        color: #556d62;
-        font-size: 0.95rem;
-      }
-
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.45rem 0.75rem;
-        border-radius: 999px;
-        background: #eff9f2;
-        color: #1d6e4f;
-        font-weight: 700;
-        font-size: 0.84rem;
-      }
-
-      @media (max-width: 1150px) {
-        .dashboard-layout { grid-template-columns: 1fr; }
-        aside { position: sticky; top: 0; z-index: 2; }
-        .summary-grid,
-        .dashboard-grid.two-col { grid-template-columns: 1fr; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="dashboard-layout">
-      <div th:replace="fragments/sidebar :: sidebar"></div>
-
-      <main class="main">
-        <div class="topbar">
-          <div class="search-bar">
-            <span>🔍</span>
-            <input type="search" placeholder="Search users, meals, logs, and more..." aria-label="Dashboard search" />
-          </div>
-          <div class="top-actions">
-            <div class="profile-pill">Admin</div>
-            <form method="post" action="/logout" th:action="@{/logout}">
-              <button type="submit">Sign out</button>
-            </form>
-          </div>
-        </div>
-
-        <div class="page-heading">
-          <h1>Dashboard</h1>
-          <p>Welcome back, Admin. Monitor users, meals, activity, and community reports from a single admin view.</p>
-        </div>
-
-        <section class="summary-grid">
-          <article class="summary-card">
-            <h2>Total users</h2>
-            <p class="value">24,583</p>
-            <p>Users registered across the NhamHealth platform.</p>
-          </article>
-          <article class="summary-card">
-            <h2>Meals</h2>
-            <p class="value">3,126</p>
-            <p>Total meals defined for meal planning and tracking.</p>
-          </article>
-          <article class="summary-card">
-            <h2>Meal logs</h2>
-            <p class="value">18,457</p>
-            <p>Entries recorded by users in the last 7 days.</p>
-          </article>
-          <article class="summary-card">
-            <h2>Community reports</h2>
-            <p class="value">312</p>
-            <p>Reported items currently under review.</p>
-          </article>
+                <article class="panel reviews-panel">
+                    <div class="panel-header"><h2>Recent Meal Reviews</h2><a th:href="@{/admin/reviews}">View all <i class="bi bi-arrow-right"></i></a></div>
+                    <div class="review-list">
+                        <div th:if="${#lists.isEmpty(recentReviews)}">No reviews yet</div>
+                        <div class="review-item" th:each="review, iter : ${recentReviews}">
+                            <div class="meal-thumb" th:classappend="${'thumb-' + (iter.index + 1)}"><i class="bi bi-egg-fried"></i></div>
+                            <div class="review-main">
+                                <strong th:text="${review.meal != null ? review.meal.mealName : 'Meal'}">Quinoa Buddha Bowl</strong>
+                                <span>by <span th:text="${review.user != null ? review.user.email : 'Unknown'}">Emily Harris</span></span>
+                            </div>
+                            <div class="rating"><span>★★★★★</span><b th:text="${review.rating}">5.0</b></div>
+                            <time th:text="${review.createdAt != null ? #temporals.format(review.createdAt, 'MMM dd, yyyy') : '-'}">May 20, 2026</time>
+                        </div>
+                    </div>
+                </article>
+            </div>
         </section>
 
-        <section class="dashboard-grid two-col" style="margin-top: 1.5rem;">
-          <article class="chart-card">
-            <div class="card-header">
-              <h3>User activity overview</h3>
-              <span>Last 7 days</span>
-            </div>
-            <div class="chart-placeholder">Activity chart placeholder</div>
-          </article>
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
 
-          <article class="mini-panel">
-            <div class="card-header">
-              <h3>Meal categories</h3>
-              <span>Catalog distribution</span>
-            </div>
-            <ul>
-              <li><span class="legend-dot breakfast"></span><span>Breakfast</span><strong>24.8%</strong></li>
-              <li><span class="legend-dot lunch"></span><span>Lunch</span><strong>22.5%</strong></li>
-              <li><span class="legend-dot dinner"></span><span>Dinner</span><strong>21.2%</strong></li>
-              <li><span class="legend-dot snacks"></span><span>Snacks</span><strong>14.2%</strong></li>
-              <li><span class="legend-dot beverages"></span><span>Beverages</span><strong>8.0%</strong></li>
-            </ul>
-          </article>
-        </section>
-
-        <section class="dashboard-grid two-col" style="margin-top: 1.5rem;">
-          <article class="list-card">
-            <div class="card-header">
-              <h3>Recent users</h3>
-              <span>Latest signups</span>
-            </div>
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr><th>Name</th><th>Email</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>Sarah Johnson</td><td>sarah.j@example.com</td><td><span class="pill">Active</span></td></tr>
-                  <tr><td>Mike Chen</td><td>mike.ch@example.com</td><td><span class="pill">Active</span></td></tr>
-                  <tr><td>Priya Patel</td><td>priya.p@example.com</td><td><span class="pill">Active</span></td></tr>
-                  <tr><td>James Wilson</td><td>james.w@example.com</td><td><span class="pill">Pending</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="list-card">
-            <div class="card-header">
-              <h3>Recent meal reviews</h3>
-              <span>Feedback trends</span>
-            </div>
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr><th>Meal</th><th>Reviewer</th><th>Rating</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>Quinoa Buddha Bowl</td><td>Emily Harris</td><td><span class="pill">5.0</span></td></tr>
-                  <tr><td>Grilled Salmon with Veggies</td><td>Tom Foster</td><td><span class="pill">4.5</span></td></tr>
-                  <tr><td>Berry Smoothie Bowl</td><td>Nina Liu</td><td><span class="pill">4.0</span></td></tr>
-                  <tr><td>Avocado Toast</td><td>GreenKitchen</td><td><span class="pill">4.8</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-        </section>
-      </main>
-    </div>
-  </body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script th:src="@{/js/admin-dashboard.js}"></script>
+</body>
 </html>

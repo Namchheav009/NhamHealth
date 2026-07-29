@@ -1,62 +1,58 @@
-<!-- Sidebar fragment -->
-<aside th:fragment="sidebar">
-  <div>
-    <div class="brand">
-      <span class="brand-mark">NH</span>
-      <span>NhamHealth</span>
-    </div>
-    <p class="brand-copy">Admin dashboard for managing meals, wellness records, and community reports.</p>
-  </div>
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="sidebar" th:fragment="sidebar(activePage)">
+    <a class="brand" th:href="@{/admin/dashboard}">
+        <span class="brand-logo"><i class="bi bi-heart-pulse-fill"></i></span>
+        <span>
+            <strong>Nham Health</strong>
+            <small>Admin Panel</small>
+        </span>
+    </a>
 
-  <div class="nav-section">
-    <div class="nav-heading">Main</div>
-    <ul class="nav-list">
-      <li><a class="nav-link active" href="/dashboard"><strong>Dashboard</strong><span>Overview</span></a></li>
-    </ul>
-  </div>
+    <nav class="sidebar-nav">
+        <a class="nav-link" th:classappend="${activePage == 'dashboard'} ? ' active' : ''" th:href="@{/admin/dashboard}">
+            <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+        </a>
 
-  <div class="nav-section">
-    <div class="nav-heading">Account management</div>
-    <ul class="nav-list">
-      <li><a class="nav-link" href="#"><strong>Users</strong><span>Manage accounts</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Wellness profiles</strong><span>Patient records</span></a></li>
-    </ul>
-  </div>
+        <p class="nav-section">Account Management</p>
+        <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people"></i><span>Users</span></a>
+        <a class="nav-link" th:href="@{/admin/wellness-profiles}"><i class="bi bi-person-vcard"></i><span>Wellness Profiles</span></a>
 
-  <div class="nav-section">
-    <div class="nav-heading">Meal management</div>
-    <ul class="nav-list">
-      <li><a class="nav-link" href="#"><strong>Meals</strong><span>Meal catalog</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Meal categories</strong><span>Category groups</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Ingredients</strong><span>Nutrition sources</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Nutrients</strong><span>Macro details</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Tags</strong><span>Diet labels</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Serving sizes</strong><span>Portions</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Moods</strong><span>Meal moods</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Favorites</strong><span>Saved options</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Reviews</strong><span>Meal feedback</span></a></li>
-    </ul>
-  </div>
+        <p class="nav-section">Meal Management</p>
+        <a class="nav-link" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
+        <a class="nav-link" th:href="@{/admin/meal-categories}"><i class="bi bi-tags"></i><span>Meal Categories</span></a>
+        <a class="nav-link" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
+        <a class="nav-link" th:href="@{/admin/nutrients}"><i class="bi bi-activity"></i><span>Nutrients</span></a>
+        <a class="nav-link" th:href="@{/admin/tags}"><i class="bi bi-bookmark"></i><span>Tags</span></a>
+        <a class="nav-link" th:href="@{/admin/serving-sizes}"><i class="bi bi-cup-straw"></i><span>Serving Sizes</span></a>
+        <a class="nav-link" th:href="@{/admin/moods}"><i class="bi bi-emoji-smile"></i><span>Moods</span></a>
+        <a class="nav-link" th:href="@{/admin/favorites}"><i class="bi bi-heart"></i><span>Favorites</span></a>
+        <a class="nav-link" th:href="@{/admin/reviews}"><i class="bi bi-star"></i><span>Reviews</span></a>
 
-  <div class="nav-section">
-    <div class="nav-heading">Health tracking</div>
-    <ul class="nav-list">
-      <li><a class="nav-link" href="#"><strong>Meal logs</strong><span>Daily intake</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Nutrient goals</strong><span>Goal progress</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Daily wellness</strong><span>Health checks</span></a></li>
-    </ul>
-  </div>
+        <p class="nav-section">Health Tracking</p>
+        <a class="nav-link" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>
+        <a class="nav-link" th:href="@{/admin/nutrient-goals}"><i class="bi bi-bullseye"></i><span>Nutrient Goals</span></a>
+        <a class="nav-link" th:href="@{/admin/daily-wellness}"><i class="bi bi-calendar2-check"></i><span>Daily Wellness</span></a>
 
-  <div class="nav-section">
-    <div class="nav-heading">Community</div>
-    <ul class="nav-list">
-      <li><a class="nav-link" href="#"><strong>Posts</strong><span>Community feed</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Reports</strong><span>Flagged content</span></a></li>
-      <li><a class="nav-link" href="#"><strong>Follows</strong><span>User connections</span></a></li>
-    </ul>
-  </div>
+        <p class="nav-section">AI Features</p>
+        <a class="nav-link" th:href="@{/admin/ai-food-analyses}"><i class="bi bi-stars"></i><span>AI Food Analyses</span></a>
+        <a class="nav-link" th:href="@{/admin/ai-food-suggestions}"><i class="bi bi-lightbulb"></i><span>AI Food Suggestions</span></a>
+        <a class="nav-link" th:href="@{/admin/ai-recommendations}"><i class="bi bi-magic"></i><span>AI Recommendations</span></a>
+        <a class="nav-link" th:href="@{/admin/ai-chat}"><i class="bi bi-chat-square-text"></i><span>AI Chat</span></a>
 
-  <div class="sidebar-footer">
-    Signed in as <strong th:text="${email}">admin@nhamhealth.local</strong>
-  </div>
+        <p class="nav-section">Community</p>
+        <a class="nav-link" th:href="@{/admin/posts}"><i class="bi bi-file-post"></i><span>Posts</span></a>
+        <a class="nav-link" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
+        <a class="nav-link" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
+        <a class="nav-link" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
+
+        <p class="nav-section">Messaging</p>
+        <a class="nav-link" th:href="@{/admin/chats}"><i class="bi bi-chat-dots"></i><span>Chats</span></a>
+
+        <p class="nav-section">System</p>
+        <a class="nav-link" th:href="@{/admin/settings}"><i class="bi bi-gear"></i><span>Settings</span></a>
+    </nav>
 </aside>
+</body>
+</html>
