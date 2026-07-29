@@ -23,10 +23,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.jayway.jsonpath.JsonPath;
-import com.nhamhealth.nhamhealth_api.user.entity.Role;
-import com.nhamhealth.nhamhealth_api.user.entity.User;
-import com.nhamhealth.nhamhealth_api.user.repository.RoleRepository;
-import com.nhamhealth.nhamhealth_api.user.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.entity.Role;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -107,7 +107,7 @@ class AuthenticationFlowTests {
 
         mockMvc.perform(get("/dashboard").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(view().name("dashboard"));
+                .andExpect(view().name("admin/dashboard"));
     }
 
     @Test

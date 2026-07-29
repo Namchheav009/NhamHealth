@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.dto;
+package com.nhamhealth.nhamhealth_api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.auth.controller;
+package com.nhamhealth.nhamhealth_api.controller;
 
 import java.util.List;
 
@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nhamhealth.nhamhealth_api.auth.dto.AuthErrorResponse;
-import com.nhamhealth.nhamhealth_api.auth.dto.AuthenticatedUserResponse;
-import com.nhamhealth.nhamhealth_api.auth.dto.LoginRequest;
-import com.nhamhealth.nhamhealth_api.auth.exception.MobileLoginNotAllowedException;
-import com.nhamhealth.nhamhealth_api.auth.service.AuthService;
+import com.nhamhealth.nhamhealth_api.dto.AuthErrorResponse;
+import com.nhamhealth.nhamhealth_api.dto.AuthenticatedUserResponse;
+import com.nhamhealth.nhamhealth_api.dto.LoginRequest;
+import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
+import com.nhamhealth.nhamhealth_api.service.AuthService;
 
 import jakarta.validation.Valid;
 

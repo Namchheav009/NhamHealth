@@ -1,4 +1,4 @@
-package com.nhamhealth.nhamhealth_api.health.controller;
+package com.nhamhealth.nhamhealth_api.controller;
 
 import java.time.Instant;
 
@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nhamhealth.nhamhealth_api.health.dto.ApiHealthResponse;
+import com.nhamhealth.nhamhealth_api.dto.ApiHealthResponse;
 
 @RestController
 @RequestMapping("/api/v1/health")
