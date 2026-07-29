@@ -16,6 +16,6 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         model.addAttribute("email", authentication.getName());
-        return "dashboard";
+        return "admin/dashboard";
     }
 }
