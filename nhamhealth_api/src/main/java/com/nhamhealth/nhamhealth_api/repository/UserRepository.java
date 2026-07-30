@@ -9,4 +9,6 @@ import com.nhamhealth.nhamhealth_api.entity.User;
 public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmailIgnoreCase(String email);
+
+    long countByIsVerifiedTrue();
 }

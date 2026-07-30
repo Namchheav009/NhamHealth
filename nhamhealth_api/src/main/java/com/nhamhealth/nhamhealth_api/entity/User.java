@@ -1,5 +1,8 @@
 package com.nhamhealth.nhamhealth_api.entity;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,8 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -133,5 +134,55 @@ public class User {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getName() {
+        return email != null ? email : "Unknown";
+    }
+
+    public String getRoleLabel() {
+        return role != null ? role.getRoleName() : "USER";
+    }
+
+    public String getInitials() {
+        String name = getName();
+        if (name == null || name.isBlank()) {
+            return "NA";
+        }
+
+        String[] parts = name.split("[\s@._-]+");
+        if (parts.length == 0) {
+            return name.substring(0, Math.min(2, name.length())).toUpperCase();
+        }
+
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        }
+
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+    }
+
+    public String getVerification() {
+        return Boolean.TRUE.equals(isVerified) ? "Verified" : "Unverified";
+    }
+
+    public String getJoinedDate() {
+        if (createdAt == null) {
+            return "Unknown";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+        return createdAt.format(formatter);
+    }
+
+    public String getLastActive() {
+        if (lastLoginAt == null) {
+            return "Never";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+        return lastLoginAt.format(formatter);
+    }
+
+    public String getWellnessProfile() {
+        return "Incomplete";
     }
 }
