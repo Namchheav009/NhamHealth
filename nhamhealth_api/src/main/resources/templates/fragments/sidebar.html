@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<body>
-<aside class="sidebar" th:fragment="sidebar(activePage)">
+<aside id="sidebar" class="sidebar" th:fragment="sidebar(activePage)">
     <a class="brand" th:href="@{/admin/dashboard}">
         <span class="brand-logo"><i class="bi bi-heart-pulse-fill"></i></span>
         <span>
@@ -16,8 +13,8 @@
         </a>
 
         <p class="nav-section">Account Management</p>
-        <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people"></i><span>Users</span></a>
-        <a class="nav-link" th:href="@{/admin/wellness-profiles}"><i class="bi bi-person-vcard"></i><span>Wellness Profiles</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'users'} ? ' active' : ''" th:href="@{/admin/users}"><i class="bi bi-people"></i><span>Users</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'wellness-profiles'} ? ' active' : ''" th:href="@{/admin/wellness-profiles}"><i class="bi bi-person-vcard"></i><span>Wellness Profiles</span></a>
 
         <p class="nav-section">Meal Management</p>
         <a class="nav-link" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
@@ -54,5 +51,3 @@
         <a class="nav-link" th:href="@{/admin/settings}"><i class="bi bi-gear"></i><span>Settings</span></a>
     </nav>
 </aside>
-</body>
-</html>
