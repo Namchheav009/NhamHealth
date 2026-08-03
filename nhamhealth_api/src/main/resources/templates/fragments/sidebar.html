@@ -17,9 +17,9 @@
         <a class="nav-link" th:classappend="${activePage == 'wellness-profiles'} ? ' active' : ''" th:href="@{/admin/wellness-profiles}"><i class="bi bi-person-vcard"></i><span>Wellness Profiles</span></a>
 
         <p class="nav-section">Meal Management</p>
-        <a class="nav-link" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
-        <a class="nav-link" th:href="@{/admin/meal-categories}"><i class="bi bi-tags"></i><span>Meal Categories</span></a>
-        <a class="nav-link" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'meals'} ? ' active' : ''" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'meal-categories'} ? ' active' : ''" th:href="@{/admin/meal-categories}"><i class="bi bi-tags-fill"></i><span>Meal Categories</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'ingredients'} ? ' active' : ''" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
         <a class="nav-link" th:href="@{/admin/nutrients}"><i class="bi bi-activity"></i><span>Nutrients</span></a>
         <a class="nav-link" th:href="@{/admin/tags}"><i class="bi bi-bookmark"></i><span>Tags</span></a>
         <a class="nav-link" th:href="@{/admin/serving-sizes}"><i class="bi bi-cup-straw"></i><span>Serving Sizes</span></a>
