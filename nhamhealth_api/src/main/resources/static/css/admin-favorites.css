@@ -1,0 +1,18 @@
+:root {
+    --green: #079447;
+    --border: #e4e9ef;
+    --muted: #667085;
+    --shadow: 0 8px 24px rgba(31,41,55,0.06);
+}
+
+.panel-tools .tab-buttons { display:flex; gap:8px }
+.tab-buttons .btn { border-radius: 8px; padding: 8px 12px }
+.tab-buttons .btn.btn-primary { box-shadow: 0 8px 24px rgba(31,41,55,0.06) }
+
+.table-responsive table { width:100%; border-collapse:collapse }
+.table-responsive th, .table-responsive td { padding:.75rem; text-align:left; border-bottom:1px solid rgba(0,0,0,0.04) }
+
+.action-group { display:flex; gap:6px }
+.icon-button.small { width:30px; height:30px; border:1px solid var(--border); border-radius:7px; background:#fff }
+
+@media (max-width: 900px) { .stats-grid { grid-template-columns: 1fr } }

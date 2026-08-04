@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Meal Reviews | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-reviews.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('reviews')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Meal Reviews</h1>
+                        <span>View and manage reviews and ratings for meals.</span>
+                    </div>
+                    <p>Dashboard &gt; Meal Management &gt; Meal Reviews</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn btn-primary" type="button"><i class="bi bi-download"></i> Export CSV</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon yellow"><i class="bi bi-star-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Total Reviews</span>
+                        <strong th:text="${totalReviews}">1,248</strong>
+                        <small>All time</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-hand-thumbs-up-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Approved Reviews</span>
+                        <strong th:text="${approvedReviews}">1,186</strong>
+                        <small th:text="${approvedPercentage}">95.0% of total</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon red"><i class="bi bi-flag-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Reported Reviews</span>
+                        <strong th:text="${reportedReviews}">32</strong>
+                        <small th:text="${reportedPercentage}">2.6% of total</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon purple"><i class="bi bi-star"></i></div>
+                    <div class="stat-content">
+                        <span>Average Rating</span>
+                        <strong th:text="${averageRating}">4.6 / 5</strong>
+                        <small th:text="${ratingDelta}">+0.2 from last month</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-basket3-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Meals Reviewed</span>
+                        <strong th:text="${mealsReviewed}">248</strong>
+                        <small>Unique meals</small>
+                    </div>
+                </article>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>All Reviews</h2>
+                    <div class="panel-tools">
+                        <select class="table-filter-pill" id="statusFilter" aria-label="Filter by status">
+                            <option value="all">All Status</option>
+                            <option value="approved">Approved</option>
+                            <option value="reported">Reported</option>
+                        </select>
+                        <select class="table-filter-pill" id="ratingFilter" aria-label="Filter by rating">
+                            <option value="all">All Ratings</option>
+                            <option value="5">5 stars</option>
+                            <option value="4">4 stars</option>
+                            <option value="3">3 stars</option>
+                            <option value="2">2 stars</option>
+                            <option value="1">1 star</option>
+                        </select>
+                        <input class="table-search" id="reviewSearch" type="search" placeholder="Search reviews..." aria-label="Search reviews">
+                        <button class="btn btn-secondary" id="applyReviewFilter" type="button"><i class="bi bi-funnel"></i> Filter</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Meal</th>
+                            <th>User</th>
+                            <th>Rating</th>
+                            <th>Review</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="review, iter : ${reviews}"
+                            th:data-status="${review.rating != null and review.rating < 3 ? 'reported' : 'approved'}"
+                            th:data-rating="${review.rating}"
+                            th:data-meal="${review.meal != null ? review.meal.mealName : '-'}">
+                            <td th:text="${iter.index + 1}">1</td>
+                            <td>
+                                <div class="content-cell meal-cell">
+                                    <div class="meal-preview">
+                                        <img th:if="${review.meal != null and review.meal.mainImageUrl != null}"
+                                             th:src="${review.meal.mainImageUrl}"
+                                             alt="Meal image"
+                                             class="meal-image" />
+                                        <div>
+                                            <strong th:text="${review.meal != null ? review.meal.mealName : '-'}">Avocado Salad</strong>
+                                            <span th:text="${review.meal != null && review.meal.category != null ? review.meal.category.categoryName : '-'}">Salads</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="content-cell">
+                                    <span class="pill tag-blue" th:text="${review.user != null ? review.user.name : 'Guest'}">Sokunthy P.</span>
+                                    <small th:text="${review.user != null ? review.user.email : 'guest@example.com'}">user_1024@example.com</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="pill tag-orange" th:text="${review.rating != null ? review.rating + ' ★' : 'N/A'}">4 ★</span>
+                            </td>
+                            <td th:text="${review.reviewText}">Very fresh and healthy! Love the avocado and the dressing.</td>
+                            <td th:text="${#dates.format(review.createdAt, 'MMM dd, yyyy hh:mm a')}">May 20, 2025 09:41 AM</td>
+                            <td>
+                                <span class="status-badge" th:text="${review.rating != null and review.rating < 3 ? 'Reported' : 'Approved'}" th:classappend="${review.rating != null and review.rating < 3 ? ' reported-status' : ' approved-status'}">Approved</span>
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="icon-button small" type="button"><i class="bi bi-eye"></i></button>
+                                    <button class="icon-button small" type="button"><i class="bi bi-flag"></i></button>
+                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-row">
+                    <span th:text="${'Showing 1 to ' + reviews.size() + ' of ' + totalReviews + ' reviews'}">Showing 1 to 10 of 1,248 reviews</span>
+                    <div class="pagination-controls">
+                        <button class="page-btn"><i class="bi bi-chevron-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <span>...</span>
+                        <button class="page-btn">125</button>
+                        <button class="page-btn"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-reviews.js}" defer></script>
+</body>
+</html>

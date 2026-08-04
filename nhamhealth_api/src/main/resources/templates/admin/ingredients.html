@@ -50,10 +50,21 @@
                 <div class="panel-header">
                     <h2>All Ingredients</h2>
                     <div class="panel-tools">
-                        <select class="table-filter-pill"><option>All Categories</option></select>
-                        <select class="table-filter-pill"><option>All Status</option></select>
-                        <input class="table-search" type="search" placeholder="Search ingredients...">
-                        <button class="btn btn-secondary" type="button">Filter</button>
+                        <select class="table-filter-pill" id="categoryFilter" aria-label="Filter by ingredient category">
+                            <option value="all">All Categories</option>
+                            <option value="protein">Protein</option>
+                            <option value="vegetable">Vegetable</option>
+                            <option value="fruit">Fruit</option>
+                            <option value="dairy">Dairy</option>
+                            <option value="grain">Grain</option>
+                        </select>
+                        <select class="table-filter-pill" id="statusFilter" aria-label="Filter by ingredient status">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <input class="table-search" id="ingredientSearch" type="search" placeholder="Search ingredients..." aria-label="Search ingredients">
+                        <button class="btn btn-secondary" id="clearIngredientFilter" type="button">Clear</button>
                     </div>
                 </div>
 
@@ -71,7 +82,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="ingredient, iter : ${ingredients}">
+                        <tr th:each="ingredient, iter : ${ingredients}" th:data-name="${ingredient.ingredientName}" th:data-category="${ingredient.ingredientType != null ? ingredient.ingredientType : '-'}" th:data-status="${ingredient.isActive != null and ingredient.isActive ? 'active' : 'inactive'}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="ingredient-name">
@@ -85,7 +96,7 @@
                             </td>
                             <td th:text="${ingredient.description != null ? ingredient.description : '-'}">Salads, Smoothies, Stir-fries</td>
                             <td>
-                                <span class="status-badge active-status">Active</span>
+                                <span class="status-badge active-status" th:classappend="${ingredient.isActive != null and ingredient.isActive ? ' active-status' : ' inactive-status'}" th:text="${ingredient.isActive != null and ingredient.isActive ? 'Active' : 'Inactive'}">Active</span>
                             </td>
                             <td>
                                 <div class="action-group">
@@ -164,20 +175,6 @@
 </div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script>
-    const ingredientModal = document.getElementById('ingredientModal');
-    const openIngredientModal = document.getElementById('openIngredientModal');
-    const closeIngredientModal = document.getElementById('closeIngredientModal');
-    const cancelIngredientModal = document.getElementById('cancelIngredientModal');
-
-    openIngredientModal?.addEventListener('click', () => ingredientModal.classList.add('show'));
-    closeIngredientModal?.addEventListener('click', () => ingredientModal.classList.remove('show'));
-    cancelIngredientModal?.addEventListener('click', () => ingredientModal.classList.remove('show'));
-    ingredientModal?.addEventListener('click', event => {
-        if (event.target === ingredientModal) {
-            ingredientModal.classList.remove('show');
-        }
-    });
-</script>
+<script th:src="@{/js/admin-ingredients.js}" defer></script>
 </body>
 </html>
