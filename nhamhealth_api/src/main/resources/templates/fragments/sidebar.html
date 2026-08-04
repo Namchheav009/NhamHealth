@@ -20,12 +20,12 @@
         <a class="nav-link" th:classappend="${activePage == 'meals'} ? ' active' : ''" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
         <a class="nav-link" th:classappend="${activePage == 'meal-categories'} ? ' active' : ''" th:href="@{/admin/meal-categories}"><i class="bi bi-tags-fill"></i><span>Meal Categories</span></a>
         <a class="nav-link" th:classappend="${activePage == 'ingredients'} ? ' active' : ''" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
-        <a class="nav-link" th:href="@{/admin/nutrients}"><i class="bi bi-activity"></i><span>Nutrients</span></a>
-        <a class="nav-link" th:href="@{/admin/tags}"><i class="bi bi-bookmark"></i><span>Tags</span></a>
-        <a class="nav-link" th:href="@{/admin/serving-sizes}"><i class="bi bi-cup-straw"></i><span>Serving Sizes</span></a>
-        <a class="nav-link" th:href="@{/admin/moods}"><i class="bi bi-emoji-smile"></i><span>Moods</span></a>
-        <a class="nav-link" th:href="@{/admin/favorites}"><i class="bi bi-heart"></i><span>Favorites</span></a>
-        <a class="nav-link" th:href="@{/admin/reviews}"><i class="bi bi-star"></i><span>Reviews</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'nutrients'} ? ' active' : ''" th:href="@{/admin/nutrients}"><i class="bi bi-activity"></i><span>Nutrients</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'tags'} ? ' active' : ''" th:href="@{/admin/tags}"><i class="bi bi-tag-fill"></i><span>Tags</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'serving-sizes'} ? ' active' : ''" th:href="@{/admin/serving-sizes}"><i class="bi bi-cup-straw"></i><span>Serving Sizes</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'moods'} ? ' active' : ''" th:href="@{/admin/moods}"><i class="bi bi-emoji-smile"></i><span>Moods</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'favorites'} ? ' active' : ''" th:href="@{/admin/favorites}"><i class="bi bi-heart-fill"></i><span>Favorites</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reviews'} ? ' active' : ''" th:href="@{/admin/reviews}"><i class="bi bi-star-fill"></i><span>Reviews</span></a>
 
         <p class="nav-section">Health Tracking</p>
         <a class="nav-link" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>

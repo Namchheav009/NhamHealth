@@ -7,4 +7,6 @@ import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 public interface MealFavoriteRepository extends JpaRepository<MealFavorite, Integer> {
 
     long countByMealMealId(Integer mealId);
+
+    java.util.List<MealFavorite> findAllByOrderBySavedAtDesc();
 }

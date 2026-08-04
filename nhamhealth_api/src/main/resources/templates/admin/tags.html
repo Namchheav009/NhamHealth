@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Tags | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-tags.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('tags')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Tags</h1>
+                        <span>Manage all tags used to categorize meals and ingredients.</span>
+                    </div>
+                    <p>Dashboard &gt; Meal Management &gt; Tags</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn btn-primary" id="openTagModal" type="button"><i class="bi bi-plus-lg"></i> Add New Tag</button>
+                    <button class="btn" type="button"><i class="bi bi-download"></i> Export</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-tag-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Total Tags</span>
+                        <strong th:text="${#numbers.formatInteger(totalTags, 0, 'COMMA')}">86</strong>
+                        <small>All tags in system</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Active Tags</span>
+                        <strong th:text="${#numbers.formatInteger(activeTags, 0, 'COMMA')}">81</strong>
+                        <small th:text="${#numbers.formatDecimal(activeTags * 100.0 / totalTags, 1, 2)} + '% Active'">94.2% Active</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-slash-circle"></i></div>
+                    <div class="stat-content">
+                        <span>Inactive Tags</span>
+                        <strong th:text="${#numbers.formatInteger(inactiveTags, 0, 'COMMA')}">5</strong>
+                        <small>Needs review</small>
+                    </div>
+                </article>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>All Tags</h2>
+                    <div class="panel-tools">
+                        <select class="table-filter-pill" id="scopeFilter" aria-label="Filter by tag scope">
+                            <option value="all">All Status</option>
+                            <option value="nutrition">Nutrition</option>
+                            <option value="diet">Diet</option>
+                            <option value="health">Health</option>
+                            <option value="lifestyle">Lifestyle</option>
+                        </select>
+                        <select class="table-filter-pill" id="statusFilter" aria-label="Filter by tag status">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <input class="table-search" id="tagSearch" type="search" placeholder="Search tags..." aria-label="Search tags">
+                        <button class="btn btn-secondary" id="clearTagFilter" type="button">Clear</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tag Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="tag, iter : ${tags}" th:data-name="${tag.tagName}" th:data-scope="${tag.tagScope}" th:data-status="${tag.isActive != null and tag.isActive ? 'active' : 'inactive'}">
+                            <td th:text="${iter.index + 1}">1</td>
+                            <td>
+                                <span class="pill tag-pink" th:text="${tag.tagName}">High Protein</span>
+                            </td>
+                            <td>
+                                <span class="pill tag-blue" th:text="${tag.tagScope}">Nutrition</span>
+                            </td>
+                            <td th:text="${tag.description != null ? tag.description : '-'}">High in protein content</td>
+                            <td>
+                                <span class="status-badge active-status" th:classappend="${tag.isActive != null and tag.isActive ? ' active-status' : ' inactive-status'}" th:text="${tag.isActive != null and tag.isActive ? 'Active' : 'Inactive'}">Active</span>
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="icon-button small" type="button"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="modal" id="tagModal">
+    <section class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2>Add Tag</h2>
+                <p>Enter tag information for your taxonomy.</p>
+            </div>
+            <button class="close" id="closeTagModal" type="button" aria-label="Close dialog">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form id="tagForm">
+            <div class="modal-body">
+                <div class="field">
+                    <label for="tagName">Tag name</label>
+                    <input id="tagName" name="tagName" type="text" required>
+                </div>
+                <div class="field">
+                    <label for="tagScope">Type</label>
+                    <select id="tagScope" name="tagScope" required>
+                        <option value="">Select type</option>
+                        <option value="Nutrition">Nutrition</option>
+                        <option value="Diet">Diet</option>
+                        <option value="Health">Health</option>
+                        <option value="Lifestyle">Lifestyle</option>
+                    </select>
+                </div>
+                <div class="field full">
+                    <label for="tagDescription">Description</label>
+                    <textarea id="tagDescription" name="tagDescription" placeholder="Tag description..."></textarea>
+                </div>
+                <div class="field">
+                    <label for="tagStatus">Status</label>
+                    <select id="tagStatus" name="tagStatus" required>
+                        <option value="">Select status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelTagModal" type="button">Cancel</button>
+                <button class="btn btn-primary" type="submit">Save Tag</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-tags.js}" defer></script>
+</body>
+</html>
