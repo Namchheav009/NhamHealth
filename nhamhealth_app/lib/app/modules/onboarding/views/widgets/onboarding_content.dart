@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../models/onboarding_item.dart';
 import 'onboarding_indicator.dart';
 import 'onboarding_next_button.dart';
@@ -27,219 +28,188 @@ class OnboardingContent extends StatelessWidget {
   final VoidCallback onSkip;
   final VoidCallback onBack;
 
-  double imageHeight(BuildContext context) {
-    final double screenHeight = MediaQuery.of(context).size.height;
-
-    if (screenHeight < 700) {
-      return screenHeight * 0.25;
-    }
-
-    if (screenHeight < 850) {
-      return screenHeight * 0.29;
-    }
-
-    return screenHeight * 0.33;
-  }
-
-  double titleSize(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-
-    if (screenWidth < 360) {
-      return 29;
-    }
-
-    return 36;
-  }
-
-  Widget buildHeader() {
-  return Row(
-    children: [
-      Image.asset(
-        'assets/icons/logo.png',
-        width: 50,
-        height: 50,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const SizedBox(
-            width: 50,
-            height: 50,
-            child: Icon(
-              Icons.eco_rounded,
-              size: 38,
-              color: Color(0xFF009B3E),
-            ),
-          );
-        },
-      ),
-
-      const SizedBox(width: 8),
-
-      RichText(
-        text: const TextSpan(
-          children: [
-            TextSpan(
-              text: 'NHAM ',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFFF5A73),
-              ),
-            ),
-            TextSpan(
-              text: 'HEALTH',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF009B3E),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      const Spacer(),
-
-      if (showBackButton)
-        IconButton(
-          onPressed: onBack,
-          tooltip: 'Back',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 44,
-            minHeight: 44,
-          ),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            size: 30,
-            color: Color(0xFF005B27),
-          ),
-        ),
-    ],
-  );
-}
-
-  Widget buildOnboardingImage({
-    required String image,
-    required double height,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: height,
-      child: Center(
-        child: Image.asset(
-          image,
-          width: double.infinity,
-          height: height,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.image_not_supported_outlined,
-              size: 70,
-              color: Colors.grey,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double onboardingImageHeight = imageHeight(context);
-
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
+    return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFF4FFFA),
-            Color(0xFFF7FFF5),
-            Color(0xFFFFFEED),
-          ],
+          colors: [AppColors.backgroundMint, AppColors.backgroundCream],
         ),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            children: [
-              SizedBox(height: screenHeight * 0.025),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxHeight < 720;
+                final imageHeight = (constraints.maxHeight *
+                        (item.titleAboveImage ? 0.45 : 0.34))
+                    .clamp(
+                      compact ? 170.0 : 220.0,
+                      item.titleAboveImage
+                          ? (compact ? 310.0 : 380.0)
+                          : (compact ? 250.0 : 290.0),
+                    );
 
-              buildHeader(),
-
-              Expanded(
-                child: Column(
-                  children: [
-                    const Spacer(),
-
-                    buildOnboardingImage(
-                      image: item.imagePath,
-                      height: onboardingImageHeight,
-                    ),
-
-                    SizedBox(height: screenHeight * 0.01),
-
-                    Text(
-                      item.title,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: titleSize(context),
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF005B27),
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 26, 32, 40),
+                  child: Column(
+                    children: [
+                      if (item.showBrandHeader)
+                        _BrandHeader(
+                          showBackButton: showBackButton,
+                          onBack: onBack,
+                        )
+                      else
+                        const SizedBox(height: 28),
+                      if (item.titleAboveImage) ...[
+                        const SizedBox(height: 8),
+                        _TitleBlock(item: item, centered: false),
+                      ],
+                      Expanded(
+                        child: Align(
+                          alignment:
+                              item.titleAboveImage
+                                  ? Alignment.center
+                                  : const Alignment(0, -0.35),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: imageHeight,
+                            child: Image.asset(
+                              item.imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder:
+                                  (_, _, _) => const Icon(
+                                    Icons.image_not_supported_outlined,
+                                    size: 70,
+                                    color: AppColors.mutedText,
+                                  ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Text(
-                      item.description,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        height: 1.35,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF9A9A9A),
+                      if (!item.titleAboveImage) ...[
+                        _TitleBlock(item: item, centered: true),
+                        SizedBox(height: compact ? 16 : 24),
+                      ],
+                      OnboardingIndicator(activePage: activePage, pageCount: 2),
+                      const SizedBox(height: 18),
+                      OnboardingNextButton(text: buttonText, onPressed: onNext),
+                      const SizedBox(height: 4),
+                      Visibility(
+                        visible: showSkipButton,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: OnboardingSkipButton(onPressed: onSkip),
                       ),
-                    ),
-
-                    const Spacer(),
-                  ],
-                ),
-              ),
-
-              OnboardingIndicator(
-                activePage: activePage,
-                pageCount: 2,
-              ),
-
-              const SizedBox(height: 28),
-
-              OnboardingNextButton(
-                text: buttonText,
-                onPressed: onNext,
-              ),
-
-              const SizedBox(height: 14),
-
-              Visibility(
-                visible: showSkipButton,
-                maintainSize: true,
-                maintainAnimation: true,
-                maintainState: true,
-                child: OnboardingSkipButton(
-                  onPressed: onSkip,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ],
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader({required this.showBackButton, required this.onBack});
+
+  final bool showBackButton;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          Image.asset('assets/icons/logo.png', width: 26, height: 26),
+          const SizedBox(width: 6),
+          const Text(
+            'NHAM ',
+            style: TextStyle(
+              color: AppColors.primaryPink,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const Text(
+            'HEALTH',
+            style: TextStyle(
+              color: AppColors.primaryGreen,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const Spacer(),
+          if (showBackButton)
+            IconButton(
+              tooltip: 'Back',
+              onPressed: onBack,
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.darkGreen,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TitleBlock extends StatelessWidget {
+  const _TitleBlock({required this.item, required this.centered});
+
+  final OnboardingItem item;
+  final bool centered;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment:
+            centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.title,
+            textAlign: centered ? TextAlign.center : TextAlign.left,
+            style: TextStyle(
+              color: AppColors.darkGreen,
+              fontSize: centered ? 32 : 36,
+              height: 1.08,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (item.accentTitle != null)
+            Text(
+              item.accentTitle!,
+              style: const TextStyle(
+                color: AppColors.accentOrange,
+                fontSize: 34,
+                height: 1.12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          const SizedBox(height: 12),
+          Text(
+            item.description,
+            textAlign: centered ? TextAlign.center : TextAlign.left,
+            style: const TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 14,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
