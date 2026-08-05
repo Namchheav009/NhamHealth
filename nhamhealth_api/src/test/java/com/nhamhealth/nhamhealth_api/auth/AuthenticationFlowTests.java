@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.auth;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -84,6 +85,33 @@ class AuthenticationFlowTests {
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    @Test
+    void userCanRegisterAndImmediatelyReceiveBearerToken() throws Exception {
+        String email = "new-" + UUID.randomUUID() + "@example.com";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fullName":"New User","email":"%s","password":"StrongPass123!"}
+                                """.formatted(email)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.user.email").value(email))
+                .andExpect(jsonPath("$.user.role").value("USER"));
+    }
+
+    @Test
+    void registrationRejectsAnExistingEmail() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fullName":"Existing User","email":"user@nhamhealth.local","password":"StrongPass123!"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("An account with this email already exists"));
     }
 
     @Test

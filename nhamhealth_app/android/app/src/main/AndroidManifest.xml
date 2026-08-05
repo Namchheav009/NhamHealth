@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="nhamhealth_flutter"
+        android:label="NhamHealth"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
