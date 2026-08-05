@@ -1,7 +1,7 @@
 package com.nhamhealth.nhamhealth_api.dto;
 
 public record AuthenticatedUserResponse(
-        Integer userId,
+        Integer id,
         String email,
         String role) {
 }
