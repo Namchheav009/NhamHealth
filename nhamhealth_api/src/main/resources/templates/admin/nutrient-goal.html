@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Nutrient Goals | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-nutrient-goal.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('nutrient-goals')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Nutrient Goals</h1>
+                        <span>Monitor active nutrient targets and manage goals for users.</span>
+                    </div>
+                    <p>Dashboard &gt; Health Tracking &gt; Nutrient Goals</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" type="button"><i class="fa-solid fa-plus"></i> Add Goal</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="stat-content">
+                        <span>Total Active Goals</span>
+                        <strong th:text="${totalGoals}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-user-check"></i></div>
+                    <div class="stat-content">
+                        <span>Tracked Nutrients</span>
+                        <strong th:text="${trackedNutrients}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="stat-content">
+                        <span>Current Effective Goals</span>
+                        <strong th:text="${totalGoals}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+                        <section class="filters-grid">
+                <div class="field-group">
+                    <label for="goalSearch">Search</label>
+                    <input id="goalSearch" type="search" placeholder="Search by user or nutrient">
+                </div>
+                <div class="field-group">
+                    <label for="nutrientFilter">Filter by Nutrient</label>
+                    <select id="nutrientFilter">
+                        <option value="">All Nutrients</option>
+                        <option value="protein">Protein</option>
+                        <option value="fiber">Fiber</option>
+                        <option value="vitamin d">Vitamin D</option>
+                        <option value="iron">Iron</option>
+                        <option value="calcium">Calcium</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Filter by Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Active Nutrient Goals</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Nutrient</th>
+                            <th>Goal Amount</th>
+                            <th>Effective From</th>
+                            <th>Effective To</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="goal, iterStat : ${nutrientGoals}" th:data-user="${goal.user != null ? goal.user.name : 'Unknown'}" th:data-nutrient="${goal.nutrient != null ? goal.nutrient.nutrientName : ''}" th:data-status="${goal.isActive ? 'active' : 'inactive'}">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td th:text="${goal.user != null ? goal.user.name : 'Unknown'}">user@example.com</td>
+                            <td th:text="${goal.nutrient != null ? goal.nutrient.nutrientName : '-'}">Protein</td>
+                            <td th:text="${goal.goalAmount}">50</td>
+                            <td th:text="${goal.effectiveFrom}">2026-08-01</td>
+                            <td th:text="${goal.effectiveTo != null ? goal.effectiveTo : 'Ongoing'}">2026-08-31</td>
+                            <td><span th:text="${goal.isActive ? 'Active' : 'Inactive'}" th:classappend="${goal.isActive} ? 'status-pill status-active' : 'status-pill status-inactive'">Active</span></td>
+                        </tr>
+                        <tr th:if="${nutrientGoals.empty}">
+                            <td class="empty-state" colspan="7">No nutrient goals found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="goalModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>Add Nutrient Goal</h2>
+                            <p>Configure a nutrient target to track for one of your users.</p>
+                        </div>
+                        <button class="icon-button small" id="closeGoalModal" type="button"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="goalForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="userName">User Name</label>
+                                <input id="userName" type="text" placeholder="Enter user name" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="nutrientName">Nutrient</label>
+                                <select id="nutrientName" required>
+                                    <option value="">Select nutrient</option>
+                                    <option value="Protein">Protein</option>
+                                    <option value="Fiber">Fiber</option>
+                                    <option value="Vitamin D">Vitamin D</option>
+                                    <option value="Iron">Iron</option>
+                                    <option value="Calcium">Calcium</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="goalAmount">Goal Amount</label>
+                                <input id="goalAmount" type="text" placeholder="Example: 50 grams" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="effectiveFrom">Effective From</label>
+                                <input id="effectiveFrom" type="date" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="effectiveTo">Effective To</label>
+                                <input id="effectiveTo" type="date">
+                            </div>
+                            <div class="field-group">
+                                <label for="goalStatus">Status</label>
+                                <select id="goalStatus" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelGoalModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Goal</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-nutrient-goal.js}"></script>
+</body>
+</html>
