@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'app/routes/app_pages.dart';
+import 'app/bindings/initial_binding.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  InitialBinding.ensureRegistered();
 
   runApp(const NhamHealthApp());
 }
@@ -19,6 +21,7 @@ class NhamHealthApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: AppPages.initialRoute,
       getPages: AppPages.pages,
+      initialBinding: InitialBinding(),
     );
   }
 }
