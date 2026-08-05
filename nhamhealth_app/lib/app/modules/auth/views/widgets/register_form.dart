@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
 import 'auth_tab_switcher.dart';
 import 'password_field.dart';
 import 'social_login_button.dart';
@@ -37,17 +38,17 @@ class RegisterForm extends StatelessWidget {
             onLogin: onLogin,
             onRegister: () {},
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 18),
           const Text(
             'Create your account',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF005B27),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+              color: AppColors.darkGreen,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           AuthTextField(
             controller: fullNameController,
             hintText: 'Full name',
@@ -77,29 +78,40 @@ class RegisterForm extends StatelessWidget {
             autofillHints: const [AutofillHints.newPassword],
             onSubmitted: (_) => onRegister(),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 13),
           AuthPrimaryButton(
             label: 'Create account',
             loading: loading,
             onPressed: onRegister,
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: 10),
           SocialLoginButton(
             label: 'Continue with Google',
             loading: loading,
             onPressed: onGoogle,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Flexible(child: Text('Already have an account?')),
+              const Flexible(
+                child: Text(
+                  'Already have an account?',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ),
               TextButton(
                 onPressed: loading ? null : onLogin,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 child: const Text(
                   'Login',
                   style: TextStyle(
-                    color: Color(0xFFFF9800),
+                    color: AppColors.accentOrange,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

@@ -19,10 +19,13 @@ class OnboardingController extends GetxController {
     ),
     OnboardingItem(
       imagePath: 'assets/images/onboarding/onboarding2.png',
-      title: 'Healthy Choices\nMade Simple',
+      title: 'Eat with purpose',
+      accentTitle: 'Live with energy.',
       description:
-          'Discover nutritious food and build healthy\n'
-          'habits for a better everyday life.',
+          'Every meal you choose is a step toward\n'
+          'the life you deserve.',
+      titleAboveImage: true,
+      showBrandHeader: false,
     ),
   ];
 
