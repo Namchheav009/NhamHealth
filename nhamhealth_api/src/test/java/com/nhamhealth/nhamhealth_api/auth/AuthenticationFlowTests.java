@@ -63,6 +63,7 @@ class AuthenticationFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").value(86400))
+                .andExpect(jsonPath("$.user.id").isNumber())
                 .andExpect(jsonPath("$.user.email").value("user@nhamhealth.local"))
                 .andExpect(jsonPath("$.user.role").value("USER"))
                 .andReturn();
@@ -72,6 +73,7 @@ class AuthenticationFlowTests {
         mockMvc.perform(get("/api/v1/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.email").value("user@nhamhealth.local"))
                 .andExpect(jsonPath("$.role").value("USER"));
     }
