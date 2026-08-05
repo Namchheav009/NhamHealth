@@ -1,0 +1,13 @@
+/* Reports admin styles */
+.page-content{padding:22px 24px 12px}
+.page-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px}
+.filters-grid{display:flex;gap:16px;align-items:end;margin-bottom:12px}
+.filters-grid .field-group{display:flex;flex-direction:column;gap:6px}
+.filters-grid input[type="search"],.filters-grid select{min-width:240px;padding:10px 12px;border:1px solid #e7ebf1;border-radius:8px;background:#fff}
+.table-panel{background:#fff;border:1px solid #e7ebf1;border-radius:10px}
+.table-responsive{overflow-x:auto;padding:0 14px 13px}
+.empty-state{padding:40px 0;text-align:center;color:#7c8898}
+.modal{position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:24px;background:rgba(4,18,29,0.55)}
+.modal.show{display:grid}
+.modal-card{width:min(760px,100%);background:#fff;border-radius:12px}
+@media (max-width:900px){.filters-grid{flex-direction:column;align-items:stretch}.filters-grid input[type="search"],.filters-grid select{width:100%}}

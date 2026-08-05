@@ -28,24 +28,24 @@
         <a class="nav-link" th:classappend="${activePage == 'reviews'} ? ' active' : ''" th:href="@{/admin/reviews}"><i class="bi bi-star-fill"></i><span>Reviews</span></a>
 
         <p class="nav-section">Health Tracking</p>
-        <a class="nav-link" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>
-        <a class="nav-link" th:href="@{/admin/nutrient-goals}"><i class="bi bi-bullseye"></i><span>Nutrient Goals</span></a>
-        <a class="nav-link" th:href="@{/admin/daily-wellness}"><i class="bi bi-calendar2-check"></i><span>Daily Wellness</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'meal-logs'} ? ' active' : ''" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'nutrient-goals'} ? ' active' : ''" th:href="@{/admin/nutrient-goals}"><i class="bi bi-bullseye"></i><span>Nutrient Goals</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'daily-wellness'} ? ' active' : ''" th:href="@{/admin/daily-wellness}"><i class="bi bi-calendar2-check"></i><span>Daily Wellness</span></a>
 
         <p class="nav-section">AI Features</p>
-        <a class="nav-link" th:href="@{/admin/ai-food-analyses}"><i class="bi bi-stars"></i><span>AI Food Analyses</span></a>
-        <a class="nav-link" th:href="@{/admin/ai-food-suggestions}"><i class="bi bi-lightbulb"></i><span>AI Food Suggestions</span></a>
-        <a class="nav-link" th:href="@{/admin/ai-recommendations}"><i class="bi bi-magic"></i><span>AI Recommendations</span></a>
-        <a class="nav-link" th:href="@{/admin/ai-chat}"><i class="bi bi-chat-square-text"></i><span>AI Chat</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'ai-food-analyses'} ? ' active' : ''" th:href="@{/admin/ai-food-analyses}"><i class="bi bi-stars"></i><span>AI Food Analyses</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'ai-food-suggestions'} ? ' active' : ''" th:href="@{/admin/ai-food-suggestions}"><i class="bi bi-lightbulb"></i><span>AI Food Suggestions</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'ai-recommendations'} ? ' active' : ''" th:href="@{/admin/ai-recommendations}"><i class="bi bi-magic"></i><span>AI Recommendations</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'ai-chat'} ? ' active' : ''" th:href="@{/admin/ai-chat}"><i class="bi bi-chat-square-text"></i><span>AI Chat</span></a>
 
         <p class="nav-section">Community</p>
-        <a class="nav-link" th:href="@{/admin/posts}"><i class="bi bi-file-post"></i><span>Posts</span></a>
-        <a class="nav-link" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
-        <a class="nav-link" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
-        <a class="nav-link" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'posts'} ? ' active' : ''" th:href="@{/admin/posts}"><i class="bi bi-file-post"></i><span>Posts</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports'} ? ' active' : ''" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'follows'} ? ' active' : ''" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
 
         <p class="nav-section">Messaging</p>
-        <a class="nav-link" th:href="@{/admin/chats}"><i class="bi bi-chat-dots"></i><span>Chats</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'chats'} ? ' active' : ''" th:href="@{/admin/chats}"><i class="bi bi-chat-dots"></i><span>Chats</span></a>
 
         <p class="nav-section">System</p>
         <a class="nav-link" th:href="@{/admin/settings}"><i class="bi bi-gear"></i><span>Settings</span></a>

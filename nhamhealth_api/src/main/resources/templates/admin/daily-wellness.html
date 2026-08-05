@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Daily Wellness | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-daily-wellness.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('daily-wellness')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Daily Wellness</h1>
+                        <span>Track daily mood, balance, and wellness insights for users.</span>
+                    </div>
+                    <p>Dashboard &gt; Health Tracking &gt; Daily Wellness</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openWellnessModal" type="button"><i class="fa-solid fa-plus"></i> Add Summary</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="stat-content">
+                        <span>Total Wellness Entries</span>
+                        <strong th:text="${totalEntries}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-content">
+                        <span>Unique Users Tracked</span>
+                        <strong th:text="${uniqueUsers}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="stat-content">
+                        <span>Insights Generated</span>
+                        <strong th:text="${totalEntries}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="summarySearch">Search</label>
+                    <input id="summarySearch" type="search" placeholder="Search by user or mood">
+                </div>
+                <div class="field-group">
+                    <label for="moodFilter">Filter by Mood</label>
+                    <select id="moodFilter">
+                        <option value="">All Moods</option>
+                        <option value="happy">Happy</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="sad">Sad</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Filter by Balance</label>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="unbalanced">Unbalanced</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Daily Wellness Summaries</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Date</th>
+                            <th>Mood</th>
+                            <th>Balance</th>
+                            <th>AI Insight</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="summary, iterStat : ${wellnessSummaries}" th:data-user="${summary.user != null ? summary.user.name : 'Unknown'}" th:data-mood="${summary.mood != null ? summary.mood.moodName : ''}" th:data-balance="${summary.balanceStatus != null ? summary.balanceStatus.toLowerCase() : ''}">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td th:text="${summary.user != null ? summary.user.name : 'Unknown'}">user@example.com</td>
+                            <td th:text="${summary.summaryDate}">2026-08-05</td>
+                            <td th:text="${summary.mood != null ? summary.mood.moodName : '-'}">Happy</td>
+                            <td th:text="${summary.balanceStatus}">Balanced</td>
+                            <td th:text="${summary.aiInsightText != null ? summary.aiInsightText : '-'}">Great progress</td>
+                            <td><span th:text="${summary.balanceStatus != null ? summary.balanceStatus : 'Unknown'}" th:classappend="${summary.balanceStatus != null && summary.balanceStatus.toLowerCase() == 'balanced'} ? ' status-pill status-active' : ' status-pill status-inactive'">Balanced</span></td>
+                        </tr>
+                        <tr th:if="${wellnessSummaries.empty}">
+                            <td class="empty-state" colspan="7">No daily wellness summaries found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="wellnessModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>Add Wellness Summary</h2>
+                            <p>Create a new daily wellness record for a user.</p>
+                        </div>
+                        <button class="icon-button small" id="closeWellnessModal" type="button"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="wellnessForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="wellnessUser">User Name</label>
+                                <input id="wellnessUser" type="text" placeholder="Enter user name" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="summaryDate">Date</label>
+                                <input id="summaryDate" type="date" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="moodType">Mood</label>
+                                <select id="moodType" required>
+                                    <option value="">Select mood</option>
+                                    <option value="Happy">Happy</option>
+                                    <option value="Neutral">Neutral</option>
+                                    <option value="Sad">Sad</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="balanceStatus">Balance Status</label>
+                                <select id="balanceStatus" required>
+                                    <option value="Balanced">Balanced</option>
+                                    <option value="Unbalanced">Unbalanced</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="insightText">AI Insight</label>
+                                <textarea id="insightText" placeholder="Add insight text..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelWellnessModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Summary</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-daily-wellness.js}"></script>
+</body>
+</html>
