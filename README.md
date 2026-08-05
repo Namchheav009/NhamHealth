@@ -122,6 +122,49 @@ Authorization: Bearer <accessToken>
 `GET /api/v1/auth/me` can be used to verify the token and retrieve its current
 user identity. Passwords stored in `users.password_hash` must be BCrypt hashes.
 
+New mobile users can register through `POST /api/v1/auth/register` with
+`fullName`, `email`, and a password of at least eight characters. Registration
+returns the same bearer-token response as login. The Flutter client stores this
+token in platform secure storage.
+
+### Configure Google sign-in
+
+Google sign-in requires OAuth credentials from the Google Cloud Console; no
+client secret is stored in the Flutter application.
+
+1. Create an OAuth **Web application** client. Put its client ID in
+   `nhamhealth_api/.env`:
+
+   ```properties
+   GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   ```
+
+2. For Android, create an OAuth **Android** client for the package
+   `com.example.nhamhealth_flutter` and add the SHA-1 fingerprints for every
+   signing configuration you use. The Flutter app defaults to this project's
+   Web client ID as its server client ID. To use a different Google Cloud
+   project, override it when launching Flutter:
+
+   ```powershell
+   flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   ```
+
+3. For iOS, create an OAuth **iOS** client for the Xcode bundle identifier.
+   Add its reversed client ID under `CFBundleURLTypes` in
+   `nhamhealth_app/ios/Runner/Info.plist`, then run with both IDs:
+
+   ```powershell
+   flutter run `
+     --dart-define=GOOGLE_CLIENT_ID=YOUR_IOS_CLIENT_ID.apps.googleusercontent.com `
+     --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   ```
+
+The styled Google button currently targets Android, iOS, and macOS. Google
+requires its SDK-rendered button for interactive Flutter web sign-in, so the
+custom mobile button reports that it is unavailable when run on web. The API
+always verifies Google ID-token signature, audience, issuer, and expiry before
+creating an NhamHealth session.
+
 ### Run the Flutter client
 
 Keep the API terminal open, then open another terminal from the repository
@@ -184,6 +227,7 @@ API to a Supabase PostgreSQL database:
 4. Replace the placeholders in `.env` with the Supabase connection values:
 
    ```properties
+   SPRING_PROFILES_ACTIVE=supabase
    SUPABASE_DB_URL=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
    SUPABASE_DB_USERNAME=postgres.YOUR_PROJECT_REF
    SUPABASE_DB_PASSWORD=YOUR_DATABASE_PASSWORD
@@ -194,16 +238,16 @@ API to a Supabase PostgreSQL database:
 
    Keep the `jdbc:` prefix and do not quote the values.
 
-5. Start the API with the Supabase profile:
+5. Start the API. The `.env` file activates the Supabase profile automatically:
 
    ```powershell
    # Windows PowerShell
-   mvn spring-boot:run "-Dspring-boot.run.profiles=supabase"
+   .\mvnw.cmd spring-boot:run
    ```
 
    ```bash
    # macOS/Linux
-   ./mvnw spring-boot:run -Dspring-boot.run.profiles=supabase
+   ./mvnw spring-boot:run
    ```
 
 A successful connection ends with a `Started NhamhealthApiApplication` message

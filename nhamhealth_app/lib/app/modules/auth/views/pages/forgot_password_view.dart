@@ -172,7 +172,7 @@ class ForgotPasswordPage extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.35),
+                    fillColor: Colors.white.withValues(alpha: 0.35),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 28,
                       vertical: 21,
@@ -207,11 +207,12 @@ class ForgotPasswordPage extends StatelessWidget {
                           : controller.sendCode,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: buttonGreen,
-                        disabledBackgroundColor:
-                            buttonGreen.withOpacity(0.6),
+                        disabledBackgroundColor: buttonGreen.withValues(
+                          alpha: 0.6,
+                        ),
                         foregroundColor: Colors.white,
                         elevation: 8,
-                        shadowColor: buttonGreen.withOpacity(0.3),
+                        shadowColor: buttonGreen.withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(40),
                         ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../models/onboarding_item.dart';import '../../auth/views/pages/login_view.dart';
+import '../models/onboarding_item.dart';
+import '../../../routes/app_routes.dart';
+
 class OnboardingController extends GetxController {
   final PageController pageController = PageController();
 
@@ -59,11 +61,7 @@ class OnboardingController extends GetxController {
   }
 
   void finishOnboarding() {
-    Get.offAll(
-      () => const LoginScreen(),
-      transition: Transition.fade,
-      duration: const Duration(milliseconds: 300),
-    );
+    Get.offAllNamed(AppRoutes.login);
   }
 
   @override

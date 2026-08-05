@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nhamhealth.nhamhealth_api.dto.AuthErrorResponse;
 import com.nhamhealth.nhamhealth_api.dto.AuthenticatedUserResponse;
 import com.nhamhealth.nhamhealth_api.dto.LoginRequest;
+import com.nhamhealth.nhamhealth_api.dto.GoogleLoginRequest;
+import com.nhamhealth.nhamhealth_api.dto.RegisterRequest;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.AuthService;
 
@@ -41,6 +43,33 @@ public class AuthController {
         } catch (AuthenticationException exception) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthErrorResponse("Invalid email or password"));
+        }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(authService.registerMobileUser(request));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new AuthErrorResponse(exception.getMessage()));
+        }
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> google(@Valid @RequestBody GoogleLoginRequest request) {
+        try {
+            return ResponseEntity.ok(authService.loginWithGoogle(request.idToken()));
+        } catch (MobileLoginNotAllowedException exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AuthErrorResponse(exception.getMessage()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthErrorResponse(exception.getMessage()));
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new AuthErrorResponse(exception.getMessage()));
         }
     }
 

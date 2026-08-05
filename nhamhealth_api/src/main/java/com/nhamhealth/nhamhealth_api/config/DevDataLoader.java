@@ -2,6 +2,7 @@ package com.nhamhealth.nhamhealth_api.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Component
+@Profile("!supabase")
 public class DevDataLoader implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
