@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Posts | Nham Health Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-post.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('posts')}"></div>
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Posts</h1>
+                        <span>Manage community posts and moderation.</span>
+                    </div>
+                    <p>Dashboard &gt; Community &gt; Posts</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button">Export</button>
+                    <button class="btn btn-primary" id="openPostModal" type="button">New Post</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="stat-content">
+                        <span>Total Posts</span>
+                        <strong th:text="${totalPosts}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
+                    <div class="stat-content">
+                        <span>Active Authors</span>
+                        <strong>0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-flag"></i></div>
+                    <div class="stat-content">
+                        <span>Pending Reports</span>
+                        <strong>0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="postSearch">Search</label>
+                    <input id="postSearch" type="search" placeholder="Search posts or authors">
+                </div>
+                <div class="field-group">
+                    <label for="postStatus">Status</label>
+                    <select id="postStatus">
+                        <option value="">All</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="flagged">Flagged</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearPostFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Posts</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Author</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Comments</th>
+                            <th>Updated</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p, s : ${posts}" th:data-author="${p.authorName}" th:data-status="${p.status}">
+                            <td th:text="${s.count}">1</td>
+                            <td th:text="${p.authorName}">author@example.com</td>
+                            <td th:text="${p.title}">Hello world</td>
+                            <td th:text="${p.status}">published</td>
+                            <td th:text="${p.commentCount}">0</td>
+                            <td th:text="${p.updatedAt}">2026-08-05T12:00:00</td>
+                        </tr>
+                        <tr th:if="${posts.empty}">
+                            <td class="empty-state" colspan="6">No posts found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="postModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>New Post</h2>
+                            <p>Create a new community post.</p>
+                        </div>
+                        <button class="icon-button small" id="closePostModal" type="button">×</button>
+                    </div>
+                    <form id="postForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="postAuthor">Author Email</label>
+                                <input id="postAuthor" name="authorEmail" type="email" placeholder="author@example.com" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="postTitle">Title</label>
+                                <input id="postTitle" name="title" type="text" placeholder="Post title" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="postBody">Body</label>
+                                <textarea id="postBody" name="body" rows="6" placeholder="Write the post..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelPostModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Create Post</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+        </section>
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-post.js}"></script>
+</body>
+</html>

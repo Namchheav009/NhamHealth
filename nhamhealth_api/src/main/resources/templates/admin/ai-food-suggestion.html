@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Food Suggestions | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-ai-food-suggestion.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('ai-food-suggestions')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>AI Food Suggestions</h1>
+                        <span>Manage AI-generated food suggestions and review suggestion priority.</span>
+                    </div>
+                    <p>Dashboard &gt; AI Features &gt; AI Food Suggestions</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openSuggestionModal" type="button"><i class="fa-solid fa-plus"></i> Add Suggestion</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-sparkles"></i></div>
+                    <div class="stat-content">
+                        <span>Total Suggestions</span>
+                        <strong th:text="${totalSuggestions}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-search"></i></div>
+                    <div class="stat-content">
+                        <span>Unique Requests</span>
+                        <strong th:text="${uniqueRequests}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-list-check"></i></div>
+                    <div class="stat-content">
+                        <span>Highest Priority</span>
+                        <strong th:text="${aiSuggestions.size() > 0 ? aiSuggestions.get(0).priority : 0}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="suggestionSearch">Search</label>
+                    <input id="suggestionSearch" type="search" placeholder="Search by food or type">
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Filter by Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Suggestion Feed</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Request ID</th>
+                            <th>Type</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="suggestion, iterStat : ${aiSuggestions}" th:data-food="${suggestion.title != null ? suggestion.title : ''}" th:data-status="${suggestion.suggestionType != null ? suggestion.suggestionType.toLowerCase() : ''}">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td th:text="${suggestion.aiFoodAnalysis != null ? suggestion.aiFoodAnalysis.aiFoodAnalysisId : '-'}">123</td>
+                            <td th:text="${suggestion.suggestionType != null ? suggestion.suggestionType : '-'}">Healthy Swap</td>
+                            <td th:text="${suggestion.title}">Choose lean protein</td>
+                            <td th:text="${suggestion.description}">Swap to grilled chicken instead of fried.</td>
+                            <td th:text="${suggestion.priority}">1</td>
+                            <td><span th:text="${suggestion.suggestionType != null ? suggestion.suggestionType : 'Unknown'}" th:classappend="${suggestion.suggestionType != null && suggestion.suggestionType.equalsIgnoreCase('approved')} ? ' status-pill status-active' : ' status-pill status-inactive'">Approved</span></td>
+                        </tr>
+                        <tr th:if="${aiSuggestions.empty}">
+                            <td class="empty-state" colspan="7">No AI food suggestions found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="suggestionModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>Add Food Suggestion</h2>
+                            <p>Create a new AI food suggestion entry.</p>
+                        </div>
+                        <button class="icon-button small" id="closeSuggestionModal" type="button"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="suggestionForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="suggestionType">Suggestion Type</label>
+                                <input id="suggestionType" type="text" placeholder="e.g. Healthy Swap" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="suggestionTitle">Title</label>
+                                <input id="suggestionTitle" type="text" placeholder="Suggestion title" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="suggestionDescription">Description</label>
+                                <textarea id="suggestionDescription" rows="4" placeholder="Write details for this suggestion"></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="suggestionPriority">Priority</label>
+                                <input id="suggestionPriority" type="number" min="1" placeholder="1" required>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelSuggestionModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Suggestion</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-ai-food-suggestion.js}"></script>
+</body>
+</html>
