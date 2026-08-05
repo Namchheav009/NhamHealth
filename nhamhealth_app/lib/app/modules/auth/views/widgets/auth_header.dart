@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class AuthHeader extends StatelessWidget {
   const AuthHeader({super.key, required this.compact});
 
@@ -25,16 +27,16 @@ class AuthHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: titleSize,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.2,
+              letterSpacing: 0.1,
             ),
             children: const [
               TextSpan(
                 text: 'NHAM ',
-                style: TextStyle(color: Color(0xFFFF5A73)),
+                style: TextStyle(color: AppColors.primaryPink),
               ),
               TextSpan(
                 text: 'HEALTH',
-                style: TextStyle(color: Color(0xFF009B3E)),
+                style: TextStyle(color: AppColors.primaryGreen),
               ),
             ],
           ),

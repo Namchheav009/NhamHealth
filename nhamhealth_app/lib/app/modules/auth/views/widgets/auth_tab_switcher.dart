@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class AuthTabSwitcher extends StatelessWidget {
   const AuthTabSwitcher({
     super.key,
@@ -15,12 +17,19 @@ class AuthTabSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 46,
-      padding: const EdgeInsets.all(3),
+      height: 44,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F2EC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDDE4D9)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -58,17 +67,17 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF00A846) : Colors.transparent,
-      borderRadius: BorderRadius.circular(13),
+      color: selected ? AppColors.primaryGreen : Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: selected ? null : onTap,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(20),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
               color: selected ? Colors.white : const Color(0xFF5D625D),
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
           ),
