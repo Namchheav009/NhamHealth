@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
+import '../../../../core/services/auth_service.dart';
 
 class SplashController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -117,10 +118,21 @@ class SplashController extends GetxController
       const Duration(milliseconds: 500),
       () {
         if (!isClosed) {
-          Get.offAllNamed(AppRoutes.onboarding);
+          _finishStartup();
         }
       },
     );
+  }
+
+  Future<void> _finishStartup() async {
+    final user = await Get.find<AuthService>().restoreSession();
+    if (isClosed) return;
+
+    if (user != null) {
+      Get.offAllNamed(AppRoutes.home, arguments: user);
+    } else {
+      Get.offAllNamed(AppRoutes.onboarding);
+    }
   }
 
   @override

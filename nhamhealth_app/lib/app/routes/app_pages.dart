@@ -4,6 +4,9 @@ import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/pages/onboarding_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/auth/views/pages/login_view.dart';
+import '../modules/auth/views/pages/register_view.dart';
+import '../modules/home/views/pages/home_view.dart';
 import 'app_routes.dart';
 
 abstract class AppPages {
@@ -24,6 +27,21 @@ abstract class AppPages {
       binding: OnboardingBinding(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.login,
+      page: () => const LoginScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.register,
+      page: () => const RegisterScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.home,
+      page: () => const HomeView(),
+      transition: Transition.fadeIn,
     ),
   ];
 }

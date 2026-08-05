@@ -247,7 +247,7 @@ class VerificationView extends GetView<VerificationController> {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: cardBg.withOpacity(0.85),
+        color: cardBg.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Center(
