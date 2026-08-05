@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'app/routes/app_pages.dart';
-import 'models/api_health.dart';
-import 'core/services/api_service.dart';
-import 'core/services/health_api.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
