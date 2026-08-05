@@ -64,6 +64,10 @@ flutter:
     - assets/images/onboarding/onboarding1.png
     - assets/images/onboarding/onboarding2.png
     - assets/icons/google.png
+    - assets/images/Login/forgot_password.png
+    - assets/images/Login/verification.png
+    - assets/images/Login/reset.png
+    - assets/images/Login/account_create.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
