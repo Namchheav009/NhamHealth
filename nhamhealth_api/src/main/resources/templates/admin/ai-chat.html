@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Chat | Nham Health Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-ai-chat.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('ai-chat')}"></div>
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>AI Chat</h1>
+                        <span>Review and moderate AI chat sessions and messages.</span>
+                    </div>
+                    <p>Dashboard &gt; AI Features &gt; AI Chat</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button">Export</button>
+                    <button class="btn btn-primary" id="openChatModal" type="button">New Chat</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-comments"></i></div>
+                    <div class="stat-content">
+                        <span>Total Threads</span>
+                        <strong th:text="${totalThreads}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
+                    <div class="stat-content">
+                        <span>Active Agents</span>
+                        <strong>0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
+                    <div class="stat-content">
+                        <span>Pending Reviews</span>
+                        <strong>0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="chatSearch">Search</label>
+                    <input id="chatSearch" type="search" placeholder="Search threads or users">
+                </div>
+                <div class="field-group">
+                    <label for="chatStatus">Status</label>
+                    <select id="chatStatus">
+                        <option value="">All</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="flagged">Flagged</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearChatFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Chat Threads</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Last Message</th>
+                            <th>Status</th>
+                            <th>Messages</th>
+                            <th>Updated</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t, s : ${chatThreads}" th:data-user="${t.userName}" th:data-status="${t.status}">
+                            <td th:text="${s.count}">1</td>
+                            <td th:text="${t.userName}">user@example.com</td>
+                            <td th:text="${t.lastMessage}">Hello</td>
+                            <td th:text="${t.status}">open</td>
+                            <td th:text="${t.messageCount}">0</td>
+                            <td th:text="${t.updatedAt}">2026-08-05T12:00:00</td>
+                        </tr>
+                        <tr th:if="${chatThreads.empty}">
+                            <td class="empty-state" colspan="6">No chat threads found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="chatModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>New Chat Thread</h2>
+                            <p>Start a new AI chat session for testing or support.</p>
+                        </div>
+                        <button class="icon-button small" id="closeChatModal" type="button">×</button>
+                    </div>
+                    <form id="chatForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="chatUser">User Email</label>
+                                <input id="chatUser" name="userEmail" type="email" placeholder="user@example.com" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="chatPrompt">Prompt</label>
+                                <textarea id="chatPrompt" name="prompt" rows="4" placeholder="Start the conversation"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelChatModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Create Chat</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+        </section>
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-ai-chat.js}"></script>
+</body>
+</html>

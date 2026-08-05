@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Food Analyses | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-ai-food-analysis.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar('ai-food-analyses')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>AI Food Analyses</h1>
+                        <span>Review recent AI food analysis requests and quality metrics.</span>
+                    </div>
+                    <p>Dashboard &gt; AI Features &gt; AI Food Analyses</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openAnalysisModal" type="button"><i class="fa-solid fa-plus"></i> Add Analysis</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-robot"></i></div>
+                    <div class="stat-content">
+                        <span>Total Analyses</span>
+                        <strong th:text="${totalAnalyses}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-content">
+                        <span>Unique Users</span>
+                        <strong th:text="${uniqueUsers}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-star"></i></div>
+                    <div class="stat-content">
+                        <span>Average Confidence</span>
+                        <strong th:text="${averageConfidence}">0%</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="analysisSearch">Search</label>
+                    <input id="analysisSearch" type="search" placeholder="Search by user or food">
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Filter by Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Analysis History</h2>
+                    <button class="action-button" type="button">Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Input Text</th>
+                            <th>Detected Food</th>
+                            <th>Serving</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="analysis, iterStat : ${aiAnalyses}" th:data-user="${analysis.user != null ? analysis.user.name : 'Unknown'}" th:data-food="${analysis.detectedFoodName != null ? analysis.detectedFoodName : ''}" th:data-status="${analysis.status != null ? analysis.status.toLowerCase() : ''}">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td th:text="${analysis.user != null ? analysis.user.name : 'Unknown'}">user@example.com</td>
+                            <td th:text="${analysis.inputText}">Chicken salad</td>
+                            <td th:text="${analysis.detectedFoodName != null ? analysis.detectedFoodName : '-'}">Chicken Breast</td>
+                            <td th:text="${analysis.detectedServingText != null ? analysis.detectedServingText : '-'}">1 serving</td>
+                            <td th:text="${analysis.confidenceScore != null ? analysis.confidenceScore : '-'}">0.85</td>
+                            <td><span th:text="${analysis.status != null ? analysis.status : 'Unknown'}" th:classappend="${analysis.status != null && analysis.status.equalsIgnoreCase('completed')} ? ' status-pill status-active' : ' status-pill status-inactive'">Completed</span></td>
+                            <td th:text="${analysis.createdAt}">2026-08-05T12:00:00</td>
+                        </tr>
+                        <tr th:if="${aiAnalyses.empty}">
+                            <td class="empty-state" colspan="8">No AI food analyses found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="analysisModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2>Add AI Food Analysis</h2>
+                            <p>Submit a new food analysis request for review.</p>
+                        </div>
+                        <button class="icon-button small" id="closeAnalysisModal" type="button"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="analysisForm">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="analysisUser">User Email</label>
+                                <input id="analysisUser" type="email" placeholder="Enter user email" required>
+                            </div>
+                            <div class="field-group">
+                                <label for="analysisText">Food Description</label>
+                                <textarea id="analysisText" rows="4" placeholder="Describe the food or meal"></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="analysisStatus">Status</label>
+                                <select id="analysisStatus" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelAnalysisModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Analysis</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-ai-food-analysis.js}"></script>
+</body>
+</html>
