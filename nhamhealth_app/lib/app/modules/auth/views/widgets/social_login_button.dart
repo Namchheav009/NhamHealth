@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -15,15 +17,15 @@ class AuthPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 48,
       width: double.infinity,
       child: FilledButton(
         onPressed: loading ? null : onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF00A846),
-          disabledBackgroundColor: const Color(0xFF9ACFAD),
+          backgroundColor: AppColors.primaryGreen,
+          disabledBackgroundColor: AppColors.mutedText,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child:
@@ -38,10 +40,45 @@ class AuthPrimaryButton extends StatelessWidget {
                 : Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+      ),
+    );
+  }
+}
+
+class AuthSecondaryButton extends StatelessWidget {
+  const AuthSecondaryButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.loading = false,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: loading ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkGreen,
+          side: const BorderSide(color: AppColors.primaryGreen, width: 1.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+        ),
       ),
     );
   }
@@ -62,22 +99,22 @@ class SocialLoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 48,
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: loading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF005B27),
-          side: const BorderSide(color: Color(0xFF6BC98F), width: 1.2),
+          foregroundColor: AppColors.darkGreen,
+          side: const BorderSide(color: AppColors.primaryGreen, width: 1.1),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
-        icon: Image.asset('assets/icons/google.png', width: 19, height: 19),
+        icon: Image.asset('assets/icons/google.png', width: 18, height: 18),
         label: Text(
           label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),
     );

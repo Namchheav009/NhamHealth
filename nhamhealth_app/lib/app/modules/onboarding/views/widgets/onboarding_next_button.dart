@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class OnboardingNextButton extends StatelessWidget {
   const OnboardingNextButton({
     super.key,
@@ -14,26 +16,19 @@ class OnboardingNextButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 68,
-      child: ElevatedButton(
+      height: 48,
+      child: FilledButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF009B3E),
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
           foregroundColor: Colors.white,
-          elevation: 10,
-          shadowColor: const Color(
-            0xFF009B3E,
-          ).withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(36),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
       ),
     );
