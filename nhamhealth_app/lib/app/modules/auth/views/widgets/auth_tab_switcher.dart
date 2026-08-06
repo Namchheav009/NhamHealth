@@ -35,14 +35,14 @@ class AuthTabSwitcher extends StatelessWidget {
         children: [
           Expanded(
             child: _Tab(
-              label: 'Login',
+              label: 'Sign In',
               selected: selectedIndex == 0,
               onTap: onLogin,
             ),
           ),
           Expanded(
             child: _Tab(
-              label: 'Register',
+              label: 'Sign Up',
               selected: selectedIndex == 1,
               onTap: onRegister,
             ),
