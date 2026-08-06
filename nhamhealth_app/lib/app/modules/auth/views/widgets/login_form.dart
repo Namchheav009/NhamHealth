@@ -38,7 +38,7 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           const Text(
-            'Please login to continue',
+            'Please sign in to continue',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.darkGreen,
@@ -78,7 +78,7 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           AuthPrimaryButton(
-            label: 'Login',
+            label: 'Sign In',
             loading: loading,
             onPressed: onLogin,
           ),
@@ -106,7 +106,7 @@ class LoginForm extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
-                  'Register',
+                  'Sign Up',
                   style: TextStyle(
                     color: AppColors.accentOrange,
                     fontSize: 11,
