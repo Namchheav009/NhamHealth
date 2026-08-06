@@ -1,66 +1,37 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../models/home_dashboard_model.dart';
 import '../repositories/home_repository.dart';
 
 class HomeController extends GetxController {
+  HomeController({required this.repository});
+
   final HomeRepository repository;
-
-  HomeController({
-    required this.repository,
-  });
-
   final isLoading = false.obs;
-
-  final Rxn<HomeDashboardModel> dashboard =
-      Rxn<HomeDashboardModel>();
-
+  final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
   final selectedMoodIndex = 0.obs;
-
   final selectedBottomIndex = 0.obs;
 
   final moods = <MoodItem>[
-    MoodItem(
-      emoji: '😊',
-      label: 'Happy',
-    ),
-    MoodItem(
-      emoji: '🥵',
-      label: 'Tired',
-    ),
-    MoodItem(
-      emoji: '😫',
-      label: 'Stressed',
-    ),
-    MoodItem(
-      emoji: '💼',
-      label: 'Busy',
-    ),
-    MoodItem(
-      emoji: '😴',
-      label: 'Sleepy',
-    ),
-    MoodItem(
-      emoji: '😎',
-      label: 'Great',
-    ),
+    const MoodItem(emoji: '\u{1F60A}', label: 'Happy'),
+    const MoodItem(emoji: '\u{1F975}', label: 'Tired'),
+    const MoodItem(emoji: '\u{1F63E}', label: 'Stressed'),
+    const MoodItem(emoji: '\u{1F4BC}', label: 'Busy'),
+    const MoodItem(emoji: '\u{1F634}', label: 'Sleepy'),
+    const MoodItem(emoji: '\u{1F60E}', label: 'Great'),
   ];
 
   @override
   void onInit() {
     super.onInit();
-
     loadDashboard();
   }
 
   Future<void> loadDashboard() async {
     try {
       isLoading.value = true;
-
-      dashboard.value =
-          await repository.getHomeDashboard();
-    } catch (e) {
+      dashboard.value = await repository.getHomeDashboard();
+    } catch (_) {
       Get.snackbar(
         'Error',
         'Unable to load home data.',
@@ -81,19 +52,15 @@ class HomeController extends GetxController {
     switch (index) {
       case 0:
         break;
-
       case 1:
         // Get.toNamed(AppRoutes.meals);
         break;
-
       case 2:
         // Get.toNamed(AppRoutes.createPost);
         break;
-
       case 3:
         // Get.toNamed(AppRoutes.community);
         break;
-
       case 4:
         // Get.toNamed(AppRoutes.profile);
         break;
@@ -122,11 +89,8 @@ class HomeController extends GetxController {
 }
 
 class MoodItem {
+  const MoodItem({required this.emoji, required this.label});
+
   final String emoji;
   final String label;
-
-  MoodItem({
-    required this.emoji,
-    required this.label,
-  });
 }
