@@ -33,7 +33,7 @@ public class ReviewAdminController {
 
         double averageRating = reviews.stream()
                 .filter(r -> r.getRating() != null)
-                .mapToInt(Review::getRating)
+                .mapToInt(review -> review.getRating())
                 .average()
                 .orElse(0.0);
 

@@ -31,7 +31,7 @@ public class MealLogAdminController {
                 .count();
 
         long customFoodCount = mealLogs.stream()
-                .map(MealLog::getCustomFoodName)
+                .map(log -> log.getCustomFoodName())
                 .filter(name -> name != null && !name.isBlank())
                 .count();
 
