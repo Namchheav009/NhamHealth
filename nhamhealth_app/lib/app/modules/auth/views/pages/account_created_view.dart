@@ -36,7 +36,7 @@ class PasswordSuccessView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           AuthPrimaryButton(
-            label: 'Back to login',
+            label: 'Back to sign in',
             loading: false,
             onPressed: controller.backToLogin,
           ),

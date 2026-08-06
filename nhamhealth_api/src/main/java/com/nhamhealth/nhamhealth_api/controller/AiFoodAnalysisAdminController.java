@@ -36,9 +36,9 @@ public class AiFoodAnalysisAdminController {
                 .count();
 
         double averageConfidence = analyses.stream()
-                .map(AiFoodAnalysis::getConfidenceScore)
+                .map(analysis -> analysis.getConfidenceScore())
                 .filter(Objects::nonNull)
-                .mapToDouble(BigDecimal::doubleValue)
+                .mapToDouble(score -> score.doubleValue())
                 .average()
                 .orElse(0.0);
 

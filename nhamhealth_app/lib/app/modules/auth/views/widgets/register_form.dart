@@ -80,7 +80,7 @@ class RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: 13),
           AuthPrimaryButton(
-            label: 'Create account',
+            label: 'Sign Up',
             loading: loading,
             onPressed: onRegister,
           ),
@@ -108,7 +108,7 @@ class RegisterForm extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
-                  'Login',
+                  'Sign In',
                   style: TextStyle(
                     color: AppColors.accentOrange,
                     fontSize: 11,

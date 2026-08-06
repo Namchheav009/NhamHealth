@@ -26,7 +26,9 @@ public class IngredientAdminController {
         List<Ingredient> ingredients = ingredientRepository.findAllByOrderByIngredientNameAsc();
 
         List<Ingredient> recentIngredients = ingredients.stream()
-                .sorted(Comparator.comparing(Ingredient::getIngredientName, Comparator.nullsLast(String::compareTo)))
+                .sorted(Comparator.comparing(
+                        ingredient -> ingredient.getIngredientName(),
+                        Comparator.nullsLast((left, right) -> left.compareTo(right))))
                 .collect(Collectors.toList());
 
         model.addAttribute("pageTitle", "Ingredients");

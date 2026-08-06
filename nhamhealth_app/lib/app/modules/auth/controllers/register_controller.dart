@@ -65,7 +65,7 @@ class RegisterController extends GetxController {
         } on AuthException {
           throw const AuthException(
             'This email is already registered. Use your original password '
-            'on the Login tab, or continue with Google.',
+            'on the Sign In tab, or continue with Google.',
           );
         }
       }
@@ -98,7 +98,7 @@ class RegisterController extends GetxController {
 
   void _showError(String message) {
     Get.snackbar(
-      'Registration failed',
+      'Sign up failed',
       message,
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(16),
