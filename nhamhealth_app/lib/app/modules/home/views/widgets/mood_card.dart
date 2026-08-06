@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'inner_shadow.dart';
+
 class MoodCard extends StatelessWidget {
   final String emoji;
   final String label;
@@ -19,58 +21,65 @@ class MoodCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration:
-            const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         width: 66,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 7,
-        ),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFFFF1F3)
-              : Colors.white,
+          color: selected ? const Color(0xFFFFFAFB) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected
-                ? const Color(0xFFFF6375)
-                : const Color(0xFFF3F3F3),
+            color: selected ? const Color(0xFFFFE4E8) : const Color(0xFFF3F3F3),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: 0.03,
-              ),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Text(
-              emoji,
-              style:
-                  const TextStyle(fontSize: 26),
-            ),
-
-            const SizedBox(height: 3),
-
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: selected
-                    ? const Color(0xFFFF5265)
-                    : Colors.black54,
-                fontWeight: selected
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-              ),
+        child: InnerShadow(
+          borderRadius: BorderRadius.circular(12),
+          shadows: const [
+            BoxShadow(
+              color: Color(0x1000522F),
+              blurRadius: 7,
+              offset: Offset(-1, -1),
             ),
           ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 26, height: 1),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                SizedBox(
+                  height: 16,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: const Color(0xFFFF5265),
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

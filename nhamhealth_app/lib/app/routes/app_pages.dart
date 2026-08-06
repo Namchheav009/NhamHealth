@@ -6,6 +6,7 @@ import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/auth/views/pages/login_view.dart';
 import '../modules/auth/views/pages/register_view.dart';
+import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/pages/home_view.dart';
 import 'app_routes.dart';
 
@@ -41,6 +42,7 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.home,
       page: () => const HomeView(),
+      binding: HomeBinding(),
       transition: Transition.fadeIn,
     ),
   ];

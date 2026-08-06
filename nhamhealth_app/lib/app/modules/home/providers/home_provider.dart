@@ -5,9 +5,7 @@ import '../models/recommended_meal_model.dart';
 
 class HomeProvider {
   Future<HomeDashboardModel> getHomeDashboard() async {
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
+    await Future.delayed(const Duration(milliseconds: 500));
 
     return const HomeDashboardModel(
       userName: 'Sokchen',
@@ -37,27 +35,27 @@ class HomeProvider {
       recommendedMeals: [
         RecommendedMealModel(
           id: 1,
-          name: 'Healthy Salad',
-          image: 'assets/images/healthy_salad.png',
-          calories: 320,
+          name: 'Grilled Chicken Power Bowl',
+          image: 'assets/images/meals/healthy_salad.jpg',
+          calories: 520,
           cookingTime: '15 min',
           rating: 4.8,
         ),
         RecommendedMealModel(
           id: 2,
-          name: 'Chicken Bowl',
-          image: 'assets/images/chicken_bowl.png',
-          calories: 450,
+          name: 'Grilled Chicken Power Bowl',
+          image: 'assets/images/meals/healthy_salad.jpg',
+          calories: 520,
           cookingTime: '20 min',
-          rating: 4.7,
+          rating: 4.8,
         ),
         RecommendedMealModel(
           id: 3,
-          name: 'Fruit Breakfast',
-          image: 'assets/images/fruit_bowl.png',
-          calories: 280,
+          name: 'Grilled Chicken Power Bowl',
+          image: 'assets/images/meals/healthy_salad.jpg',
+          calories: 520,
           cookingTime: '10 min',
-          rating: 4.9,
+          rating: 4.8,
         ),
       ],
     );
