@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nhamhealth.nhamhealth_api.dto.ApiHealthResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.ApiHealthResponse;
 
 @RestController
 @RequestMapping("/api/v1/health")
