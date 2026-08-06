@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.nhamhealth.nhamhealth_api.dto.MealAdminRowDto;
+import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;

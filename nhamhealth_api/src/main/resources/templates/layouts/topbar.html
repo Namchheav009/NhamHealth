@@ -1,0 +1,34 @@
+<header class="topbar" th:fragment="topbar">
+    <div class="topbar-inner">
+        <button class="icon-button menu-toggle" id="menuToggle" aria-label="Open menu">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="search" placeholder="Search users, meals, logs, and more..." aria-label="Search">
+        </div>
+
+        <div class="topbar-actions">
+            <button class="topbar-action-btn" type="button">
+                <i class="bi bi-plus-circle"></i> New
+            </button>
+            <button class="icon-button notification-button" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="badge-dot">12</span>
+            </button>
+            <button class="icon-button notification-button" aria-label="Messages">
+                <i class="bi bi-envelope"></i>
+                <span class="badge-dot">5</span>
+            </button>
+            <div class="admin-profile">
+                <div class="avatar" th:text="${adminName != null && adminName.length() > 0 ? #strings.substring(adminName, 0, 1) : 'A'}">A</div>
+                <div class="admin-text">
+                    <strong th:text="${adminName}">Admin</strong>
+                    <span>Super Admin</span>
+                </div>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+        </div>
+    </div>
+</header>

@@ -9,10 +9,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nhamhealth.nhamhealth_api.dto.AuthResponse;
-import com.nhamhealth.nhamhealth_api.dto.AuthenticatedUserResponse;
-import com.nhamhealth.nhamhealth_api.dto.LoginRequest;
-import com.nhamhealth.nhamhealth_api.dto.RegisterRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
+import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
 import com.nhamhealth.nhamhealth_api.entity.AuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
