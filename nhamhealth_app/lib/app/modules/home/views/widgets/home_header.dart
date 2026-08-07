@@ -87,33 +87,103 @@ class HomeHeader extends GetView<HomeController> {
             ],
           ),
           const SizedBox(width: 4),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.white,
-                backgroundImage: AssetImage(
-                  'assets/images/homepage/profile.jpg',
-                ),
-              ),
-              Positioned(
-                right: -1,
-                bottom: 0,
-                child: Container(
-                  width: 11,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00A651),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+          PopupMenuButton<_ProfileMenuAction>(
+            key: const ValueKey<String>('profile-menu-button'),
+            tooltip: 'Open profile menu',
+            position: PopupMenuPosition.under,
+            offset: const Offset(0, 6),
+            color: Colors.white,
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            onSelected: (action) {
+              switch (action) {
+                case _ProfileMenuAction.profile:
+                  controller.openProfile();
+                case _ProfileMenuAction.logout:
+                  controller.logout();
+              }
+            },
+            itemBuilder:
+                (context) => const [
+                  PopupMenuItem<_ProfileMenuAction>(
+                    value: _ProfileMenuAction.profile,
+                    child: _ProfileMenuRow(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Profile',
+                    ),
+                  ),
+                  PopupMenuDivider(height: 1),
+                  PopupMenuItem<_ProfileMenuAction>(
+                    value: _ProfileMenuAction.logout,
+                    child: _ProfileMenuRow(
+                      icon: Icons.logout_rounded,
+                      label: 'Logout',
+                      color: Color(0xFFD32F2F),
+                    ),
+                  ),
+                ],
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white,
+                  backgroundImage: AssetImage(
+                    'assets/images/homepage/profile.jpg',
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  right: -1,
+                  bottom: 0,
+                  child: Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00A651),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+enum _ProfileMenuAction { profile, logout }
+
+class _ProfileMenuRow extends StatelessWidget {
+  const _ProfileMenuRow({
+    required this.icon,
+    required this.label,
+    this.color = const Color(0xFF333333),
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 21, color: color),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

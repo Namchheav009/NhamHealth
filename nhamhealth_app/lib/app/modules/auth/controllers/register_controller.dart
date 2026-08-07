@@ -76,11 +76,18 @@ class RegisterController extends GetxController {
     await _run(() async {
       final idToken = await _googleAuth.signInAndGetIdToken();
       if (idToken == null) return;
-      final response = await _authService.loginWithGoogle(
-        GoogleLoginRequest(idToken: idToken),
-      );
-      Get.offAllNamed(AppRoutes.home, arguments: response.user);
+      await _registerWithGoogleToken(idToken);
     });
+  }
+
+  Future<void> registerWithGoogleToken(String idToken) =>
+      _run(() => _registerWithGoogleToken(idToken));
+
+  Future<void> _registerWithGoogleToken(String idToken) async {
+    final response = await _authService.loginWithGoogle(
+      GoogleLoginRequest(idToken: idToken),
+    );
+    Get.offAllNamed(AppRoutes.home, arguments: response.user);
   }
 
   Future<void> _run(Future<void> Function() action) async {
