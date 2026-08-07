@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import 'auth_tab_switcher.dart';
 import 'password_field.dart';
+import 'platform_google_sign_in_button.dart';
 import 'social_login_button.dart';
 
 class RegisterForm extends StatelessWidget {
@@ -15,6 +16,7 @@ class RegisterForm extends StatelessWidget {
     required this.loading,
     required this.onRegister,
     required this.onGoogle,
+    required this.onGoogleAuthenticated,
     required this.onLogin,
   });
 
@@ -25,6 +27,7 @@ class RegisterForm extends StatelessWidget {
   final bool loading;
   final VoidCallback onRegister;
   final VoidCallback onGoogle;
+  final ValueChanged<String> onGoogleAuthenticated;
   final VoidCallback onLogin;
 
   @override
@@ -85,10 +88,11 @@ class RegisterForm extends StatelessWidget {
             onPressed: onRegister,
           ),
           const SizedBox(height: 10),
-          SocialLoginButton(
+          PlatformGoogleSignInButton(
             label: 'Continue with Google',
             loading: loading,
             onPressed: onGoogle,
+            onAuthenticated: onGoogleAuthenticated,
           ),
           const SizedBox(height: 6),
           Row(
