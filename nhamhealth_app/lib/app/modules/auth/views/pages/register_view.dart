@@ -48,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 confirmPassword: _confirmPasswordController.text,
               ),
           onGoogle: _controller.registerWithGoogle,
+          onGoogleAuthenticated: _controller.registerWithGoogleToken,
           onLogin: () => Get.offNamed(AppRoutes.login),
         ),
       ),

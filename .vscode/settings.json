@@ -10,6 +10,10 @@
   ],
   "java.compile.nullAnalysis.mode": "automatic",
   "cmake.ignoreCMakeListsMissing": true,
+  "java.import.exclusions": [
+    "**/.dart_tool/**",
+    "**/build/**"
+  ],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true
 }

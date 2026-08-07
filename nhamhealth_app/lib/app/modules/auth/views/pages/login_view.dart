@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _passwordController.text,
               ),
           onGoogle: _controller.loginWithGoogle,
+          onGoogleAuthenticated: _controller.loginWithGoogleToken,
           onForgotPassword:
               () => Get.to(
                 () => ForgotPasswordPage(),

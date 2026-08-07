@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import 'auth_tab_switcher.dart';
 import 'password_field.dart';
+import 'platform_google_sign_in_button.dart';
 import 'social_login_button.dart';
 
 class LoginForm extends StatelessWidget {
@@ -13,6 +14,7 @@ class LoginForm extends StatelessWidget {
     required this.loading,
     required this.onLogin,
     required this.onGoogle,
+    required this.onGoogleAuthenticated,
     required this.onForgotPassword,
     required this.onRegister,
   });
@@ -22,6 +24,7 @@ class LoginForm extends StatelessWidget {
   final bool loading;
   final VoidCallback onLogin;
   final VoidCallback onGoogle;
+  final ValueChanged<String> onGoogleAuthenticated;
   final VoidCallback onForgotPassword;
   final VoidCallback onRegister;
 
@@ -83,10 +86,11 @@ class LoginForm extends StatelessWidget {
             onPressed: onLogin,
           ),
           const SizedBox(height: 10),
-          SocialLoginButton(
+          PlatformGoogleSignInButton(
             label: 'Continue with Google',
             loading: loading,
             onPressed: onGoogle,
+            onAuthenticated: onGoogleAuthenticated,
           ),
           const SizedBox(height: 8),
           Row(
