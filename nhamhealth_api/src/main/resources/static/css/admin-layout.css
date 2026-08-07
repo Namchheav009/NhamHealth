@@ -21,8 +21,18 @@ body {
 }
 
 * { box-sizing: border-box; }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 a { color: inherit; text-decoration: none; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(8, 174, 97, .28);
+    outline-offset: 2px;
+}
 
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar {
@@ -35,6 +45,7 @@ a { color: inherit; text-decoration: none; }
     color: #d8e7ef;
     scrollbar-width: thin;
     box-shadow: 16px 0 40px rgba(6, 16, 30, 0.12);
+    transition: transform .24s ease;
 }
 .brand {
     display: flex;
@@ -144,7 +155,10 @@ a { color: inherit; text-decoration: none; }
     font-size: 11px;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(15,23,42,.03);
+    cursor: pointer;
+    transition: .2s ease;
 }
+.topbar-action-btn:hover { border-color: #cfd8e3; background: #fff; color: #1f2937; }
 .badge-dot {
     position: absolute;
     top: 1px;
@@ -184,6 +198,69 @@ a { color: inherit; text-decoration: none; }
 .title-line h1 { margin: 0; font-size: 24px; letter-spacing: -.02em; }
 .title-line span { color: var(--muted); font-size: 11px; font-weight: 600; }
 .page-heading p { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+
+/* Shared admin components.  Individual pages can refine these defaults without
+   needing to redefine the same layout primitives. */
+.panel {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 64px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.panel-header h2 { margin: 0; color: #263341; font-size: 14px; letter-spacing: -.01em; }
+.panel-header a, .panel-link { color: var(--primary-dark); font-size: 11px; font-weight: 700; }
+.panel-header a:hover, .panel-link:hover { color: var(--primary); }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: #475569;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 7px 16px rgba(15, 23, 42, .09); }
+.btn-primary { border-color: var(--primary); color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+.btn-secondary { background: #f8fafc; }
+.btn-danger { border-color: #fecaca; color: #b91c1c; background: #fff5f5; }
+
+.empty-state { padding: 42px 20px; color: var(--muted); text-align: center; }
+.table-responsive { -webkit-overflow-scrolling: touch; }
+.table-responsive table { margin: 0; }
+.table-responsive tbody tr:last-child td { border-bottom: 0; }
+
+.modal, .modal-backdrop { overscroll-behavior: contain; }
+.modal-card, .modal { max-height: 100dvh; }
+.modal-card { overflow: auto; }
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    background: rgba(4, 18, 29, .5);
+    opacity: 0;
+    transition: opacity .2s ease;
+}
 
     .heading-actions {
         display: flex;
@@ -310,3 +387,42 @@ a { color: inherit; text-decoration: none; }
     .date-filter { padding: 10px 13px; font-size: 11px; box-shadow: var(--shadow); }
     .small-filter { padding: 7px 10px; font-size: 10px; }
     .filter-pill { padding: 7px 10px; font-size: 10px; }
+
+@media (min-width: 851px) {
+    .menu-toggle { display: none; }
+}
+
+@media (max-width: 850px) {
+    body.sidebar-open { overflow: hidden; }
+    .sidebar { transform: translateX(-100%); }
+    body.sidebar-open .sidebar { transform: translateX(0); }
+    .sidebar-overlay { display: block; pointer-events: none; }
+    body.sidebar-open .sidebar-overlay { opacity: 1; pointer-events: auto; }
+    .main-area { width: 100%; margin-left: 0; }
+    .topbar { min-height: 68px; padding: 10px 16px; }
+    .page-content { padding: 20px 16px 10px; }
+}
+
+@media (max-width: 640px) {
+    html { font-size: 13px; }
+    .topbar { padding: 9px 12px; }
+    .search-box { min-width: 0; height: 40px; padding: 0 12px; }
+    .search-box input::placeholder { font-size: 0; }
+    .topbar-actions { gap: 5px; margin-left: 0; }
+    .topbar-action-btn, .admin-text, .admin-profile > i { display: none; }
+    .admin-profile { margin-left: 0; padding: 3px; border: 0; box-shadow: none; }
+    .avatar { width: 34px; height: 34px; }
+    .page-content { padding: 16px 12px 8px; }
+    .page-heading { align-items: stretch; flex-direction: column; gap: 14px; }
+    .title-line { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .title-line h1 { font-size: 22px; }
+    .panel-header { min-height: 58px; padding: 14px 16px; }
+    .table-responsive { padding-right: 12px; padding-left: 12px; }
+    .pagination-wrap, .page-footer { align-items: flex-start; flex-direction: column; }
+    .page-footer { padding-right: 12px; padding-left: 12px; }
+    .modal, .modal-backdrop { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
