@@ -13,6 +13,8 @@
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-meals.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="app-shell">
@@ -44,13 +46,6 @@
                     <label class="filter"><span>Category</span>
                         <select id="categoryFilter">
                             <option value="">All Categories</option>
-                            <option value="bowl">Bowl</option>
-                            <option value="main course">Main Course</option>
-                            <option value="smoothie bowl">Smoothie Bowl</option>
-                            <option value="soup">Soup</option>
-                            <option value="breakfast">Breakfast</option>
-                            <option value="salad">Salad</option>
-                            <option value="stir-fry">Stir-Fry</option>
                         </select>
                     </label>
                     <label class="filter"><span>Status</span>
@@ -58,20 +53,11 @@
                             <option value="">All Statuses</option>
                             <option value="published">Published</option>
                             <option value="draft">Draft</option>
-                            <option value="archived">Archived</option>
                         </select>
                     </label>
                     <label class="filter"><span>Tag</span>
                         <select id="tagFilter">
                             <option value="">All Tags</option>
-                            <option value="high protein">High Protein</option>
-                            <option value="gluten-free">Gluten-Free</option>
-                            <option value="omega-3">Omega-3</option>
-                            <option value="low carb">Low Carb</option>
-                            <option value="antioxidant">Antioxidant</option>
-                            <option value="vegan">Vegan</option>
-                            <option value="vegetarian">Vegetarian</option>
-                            <option value="high fiber">High Fiber</option>
                         </select>
                     </label>
                     <button class="btn clear-btn" id="clearFilters" type="button"><i class="fa-solid fa-xmark"></i> Clear Filters</button>
@@ -82,24 +68,24 @@
                         <div class="summary-icon green"><i class="fa-solid fa-utensils"></i></div>
                         <div>
                             <span class="summary-label">Total Meals</span>
-                            <strong class="summary-number">1,248</strong>
-                            <span class="change"><i class="fa-solid fa-arrow-up"></i> 6.2% vs last 7 days</span>
+                            <strong class="summary-number" id="totalMeals">0</strong>
+                            <span class="change">Live catalog total</span>
                         </div>
                     </article>
                     <article class="summary-card">
                         <div class="summary-icon blue"><i class="fa-solid fa-star"></i></div>
                         <div>
                             <span class="summary-label">Average Rating</span>
-                            <strong class="summary-number">4.6 / 5</strong>
-                            <span class="change"><i class="fa-solid fa-arrow-up"></i> 0.2 vs last 7 days</span>
+                            <strong class="summary-number" id="averageRating">0.0 / 5</strong>
+                            <span class="change">Based on published reviews</span>
                         </div>
                     </article>
                     <article class="summary-card">
                         <div class="summary-icon pink"><i class="fa-solid fa-heart"></i></div>
                         <div>
                             <span class="summary-label">Favorites Saved</span>
-                            <strong class="summary-number">24,583</strong>
-                            <span class="change"><i class="fa-solid fa-arrow-up"></i> 8.4% vs last 7 days</span>
+                            <strong class="summary-number" id="favoritesSaved">0</strong>
+                            <span class="change">Saved across all meals</span>
                         </div>
                     </article>
                 </section>
@@ -107,7 +93,7 @@
                 <section class="table-card">
                     <div class="table-title">
                         <h2>All Meals</h2>
-                        <span id="resultText">8 meals</span>
+                        <span id="resultText">Loading meals...</span>
                     </div>
                     <div class="table-wrapper">
                         <table>
@@ -120,7 +106,7 @@
                         </table>
                     </div>
                     <div class="table-footer">
-                        <span id="showingText">Showing 1 to 8 of 1,248 meals</span>
+                        <span id="showingText">Loading meals...</span>
                         <div class="pagination">
                             <button>‹</button><button class="active">1</button><button>2</button><button>3</button><button>…</button><button>156</button><button>›</button>
                         </div>
@@ -142,24 +128,40 @@
     <section class="modal-card">
         <div class="modal-header">
             <div>
-                <h2>Add Meal</h2>
-                <p>Enter meal information for your catalog.</p>
+                <h2 id="mealModalTitle">Add Meal</h2>
+                <p id="mealModalText">Enter meal information for your catalog.</p>
             </div>
             <button class="close" id="closeModal" type="button"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="mealForm">
             <div class="modal-body">
-                <div class="field"><label>Meal name</label><input type="text" required></div>
-                <div class="field"><label>Category</label><select required><option value="">Select category</option><option>Bowl</option><option>Main Course</option><option>Smoothie Bowl</option><option>Soup</option><option>Breakfast</option><option>Salad</option><option>Stir-Fry</option></select></div>
-                <div class="field"><label>Calories</label><input type="number" required></div>
-                <div class="field"><label>Serving size</label><input type="text" required></div>
-                <div class="field"><label>Status</label><select required><option value="">Select status</option><option>Published</option><option>Draft</option><option>Archived</option></select></div>
-                <div class="field"><label>Primary tag</label><input type="text" placeholder="Example: High Protein"></div>
-                <div class="field full"><label>Description</label><textarea placeholder="Meal description..."></textarea></div>
+                <div class="field"><label>Meal name</label><input name="mealName" type="text" maxlength="150" required></div>
+                <div class="field"><label>Category</label><select name="categoryId" required><option value="">Select category</option><option th:each="category : ${mealCategories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Category</option></select></div>
+                <div class="field"><label>Calories</label><input name="calories" type="number" min="0" step="0.1"></div>
+                <div class="field"><label>Servings</label><input name="servings" type="number" min="1" max="100" required></div>
+                <div class="field"><label>Cooking time (minutes)</label><input name="cookingTimeMinutes" type="number" min="0" max="1440"></div>
+                <div class="field"><label>Difficulty</label><select name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                <div class="field"><label>Status</label><select name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
+                <div class="field full"><label>Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span></div>
+                <div class="field full"><label>Description</label><textarea name="description" maxlength="500" placeholder="Meal description..."></textarea></div>
+                <div class="field full recipe-steps-field">
+                    <div class="recipe-steps-heading">
+                        <div><label>Cooking steps</label><span>Add the instructions users need to prepare this meal.</span></div>
+                        <button class="btn step-add" id="addRecipeStep" type="button"><i class="fa-solid fa-plus"></i> Add Step</button>
+                    </div>
+                    <div id="recipeSteps">
+                        <article class="recipe-step" data-recipe-step>
+                            <div class="recipe-step-title"><strong>Step 1</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="fa-solid fa-trash-can"></i></button></div>
+                            <input data-step-title type="text" maxlength="150" placeholder="Step title (optional)">
+                            <textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea>
+                            <input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step 1">
+                        </article>
+                    </div>
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelModal" type="button">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Meal</button>
+                <button class="btn btn-primary" id="saveMealButton" type="submit">Save Meal</button>
             </div>
         </form>
     </section>

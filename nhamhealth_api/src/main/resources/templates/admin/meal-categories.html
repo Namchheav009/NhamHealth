@@ -12,6 +12,8 @@
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-meal-categories.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="app-shell">
@@ -81,8 +83,8 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="category, iter : ${mealCategories}" th:data-status="${category.isActive != null and category.isActive ? 'active' : 'inactive'}" th:data-name="${category.categoryName}">
+                        <tbody id="categoryRows">
+                        <tr th:each="category, iter : ${mealCategories}" th:data-id="${category.categoryId}" th:data-status="${category.isActive != null and category.isActive ? 'active' : 'inactive'}" th:data-name="${category.categoryName}" th:data-description="${category.description}" th:data-order="${category.sortOrder}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="category-name">
@@ -98,8 +100,8 @@
                             <td th:text="${category.sortOrder}">1</td>
                             <td>
                                 <div class="action-group">
-                                    <button class="icon-button small" type="button"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                    <button class="icon-button small" data-action="edit" type="button" aria-label="Edit category"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger" data-action="delete" type="button" aria-label="Delete category"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -122,8 +124,8 @@
     <section class="modal-card">
         <div class="modal-header">
             <div>
-                <h2>Add Meal Category</h2>
-                <p>Enter category information for your menu catalog.</p>
+                <h2 id="categoryModalTitle">Add Meal Category</h2>
+                <p id="categoryModalText">Enter category information for your menu catalog.</p>
             </div>
             <button class="close" id="closeCategoryModal" type="button" aria-label="Close dialog">
                 <i class="bi bi-x-lg"></i>
@@ -133,20 +135,22 @@
             <div class="modal-body">
                 <div class="field">
                     <label for="categoryName">Category name</label>
-                    <input id="categoryName" name="categoryName" type="text" required>
+                    <input id="categoryName" name="categoryName" type="text" maxlength="50" required>
                 </div>
                 <div class="field">
                     <label for="categoryStatus">Status</label>
                     <select id="categoryStatus" name="categoryStatus" required>
-                        <option value="">Select status</option>
-                        <option value="Published">Published</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Archived">Archived</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
                     </select>
+                </div>
+                <div class="field">
+                    <label for="categoryOrder">Display order</label>
+                    <input id="categoryOrder" name="sortOrder" type="number" min="0" max="10000" required>
                 </div>
                 <div class="field full">
                     <label for="categoryDescription">Description</label>
-                    <textarea id="categoryDescription" name="categoryDescription" placeholder="Meal category description..."></textarea>
+                    <textarea id="categoryDescription" name="description" maxlength="255" placeholder="Meal category description..."></textarea>
                 </div>
             </div>
             <div class="modal-actions">

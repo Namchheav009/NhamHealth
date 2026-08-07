@@ -1,23 +1,20 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.AdminDashboardService;
+import com.nhamhealth.nhamhealth_api.service.AdminDashboardService.DashboardSnapshot;
 
 @Controller
 public class DashboardController {
 
-    private final UserRepository userRepository;
+    private final AdminDashboardService adminDashboardService;
 
-    public DashboardController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public DashboardController(AdminDashboardService adminDashboardService) {
+        this.adminDashboardService = adminDashboardService;
     }
 
     @GetMapping("/")
@@ -27,19 +24,17 @@ public class DashboardController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
-        long totalUsers = userRepository.count();
-
-        List<User> recentUsers = userRepository.findAll().stream()
-                .sorted((left, right) -> right.getCreatedAt() == null ? 0
-                        : right.getCreatedAt().compareTo(left.getCreatedAt() == null ? null : left.getCreatedAt()))
-                .limit(5)
-                .collect(Collectors.toList());
-
-        model.addAttribute("email", authentication.getName());
-        model.addAttribute("adminName", authentication.getName());
+        String adminName = authentication != null ? authentication.getName() : "Admin";
+        model.addAttribute("email", adminName);
+        model.addAttribute("adminName", adminName);
         model.addAttribute("pageTitle", "Dashboard");
-        model.addAttribute("totalUsers", totalUsers);
-        model.addAttribute("recentUsers", recentUsers);
+        DashboardSnapshot dashboard = adminDashboardService.loadDashboard();
+        model.addAttribute("dashboard", dashboard);
+        model.addAttribute("activityLabels", dashboard.activity().stream().map(point -> point.label()).toList());
+        model.addAttribute("activityUsers", dashboard.activity().stream().map(point -> point.newUsers()).toList());
+        model.addAttribute("activityMealLogs", dashboard.activity().stream().map(point -> point.mealLogs()).toList());
+        model.addAttribute("categoryLabels", dashboard.categories().stream().map(category -> category.name()).toList());
+        model.addAttribute("categoryValues", dashboard.categories().stream().map(category -> category.count()).toList());
         return "admin/dashboard";
     }
 

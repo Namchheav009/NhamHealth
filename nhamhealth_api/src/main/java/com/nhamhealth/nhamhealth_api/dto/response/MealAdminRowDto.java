@@ -5,6 +5,7 @@ import java.util.List;
 public record MealAdminRowDto(
         Integer mealId,
         String iconClass,
+        String mainImageUrl,
         String mealName,
         String category,
         String calories,

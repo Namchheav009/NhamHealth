@@ -214,6 +214,12 @@ tbody tr:hover { background: #fbfdfc; }
     font-size: 18px;
     flex: 0 0 auto;
 }
+.meal-thumb img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
 .meal-cell strong,
 .meal-cell small { display: block; }
 .meal-cell strong { color: #1d2939; font-size: 10px; }
@@ -250,6 +256,9 @@ tbody tr:hover { background: #fbfdfc; }
     cursor: pointer;
 }
 .action:hover { background: #eef2f5; }
+.meal-actions { display: flex; gap: 4px; }
+.danger-action { color: #d92d20; }
+.danger-action:hover { background: #fff0f1; }
 
 .table-footer {
     display: flex;
@@ -290,6 +299,8 @@ tbody tr:hover { background: #fbfdfc; }
 .modal.show { display: grid; }
 .modal-card {
     width: min(680px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     border-radius: 12px;
     background: #fff;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.24);
@@ -338,6 +349,43 @@ tbody tr:hover { background: #fbfdfc; }
 }
 .field textarea { min-height: 90px; resize: vertical; }
 .field.full { grid-column: 1 / -1; }
+.field-help { color: var(--muted); font-size: 10px; }
+.recipe-steps-field { gap: 10px; }
+.recipe-steps-heading,
+.recipe-step-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.recipe-steps-heading span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+}
+.step-add { min-height: 32px; padding: 0 10px; font-size: 10px; }
+#recipeSteps { display: grid; gap: 10px; }
+.recipe-step {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fbfdfc;
+}
+.recipe-step-title strong { font-size: 11px; color: #344054; }
+.step-remove {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 7px;
+    background: #fff0f1;
+    color: #cf3d4f;
+    cursor: pointer;
+}
+.step-remove:disabled { opacity: .45; cursor: not-allowed; }
 .modal-actions {
     display: flex;
     justify-content: flex-end;
