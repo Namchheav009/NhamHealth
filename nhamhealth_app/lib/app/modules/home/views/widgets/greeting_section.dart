@@ -54,7 +54,7 @@ class GreetingSection extends GetView<HomeController> {
 
                     return Obx(
                       () => MoodCard(
-                        emoji: mood.emoji,
+                        imageAsset: mood.imageAsset,
                         label: mood.label,
                         selected: controller.selectedMoodIndex.value == index,
                         onTap: () => controller.selectMood(index),
