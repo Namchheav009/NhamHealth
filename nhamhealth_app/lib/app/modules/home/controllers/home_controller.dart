@@ -13,12 +13,18 @@ class HomeController extends GetxController {
   final selectedBottomIndex = 0.obs;
 
   final moods = <MoodItem>[
-    const MoodItem(emoji: '\u{1F60A}', label: 'Happy'),
-    const MoodItem(emoji: '\u{1F975}', label: 'Tired'),
-    const MoodItem(emoji: '\u{1F63E}', label: 'Stressed'),
-    const MoodItem(emoji: '\u{1F4BC}', label: 'Busy'),
-    const MoodItem(emoji: '\u{1F634}', label: 'Sleepy'),
-    const MoodItem(emoji: '\u{1F60E}', label: 'Great'),
+    const MoodItem(imageAsset: 'assets/icons/moods/happy.png', label: 'Happy'),
+    const MoodItem(imageAsset: 'assets/icons/moods/tired.png', label: 'Tired'),
+    const MoodItem(
+      imageAsset: 'assets/icons/moods/stressed.png',
+      label: 'Stressed',
+    ),
+    const MoodItem(imageAsset: 'assets/icons/moods/busy.png', label: 'Busy'),
+    const MoodItem(
+      imageAsset: 'assets/icons/moods/sleepy.png',
+      label: 'Sleepy',
+    ),
+    const MoodItem(imageAsset: 'assets/icons/moods/great.png', label: 'Great'),
   ];
 
   @override
@@ -89,8 +95,8 @@ class HomeController extends GetxController {
 }
 
 class MoodItem {
-  const MoodItem({required this.emoji, required this.label});
+  const MoodItem({required this.imageAsset, required this.label});
 
-  final String emoji;
+  final String imageAsset;
   final String label;
 }
