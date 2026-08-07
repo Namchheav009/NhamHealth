@@ -12,6 +12,8 @@
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-ingredients.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="app-shell">
@@ -31,7 +33,7 @@
                 </div>
                 <div class="heading-actions">
                     <button class="btn btn-primary" id="openIngredientModal" type="button"><i class="bi bi-plus-lg"></i> Add New Ingredient</button>
-                    <button class="btn" type="button"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn" id="exportIngredients" type="button"><i class="bi bi-download"></i> Export</button>
                 </div>
             </div>
 
@@ -51,17 +53,7 @@
                     <h2>All Ingredients</h2>
                     <div class="panel-tools">
                         <select class="table-filter-pill" id="categoryFilter" aria-label="Filter by ingredient category">
-                            <option value="all">All Categories</option>
-                            <option value="protein">Protein</option>
-                            <option value="vegetable">Vegetable</option>
-                            <option value="fruit">Fruit</option>
-                            <option value="dairy">Dairy</option>
-                            <option value="grain">Grain</option>
-                        </select>
-                        <select class="table-filter-pill" id="statusFilter" aria-label="Filter by ingredient status">
-                            <option value="all">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="all">All Types</option>
                         </select>
                         <input class="table-search" id="ingredientSearch" type="search" placeholder="Search ingredients..." aria-label="Search ingredients">
                         <button class="btn btn-secondary" id="clearIngredientFilter" type="button">Clear</button>
@@ -74,34 +66,30 @@
                         <tr>
                             <th>#</th>
                             <th>Ingredient Name</th>
-                            <th>Category</th>
                             <th>Type</th>
-                            <th>Common Uses</th>
-                            <th>Status</th>
+                            <th>Default Unit</th>
+                            <th>Description</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="ingredient, iter : ${ingredients}" th:data-name="${ingredient.ingredientName}" th:data-category="${ingredient.ingredientType != null ? ingredient.ingredientType : '-'}" th:data-status="${ingredient.isActive != null and ingredient.isActive ? 'active' : 'inactive'}">
+                        <tbody id="ingredientRows">
+                        <tr th:each="ingredient, iter : ${ingredients}" th:data-id="${ingredient.ingredientId}" th:data-name="${ingredient.ingredientName}" th:data-type="${ingredient.ingredientType}" th:data-unit="${ingredient.defaultUnit}" th:data-description="${ingredient.description}" th:data-image-url="${ingredient.imageUrl}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="ingredient-name">
-                                    <span class="ingredient-icon"><i class="bi bi-flower1"></i></span>
+                                    <span class="ingredient-icon"><img th:if="${ingredient.imageUrl != null}" th:src="${ingredient.imageUrl}" th:alt="${ingredient.ingredientName}"><i th:unless="${ingredient.imageUrl != null}" class="bi bi-flower1"></i></span>
                                     <span th:text="${ingredient.ingredientName}">Spinach</span>
                                 </div>
                             </td>
-                            <td th:text="${ingredient.ingredientType != null ? ingredient.ingredientType : '-'}">Leafy Greens</td>
                             <td>
                                 <span class="pill tag-green" th:text="${ingredient.ingredientType != null ? ingredient.ingredientType : 'General'}">Plant-Based</span>
                             </td>
+                            <td th:text="${ingredient.defaultUnit != null ? ingredient.defaultUnit : '-'}">g</td>
                             <td th:text="${ingredient.description != null ? ingredient.description : '-'}">Salads, Smoothies, Stir-fries</td>
                             <td>
-                                <span class="status-badge active-status" th:classappend="${ingredient.isActive != null and ingredient.isActive ? ' active-status' : ' inactive-status'}" th:text="${ingredient.isActive != null and ingredient.isActive ? 'Active' : 'Inactive'}">Active</span>
-                            </td>
-                            <td>
                                 <div class="action-group">
-                                    <button class="icon-button small" type="button"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                    <button class="icon-button small" data-action="edit" type="button" aria-label="Edit ingredient"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger" data-action="delete" type="button" aria-label="Delete ingredient"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -124,8 +112,8 @@
     <section class="modal-card">
         <div class="modal-header">
             <div>
-                <h2>Add Ingredient</h2>
-                <p>Enter ingredient information for your catalog.</p>
+                <h2 id="ingredientModalTitle">Add Ingredient</h2>
+                <p id="ingredientModalText">Enter ingredient information for your catalog.</p>
             </div>
             <button class="close" id="closeIngredientModal" type="button" aria-label="Close dialog">
                 <i class="bi bi-x-lg"></i>
@@ -135,40 +123,30 @@
             <div class="modal-body">
                 <div class="field">
                     <label for="ingredientName">Ingredient name</label>
-                    <input id="ingredientName" name="ingredientName" type="text" required>
+                    <input id="ingredientName" name="ingredientName" type="text" maxlength="100" required>
                 </div>
                 <div class="field">
                     <label for="ingredientType">Type</label>
-                    <select id="ingredientType" name="ingredientType" required>
-                        <option value="">Select type</option>
-                        <option value="Protein">Protein</option>
-                        <option value="Vegetable">Vegetable</option>
-                        <option value="Fruit">Fruit</option>
-                        <option value="Dairy">Dairy</option>
-                        <option value="Grain">Grain</option>
-                    </select>
+                    <input id="ingredientType" name="ingredientType" type="text" maxlength="50" list="ingredientTypes" placeholder="Example: Vegetable" required>
+                    <datalist id="ingredientTypes"></datalist>
                 </div>
                 <div class="field">
                     <label for="defaultUnit">Default unit</label>
-                    <input id="defaultUnit" name="defaultUnit" type="text" placeholder="Example: g, cup, tbsp">
+                    <input id="defaultUnit" name="defaultUnit" type="text" maxlength="30" placeholder="Example: g, cup, tbsp">
                 </div>
                 <div class="field">
-                    <label for="ingredientStatus">Status</label>
-                    <select id="ingredientStatus" name="ingredientStatus" required>
-                        <option value="">Select status</option>
-                        <option value="Published">Published</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Archived">Archived</option>
-                    </select>
+                    <label for="ingredientImageFile">Ingredient image</label>
+                    <input id="ingredientImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <span class="field-help" id="ingredientImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span>
                 </div>
                 <div class="field full">
                     <label for="ingredientDescription">Description</label>
-                    <textarea id="ingredientDescription" name="ingredientDescription" placeholder="Ingredient description..."></textarea>
+                    <textarea id="ingredientDescription" name="description" maxlength="255" placeholder="Ingredient description..."></textarea>
                 </div>
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelIngredientModal" type="button">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Ingredient</button>
+                <button class="btn btn-primary" id="saveIngredientButton" type="submit">Save Ingredient</button>
             </div>
         </form>
     </section>

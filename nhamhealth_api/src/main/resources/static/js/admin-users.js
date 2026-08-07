@@ -5,109 +5,181 @@
     const roleFilter = document.getElementById('roleFilter');
     const clearFilters = document.getElementById('clearFilters');
     const table = document.getElementById('usersTable');
-    const rows = table ? [...table.querySelectorAll('tbody tr')] : [];
+    const rows = table ? [...table.querySelectorAll('tbody tr[data-email]')] : [];
     const visibleCount = document.getElementById('visibleCount');
     const footerVisibleCount = document.getElementById('footerVisibleCount');
-    const selectAll = document.getElementById('selectAll');
     const exportButton = document.getElementById('exportButton');
+    const modal = document.getElementById('userModal');
+    const openAddUser = document.getElementById('openAddUser');
+    const closeModal = document.getElementById('closeModal');
+    const cancelModal = document.getElementById('cancelModal');
+    const form = document.getElementById('addUserForm');
+    const formError = document.getElementById('formError');
+    const submitButton = document.getElementById('createUserButton');
+    const title = document.getElementById('addUserTitle');
+    const description = document.getElementById('userModalDescription');
+    const passwordLabel = document.getElementById('passwordLabel');
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    let editingUserId = null;
 
-    function applyFilters() {
-        const keyword = searchInput.value.trim().toLowerCase();
-        const status = statusFilter.value;
-        const verification = verificationFilter.value;
-        const role = roleFilter.value;
+    const applyFilters = () => {
+        const keyword = searchInput?.value.trim().toLowerCase() || '';
+        const status = statusFilter?.value || 'all';
+        const verification = verificationFilter?.value || 'all';
+        const role = roleFilter?.value || 'all';
         let count = 0;
-
         rows.forEach((row) => {
             const matchesKeyword = !keyword || row.dataset.name.includes(keyword) || row.dataset.email.includes(keyword);
-            const matchesStatus = status === 'all' || row.dataset.status === status;
-            const matchesVerification = verification === 'all' || row.dataset.verification === verification;
-            const matchesRole = role === 'all' || row.dataset.role === role;
-            const show = matchesKeyword && matchesStatus && matchesVerification && matchesRole;
-
+            const show = matchesKeyword
+                && (status === 'all' || row.dataset.status === status)
+                && (verification === 'all' || row.dataset.verification === verification)
+                && (role === 'all' || row.dataset.role === role);
             row.hidden = !show;
             if (show) count += 1;
         });
+        if (visibleCount) visibleCount.textContent = count;
+        if (footerVisibleCount) footerVisibleCount.textContent = count;
+    };
 
-        visibleCount.textContent = count;
-        footerVisibleCount.textContent = count;
-        selectAll.checked = false;
-    }
-
-    [searchInput, statusFilter, verificationFilter, roleFilter].forEach((control) => {
+    [searchInput, statusFilter, verificationFilter, roleFilter].filter(Boolean).forEach((control) => {
         control.addEventListener(control.tagName === 'INPUT' ? 'input' : 'change', applyFilters);
     });
-
-    clearFilters.addEventListener('click', () => {
-        searchInput.value = '';
-        statusFilter.value = 'all';
-        verificationFilter.value = 'all';
-        roleFilter.value = 'all';
+    clearFilters?.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (statusFilter) statusFilter.value = 'all';
+        if (verificationFilter) verificationFilter.value = 'all';
+        if (roleFilter) roleFilter.value = 'all';
         applyFilters();
     });
 
-    selectAll.addEventListener('change', () => {
-        rows.filter((row) => !row.hidden).forEach((row) => {
-            row.querySelector('.row-checkbox').checked = selectAll.checked;
-        });
-    });
-
-    exportButton.addEventListener('click', () => {
-        const headers = ['Name', 'Email', 'Status', 'Verification', 'Wellness Profile', 'Joined Date', 'Last Active'];
-        const dataRows = rows.filter((row) => !row.hidden).map((row) => {
-            const cells = row.querySelectorAll('td');
-            return [
-                cells[1].querySelector('strong').textContent.trim(),
-                cells[2].textContent.trim(),
-                cells[3].textContent.trim(),
-                cells[4].textContent.trim(),
-                cells[5].textContent.trim(),
-                cells[6].textContent.trim(),
-                cells[7].textContent.trim()
-            ];
-        });
-
-        const csv = [headers, ...dataRows]
-            .map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+    exportButton?.addEventListener('click', () => {
+        const headers = ['User', 'Role', 'Status', 'Verification', 'Profile', 'Joined', 'Last active'];
+        const dataRows = rows.filter((row) => !row.hidden)
+            .map((row) => [...row.querySelectorAll('td')].slice(0, 7)
+                .map((cell) => cell.textContent.trim().replaceAll(/\s+/g, ' ')));
+        const csv = [headers, ...dataRows].map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
         link.href = url;
         link.download = 'nham-health-users.csv';
         link.click();
         URL.revokeObjectURL(url);
     });
 
-    const modal = document.getElementById('userModal');
-    const openAddUser = document.getElementById('openAddUser');
-    const closeModal = document.getElementById('closeModal');
-    const cancelModal = document.getElementById('cancelModal');
-    const addUserForm = document.getElementById('addUserForm');
+    const requestHeaders = (json = false) => ({
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
+        'Accept': 'application/json',
+        ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+    });
 
-    function showModal() {
+    const uploadProfileImage = async (file) => {
+        if (!(file instanceof File) || file.size === 0) return null;
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        const response = await fetch('/admin/profile-images', { method: 'POST', headers: requestHeaders(), body: uploadData });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.message || 'Unable to upload the profile image.');
+        return body.profileImageUrl;
+    };
+
+    const setFormError = (message = '') => {
+        if (!formError) return;
+        formError.textContent = message;
+        formError.hidden = !message;
+    };
+
+    const showModal = (row) => {
+        if (!modal || !form) return;
+        form.reset();
+        setFormError();
+        editingUserId = row?.dataset.id || null;
+        const editing = Boolean(editingUserId);
+        title.textContent = editing ? 'Edit user' : 'Add user';
+        description.textContent = editing ? 'Update account access and profile details.' : 'Create an account with a temporary password.';
+        passwordLabel.firstChild.textContent = editing ? 'New password (leave blank to keep current)' : 'Temporary password';
+        form.password.required = !editing;
+        submitButton.textContent = editing ? 'Save changes' : 'Create user';
+        if (row) {
+            form.userId.value = row.dataset.id;
+            form.fullName.value = row.dataset.fullName;
+            form.email.value = row.dataset.email;
+            form.profileImageUrl.value = row.dataset.image;
+            form.role.value = row.dataset.role;
+            form.status.value = row.dataset.status;
+            form.verified.checked = row.dataset.verification === 'verified';
+        } else {
+            form.status.value = 'ACTIVE';
+            form.verified.checked = true;
+        }
         modal.hidden = false;
-        document.body.style.overflow = 'hidden';
-        modal.querySelector('input')?.focus();
-    }
+        document.body.classList.add('modal-open');
+        form.fullName.focus();
+    };
 
-    function hideModal() {
+    const hideModal = () => {
+        if (!modal) return;
         modal.hidden = true;
-        document.body.style.overflow = '';
-        addUserForm.reset();
-    }
+        document.body.classList.remove('modal-open');
+        editingUserId = null;
+        form?.reset();
+        setFormError();
+    };
 
-    openAddUser.addEventListener('click', showModal);
-    closeModal.addEventListener('click', hideModal);
-    cancelModal.addEventListener('click', hideModal);
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) hideModal();
-    });
+    openAddUser?.addEventListener('click', () => showModal());
+    document.querySelectorAll('.edit-user').forEach((button) => button.addEventListener('click', () => showModal(button.closest('tr'))));
+    closeModal?.addEventListener('click', hideModal);
+    cancelModal?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal && !modal.hidden) hideModal(); });
 
-    addUserForm.addEventListener('submit', (event) => {
+    form?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        alert('UI demonstration only. Connect this form to your UserService to save the user.');
-        hideModal();
+        const formData = new FormData(form);
+        const imageFile = formData.get('profileImageFile');
+        formData.delete('profileImageFile');
+        formData.delete('userId');
+        const payload = Object.fromEntries(formData.entries());
+        payload.verified = form.verified.checked;
+        setFormError();
+        submitButton.disabled = true;
+        submitButton.textContent = editingUserId ? 'Saving…' : 'Creating…';
+        try {
+            const profileImageUrl = await uploadProfileImage(imageFile);
+            if (profileImageUrl) payload.profileImageUrl = profileImageUrl;
+            const response = await fetch(editingUserId ? `/admin/users/${editingUserId}` : '/admin/users', {
+                method: editingUserId ? 'PUT' : 'POST',
+                headers: requestHeaders(true),
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.message || 'Unable to save this user.');
+            }
+            window.location.reload();
+        } catch (error) {
+            setFormError(error.message);
+            submitButton.disabled = false;
+            submitButton.textContent = editingUserId ? 'Save changes' : 'Create user';
+        }
     });
+
+    document.querySelectorAll('.delete-user').forEach((button) => button.addEventListener('click', async () => {
+        const row = button.closest('tr');
+        const name = row?.dataset.fullName || 'this user';
+        if (!row?.dataset.id || !window.confirm(`Delete ${name}? Their account will be disabled and hidden, while health and history records remain protected.`)) return;
+        button.disabled = true;
+        try {
+            const response = await fetch(`/admin/users/${row.dataset.id}`, { method: 'DELETE', headers: requestHeaders() });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.message || 'Unable to delete this user.');
+            }
+            window.location.reload();
+        } catch (error) {
+            window.alert(error.message);
+            button.disabled = false;
+        }
+    }));
 })();
