@@ -75,7 +75,7 @@ public class SecurityConfig {
             AuthenticationSuccessHandler adminAuthenticationSuccessHandler) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/css/**", "/js/**", "/error").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/uploads/**", "/error").permitAll()
                         .anyRequest().hasRole("ADMIN"))
                 .formLogin(form -> form
                         .loginPage("/login")

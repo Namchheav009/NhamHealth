@@ -8,203 +8,81 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-wellness-profiles.css}">
 </head>
 <body>
 <div class="app-shell">
-    <!-- Uses the sidebar you already created -->
     <div th:replace="~{layouts/sidebar :: sidebar('wellness-profiles')}"></div>
-
     <main class="main-area">
-        <!-- Uses the topbar you already created -->
         <div th:replace="~{layouts/topbar :: topbar}"></div>
-
         <section class="page-content">
-
-        <section class="page-heading">
-            <div>
-                <h1>Wellness Profiles</h1>
-                <p>Manage user wellness information and health profile completion.</p>
+            <div class="page-heading">
+                <div><div class="title-line"><h1>Wellness profiles</h1><span>Health data</span></div><p>Manage each user's recorded height, weight, date of birth, and activity level.</p></div>
+                <div class="heading-actions"><button class="button button-secondary" id="exportButton" type="button"><i class="bi bi-download"></i> Export CSV</button><button class="button button-primary" id="openModal" type="button"><i class="bi bi-plus-lg"></i> Add profile</button></div>
             </div>
 
-            <div class="heading-actions">
-                <button class="button button-secondary" id="exportButton" type="button">
-                    <i class="bi bi-download"></i> Export
-                </button>
-                <button class="button button-primary" id="openModal" type="button">
-                    <i class="bi bi-plus"></i> Add Profile
-                </button>
-            </div>
+            <section class="card filters-card" aria-label="Wellness profile filters">
+                <label class="global-search" for="searchInput"><i class="bi bi-search" aria-hidden="true"></i><input id="searchInput" type="search" placeholder="Search by name or email"></label>
+                <label class="filter-field"><span>Profile status</span><select id="statusFilter"><option value="all">All statuses</option><option value="complete">Complete</option><option value="incomplete">Incomplete</option></select></label>
+                <label class="filter-field"><span>Activity level</span><select id="activityFilter"><option value="all">All levels</option><option value="LOW">Low</option><option value="MODERATE">Moderate</option><option value="HIGH">High</option></select></label>
+                <button class="button button-ghost" id="clearFilters" type="button">Clear filters</button>
+            </section>
+
+            <section class="stats-grid wellness-stats-grid">
+                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-heart-pulse"></i></div><div><span>Total wellness profiles</span><strong th:text="${#numbers.formatInteger(wellnessPage.totalProfiles(), 1, 'COMMA')}">0</strong><small>Recorded health profiles</small></div></article>
+                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-check-circle"></i></div><div><span>Complete profiles</span><strong th:text="${#numbers.formatInteger(wellnessPage.completeProfiles(), 1, 'COMMA')}">0</strong><small>All core health fields recorded</small></div></article>
+                <article class="stat-card"><div class="stat-icon orange"><i class="bi bi-exclamation-circle"></i></div><div><span>Incomplete profiles</span><strong th:text="${#numbers.formatInteger(wellnessPage.incompleteProfiles(), 1, 'COMMA')}">0</strong><small>Needs additional health data</small></div></article>
+            </section>
+
+            <section class="table-card">
+                <div class="card-header"><div><h2>All wellness profiles</h2><span>Live records from the wellness profile table.</span></div><b class="result-count"><span id="resultCount" th:text="${#lists.size(wellnessPage.profiles())}">0</span> shown</b></div>
+                <div class="table-wrap">
+                    <table id="wellnessTable">
+                        <thead><tr><th>User</th><th>Age</th><th>Gender</th><th>Height</th><th>Weight</th><th>BMI</th><th>Activity</th><th>Profile status</th><th>Updated</th><th>Actions</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(wellnessPage.profiles())}"><td class="empty-state" colspan="10">No wellness profiles recorded yet.</td></tr>
+                        <tr th:each="profile : ${wellnessPage.profiles()}"
+                            th:attr="data-id=${profile.id()},data-name=${#strings.toLowerCase(profile.name())},data-email=${#strings.toLowerCase(profile.email())},data-image=${profile.profileImageUrl() ?: ''},data-gender=${profile.gender() ?: ''},data-status=${profile.complete() ? 'complete' : 'incomplete'},data-activity=${profile.activityLevel() ?: ''},data-date-of-birth=${profile.dateOfBirth() ?: ''},data-height=${profile.heightCm() ?: ''},data-weight=${profile.weightKg() ?: ''}">
+                            <td><div class="user-cell"><div class="avatar"><img th:if="${profile.profileImageUrl() != null}" th:src="${profile.profileImageUrl()}" th:alt="${profile.name()}"><span th:unless="${profile.profileImageUrl() != null}" th:text="${profile.initials()}">NH</span></div><div><strong th:text="${profile.name()}">Nham Health</strong><span th:text="${profile.email()}">user@example.com</span></div></div></td>
+                            <td th:text="${profile.age() ?: '—'}">—</td><td th:text="${profile.gender() ?: '—'}">—</td>
+                            <td th:text="${profile.heightCm() != null ? #numbers.formatDecimal(profile.heightCm(), 1, 1) + ' cm' : '—'}">—</td>
+                            <td th:text="${profile.weightKg() != null ? #numbers.formatDecimal(profile.weightKg(), 1, 1) + ' kg' : '—'}">—</td>
+                            <td th:text="${profile.bmi() != null ? #numbers.formatDecimal(profile.bmi(), 1, 1) : '—'}">—</td>
+                            <td><span class="badge" th:classappend="${profile.activityLevel() != null ? #strings.toLowerCase(profile.activityLevel()) : ''}" th:text="${profile.activityLevel() ?: '—'}">—</span></td>
+                            <td><span class="badge" th:classappend="${profile.complete() ? ' badge-complete' : ' badge-incomplete'}" th:text="${profile.complete() ? 'Complete' : 'Incomplete'}">Complete</span></td>
+                            <td th:text="${profile.updatedAt() != null ? #temporals.format(profile.updatedAt(), 'MMM d, yyyy') : '—'}">—</td>
+                            <td><div class="table-actions"><button class="action edit-profile" type="button" title="Edit wellness profile"><i class="bi bi-pencil"></i><span class="sr-only">Edit profile</span></button><button class="action delete-profile" type="button" title="Delete wellness profile"><i class="bi bi-trash"></i><span class="sr-only">Delete profile</span></button></div></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer"><span>Showing <b id="showingCount" th:text="${#lists.size(wellnessPage.profiles())}">0</b> wellness profiles</span><span>Use “Add profile” to create or update a user’s health record.</span></div>
+            </section>
         </section>
-
-        <section class="card filters-card" aria-label="Wellness filters">
-            <div class="global-search">
-                <i class="bi bi-search"></i>
-                <input id="searchInput" type="search" placeholder="Search by name, email, or phone...">
-            </div>
-
-            <label class="filter-field">
-                <span>Profile Status</span>
-                <select id="statusFilter">
-                    <option value="">All Statuses</option>
-                    <option value="complete">Complete</option>
-                    <option value="incomplete">Incomplete</option>
-                    <option value="needs review">Needs Review</option>
-                </select>
-            </label>
-
-            <label class="filter-field">
-                <span>Goal Type</span>
-                <select id="goalFilter">
-                    <option value="">All Goals</option>
-                    <option value="maintain">Maintain</option>
-                    <option value="lose weight">Lose Weight</option>
-                    <option value="tone">Tone</option>
-                    <option value="build muscle">Build Muscle</option>
-                    <option value="improve health">Improve Health</option>
-                </select>
-            </label>
-
-            <label class="filter-field">
-                <span>Activity Level</span>
-                <select id="activityFilter">
-                    <option value="">All Levels</option>
-                    <option value="low">Low</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="high">High</option>
-                </select>
-            </label>
-
-            <label class="filter-field">
-                <span>Dietary Preference</span>
-                <select id="dietFilter">
-                    <option value="">All Preferences</option>
-                    <option value="none">None</option>
-                    <option value="low carb">Low Carb</option>
-                    <option value="vegetarian">Vegetarian</option>
-                    <option value="mediterranean">Mediterranean</option>
-                    <option value="high protein">High Protein</option>
-                    <option value="pescatarian">Pescatarian</option>
-                </select>
-            </label>
-        </section>
-
-        <section class="stats-grid">
-            <article class="stat-card">
-                <div class="stat-icon green">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div>
-                    <span>Total Profiles</span>
-                    <strong>24,583</strong>
-                    <small class="positive"><i class="bi bi-arrow-up-short"></i> 8.62% vs last 7 days</small>
-                </div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-icon blue">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <div>
-                    <span>Complete Profiles</span>
-                    <strong>16,321</strong>
-                    <small class="positive"><i class="bi bi-arrow-up-short"></i> 9.35% vs last 7 days</small>
-                </div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-icon orange">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-                <div>
-                    <span>Incomplete Profiles</span>
-                    <strong>6,842</strong>
-                    <small class="negative"><i class="bi bi-arrow-down-short"></i> 5.21% vs last 7 days</small>
-                </div>
-            </article>
-        </section>
-
-        <section class="table-card">
-            <div class="card-header">
-                <div>
-                    <h2>All Wellness Profiles</h2>
-                    <span id="resultText">8 profiles</span>
-                </div>
-            </div>
-
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                    <tr>
-                        <th><input type="checkbox"></th>
-                        <th>User</th><th>Age</th><th>Gender</th><th>Height</th>
-                        <th>Weight</th><th>BMI</th><th>Activity Level</th>
-                        <th>Goal</th><th>Dietary Preference</th><th>Allergies</th>
-                        <th>Profile Status</th><th>Last Updated</th><th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="profileRows"></tbody>
-                </table>
-            </div>
-
-            <div class="table-footer">
-                <span id="showingText">Showing 1 to 8 of 24,583 profiles</span>
-                <div class="pagination">
-                    <button>‹</button><button class="active">1</button>
-                    <button>2</button><button>3</button><button>...</button>
-                    <button>3073</button><button>›</button>
-                </div>
-            </div>
-        </section>
-        </section>
-
-        <footer class="page-footer">
-            <span>© 2026 Nham Health. All rights reserved.</span>
-            <span>Version 1.0.0</span>
-        </footer>
+        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Wellness data updates when this page is refreshed.</span></footer>
     </main>
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-<div class="modal" id="profileModal">
-    <section class="modal-card">
-        <div class="modal-header">
-            <div>
-                <h2>Add Wellness Profile</h2>
-                <p>Enter the user wellness information.</p>
-            </div>
-            <button class="close" id="closeModal" type="button">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-
-        <form id="profileForm">
+<div class="modal" id="profileModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="modal-header"><div><h2 id="profileModalTitle">Add wellness profile</h2><p>Use an existing user account email. Saving an existing profile updates it.</p></div><button class="close" id="closeModal" type="button" aria-label="Close"><i class="bi bi-x-lg"></i></button></div>
+        <form id="profileForm" enctype="multipart/form-data">
             <div class="modal-body">
-                <div class="field"><label>User name</label><input type="text" required></div>
-                <div class="field"><label>Email</label><input type="email" required></div>
-                <div class="field"><label>Age</label><input type="number" required></div>
-                <div class="field">
-                    <label>Gender</label>
-                    <select required><option value="">Select gender</option><option>Female</option><option>Male</option></select>
-                </div>
-                <div class="field"><label>Height (cm)</label><input type="number" required></div>
-                <div class="field"><label>Weight (kg)</label><input type="number" required></div>
-                <div class="field">
-                    <label>Activity level</label>
-                    <select required><option value="">Select level</option><option>Low</option><option>Moderate</option><option>High</option></select>
-                </div>
-                <div class="field">
-                    <label>Goal</label>
-                    <select required><option value="">Select goal</option><option>Maintain</option><option>Lose Weight</option><option>Tone</option><option>Build Muscle</option></select>
-                </div>
+                <div class="field field-wide"><label for="userEmail">User email</label><input id="userEmail" name="userEmail" type="email" required autocomplete="email" placeholder="user@example.com"></div>
+                <input id="profileImageUrl" name="profileImageUrl" type="hidden">
+                <div class="field field-wide"><label for="profileImageFile">Profile image</label><input id="profileImageFile" name="profileImageFile" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, or WebP; maximum 5 MB. Leave empty to keep the current image.</small></div>
+                <div class="field"><label for="gender">Gender</label><select id="gender" name="gender"><option value="">Prefer not to say</option><option value="Female">Female</option><option value="Male">Male</option><option value="Non-binary">Non-binary</option><option value="Other">Other</option></select></div>
+                <div class="field"><label for="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date"></div>
+                <div class="field"><label for="activityLevel">Activity level</label><select id="activityLevel" name="activityLevel" required><option value="">Select level</option><option value="LOW">Low</option><option value="MODERATE">Moderate</option><option value="HIGH">High</option></select></div>
+                <div class="field"><label for="heightCm">Height (cm)</label><input id="heightCm" name="heightCm" type="number" min="50" max="300" step="0.1" required></div>
+                <div class="field"><label for="weightKg">Weight (kg)</label><input id="weightKg" name="weightKg" type="number" min="15" max="500" step="0.1" required></div>
             </div>
-
-            <div class="modal-actions">
-                <button class="button button-secondary" id="cancelModal" type="button">Cancel</button>
-                <button class="button button-primary" type="submit">Save Profile</button>
-            </div>
+            <p class="form-error" id="formError" role="alert" hidden></p>
+            <div class="modal-actions"><button class="button button-secondary" id="cancelModal" type="button">Cancel</button><button class="button button-primary" id="saveProfileButton" type="submit">Save profile</button></div>
         </form>
     </section>
 </div>
