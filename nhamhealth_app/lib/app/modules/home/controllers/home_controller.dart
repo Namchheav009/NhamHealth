@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../../../core/services/auth_service.dart';
+import '../../auth/services/google_auth_service.dart';
+import '../../../routes/app_routes.dart';
 import '../models/home_dashboard_model.dart';
 import '../repositories/home_repository.dart';
 
@@ -11,6 +14,7 @@ class HomeController extends GetxController {
   final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
   final selectedMoodIndex = 0.obs;
   final selectedBottomIndex = 0.obs;
+  final isLoggingOut = false.obs;
 
   final moods = <MoodItem>[
     const MoodItem(imageAsset: 'assets/icons/moods/happy.png', label: 'Happy'),
@@ -79,6 +83,38 @@ class HomeController extends GetxController {
 
   void openFavorites() {
     // Get.toNamed(AppRoutes.favorites);
+  }
+
+  void openProfile() {
+    selectBottomMenu(4);
+  }
+
+  Future<void> logout() async {
+    if (isLoggingOut.value) return;
+    isLoggingOut.value = true;
+
+    try {
+      await Get.find<AuthService>().logout();
+
+      if (Get.isRegistered<GoogleAuthService>()) {
+        try {
+          await Get.find<GoogleAuthService>().signOut();
+        } on Object {
+          // The local session is already cleared, so a provider sign-out
+          // failure must not keep the user inside the authenticated app.
+        }
+      }
+
+      Get.offAllNamed(AppRoutes.login);
+    } on Object {
+      Get.snackbar(
+        'Logout failed',
+        'Unable to clear your session. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoggingOut.value = false;
+    }
   }
 
   void getRecommendation() {

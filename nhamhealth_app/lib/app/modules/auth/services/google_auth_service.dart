@@ -14,8 +14,23 @@ class GoogleAuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _initialization;
 
+  Future<void> initialize() => _initialization ??= _initialize();
+
+  Stream<String> get authenticationTokens async* {
+    await initialize();
+
+    await for (final event in _googleSignIn.authenticationEvents) {
+      if (event is! GoogleSignInAuthenticationEventSignIn) continue;
+
+      final idToken = event.user.authentication.idToken;
+      if (idToken != null && idToken.isNotEmpty) {
+        yield idToken;
+      }
+    }
+  }
+
   Future<String?> signInAndGetIdToken() async {
-    await (_initialization ??= _initialize());
+    await initialize();
 
     if (!_googleSignIn.supportsAuthenticate()) {
       throw const GoogleAuthException(
@@ -53,7 +68,8 @@ class GoogleAuthService {
         kIsWeb && _clientId.isEmpty ? _serverClientId : _clientId;
     return _googleSignIn.initialize(
       clientId: platformClientId.isEmpty ? null : platformClientId,
-      serverClientId: _serverClientId.isEmpty ? null : _serverClientId,
+      serverClientId:
+          kIsWeb || _serverClientId.isEmpty ? null : _serverClientId,
     );
   }
 }
