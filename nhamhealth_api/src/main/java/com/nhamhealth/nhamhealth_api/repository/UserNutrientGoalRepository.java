@@ -9,4 +9,6 @@ import com.nhamhealth.nhamhealth_api.entity.UserNutrientGoal;
 public interface UserNutrientGoalRepository extends JpaRepository<UserNutrientGoal, Integer> {
 
     List<UserNutrientGoal> findByIsActiveTrueOrderByEffectiveFromDesc();
+
+    List<UserNutrientGoal> findAllByOrderByEffectiveFromDesc();
 }
