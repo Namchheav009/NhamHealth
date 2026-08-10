@@ -1,147 +1,96 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Favorites | Nham Health Admin</title>
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Favorites | Nham Health Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/admin-tags.css}">
     <link rel="stylesheet" th:href="@{/css/admin-favorites.css}">
 </head>
 <body>
 <div class="app-shell">
     <div th:replace="~{layouts/sidebar :: sidebar('favorites')}"></div>
-
     <main class="main-area">
         <div th:replace="~{layouts/topbar :: topbar}"></div>
-
         <section class="page-content">
             <div class="page-heading">
                 <div>
-                    <div class="title-line">
-                        <h1>Favorites</h1>
-                        <span>Manage users' favorite meals and favorite posts.</span>
-                    </div>
-                    <p>Dashboard &gt; Meal Management &gt; Favorites</p>
+                    <div class="title-line"><h1>Favorites</h1><span>Saved-content activity</span></div>
+                    <p>Review meal and community-post favorites across Nham Health.</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn btn-secondary" id="exportCsv" type="button"><i class="bi bi-download"></i> Export (CSV)</button>
-                    <button class="btn btn-primary" id="openFilter" type="button"><i class="bi bi-funnel"></i> Filter</button>
+                    <button class="btn" id="exportFavorites" type="button"><i class="bi bi-download"></i> Export CSV</button>
                 </div>
             </div>
 
             <div class="stats-grid">
-                <article class="stat-card">
-                    <div class="stat-icon green"><i class="bi bi-heart-fill"></i></div>
-                    <div class="stat-content">
-                        <span>Food Favorites (Total)</span>
-                        <strong>2,568</strong>
-                        <small>Across all users</small>
-                    </div>
-                </article>
-
-                <article class="stat-card">
-                    <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
-                    <div class="stat-content">
-                        <span>Users with Food Favorites</span>
-                        <strong>1,024</strong>
-                        <small>Unique users</small>
-                    </div>
-                </article>
-
-                <article class="stat-card">
-                    <div class="stat-icon purple"><i class="bi bi-bookmark-fill"></i></div>
-                    <div class="stat-content">
-                        <span>Post Favorites (Total)</span>
-                        <strong>1,842</strong>
-                        <small>Across all users</small>
-                    </div>
-                </article>
+                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-heart-fill"></i></div><div class="stat-content"><span>Total favorites</span><strong th:text="${#numbers.formatInteger(totalFavorites, 1, 'COMMA')}">0</strong><small>Meals and posts combined</small></div></article>
+                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-egg-fried"></i></div><div class="stat-content"><span>Meal favorites</span><strong th:text="${#numbers.formatInteger(totalFoodFavorites, 1, 'COMMA')}">0</strong><small th:text="${usersWithFoodFavorites + ' users saved meals'}">0 users saved meals</small></div></article>
+                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-bookmark-fill"></i></div><div class="stat-content"><span>Post favorites</span><strong th:text="${#numbers.formatInteger(totalPostFavorites, 1, 'COMMA')}">0</strong><small th:text="${usersWithFavorites + ' unique users overall'}">0 unique users overall</small></div></article>
             </div>
 
             <article class="panel table-panel">
                 <div class="panel-header">
-                    <h2>Favorites</h2>
+                    <div><h2>Saved content</h2><p><span id="visibleFavoriteCount">0</span> records shown</p></div>
                     <div class="panel-tools">
-                        <div class="tab-buttons">
-                            <button class="btn" id="tabFood">Food Favorites</button>
-                            <button class="btn btn-primary" id="tabPost">Post Favorites</button>
+                        <div class="tab-buttons" role="tablist" aria-label="Favorite type">
+                            <button class="btn btn-primary" id="tabFood" type="button" role="tab" aria-selected="true"><i class="bi bi-egg-fried"></i> Meals <span th:text="${totalFoodFavorites}">0</span></button>
+                            <button class="btn" id="tabPost" type="button" role="tab" aria-selected="false"><i class="bi bi-file-post"></i> Posts <span th:text="${totalPostFavorites}">0</span></button>
                         </div>
+                        <input class="table-search" id="favoriteSearch" type="search" placeholder="Search content or user…" aria-label="Search favorites">
+                        <button class="btn btn-secondary" id="clearFavoriteSearch" type="button">Clear</button>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <div id="foodPanel" style="display:none;">
+                <div class="favorite-panel" id="foodPanel" role="tabpanel">
+                    <div class="table-responsive">
                         <table>
-                            <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Meal</th>
-                                <th>Category</th>
-                                <th>Favorited By</th>
-                                <th>Favorited At</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
+                            <thead><tr><th>Meal</th><th>Category</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
                             <tbody>
-                            <!-- Server renders food favorites here -->
-                            <tr>
-                                <td>1</td>
-                                <td>Avocado Salad</td>
-                                <td>Salads</td>
-                                <td>Sokunthy P.</td>
-                                <td>May 20, 2025 09:41 AM</td>
-                                <td><div class="action-group"><button class="icon-button small" type="button"><i class="bi bi-eye"></i></button></div></td>
+                            <tr th:each="favorite : ${foodFavorites}" th:data-id="${favorite.mealFavoriteId}" th:data-search="${#strings.toLowerCase(favorite.meal.mealName + ' ' + favorite.user.email)}">
+                                <td><div class="content-cell"><span class="content-icon meal"><i class="bi bi-egg-fried"></i></span><span><strong th:text="${favorite.meal.mealName}">Meal</strong><small th:text="${favorite.meal.isPublished ? 'Published' : 'Draft'}">Published</small></span></div></td>
+                                <td><span class="category-badge" th:text="${favorite.meal.category.categoryName}">Category</span></td>
+                                <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
+                                <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
+                                <td><button class="icon-button small danger remove-favorite" type="button" data-kind="meals" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
                             </tr>
+                            <tr th:if="${#lists.isEmpty(foodFavorites)}"><td class="empty-state" colspan="5"><i class="bi bi-heart"></i><strong>No meal favorites</strong><span>Meal favorites will appear here when users save meals.</span></td></tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <div id="postPanel">
+                <div class="favorite-panel" id="postPanel" role="tabpanel" hidden>
+                    <div class="table-responsive">
                         <table>
-                            <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Post</th>
-                                <th>Post By</th>
-                                <th>Favorited By</th>
-                                <th>Favorited At</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
+                            <thead><tr><th>Post</th><th>Post author</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
                             <tbody>
-                            <!-- Server renders post favorites here -->
-                            <tr>
-                                <td>1</td>
-                                <td>5 Healthy Breakfast Ideas</td>
-                                <td>Vanna L.</td>
-                                <td>Dara K.</td>
-                                <td>May 20, 2025 10:21 AM</td>
-                                <td><div class="action-group"><button class="icon-button small" type="button"><i class="bi bi-eye"></i></button></div></td>
+                            <tr th:each="favorite : ${postFavorites}" th:data-id="${favorite.postFavoriteId}" th:data-search="${#strings.toLowerCase((favorite.post.caption ?: '') + ' ' + favorite.post.user.email + ' ' + favorite.user.email)}">
+                                <td><div class="content-cell"><span class="content-icon post"><i class="bi bi-file-post"></i></span><span><strong th:text="${favorite.post.caption != null && !#strings.isEmpty(favorite.post.caption) ? favorite.post.caption : 'Post #' + favorite.post.postId}">Post</strong><small th:text="${favorite.post.visibility + ' · ' + favorite.post.status}">PUBLIC · ACTIVE</small></span></div></td>
+                                <td th:text="${favorite.post.user.email}">author@example.com</td>
+                                <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
+                                <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
+                                <td><button class="icon-button small danger remove-favorite" type="button" data-kind="posts" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
                             </tr>
+                            <tr th:if="${#lists.isEmpty(postFavorites)}"><td class="empty-state" colspan="5"><i class="bi bi-bookmark"></i><strong>No post favorites</strong><span>Post favorites will appear here when users save community posts.</span></td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </article>
         </section>
-
-        <footer class="page-footer">
-            <span>© 2026 Nham Health. All rights reserved.</span>
-            <span>Version 1.0.0</span>
-        </footer>
+        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Favorite data updates when this page is refreshed.</span></footer>
     </main>
 </div>
-
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-favorites.js}" defer></script>
+<script th:src="@{/js/admin-favorites.js}"></script>
 </body>
 </html>
