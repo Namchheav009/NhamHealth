@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-notification.css}">
@@ -23,36 +24,36 @@
                 <div>
                     <div class="title-line">
                         <h1>Notifications</h1>
-                        <span>Manage system notifications and messages.</span>
+                        <span>Message center</span>
                     </div>
                     <p>Dashboard &gt; Messaging &gt; Notifications</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button">Export</button>
-                    <button class="btn btn-primary" id="openNotificationModal" type="button">New Notification</button>
+                    <button class="btn" id="exportNotifications" type="button"><i class="bi bi-download"></i> Export CSV</button>
+                    <button class="btn btn-primary" id="openNotificationModal" type="button"><i class="bi bi-plus-lg"></i> New notification</button>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <article class="stat-card">
-                    <div class="stat-icon green"><i class="fa-solid fa-bell"></i></div>
+                    <div class="stat-icon green"><i class="bi bi-bell-fill"></i></div>
                     <div class="stat-content">
                         <span>Total Notifications</span>
                         <strong th:text="${totalNotifications}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-icon blue"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="stat-icon blue"><i class="bi bi-envelope-paper-fill"></i></div>
                     <div class="stat-content">
                         <span>Unread</span>
-                        <strong>0</strong>
+                        <strong th:text="${unreadNotifications}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-icon orange"><i class="fa-solid fa-calendar-day"></i></div>
+                    <div class="stat-icon orange"><i class="bi bi-clock-history"></i></div>
                     <div class="stat-content">
                         <span>Last 24h</span>
-                        <strong>0</strong>
+                        <strong th:text="${recentNotifications}">0</strong>
                     </div>
                 </article>
             </div>
@@ -65,44 +66,49 @@
                 <div class="field-group">
                     <label for="notifStatus">Status</label>
                     <select id="notifStatus">
-                        <option value="">All</option>
+                        <option value="all">All statuses</option>
                         <option value="unread">Unread</option>
                         <option value="read">Read</option>
                     </select>
                 </div>
-                <div class="field-group" style="align-self: end;">
+                <div class="field-group filter-action">
                     <button class="btn btn-secondary" id="clearNotifFilters" type="button">Clear Filters</button>
                 </div>
             </section>
 
             <article class="panel table-panel">
                 <div class="panel-header">
-                    <h2>Notifications</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <div><h2>All notifications</h2><p><span id="visibleNotificationCount" th:text="${totalNotifications}">0</span> records shown</p></div>
+                    <button class="btn btn-secondary" id="refreshNotifications" type="button"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
                         <thead>
                         <tr>
-                            <th>#</th>
                             <th>User</th>
-                            <th>Title</th>
-                            <th>Message</th>
+                            <th>Notification</th>
+                            <th>Type</th>
                             <th>Created</th>
                             <th>Status</th>
+                            <th class="actions-heading">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="n, s : ${notifications}" th:data-user="${n.user.email}" th:data-status="${n.isRead}">
-                            <td th:text="${s.count}">1</td>
-                            <td th:text="${n.user.email}">user@example.com</td>
-                            <td th:text="${n.title}">Title</td>
-                            <td th:text="${n.message}">Message body</td>
-                            <td th:text="${n.createdAt}">2026-08-05T12:00:00</td>
-                            <td th:text="${n.isRead} ? 'read' : 'unread'">unread</td>
+                        <tr th:each="n : ${notifications}"
+                            th:data-id="${n.notificationId}"
+                            th:data-user="${#strings.toLowerCase(n.user.email)}"
+                            th:data-status="${n.isRead} ? 'read' : 'unread'"
+                            th:data-title="${#strings.toLowerCase(n.title ?: '')}"
+                            th:data-message="${#strings.toLowerCase(n.message)}">
+                            <td><div class="recipient-cell"><span class="recipient-avatar" th:text="${n.user.initials}">NH</span><span><strong th:text="${n.user.name}">User</strong><small th:text="${n.user.email}">user@example.com</small></span></div></td>
+                            <td><div class="notification-copy"><strong th:text="${n.title ?: 'Notification'}">Title</strong><span th:text="${n.message}">Message body</span></div></td>
+                            <td><span class="type-badge" th:text="${n.notificationType}">SYSTEM</span></td>
+                            <td><time th:text="${n.createdAt != null ? #temporals.format(n.createdAt, 'MMM d, yyyy HH:mm') : '—'}">Aug 8, 2026 10:00</time></td>
+                            <td><span class="status-badge" th:classappend="${n.isRead} ? ' status-read' : ' status-unread'" th:text="${n.isRead} ? 'Read' : 'Unread'">Unread</span></td>
+                            <td><div class="row-actions"><button class="icon-button small toggle-read" type="button" th:title="${n.isRead} ? 'Mark unread' : 'Mark read'"><i th:class="${n.isRead} ? 'bi bi-envelope' : 'bi bi-envelope-open'"></i></button><button class="icon-button small delete-notification" type="button" title="Delete notification"><i class="bi bi-trash3"></i></button></div></td>
                         </tr>
                         <tr th:if="${notifications.empty}">
-                            <td class="empty-state" colspan="6">No notifications found.</td>
+                            <td class="empty-state" colspan="6"><i class="bi bi-bell-slash"></i><strong>No notifications yet</strong><span>Create a notification to message a Nham Health user.</span></td>
                         </tr>
                         </tbody>
                     </table>
@@ -113,10 +119,10 @@
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New Notification</h2>
-                            <p>Create a new system notification.</p>
+                            <h2>New notification</h2>
+                            <p>Send a message to an existing Nham Health account.</p>
                         </div>
-                        <button class="icon-button small" id="closeNotificationModal" type="button">×</button>
+                        <button class="icon-button small" id="closeNotificationModal" type="button" aria-label="Close"><i class="bi bi-x-lg"></i></button>
                     </div>
                     <form id="notificationForm">
                         <div class="modal-body">
@@ -125,17 +131,27 @@
                                 <input id="notifUser" name="userEmail" type="email" placeholder="user@example.com" required>
                             </div>
                             <div class="field-group">
+                                <label for="notifType">Type</label>
+                                <select id="notifType" name="notificationType" required>
+                                    <option value="SYSTEM">System</option>
+                                    <option value="REMINDER">Reminder</option>
+                                    <option value="HEALTH">Health</option>
+                                    <option value="COMMUNITY">Community</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
                                 <label for="notifTitle">Title</label>
-                                <input id="notifTitle" name="title" type="text" placeholder="Notification title" required>
+                                <input id="notifTitle" name="title" type="text" maxlength="150" placeholder="Notification title" required>
                             </div>
                             <div class="field-group">
                                 <label for="notifMessage">Message</label>
-                                <textarea id="notifMessage" name="message" rows="5" placeholder="Write the message..."></textarea>
+                                <textarea id="notifMessage" name="message" rows="4" maxlength="500" placeholder="Write the message..." required></textarea>
                             </div>
+                            <p class="form-error" id="notificationFormError" role="alert" hidden></p>
                         </div>
                         <div class="modal-actions">
                             <button class="btn" id="cancelNotificationModal" type="button">Cancel</button>
-                            <button class="btn btn-primary" type="submit">Create Notification</button>
+                            <button class="btn btn-primary" id="createNotificationButton" type="submit">Create notification</button>
                         </div>
                     </form>
                 </section>

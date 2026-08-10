@@ -245,6 +245,30 @@ API to a Supabase PostgreSQL database:
    .\mvnw.cmd spring-boot:run
    ```
 
+### Shared uploaded images
+
+The API uses the local `nhamhealth_api/uploads` directory when Supabase Storage
+is not configured. That is suitable for one development machine only. If two
+PCs run the API against the same database, configure shared storage:
+
+1. In Supabase Dashboard, open **Storage** and create a **public** bucket named
+   `nhamhealth-images`.
+2. Add these server-only values to `nhamhealth_api/.env`:
+
+   ```properties
+   SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+   SUPABASE_STORAGE_BUCKET=nhamhealth-images
+   ```
+
+3. Restart the API. New profile, meal, recipe-step, and ingredient images will
+   be uploaded to the shared bucket and their public HTTPS URLs will be stored
+   in the database.
+
+Never add the service-role key to Flutter or commit it to Git. Images uploaded
+before shared storage was enabled remain on the PC that originally received
+them and should be uploaded again.
+
    ```bash
    # macOS/Linux
    ./mvnw spring-boot:run

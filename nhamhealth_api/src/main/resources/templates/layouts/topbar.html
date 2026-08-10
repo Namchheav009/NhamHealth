@@ -12,7 +12,8 @@
         <div class="topbar-actions">
             <a class="icon-button notification-button" th:href="@{/admin/notifications}" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
-                <span class="badge-dot">12</span>
+                <span class="badge-dot" th:if="${globalUnreadNotificationCount > 0}"
+                      th:text="${globalUnreadNotificationCount > 99 ? '99+' : globalUnreadNotificationCount}">0</span>
             </a>
             <a class="icon-button notification-button" th:href="@{/admin/chats}" aria-label="Messages">
                 <i class="bi bi-envelope"></i>

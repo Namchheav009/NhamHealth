@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-tags.css}">
@@ -25,13 +27,13 @@
                 <div>
                     <div class="title-line">
                         <h1>Tags</h1>
-                        <span>Manage all tags used to categorize meals and ingredients.</span>
+                        <span>Content taxonomy</span>
                     </div>
                     <p>Dashboard &gt; Meal Management &gt; Tags</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn btn-primary" id="openTagModal" type="button"><i class="bi bi-plus-lg"></i> Add New Tag</button>
-                    <button class="btn" type="button"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn" id="exportTags" type="button"><i class="bi bi-download"></i> Export CSV</button>
+                    <button class="btn btn-primary" id="openTagModal" type="button"><i class="bi bi-plus-lg"></i> Add tag</button>
                 </div>
             </div>
 
@@ -50,7 +52,7 @@
                     <div class="stat-content">
                         <span>Active Tags</span>
                         <strong th:text="${#numbers.formatInteger(activeTags, 0, 'COMMA')}">81</strong>
-                        <small th:text="${#numbers.formatDecimal(activeTags * 100.0 / totalTags, 1, 2)} + '% Active'">94.2% Active</small>
+                        <small th:text="${totalTags > 0 ? #numbers.formatDecimal(activeTags * 100.0 / totalTags, 1, 1) + '% active' : 'No tags yet'}">94.2% active</small>
                     </div>
                 </article>
 
@@ -66,10 +68,10 @@
 
             <article class="panel table-panel">
                 <div class="panel-header">
-                    <h2>All Tags</h2>
+                    <div><h2>All tags</h2><p><span id="visibleTagCount" th:text="${totalTags}">0</span> records shown</p></div>
                     <div class="panel-tools">
                         <select class="table-filter-pill" id="scopeFilter" aria-label="Filter by tag scope">
-                            <option value="all">All Status</option>
+                            <option value="all">All types</option>
                             <option value="nutrition">Nutrition</option>
                             <option value="diet">Diet</option>
                             <option value="health">Health</option>
@@ -89,7 +91,6 @@
                     <table>
                         <thead>
                         <tr>
-                            <th>#</th>
                             <th>Tag Name</th>
                             <th>Type</th>
                             <th>Description</th>
@@ -98,8 +99,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="tag, iter : ${tags}" th:data-name="${tag.tagName}" th:data-scope="${tag.tagScope}" th:data-status="${tag.isActive != null and tag.isActive ? 'active' : 'inactive'}">
-                            <td th:text="${iter.index + 1}">1</td>
+                        <tr th:each="tag : ${tags}" th:data-id="${tag.tagId}" th:data-name="${#strings.toLowerCase(tag.tagName)}" th:data-scope="${#strings.toLowerCase(tag.tagScope)}" th:data-description="${tag.description ?: ''}" th:data-status="${tag.isActive != null and tag.isActive ? 'active' : 'inactive'}">
                             <td>
                                 <span class="pill tag-pink" th:text="${tag.tagName}">High Protein</span>
                             </td>
@@ -112,11 +112,12 @@
                             </td>
                             <td>
                                 <div class="action-group">
-                                    <button class="icon-button small" type="button"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                    <button class="icon-button small edit-tag" type="button" title="Edit tag"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger delete-tag" type="button" title="Delete tag"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
+                        <tr th:if="${#lists.isEmpty(tags)}"><td class="empty-state" colspan="5"><i class="bi bi-tags"></i><strong>No tags yet</strong><span>Add a tag to organize meals and community content.</span></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -132,49 +133,50 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<div class="modal" id="tagModal">
+<div class="modal" id="tagModal" aria-hidden="true">
     <section class="modal-card">
         <div class="modal-header">
             <div>
-                <h2>Add Tag</h2>
-                <p>Enter tag information for your taxonomy.</p>
+                <h2 id="tagModalTitle">Add tag</h2>
+                <p id="tagModalDescription">Create a reusable tag for meals and posts.</p>
             </div>
             <button class="close" id="closeTagModal" type="button" aria-label="Close dialog">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
         <form id="tagForm">
+            <input id="tagId" name="tagId" type="hidden">
             <div class="modal-body">
                 <div class="field">
                     <label for="tagName">Tag name</label>
-                    <input id="tagName" name="tagName" type="text" required>
+                    <input id="tagName" name="tagName" type="text" maxlength="100" required>
                 </div>
                 <div class="field">
                     <label for="tagScope">Type</label>
                     <select id="tagScope" name="tagScope" required>
                         <option value="">Select type</option>
-                        <option value="Nutrition">Nutrition</option>
-                        <option value="Diet">Diet</option>
-                        <option value="Health">Health</option>
-                        <option value="Lifestyle">Lifestyle</option>
+                        <option value="NUTRITION">Nutrition</option>
+                        <option value="DIET">Diet</option>
+                        <option value="HEALTH">Health</option>
+                        <option value="LIFESTYLE">Lifestyle</option>
                     </select>
                 </div>
                 <div class="field full">
                     <label for="tagDescription">Description</label>
-                    <textarea id="tagDescription" name="tagDescription" placeholder="Tag description..."></textarea>
+                    <textarea id="tagDescription" name="description" maxlength="255" placeholder="Tag description..."></textarea>
                 </div>
                 <div class="field">
                     <label for="tagStatus">Status</label>
-                    <select id="tagStatus" name="tagStatus" required>
-                        <option value="">Select status</option>
+                    <select id="tagStatus" name="status" required>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
                 </div>
+                <p class="form-error full" id="tagFormError" role="alert" hidden></p>
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelTagModal" type="button">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Tag</button>
+                <button class="btn btn-primary" id="saveTagButton" type="submit">Save tag</button>
             </div>
         </form>
     </section>
