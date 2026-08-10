@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -36,5 +37,61 @@ class LoginPageTests {
 		mockMvc.perform(get("/dashboard"))
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/login"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderFavoritesPage() throws Exception {
+		mockMvc.perform(get("/admin/favorites")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/favorite"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderReviewsPage() throws Exception {
+		mockMvc.perform(get("/admin/reviews")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/review"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderMealLogsPage() throws Exception {
+		mockMvc.perform(get("/admin/meal-logs")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/meals-log"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderNutrientGoalsPage() throws Exception {
+		mockMvc.perform(get("/admin/nutrient-goals")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/nutrient-goal"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderDailyWellnessPage() throws Exception {
+		mockMvc.perform(get("/admin/daily-wellness")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/daily-wellness"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderAiFoodAnalysesPage() throws Exception {
+		mockMvc.perform(get("/admin/ai-food-analyses")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/ai-food-analysis"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderAiFoodSuggestionsPage() throws Exception {
+		mockMvc.perform(get("/admin/ai-food-suggestions")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/ai-food-suggestion"));
 	}
 }

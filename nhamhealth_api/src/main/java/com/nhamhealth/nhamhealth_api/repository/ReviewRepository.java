@@ -9,4 +9,6 @@ import com.nhamhealth.nhamhealth_api.entity.Review;
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
     List<Review> findByMealMealId(Integer mealId);
+
+    List<Review> findAllByOrderByCreatedAtDesc();
 }

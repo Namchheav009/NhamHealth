@@ -159,11 +159,29 @@ tbody tr:hover { background: #fbfdfc; }
     background: rgba(4, 15, 24, .58);
 }
 .modal-backdrop[hidden] { display: none; }
-.modal { width: min(460px, 100%); overflow: hidden; background: white; border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,.24); }
+.modal {
+    display: flex;
+    flex-direction: column;
+    width: min(460px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow: hidden;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.24);
+}
 .modal-header { display: flex; justify-content: space-between; gap: 15px; padding: 20px; border-bottom: 1px solid var(--line); }
 .modal-header h2 { margin: 0 0 4px; font-size: 20px; }
 .modal-header p { margin: 0; color: var(--muted); font-size: 12px; }
-.modal-form { display: grid; gap: 14px; padding: 20px; }
+.modal-form {
+    display: grid;
+    gap: 14px;
+    min-height: 0;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
 .modal-form label { display: grid; gap: 7px; color: #475467; font-size: 11px; font-weight: 700; }
 .modal-form input, .modal-form select { height: 42px; padding: 0 12px; border: 1px solid #dce3ea; border-radius: 8px; outline: 0; }
 .modal-form input[type="file"] { height: auto; padding: 9px; }
@@ -173,6 +191,27 @@ tbody tr:hover { background: #fbfdfc; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 5px; }
 .form-error { margin: -2px 0 0; color: #b42318; font-size: 11px; font-weight: 600; }
 body.modal-open { overflow: hidden; }
+
+/* Keep the complete form usable on common 720p/768p laptop displays. */
+@media (max-height: 820px) {
+    .modal-backdrop { padding-block: 12px; }
+    .modal { max-height: calc(100dvh - 24px); }
+    .modal-header { padding: 14px 18px; }
+    .modal-header h2 { font-size: 18px; }
+    .modal-form { gap: 10px; padding: 14px 18px 16px; }
+    .modal-form label { gap: 5px; }
+    .modal-form input, .modal-form select { height: 38px; }
+    .modal-form input[type="file"] { height: auto; padding: 7px; }
+    .modal-actions {
+        position: sticky;
+        bottom: -16px;
+        z-index: 1;
+        margin: 0 -18px -16px;
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+    }
+}
 
 @media (max-width: 1120px) {
     .filters-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -197,4 +236,8 @@ body.modal-open { overflow: hidden; }
     .recent-user { grid-template-columns: 34px minmax(0, 1fr) auto; }
     .recent-date { display: none; }
     .footer { flex-direction: column; }
+    .modal-backdrop { align-items: end; padding: 8px; }
+    .modal { width: 100%; max-height: calc(100dvh - 16px); border-radius: 14px 14px 8px 8px; }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .modal-actions .button { width: 100%; }
 }
