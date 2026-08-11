@@ -31,6 +31,7 @@ public class MealAdminService {
     private final ReviewRepository reviewRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final RecipeStepRepository recipeStepRepository;
+    private final ProfileImageStorageService profileImageStorageService;
     private final EntityManager entityManager;
 
     public MealAdminService(
@@ -40,6 +41,7 @@ public class MealAdminService {
             ReviewRepository reviewRepository,
             MealCategoryRepository mealCategoryRepository,
             RecipeStepRepository recipeStepRepository,
+            ProfileImageStorageService profileImageStorageService,
             EntityManager entityManager) {
         this.mealRepository = mealRepository;
         this.mealTagRepository = mealTagRepository;
@@ -47,6 +49,7 @@ public class MealAdminService {
         this.reviewRepository = reviewRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.recipeStepRepository = recipeStepRepository;
+        this.profileImageStorageService = profileImageStorageService;
         this.entityManager = entityManager;
     }
 
@@ -115,7 +118,7 @@ public class MealAdminService {
     private void applyMealRequest(Meal meal, AdminMealRequest request) {
         MealCategory category = mealCategoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Selected meal category was not found"));
-        if (!request.mainImageUrl().startsWith("/uploads/meal-images/")) {
+        if (!profileImageStorageService.isStoredMealImageUrl(request.mainImageUrl())) {
             throw new IllegalArgumentException("Upload a meal image before saving the meal");
         }
         meal.setMealName(request.mealName().trim());
@@ -138,7 +141,7 @@ public class MealAdminService {
             recipeStep.setStepNumber(index + 1);
             recipeStep.setStepTitle(blankToNull(requestedStep.title()));
             recipeStep.setInstruction(requestedStep.instruction().trim());
-            if (!requestedStep.imageUrl().startsWith("/uploads/recipe-step-images/")) {
+            if (!profileImageStorageService.isStoredRecipeStepImageUrl(requestedStep.imageUrl())) {
                 throw new IllegalArgumentException("Upload an image for every recipe step before saving the meal");
             }
             recipeStep.setImageUrl(requestedStep.imageUrl().trim());
