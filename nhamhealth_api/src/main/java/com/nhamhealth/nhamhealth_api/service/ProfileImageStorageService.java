@@ -79,6 +79,14 @@ public class ProfileImageStorageService {
         return storeImage(file, ingredientImageDirectory, "/uploads/ingredient-images/", "Ingredient");
     }
 
+    public boolean isStoredMealImageUrl(String imageUrl) {
+        return isStoredImageUrl(imageUrl, "/uploads/meal-images/", "meal-images");
+    }
+
+    public boolean isStoredRecipeStepImageUrl(String imageUrl) {
+        return isStoredImageUrl(imageUrl, "/uploads/recipe-step-images/", "recipe-step-images");
+    }
+
     private String storeImage(MultipartFile file, Path imageDirectory, String publicPath, String imageLabel) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Please choose an image file");
@@ -111,6 +119,21 @@ public class ProfileImageStorageService {
 
     private boolean usesSupabaseStorage() {
         return !supabaseUrl.isBlank() && !supabaseServiceKey.isBlank() && !supabaseBucket.isBlank();
+    }
+
+    private boolean isStoredImageUrl(String imageUrl, String localPathPrefix, String storageFolder) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return false;
+        }
+
+        String normalizedUrl = imageUrl.trim();
+        if (normalizedUrl.startsWith(localPathPrefix)) {
+            return true;
+        }
+
+        String sharedStoragePrefix = supabaseUrl + "/storage/v1/object/public/"
+                + supabaseBucket + "/" + storageFolder + "/";
+        return usesSupabaseStorage() && normalizedUrl.startsWith(sharedStoragePrefix);
     }
 
     private String storeInSupabase(
