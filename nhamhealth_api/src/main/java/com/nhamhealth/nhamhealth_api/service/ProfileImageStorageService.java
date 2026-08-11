@@ -121,13 +121,18 @@ public class ProfileImageStorageService {
             String imageLabel) throws IOException {
         String objectPath = folder + "/" + filename;
         URI uploadUri = URI.create(supabaseUrl + "/storage/v1/object/" + supabaseBucket + "/" + objectPath);
-        HttpRequest request = HttpRequest.newBuilder(uploadUri)
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uploadUri)
                 .timeout(Duration.ofSeconds(30))
-                .header("Authorization", "Bearer " + supabaseServiceKey)
                 .header("apikey", supabaseServiceKey)
                 .header("Content-Type", contentType)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()));
+
+        // New sb_secret_ keys are sent with apikey only. Legacy service_role
+        // JWT keys also need the Bearer header for Storage authorization.
+        if (!supabaseServiceKey.startsWith("sb_secret_")) {
+            requestBuilder.header("Authorization", "Bearer " + supabaseServiceKey);
+        }
+        HttpRequest request = requestBuilder.build();
 
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
