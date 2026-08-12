@@ -9,6 +9,10 @@ const form = document.getElementById("mealForm");
 const recipeStepsBox = document.getElementById("recipeSteps");
 const mealImageFile = document.getElementById("mealImageFile");
 const mealImageHelp = document.getElementById("mealImageHelp");
+const mealImagePreview = document.getElementById("mealImagePreview");
+const mealImagePreviewImage = document.getElementById("mealImagePreviewImage");
+const mealImagePreviewTitle = document.getElementById("mealImagePreviewTitle");
+const mealImagePreviewText = document.getElementById("mealImagePreviewText");
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
@@ -17,6 +21,7 @@ document.querySelector(".pagination")?.remove();
 let meals = [];
 let editingMealId = null;
 let currentMainImageUrl = null;
+let previewObjectUrl = null;
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;"
@@ -31,6 +36,24 @@ const tagClass = tag => {
 };
 
 const statusClass = status => status.toLowerCase() === "published" ? "status-published" : "status-draft";
+
+function clearImagePreview() {
+    if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+    }
+    mealImagePreview.hidden = true;
+    mealImagePreviewImage.removeAttribute("src");
+}
+
+function showImagePreview(imageUrl, title, text) {
+    clearImagePreview();
+    if (!imageUrl) return;
+    mealImagePreviewImage.src = imageUrl;
+    mealImagePreviewTitle.textContent = title;
+    mealImagePreviewText.textContent = text;
+    mealImagePreview.hidden = false;
+}
 
 function drawRows(list) {
     rowsBox.innerHTML = "";
@@ -109,7 +132,33 @@ async function loadMeals() {
 }
 
 function recipeStepMarkup(number) {
-    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="fa-solid fa-trash-can"></i></button></div><input data-step-title type="text" maxlength="150" placeholder="Step title (optional)"><textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea><input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step ${number}"></article>`;
+    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="fa-solid fa-trash-can"></i></button></div><input data-step-title type="text" maxlength="150" placeholder="Step title (optional)"><textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea><input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step ${number}"><div class="recipe-step-image-preview" data-step-image-preview hidden><img data-step-image-preview-image alt="Cooking step image preview"><div><strong data-step-image-preview-title>Current step image</strong><span data-step-image-preview-text>This image is currently shown to users.</span></div></div></article>`;
+}
+
+function clearStepImagePreview(step) {
+    if (step.dataset.previewObjectUrl) {
+        URL.revokeObjectURL(step.dataset.previewObjectUrl);
+        delete step.dataset.previewObjectUrl;
+    }
+    const preview = step.querySelector("[data-step-image-preview]");
+    if (!preview) return;
+    preview.hidden = true;
+    preview.querySelector("[data-step-image-preview-image]").removeAttribute("src");
+}
+
+function showStepImagePreview(step, imageUrl, title, text) {
+    clearStepImagePreview(step);
+    if (!imageUrl) return;
+    const preview = step.querySelector("[data-step-image-preview]");
+    if (!preview) return;
+    preview.querySelector("[data-step-image-preview-image]").src = imageUrl;
+    preview.querySelector("[data-step-image-preview-title]").textContent = title;
+    preview.querySelector("[data-step-image-preview-text]").textContent = text;
+    preview.hidden = false;
+}
+
+function clearAllStepImagePreviews() {
+    recipeStepsBox.querySelectorAll("[data-recipe-step]").forEach(clearStepImagePreview);
 }
 
 function updateRecipeStepLabels() {
@@ -128,11 +177,15 @@ function appendRecipeStep(step = {}) {
     const imageInput = element.querySelector("[data-step-image]");
     element.dataset.imageUrl = step.imageUrl || "";
     imageInput.required = !step.imageUrl;
-    if (step.imageUrl) imageInput.title = "Choose a new file only to replace the current step image.";
+    if (step.imageUrl) {
+        imageInput.title = "Choose a new file only to replace the current step image.";
+        showStepImagePreview(element, step.imageUrl, "Current step image", "This image is currently shown to users.");
+    }
     updateRecipeStepLabels();
 }
 
 function resetRecipeSteps() {
+    clearAllStepImagePreviews();
     recipeStepsBox.innerHTML = "";
     appendRecipeStep();
 }
@@ -141,6 +194,7 @@ function openCreateModal() {
     editingMealId = null;
     currentMainImageUrl = null;
     form.reset();
+    clearImagePreview();
     form.elements.categoryId.querySelector("option[data-inactive-category]")?.remove();
     mealImageFile.required = true;
     mealImageHelp.textContent = "JPG, PNG, or WebP. Maximum 5 MB.";
@@ -175,6 +229,8 @@ async function openEditModal(mealId) {
         form.elements.description.value = meal.description ?? "";
         mealImageFile.required = false;
         mealImageHelp.textContent = "Leave empty to keep the current meal image. JPG, PNG, or WebP; maximum 5 MB.";
+        showImagePreview(meal.mainImageUrl, "Current meal image", "This is the image currently shown to users.");
+        clearAllStepImagePreviews();
         recipeStepsBox.innerHTML = "";
         meal.recipeSteps.forEach(appendRecipeStep);
         document.getElementById("mealModalTitle").textContent = "Edit Meal";
@@ -182,11 +238,13 @@ async function openEditModal(mealId) {
         document.getElementById("saveMealButton").textContent = "Update Meal";
         modal.classList.add("show");
     } catch (error) {
-        window.alert(error.message);
+        window.adminAlerts?.error(error.message) ?? window.alert(error.message);
     }
 }
 
 function closeModal() {
+    clearImagePreview();
+    clearAllStepImagePreviews();
     modal.classList.remove("show");
 }
 
@@ -201,6 +259,7 @@ async function uploadImage(endpoint, file, responseField) {
 
 async function saveMeal(event) {
     event.preventDefault();
+    const isUpdate = Boolean(editingMealId);
     const data = new FormData(form);
     const imageFile = data.get("imageFile");
     data.delete("imageFile");
@@ -221,8 +280,8 @@ async function saveMeal(event) {
                 imageUrl: stepImage ? await uploadImage("/admin/recipe-step-images", stepImage, "imageUrl") : step.dataset.imageUrl
             };
         }));
-        const response = await fetch(editingMealId ? `/admin/meals/${editingMealId}` : "/admin/meals", {
-            method: editingMealId ? "PUT" : "POST",
+        const response = await fetch(isUpdate ? `/admin/meals/${editingMealId}` : "/admin/meals", {
+            method: isUpdate ? "PUT" : "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json", ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}) },
             body: JSON.stringify(payload)
         });
@@ -230,10 +289,14 @@ async function saveMeal(event) {
             const body = await response.json().catch(() => ({}));
             throw new Error(body.message || "Unable to save meal");
         }
+        await (window.adminAlerts?.success(
+            isUpdate ? "Updated!" : "Added!",
+            isUpdate ? "The meal has been updated successfully." : "The new meal has been added successfully."
+        ) ?? Promise.resolve(window.alert(isUpdate ? "The meal has been updated successfully." : "The new meal has been added successfully.")));
         closeModal();
         await loadMeals();
     } catch (error) {
-        window.alert(error.message);
+        window.adminAlerts?.error(error.message) ?? window.alert(error.message);
         console.error(error);
     }
 }
@@ -243,16 +306,22 @@ rowsBox.addEventListener("click", async event => {
     if (!button) return;
     const mealId = button.dataset.mealId;
     if (button.dataset.action === "edit") return openEditModal(mealId);
-    if (!window.confirm("Delete this meal? Its recipe details and related saved data will be removed.")) return;
+    const meal = meals.find(item => String(item.mealId) === String(mealId));
+    const confirmed = await (window.adminAlerts?.confirmDelete({
+        title: "Delete this meal?",
+        text: `${meal?.mealName || "This meal"} and its recipe details, saved data, and related records will be removed.`
+    }) ?? Promise.resolve(window.confirm("Delete this meal? Its recipe details and related saved data will be removed.")));
+    if (!confirmed) return;
     try {
         const response = await fetch(`/admin/meals/${mealId}`, { method: "DELETE", headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {} });
         if (!response.ok) {
             const body = await response.json().catch(() => ({}));
             throw new Error(body.message || "Unable to delete meal");
         }
+        await window.adminAlerts?.success("Deleted!", "The meal has been deleted.");
         await loadMeals();
     } catch (error) {
-        window.alert(error.message);
+        window.adminAlerts?.error(error.message) ?? window.alert(error.message);
     }
 });
 
@@ -271,11 +340,46 @@ document.getElementById("openModal").onclick = openCreateModal;
 document.getElementById("closeModal").onclick = closeModal;
 document.getElementById("cancelModal").onclick = closeModal;
 document.getElementById("addRecipeStep").onclick = () => appendRecipeStep();
+mealImageFile.addEventListener("change", () => {
+    const file = mealImageFile.files[0];
+    if (!file) {
+        if (editingMealId && currentMainImageUrl) {
+            showImagePreview(currentMainImageUrl, "Current meal image", "This is the image currently shown to users.");
+        } else {
+            clearImagePreview();
+        }
+        return;
+    }
+    clearImagePreview();
+    previewObjectUrl = URL.createObjectURL(file);
+    mealImagePreviewImage.src = previewObjectUrl;
+    mealImagePreviewTitle.textContent = "New meal image preview";
+    mealImagePreviewText.textContent = "This image will replace the current one after you save.";
+    mealImagePreview.hidden = false;
+});
 recipeStepsBox.addEventListener("click", event => {
     const button = event.target.closest(".step-remove");
     if (!button || recipeStepsBox.children.length === 1) return;
-    button.closest("[data-recipe-step]").remove();
+    const step = button.closest("[data-recipe-step]");
+    clearStepImagePreview(step);
+    step.remove();
     updateRecipeStepLabels();
+});
+recipeStepsBox.addEventListener("change", event => {
+    if (!event.target.matches("[data-step-image]")) return;
+    const step = event.target.closest("[data-recipe-step]");
+    const file = event.target.files[0];
+    if (!file) {
+        showStepImagePreview(step, step.dataset.imageUrl, "Current step image", "This image is currently shown to users.");
+        return;
+    }
+    clearStepImagePreview(step);
+    const previewUrl = URL.createObjectURL(file);
+    step.dataset.previewObjectUrl = previewUrl;
+    step.querySelector("[data-step-image-preview-image]").src = previewUrl;
+    step.querySelector("[data-step-image-preview-title]").textContent = "New step image preview";
+    step.querySelector("[data-step-image-preview-text]").textContent = "This image will replace the current one after you save.";
+    step.querySelector("[data-step-image-preview]").hidden = false;
 });
 form.addEventListener("submit", saveMeal);
 updateRecipeStepLabels();

@@ -9,4 +9,8 @@ import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 public interface NutrientRepository extends JpaRepository<Nutrient, Integer> {
 
     List<Nutrient> findAllByOrderByDisplayOrderAsc();
+
+    boolean existsByNutrientNameIgnoreCase(String nutrientName);
+
+    boolean existsByNutrientNameIgnoreCaseAndNutrientIdNot(String nutrientName, Integer nutrientId);
 }

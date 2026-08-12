@@ -42,7 +42,7 @@
                     <div class="stat-icon green"><i class="bi bi-tag-fill"></i></div>
                     <div class="stat-content">
                         <span>Total Tags</span>
-                        <strong th:text="${#numbers.formatInteger(totalTags, 0, 'COMMA')}">86</strong>
+                        <strong id="totalTagCount" th:text="${#numbers.formatInteger(totalTags, 0, 'COMMA')}">86</strong>
                         <small>All tags in system</small>
                     </div>
                 </article>
@@ -51,8 +51,8 @@
                     <div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
                     <div class="stat-content">
                         <span>Active Tags</span>
-                        <strong th:text="${#numbers.formatInteger(activeTags, 0, 'COMMA')}">81</strong>
-                        <small th:text="${totalTags > 0 ? #numbers.formatDecimal(activeTags * 100.0 / totalTags, 1, 1) + '% active' : 'No tags yet'}">94.2% active</small>
+                        <strong id="activeTagCount" th:text="${#numbers.formatInteger(activeTags, 0, 'COMMA')}">81</strong>
+                        <small id="activeTagPercentage" th:text="${totalTags > 0 ? #numbers.formatDecimal(activeTags * 100.0 / totalTags, 1, 1) + '% active' : 'No tags yet'}">94.2% active</small>
                     </div>
                 </article>
 
@@ -60,7 +60,7 @@
                     <div class="stat-icon orange"><i class="bi bi-slash-circle"></i></div>
                     <div class="stat-content">
                         <span>Inactive Tags</span>
-                        <strong th:text="${#numbers.formatInteger(inactiveTags, 0, 'COMMA')}">5</strong>
+                        <strong id="inactiveTagCount" th:text="${#numbers.formatInteger(inactiveTags, 0, 'COMMA')}">5</strong>
                         <small>Needs review</small>
                     </div>
                 </article>
@@ -98,7 +98,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tagRows">
                         <tr th:each="tag : ${tags}" th:data-id="${tag.tagId}" th:data-name="${#strings.toLowerCase(tag.tagName)}" th:data-scope="${#strings.toLowerCase(tag.tagScope)}" th:data-description="${tag.description ?: ''}" th:data-status="${tag.isActive != null and tag.isActive ? 'active' : 'inactive'}">
                             <td>
                                 <span class="pill tag-pink" th:text="${tag.tagName}">High Protein</span>
@@ -108,7 +108,7 @@
                             </td>
                             <td th:text="${tag.description != null ? tag.description : '-'}">High in protein content</td>
                             <td>
-                                <span class="status-badge active-status" th:classappend="${tag.isActive != null and tag.isActive ? ' active-status' : ' inactive-status'}" th:text="${tag.isActive != null and tag.isActive ? 'Active' : 'Inactive'}">Active</span>
+                                <span class="status-badge" th:classappend="${tag.isActive != null and tag.isActive ? ' active-status' : ' inactive-status'}" th:text="${tag.isActive != null and tag.isActive ? 'Active' : 'Inactive'}">Active</span>
                             </td>
                             <td>
                                 <div class="action-group">
@@ -117,7 +117,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(tags)}"><td class="empty-state" colspan="5"><i class="bi bi-tags"></i><strong>No tags yet</strong><span>Add a tag to organize meals and community content.</span></td></tr>
+                        <tr th:if="${#lists.isEmpty(tags)}" id="emptyTagRow"><td class="empty-state" colspan="5"><i class="bi bi-tags"></i><strong>No tags yet</strong><span>Add a tag to organize meals and community content.</span></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -134,7 +134,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="modal" id="tagModal" aria-hidden="true">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
         <div class="modal-header">
             <div>
                 <h2 id="tagModalTitle">Add tag</h2>
@@ -144,7 +144,7 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-        <form id="tagForm">
+        <form id="tagForm" novalidate>
             <input id="tagId" name="tagId" type="hidden">
             <div class="modal-body">
                 <div class="field">
