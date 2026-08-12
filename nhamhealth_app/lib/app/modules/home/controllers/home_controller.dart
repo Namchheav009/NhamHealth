@@ -5,6 +5,7 @@ import '../../auth/models/authenticated_user_model.dart';
 import '../../auth/services/google_auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../models/home_dashboard_model.dart';
+import '../models/home_route_arguments.dart';
 import '../repositories/home_repository.dart';
 
 class HomeController extends GetxController {
@@ -37,12 +38,17 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     final routeUser = Get.arguments;
-    if (routeUser is AuthenticatedUser) {
+    if (routeUser is HomeRouteArguments) {
+      authenticatedUser.value = routeUser.user;
+      dashboard.value = routeUser.initialDashboard;
+    } else if (routeUser is AuthenticatedUser) {
       authenticatedUser.value = routeUser;
     } else {
       _restoreAuthenticatedUser();
     }
-    loadDashboard();
+    if (dashboard.value == null) {
+      loadDashboard();
+    }
   }
 
   Future<void> _restoreAuthenticatedUser() async {
