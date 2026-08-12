@@ -18,6 +18,7 @@ public class DevSecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .usernameParameter("email")
+                .defaultSuccessUrl("/dashboard?login=success", true)
                 .permitAll())
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
