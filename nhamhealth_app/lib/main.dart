@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/bindings/initial_binding.dart';
+import 'app/theme/app_colors.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,19 @@ class NhamHealthApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Nham Health',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: AppColors.homeBackground,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primaryGreen,
+          primary: AppColors.primaryGreen,
+          secondary: AppColors.primaryPink,
+          surface: AppColors.cardSurface,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: AppColors.primaryGreen,
+        ),
+      ),
       initialRoute: AppPages.initialRoute,
       getPages: AppPages.pages,
       initialBinding: InitialBinding(),

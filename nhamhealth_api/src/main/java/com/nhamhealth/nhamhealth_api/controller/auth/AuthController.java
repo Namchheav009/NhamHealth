@@ -78,6 +78,7 @@ public class AuthController {
         Number userId = jwt.getClaim("userId");
         List<String> roles = jwt.getClaimAsStringList("roles");
         String role = roles == null || roles.isEmpty() ? "USER" : roles.getFirst();
-        return new AuthenticatedUserResponse(userId.intValue(), jwt.getSubject(), role);
+        return authService.authenticatedUser(
+                userId.intValue(), jwt.getSubject(), role);
     }
 }

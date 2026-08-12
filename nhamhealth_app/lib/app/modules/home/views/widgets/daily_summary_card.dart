@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 import 'nutrition_progress_card.dart';
@@ -17,24 +19,22 @@ class DailySummaryCard extends GetView<HomeController> {
       }
 
       return Container(
-        constraints: const BoxConstraints(minHeight: 158),
+        constraints: const BoxConstraints(minHeight: 160),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(15),
           gradient: const LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [Color(0xFFFFF5F7), Color(0xFFFFFFFF), Color(0xFFF1FFF2)],
+            colors: [
+              AppColors.softPink,
+              AppColors.cardSurface,
+              AppColors.softGreen,
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF66706A).withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          boxShadow: AppShadows.surface,
         ),
         child: InnerShadow(
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(15),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 15, 16, 17),
             child: Column(
@@ -43,19 +43,23 @@ class DailySummaryCard extends GetView<HomeController> {
                   children: [
                     const Icon(
                       Icons.eco_rounded,
-                      color: Color(0xFF00A651),
+                      color: AppColors.primaryGreen,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Your Daily Wellness',
-                      style: TextStyle(
-                        color: Color(0xFF3E3E3E),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    const Expanded(
+                      child: Text(
+                        'Your Daily Wellness',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () {},
                       borderRadius: BorderRadius.circular(16),
@@ -67,14 +71,14 @@ class DailySummaryCard extends GetView<HomeController> {
                               'View Details',
                               style: TextStyle(
                                 fontSize: 9,
-                                color: Color(0xFF00A651),
+                                color: AppColors.primaryGreen,
                               ),
                             ),
                             SizedBox(width: 2),
                             Icon(
                               Icons.chevron_right_rounded,
                               size: 17,
-                              color: Color(0xFF00A651),
+                              color: AppColors.primaryGreen,
                             ),
                           ],
                         ),
