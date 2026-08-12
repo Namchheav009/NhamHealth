@@ -29,9 +29,16 @@ spring.datasource.password=YOUR_DATABASE_PASSWORD
 spring.datasource.driver-class-name=org.postgresql.Driver
 spring.datasource.hikari.data-source-properties.sslmode=require
 spring.datasource.hikari.maximum-pool-size=5
-spring.datasource.hikari.minimum-idle=1
-spring.datasource.hikari.idle-timeout=60000
-spring.datasource.hikari.max-lifetime=300000
+spring.datasource.hikari.minimum-idle=0
+spring.datasource.hikari.idle-timeout=10000
+spring.datasource.hikari.max-lifetime=60000
+spring.datasource.hikari.keepalive-time=30000
+spring.datasource.hikari.validation-timeout=5000
+spring.datasource.hikari.connection-timeout=10000
+spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
+# Supabase may close an idle pooled session between checks. Hikari discards and
+# replaces it automatically, so hide only this recoverable validation warning.
+logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
 spring.jpa.properties.hibernate.default_schema=public
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
