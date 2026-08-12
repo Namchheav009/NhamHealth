@@ -86,6 +86,65 @@ void main() {
     },
   );
 
+  test('login does not follow a redirect to the HTML login page', () async {
+    final service = AuthService(
+      client: MockClient((request) async {
+        expect(request.followRedirects, isFalse);
+        return http.Response(
+          '<html><body>Sign in</body></html>',
+          302,
+          headers: {'location': '/login'},
+        );
+      }),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(
+          email: 'user@example.com',
+          password: 'StrongPass123!',
+        ),
+      ),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 302)
+            .having(
+              (error) => error.message,
+              'message',
+              contains('redirected the sign-in request'),
+            ),
+      ),
+    );
+  });
+
+  test('login explains a non-JSON service error', () async {
+    final service = AuthService(
+      client: MockClient(
+        (_) async => http.Response('<html>Database unavailable</html>', 503),
+      ),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(
+          email: 'user@example.com',
+          password: 'StrongPass123!',
+        ),
+      ),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 503)
+            .having(
+              (error) => error.message,
+              'message',
+              contains('temporarily unavailable'),
+            ),
+      ),
+    );
+  });
+
   test('restoreSession validates a saved token and returns its user', () async {
     final storage = _MemoryTokenStorage()..accessToken = 'saved-token';
     final service = AuthService(

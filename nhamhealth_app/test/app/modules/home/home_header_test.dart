@@ -76,6 +76,34 @@ void main() {
     expect(find.text('Alex Rivera'), findsOneWidget);
     expect(find.text('alex@example.com'), findsOneWidget);
   });
+
+  testWidgets('notification bell opens the notifications screen', (
+    tester,
+  ) async {
+    Get.put<AuthService>(_TrackingAuthService());
+    Get.put<HomeController>(
+      HomeController(repository: HomeRepository(provider: HomeProvider())),
+    );
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        getPages: AppPages.pages,
+        home: const Scaffold(body: HomeHeader()),
+      ),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('notifications-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(Get.currentRoute, '/notifications');
+    expect(find.text('Notifications'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('notifications-list')),
+      findsOneWidget,
+    );
+  });
 }
 
 class _TrackingAuthService extends AuthService {

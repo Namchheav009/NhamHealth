@@ -69,16 +69,18 @@ class AuthService {
   ) async {
     final http.Response response;
     try {
-      response = await _client
-          .post(
-            Uri.parse('${ApiConfig.baseUrl}$path'),
-            headers: const {
+      final request =
+          http.Request('POST', Uri.parse('${ApiConfig.baseUrl}$path'))
+            ..followRedirects = false
+            ..headers.addAll(const {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-            },
-            body: jsonEncode(body),
-          )
+            })
+            ..body = jsonEncode(body);
+      final streamedResponse = await _client
+          .send(request)
           .timeout(const Duration(seconds: 15));
+      response = await http.Response.fromStream(streamedResponse);
     } on TimeoutException {
       throw const AuthException(
         'The server took too long to respond. Please try again.',
@@ -89,18 +91,27 @@ class AuthService {
       );
     }
 
-    final Map<String, dynamic> payload;
+    Map<String, dynamic>? payload;
     try {
-      payload = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        payload = decoded;
+      }
     } on Object {
-      throw const AuthException('The server returned an invalid response.');
+      payload = null;
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw AuthException(
-        payload['message'] as String? ??
-            payload['error'] as String? ??
-            'Authentication failed. Please try again.',
+        _errorMessage(response, payload),
+        statusCode: response.statusCode,
+      );
+    }
+
+    if (payload == null) {
+      throw AuthException(
+        'The API returned HTTP ${response.statusCode}, but its response was not '
+        'valid JSON. Restart the API and try again.',
         statusCode: response.statusCode,
       );
     }
@@ -126,6 +137,30 @@ class AuthService {
     }
 
     return result;
+  }
+
+  String _errorMessage(http.Response response, Map<String, dynamic>? payload) {
+    final apiMessage = payload?['message'] ?? payload?['error'];
+    if (apiMessage is String && apiMessage.trim().isNotEmpty) {
+      return apiMessage.trim();
+    }
+
+    return switch (response.statusCode) {
+      301 || 302 || 303 || 307 || 308 =>
+        'The API redirected the sign-in request to a web page. Restart the API '
+            'and verify API_BASE_URL (${ApiConfig.baseUrl}).',
+      400 => 'The sign-in request was rejected by the server.',
+      401 => 'Invalid email or password.',
+      403 => 'This account is not allowed to sign in to the mobile app.',
+      404 =>
+        'The sign-in endpoint was not found. Verify API_BASE_URL '
+            '(${ApiConfig.baseUrl}).',
+      500 => 'The server could not complete sign in. Check the API logs.',
+      502 || 503 || 504 =>
+        'The authentication service is temporarily unavailable. Try again '
+            'shortly.',
+      _ => 'Authentication failed (HTTP ${response.statusCode}).',
+    };
   }
 }
 
