@@ -141,6 +141,7 @@
         formData.delete('profileImageFile');
         formData.delete('userId');
         const payload = Object.fromEntries(formData.entries());
+        if (editingUserId && !payload.password) delete payload.password;
         payload.verified = form.verified.checked;
         setFormError();
         submitButton.disabled = true;

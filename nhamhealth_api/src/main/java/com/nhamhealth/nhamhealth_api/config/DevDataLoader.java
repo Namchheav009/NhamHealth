@@ -28,10 +28,10 @@ public class DevDataLoader implements CommandLineRunner {
             RoleRepository roleRepository,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            @Value("${APP_ADMIN_EMAIL:admin@nhamhealth.local}") String adminEmail,
-            @Value("${APP_ADMIN_PASSWORD:Admin123!}") String adminPassword,
-            @Value("${APP_USER_EMAIL:user@nhamhealth.local}") String userEmail,
-            @Value("${APP_USER_PASSWORD:User123!}") String userPassword) {
+            @Value("${app.seed.admin-email}") String adminEmail,
+            @Value("${app.seed.admin-password}") String adminPassword,
+            @Value("${app.seed.user-email}") String userEmail,
+            @Value("${app.seed.user-password}") String userPassword) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
