@@ -286,7 +286,7 @@ class AuthenticationFlowTests {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"fullName":"Updated User","email":"%s","role":"USER","status":"SUSPENDED","verified":false}
+                                {"fullName":"Updated User","email":"%s","password":"","role":"USER","status":"SUSPENDED","verified":false}
                                 """.formatted(email)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated User"))
