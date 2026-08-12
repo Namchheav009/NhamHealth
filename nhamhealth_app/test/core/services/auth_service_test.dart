@@ -27,6 +27,8 @@ void main() {
               'userId': 7,
               'email': 'user@example.com',
               'role': 'USER',
+              'fullName': 'Nham User',
+              'profileImageUrl': '/uploads/profile-images/user.png',
             },
           }),
           200,
@@ -43,39 +45,46 @@ void main() {
     );
 
     expect(response.user.email, 'user@example.com');
+    expect(response.user.displayName, 'Nham User');
+    expect(response.user.profileImageUrl, '/uploads/profile-images/user.png');
     expect(storage.accessToken, 'access-token');
   });
 
-  test('registration exposes conflict status for an existing account', () async {
-    final service = AuthService(
-      client: MockClient(
-        (_) async => http.Response(
-          jsonEncode({'message': 'An account with this email already exists'}),
-          409,
+  test(
+    'registration exposes conflict status for an existing account',
+    () async {
+      final service = AuthService(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'message': 'An account with this email already exists',
+            }),
+            409,
+          ),
         ),
-      ),
-      tokenStorage: _MemoryTokenStorage(),
-    );
+        tokenStorage: _MemoryTokenStorage(),
+      );
 
-    await expectLater(
-      service.register(
-        const RegisterRequest(
-          fullName: 'Existing User',
-          email: 'user@example.com',
-          password: 'StrongPass123!',
+      await expectLater(
+        service.register(
+          const RegisterRequest(
+            fullName: 'Existing User',
+            email: 'user@example.com',
+            password: 'StrongPass123!',
+          ),
         ),
-      ),
-      throwsA(
-        isA<AuthException>()
-            .having((error) => error.statusCode, 'statusCode', 409)
-            .having(
-              (error) => error.message,
-              'message',
-              'An account with this email already exists',
-            ),
-      ),
-    );
-  });
+        throwsA(
+          isA<AuthException>()
+              .having((error) => error.statusCode, 'statusCode', 409)
+              .having(
+                (error) => error.message,
+                'message',
+                'An account with this email already exists',
+              ),
+        ),
+      );
+    },
+  );
 
   test('restoreSession validates a saved token and returns its user', () async {
     final storage = _MemoryTokenStorage()..accessToken = 'saved-token';
@@ -89,6 +98,8 @@ void main() {
             'userId': 7,
             'email': 'user@example.com',
             'role': 'USER',
+            'fullName': 'Nham User',
+            'profileImageUrl': null,
           }),
           200,
         );
@@ -99,6 +110,7 @@ void main() {
     final user = await service.restoreSession();
 
     expect(user?.email, 'user@example.com');
+    expect(user?.displayName, 'Nham User');
   });
 
   test('restoreSession clears a rejected token', () async {

@@ -16,6 +16,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,18 +30,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.jayway.jsonpath.JsonPath;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
+import com.nhamhealth.nhamhealth_api.service.GoogleTokenVerifier;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -71,6 +76,9 @@ class AuthenticationFlowTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @MockitoBean
+    private GoogleTokenVerifier googleTokenVerifier;
 
     @BeforeEach
     void createTestAccounts() {
@@ -117,6 +125,12 @@ class AuthenticationFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.profileImageUrl").value(org.hamcrest.Matchers.startsWith("/uploads/profile-images/")));
 
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profileImageUrl")
+                        .value(org.hamcrest.Matchers.startsWith("/uploads/profile-images/")));
+
         User user = userRepository.findByEmailIgnoreCase("user@nhamhealth.local").orElseThrow();
         assertTrue(userProfileRepository.findByUser_UserId(user.getUserId())
                 .map(profile -> profile.getProfileImageUrl().startsWith("/uploads/profile-images/"))
@@ -146,7 +160,56 @@ class AuthenticationFlowTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.user.email").value(email))
-                .andExpect(jsonPath("$.user.role").value("USER"));
+                .andExpect(jsonPath("$.user.role").value("USER"))
+                .andExpect(jsonPath("$.user.fullName").value("New User"))
+                .andExpect(jsonPath("$.user.profileImageUrl").isEmpty());
+    }
+
+    @Test
+    void googleLoginRefreshesTheLinkedUsersRealProfile() throws Exception {
+        String email = "google-linked-" + UUID.randomUUID() + "@example.com";
+        Role userRole = findOrCreateRole("USER");
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode("StrongPass123!"));
+        user.setRole(userRole);
+        user.setStatus("ACTIVE");
+        user.setIsVerified(true);
+        user.setVerifiedAt(LocalDateTime.now());
+        user = userRepository.save(user);
+
+        UserProfile profile = new UserProfile();
+        profile.setUser(user);
+        profile.setFullName("Old Profile Name");
+        profile.setProfileImageUrl(null);
+        profile.setCreatedAt(LocalDateTime.now());
+        profile.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(profile);
+
+        String googlePicture = "https://lh3.googleusercontent.com/a/google-profile";
+        when(googleTokenVerifier.verify("linked-google-token"))
+                .thenReturn(new GoogleTokenVerifier.GoogleIdentity(
+                        "google-subject-" + UUID.randomUUID(),
+                        email,
+                        "Google Profile Name",
+                        googlePicture));
+
+        mockMvc.perform(post("/api/v1/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idToken":"linked-google-token"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.email").value(email))
+                .andExpect(jsonPath("$.user.fullName").value("Google Profile Name"))
+                .andExpect(jsonPath("$.user.profileImageUrl").value(googlePicture));
+
+        UserProfile refreshed = userProfileRepository
+                .findByUser_UserId(user.getUserId())
+                .orElseThrow();
+        assertEquals("Google Profile Name", refreshed.getFullName());
+        assertEquals(googlePicture, refreshed.getProfileImageUrl());
     }
 
     @Test

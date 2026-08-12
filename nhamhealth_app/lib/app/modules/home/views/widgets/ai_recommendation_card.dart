@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 
@@ -16,21 +18,15 @@ class AiRecommendationCard extends GetView<HomeController> {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(17),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF66706A).withValues(alpha: 0.09),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: AppShadows.surface,
           ),
           child: InnerShadow(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(15),
             child: Stack(
               children: [
                 Positioned(
-                  right: -29,
+                  right: -40,
                   top: 27,
                   child: Container(
                     width: 148,
@@ -39,13 +35,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                     decoration: BoxDecoration(
                       color: Colors.black,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                      boxShadow: AppShadows.image,
                     ),
                     child: ClipOval(
                       child: Image.asset(
@@ -77,7 +67,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Color(0xFF009B49),
+                                color: AppColors.primaryGreen,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -97,7 +87,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                           style: TextStyle(
                             fontSize: 14,
                             height: 1.08,
-                            color: Color(0xFF414141),
+                            color: AppColors.primaryText,
                           ),
                         ),
                       ),
@@ -107,12 +97,12 @@ class AiRecommendationCard extends GetView<HomeController> {
                         child: ElevatedButton(
                           onPressed: controller.getRecommendation,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF009B49),
+                            backgroundColor: AppColors.primaryGreen,
                             foregroundColor: Colors.white,
-                            elevation: 4,
-                            shadowColor: const Color(
-                              0xFF009B49,
-                            ).withValues(alpha: 0.32),
+                            elevation: 3,
+                            shadowColor: AppColors.primaryGreen.withValues(
+                              alpha: 0.2,
+                            ),
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(22),

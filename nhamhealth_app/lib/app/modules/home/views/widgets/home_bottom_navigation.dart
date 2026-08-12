@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 
 class HomeBottomNavigation extends GetView<HomeController> {
   const HomeBottomNavigation({super.key});
 
-  static const Color _activeGreen = Color(0xFF35AD67);
-  static const Color _inactiveGray = Color(0xFF929292);
+  static const Color _activeGreen = AppColors.navigationGreen;
+  static const Color _inactiveGray = AppColors.inactiveText;
 
   @override
   Widget build(BuildContext context) {
@@ -29,22 +31,22 @@ class HomeBottomNavigation extends GetView<HomeController> {
                 clipper: const _NavigationBarClipper(),
                 clipBehavior: Clip.antiAlias,
                 color: Colors.white,
-                shadowColor: Colors.black.withValues(alpha: 0.22),
-                elevation: 10,
+                shadowColor: const Color(0x1A31543F),
+                elevation: 4,
                 child: DecoratedBox(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Color(0xFFFFFBFC),
-                        Color(0xFFFFFFFF),
-                        Color(0xFFFBFFF2),
+                        AppColors.homeBackground,
+                        AppColors.cardSurface,
+                        AppColors.softGreen,
                       ],
                     ),
                   ),
                   child: CustomPaint(
-                    foregroundPainter: const _NavigationBorderPainter(),
+                    foregroundPainter: const _NavigationInnerShadowPainter(),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Row(
@@ -103,7 +105,7 @@ class HomeBottomNavigation extends GetView<HomeController> {
 }
 
 Path _navigationBarPath(Size size) {
-  const cornerRadius = 28.0;
+  const cornerRadius = 32.0;
   const notchHalfWidth = 35.0;
   const notchDepth = 29.0;
   final center = size.width / 2;
@@ -146,22 +148,62 @@ class _NavigationBarClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant _NavigationBarClipper oldClipper) => false;
 }
 
-class _NavigationBorderPainter extends CustomPainter {
-  const _NavigationBorderPainter();
+class _NavigationInnerShadowPainter extends CustomPainter {
+  const _NavigationInnerShadowPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
+    final path = _navigationBarPath(size);
+
+    canvas.save();
+    canvas.clipPath(path);
+
+    _paintInsetShadow(
+      canvas,
+      path,
+      color: const Color(0x14005C32),
+      blurRadius: 9,
+      offset: const Offset(-1, -1),
+    );
+    _paintInsetShadow(
+      canvas,
+      path,
+      color: const Color(0x99FFFFFF),
+      blurRadius: 6,
+      offset: const Offset(1, 2),
+    );
+
     canvas.drawPath(
-      _navigationBarPath(size),
+      path,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.9)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2,
     );
+
+    canvas.restore();
+  }
+
+  void _paintInsetShadow(
+    Canvas canvas,
+    Path path, {
+    required Color color,
+    required double blurRadius,
+    required Offset offset,
+  }) {
+    canvas.drawPath(
+      path.shift(offset),
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = blurRadius * 1.7
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurRadius * 0.58),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _NavigationBorderPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _NavigationInnerShadowPainter oldDelegate) =>
+      false;
 }
 
 class _NavItem extends StatelessWidget {
@@ -194,8 +236,8 @@ class _NavItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            width: selected ? 66 : 43,
-            height: 44,
+            width: selected ? 68 : 43,
+            height: selected ? 48 : 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color:
@@ -203,36 +245,11 @@ class _NavItem extends StatelessWidget {
                       ? HomeBottomNavigation._activeGreen
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(25),
-              boxShadow:
-                  selected
-                      ? [
-                        BoxShadow(
-                          color: HomeBottomNavigation._activeGreen.withValues(
-                            alpha: 0.22,
-                          ),
-                          blurRadius: 9,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                      : null,
+              boxShadow: selected ? AppShadows.selectedNavigation : null,
             ),
             child: InnerShadow(
               borderRadius: BorderRadius.circular(25),
-              shadows:
-                  selected
-                      ? const [
-                        BoxShadow(
-                          color: Color(0x26006231),
-                          blurRadius: 7,
-                          offset: Offset(-1, -1),
-                        ),
-                        BoxShadow(
-                          color: Color(0x4D6AF09F),
-                          blurRadius: 4,
-                          offset: Offset(1, 1),
-                        ),
-                      ]
-                      : const [],
+              shadows: selected ? AppShadows.innerSelectedNavigation : const [],
               child: Center(
                 child: Icon(
                   selected ? selectedIcon ?? icon : icon,
@@ -284,7 +301,7 @@ class _PostButton extends StatelessWidget {
                     color: Colors.white,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF009B49),
+                      color: AppColors.primaryGreen,
                       width: 1.4,
                     ),
                     boxShadow: [
@@ -294,13 +311,13 @@ class _PostButton extends StatelessWidget {
                         spreadRadius: 5,
                       ),
                       BoxShadow(
-                        color: const Color(0xFF009B49).withValues(alpha: 0.16),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: const _PostPlusIcon(color: Color(0xFF009B49)),
+                  child: const _PostPlusIcon(color: AppColors.primaryGreen),
                 ),
                 const SizedBox(height: 8),
                 AnimatedDefaultTextStyle(
@@ -308,7 +325,7 @@ class _PostButton extends StatelessWidget {
                   style: TextStyle(
                     color:
                         selected
-                            ? const Color(0xFF009B49)
+                            ? AppColors.primaryGreen
                             : HomeBottomNavigation._inactiveGray,
                     fontSize: 11,
                     height: 1,
