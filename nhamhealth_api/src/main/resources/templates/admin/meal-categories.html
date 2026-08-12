@@ -95,7 +95,7 @@
                             <td th:text="${category.description != null ? category.description : '-'}">Meals for a healthy and energetic start</td>
                             <td th:text="${mealCounts[category.categoryId] != null ? mealCounts[category.categoryId] : 0}">0</td>
                             <td>
-                                <span class="status-badge active-status" th:classappend="${category.isActive != null and category.isActive ? ' active-status' : ' inactive-status'}" th:text="${category.isActive != null and category.isActive ? 'Active' : 'Inactive'}">Active</span>
+                                <span class="status-badge" th:classappend="${category.isActive != null and category.isActive ? ' active-status' : ' inactive-status'}" th:text="${category.isActive != null and category.isActive ? 'Active' : 'Inactive'}">Active</span>
                             </td>
                             <td th:text="${category.sortOrder}">1</td>
                             <td>
@@ -104,6 +104,9 @@
                                     <button class="icon-button small danger" data-action="delete" type="button" aria-label="Delete category"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(mealCategories)}" id="emptyCategoryRow">
+                            <td colspan="7" class="empty-state">No meal categories found. Add your first category to begin.</td>
                         </tr>
                         </tbody>
                     </table>
@@ -120,8 +123,8 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<div class="modal" id="categoryModal">
-    <section class="modal-card">
+<div class="modal" id="categoryModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
         <div class="modal-header">
             <div>
                 <h2 id="categoryModalTitle">Add Meal Category</h2>
@@ -155,7 +158,7 @@
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelCategoryModal" type="button">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Category</button>
+                <button class="btn btn-primary" id="saveCategoryButton" type="submit">Save Category</button>
             </div>
         </form>
     </section>
