@@ -18,8 +18,14 @@ import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.GoogleLoginRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ForgotPasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.AuthService;
+import com.nhamhealth.nhamhealth_api.service.PasswordResetService;
 
 import jakarta.validation.Valid;
 
@@ -28,9 +34,11 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
         this.authService = authService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/login")
@@ -80,5 +88,25 @@ public class AuthController {
         String role = roles == null || roles.isEmpty() ? "USER" : roles.getFirst();
         return authService.authenticatedUser(
                 userId.intValue(), jwt.getSubject(), role);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.sendCode(request.email());
+        return ResponseEntity.accepted().body(new MessageResponse(
+                "If an account exists for this email, a verification code has been sent"));
+    }
+
+    @PostMapping("/verify-reset-code")
+    public PasswordResetVerificationResponse verifyResetCode(
+            @Valid @RequestBody VerifyPasswordResetCodeRequest request) {
+        return passwordResetService.verifyCode(request.email(), request.code());
+    }
+
+    @PostMapping("/reset-password")
+    public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.resetToken(), request.newPassword());
+        return new MessageResponse("Password reset successfully");
     }
 }
