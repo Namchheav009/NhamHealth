@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/modules/auth/models/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/services/google_auth_service.dart';
 import 'package:nhamhealth_flutter/app/modules/home/controllers/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/home/providers/home_provider.dart';
@@ -46,6 +47,34 @@ void main() {
     expect(authService.didLogout, isTrue);
     expect(googleAuthService.didSignOut, isTrue);
     expect(Get.currentRoute, '/login');
+  });
+
+  testWidgets('profile menu shows the authenticated user identity', (
+    tester,
+  ) async {
+    Get.put<AuthService>(_TrackingAuthService());
+    final controller = HomeController(
+      repository: HomeRepository(provider: HomeProvider()),
+    );
+    Get.put<HomeController>(controller);
+    controller.authenticatedUser.value = const AuthenticatedUser(
+      id: 12,
+      email: 'alex@example.com',
+      role: 'USER',
+      fullName: 'Alex Rivera',
+    );
+
+    await tester.pumpWidget(
+      const GetMaterialApp(home: Scaffold(body: HomeHeader())),
+    );
+
+    expect(find.text('AR'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('profile-menu-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alex Rivera'), findsOneWidget);
+    expect(find.text('alex@example.com'), findsOneWidget);
   });
 }
 

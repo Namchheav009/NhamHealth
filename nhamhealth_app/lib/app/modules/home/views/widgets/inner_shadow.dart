@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_shadows.dart';
+
 class InnerShadow extends StatelessWidget {
   const InnerShadow({
     super.key,
     required this.borderRadius,
     required this.child,
-    this.shadows = const [
-      BoxShadow(
-        color: Color(0x1400522F),
-        blurRadius: 10,
-        offset: Offset(-1, -1),
-      ),
-      BoxShadow(color: Color(0xB3FFFFFF), blurRadius: 5, offset: Offset(1, 1)),
-    ],
+    this.shadows = AppShadows.innerSurface,
   });
 
   final BorderRadius borderRadius;

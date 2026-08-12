@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import '../../models/recommended_meal_model.dart';
 import 'inner_shadow.dart';
 
@@ -20,31 +22,14 @@ class RecommendedMealCard extends StatelessWidget {
     return Container(
       width: 100,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: AppColors.cardSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: const Color(0xFFE3E8E5)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF52645B).withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.tile,
       ),
       child: InnerShadow(
         borderRadius: BorderRadius.circular(13),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x1200522F),
-            blurRadius: 7,
-            offset: Offset(-1, -1),
-          ),
-          BoxShadow(
-            color: Color(0xA6FFFFFF),
-            blurRadius: 4,
-            offset: Offset(1, 1),
-          ),
-        ],
+        shadows: AppShadows.innerSurface,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -108,7 +93,7 @@ class RecommendedMealCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF4D4D4D),
+                              color: AppColors.primaryText,
                               fontSize: 9,
                               height: 1.12,
                               fontWeight: FontWeight.w500,

@@ -115,6 +115,7 @@ public class AuthService {
             throw new MobileLoginNotAllowedException();
         }
 
+        syncGoogleProfile(user, identity);
         user.setLastLoginAt(LocalDateTime.now());
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
@@ -188,10 +189,56 @@ public class AuthService {
         userProfileRepository.save(profile);
     }
 
+    private void syncGoogleProfile(
+            User user,
+            GoogleTokenVerifier.GoogleIdentity identity) {
+        LocalDateTime now = LocalDateTime.now();
+        UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId())
+                .orElseGet(() -> {
+                    UserProfile created = new UserProfile();
+                    created.setUser(user);
+                    created.setFullName(defaultGoogleName(identity));
+                    created.setCreatedAt(now);
+                    return created;
+                });
+
+        if (identity.name() != null && !identity.name().isBlank()) {
+            profile.setFullName(identity.name().trim());
+        }
+        if (identity.pictureUrl() != null && !identity.pictureUrl().isBlank()) {
+            profile.setProfileImageUrl(identity.pictureUrl().trim());
+        }
+        profile.setUpdatedAt(now);
+        userProfileRepository.save(profile);
+    }
+
+    private String defaultGoogleName(GoogleTokenVerifier.GoogleIdentity identity) {
+        if (identity.name() != null && !identity.name().isBlank()) {
+            return identity.name().trim();
+        }
+        String email = identity.email().trim();
+        int separator = email.indexOf('@');
+        return separator > 0 ? email.substring(0, separator) : email;
+    }
+
     private AuthResponse issueToken(AppUserPrincipal principal) {
         JwtTokenService.IssuedToken token = jwtTokenService.issue(principal);
-        AuthenticatedUserResponse responseUser = new AuthenticatedUserResponse(
+        AuthenticatedUserResponse responseUser = authenticatedUser(
                 principal.userId(), principal.getUsername(), principal.role());
         return new AuthResponse(token.value(), "Bearer", token.expiresIn(), responseUser);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthenticatedUserResponse authenticatedUser(
+            Integer userId,
+            String email,
+            String role) {
+        UserProfile profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
+        return new AuthenticatedUserResponse(
+                userId,
+                email,
+                role,
+                profile == null ? null : profile.getFullName(),
+                profile == null ? null : profile.getProfileImageUrl());
     }
 }

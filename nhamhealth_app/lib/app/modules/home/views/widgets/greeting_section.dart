@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 import 'mood_card.dart';
@@ -13,19 +15,13 @@ class GreetingSection extends GetView<HomeController> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: AppShadows.surface,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(15),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -34,7 +30,7 @@ class GreetingSection extends GetView<HomeController> {
                 child: Text(
                   'How are you feeling today?',
                   style: TextStyle(
-                    color: Color(0xFF00A651),
+                    color: AppColors.primaryGreen,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -45,7 +41,7 @@ class GreetingSection extends GetView<HomeController> {
                 height: 70,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   physics: const BouncingScrollPhysics(),
                   itemCount: controller.moods.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 12),

@@ -9,6 +9,7 @@ import 'package:nhamhealth_flutter/app/modules/auth/models/login_request.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/models/login_response.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/models/register_request.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/services/google_auth_service.dart';
+import 'package:nhamhealth_flutter/app/modules/home/controllers/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/home/views/pages/home_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
@@ -32,6 +33,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HomeView), findsOneWidget);
+    expect(
+      Get.find<HomeController>().authenticatedUser.value?.email,
+      'user@example.com',
+    );
   });
 
   testWidgets('registration opens HomeView', (tester) async {
@@ -69,10 +74,7 @@ void main() {
   });
 }
 
-Future<void> _pumpRouter(
-  WidgetTester tester,
-  AuthService authService,
-) async {
+Future<void> _pumpRouter(WidgetTester tester, AuthService authService) async {
   Get.put<AuthService>(authService);
   Get.put<GoogleAuthService>(_SuccessfulGoogleAuthService());
   await tester.pumpWidget(
@@ -91,11 +93,7 @@ class _SuccessfulAuthService extends AuthService {
     accessToken: 'access-token',
     tokenType: 'Bearer',
     expiresIn: 86400,
-    user: AuthenticatedUser(
-      id: 7,
-      email: 'user@example.com',
-      role: 'USER',
-    ),
+    user: AuthenticatedUser(id: 7, email: 'user@example.com', role: 'USER'),
   );
 
   @override

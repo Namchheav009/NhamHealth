@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../controllers/home_controller.dart';
 import '../widgets/ai_recommendation_card.dart';
 import '../widgets/daily_summary_card.dart';
 import '../widgets/greeting_section.dart';
 import '../widgets/home_bottom_navigation.dart';
 import '../widgets/home_header.dart';
+import '../widgets/home_profile_content.dart';
 import '../widgets/home_search_bar.dart';
 import '../widgets/recommended_meal_card.dart';
 
@@ -19,7 +21,7 @@ class HomeView extends GetView<HomeController> {
       maxScaleFactor: 1.2,
       child: Scaffold(
         extendBody: true,
-        backgroundColor: const Color(0xFFFFFBFC),
+        backgroundColor: AppColors.homeBackground,
         body: DecoratedBox(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -29,31 +31,36 @@ class HomeView extends GetView<HomeController> {
           ),
           child: SafeArea(
             bottom: false,
-            child: RefreshIndicator(
-              color: const Color(0xFF00A651),
-              onRefresh: controller.loadDashboard,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: const EdgeInsets.fromLTRB(26, 20, 26, 105),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HomeHeader(),
-                    SizedBox(height: 16),
-                    HomeSearchBar(),
-                    SizedBox(height: 16),
-                    GreetingSection(),
-                    SizedBox(height: 14),
-                    AiRecommendationCard(),
-                    SizedBox(height: 14),
-                    DailySummaryCard(),
-                    SizedBox(height: 12),
-                    _RecommendedMealsSection(),
-                  ],
-                ),
-              ),
+            child: Obx(
+              () =>
+                  controller.selectedBottomIndex.value == 4
+                      ? const HomeProfileContent()
+                      : RefreshIndicator(
+                        color: AppColors.primaryGreen,
+                        onRefresh: controller.loadDashboard,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(26, 20, 26, 105),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              HomeHeader(),
+                              SizedBox(height: 16),
+                              HomeSearchBar(),
+                              SizedBox(height: 14),
+                              GreetingSection(),
+                              SizedBox(height: 14),
+                              AiRecommendationCard(),
+                              SizedBox(height: 14),
+                              DailySummaryCard(),
+                              SizedBox(height: 12),
+                              _RecommendedMealsSection(),
+                            ],
+                          ),
+                        ),
+                      ),
             ),
           ),
         ),
@@ -80,19 +87,23 @@ class _RecommendedMealsSection extends GetView<HomeController> {
         children: [
           Row(
             children: [
-              const Text(
-                'Recommended Meals',
-                style: TextStyle(
-                  color: Color(0xFF454545),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              const Expanded(
+                child: Text(
+                  'Recommended Meals',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: controller.refreshMeals,
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF00A651),
+                  foregroundColor: AppColors.primaryGreen,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -106,8 +117,8 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               padding: EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(
                 minHeight: 3,
-                color: Color(0xFF00A651),
-                backgroundColor: Color(0xFFE9F7EE),
+                color: AppColors.primaryGreen,
+                backgroundColor: AppColors.softGreen,
               ),
             )
           else if (meals.isNotEmpty) ...[
