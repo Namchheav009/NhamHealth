@@ -6,6 +6,8 @@ import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/auth/views/pages/login_view.dart';
 import '../modules/auth/views/pages/register_view.dart';
+import '../modules/auth/controllers/account_created_controller.dart';
+import '../modules/auth/views/pages/account_created_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/pages/home_view.dart';
 import '../modules/notifications/views/pages/notifications_view.dart';
@@ -39,6 +41,15 @@ abstract class AppPages {
       name: AppRoutes.register,
       page: () => const RegisterScreen(),
       transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.accountCreated,
+      page: () => const AccountCreatedView(),
+      binding: BindingsBuilder(
+        () => Get.put<AccountCreatedController>(AccountCreatedController()),
+      ),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
     GetPage<dynamic>(
       name: AppRoutes.home,

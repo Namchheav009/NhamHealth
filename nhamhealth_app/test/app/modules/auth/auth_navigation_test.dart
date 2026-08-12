@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/controllers/login_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/controllers/register_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/auth/views/pages/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/models/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/models/google_login_request.dart';
 import 'package:nhamhealth_flutter/app/modules/auth/models/login_request.dart';
@@ -41,24 +42,37 @@ void main() {
     );
   });
 
-  testWidgets('registration opens HomeView', (tester) async {
-    final authService = _SuccessfulAuthService();
-    await _pumpRouter(tester, authService);
-    final controller = RegisterController(
-      authService: authService,
-      googleAuth: _SuccessfulGoogleAuthService(),
-    );
+  testWidgets(
+    'registration shows success while loading then opens Home without history',
+    (tester) async {
+      final authService = _SuccessfulAuthService();
+      await _pumpRouter(tester, authService);
+      final controller = RegisterController(
+        authService: authService,
+        googleAuth: _SuccessfulGoogleAuthService(),
+      );
 
-    await controller.register(
-      fullName: 'New User',
-      email: 'user@example.com',
-      password: 'StrongPass123!',
-      confirmPassword: 'StrongPass123!',
-    );
-    await tester.pumpAndSettle();
+      await controller.register(
+        fullName: 'New User',
+        email: 'user@example.com',
+        password: 'StrongPass123!',
+        confirmPassword: 'StrongPass123!',
+      );
 
-    expect(find.byType(HomeView), findsOneWidget);
-  });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(Get.currentRoute, AppRoutes.accountCreated);
+      expect(find.byType(AccountCreatedView), findsOneWidget);
+      expect(find.text('Preparing your home...'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+
+      expect(Get.currentRoute, AppRoutes.home);
+      expect(find.byType(HomeView), findsOneWidget);
+      expect(Get.key.currentState?.canPop(), isFalse);
+    },
+  );
 
   testWidgets('Google authentication opens HomeView', (tester) async {
     final authService = _SuccessfulAuthService();
