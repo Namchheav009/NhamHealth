@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.nhamhealth.nhamhealth_api.dto.response.AuthErrorResponse;
+import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
 
 @RestControllerAdvice(assignableTypes = AuthController.class)
 public class AuthApiExceptionHandler {
@@ -30,6 +31,12 @@ public class AuthApiExceptionHandler {
     ResponseEntity<AuthErrorResponse> handleUnreadableRequest() {
         return ResponseEntity.badRequest()
                 .body(new AuthErrorResponse("Request body must be valid JSON"));
+    }
+
+    @ExceptionHandler(PasswordResetException.class)
+    ResponseEntity<AuthErrorResponse> handlePasswordReset(PasswordResetException exception) {
+        return ResponseEntity.status(exception.getStatus())
+                .body(new AuthErrorResponse(exception.getMessage()));
     }
 
     @ExceptionHandler(DataAccessException.class)

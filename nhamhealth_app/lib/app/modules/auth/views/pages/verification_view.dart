@@ -1,68 +1,175 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/services/auth_service.dart';
 import '../../../../theme/app_colors.dart';
 import '../widgets/auth_flow_scaffold.dart';
 import '../widgets/social_login_button.dart';
 import 'reset_password_view.dart';
 
 class VerificationController extends GetxController {
-  final List<TextEditingController> otpControllers = List.generate(
-    4,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> focusNodes = List.generate(4, (_) => FocusNode());
-  final RxString userEmailOrPhone = 'Your email or phone'.obs;
+  VerificationController({AuthService? authService})
+    : _authService = authService ?? Get.find<AuthService>();
+
+  static const int codeLifetimeSeconds = 3 * 60;
+  static const int resendCooldownSeconds = 30;
+
+  final AuthService _authService;
+  final TextEditingController codeController = TextEditingController();
+  final FocusNode codeFocusNode = FocusNode();
+  final RxString userEmail = 'Your email'.obs;
+  final RxString code = ''.obs;
+  final RxBool codeHasFocus = false.obs;
   final RxBool hasError = false.obs;
+  final RxString errorMessage = ''.obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isResending = false.obs;
+  final RxInt codeSeconds = codeLifetimeSeconds.obs;
+  final RxInt resendSeconds = resendCooldownSeconds.obs;
+  Timer? _countdownTimer;
+
+  String get formattedCodeTime {
+    final minutes = codeSeconds.value ~/ 60;
+    final seconds = codeSeconds.value % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  bool get isExpired => codeSeconds.value == 0;
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args is Map && args['emailOrPhone'] != null) {
-      userEmailOrPhone.value = args['emailOrPhone'] as String;
+    if (args is Map && args['email'] is String) {
+      userEmail.value = args['email'] as String;
     }
+    codeFocusNode.addListener(_syncFocusState);
+    _restartCountdowns(resetCodeLifetime: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!isClosed) codeFocusNode.requestFocus();
+    });
   }
 
   @override
   void onClose() {
-    for (final textController in otpControllers) {
-      textController.dispose();
-    }
-    for (final focusNode in focusNodes) {
-      focusNode.dispose();
-    }
+    _countdownTimer?.cancel();
+    codeFocusNode.removeListener(_syncFocusState);
+    codeFocusNode.dispose();
+    codeController.dispose();
     super.onClose();
   }
 
-  void verifyCode() {
-    final code = otpControllers.map((item) => item.text).join();
-    if (code.length != 4) {
-      hasError.value = true;
+  void _syncFocusState() {
+    codeHasFocus.value = codeFocusNode.hasFocus;
+  }
+
+  void onCodeChanged(String value) {
+    code.value = value;
+    clearError();
+    if (value.length == 4 && !isExpired && !isLoading.value) {
+      codeFocusNode.unfocus();
+      unawaited(verifyCode());
+    }
+  }
+
+  Future<void> verifyCode() async {
+    if (isLoading.value || isResending.value) return;
+    if (isExpired) {
+      _showCodeError('This code has expired. Send a new code to continue.');
+      return;
+    }
+    if (code.value.length != 4) {
+      _showCodeError('Enter the complete four-digit code.');
+      codeFocusNode.requestFocus();
       return;
     }
 
     hasError.value = false;
     FocusManager.instance.primaryFocus?.unfocus();
-    Get.to(
-      () => const ResetPasswordView(),
-      arguments: {'emailOrPhone': userEmailOrPhone.value},
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 300),
-    );
+    try {
+      isLoading.value = true;
+      final resetToken = await _authService.verifyPasswordResetCode(
+        email: userEmail.value,
+        code: code.value,
+      );
+      _countdownTimer?.cancel();
+      Get.off(
+        () => const ResetPasswordView(),
+        arguments: {'resetToken': resetToken},
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      );
+    } on AuthException catch (error) {
+      if (error.message.toLowerCase().contains('expired')) {
+        codeSeconds.value = 0;
+      }
+      _showCodeError(error.message);
+      codeController.clear();
+      code.value = '';
+      codeFocusNode.requestFocus();
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void clearError() {
     if (hasError.value) hasError.value = false;
   }
 
-  void resendCode() {
-    Get.snackbar(
-      'Code sent',
-      'A new verification code has been sent.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  Future<void> resendCode() async {
+    if (resendSeconds.value > 0 || isResending.value || isLoading.value) return;
+    try {
+      isResending.value = true;
+      await _authService.requestPasswordReset(userEmail.value);
+      codeController.clear();
+      code.value = '';
+      hasError.value = false;
+      _restartCountdowns(resetCodeLifetime: true);
+      codeFocusNode.requestFocus();
+      Get.snackbar(
+        'New code sent',
+        'Check your email. The new code is valid for 3 minutes.',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: AppColors.primaryGreen,
+        colorText: Colors.white,
+      );
+    } on AuthException catch (error) {
+      Get.snackbar(
+        'Could not resend code',
+        error.message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: AppColors.errorCoral,
+        colorText: Colors.white,
+      );
+    } finally {
+      isResending.value = false;
+    }
+  }
+
+  void _showCodeError(String message) {
+    errorMessage.value = message;
+    hasError.value = true;
+  }
+
+  void _restartCountdowns({required bool resetCodeLifetime}) {
+    _countdownTimer?.cancel();
+    if (resetCodeLifetime) codeSeconds.value = codeLifetimeSeconds;
+    resendSeconds.value = resendCooldownSeconds;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (codeSeconds.value > 0) {
+        codeSeconds.value--;
+        if (codeSeconds.value == 0 && !isLoading.value) {
+          _showCodeError('This code has expired. Send a new code to continue.');
+        }
+      }
+      if (resendSeconds.value > 0) resendSeconds.value--;
+      if (codeSeconds.value == 0 && resendSeconds.value == 0) timer.cancel();
+    });
   }
 }
 
@@ -92,8 +199,9 @@ class VerificationView extends StatelessWidget {
           const SizedBox(height: 4),
           Obx(
             () => Text(
-              controller.userEmailOrPhone.value,
+              controller.userEmail.value,
               textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.darkGreen,
                 fontSize: 13,
@@ -101,18 +209,20 @@ class VerificationView extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Obx(
-            () => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                4,
-                (index) => _OtpBox(
-                  controller: controller,
-                  index: index,
-                  hasError: controller.hasError.value,
-                ),
-              ),
+            () => _ExpiryPill(
+              time: controller.formattedCodeTime,
+              expired: controller.isExpired,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Obx(
+            () => _VerificationCodeField(
+              controller: controller,
+              code: controller.code.value,
+              hasFocus: controller.codeHasFocus.value,
+              hasError: controller.hasError.value,
             ),
           ),
           Obx(
@@ -120,15 +230,15 @@ class VerificationView extends StatelessWidget {
               duration: const Duration(milliseconds: 180),
               child:
                   controller.hasError.value
-                      ? const Padding(
-                        key: ValueKey('verification-error'),
-                        padding: EdgeInsets.only(top: 7),
+                      ? Padding(
+                        key: const ValueKey('verification-error'),
+                        padding: const EdgeInsets.only(top: 9),
                         child: Text(
-                          'Wrong or incomplete code. Try again.',
+                          controller.errorMessage.value,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.errorCoral,
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -136,32 +246,49 @@ class VerificationView extends StatelessWidget {
                       : const SizedBox.shrink(),
             ),
           ),
-          const SizedBox(height: 16),
-          AuthPrimaryButton(
-            label: 'Verify code',
-            loading: false,
-            onPressed: controller.verifyCode,
+          const SizedBox(height: 18),
+          Obx(
+            () => AuthPrimaryButton(
+              label: 'Verify code',
+              loading: controller.isLoading.value,
+              onPressed: controller.verifyCode,
+            ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Didn't receive the code?",
-                style: TextStyle(fontSize: 11, color: AppColors.darkGreen),
-              ),
-              TextButton(
-                onPressed: controller.resendCode,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(48, 48),
-                  foregroundColor: AppColors.accentOrange,
+          Obx(
+            () => Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  "Didn't receive the code?",
+                  style: TextStyle(fontSize: 11, color: AppColors.darkGreen),
                 ),
-                child: const Text(
-                  'Send again',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                TextButton(
+                  onPressed:
+                      controller.resendSeconds.value == 0 &&
+                              !controller.isResending.value &&
+                              !controller.isLoading.value
+                          ? controller.resendCode
+                          : null,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(48, 44),
+                    foregroundColor: AppColors.accentOrange,
+                  ),
+                  child: Text(
+                    controller.isResending.value
+                        ? 'Sending...'
+                        : controller.resendSeconds.value > 0
+                        ? 'Send again in ${controller.resendSeconds.value}s'
+                        : 'Send again',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -169,67 +296,147 @@ class VerificationView extends StatelessWidget {
   }
 }
 
-class _OtpBox extends StatelessWidget {
-  const _OtpBox({
+class _ExpiryPill extends StatelessWidget {
+  const _ExpiryPill({required this.time, required this.expired});
+
+  final String time;
+  final bool expired;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = expired ? AppColors.errorCoral : AppColors.primaryGreen;
+    return Align(
+      alignment: Alignment.center,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.schedule_rounded, size: 15, color: color),
+              const SizedBox(width: 5),
+              Text(
+                expired ? 'Code expired' : 'Code expires in $time',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VerificationCodeField extends StatelessWidget {
+  const _VerificationCodeField({
     required this.controller,
-    required this.index,
+    required this.code,
+    required this.hasFocus,
     required this.hasError,
   });
 
   final VerificationController controller;
-  final int index;
+  final String code;
+  final bool hasFocus;
   final bool hasError;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 54,
-      child: TextField(
-        controller: controller.otpControllers[index],
-        focusNode: controller.focusNodes[index],
-        keyboardType: TextInputType.number,
-        textInputAction:
-            index == 3 ? TextInputAction.done : TextInputAction.next,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.darkGreen,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-        ),
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(1),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: EdgeInsets.zero,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
-            borderSide: BorderSide(
-              color: hasError ? AppColors.errorCoral : Colors.white,
-              width: hasError ? 1.4 : 1.2,
+    return Semantics(
+      label: 'Four digit verification code',
+      textField: true,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 10.0;
+          final boxSize = ((constraints.maxWidth - gap * 3) / 4).clamp(
+            48.0,
+            58.0,
+          );
+          return SizedBox(
+            height: 58,
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(4, (index) {
+                      final isActive = hasFocus && index == code.length;
+                      final digit = index < code.length ? code[index] : '';
+                      return Padding(
+                        padding: EdgeInsets.only(right: index == 3 ? 0 : gap),
+                        child: AnimatedContainer(
+                          key: ValueKey('verification-digit-$index'),
+                          duration: const Duration(milliseconds: 160),
+                          width: boxSize,
+                          height: 58,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(17),
+                            border: Border.all(
+                              color:
+                                  hasError
+                                      ? AppColors.errorCoral
+                                      : isActive
+                                      ? AppColors.primaryGreen
+                                      : Colors.white,
+                              width: hasError || isActive ? 1.5 : 1.2,
+                            ),
+                          ),
+                          child: Text(
+                            digit,
+                            style: const TextStyle(
+                              color: AppColors.darkGreen,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.01,
+                    child: TextField(
+                      key: const ValueKey('verification-code-input'),
+                      controller: controller.codeController,
+                      focusNode: controller.codeFocusNode,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      showCursor: false,
+                      maxLength: 4,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                      onChanged: controller.onCodeChanged,
+                      onSubmitted: (_) => controller.verifyCode(),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
-            borderSide: BorderSide(
-              color: hasError ? AppColors.errorCoral : AppColors.primaryGreen,
-              width: 1.5,
-            ),
-          ),
-        ),
-        onChanged: (value) {
-          controller.clearError();
-          if (value.isNotEmpty && index < 3) {
-            controller.focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            controller.focusNodes[index - 1].requestFocus();
-          } else if (value.isNotEmpty && index == 3) {
-            controller.focusNodes[index].unfocus();
-          }
+          );
         },
-        onSubmitted: (_) => controller.verifyCode(),
       ),
     );
   }

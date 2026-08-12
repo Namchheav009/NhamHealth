@@ -182,6 +182,78 @@ void main() {
     expect(await service.restoreSession(), isNull);
     expect(storage.accessToken, isNull);
   });
+
+  test('password reset calls all three public API endpoints', () async {
+    var step = 0;
+    final service = AuthService(
+      client: MockClient((request) async {
+        step++;
+        expect(request.method, 'POST');
+        final body = jsonDecode(request.body);
+        if (step == 1) {
+          expect(request.url.path, '/api/v1/auth/forgot-password');
+          expect(body, {'email': 'user@example.com'});
+          return http.Response(jsonEncode({'message': 'Code sent'}), 202);
+        }
+        if (step == 2) {
+          expect(request.url.path, '/api/v1/auth/verify-reset-code');
+          expect(body, {'email': 'user@example.com', 'code': '1234'});
+          return http.Response(
+            jsonEncode({'resetToken': 'one-time-token', 'expiresIn': 900}),
+            200,
+          );
+        }
+        expect(request.url.path, '/api/v1/auth/reset-password');
+        expect(body, {
+          'resetToken': 'one-time-token',
+          'newPassword': 'NewPassword123!',
+        });
+        return http.Response(
+          jsonEncode({'message': 'Password reset successfully'}),
+          200,
+        );
+      }),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await service.requestPasswordReset(' USER@example.com ');
+    final resetToken = await service.verifyPasswordResetCode(
+      email: 'user@example.com',
+      code: '1234',
+    );
+    await service.resetPassword(
+      resetToken: resetToken,
+      newPassword: 'NewPassword123!',
+    );
+
+    expect(resetToken, 'one-time-token');
+    expect(step, 3);
+  });
+
+  test('password reset surfaces API verification errors', () async {
+    final service = AuthService(
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({'message': 'The verification code is incorrect'}),
+          400,
+        ),
+      ),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.verifyPasswordResetCode(email: 'user@example.com', code: '0000'),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 400)
+            .having(
+              (error) => error.message,
+              'message',
+              'The verification code is incorrect',
+            ),
+      ),
+    );
+  });
 }
 
 class _MemoryTokenStorage extends TokenStorage {
