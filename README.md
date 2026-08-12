@@ -127,6 +127,24 @@ New mobile users can register through `POST /api/v1/auth/register` with
 returns the same bearer-token response as login. The Flutter client stores this
 token in platform secure storage.
 
+### Configure password-reset email
+
+Forgot password uses a real email verification flow. Configure the API with a
+Gmail account that has two-step verification enabled and use a Gmail App
+Password, not the account's normal password:
+
+```powershell
+$env:GMAIL_USERNAME="your-account@gmail.com"
+$env:GMAIL_APP_PASSWORD="your-16-character-app-password"
+.\mvnw.cmd spring-boot:run
+```
+
+The app requests a four-digit code from `POST /api/v1/auth/forgot-password`,
+exchanges it for a short-lived one-time token through
+`POST /api/v1/auth/verify-reset-code`, and changes the BCrypt password through
+`POST /api/v1/auth/reset-password`. Codes expire after 3 minutes, reset tokens
+after 15 minutes, and resend is limited to once every 30 seconds.
+
 ### Configure Google sign-in
 
 Google sign-in requires OAuth credentials from the Google Cloud Console; no

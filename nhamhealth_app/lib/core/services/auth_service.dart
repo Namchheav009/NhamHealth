@@ -28,6 +28,37 @@ class AuthService {
   Future<LoginResponse> loginWithGoogle(GoogleLoginRequest request) =>
       _authenticate('/api/v1/auth/google', request.toJson());
 
+  Future<void> requestPasswordReset(String email) async {
+    await _postJson('/api/v1/auth/forgot-password', {
+      'email': email.trim().toLowerCase(),
+    });
+  }
+
+  Future<String> verifyPasswordResetCode({
+    required String email,
+    required String code,
+  }) async {
+    final payload = await _postJson('/api/v1/auth/verify-reset-code', {
+      'email': email.trim().toLowerCase(),
+      'code': code,
+    });
+    final resetToken = payload['resetToken'];
+    if (resetToken is! String || resetToken.isEmpty) {
+      throw const AuthException('The server did not return a reset token.');
+    }
+    return resetToken;
+  }
+
+  Future<void> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    await _postJson('/api/v1/auth/reset-password', {
+      'resetToken': resetToken,
+      'newPassword': newPassword,
+    });
+  }
+
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
 
   Future<AuthenticatedUser?> restoreSession() async {
@@ -64,6 +95,35 @@ class AuthService {
   Future<void> logout() => _tokenStorage.clear();
 
   Future<LoginResponse> _authenticate(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final payload = await _postJson(path, body);
+
+    final LoginResponse result;
+    try {
+      result = LoginResponse.fromJson(payload);
+    } on Object {
+      throw const AuthException('The server response is incomplete.');
+    }
+
+    try {
+      await _tokenStorage.saveAccessToken(result.accessToken);
+    } on Object {
+      try {
+        await _tokenStorage.clear();
+        await _tokenStorage.saveAccessToken(result.accessToken);
+      } on Object {
+        throw const AuthException(
+          'Signed in, but the secure session could not be saved.',
+        );
+      }
+    }
+
+    return result;
+  }
+
+  Future<Map<String, dynamic>> _postJson(
     String path,
     Map<String, dynamic> body,
   ) async {
@@ -116,27 +176,7 @@ class AuthService {
       );
     }
 
-    final LoginResponse result;
-    try {
-      result = LoginResponse.fromJson(payload);
-    } on Object {
-      throw const AuthException('The server response is incomplete.');
-    }
-
-    try {
-      await _tokenStorage.saveAccessToken(result.accessToken);
-    } on Object {
-      try {
-        await _tokenStorage.clear();
-        await _tokenStorage.saveAccessToken(result.accessToken);
-      } on Object {
-        throw const AuthException(
-          'Signed in, but the secure session could not be saved.',
-        );
-      }
-    }
-
-    return result;
+    return payload;
   }
 
   String _errorMessage(http.Response response, Map<String, dynamic>? payload) {

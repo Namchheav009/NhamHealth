@@ -2,16 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../routes/app_routes.dart';
 import '../widgets/auth_flow_scaffold.dart';
 import '../widgets/password_field.dart';
 import '../widgets/social_login_button.dart';
 import 'account_created_view.dart';
 
 class ResetPasswordController extends GetxController {
+  ResetPasswordController({AuthService? authService})
+    : _authService = authService ?? Get.find<AuthService>();
+
+  final AuthService _authService;
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final RxBool confirmPasswordHasError = false.obs;
+  final RxBool isLoading = false.obs;
+  late final String resetToken;
+
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments;
+    resetToken =
+        args is Map && args['resetToken'] is String
+            ? args['resetToken'] as String
+            : '';
+  }
 
   @override
   void onClose() {
@@ -20,7 +38,7 @@ class ResetPasswordController extends GetxController {
     super.onClose();
   }
 
-  void resetPassword() {
+  Future<void> resetPassword() async {
     final newPassword = newPasswordController.text;
     final confirmPassword = confirmPasswordController.text;
     confirmPasswordHasError.value = false;
@@ -34,17 +52,52 @@ class ResetPasswordController extends GetxController {
       return;
     }
 
+    if (newPassword.length < 8) {
+      Get.snackbar(
+        'Password too short',
+        'Use at least 8 characters for your new password.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     if (newPassword != confirmPassword) {
       confirmPasswordHasError.value = true;
       return;
     }
 
+    if (resetToken.isEmpty) {
+      Get.snackbar(
+        'Reset session expired',
+        'Request a new verification code and try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     FocusManager.instance.primaryFocus?.unfocus();
-    Get.offAll(
-      () => const PasswordSuccessView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 300),
-    );
+    try {
+      isLoading.value = true;
+      await _authService.resetPassword(
+        resetToken: resetToken,
+        newPassword: newPassword,
+      );
+      Get.offAll(
+        () => const PasswordSuccessView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      );
+    } on AuthException catch (error) {
+      Get.snackbar(
+        'Could not reset password',
+        error.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.errorCoral,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void clearConfirmError(String _) {
@@ -54,11 +107,7 @@ class ResetPasswordController extends GetxController {
   }
 
   void skip() {
-    Get.offAll(
-      () => const PasswordSuccessView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 300),
-    );
+    Get.offAllNamed(AppRoutes.login);
   }
 }
 
@@ -115,13 +164,18 @@ class ResetPasswordView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          AuthPrimaryButton(
-            label: 'Reset password',
-            loading: false,
-            onPressed: controller.resetPassword,
+          Obx(
+            () => AuthPrimaryButton(
+              label: 'Reset password',
+              loading: controller.isLoading.value,
+              onPressed: controller.resetPassword,
+            ),
           ),
           const SizedBox(height: 10),
-          AuthSecondaryButton(label: 'Skip', onPressed: controller.skip),
+          AuthSecondaryButton(
+            label: 'Back to sign in',
+            onPressed: controller.skip,
+          ),
         ],
       ),
     );
