@@ -17,7 +17,7 @@ public record AdminUpdateUserRequest(
         @Size(max = 255, message = "Profile image URL must not exceed 255 characters")
         String profileImageUrl,
 
-        @Size(min = 8, max = 72, message = "Password must contain between 8 and 72 characters")
+        @Pattern(regexp = "^$|.{8,72}", message = "Password must be blank or contain between 8 and 72 characters")
         String password,
 
         @NotBlank(message = "Role is required")

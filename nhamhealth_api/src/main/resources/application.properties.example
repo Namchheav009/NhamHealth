@@ -1,0 +1,37 @@
+spring.application.name=nhamhealth_api
+spring.profiles.active=supabase
+
+# Authentication
+app.auth.jwt.secret=REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
+app.auth.jwt.issuer=nhamhealth-api
+app.auth.jwt.expiration=PT24H
+app.auth.google.client-id=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+app.auth.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+
+# Development seed accounts (used only when the supabase profile is inactive)
+app.seed.admin-email=admin@nhamhealth.local
+app.seed.admin-password=CHANGE_THIS_ADMIN_PASSWORD
+app.seed.user-email=user@nhamhealth.local
+app.seed.user-password=CHANGE_THIS_USER_PASSWORD
+
+# Upload storage
+app.upload.directory=uploads
+app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
+app.storage.supabase.service-key=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+app.storage.supabase.bucket=nhamhealth-images
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=5MB
+
+# Supabase PostgreSQL
+spring.datasource.url=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
+spring.datasource.username=postgres.YOUR_PROJECT_REF
+spring.datasource.password=YOUR_DATABASE_PASSWORD
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.hikari.data-source-properties.sslmode=require
+spring.datasource.hikari.maximum-pool-size=5
+spring.datasource.hikari.minimum-idle=1
+spring.datasource.hikari.idle-timeout=60000
+spring.datasource.hikari.max-lifetime=300000
+spring.jpa.properties.hibernate.default_schema=public
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.open-in-view=false

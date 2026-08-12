@@ -15,10 +15,10 @@ import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-        "APP_ADMIN_EMAIL=seed-admin@example.com",
-        "APP_ADMIN_PASSWORD=SeedAdmin123!",
-        "APP_USER_EMAIL=seed-user@example.com",
-        "APP_USER_PASSWORD=SeedUser123!"
+        "app.seed.admin-email=seed-admin@example.com",
+        "app.seed.admin-password=SeedAdmin123!",
+        "app.seed.user-email=seed-user@example.com",
+        "app.seed.user-password=SeedUser123!"
 })
 class DevDataLoaderTest {
 
