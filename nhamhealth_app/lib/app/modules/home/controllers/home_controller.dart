@@ -89,9 +89,6 @@ class HomeController extends GetxController {
       case 3:
         // Get.toNamed(AppRoutes.community);
         break;
-      case 4:
-        // Get.toNamed(AppRoutes.profile);
-        break;
     }
   }
 
@@ -101,10 +98,6 @@ class HomeController extends GetxController {
 
   void openFavorites() {
     // Get.toNamed(AppRoutes.favorites);
-  }
-
-  void openProfile() {
-    selectBottomMenu(4);
   }
 
   Future<void> logout() async {

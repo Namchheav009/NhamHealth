@@ -43,39 +43,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('profile navigation shows the logged-in user', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(381, 856);
-    addTearDown(tester.view.reset);
-
-    const user = AuthenticatedUser(
-      id: 12,
-      email: 'alex@example.com',
-      role: 'USER',
-      fullName: 'Alex Rivera',
-    );
-    Get.put<AuthService>(_SessionAuthService(user));
-    Get.put<HomeController>(
-      HomeController(repository: HomeRepository(provider: HomeProvider())),
-    );
-
-    await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
-    await tester.pump(const Duration(milliseconds: 600));
-
-    await tester.tap(find.byKey(const ValueKey<String>('nav-profile')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('My Profile'), findsOneWidget);
-    expect(find.text('Alex Rivera'), findsOneWidget);
-    expect(find.text('alex@example.com'), findsNWidgets(2));
-    expect(find.text('User'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey<String>('profile-back-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('How are you feeling today?'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
 }
 
 class _SessionAuthService extends AuthService {
