@@ -133,10 +133,10 @@ Google sign-in requires OAuth credentials from the Google Cloud Console; no
 client secret is stored in the Flutter application.
 
 1. Create an OAuth **Web application** client. Put its client ID in
-   `nhamhealth_api/.env`:
+   `nhamhealth_api/src/main/resources/application.properties`:
 
    ```properties
-   GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   app.auth.google.client-id=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
    ```
 
 2. For Android, create an OAuth **Android** client for the package
@@ -206,39 +206,33 @@ Xcode.
 
 ## Supabase PostgreSQL
 
-The API uses H2 unless the `supabase` Spring profile is active. To connect the
-API to a Supabase PostgreSQL database:
+The API reads its Supabase connection directly from
+`nhamhealth_api/src/main/resources/application.properties`:
 
-1. In the Supabase dashboard, open the project and select **Connect**.
-2. Open **Session pooler** > **View parameters** and copy the displayed host,
-   username, and database password.
-3. From `nhamhealth_api/`, create the local environment file:
+1. Create the ignored local configuration file from the safe template:
 
    ```powershell
-   # Windows PowerShell
-   Copy-Item .env.example .env
+   Copy-Item nhamhealth_api/src/main/resources/application.properties.example nhamhealth_api/src/main/resources/application.properties
    ```
 
-   ```bash
-   # macOS/Linux
-   cp .env.example .env
-   ```
-
-4. Replace the placeholders in `.env` with the Supabase connection values:
+2. In the Supabase dashboard, open the project and select **Connect**.
+3. Open **Session pooler** > **View parameters** and copy the displayed host,
+   username, and database password.
+4. Update the Spring properties with the Supabase connection values:
 
    ```properties
-   SPRING_PROFILES_ACTIVE=supabase
-   SUPABASE_DB_URL=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
-   SUPABASE_DB_USERNAME=postgres.YOUR_PROJECT_REF
-   SUPABASE_DB_PASSWORD=YOUR_DATABASE_PASSWORD
-   JPA_DDL_AUTO=update
-   DB_POOL_MAX_SIZE=5
-   DB_POOL_MIN_IDLE=1
+   spring.profiles.active=supabase
+   spring.datasource.url=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
+   spring.datasource.username=postgres.YOUR_PROJECT_REF
+   spring.datasource.password=YOUR_DATABASE_PASSWORD
+   spring.jpa.hibernate.ddl-auto=update
+   spring.datasource.hikari.maximum-pool-size=5
+   spring.datasource.hikari.minimum-idle=1
    ```
 
    Keep the `jdbc:` prefix and do not quote the values.
 
-5. Start the API. The `.env` file activates the Supabase profile automatically:
+5. Start the API:
 
    ```powershell
    # Windows PowerShell
@@ -253,12 +247,12 @@ PCs run the API against the same database, configure shared storage:
 
 1. In Supabase Dashboard, open **Storage** and create a **public** bucket named
    `nhamhealth-images`.
-2. Add these server-only values to `nhamhealth_api/.env`:
+2. Set these server-only values in `application.properties`:
 
    ```properties
-   SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
-   SUPABASE_STORAGE_BUCKET=nhamhealth-images
+   app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
+   app.storage.supabase.service-key=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+   app.storage.supabase.bucket=nhamhealth-images
    ```
 
 3. Restart the API. New profile, meal, recipe-step, and ingredient images will
@@ -278,15 +272,16 @@ A successful connection ends with a `Started NhamhealthApiApplication` message
 in the server log. Hibernate creates or updates application tables in the
 database's `public` schema as JPA entities are added.
 
-The `.env` file is ignored by Git. Never commit database credentials; only the
-placeholder-based `.env.example` should be version controlled.
+`application.properties` now contains server credentials. Keep the repository
+private and never expose the database password or service-role key to Flutter,
+JavaScript, logs, or screenshots.
 
 If the development machine has IPv6 connectivity, Supabase's direct connection
 can be used instead:
 
 ```properties
-SUPABASE_DB_URL=jdbc:postgresql://db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
-SUPABASE_DB_USERNAME=postgres
+spring.datasource.url=jdbc:postgresql://db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
+spring.datasource.username=postgres
 ```
 
 Use the exact connection values shown by the Supabase dashboard. The session
