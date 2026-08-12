@@ -59,6 +59,7 @@ class HomeHeader extends GetView<HomeController> {
             clipBehavior: Clip.none,
             children: [
               _HeaderButton(
+                key: const ValueKey<String>('notifications-button'),
                 onTap: controller.openNotifications,
                 child: const Icon(
                   Icons.notifications_none_rounded,
@@ -218,7 +219,7 @@ class _ProfileMenuRow extends StatelessWidget {
 }
 
 class _HeaderButton extends StatelessWidget {
-  const _HeaderButton({required this.onTap, required this.child});
+  const _HeaderButton({super.key, required this.onTap, required this.child});
 
   final VoidCallback onTap;
   final Widget child;

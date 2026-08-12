@@ -149,6 +149,19 @@ class AuthenticationFlowTests {
     }
 
     @Test
+    void invalidMobileLoginPayloadAlwaysReturnsJson() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"not-an-email","password":""}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
     void userCanRegisterAndImmediatelyReceiveBearerToken() throws Exception {
         String email = "new-" + UUID.randomUUID() + "@example.com";
 

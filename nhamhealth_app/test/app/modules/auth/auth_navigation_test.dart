@@ -11,7 +11,9 @@ import 'package:nhamhealth_flutter/app/modules/auth/models/register_request.dart
 import 'package:nhamhealth_flutter/app/modules/auth/services/google_auth_service.dart';
 import 'package:nhamhealth_flutter/app/modules/home/controllers/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/home/views/pages/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/notifications/views/pages/notifications_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
+import 'package:nhamhealth_flutter/app/routes/app_routes.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -70,6 +72,37 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(authService.googleToken, 'google-id-token');
+    expect(find.byType(HomeView), findsOneWidget);
+  });
+
+  testWidgets('authenticated home opens notifications and returns home', (
+    tester,
+  ) async {
+    final authService = _SuccessfulAuthService();
+    await _pumpRouter(tester, authService);
+    final controller = LoginController(
+      authService: authService,
+      googleAuth: _SuccessfulGoogleAuthService(),
+    );
+
+    await controller.login('user@example.com', 'StrongPass123!');
+    await tester.pumpAndSettle();
+
+    expect(Get.currentRoute, AppRoutes.home);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('notifications-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(Get.currentRoute, AppRoutes.notifications);
+    expect(find.byType(NotificationsView), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('notifications-back-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(Get.currentRoute, AppRoutes.home);
     expect(find.byType(HomeView), findsOneWidget);
   });
 }
