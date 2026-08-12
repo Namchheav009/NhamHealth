@@ -35,3 +35,12 @@ spring.datasource.hikari.max-lifetime=300000
 spring.jpa.properties.hibernate.default_schema=public
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
+
+# Gmail SMTP (set GMAIL_USERNAME and GMAIL_APP_PASSWORD in your environment)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${GMAIL_USERNAME:}
+spring.mail.password=${GMAIL_APP_PASSWORD:}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
