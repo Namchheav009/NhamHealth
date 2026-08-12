@@ -53,7 +53,7 @@ class RegisterController extends GetxController {
         final response = await _authService.register(
           RegisterRequest(fullName: fullName, email: email, password: password),
         );
-        Get.offAllNamed(AppRoutes.home, arguments: response.user);
+        Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
       } on AuthException catch (error) {
         if (error.statusCode != 409) rethrow;
 
@@ -87,7 +87,7 @@ class RegisterController extends GetxController {
     final response = await _authService.loginWithGoogle(
       GoogleLoginRequest(idToken: idToken),
     );
-    Get.offAllNamed(AppRoutes.home, arguments: response.user);
+    Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
   }
 
   Future<void> _run(Future<void> Function() action) async {
