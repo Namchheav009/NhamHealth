@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminTagRequest;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
@@ -49,6 +50,7 @@ public class TagAdminController {
     }
 
     @PostMapping("/admin/tags")
+    @ResponseBody
     public ResponseEntity<?> createTag(@Valid @RequestBody AdminTagRequest request) {
         if (tagTypeRepository.findByTagNameIgnoreCase(request.tagName().trim()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "A tag with this name already exists"));
@@ -59,6 +61,7 @@ public class TagAdminController {
     }
 
     @PutMapping("/admin/tags/{tagId}")
+    @ResponseBody
     public ResponseEntity<?> updateTag(@PathVariable Integer tagId, @Valid @RequestBody AdminTagRequest request) {
         return tagTypeRepository.findById(tagId)
                 .<ResponseEntity<?>>map(tag -> {
@@ -75,6 +78,7 @@ public class TagAdminController {
     }
 
     @DeleteMapping("/admin/tags/{tagId}")
+    @ResponseBody
     public ResponseEntity<?> deleteTag(@PathVariable Integer tagId) {
         if (!tagTypeRepository.existsById(tagId)) {
             return ResponseEntity.notFound().build();
