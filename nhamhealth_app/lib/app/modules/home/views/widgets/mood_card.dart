@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
 import 'inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
@@ -24,20 +26,14 @@ class MoodCard extends StatelessWidget {
       label: '$label mood',
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 66,
+        width: 68,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFFAFB) : Colors.white,
+          color: selected ? AppColors.softPink : AppColors.cardSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? const Color(0xFFFFD7DE) : const Color(0xFFF3F3F3),
+            color: selected ? AppColors.softPinkBorder : AppColors.border,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: AppShadows.tile,
         ),
         child: Material(
           color: Colors.transparent,
@@ -46,13 +42,7 @@ class MoodCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: InnerShadow(
               borderRadius: BorderRadius.circular(12),
-              shadows: const [
-                BoxShadow(
-                  color: Color(0x1000522F),
-                  blurRadius: 7,
-                  offset: Offset(-1, -1),
-                ),
-              ],
+              shadows: AppShadows.innerSurface,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 child: Column(
@@ -88,7 +78,7 @@ class MoodCard extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             fontSize: 11,
-                            color: const Color(0xFFFF5265),
+                            color: AppColors.primaryPink,
                             fontWeight:
                                 selected ? FontWeight.w600 : FontWeight.w400,
                           ),

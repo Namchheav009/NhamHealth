@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../models/nutrition_progress_model.dart';
 import 'inner_shadow.dart';
 
@@ -32,7 +33,7 @@ class NutritionProgressCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF858585),
+                    color: AppColors.secondaryText,
                   ),
                 ),
               ),
@@ -43,7 +44,7 @@ class NutritionProgressCard extends StatelessWidget {
             '${data.value} / ${data.target}',
             maxLines: 1,
             style: const TextStyle(
-              color: Color(0xFF555555),
+              color: AppColors.primaryText,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -53,7 +54,7 @@ class NutritionProgressCard extends StatelessWidget {
             data.unit,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF929292)),
+            style: const TextStyle(fontSize: 10, color: AppColors.inactiveText),
           ),
           const SizedBox(height: 9),
           Padding(
@@ -61,7 +62,7 @@ class NutritionProgressCard extends StatelessWidget {
             child: Container(
               height: 6,
               decoration: BoxDecoration(
-                color: const Color(0xFFDDE3DF),
+                color: AppColors.progressTrack,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: InnerShadow(
@@ -79,7 +80,7 @@ class NutritionProgressCard extends StatelessWidget {
                     widthFactor: data.progress,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF009B49),
+                        color: AppColors.primaryGreen,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),

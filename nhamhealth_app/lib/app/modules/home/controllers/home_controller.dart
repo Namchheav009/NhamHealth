@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../auth/models/authenticated_user_model.dart';
 import '../../auth/services/google_auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../models/home_dashboard_model.dart';
@@ -15,6 +16,7 @@ class HomeController extends GetxController {
   final selectedMoodIndex = 0.obs;
   final selectedBottomIndex = 0.obs;
   final isLoggingOut = false.obs;
+  final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
 
   final moods = <MoodItem>[
     const MoodItem(imageAsset: 'assets/icons/moods/happy.png', label: 'Happy'),
@@ -34,7 +36,17 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final routeUser = Get.arguments;
+    if (routeUser is AuthenticatedUser) {
+      authenticatedUser.value = routeUser;
+    } else {
+      _restoreAuthenticatedUser();
+    }
     loadDashboard();
+  }
+
+  Future<void> _restoreAuthenticatedUser() async {
+    authenticatedUser.value = await Get.find<AuthService>().restoreSession();
   }
 
   Future<void> loadDashboard() async {
@@ -95,6 +107,7 @@ class HomeController extends GetxController {
 
     try {
       await Get.find<AuthService>().logout();
+      authenticatedUser.value = null;
 
       if (Get.isRegistered<GoogleAuthService>()) {
         try {
