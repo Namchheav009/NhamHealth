@@ -16,6 +16,11 @@ abstract class AppShadows {
     BoxShadow(color: Color(0x0D263D30), blurRadius: 10, offset: Offset(0, 3)),
   ];
 
+  static const List<BoxShadow> notificationTile = [
+    BoxShadow(color: Color(0x12263D30), blurRadius: 10, offset: Offset(0, 3)),
+    BoxShadow(color: Color(0x73FFFFFF), blurRadius: 4, offset: Offset(-1, -2)),
+  ];
+
   static const List<BoxShadow> image = [
     BoxShadow(color: Color(0x1F000000), blurRadius: 10, offset: Offset(0, 4)),
   ];

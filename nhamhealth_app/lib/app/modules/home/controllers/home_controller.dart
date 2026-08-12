@@ -90,7 +90,7 @@ class HomeController extends GetxController {
   }
 
   void openNotifications() {
-    // Get.toNamed(AppRoutes.notifications);
+    Get.toNamed<void>(AppRoutes.notifications);
   }
 
   void openFavorites() {
