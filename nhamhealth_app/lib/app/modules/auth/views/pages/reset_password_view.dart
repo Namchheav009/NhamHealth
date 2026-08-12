@@ -7,7 +7,7 @@ import '../../../../routes/app_routes.dart';
 import '../widgets/auth_flow_scaffold.dart';
 import '../widgets/password_field.dart';
 import '../widgets/social_login_button.dart';
-import 'account_created_view.dart';
+import 'password_success_view.dart';
 
 class ResetPasswordController extends GetxController {
   ResetPasswordController({AuthService? authService})
