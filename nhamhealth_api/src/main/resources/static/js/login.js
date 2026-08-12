@@ -1,4 +1,21 @@
 (() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('logout')) {
+        document.querySelector('.notice-success')?.remove();
+        if (window.Swal) {
+            window.Swal.fire({
+                title: 'Signed out',
+                text: 'You have been signed out securely.',
+                icon: 'success',
+                confirmButtonColor: '#0b6b57'
+            });
+        } else {
+            window.alert('You have been signed out securely.');
+        }
+        url.searchParams.delete('logout');
+        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+    }
+
     const password = document.querySelector('#password');
     const toggle = document.querySelector('[data-password-toggle]');
     const toggleLabel = document.querySelector('[data-toggle-label]');

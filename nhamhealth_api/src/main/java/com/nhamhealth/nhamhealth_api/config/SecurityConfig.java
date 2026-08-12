@@ -141,7 +141,7 @@ public class SecurityConfig {
     @Bean
     AuthenticationSuccessHandler adminAuthenticationSuccessHandler(UserRepository userRepository) {
         SavedRequestAwareAuthenticationSuccessHandler dashboardHandler = new SavedRequestAwareAuthenticationSuccessHandler();
-        dashboardHandler.setDefaultTargetUrl("/dashboard");
+        dashboardHandler.setDefaultTargetUrl("/dashboard?login=success");
         dashboardHandler.setAlwaysUseDefaultTargetUrl(true);
 
         return (request, response, authentication) -> {
