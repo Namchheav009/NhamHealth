@@ -8,6 +8,7 @@ import '../modules/auth/views/pages/login_view.dart';
 import '../modules/auth/views/pages/register_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/pages/home_view.dart';
+import '../modules/notifications/views/pages/notifications_view.dart';
 import 'app_routes.dart';
 
 abstract class AppPages {
@@ -44,6 +45,11 @@ abstract class AppPages {
       page: () => const HomeView(),
       binding: HomeBinding(),
       transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.notifications,
+      page: () => const NotificationsView(),
+      transition: Transition.rightToLeft,
     ),
   ];
 }
