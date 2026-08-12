@@ -245,7 +245,14 @@ The API reads its Supabase connection directly from
    spring.datasource.password=YOUR_DATABASE_PASSWORD
    spring.jpa.hibernate.ddl-auto=update
    spring.datasource.hikari.maximum-pool-size=5
-   spring.datasource.hikari.minimum-idle=1
+   spring.datasource.hikari.minimum-idle=0
+   spring.datasource.hikari.idle-timeout=10000
+   spring.datasource.hikari.max-lifetime=60000
+   spring.datasource.hikari.keepalive-time=30000
+   spring.datasource.hikari.validation-timeout=5000
+   spring.datasource.hikari.connection-timeout=10000
+   spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
+   logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
    ```
 
    Keep the `jdbc:` prefix and do not quote the values.
