@@ -12,6 +12,8 @@
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin-nutrients.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="app-shell">
@@ -31,7 +33,7 @@
                 </div>
                 <div class="heading-actions">
                     <button class="btn btn-primary" id="openNutrientModal" type="button"><i class="bi bi-plus-lg"></i> Add New Nutrient</button>
-                    <button class="btn" type="button"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn" id="exportNutrients" type="button"><i class="bi bi-download"></i> Export</button>
                 </div>
             </div>
 
@@ -97,7 +99,13 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="nutrient, iter : ${nutrients}" th:data-name="${nutrient.nutrientName}" th:data-type="${nutrient.isCore != null and nutrient.isCore ? 'macronutrient' : 'micronutrient'}" th:data-status="${nutrient.isActive != null and nutrient.isActive ? 'active' : 'inactive'}">
+                        <tr th:each="nutrient, iter : ${nutrients}"
+                            th:data-id="${nutrient.nutrientId}"
+                            th:data-name="${nutrient.nutrientName}"
+                            th:data-unit="${nutrient.unit}"
+                            th:data-type="${nutrient.isCore != null and nutrient.isCore ? 'macronutrient' : 'micronutrient'}"
+                            th:data-status="${nutrient.isActive != null and nutrient.isActive ? 'active' : 'inactive'}"
+                            th:data-display-order="${nutrient.displayOrder}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td th:text="${nutrient.nutrientName}">Calories</td>
                             <td>
@@ -106,14 +114,17 @@
                             <td th:text="${nutrient.unit}">kcal</td>
                             <td th:text="${nutrient.displayOrder}">1</td>
                             <td>
-                                <span class="status-badge active-status" th:classappend="${nutrient.isActive != null and nutrient.isActive ? ' active-status' : ' inactive-status'}" th:text="${nutrient.isActive != null and nutrient.isActive ? 'Active' : 'Inactive'}">Active</span>
+                                <span class="status-badge" th:classappend="${nutrient.isActive != null and nutrient.isActive ? ' active-status' : ' inactive-status'}" th:text="${nutrient.isActive != null and nutrient.isActive ? 'Active' : 'Inactive'}">Active</span>
                             </td>
                             <td>
                                 <div class="action-group">
-                                    <button class="icon-button small" type="button"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="icon-button small danger" type="button"><i class="bi bi-trash"></i></button>
+                                    <button class="icon-button small edit-nutrient" type="button" title="Edit nutrient" aria-label="Edit nutrient"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger delete-nutrient" type="button" title="Delete nutrient" aria-label="Delete nutrient"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(nutrients)}" id="emptyNutrientRow">
+                            <td colspan="7" class="empty-state">No nutrients found. Add your first nutrient to begin.</td>
                         </tr>
                         </tbody>
                     </table>
@@ -134,14 +145,14 @@
     <section class="modal-card">
         <div class="modal-header">
             <div>
-                <h2>Add Nutrient</h2>
-                <p>Enter nutrient information for the nutrition catalog.</p>
+                <h2 id="nutrientModalTitle">Add Nutrient</h2>
+                <p id="nutrientModalDescription">Enter nutrient information for the nutrition catalog.</p>
             </div>
             <button class="close" id="closeNutrientModal" type="button" aria-label="Close dialog">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-        <form id="nutrientForm">
+        <form id="nutrientForm" novalidate>
             <div class="modal-body">
                 <div class="field">
                     <label for="nutrientName">Nutrient name</label>
@@ -174,7 +185,7 @@
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelNutrientModal" type="button">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Nutrient</button>
+                <button class="btn btn-primary" id="saveNutrientButton" type="submit">Save Nutrient</button>
             </div>
         </form>
     </section>

@@ -41,6 +41,7 @@ import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
@@ -73,6 +74,9 @@ class AuthenticationFlowTests {
 
     @Autowired
     private IngredientRepository ingredientRepository;
+
+    @Autowired
+    private TagTypeRepository tagTypeRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -241,7 +245,7 @@ class AuthenticationFlowTests {
                         .param("email", "admin@nhamhealth.local")
                         .param("password", "Admin123!"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/dashboard"));
+                .andExpect(redirectedUrl("/dashboard?login=success"));
 
         mockMvc.perform(get("/dashboard").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
@@ -549,6 +553,42 @@ class AuthenticationFlowTests {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
         assertTrue(ingredientRepository.findById(ingredientId).isEmpty());
+    }
+
+    @Test
+    void adminCanManageTagsFromTheAdminPortal() throws Exception {
+        String tagName = "Tag " + UUID.randomUUID();
+        MvcResult result = mockMvc.perform(post("/admin/tags")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tagName":"%s","tagScope":"NUTRITION","description":"Created from the admin portal","active":true}
+                                """.formatted(tagName)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andReturn();
+
+        Integer tagId = JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        mockMvc.perform(put("/admin/tags/{tagId}", tagId)
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tagName":"%s","tagScope":"HEALTH","description":"Updated tag","active":false}
+                                """.formatted(tagName)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/admin/tags").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/tags"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-id=\"" + tagId + "\"")));
+
+        mockMvc.perform(delete("/admin/tags/{tagId}", tagId)
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+        assertTrue(tagTypeRepository.findById(tagId).isEmpty());
     }
 
     @Test
