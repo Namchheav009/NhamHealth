@@ -1,8 +1,23 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+}
+
+def googleOAuthConfigFile = file("../../config/google_oauth.json")
+def googleOAuthConfig = googleOAuthConfigFile.exists()
+    ? new JsonSlurper().parse(googleOAuthConfigFile)
+    : [:]
+def googleServerClientId = googleOAuthConfig.GOOGLE_SERVER_CLIENT_ID ?: ""
+
+if (googleServerClientId &&
+        !(googleServerClientId ==~ /[0-9A-Za-z._-]+\.apps\.googleusercontent\.com/)) {
+    throw new GradleException(
+        "GOOGLE_SERVER_CLIENT_ID in config/google_oauth.json is invalid"
+    )
 }
 
 android {
@@ -15,6 +30,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.nhamhealth_flutter"
@@ -24,6 +43,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField "String", "GOOGLE_SERVER_CLIENT_ID", "\"${googleServerClientId}\""
     }
 
     buildTypes {
