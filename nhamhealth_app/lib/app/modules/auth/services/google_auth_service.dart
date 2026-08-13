@@ -1,14 +1,19 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleAuthService {
   GoogleAuthService();
 
   static const _clientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
+  static const _androidClientId = String.fromEnvironment(
+    'GOOGLE_ANDROID_CLIENT_ID',
+  );
   static const _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '197065287162-2t743hltpkorhfn91c3h92h07gtv8sru.apps.googleusercontent.com',
+  );
+  static const _androidConfigChannel = MethodChannel(
+    'com.example.nhamhealth_flutter/google_oauth_config',
   );
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -51,6 +56,15 @@ class GoogleAuthService {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         return null;
       }
+      if (error.description?.toLowerCase().contains(
+            'no credential available',
+          ) ??
+          false) {
+        throw const GoogleAuthException(
+          'No Google account is available on this device. Add a Google '
+          'account in Android Settings, then try again.',
+        );
+      }
       throw GoogleAuthException(
         error.description ?? 'Could not sign in with Google.',
       );
@@ -63,13 +77,40 @@ class GoogleAuthService {
     await _googleSignIn.signOut();
   }
 
-  Future<void> _initialize() {
+  Future<void> _initialize() async {
+    var serverClientId = _serverClientId;
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        serverClientId.isEmpty) {
+      serverClientId =
+          await _androidConfigChannel.invokeMethod<String>(
+            'getServerClientId',
+          ) ??
+          '';
+    }
+
+    if (!kIsWeb && serverClientId.isEmpty) {
+      throw const GoogleAuthException(
+        'Google sign-in configuration is missing. Create '
+        'config/google_oauth.json from the provided example and rebuild.',
+      );
+    }
+
+    if (!kIsWeb &&
+        _androidClientId.isNotEmpty &&
+        serverClientId == _androidClientId) {
+      throw const GoogleAuthException(
+        'GOOGLE_SERVER_CLIENT_ID must be a Web OAuth client ID, not the '
+        'Android OAuth client ID.',
+      );
+    }
+
     final platformClientId =
         kIsWeb && _clientId.isEmpty ? _serverClientId : _clientId;
-    return _googleSignIn.initialize(
+    await _googleSignIn.initialize(
       clientId: platformClientId.isEmpty ? null : platformClientId,
       serverClientId:
-          kIsWeb || _serverClientId.isEmpty ? null : _serverClientId,
+          kIsWeb || serverClientId.isEmpty ? null : serverClientId,
     );
   }
 }

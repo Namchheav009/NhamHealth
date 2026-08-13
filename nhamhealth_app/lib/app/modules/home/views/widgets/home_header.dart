@@ -115,8 +115,6 @@ class _ProfileMenu extends GetView<HomeController> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (action) {
         switch (action) {
-          case _ProfileMenuAction.profile:
-            controller.openProfile();
           case _ProfileMenuAction.logout:
             controller.logout();
         }
@@ -129,14 +127,6 @@ class _ProfileMenu extends GetView<HomeController> {
                 child: _SignedInUser(user: user!),
               ),
             if (user != null) const PopupMenuDivider(height: 1),
-            const PopupMenuItem<_ProfileMenuAction>(
-              value: _ProfileMenuAction.profile,
-              child: _ProfileMenuRow(
-                icon: Icons.person_outline_rounded,
-                label: 'Profile',
-              ),
-            ),
-            const PopupMenuDivider(height: 1),
             const PopupMenuItem<_ProfileMenuAction>(
               value: _ProfileMenuAction.logout,
               child: _ProfileMenuRow(
@@ -186,7 +176,7 @@ class _SignedInUser extends StatelessWidget {
   }
 }
 
-enum _ProfileMenuAction { profile, logout }
+enum _ProfileMenuAction { logout }
 
 class _ProfileMenuRow extends StatelessWidget {
   const _ProfileMenuRow({

@@ -159,22 +159,32 @@ client secret is stored in the Flutter application.
 
 2. For Android, create an OAuth **Android** client for the package
    `com.example.nhamhealth_flutter` and add the SHA-1 fingerprints for every
-   signing configuration you use. The Flutter app defaults to this project's
-   Web client ID as its server client ID. To use a different Google Cloud
-   project, override it when launching Flutter:
+   signing configuration you use. Copy the safe example to the ignored local
+   configuration file and replace its placeholders with the Android and Web
+   client IDs from the same Google Cloud project:
 
    ```powershell
-   flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   Copy-Item nhamhealth_app/config/google_oauth.example.json `
+     nhamhealth_app/config/google_oauth.json
+   ```
+
+   Android builds also load this ignored file through the native Gradle
+   configuration, so a normal `flutter run` works. VS Code launch profiles
+   additionally pass it as Dart defines for other supported platforms. From a
+   terminal on iOS, macOS, or web, use:
+
+   ```powershell
+   cd nhamhealth_app
+   flutter run --dart-define-from-file=config/google_oauth.json
    ```
 
 3. For iOS, create an OAuth **iOS** client for the Xcode bundle identifier.
    Add its reversed client ID under `CFBundleURLTypes` in
-   `nhamhealth_app/ios/Runner/Info.plist`, then run with both IDs:
+   `nhamhealth_app/ios/Runner/Info.plist`, put its client ID in
+   `GOOGLE_CLIENT_ID` in the local JSON file, then run with that file:
 
    ```powershell
-   flutter run `
-     --dart-define=GOOGLE_CLIENT_ID=YOUR_IOS_CLIENT_ID.apps.googleusercontent.com `
-     --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   flutter run --dart-define-from-file=config/google_oauth.json
    ```
 
 The styled Google button currently targets Android, iOS, and macOS. Google
@@ -246,6 +256,13 @@ The API reads its Supabase connection directly from
    spring.jpa.hibernate.ddl-auto=update
    spring.datasource.hikari.maximum-pool-size=5
    spring.datasource.hikari.minimum-idle=1
+   spring.datasource.hikari.idle-timeout=600000
+   spring.datasource.hikari.max-lifetime=1800000
+   spring.datasource.hikari.keepalive-time=120000
+   spring.datasource.hikari.validation-timeout=5000
+   spring.datasource.hikari.connection-timeout=30000
+   spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
+   logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
    ```
 
    Keep the `jdbc:` prefix and do not quote the values.
@@ -349,6 +366,10 @@ flutter build apk       # Android APK
 flutter build appbundle # Android App Bundle
 flutter build web       # Web
 ```
+
+For builds that include Google sign-in, append
+`--dart-define-from-file=config/google_oauth.json` to the selected build
+command.
 
 Desktop and iOS builds require their corresponding operating system and native
 toolchain.
