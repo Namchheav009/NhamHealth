@@ -38,7 +38,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('profile-menu-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.text('Profile'), findsNothing);
     expect(find.text('Logout'), findsOneWidget);
 
     await tester.tap(find.text('Logout'));

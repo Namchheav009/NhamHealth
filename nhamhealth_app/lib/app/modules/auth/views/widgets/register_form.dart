@@ -87,13 +87,6 @@ class RegisterForm extends StatelessWidget {
             loading: loading,
             onPressed: onRegister,
           ),
-          const SizedBox(height: 10),
-          PlatformGoogleSignInButton(
-            label: 'Continue with Google',
-            loading: loading,
-            onPressed: onGoogle,
-            onAuthenticated: onGoogleAuthenticated,
-          ),
           const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
