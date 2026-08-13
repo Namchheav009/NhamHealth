@@ -104,6 +104,10 @@ class HomeController extends GetxController {
     selectBottomMenu(4);
   }
 
+  void openWellnessDetails() {
+  Get.toNamed(AppRoutes.wellness);
+}
+
   Future<void> logout() async {
     if (isLoggingOut.value) return;
     isLoggingOut.value = true;
