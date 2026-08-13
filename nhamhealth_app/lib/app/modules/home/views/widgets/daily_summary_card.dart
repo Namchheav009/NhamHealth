@@ -7,6 +7,7 @@ import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 import 'nutrition_progress_card.dart';
 
+
 class DailySummaryCard extends GetView<HomeController> {
   const DailySummaryCard({super.key});
 
