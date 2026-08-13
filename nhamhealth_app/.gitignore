@@ -41,3 +41,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local OAuth configuration. Copy the tracked example and keep real values out
+# of source control.
+/config/google_oauth.json
