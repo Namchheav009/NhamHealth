@@ -8,4 +8,13 @@ abstract class AppRoutes {
   static const String accountCreated = '/account-created';
   static const String home = '/home';
   static const String notifications = '/notifications';
+  
+  static const String wellness = '/wellness';
+  static const String calories = '/wellness/calories';
+  static const String protein = '/wellness/protein';
+  static const String water = '/wellness/water';
+  static const String fiber = '/wellness/fiber';
+  static const String sugar = '/wellness/sugar';
+
+  static const String aiMealAutoFill = '/wellness/ai-meal-auto-fill';
 }
