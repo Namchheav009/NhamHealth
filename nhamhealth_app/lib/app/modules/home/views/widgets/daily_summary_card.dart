@@ -61,7 +61,7 @@ class DailySummaryCard extends GetView<HomeController> {
                     ),
                     const SizedBox(width: 8),
                     InkWell(
-                      onTap: () {},
+                      onTap: controller.openWellnessDetails,
                       borderRadius: BorderRadius.circular(16),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(vertical: 3),
