@@ -21,6 +21,11 @@
     const passwordLabel = document.getElementById('passwordLabel');
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const alerts = window.adminAlerts ?? {
+        confirmDelete: ({ text }) => Promise.resolve(window.confirm(text)),
+        success: (heading, text) => Promise.resolve(window.alert(text || heading)),
+        error: (text) => Promise.resolve(window.alert(text))
+    };
     let editingUserId = null;
 
     const applyFilters = () => {
@@ -136,6 +141,11 @@
 
     form?.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
         const formData = new FormData(form);
         const imageFile = formData.get('profileImageFile');
         formData.delete('profileImageFile');
@@ -144,6 +154,7 @@
         if (editingUserId && !payload.password) delete payload.password;
         payload.verified = form.verified.checked;
         setFormError();
+        const isEditing = Boolean(editingUserId);
         submitButton.disabled = true;
         submitButton.textContent = editingUserId ? 'Saving…' : 'Creating…';
         try {
@@ -158,18 +169,31 @@
                 const body = await response.json().catch(() => ({}));
                 throw new Error(body.message || 'Unable to save this user.');
             }
+            const name = payload.fullName || 'User';
+            hideModal();
+            await alerts.success(
+                isEditing ? 'User updated' : 'User added',
+                `${name} has been ${isEditing ? 'updated' : 'added'} successfully.`
+            );
             window.location.reload();
         } catch (error) {
             setFormError(error.message);
+            await alerts.error(error.message || 'Unable to save this user.');
             submitButton.disabled = false;
-            submitButton.textContent = editingUserId ? 'Save changes' : 'Create user';
+            submitButton.textContent = isEditing ? 'Save changes' : 'Create user';
         }
     });
 
     document.querySelectorAll('.delete-user').forEach((button) => button.addEventListener('click', async () => {
         const row = button.closest('tr');
         const name = row?.dataset.fullName || 'this user';
-        if (!row?.dataset.id || !window.confirm(`Delete ${name}? Their account will be disabled and hidden, while health and history records remain protected.`)) return;
+        if (!row?.dataset.id) return;
+        const confirmed = await alerts.confirmDelete({
+            title: 'Delete user?',
+            text: `Delete ${name}? Their account will be disabled and hidden, while health and history records remain protected.`,
+            confirmButtonText: 'Yes, delete user!'
+        });
+        if (!confirmed) return;
         button.disabled = true;
         try {
             const response = await fetch(`/admin/users/${row.dataset.id}`, { method: 'DELETE', headers: requestHeaders() });
@@ -177,9 +201,10 @@
                 const body = await response.json().catch(() => ({}));
                 throw new Error(body.message || 'Unable to delete this user.');
             }
+            await alerts.success('User deleted', `${name} has been deleted.`);
             window.location.reload();
         } catch (error) {
-            window.alert(error.message);
+            await alerts.error(error.message || 'Unable to delete this user.');
             button.disabled = false;
         }
     }));

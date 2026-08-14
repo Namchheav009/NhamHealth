@@ -57,7 +57,7 @@ public class TagAdminController {
         }
         TagType tag = new TagType();
         apply(tag, request);
-        return ResponseEntity.ok(Map.of("id", tagTypeRepository.save(tag).getTagId()));
+        return ResponseEntity.ok(toResponse(tagTypeRepository.saveAndFlush(tag)));
     }
 
     @PutMapping("/admin/tags/{tagId}")
@@ -71,8 +71,7 @@ public class TagAdminController {
                         return ResponseEntity.badRequest().body(Map.of("message", "A tag with this name already exists"));
                     }
                     apply(tag, request);
-                    tagTypeRepository.save(tag);
-                    return ResponseEntity.ok(Map.of("id", tag.getTagId()));
+                    return ResponseEntity.ok(toResponse(tagTypeRepository.saveAndFlush(tag)));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -99,5 +98,14 @@ public class TagAdminController {
         tag.setDescription(request.description() == null || request.description().isBlank()
                 ? null : request.description().trim());
         tag.setIsActive(request.active() == null || request.active());
+    }
+
+    private Map<String, Object> toResponse(TagType tag) {
+        return Map.of(
+                "id", tag.getTagId(),
+                "tagName", tag.getTagName(),
+                "tagScope", tag.getTagScope(),
+                "description", tag.getDescription() == null ? "" : tag.getDescription(),
+                "active", Boolean.TRUE.equals(tag.getIsActive()));
     }
 }
