@@ -24,20 +24,21 @@ class AiMealCard extends GetView<WellnessController> {
         ],
       ),
       child: Row(
-        children: [
-          // Robot placeholder
-          Container(
-            width: 72,
-            height: 90,
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.smart_toy_outlined,
-              size: 65,
-              color: Color(0xFF00A98F),
-            ),
-          ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Transform.translate(
+                    offset: const Offset(-10, 0),
+                    child: SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Image.asset(
+                        'assets/images/wellness/ai_robot.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
 
-          const SizedBox(width: 10),
+          // const SizedBox(width: 10),
 
           Expanded(
             child: Column(

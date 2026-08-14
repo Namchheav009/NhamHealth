@@ -23,18 +23,21 @@ class AiInsightCard extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                width: 72,
-                child: Icon(
-                  Icons.smart_toy_outlined,
-                  color: Color(0xFF00A98F),
-                  size: 60,
-                ),
-              ),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Transform.translate(
+                    offset: const Offset(-10, 0),
+                    child: SizedBox(
+                      width: 130,
+                      height: 130,
+                      child: Image.asset(
+                        'assets/images/wellness/ai_search.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
 
-              const SizedBox(width: 10),
+              // const SizedBox(width: 10),
 
               Expanded(
                 child: Column(
