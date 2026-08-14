@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/calories_controller.dart';
-import '../widgets/calories_intake_editor.dart';
-import '../widgets/calories_progress_card.dart';
-import '../widgets/calories_ai_insight_card.dart';
-import '../widgets/food_sources_card.dart';
+import '../../controllers/food_source_detail_controller.dart';
+import '../widgets/food_amount_editor_card.dart';
+import '../widgets/food_contribution_card.dart';
+import '../widgets/food_detail_ai_insight_card.dart';
+import '../widgets/food_detail_summary_card.dart';
+import '../widgets/food_nutrition_estimate_card.dart';
 
-class CaloriesView extends GetView<CaloriesController> {
-  const CaloriesView({super.key});
+class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
+  const FoodSourceDetailView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,39 +29,26 @@ class CaloriesView extends GetView<CaloriesController> {
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 520,
-              ),
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 children: [
                   _header(),
 
                   Expanded(
                     child: SingleChildScrollView(
-                      physics:
-                          const BouncingScrollPhysics(),
-                      padding:
-                          const EdgeInsets.fromLTRB(
-                        20,
-                        8,
-                        20,
-                        18,
-                      ),
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
                       child: const Column(
                         children: [
-                          CalorieProgressCard(),
-
+                          FoodDetailSummaryCard(),
                           SizedBox(height: 10),
-
-                          CalorieIntakeEditor(),
-
+                          FoodAmountEditorCard(),
                           SizedBox(height: 10),
-
-                          FoodSourcesCard(),
-
+                          FoodNutritionEstimateCard(),
                           SizedBox(height: 10),
-
-                          CaloriesAiInsightCard(),
+                          FoodContributionCard(),
+                          SizedBox(height: 10),
+                          FoodDetailAiInsightCard(),
                         ],
                       ),
                     ),
@@ -78,12 +66,7 @@ class CaloriesView extends GetView<CaloriesController> {
 
   Widget _header() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        12,
-        14,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
         children: [
           IconButton(
@@ -93,11 +76,10 @@ class CaloriesView extends GetView<CaloriesController> {
               color: Color(0xFF00A651),
             ),
           ),
-
           const Expanded(
             child: Center(
               child: Text(
-                'Calories',
+                'Food Detail',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -105,7 +87,6 @@ class CaloriesView extends GetView<CaloriesController> {
               ),
             ),
           ),
-
           const SizedBox(width: 48),
         ],
       ),
@@ -114,58 +95,40 @@ class CaloriesView extends GetView<CaloriesController> {
 
   Widget _bottomActions() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        8,
-        20,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
       child: Row(
         children: [
           Expanded(
             child: OutlinedButton(
               onPressed: controller.cancelChanges,
               style: OutlinedButton.styleFrom(
-                minimumSize:
-                    const Size.fromHeight(45),
-                foregroundColor:
-                    const Color(0xFF00A651),
+                minimumSize: const Size.fromHeight(45),
+                foregroundColor: const Color(0xFF00A651),
                 side: const BorderSide(
                   color: Color(0xFF00A651),
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
               child: const Text('Cancel'),
             ),
           ),
-
           const SizedBox(width: 8),
-
           Expanded(
             child: ElevatedButton.icon(
               onPressed: controller.saveChanges,
-              icon: const Icon(
-                Icons.check_circle_outline_rounded,
-                size: 18,
-              ),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               style: ElevatedButton.styleFrom(
-                minimumSize:
-                    const Size.fromHeight(45),
-                backgroundColor:
-                    const Color(0xFF00A651),
+                minimumSize: const Size.fromHeight(45),
+                backgroundColor: const Color(0xFF00A651),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: const Text(
-                'Save Changes',
-              ),
+              label: const Text('Save Changes'),
             ),
           ),
         ],
@@ -173,3 +136,39 @@ class CaloriesView extends GetView<CaloriesController> {
     );
   }
 }
+
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+
+// import '../../models/food_source_model.dart';
+
+// class FoodSourceDetailView
+//     extends StatelessWidget {
+//   const FoodSourceDetailView({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final FoodSourceModel source =
+//         Get.arguments as FoodSourceModel;
+
+//     return Scaffold(
+//       appBar: AppBar(
+//         leading: IconButton(
+//           onPressed: Get.back,
+//           icon: const Icon(
+//             Icons.arrow_back_rounded,
+//           ),
+//         ),
+//         title: Text(source.foodName),
+//       ),
+//       body: Center(
+//         child: Text(
+//           '${source.mealType}\n'
+//           '${source.foodName}\n'
+//           '${source.calories} kcal',
+//           textAlign: TextAlign.center,
+//         ),
+//       ),
+//     );
+//   }
+// }
