@@ -36,7 +36,7 @@
     });
 
     async function readBody(response) {
-        return (response.headers.get('content-type') || '').includes('application/json')
+        return (response.headers.get('content-type') || '').includes('json')
             ? response.json()
             : {};
     }
@@ -200,7 +200,8 @@
         });
         const body = await readBody(response);
         if (!response.ok) {
-            throw new Error(body.message || body.detail || body.title || 'Unable to save this tag.');
+            const fieldError = Array.isArray(body.errors) ? body.errors[0]?.defaultMessage : null;
+            throw new Error(body.message || body.detail || fieldError || body.title || 'Unable to save this tag.');
         }
         return body;
     }
@@ -231,18 +232,12 @@
         saveButton.textContent = 'Saving…';
 
         try {
-            const response = await request(
+            const savedTag = await request(
                 isEditing ? `/admin/tags/${editingId}` : '/admin/tags',
                 isEditing ? 'PUT' : 'POST',
                 payload
             );
-            upsertTag({
-                id: isEditing ? editingId : response.id,
-                tagName: payload.tagName,
-                tagScope: payload.tagScope,
-                description: payload.description,
-                active: payload.active
-            });
+            upsertTag(savedTag);
             hideModal();
             await alerts.success(
                 isEditing ? 'Tag updated' : 'Tag added',

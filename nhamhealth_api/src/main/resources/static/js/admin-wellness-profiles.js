@@ -55,6 +55,12 @@
     const saveButton = document.getElementById('saveProfileButton');
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const alerts = window.adminAlerts ?? {
+        confirmDelete: ({ text }) => Promise.resolve(window.confirm(text)),
+        success: (heading, text) => Promise.resolve(window.alert(text || heading)),
+        error: (text) => Promise.resolve(window.alert(text))
+    };
+    let editingProfileId = null;
 
     const uploadProfileImage = async (file) => {
         if (!(file instanceof File) || file.size === 0) return null;
@@ -80,7 +86,9 @@
         form.reset();
         setError();
         const isEdit = Boolean(row);
+        editingProfileId = row?.dataset.id || null;
         document.getElementById('profileModalTitle').textContent = isEdit ? 'Edit wellness profile' : 'Add wellness profile';
+        saveButton.textContent = isEdit ? 'Save changes' : 'Save profile';
         if (row) {
             form.userEmail.value = row.dataset.email;
             form.profileImageUrl.value = row.dataset.image;
@@ -99,6 +107,8 @@
         modal?.classList.remove('show');
         modal?.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        editingProfileId = null;
+        form?.reset();
         setError();
     };
 
@@ -106,7 +116,14 @@
     document.querySelectorAll('.edit-profile').forEach((button) => button.addEventListener('click', () => openModal(button.closest('tr'))));
     document.querySelectorAll('.delete-profile').forEach((button) => button.addEventListener('click', async () => {
         const row = button.closest('tr');
-        if (!row?.dataset.id || !window.confirm('Delete this wellness profile? The user account and public profile will remain.')) return;
+        if (!row?.dataset.id) return;
+        const name = row.dataset.name || 'this user';
+        const confirmed = await alerts.confirmDelete({
+            title: 'Delete wellness profile?',
+            text: `Delete the wellness profile for ${name}? The user account and public profile will remain.`,
+            confirmButtonText: 'Yes, delete profile!'
+        });
+        if (!confirmed) return;
         button.disabled = true;
         try {
             const response = await fetch(`/admin/wellness-profiles/${row.dataset.id}`, {
@@ -117,9 +134,10 @@
                 const body = await response.json().catch(() => ({}));
                 throw new Error(body.message || 'Unable to delete this wellness profile.');
             }
+            await alerts.success('Wellness profile deleted', `${name}'s wellness profile has been deleted.`);
             window.location.reload();
         } catch (exception) {
-            window.alert(exception.message);
+            await alerts.error(exception.message || 'Unable to delete this wellness profile.');
             button.disabled = false;
         }
     }));
@@ -130,11 +148,17 @@
 
     form?.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
         const formData = new FormData(form);
         const imageFile = formData.get('profileImageFile');
         formData.delete('profileImageFile');
         const payload = Object.fromEntries(formData.entries());
         setError();
+        const isEditing = Boolean(editingProfileId);
         saveButton.disabled = true;
         saveButton.textContent = 'Saving…';
         try {
@@ -149,11 +173,17 @@
                 const body = await response.json().catch(() => ({}));
                 throw new Error(body.message || 'Unable to save this wellness profile.');
             }
+            closeModal();
+            await alerts.success(
+                isEditing ? 'Wellness profile updated' : 'Wellness profile added',
+                `${payload.userEmail} has had their wellness profile ${isEditing ? 'updated' : 'added'}.`
+            );
             window.location.reload();
         } catch (exception) {
             setError(exception.message);
+            await alerts.error(exception.message || 'Unable to save this wellness profile.');
             saveButton.disabled = false;
-            saveButton.textContent = 'Save profile';
+            saveButton.textContent = isEditing ? 'Save changes' : 'Save profile';
         }
     });
 })();
