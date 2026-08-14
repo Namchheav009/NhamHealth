@@ -21,6 +21,9 @@ import '../modules/wellness/views/pages/water_view.dart';
 import '../modules/wellness/views/pages/fiber_view.dart';
 import '../modules/wellness/views/pages/sugar_view.dart';
 import '../modules/wellness/views/pages/ai_meal_auto_fill_view.dart';
+import '../modules/wellness/bindings/calories_binding.dart';
+import '../modules/wellness/views/pages/food_source_detail_view.dart';
+import '../modules/wellness/bindings/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
 
@@ -80,11 +83,12 @@ abstract class AppPages {
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),
-    GetPage<dynamic>(
-      name: AppRoutes.calories,
-      page: () => const CaloriesView(),
-      binding: WellnessBinding(),
-    ),
+
+    // GetPage<dynamic>(
+    //   name: AppRoutes.calories,
+    //   page: () => const CaloriesView(),
+    //   binding: WellnessBinding(),
+    // ),
 
     GetPage<dynamic>(
       name: AppRoutes.protein,
@@ -114,6 +118,20 @@ abstract class AppPages {
       name: AppRoutes.aiMealAutoFill,
       page: () => const AiMealAutoFillView(),
       binding: WellnessBinding(),
+    ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.calories,
+      page: () => const CaloriesView(),
+      binding: CaloriesBinding(),
+      transition: Transition.rightToLeft,
+    ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.foodSourceDetail,
+      page: () => const FoodSourceDetailView(),
+      binding: FoodSourceDetailBinding(),
+      transition: Transition.rightToLeft,
     ),
   ];
 }

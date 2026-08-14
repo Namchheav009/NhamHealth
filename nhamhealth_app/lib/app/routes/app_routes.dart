@@ -17,4 +17,6 @@ abstract class AppRoutes {
   static const String sugar = '/wellness/sugar';
 
   static const String aiMealAutoFill = '/wellness/ai-meal-auto-fill';
+  static const String foodSourceDetail = '/wellness/calories/food-source-detail';
+  
 }
