@@ -580,6 +580,9 @@ class AuthenticationFlowTests {
                                 """.formatted(tagName)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.tagName").value(tagName))
+                .andExpect(jsonPath("$.tagScope").value("NUTRITION"))
+                .andExpect(jsonPath("$.active").value(true))
                 .andReturn();
 
         Integer tagId = JsonPath.read(result.getResponse().getContentAsString(), "$.id");
@@ -589,8 +592,10 @@ class AuthenticationFlowTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"tagName":"%s","tagScope":"HEALTH","description":"Updated tag","active":false}
-                                """.formatted(tagName)))
-                .andExpect(status().isOk());
+                        """.formatted(tagName)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tagScope").value("HEALTH"))
+                .andExpect(jsonPath("$.active").value(false));
 
         mockMvc.perform(get("/admin/tags").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
