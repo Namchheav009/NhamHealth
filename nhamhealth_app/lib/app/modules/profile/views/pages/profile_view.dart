@@ -26,33 +26,56 @@ class ProfileView extends GetView<ProfileController> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopBar(),
-                const SizedBox(height: 14),
+          child: RefreshIndicator(
+            onRefresh: controller.refreshProfile,
+            color: const Color(0xFF009B3E),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTopBar(),
+                  Obx(
+                    () => controller.isLoading.value
+                        ? const LinearProgressIndicator(
+                            minHeight: 2,
+                            color: Color(0xFF009B3E),
+                            backgroundColor: Colors.transparent,
+                          )
+                        : const SizedBox(height: 2),
+                  ),
+                  Obx(() {
+                    final message = controller.errorMessage.value;
+                    if (message == null) return const SizedBox.shrink();
+                    return _ProfileErrorBanner(
+                      message: message,
+                      onRetry: controller.loadProfile,
+                    );
+                  }),
+                  const SizedBox(height: 12),
 
-                const ProfileHeader(),
+                  const ProfileHeader(),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                const HealthStatsCard(),
+                  const HealthStatsCard(),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                const ProgressCard(),
+                  const ProgressCard(),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                const InsightCard(),
+                  const InsightCard(),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                const ProfilePostCard(),
-              ],
+                  const ProfilePostCard(),
+                ],
+              ),
             ),
           ),
         ),
@@ -139,6 +162,33 @@ class ProfileView extends GetView<ProfileController> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ProfileErrorBanner extends StatelessWidget {
+  const _ProfileErrorBanner({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3F3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Color(0xFFD84A4A), size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
     );
   }
 }

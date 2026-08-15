@@ -150,10 +150,13 @@ public class AdminUserService {
         if (user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
             throw new IllegalArgumentException("You cannot delete your own account");
         }
-        user.setStatus("DELETED");
-        user.setIsVerified(false);
-        user.setVerifiedAt(null);
-        userRepository.save(user);
+
+        wellnessProfileRepository.findByUser_UserId(userId)
+                .ifPresent(wellnessProfileRepository::delete);
+        userProfileRepository.findByUser_UserId(userId)
+                .ifPresent(userProfileRepository::delete);
+        userRepository.delete(user);
+        userRepository.flush();
     }
 
     private UserProfile createProfile(User user, LocalDateTime now) {

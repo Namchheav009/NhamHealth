@@ -90,7 +90,10 @@ class HomeController extends GetxController {
         // Get.toNamed(AppRoutes.community);
         break;
       case 4:
-        Get.offNamed<void>(AppRoutes.profile);
+        Get.offNamed<void>(
+          AppRoutes.profile,
+          arguments: authenticatedUser.value,
+        );
         break;
     }
   }
