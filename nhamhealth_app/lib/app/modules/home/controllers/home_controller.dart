@@ -89,6 +89,9 @@ class HomeController extends GetxController {
       case 3:
         // Get.toNamed(AppRoutes.community);
         break;
+      case 4:
+        Get.offNamed<void>(AppRoutes.profile);
+        break;
     }
   }
 
@@ -105,8 +108,8 @@ class HomeController extends GetxController {
   }
 
   void openWellnessDetails() {
-  Get.toNamed(AppRoutes.wellness);
-}
+    Get.toNamed(AppRoutes.wellness);
+  }
 
   Future<void> logout() async {
     if (isLoggingOut.value) return;
