@@ -39,6 +39,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   google_sign_in: ^7.2.0
   google_sign_in_web: ^1.1.3
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,7 @@ flutter:
 
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png
+    - assets/images/profile/profile.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

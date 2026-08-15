@@ -11,6 +11,8 @@ import '../modules/auth/views/pages/account_created_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/pages/home_view.dart';
 import '../modules/notifications/views/pages/notifications_view.dart';
+import '../modules/profile/bindings/profile_binding.dart';
+import '../modules/profile/views/pages/profile_view.dart';
 
 import '../modules/wellness/bindings/wellness_binding.dart';
 import '../modules/wellness/views/pages/wellness_view.dart';
@@ -72,6 +74,12 @@ abstract class AppPages {
       transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
+      name: AppRoutes.profile,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
       name: AppRoutes.notifications,
       page: () => const NotificationsView(),
       transition: Transition.rightToLeft,
@@ -89,7 +97,6 @@ abstract class AppPages {
     //   page: () => const CaloriesView(),
     //   binding: WellnessBinding(),
     // ),
-
     GetPage<dynamic>(
       name: AppRoutes.protein,
       page: () => const ProteinView(),
