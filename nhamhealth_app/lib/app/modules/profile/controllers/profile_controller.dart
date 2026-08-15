@@ -4,8 +4,8 @@ import '../../../routes/app_routes.dart';
 import '../../auth/models/authenticated_user_model.dart';
 import '../models/profile_dashboard_model.dart';
 import '../repositories/profile_repository.dart';
-import '../views/pages/edit_profile_view.dart';
-import '../views/pages/setting_view.dart';
+import '../views/edit_profile_view.dart';
+import '../views/setting_view.dart';
 import 'edit_profile_controller.dart';
 import 'setting_controller.dart';
 

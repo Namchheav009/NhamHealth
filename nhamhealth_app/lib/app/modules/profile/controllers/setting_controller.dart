@@ -9,12 +9,12 @@ import '../bindings/change_password_binding.dart';
 import '../bindings/language_binding.dart';
 import '../bindings/terms_privacy_binding.dart';
 import '../bindings/help_support_binding.dart';
-import '../views/pages/appearance_view.dart';
-import '../views/pages/change_password_view.dart';
-import '../views/pages/language_view.dart';
-import '../views/pages/terms_privacy_view.dart';
+import '../views/appearance_view.dart';
+import '../views/change_password_view.dart';
+import '../views/language_view.dart';
+import '../views/terms_privacy_view.dart';
 import '../views/widgets/logout_dialog.dart';
-import '../views/pages/help_support_view.dart';
+import '../views/help_support_view.dart';
 
 class SettingsController extends GetxController {
   final selectedLanguage = 'English'.obs;
