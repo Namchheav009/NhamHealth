@@ -12,6 +12,8 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/pages/home_view.dart';
 import '../modules/notifications/views/pages/notifications_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
+import '../modules/profile/bindings/change_password_binding.dart';
+import '../modules/profile/views/pages/change_password_view.dart';
 import '../modules/profile/views/pages/profile_view.dart';
 
 import '../modules/wellness/bindings/wellness_binding.dart';
@@ -78,6 +80,12 @@ abstract class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
       transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.changePassword,
+      page: () => const ChangePasswordView(),
+      binding: ChangePasswordBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.notifications,
