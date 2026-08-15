@@ -22,7 +22,8 @@ if (googleServerClientId &&
 
 android {
     namespace = "com.example.nhamhealth_flutter"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage requires API 37 or newer.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

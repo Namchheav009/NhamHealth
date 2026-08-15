@@ -39,6 +39,9 @@ public class UserProfile {
     @Column(name = "gender", length = 30)
     private String gender;
 
+    @Column(name = "phone_number", length = 30)
+    private String phoneNumber;
+
     @Column(name = "membership_type", length = 50)
     private String membershipType;
 
@@ -99,6 +102,14 @@ public class UserProfile {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getMembershipType() {

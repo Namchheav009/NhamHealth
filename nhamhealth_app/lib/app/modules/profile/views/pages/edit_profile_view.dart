@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../config/api_config.dart';
 import '../../controllers/edit_profile_controller.dart';
 import '../widgets/edit_info_row.dart';
 
@@ -80,15 +81,28 @@ class EditProfileView extends GetView<EditProfileController> {
 
         const Spacer(),
 
-        TextButton(
-          onPressed: controller.saveProfile,
-          child: const Text(
-            'Save',
-            style: TextStyle(
-              color: green,
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
+        Obx(
+          () => TextButton(
+            onPressed: controller.isSaving.value
+                ? null
+                : controller.saveProfile,
+            child: controller.isSaving.value
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: green,
+                    ),
+                  )
+                : const Text(
+                    'Save',
+                    style: TextStyle(
+                      color: green,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -128,14 +142,7 @@ class EditProfileView extends GetView<EditProfileController> {
                 child: Obx(
                   () => CircleAvatar(
                     radius: 39,
-                    backgroundImage:
-                        controller.profileImagePath.isEmpty
-                            ? const AssetImage(
-                              'assets/images/profile/profile.jpg',
-                            )
-                            : FileImage(
-                              File(controller.profileImagePath.value),
-                            ),
+                    backgroundImage: _editAvatarImage(),
                   ),
                 ),
               ),
@@ -214,6 +221,26 @@ class EditProfileView extends GetView<EditProfileController> {
         ],
       ),
     );
+  }
+
+  ImageProvider<Object> _editAvatarImage() {
+    final localPath = controller.profileImagePath.value.trim();
+    if (localPath.isNotEmpty) return FileImage(File(localPath));
+
+    final remotePath = controller
+        .profileController
+        .authenticatedUser
+        .value
+        ?.profileImageUrl
+        ?.trim();
+    if (remotePath != null && remotePath.isNotEmpty) {
+      final url = remotePath.startsWith('http://') ||
+              remotePath.startsWith('https://')
+          ? remotePath
+          : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+      return NetworkImage(url);
+    }
+    return const AssetImage('assets/images/profile/profile.jpg');
   }
 
   // -----------------------------------------

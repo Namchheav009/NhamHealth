@@ -233,10 +233,13 @@ public class AuthService {
             Integer userId,
             String email,
             String role) {
+        String currentEmail = userRepository.findById(userId)
+                .map(User::getEmail)
+                .orElse(email);
         UserProfile profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
         return new AuthenticatedUserResponse(
                 userId,
-                email,
+                currentEmail,
                 role,
                 profile == null ? null : profile.getFullName(),
                 profile == null ? null : profile.getProfileImageUrl());

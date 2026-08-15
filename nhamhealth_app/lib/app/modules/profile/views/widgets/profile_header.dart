@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../config/api_config.dart';
+import '../../../auth/models/authenticated_user_model.dart';
 import '../../controllers/profile_controller.dart';
 
 class ProfileHeader extends GetView<ProfileController> {
@@ -37,11 +39,9 @@ class ProfileHeader extends GetView<ProfileController> {
                   color: Colors.white,
                 ),
                 child: Obx(
-                  () => CircleAvatar(
-                    radius: 32,
-                    backgroundImage: controller.profileImagePath.isEmpty
-                        ? const AssetImage('assets/images/profile/profile.jpg')
-                        : FileImage(File(controller.profileImagePath.value)),
+                  () => _ProfileAvatar(
+                    localPath: controller.profileImagePath.value,
+                    user: controller.authenticatedUser.value,
                   ),
                 ),
               ),
@@ -131,6 +131,55 @@ class ProfileHeader extends GetView<ProfileController> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.localPath, required this.user});
+
+  final String localPath;
+  final AuthenticatedUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPath = localPath.trim();
+    if (selectedPath.isNotEmpty) {
+      return CircleAvatar(
+        radius: 32,
+        backgroundImage: FileImage(File(selectedPath)),
+      );
+    }
+
+    final remotePath = user?.profileImageUrl?.trim();
+    if (remotePath != null && remotePath.isNotEmpty) {
+      final imageUrl = remotePath.startsWith('http://') ||
+              remotePath.startsWith('https://')
+          ? remotePath
+          : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+      return CircleAvatar(
+        radius: 32,
+        backgroundColor: const Color(0xFFE8F5E9),
+        foregroundImage: NetworkImage(imageUrl),
+        child: _initials(user?.initials ?? '?'),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 32,
+      backgroundColor: const Color(0xFFE8F5E9),
+      child: _initials(user?.initials ?? '?'),
+    );
+  }
+
+  Widget _initials(String value) {
+    return Text(
+      value,
+      style: const TextStyle(
+        color: Color(0xFF087A35),
+        fontSize: 21,
+        fontWeight: FontWeight.w800,
       ),
     );
   }
