@@ -33,6 +33,7 @@
 .filter-action { align-self: end; }
 
 .table-panel { overflow: hidden; }
+.table-panel { border-radius: 16px; box-shadow: 0 8px 24px rgba(31,41,55,.06); }
 .panel-header p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
 .table-responsive { padding: 0 16px 16px; }
 .table-responsive table { min-width: 980px; }
@@ -53,6 +54,8 @@
 .status-read { color: #64748b; background: #eef2f6; }
 .row-actions { display: inline-flex; gap: 6px; }
 .delete-notification { color: #b42318; }
+.row-actions .icon-button { transition: transform .15s ease, background .15s ease; }
+.row-actions .icon-button:hover { transform: translateY(-1px); background: #f8fafc; }
 .empty-state { display: table-cell; padding: 54px 20px !important; text-align: center !important; }
 .empty-state i, .empty-state strong, .empty-state span { display: block; }
 .empty-state i { margin-bottom: 8px; font-size: 25px; }

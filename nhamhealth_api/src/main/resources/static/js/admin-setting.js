@@ -1,6 +1,7 @@
-(function () {
-    const saveBtn = document.querySelector('.heading-actions .btn-primary');
-    saveBtn?.addEventListener('click', () => {
-        alert('Settings save endpoint is not implemented yet.');
-    });
+(() => {
+ const form=document.getElementById('settingsForm'),save=document.getElementById('saveSettings'),token=document.querySelector('meta[name="_csrf"]')?.content,header=document.querySelector('meta[name="_csrf_header"]')?.content;
+ const initial={languageCode:form.languageCode.value,theme:form.theme.value,emailNotifications:form.emailNotifications.checked,pushNotifications:form.pushNotifications.checked};
+ const restore=()=>{form.languageCode.value=initial.languageCode;form.theme.value=initial.theme;form.emailNotifications.checked=initial.emailNotifications;form.pushNotifications.checked=initial.pushNotifications;};
+ document.getElementById('resetSettings').onclick=async()=>{const result=await Swal.fire({icon:'question',title:'Reset unsaved changes?',showCancelButton:true,confirmButtonText:'Reset',confirmButtonColor:'#078f4a'});if(result.isConfirmed){restore();Swal.fire({icon:'success',title:'Changes reset',timer:1100,showConfirmButton:false});}};
+ form.addEventListener('submit',async event=>{event.preventDefault();save.disabled=true;const data=new FormData();data.set('languageCode',form.languageCode.value);data.set('theme',form.theme.value);data.set('emailNotifications',form.emailNotifications.checked);data.set('pushNotifications',form.pushNotifications.checked);try{const headers=token&&header?{[header]:token}:{},response=await fetch(form.action,{method:'POST',headers,body:data}),result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||'Your preferences could not be saved.');Object.assign(initial,{languageCode:form.languageCode.value,theme:form.theme.value,emailNotifications:form.emailNotifications.checked,pushNotifications:form.pushNotifications.checked});document.getElementById('lastUpdated').textContent=`Last saved ${new Intl.DateTimeFormat(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(result.updatedAt))}`;Swal.fire({icon:'success',title:'Settings saved',text:result.message,timer:1700,showConfirmButton:false});}catch(error){Swal.fire({icon:'error',title:'Save failed',text:error.message,confirmButtonColor:'#078f4a'});}finally{save.disabled=false;}});
 })();

@@ -1,128 +1,19 @@
 (() => {
-    const search = document.getElementById('notifSearch');
-    const status = document.getElementById('notifStatus');
-    const clearButton = document.getElementById('clearNotifFilters');
-    const exportButton = document.getElementById('exportNotifications');
-    const refreshButton = document.getElementById('refreshNotifications');
-    const openButton = document.getElementById('openNotificationModal');
-    const modal = document.getElementById('notificationModal');
-    const closeButton = document.getElementById('closeNotificationModal');
-    const cancelButton = document.getElementById('cancelNotificationModal');
-    const form = document.getElementById('notificationForm');
-    const formError = document.getElementById('notificationFormError');
-    const submitButton = document.getElementById('createNotificationButton');
-    const visibleCount = document.getElementById('visibleNotificationCount');
-    const rows = [...document.querySelectorAll('tbody tr[data-id]')];
-    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-
-    const requestHeaders = (json = false) => ({
-        ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
-        ...(json ? { 'Content-Type': 'application/json' } : {})
-    });
-
-    const responseBody = async (response) => {
-        const contentType = response.headers.get('content-type') || '';
-        return contentType.includes('application/json') ? response.json() : {};
-    };
-
-    const applyFilters = () => {
-        const query = search?.value.trim().toLowerCase() || '';
-        const selectedStatus = status?.value || 'all';
-        let count = 0;
-        rows.forEach((row) => {
-            const matchesText = !query || [row.dataset.user, row.dataset.title, row.dataset.message]
-                .some(value => (value || '').includes(query));
-            const matchesStatus = selectedStatus === 'all' || row.dataset.status === selectedStatus;
-            row.hidden = !(matchesText && matchesStatus);
-            if (!row.hidden) count += 1;
-        });
-        if (visibleCount) visibleCount.textContent = String(count);
-    };
-
-    const showModal = () => {
-        form?.reset();
-        if (formError) formError.hidden = true;
-        modal?.classList.add('show');
-        document.body.classList.add('modal-open');
-        form?.querySelector('input')?.focus();
-    };
-
-    const hideModal = () => {
-        modal?.classList.remove('show');
-        document.body.classList.remove('modal-open');
-    };
-
-    search?.addEventListener('input', applyFilters);
-    status?.addEventListener('change', applyFilters);
-    clearButton?.addEventListener('click', () => {
-        if (search) search.value = '';
-        if (status) status.value = 'all';
-        applyFilters();
-    });
-    refreshButton?.addEventListener('click', () => window.location.reload());
-    openButton?.addEventListener('click', showModal);
-    closeButton?.addEventListener('click', hideModal);
-    cancelButton?.addEventListener('click', hideModal);
-    modal?.addEventListener('click', event => { if (event.target === modal) hideModal(); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') hideModal(); });
-
-    exportButton?.addEventListener('click', () => {
-        const quote = value => `"${String(value || '').replaceAll('"', '""')}"`;
-        const data = rows.filter(row => !row.hidden).map(row => [
-            row.querySelector('.recipient-cell small')?.textContent.trim(),
-            row.querySelector('.notification-copy strong')?.textContent.trim(),
-            row.querySelector('.notification-copy span')?.textContent.trim(),
-            row.querySelector('.type-badge')?.textContent.trim(),
-            row.querySelector('time')?.textContent.trim(),
-            row.dataset.status
-        ]);
-        const csv = [['User', 'Title', 'Message', 'Type', 'Created', 'Status'], ...data]
-            .map(columns => columns.map(quote).join(',')).join('\n');
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-        link.download = 'nham-health-notifications.csv';
-        link.click();
-        URL.revokeObjectURL(link.href);
-    });
-
-    form?.addEventListener('submit', async event => {
-        event.preventDefault();
-        if (formError) formError.hidden = true;
-        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Creating…'; }
-        try {
-            const payload = Object.fromEntries(new FormData(form).entries());
-            const response = await fetch('/admin/notifications', {
-                method: 'POST', headers: requestHeaders(true), body: JSON.stringify(payload)
-            });
-            const body = await responseBody(response);
-            if (!response.ok) throw new Error(body.message || 'Unable to create notification.');
-            window.location.reload();
-        } catch (error) {
-            if (formError) { formError.textContent = error.message; formError.hidden = false; }
-        } finally {
-            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Create notification'; }
-        }
-    });
-
-    document.querySelectorAll('.toggle-read').forEach(button => button.addEventListener('click', async () => {
-        const row = button.closest('tr[data-id]');
-        if (!row) return;
-        const markRead = row.dataset.status !== 'read';
-        const response = await fetch(`/admin/notifications/${row.dataset.id}/read`, {
-            method: 'PATCH', headers: requestHeaders(true), body: JSON.stringify({ read: markRead })
-        });
-        if (response.ok) window.location.reload();
-    }));
-
-    document.querySelectorAll('.delete-notification').forEach(button => button.addEventListener('click', async () => {
-        const row = button.closest('tr[data-id]');
-        if (!row || !window.confirm('Delete this notification?')) return;
-        const response = await fetch(`/admin/notifications/${row.dataset.id}`, {
-            method: 'DELETE', headers: requestHeaders()
-        });
-        if (response.ok) window.location.reload();
-    }));
-
-    applyFilters();
+    const $=id=>document.getElementById(id),tbody=$('notificationRows'),search=$('notifSearch'),statusFilter=$('notifStatus'),modal=$('notificationModal'),form=$('notificationForm');
+    const token=document.querySelector('meta[name="_csrf"]')?.content,header=document.querySelector('meta[name="_csrf_header"]')?.content;
+    const rows=()=>[...tbody.querySelectorAll('tr[data-id]')];
+    const headers=(json=false)=>({...(token&&header?{[header]:token}:{}),...(json?{'Content-Type':'application/json'}:{})});
+    const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]);
+    const notify=(icon,title,text)=>Swal.fire({icon,title,text,confirmButtonColor:'#078f4a'});
+    const dayAgo=()=>Date.now()-24*60*60*1000;
+    async function body(response){return (response.headers.get('content-type')||'').includes('application/json')?response.json():{};}
+    function applyFilters(){const query=search.value.trim().toLowerCase(),status=statusFilter.value;let visible=0;rows().forEach(row=>{const matchText=!query||[row.dataset.user,row.dataset.title,row.dataset.message].some(value=>(value||'').includes(query));row.hidden=!(matchText&&(status==='all'||row.dataset.status===status));if(!row.hidden)visible++;});$('visibleNotificationCount').textContent=visible;}
+    function updateMetrics(){const all=rows();$('totalNotifications').textContent=all.length;$('unreadNotifications').textContent=all.filter(row=>row.dataset.status==='unread').length;$('recentNotifications').textContent=all.filter(row=>new Date(row.dataset.createdAt).getTime()>=dayAgo()).length;applyFilters();}
+    function hideModal(){modal.classList.remove('show');document.body.classList.remove('modal-open');form.reset();$('notificationFormError').hidden=true;}
+    function showModal(){modal.classList.add('show');document.body.classList.add('modal-open');$('notifUser').focus();}
+    function addRow(item){tbody.querySelector('.empty-state')?.closest('tr')?.remove();const row=document.createElement('tr');Object.assign(row.dataset,{id:item.id,createdAt:item.createdAt,user:item.userEmail.toLowerCase(),status:'unread',title:item.title.toLowerCase(),message:item.message.toLowerCase()});const created=new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(item.createdAt));row.innerHTML=`<td><div class="recipient-cell"><span class="recipient-avatar">${escapeHtml(item.userInitials)}</span><span><strong>${escapeHtml(item.userName)}</strong><small>${escapeHtml(item.userEmail)}</small></span></div></td><td><div class="notification-copy"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.message)}</span></div></td><td><span class="type-badge">${escapeHtml(item.notificationType)}</span></td><td><time>${created}</time></td><td><span class="status-badge status-unread">Unread</span></td><td><div class="row-actions"><button class="icon-button small toggle-read" type="button" title="Mark read"><i class="bi bi-envelope-open"></i></button><button class="icon-button small delete-notification" type="button" title="Delete notification"><i class="bi bi-trash3"></i></button></div></td>`;tbody.prepend(row);updateMetrics();}
+    form.addEventListener('submit',async event=>{event.preventDefault();const submit=$('createNotificationButton');submit.disabled=true;submit.textContent='Creating…';try{const response=await fetch(form.action,{method:'POST',headers:headers(true),body:JSON.stringify(Object.fromEntries(new FormData(form).entries()))});const data=await body(response);if(!response.ok)throw new Error(data.message||'Unable to create notification.');addRow(data);hideModal();Swal.fire({icon:'success',title:'Notification created',text:'The notification is ready for the selected user.',timer:1700,showConfirmButton:false});}catch(error){notify('error','Create failed',error.message);}finally{submit.disabled=false;submit.textContent='Create notification';}});
+    tbody.addEventListener('click',async event=>{const row=event.target.closest('tr[data-id]');if(!row)return;const toggle=event.target.closest('.toggle-read'),remove=event.target.closest('.delete-notification');if(toggle){const markRead=row.dataset.status!=='read';try{const response=await fetch(`/admin/notifications/${row.dataset.id}/read`,{method:'PATCH',headers:headers(true),body:JSON.stringify({read:markRead})});if(!response.ok)throw new Error('The read status could not be updated.');row.dataset.status=markRead?'read':'unread';const badge=row.querySelector('.status-badge');badge.className=`status-badge status-${row.dataset.status}`;badge.textContent=markRead?'Read':'Unread';toggle.title=markRead?'Mark unread':'Mark read';toggle.querySelector('i').className=markRead?'bi bi-envelope':'bi bi-envelope-open';updateMetrics();Swal.fire({icon:'success',title:markRead?'Marked as read':'Marked as unread',timer:1100,showConfirmButton:false});}catch(error){notify('error','Update failed',error.message);}}else if(remove){const result=await Swal.fire({icon:'warning',title:'Delete notification?',text:'This notification will be permanently removed.',showCancelButton:true,confirmButtonText:'Delete',confirmButtonColor:'#dc2626'});if(!result.isConfirmed)return;try{const response=await fetch(`/admin/notifications/${row.dataset.id}`,{method:'DELETE',headers:headers()});if(!response.ok)throw new Error('The notification could not be deleted.');row.remove();updateMetrics();notify('success','Notification deleted','The record was removed.');}catch(error){notify('error','Delete failed',error.message);}}});
+    search.addEventListener('input',applyFilters);statusFilter.addEventListener('change',applyFilters);$('clearNotifFilters').addEventListener('click',()=>{search.value='';statusFilter.value='all';applyFilters();});$('refreshNotifications').addEventListener('click',()=>location.reload());$('openNotificationModal').addEventListener('click',showModal);$('closeNotificationModal').addEventListener('click',hideModal);$('cancelNotificationModal').addEventListener('click',hideModal);modal.addEventListener('click',event=>{if(event.target===modal)hideModal();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('show'))hideModal();});
+    $('exportNotifications').addEventListener('click',()=>{const data=[['User','Title','Message','Type','Created','Status'],...rows().filter(row=>!row.hidden).map(row=>[row.querySelector('.recipient-cell small')?.textContent.trim(),row.querySelector('.notification-copy strong')?.textContent.trim(),row.querySelector('.notification-copy span')?.textContent.trim(),row.querySelector('.type-badge')?.textContent.trim(),row.querySelector('time')?.textContent.trim(),row.dataset.status])];const csv=data.map(values=>values.map(value=>`"${String(value||'').replace(/"/g,'""')}"`).join(',')).join('\n');const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));link.download=`notifications-${new Date().toISOString().slice(0,10)}.csv`;link.click();URL.revokeObjectURL(link.href);Swal.fire({icon:'success',title:'Export ready',timer:1200,showConfirmButton:false});});updateMetrics();
 })();

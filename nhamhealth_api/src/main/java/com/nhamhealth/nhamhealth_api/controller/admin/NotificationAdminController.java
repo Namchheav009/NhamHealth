@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 
 @Controller
 public class NotificationAdminController {
+    private static final List<String> VALID_TYPES = List.of("SYSTEM", "REMINDER", "HEALTH", "COMMUNITY");
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
@@ -41,6 +42,7 @@ public class NotificationAdminController {
         model.addAttribute("activePage", "notifications");
         model.addAttribute("adminName", authentication != null ? authentication.getName() : "admin");
         model.addAttribute("notifications", notifs);
+        model.addAttribute("users", userRepository.findAll());
         model.addAttribute("totalNotifications", notifs.size());
         model.addAttribute("unreadNotifications", notifs.stream()
                 .filter(notification -> !Boolean.TRUE.equals(notification.getIsRead())).count());
@@ -52,17 +54,28 @@ public class NotificationAdminController {
 
     @PostMapping("/admin/notifications")
     public ResponseEntity<?> createNotification(@Valid @RequestBody AdminCreateNotificationRequest request) {
+        String notificationType = request.notificationType().trim().toUpperCase();
+        if (!VALID_TYPES.contains(notificationType)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Select a valid notification type"));
+        }
         return userRepository.findByEmailIgnoreCase(request.userEmail().trim())
                 .<ResponseEntity<?>>map(user -> {
                     Notification notification = new Notification();
                     notification.setUser(user);
-                    notification.setNotificationType(request.notificationType().trim().toUpperCase());
+                    notification.setNotificationType(notificationType);
                     notification.setTitle(request.title().trim());
                     notification.setMessage(request.message().trim());
                     notification.setIsRead(false);
                     notification.setCreatedAt(LocalDateTime.now());
-                    Notification saved = notificationRepository.save(notification);
-                    return ResponseEntity.ok(Map.of("id", saved.getNotificationId()));
+                    Notification saved = notificationRepository.saveAndFlush(notification);
+                    String name = user.getName() == null || user.getName().isBlank() ? "Unknown user" : user.getName();
+                    String email = user.getEmail() == null ? "" : user.getEmail();
+                    return ResponseEntity.ok(Map.ofEntries(
+                            Map.entry("id", saved.getNotificationId()), Map.entry("userId", user.getUserId()),
+                            Map.entry("userName", name), Map.entry("userEmail", email),
+                            Map.entry("userInitials", user.getInitials()), Map.entry("title", saved.getTitle()),
+                            Map.entry("message", saved.getMessage()), Map.entry("notificationType", saved.getNotificationType()),
+                            Map.entry("read", false), Map.entry("createdAt", saved.getCreatedAt().toString())));
                 })
                 .orElseGet(() -> ResponseEntity.badRequest()
                         .body(Map.of("message", "No user exists with that email address")));

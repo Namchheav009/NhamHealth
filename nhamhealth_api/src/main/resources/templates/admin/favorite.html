@@ -31,9 +31,9 @@
             </div>
 
             <div class="stats-grid">
-                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-heart-fill"></i></div><div class="stat-content"><span>Total favorites</span><strong th:text="${#numbers.formatInteger(totalFavorites, 1, 'COMMA')}">0</strong><small>Meals and posts combined</small></div></article>
-                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-egg-fried"></i></div><div class="stat-content"><span>Meal favorites</span><strong th:text="${#numbers.formatInteger(totalFoodFavorites, 1, 'COMMA')}">0</strong><small th:text="${usersWithFoodFavorites + ' users saved meals'}">0 users saved meals</small></div></article>
-                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-bookmark-fill"></i></div><div class="stat-content"><span>Post favorites</span><strong th:text="${#numbers.formatInteger(totalPostFavorites, 1, 'COMMA')}">0</strong><small th:text="${usersWithFavorites + ' unique users overall'}">0 unique users overall</small></div></article>
+                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-heart-fill"></i></div><div class="stat-content"><span>Total favorites</span><strong id="totalFavoriteCount" th:text="${#numbers.formatInteger(totalFavorites, 1, 'COMMA')}">0</strong><small>Meals and posts combined</small></div></article>
+                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-egg-fried"></i></div><div class="stat-content"><span>Meal favorites</span><strong id="mealFavoriteCount" th:text="${#numbers.formatInteger(totalFoodFavorites, 1, 'COMMA')}">0</strong><small id="mealFavoriteUserCount" th:text="${usersWithFoodFavorites + ' users saved meals'}">0 users saved meals</small></div></article>
+                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-bookmark-fill"></i></div><div class="stat-content"><span>Post favorites</span><strong id="postFavoriteCount" th:text="${#numbers.formatInteger(totalPostFavorites, 1, 'COMMA')}">0</strong><small id="overallFavoriteUserCount" th:text="${usersWithFavorites + ' unique users overall'}">0 unique users overall</small></div></article>
             </div>
 
             <article class="panel table-panel">
@@ -41,56 +41,56 @@
                     <div><h2>Saved content</h2><p><span id="visibleFavoriteCount">0</span> records shown</p></div>
                     <div class="panel-tools">
                         <div class="tab-buttons" role="tablist" aria-label="Favorite type">
-                            <button class="btn btn-primary" id="tabFood" type="button" role="tab" aria-selected="true"><i class="bi bi-egg-fried"></i> Meals <span th:text="${totalFoodFavorites}">0</span></button>
-                            <button class="btn" id="tabPost" type="button" role="tab" aria-selected="false"><i class="bi bi-file-post"></i> Posts <span th:text="${totalPostFavorites}">0</span></button>
+                            <button class="btn btn-primary" id="tabFood" type="button" role="tab" aria-selected="true" aria-controls="foodPanel"><i class="bi bi-egg-fried"></i> Meals <span id="mealTabCount" th:text="${totalFoodFavorites}">0</span></button>
+                            <button class="btn" id="tabPost" type="button" role="tab" aria-selected="false" aria-controls="postPanel"><i class="bi bi-file-post"></i> Posts <span id="postTabCount" th:text="${totalPostFavorites}">0</span></button>
                         </div>
                         <input class="table-search" id="favoriteSearch" type="search" placeholder="Search content or user…" aria-label="Search favorites">
                         <button class="btn btn-secondary" id="clearFavoriteSearch" type="button">Clear</button>
                     </div>
                 </div>
 
-                <div class="favorite-panel" id="foodPanel" role="tabpanel">
+                <div class="favorite-panel" id="foodPanel" role="tabpanel" aria-labelledby="tabFood">
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Meal</th><th>Category</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
-                            <tbody>
-                            <tr th:each="favorite : ${foodFavorites}" th:data-id="${favorite.mealFavoriteId}" th:data-search="${#strings.toLowerCase(favorite.meal.mealName + ' ' + favorite.user.email)}">
+                            <tbody id="mealFavoriteRows">
+                            <tr th:each="favorite : ${foodFavorites}" th:data-id="${favorite.mealFavoriteId}" th:data-user-id="${favorite.user.userId}" th:data-search="${#strings.toLowerCase(favorite.meal.mealName + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
                                 <td><div class="content-cell"><span class="content-icon meal"><i class="bi bi-egg-fried"></i></span><span><strong th:text="${favorite.meal.mealName}">Meal</strong><small th:text="${favorite.meal.isPublished ? 'Published' : 'Draft'}">Published</small></span></div></td>
-                                <td><span class="category-badge" th:text="${favorite.meal.category.categoryName}">Category</span></td>
+                                <td><span class="category-badge" th:text="${favorite.meal.category != null ? favorite.meal.category.categoryName : 'Uncategorized'}">Category</span></td>
                                 <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
                                 <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
                                 <td><button class="icon-button small danger remove-favorite" type="button" data-kind="meals" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(foodFavorites)}"><td class="empty-state" colspan="5"><i class="bi bi-heart"></i><strong>No meal favorites</strong><span>Meal favorites will appear here when users save meals.</span></td></tr>
+                            <tr th:if="${#lists.isEmpty(foodFavorites)}" id="emptyMealFavoriteRow"><td class="empty-state" colspan="5"><i class="bi bi-heart"></i><strong>No meal favorites</strong><span>Meal favorites will appear here when users save meals.</span></td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="favorite-panel" id="postPanel" role="tabpanel" hidden>
+                <div class="favorite-panel" id="postPanel" role="tabpanel" aria-labelledby="tabPost" hidden>
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Post</th><th>Post author</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
-                            <tbody>
-                            <tr th:each="favorite : ${postFavorites}" th:data-id="${favorite.postFavoriteId}" th:data-search="${#strings.toLowerCase((favorite.post.caption ?: '') + ' ' + favorite.post.user.email + ' ' + favorite.user.email)}">
+                            <tbody id="postFavoriteRows">
+                            <tr th:each="favorite : ${postFavorites}" th:data-id="${favorite.postFavoriteId}" th:data-user-id="${favorite.user.userId}" th:data-search="${#strings.toLowerCase((favorite.post.caption ?: '') + ' ' + favorite.post.user.email + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
                                 <td><div class="content-cell"><span class="content-icon post"><i class="bi bi-file-post"></i></span><span><strong th:text="${favorite.post.caption != null && !#strings.isEmpty(favorite.post.caption) ? favorite.post.caption : 'Post #' + favorite.post.postId}">Post</strong><small th:text="${favorite.post.visibility + ' · ' + favorite.post.status}">PUBLIC · ACTIVE</small></span></div></td>
                                 <td th:text="${favorite.post.user.email}">author@example.com</td>
                                 <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
                                 <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
                                 <td><button class="icon-button small danger remove-favorite" type="button" data-kind="posts" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(postFavorites)}"><td class="empty-state" colspan="5"><i class="bi bi-bookmark"></i><strong>No post favorites</strong><span>Post favorites will appear here when users save community posts.</span></td></tr>
+                            <tr th:if="${#lists.isEmpty(postFavorites)}" id="emptyPostFavoriteRow"><td class="empty-state" colspan="5"><i class="bi bi-bookmark"></i><strong>No post favorites</strong><span>Post favorites will appear here when users save community posts.</span></td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </article>
         </section>
-        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Favorite data updates when this page is refreshed.</span></footer>
+        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Favorite activity management</span></footer>
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-favorites.js}"></script>
+<script th:src="@{/js/admin-favorites.js(v=20260815-1)}"></script>
 </body>
 </html>
