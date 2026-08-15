@@ -65,6 +65,8 @@
 .icon-button.small { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--review-border); border-radius: 8px; background: #fff; cursor: pointer; }
 .icon-button.small.danger { color: #d92d20; }
 .icon-button.small.danger:hover { border-color: #f3b5b0; background: #fff4f3; }
+.icon-button.small:focus-visible, .page-btn:focus-visible { outline: 3px solid rgba(22,135,91,.2); outline-offset: 2px; }
+.icon-button.small:disabled { cursor: wait; opacity: .5; }
 .empty-state { padding: 50px 20px !important; text-align: center !important; }
 .empty-state i, .empty-state strong, .empty-state span { display: block; }
 .empty-state i { margin-bottom: 10px; color: #8bb8a4; font-size: 2rem; }

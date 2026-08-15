@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle + ' | Nham Health Admin'}">Reports | Nham Health Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +30,8 @@
                     <p>Dashboard &gt; Community &gt; Reports</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button">Export</button>
-                    <button class="btn btn-primary" id="openReportModal" type="button">New Report</button>
+                    <button class="btn" id="exportReports" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openReportModal" type="button"><i class="fa-solid fa-plus"></i> New Report</button>
                 </div>
             </div>
 
@@ -38,21 +40,21 @@
                     <div class="stat-icon green"><i class="fa-solid fa-flag"></i></div>
                     <div class="stat-content">
                         <span>Total Reports</span>
-                        <strong th:text="${totalReports}">0</strong>
+                        <strong id="totalReports" th:text="${totalReports}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
                     <div class="stat-content">
                         <span>Unique Reporters</span>
-                        <strong>0</strong>
+                        <strong id="uniqueReporters" th:text="${uniqueReporters}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
                     <div class="stat-content">
                         <span>Pending</span>
-                        <strong>0</strong>
+                        <strong id="pendingReports" th:text="${pendingReports}">0</strong>
                     </div>
                 </article>
             </div>
@@ -66,7 +68,7 @@
                     <label for="reportStatus">Status</label>
                     <select id="reportStatus">
                         <option value="">All</option>
-                        <option value="open">Open</option>
+                        <option value="pending">Pending</option>
                         <option value="resolved">Resolved</option>
                         <option value="dismissed">Dismissed</option>
                     </select>
@@ -79,7 +81,7 @@
             <article class="panel table-panel">
                 <div class="panel-header">
                     <h2>Reports</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <button class="action-button" id="refreshReports" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -90,48 +92,61 @@
                             <th>Target</th>
                             <th>Reason</th>
                             <th>Status</th>
+                            <th>Reviewer</th>
                             <th>Created</th>
+                            <th>Action</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="r, s : ${reports}" th:data-reporter="${r.reporterEmail}" th:data-status="${r.status}">
+                        <tbody id="reportRows">
+                        <tr th:each="r, s : ${reports}" th:data-id="${r.reportId}" th:data-reporter-id="${r.reportedByUser.userId}" th:data-reporter="${r.reportedByUser.email}" th:data-status="${r.status}">
                             <td th:text="${s.count}">1</td>
-                            <td th:text="${r.reporterEmail}">user@example.com</td>
-                            <td th:text="${r.targetSummary}">Post: Hello</td>
-                            <td th:text="${r.reason}">Spam</td>
-                            <td th:text="${r.status}">open</td>
-                            <td th:text="${r.createdAt}">2026-08-05T12:00:00</td>
+                            <td><strong th:text="${r.reportedByUser.name}">User</strong><small th:text="${r.reportedByUser.email}">email</small></td>
+                            <td class="target-cell" th:text="${r.post.caption}">Post caption</td>
+                            <td th:text="${r.reportReason.reasonName}">Spam</td>
+                            <td><span class="status-pill" th:classappend="${' status-' + r.status}" th:text="${r.status}">pending</span></td>
+                            <td th:text="${r.reviewedByUser != null ? r.reviewedByUser.name : 'Not reviewed'}">Not reviewed</td>
+                            <td th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                            <td><button class="btn-small review-report" type="button"><i class="fa-solid fa-gavel"></i> Review</button></td>
                         </tr>
                         <tr th:if="${reports.empty}">
-                            <td class="empty-state" colspan="6">No reports found.</td>
+                            <td class="empty-state" colspan="8">No reports found.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </article>
 
-            <div class="modal" id="reportModal">
+            <div class="modal" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New Report</h2>
+                            <h2 id="reportModalTitle">New Report</h2>
                             <p>Create a new moderation report.</p>
                         </div>
-                        <button class="icon-button small" id="closeReportModal" type="button">×</button>
+                        <button class="icon-button small" id="closeReportModal" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <form id="reportForm">
+                    <form id="reportForm" th:action="@{/admin/reports}" method="post">
                         <div class="modal-body">
                             <div class="field-group">
-                                <label for="reportReporter">Reporter Email</label>
-                                <input id="reportReporter" name="reporterEmail" type="email" placeholder="reporter@example.com" required>
+                                <label for="reportReporter">Reporter</label>
+                                <select id="reportReporter" name="reporterId" required>
+                                    <option value="">Select reporter</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
                             </div>
                             <div class="field-group">
-                                <label for="reportTarget">Target Summary</label>
-                                <input id="reportTarget" name="targetSummary" type="text" placeholder="Post or Comment summary">
+                                <label for="reportTarget">Reported Post</label>
+                                <select id="reportTarget" name="postId" required>
+                                    <option value="">Select post</option>
+                                    <option th:each="post : ${posts}" th:value="${post.postId}" th:text="${'#' + post.postId + ' · ' + post.user.name + ' · ' + post.caption}"></option>
+                                </select>
                             </div>
                             <div class="field-group">
                                 <label for="reportReason">Reason</label>
-                                <textarea id="reportReason" name="reason" rows="4" placeholder="Reason for report"></textarea>
+                                <select id="reportReason" name="reasonId" required>
+                                    <option value="">Select reason</option>
+                                    <option th:each="reason : ${reasons}" th:value="${reason.reportReasonId}" th:text="${reason.reasonName}"></option>
+                                </select>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -153,6 +168,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-report.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-report.js(v=2)}"></script>
 </body>
 </html>

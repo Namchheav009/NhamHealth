@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Chat | Nham Health Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +30,8 @@
                     <p>Dashboard &gt; AI Features &gt; AI Chat</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button">Export</button>
-                    <button class="btn btn-primary" id="openChatModal" type="button">New Chat</button>
+                    <button class="btn" id="exportAiChats" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openChatModal" type="button"><i class="fa-solid fa-plus"></i> New Chat</button>
                 </div>
             </div>
 
@@ -38,21 +40,21 @@
                     <div class="stat-icon green"><i class="fa-solid fa-comments"></i></div>
                     <div class="stat-content">
                         <span>Total Threads</span>
-                        <strong th:text="${totalThreads}">0</strong>
+                        <strong id="totalThreads" th:text="${totalThreads}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
                     <div class="stat-content">
-                        <span>Active Agents</span>
-                        <strong>0</strong>
+                        <span>Active Threads</span>
+                        <strong id="activeThreads" th:text="${activeThreads}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
                     <div class="stat-content">
-                        <span>Pending Reviews</span>
-                        <strong>0</strong>
+                        <span>Total Messages</span>
+                        <strong id="totalMessages" th:text="${totalMessages}">0</strong>
                     </div>
                 </article>
             </div>
@@ -68,7 +70,6 @@
                         <option value="">All</option>
                         <option value="open">Open</option>
                         <option value="closed">Closed</option>
-                        <option value="flagged">Flagged</option>
                     </select>
                 </div>
                 <div class="field-group" style="align-self: end;">
@@ -79,7 +80,7 @@
             <article class="panel table-panel">
                 <div class="panel-header">
                     <h2>Chat Threads</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <button class="action-button" id="refreshAiChats" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -87,45 +88,57 @@
                         <tr>
                             <th>#</th>
                             <th>User</th>
+                            <th>Thread</th>
                             <th>Last Message</th>
                             <th>Status</th>
                             <th>Messages</th>
                             <th>Updated</th>
+                            <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="t, s : ${chatThreads}" th:data-user="${t.userName}" th:data-status="${t.status}">
+                        <tbody id="aiChatRows">
+                        <tr th:each="t, s : ${chatThreads}" th:data-id="${t.aiConversationId}" th:data-user-id="${t.user.userId}" th:data-user="${t.user.email}" th:data-status="${t.isActive ? 'open' : 'closed'}" th:data-messages="${messageCounts[t.aiConversationId]}">
                             <td th:text="${s.count}">1</td>
-                            <td th:text="${t.userName}">user@example.com</td>
-                            <td th:text="${t.lastMessage}">Hello</td>
-                            <td th:text="${t.status}">open</td>
-                            <td th:text="${t.messageCount}">0</td>
-                            <td th:text="${t.updatedAt}">2026-08-05T12:00:00</td>
+                            <td><strong th:text="${t.user.name}">User</strong><small th:text="${t.user.email}">email</small></td>
+                            <td><strong th:text="${t.title != null ? t.title : 'Untitled conversation'}">Title</strong><small th:text="${t.currentMood != null ? t.currentMood.moodName : 'No mood'}">Mood</small></td>
+                            <td class="message-cell" th:text="${lastMessages[t.aiConversationId]}">Hello</td>
+                            <td><span class="status-pill" th:classappend="${t.isActive ? ' status-open' : ' status-closed'}" th:text="${t.isActive ? 'open' : 'closed'}">open</span></td>
+                            <td th:text="${messageCounts[t.aiConversationId]}">0</td>
+                            <td th:text="${#temporals.format(t.updatedAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                            <td><div class="row-actions"><button class="icon-button toggle-thread" type="button" aria-label="Change thread status"><i class="fa-solid fa-power-off"></i></button><button class="icon-button danger delete-thread" type="button" aria-label="Delete thread"><i class="fa-solid fa-trash"></i></button></div></td>
                         </tr>
                         <tr th:if="${chatThreads.empty}">
-                            <td class="empty-state" colspan="6">No chat threads found.</td>
+                            <td class="empty-state" colspan="8">No chat threads found.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </article>
 
-            <div class="modal" id="chatModal">
+            <div class="modal" id="chatModal" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New Chat Thread</h2>
+                            <h2 id="chatModalTitle">New Chat Thread</h2>
                             <p>Start a new AI chat session for testing or support.</p>
                         </div>
-                        <button class="icon-button small" id="closeChatModal" type="button">×</button>
+                        <button class="icon-button small" id="closeChatModal" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <form id="chatForm">
+                    <form id="chatForm" th:action="@{/admin/ai-chat}" method="post">
                         <div class="modal-body">
                             <div class="field-group">
-                                <label for="chatUser">User Email</label>
-                                <input id="chatUser" name="userEmail" type="email" placeholder="user@example.com" required>
+                                <label for="chatUser">User</label>
+                                <select id="chatUser" name="userId" required><option value="">Select user</option><option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option></select>
                             </div>
                             <div class="field-group">
+                                <label for="chatMood">Current mood <span>(optional)</span></label>
+                                <select id="chatMood" name="moodId"><option value="">No mood</option><option th:each="mood : ${moods}" th:value="${mood.moodId}" th:text="${mood.moodName}"></option></select>
+                            </div>
+                            <div class="field-group full-width">
+                                <label for="chatTitle">Conversation title</label>
+                                <input id="chatTitle" name="title" type="text" maxlength="150" placeholder="Healthy meal planning" required>
+                            </div>
+                            <div class="field-group full-width">
                                 <label for="chatPrompt">Prompt</label>
                                 <textarea id="chatPrompt" name="prompt" rows="4" placeholder="Start the conversation"></textarea>
                             </div>
@@ -149,6 +162,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-ai-chat.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-ai-chat.js(v=2)}"></script>
 </body>
 </html>

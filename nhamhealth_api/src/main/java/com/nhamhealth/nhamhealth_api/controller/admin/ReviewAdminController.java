@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
@@ -61,6 +62,7 @@ public class ReviewAdminController {
     }
 
     @DeleteMapping("/admin/reviews/{reviewId}")
+    @ResponseBody
     public ResponseEntity<Void> deleteReview(@PathVariable Integer reviewId) {
         if (!reviewRepository.existsById(reviewId)) {
             return ResponseEntity.notFound().build();

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle + ' | Nham Health Admin'}">Posts | Nham Health Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +30,8 @@
                     <p>Dashboard &gt; Community &gt; Posts</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button">Export</button>
-                    <button class="btn btn-primary" id="openPostModal" type="button">New Post</button>
+                    <button class="btn" id="exportPosts" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openPostModal" type="button"><i class="fa-solid fa-plus"></i> New Post</button>
                 </div>
             </div>
 
@@ -38,21 +40,21 @@
                     <div class="stat-icon green"><i class="fa-solid fa-file-lines"></i></div>
                     <div class="stat-content">
                         <span>Total Posts</span>
-                        <strong th:text="${totalPosts}">0</strong>
+                        <strong id="totalPosts" th:text="${totalPosts}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
                     <div class="stat-content">
                         <span>Active Authors</span>
-                        <strong>0</strong>
+                        <strong id="activeAuthors" th:text="${activeAuthors}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-flag"></i></div>
                     <div class="stat-content">
                         <span>Pending Reports</span>
-                        <strong>0</strong>
+                        <strong id="pendingReports" th:text="${pendingReports}">0</strong>
                     </div>
                 </article>
             </div>
@@ -79,7 +81,7 @@
             <article class="panel table-panel">
                 <div class="panel-header">
                     <h2>Posts</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <button class="action-button" id="refreshPosts" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -87,51 +89,70 @@
                         <tr>
                             <th>#</th>
                             <th>Author</th>
-                            <th>Title</th>
+                            <th>Post</th>
+                            <th>Visibility</th>
                             <th>Status</th>
                             <th>Comments</th>
+                            <th>Favorites</th>
+                            <th>Reports</th>
                             <th>Updated</th>
+                            <th>Moderate</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="p, s : ${posts}" th:data-author="${p.authorName}" th:data-status="${p.status}">
+                        <tbody id="postRows">
+                        <tr th:each="p, s : ${posts}" th:data-id="${p.postId}" th:data-user-id="${p.user.userId}" th:data-author="${p.user.name}" th:data-status="${p.status}" th:data-reports="${reportCounts[p.postId]}">
                             <td th:text="${s.count}">1</td>
-                            <td th:text="${p.authorName}">author@example.com</td>
-                            <td th:text="${p.title}">Hello world</td>
-                            <td th:text="${p.status}">published</td>
-                            <td th:text="${p.commentCount}">0</td>
-                            <td th:text="${p.updatedAt}">2026-08-05T12:00:00</td>
+                            <td><strong th:text="${p.user.name}">Author</strong><small th:text="${p.user.email}">email</small></td>
+                            <td class="caption-cell" th:text="${p.caption}">Hello world</td>
+                            <td><span class="visibility-pill" th:text="${p.visibility}">public</span></td>
+                            <td><span class="status-pill" th:classappend="${' status-' + p.status}" th:text="${p.status}">published</span></td>
+                            <td th:text="${commentCounts[p.postId]}">0</td>
+                            <td th:text="${favoriteCounts[p.postId]}">0</td>
+                            <td th:text="${reportCounts[p.postId]}">0</td>
+                            <td th:text="${#temporals.format(p.updatedAt != null ? p.updatedAt : p.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                            <td><button class="btn-small moderate-post" type="button"><i class="fa-solid fa-shield-halved"></i> Status</button></td>
                         </tr>
                         <tr th:if="${posts.empty}">
-                            <td class="empty-state" colspan="6">No posts found.</td>
+                            <td class="empty-state" colspan="10">No posts found.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </article>
 
-            <div class="modal" id="postModal">
+            <div class="modal" id="postModal" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New Post</h2>
+                            <h2 id="postModalTitle">New Post</h2>
                             <p>Create a new community post.</p>
                         </div>
-                        <button class="icon-button small" id="closePostModal" type="button">×</button>
+                        <button class="icon-button small" id="closePostModal" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <form id="postForm">
+                    <form id="postForm" th:action="@{/admin/posts}" method="post">
                         <div class="modal-body">
                             <div class="field-group">
-                                <label for="postAuthor">Author Email</label>
-                                <input id="postAuthor" name="authorEmail" type="email" placeholder="author@example.com" required>
+                                <label for="postAuthor">Author</label>
+                                <select id="postAuthor" name="userId" required>
+                                    <option value="">Select an author</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
                             </div>
                             <div class="field-group">
-                                <label for="postTitle">Title</label>
-                                <input id="postTitle" name="title" type="text" placeholder="Post title" required>
+                                <label for="postVisibility">Visibility</label>
+                                <select id="postVisibility" name="visibility" required>
+                                    <option value="public">Public</option><option value="followers">Followers</option><option value="private">Private</option>
+                                </select>
                             </div>
                             <div class="field-group">
-                                <label for="postBody">Body</label>
-                                <textarea id="postBody" name="body" rows="6" placeholder="Write the post..."></textarea>
+                                <label for="postStatusField">Status</label>
+                                <select id="postStatusField" name="status" required>
+                                    <option value="published">Published</option><option value="draft">Draft</option><option value="flagged">Flagged</option>
+                                </select>
+                            </div>
+                            <div class="field-group full-width">
+                                <label for="postCaption">Caption</label>
+                                <textarea id="postCaption" name="caption" rows="6" maxlength="5000" placeholder="Write the post..." required></textarea>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -153,6 +174,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-post.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-post.js(v=2)}"></script>
 </body>
 </html>
