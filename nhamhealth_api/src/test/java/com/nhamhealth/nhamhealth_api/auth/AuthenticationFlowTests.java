@@ -315,9 +315,8 @@ class AuthenticationFlowTests {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        assertTrue(userRepository.findById(userId)
-                .map(user -> "DELETED".equals(user.getStatus()) && !user.getIsVerified())
-                .orElse(false));
+        assertTrue(userRepository.findById(userId).isEmpty());
+        assertTrue(userProfileRepository.findByUser_UserId(userId).isEmpty());
 
         mockMvc.perform(get("/admin/users").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())

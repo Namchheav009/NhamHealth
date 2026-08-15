@@ -9,20 +9,21 @@ class EditProfileController extends GetxController {
 
   final ProfileController profileController;
   final ImagePicker _imagePicker = ImagePicker();
+  final isSaving = false.obs;
 
   // Top profile card
-  final profileName = 'Sarah Smith'.obs;
+  final profileName = 'My Profile'.obs;
   final membership = 'WellBite Member'.obs;
-  final profileEmail = 'sarasmith009@gmail.com'.obs;
+  final profileEmail = ''.obs;
   final profileImagePath = ''.obs;
 
   // Personal information
-  final fullName = 'Chhay Kimlang'.obs;
-  final email = 'kimlang09@gmail.com'.obs;
-  final phone = '+855 818 144 51'.obs;
+  final fullName = ''.obs;
+  final email = ''.obs;
+  final phone = ''.obs;
 
-  final dateOfBirth = DateTime(2006, 2, 12).obs;
-  final gender = 'Female'.obs;
+  final dateOfBirth = DateTime(DateTime.now().year - 21, 1, 1).obs;
+  final gender = 'Prefer not to say'.obs;
 
   // Health information
   final age = 21.obs;
@@ -91,37 +92,54 @@ class EditProfileController extends GetxController {
     age.value = profileController.age.value;
     height.value = profileController.height.value.toDouble();
     weight.value = profileController.weight.value.toDouble();
+    final dashboard = profileController.dashboard.value;
+    if (dashboard != null) {
+      phone.value = dashboard.phone ?? '';
+      dateOfBirth.value = dashboard.dateOfBirth ?? dateOfBirth.value;
+      gender.value = dashboard.gender?.trim().isNotEmpty == true
+          ? dashboard.gender!.trim()
+          : 'Prefer not to say';
+    }
   }
 
   void goBack() {
     Get.until((route) => route.isFirst);
   }
 
-  void saveProfile() {
-    // Later connect this with Spring Boot API.
-    //
-    // Example:
-    // await profileRepository.updateProfile(...);
-
-    profileController.name.value = fullName.value;
-    profileController.email.value = email.value;
-    profileController.age.value = age.value;
-    profileController.height.value = height.value.round();
-    profileController.weight.value = weight.value.round();
-    profileController.profileImagePath.value = profileImagePath.value;
-
-    Get.back();
-
-    Get.snackbar(
-      'Profile Updated',
-      'Your profile information has been saved.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF00A651),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
-    );
+  Future<void> saveProfile() async {
+    if (isSaving.value) return;
+    isSaving.value = true;
+    try {
+      await profileController.saveProfile(
+        fullName: fullName.value,
+        email: email.value,
+        phone: phone.value,
+        dateOfBirth: dateOfBirth.value,
+        gender: gender.value,
+        heightCm: height.value,
+        weightKg: weight.value,
+        imagePath: profileImagePath.value,
+      );
+      Get.back<void>();
+      Get.snackbar(
+        'Profile Updated',
+        'Your changes are now synced with the dashboard.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF00A651),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
+    } on Object catch (error) {
+      Get.snackbar(
+        'Unable to save profile',
+        error.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    } finally {
+      isSaving.value = false;
+    }
   }
 
   Future<void> editFullName() async {
@@ -202,6 +220,15 @@ class EditProfileController extends GetxController {
 
         if (number != null && number > 0 && number <= 120) {
           age.value = number;
+          final current = dateOfBirth.value;
+          final year = DateTime.now().year - number;
+          dateOfBirth.value = DateTime(
+            year,
+            current.month,
+            current.day
+                .clamp(1, DateTime(year, current.month + 1, 0).day)
+                .toInt(),
+          );
         } else {
           _showInputError('Enter an age between 1 and 120 years.');
         }

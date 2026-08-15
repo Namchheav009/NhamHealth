@@ -190,7 +190,7 @@
         if (!row?.dataset.id) return;
         const confirmed = await alerts.confirmDelete({
             title: 'Delete user?',
-            text: `Delete ${name}? Their account will be disabled and hidden, while health and history records remain protected.`,
+            text: `Permanently delete ${name}? Their account and profile will be removed from the database. This cannot be undone.`,
             confirmButtonText: 'Yes, delete user!'
         });
         if (!confirmed) return;
