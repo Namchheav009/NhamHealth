@@ -7,8 +7,9 @@ abstract class AppRoutes {
   static const String register = '/register';
   static const String accountCreated = '/account-created';
   static const String home = '/home';
+  static const String profile = '/profile';
   static const String notifications = '/notifications';
-  
+
   static const String wellness = '/wellness';
   static const String calories = '/wellness/calories';
   static const String protein = '/wellness/protein';
@@ -17,6 +18,6 @@ abstract class AppRoutes {
   static const String sugar = '/wellness/sugar';
 
   static const String aiMealAutoFill = '/wellness/ai-meal-auto-fill';
-  static const String foodSourceDetail = '/wellness/calories/food-source-detail';
-  
+  static const String foodSourceDetail =
+      '/wellness/calories/food-source-detail';
 }
