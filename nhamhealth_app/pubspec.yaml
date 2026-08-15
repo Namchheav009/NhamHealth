@@ -69,10 +69,10 @@ flutter:
     - assets/images/onboarding/onboarding2.png
     - assets/icons/google.png
     - assets/icons/moods/
-    - assets/images/Login/forgot_password.png
-    - assets/images/Login/verification.png
-    - assets/images/Login/reset.png
-    - assets/images/Login/account_create.png
+    - assets/images/auth/forgot_password.png
+    - assets/images/auth/verification.png
+    - assets/images/auth/reset.png
+    - assets/images/auth/account_create.png
     - assets/images/homepage/profile.jpg
     - assets/images/homepage/healthy_salad.png
     - assets/images/meals/healthy_salad.jpg
