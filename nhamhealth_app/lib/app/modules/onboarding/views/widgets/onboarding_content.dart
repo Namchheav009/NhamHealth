@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_spacing.dart';
 import '../../models/onboarding_item.dart';
 import 'onboarding_indicator.dart';
 import 'onboarding_next_button.dart';
@@ -55,7 +56,7 @@ class OnboardingContent extends StatelessWidget {
                     );
 
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 26, 32, 40),
+                  padding: AppSpacing.pagePadding,
                   child: Column(
                     children: [
                       if (item.showBrandHeader)

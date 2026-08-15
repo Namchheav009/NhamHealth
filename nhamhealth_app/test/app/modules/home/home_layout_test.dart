@@ -5,7 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/auth/models/authenticated_user_mo
 import 'package:nhamhealth_flutter/app/modules/home/controllers/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/home/providers/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/home/repositories/home_repository.dart';
-import 'package:nhamhealth_flutter/app/modules/home/views/pages/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/home/views/home_view.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {

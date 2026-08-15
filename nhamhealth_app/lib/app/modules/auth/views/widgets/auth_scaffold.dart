@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_spacing.dart';
 import 'auth_header.dart';
 
 class AuthScaffold extends StatelessWidget {
@@ -67,10 +68,10 @@ class AuthScaffold extends StatelessWidget {
                                   ScrollViewKeyboardDismissBehavior.onDrag,
                               physics: const BouncingScrollPhysics(),
                               padding: EdgeInsets.fromLTRB(
-                                30,
+                                AppSpacing.pageHorizontal,
                                 compact ? 18 : 46,
-                                30,
-                                20,
+                                AppSpacing.pageHorizontal,
+                                AppSpacing.pageBottom,
                               ),
                               child: child,
                             ),
