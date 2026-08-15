@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle + ' | Nham Health Admin'}">Chats | Nham Health Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/admin-ai-chat.css}">
     <link rel="stylesheet" th:href="@{/css/admin-chat.css}">
 </head>
 <body>
@@ -29,8 +30,8 @@
                     <p>Dashboard &gt; Messaging &gt; Chats</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button">Export</button>
-                    <button class="btn btn-primary" id="openChatModal" type="button">New Chat</button>
+                    <button class="btn" id="exportChats" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openChatModal" type="button"><i class="fa-solid fa-plus"></i> New Chat</button>
                 </div>
             </div>
 
@@ -39,21 +40,21 @@
                     <div class="stat-icon green"><i class="fa-solid fa-comments"></i></div>
                     <div class="stat-content">
                         <span>Total Chats</span>
-                        <strong th:text="${totalChats}">0</strong>
+                        <strong id="totalChats" th:text="${totalChats}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-user"></i></div>
                     <div class="stat-content">
                         <span>Active Users</span>
-                        <strong>0</strong>
+                        <strong id="activeUsers" th:text="${activeUsers}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
                     <div class="stat-content">
-                        <span>Recent Messages</span>
-                        <strong>0</strong>
+                        <span>Messages (24h)</span>
+                        <strong id="recentMessages" th:text="${recentMessages}">0</strong>
                     </div>
                 </article>
             </div>
@@ -79,7 +80,7 @@
             <article class="panel table-panel">
                 <div class="panel-header">
                     <h2>Chats</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <button class="action-button" id="refreshChats" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -88,47 +89,58 @@
                             <th>#</th>
                             <th>Chat</th>
                             <th>Type</th>
+                            <th>Participants</th>
+                            <th>Messages</th>
                             <th>Last Message</th>
                             <th>Created</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="c, s : ${chats}" th:data-chat="${c.chatName}" th:data-type="${c.chatType}">
+                        <tbody id="chatRows">
+                        <tr th:each="c, s : ${chats}" th:data-id="${c.chatId}" th:data-chat="${c.chatName}" th:data-type="${c.chatType}" th:data-participants="${participantCounts[c.chatId]}">
                             <td th:text="${s.count}">1</td>
-                            <td th:text="${c.chatName}">General</td>
-                            <td th:text="${c.chatType}">group</td>
-                            <td th:text="${c.lastMessageAt}">2026-08-05T12:00:00</td>
-                            <td th:text="${c.createdAt}">2026-08-05T11:00:00</td>
+                            <td><strong th:text="${c.chatName != null && !c.chatName.isBlank() ? c.chatName : 'Untitled chat'}">General</strong></td>
+                            <td><span class="type-pill" th:classappend="${c.chatType == 'group' ? ' type-group' : ' type-direct'}" th:text="${c.chatType}">group</span></td>
+                            <td th:text="${participantCounts[c.chatId]}">0</td>
+                            <td th:text="${messageCounts[c.chatId]}">0</td>
+                            <td th:text="${c.lastMessageAt != null ? #temporals.format(c.lastMessageAt, 'dd MMM yyyy, HH:mm') : 'No messages'}">No messages</td>
+                            <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
                         </tr>
                         <tr th:if="${chats.empty}">
-                            <td class="empty-state" colspan="5">No chats found.</td>
+                            <td class="empty-state" colspan="7">No chats found.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </article>
 
-            <div class="modal" id="chatModal">
+            <div class="modal" id="chatModal" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New Chat</h2>
+                            <h2 id="chatModalTitle">New Chat</h2>
                             <p>Create a chat conversation.</p>
                         </div>
-                        <button class="icon-button small" id="closeChatModal" type="button">×</button>
+                        <button class="icon-button small" id="closeChatModal" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <form id="chatForm">
+                    <form id="chatForm" th:action="@{/admin/chats}" method="post">
                         <div class="modal-body">
                             <div class="field-group">
                                 <label for="chatName">Chat Name</label>
-                                <input id="chatName" name="chatName" type="text" placeholder="Chat name">
+                                <input id="chatName" name="chatName" type="text" maxlength="150" placeholder="Required for group chats">
                             </div>
                             <div class="field-group">
                                 <label for="chatTypeField">Type</label>
-                                <select id="chatTypeField" name="chatType">
+                                <select id="chatTypeField" name="chatType" required>
                                     <option value="direct">Direct</option>
                                     <option value="group">Group</option>
                                 </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="chatParticipants">Participants</label>
+                                <select id="chatParticipants" name="participantIds" multiple required size="6">
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
+                                <small id="participantHelp">Direct chats require exactly two users.</small>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -150,7 +162,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-ai-chat.js}"></script>
-<script th:src="@{/js/admin-chat.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-chat.js(v=2)}"></script>
 </body>
 </html>

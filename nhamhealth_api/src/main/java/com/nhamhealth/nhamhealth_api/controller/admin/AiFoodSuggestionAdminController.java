@@ -2,6 +2,7 @@ package com.nhamhealth.nhamhealth_api.controller.admin;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,8 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodSuggestion;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
@@ -54,30 +56,49 @@ public class AiFoodSuggestionAdminController {
     }
 
     @PostMapping("/admin/ai-food-suggestions")
-    public String createSuggestion(@RequestParam Integer analysisId, @RequestParam String suggestionType,
+    @ResponseBody
+    public ResponseEntity<?> createSuggestion(@RequestParam Integer analysisId, @RequestParam String suggestionType,
             @RequestParam String title, @RequestParam String description,
-            @RequestParam(required = false) String reason, @RequestParam Integer priority,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String reason, @RequestParam Integer priority) {
         if (suggestionType.isBlank() || title.isBlank() || description.isBlank() || priority < 1 || priority > 10) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Complete the required fields and use priority 1–10.");
-            return "redirect:/admin/ai-food-suggestions";
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Complete the required fields and use priority 1–10."));
+        }
+        AiFoodAnalysis analysis = analysisRepository.findById(analysisId).orElse(null);
+        if (analysis == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Select a valid source analysis."));
         }
         AiFoodSuggestion suggestion = new AiFoodSuggestion();
-        suggestion.setAiFoodAnalysis(analysisRepository.findById(analysisId).orElseThrow());
+        suggestion.setAiFoodAnalysis(analysis);
         suggestion.setSuggestionType(suggestionType.trim());
         suggestion.setTitle(title.trim());
         suggestion.setDescription(description.trim());
         suggestion.setReason(reason == null || reason.isBlank() ? null : reason.trim());
         suggestion.setPriority(priority);
-        suggestionRepository.save(suggestion);
-        redirectAttributes.addFlashAttribute("successMessage", "AI food suggestion added successfully.");
-        return "redirect:/admin/ai-food-suggestions";
+        return ResponseEntity.ok(toResponse(suggestionRepository.saveAndFlush(suggestion)));
     }
 
     @DeleteMapping("/admin/ai-food-suggestions/{suggestionId}")
+    @ResponseBody
     public ResponseEntity<Void> deleteSuggestion(@PathVariable Integer suggestionId) {
         if (!suggestionRepository.existsById(suggestionId)) return ResponseEntity.notFound().build();
         suggestionRepository.deleteById(suggestionId);
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, Object> toResponse(AiFoodSuggestion suggestion) {
+        AiFoodAnalysis analysis = suggestion.getAiFoodAnalysis();
+        String sourceName = analysis.getDetectedFoodName() == null || analysis.getDetectedFoodName().isBlank()
+                ? analysis.getInputText() : analysis.getDetectedFoodName();
+        return Map.ofEntries(
+                Map.entry("id", suggestion.getAiFoodSuggestionId()),
+                Map.entry("analysisId", analysis.getAiFoodAnalysisId()),
+                Map.entry("sourceName", sourceName),
+                Map.entry("suggestionType", suggestion.getSuggestionType()),
+                Map.entry("title", suggestion.getTitle()),
+                Map.entry("description", suggestion.getDescription()),
+                Map.entry("reason", suggestion.getReason() == null ? "" : suggestion.getReason()),
+                Map.entry("priority", suggestion.getPriority()));
     }
 }

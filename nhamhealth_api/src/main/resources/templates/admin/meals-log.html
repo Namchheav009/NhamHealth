@@ -26,10 +26,10 @@
             </div>
 
             <div class="stats-grid">
-                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-journal-check"></i></div><div class="stat-content"><span>Total meal logs</span><strong th:text="${#numbers.formatInteger(totalLogs, 1, 'COMMA')}">0</strong><small>All recorded entries</small></div></article>
-                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-people-fill"></i></div><div class="stat-content"><span>Unique users</span><strong th:text="${#numbers.formatInteger(uniqueUsers, 1, 'COMMA')}">0</strong><small>Users tracking meals</small></div></article>
-                <article class="stat-card"><div class="stat-icon orange"><i class="bi bi-pencil-square"></i></div><div class="stat-content"><span>Custom foods</span><strong th:text="${#numbers.formatInteger(customFoodCount, 1, 'COMMA')}">0</strong><small>Manually named foods</small></div></article>
-                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-calendar2-check"></i></div><div class="stat-content"><span>Logged today</span><strong th:text="${#numbers.formatInteger(todayCount, 1, 'COMMA')}">0</strong><small>Entries recorded today</small></div></article>
+                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-journal-check"></i></div><div class="stat-content"><span>Total meal logs</span><strong id="totalMealLogCount" th:text="${#numbers.formatInteger(totalLogs, 1, 'COMMA')}">0</strong><small>All recorded entries</small></div></article>
+                <article class="stat-card"><div class="stat-icon blue"><i class="bi bi-people-fill"></i></div><div class="stat-content"><span>Unique users</span><strong id="uniqueMealLogUserCount" th:text="${#numbers.formatInteger(uniqueUsers, 1, 'COMMA')}">0</strong><small>Users tracking meals</small></div></article>
+                <article class="stat-card"><div class="stat-icon orange"><i class="bi bi-pencil-square"></i></div><div class="stat-content"><span>Custom foods</span><strong id="customFoodLogCount" th:text="${#numbers.formatInteger(customFoodCount, 1, 'COMMA')}">0</strong><small>Manually named foods</small></div></article>
+                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-calendar2-check"></i></div><div class="stat-content"><span>Logged today</span><strong id="todayMealLogCount" th:text="${#numbers.formatInteger(todayCount, 1, 'COMMA')}">0</strong><small>Entries recorded today</small></div></article>
             </div>
 
             <article class="panel table-panel">
@@ -44,9 +44,9 @@
                 </div>
                 <div class="table-responsive">
                     <table><thead><tr><th>Food</th><th>User</th><th>Meal type</th><th>Quantity</th><th>Entry method</th><th>Logged at</th><th>Notes</th><th>Actions</th></tr></thead>
-                        <tbody>
-                        <tr th:each="log : ${mealLogs}" th:data-id="${log.mealLogId}" th:data-type="${#strings.toLowerCase(log.mealLogType != null ? log.mealLogType.mealLogTypeName : '')}" th:data-method="${#strings.toLowerCase(log.entryMethod ?: '')}" th:data-search="${#strings.toLowerCase((log.meal != null ? log.meal.mealName : (log.customFoodName ?: 'Custom food')) + ' ' + (log.user != null ? log.user.name + ' ' + log.user.email : '') + ' ' + (log.notes ?: ''))}">
-                            <td><div class="food-cell"><span class="food-icon" th:classappend="${log.meal == null ? ' custom' : ''}"><img th:if="${log.meal != null && log.meal.mainImageUrl != null}" th:src="${log.meal.mainImageUrl}" alt=""><i th:unless="${log.meal != null && log.meal.mainImageUrl != null}" class="bi bi-egg-fried"></i></span><span><strong th:text="${log.meal != null ? log.meal.mealName : (log.customFoodName ?: 'Custom food')}">Food</strong><small th:text="${log.meal != null ? 'Saved meal' : 'Custom entry'}">Custom entry</small></span></div></td>
+                        <tbody id="mealLogRows">
+                        <tr th:each="log : ${mealLogs}" th:data-id="${log.mealLogId}" th:data-user-id="${log.user != null ? log.user.userId : ''}" th:data-custom="${log.customFoodName != null && !#strings.isEmpty(log.customFoodName)}" th:data-today="${log.loggedAt != null && log.loggedAt.toLocalDate().equals(today)}" th:data-type="${#strings.toLowerCase(log.mealLogType != null ? log.mealLogType.mealLogTypeName : '')}" th:data-method="${#strings.toLowerCase(log.entryMethod ?: '')}" th:data-search="${#strings.toLowerCase((log.meal != null ? log.meal.mealName : (log.customFoodName ?: 'Custom food')) + ' ' + (log.user != null ? log.user.name + ' ' + log.user.email : '') + ' ' + (log.notes ?: ''))}">
+                            <td><div class="food-cell"><span class="food-icon" th:classappend="${log.meal == null ? ' custom' : ''}"><img th:if="${log.meal != null && log.meal.mainImageUrl != null}" th:src="${log.meal.mainImageUrl}" th:alt="${log.meal.mealName}"><i th:unless="${log.meal != null && log.meal.mainImageUrl != null}" class="bi bi-egg-fried"></i></span><span><strong th:text="${log.meal != null ? log.meal.mealName : (log.customFoodName ?: 'Custom food')}">Food</strong><small th:text="${log.meal != null ? 'Saved meal' : 'Custom entry'}">Custom entry</small></span></div></td>
                             <td><div class="user-cell" th:if="${log.user != null}"><span class="user-avatar" th:text="${log.user.initials}">NH</span><span><strong th:text="${log.user.name}">User</strong><small th:text="${log.user.email}">email</small></span></div><span th:unless="${log.user != null}">Unknown</span></td>
                             <td><span class="type-badge" th:text="${log.mealLogType != null ? log.mealLogType.mealLogTypeName : 'Unspecified'}">Breakfast</span></td>
                             <td><strong th:text="${log.quantity != null ? #numbers.formatDecimal(log.quantity, 1, 2) : '—'}">1</strong><small class="serving" th:text="${log.servingSize != null ? log.servingSize.servingSizeName : ''}">serving</small></td>
@@ -55,17 +55,17 @@
                             <td><p class="notes-copy" th:text="${log.notes != null && !#strings.isEmpty(log.notes) ? log.notes : 'No notes'}">No notes</p></td>
                             <td><button class="icon-button danger delete-meal-log" type="button" title="Delete meal log"><i class="bi bi-trash3"></i></button></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(mealLogs)}"><td class="empty-state" colspan="8"><i class="bi bi-journal-x"></i><strong>No meal logs yet</strong><span>Meal activity will appear here when users record food.</span></td></tr>
+                        <tr th:if="${#lists.isEmpty(mealLogs)}" id="emptyMealLogRow"><td class="empty-state" colspan="8"><i class="bi bi-journal-x"></i><strong>No meal logs yet</strong><span>Meal activity will appear here when users record food.</span></td></tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="pagination-row"><span><span id="filteredLogTotal" th:text="${totalLogs}">0</span> matching logs</span><nav class="pagination-controls" aria-label="Meal log pages"><button class="page-btn" id="pagePrev" type="button" aria-label="Previous"><i class="bi bi-chevron-left"></i></button><div class="page-numbers" id="pageNumbers"></div><button class="page-btn" id="pageNext" type="button" aria-label="Next"><i class="bi bi-chevron-right"></i></button></nav></div>
             </article>
         </section>
-        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Meal-log data updates when this page is refreshed.</span></footer>
+        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Meal-log activity management</span></footer>
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-meal-logs.js}"></script>
+<script th:src="@{/js/admin-meal-logs.js(v=20260815-1)}"></script>
 </body></html>

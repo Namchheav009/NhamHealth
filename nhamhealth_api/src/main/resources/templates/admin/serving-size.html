@@ -42,7 +42,7 @@
 					<div class="stat-icon green"><i class="bi bi-cup-straw"></i></div>
 					<div class="stat-content">
 						<span>Total Serving Sizes</span>
-						<strong th:text="${totalServingSizes}">48</strong>
+						<strong id="totalServingSizeCount" th:text="${totalServingSizes}">48</strong>
 						<small>All serving sizes</small>
 					</div>
 				</article>
@@ -51,8 +51,8 @@
 					<div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
 					<div class="stat-content">
 						<span>Active</span>
-						<strong th:text="${activeServingSizes}">24</strong>
-						<small th:text="${totalServingSizes > 0 ? #numbers.formatDecimal(activeServingSizes * 100.0 / totalServingSizes, 1, 1) + '% active' : 'No records yet'}">50% active</small>
+						<strong id="activeServingSizeCount" th:text="${activeServingSizes}">24</strong>
+						<small id="activeServingSizePercentage" th:text="${totalServingSizes > 0 ? #numbers.formatDecimal(activeServingSizes * 100.0 / totalServingSizes, 1, 1) + '% active' : 'No records yet'}">50% active</small>
 					</div>
 				</article>
 
@@ -60,7 +60,7 @@
 					<div class="stat-icon orange"><i class="bi bi-slash-circle"></i></div>
 					<div class="stat-content">
 						<span>Inactive</span>
-						<strong th:text="${inactiveServingSizes}">24</strong>
+						<strong id="inactiveServingSizeCount" th:text="${inactiveServingSizes}">24</strong>
 						<small>Hidden from new meal logs</small>
 					</div>
 				</article>
@@ -91,7 +91,7 @@
 							<th>Actions</th>
 						</tr>
 						</thead>
-						<tbody>
+					<tbody id="servingSizeRows">
 					<tr th:each="s : ${servingSizes}" th:data-id="${s.servingSizeId}" th:data-name="${#strings.toLowerCase(s.servingSizeName)}" th:data-description="${s.description ?: ''}" th:data-multiplier="${s.multiplier}" th:data-status="${s.isActive != null and s.isActive ? 'active' : 'inactive'}">
 							<td><span class="pill tag-green" th:text="${s.servingSizeName}">1 Teaspoon (tsp)</span></td>
 							<td><strong class="multiplier" th:text="${s.multiplier}">1.0</strong></td>
@@ -104,7 +104,7 @@
 								</div>
 							</td>
 						</tr>
-						<tr th:if="${#lists.isEmpty(servingSizes)}"><td class="empty-state" colspan="5"><i class="bi bi-cup-straw"></i><strong>No serving sizes yet</strong><span>Add a serving size to make it available for meal logs.</span></td></tr>
+						<tr th:if="${#lists.isEmpty(servingSizes)}" id="emptyServingSizeRow"><td class="empty-state" colspan="5"><i class="bi bi-cup-straw"></i><strong>No serving sizes yet</strong><span>Add a serving size to make it available for meal logs.</span></td></tr>
 						</tbody>
 					</table>
 				</div>
@@ -129,7 +129,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="modal" id="servingModal" aria-hidden="true">
-	<section class="modal-card">
+	<section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="servingModalTitle">
 		<div class="modal-header">
 			<div>
 				<h2 id="servingModalTitle">Add serving size</h2>
@@ -139,7 +139,7 @@
 				<i class="bi bi-x-lg"></i>
 			</button>
 		</div>
-		<form id="servingForm">
+		<form id="servingForm" novalidate>
 			<input id="servingId" name="servingId" type="hidden">
 			<div class="modal-body">
 				<div class="field">
@@ -172,6 +172,6 @@
 </div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-serving-size.js}" defer></script>
+<script th:src="@{/js/admin-serving-size.js(v=20260815-1)}" defer></script>
 </body>
 </html>

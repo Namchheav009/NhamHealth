@@ -29,10 +29,10 @@
             </div>
 
             <div class="stats-grid">
-                <article class="stat-card"><div class="stat-icon yellow"><i class="bi bi-chat-square-heart-fill"></i></div><div class="stat-content"><span>Total reviews</span><strong th:text="${#numbers.formatInteger(totalReviews, 1, 'COMMA')}">0</strong><small>All submitted feedback</small></div></article>
-                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-hand-thumbs-up-fill"></i></div><div class="stat-content"><span>Positive ratings</span><strong th:text="${#numbers.formatInteger(positiveReviews, 1, 'COMMA')}">0</strong><small th:text="${positivePercentage}">0.0% of total</small></div></article>
-                <article class="stat-card"><div class="stat-icon red"><i class="bi bi-hand-thumbs-down-fill"></i></div><div class="stat-content"><span>Low ratings</span><strong th:text="${#numbers.formatInteger(lowRatedReviews, 1, 'COMMA')}">0</strong><small>Ratings below 3 stars</small></div></article>
-                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-star-fill"></i></div><div class="stat-content"><span>Average rating</span><strong th:text="${averageRating}">0.0 / 5</strong><small th:text="${mealsReviewed + ' unique meals reviewed'}">0 unique meals reviewed</small></div></article>
+                <article class="stat-card"><div class="stat-icon yellow"><i class="bi bi-chat-square-heart-fill"></i></div><div class="stat-content"><span>Total reviews</span><strong id="totalReviewCount" th:text="${#numbers.formatInteger(totalReviews, 1, 'COMMA')}">0</strong><small>All submitted feedback</small></div></article>
+                <article class="stat-card"><div class="stat-icon green"><i class="bi bi-hand-thumbs-up-fill"></i></div><div class="stat-content"><span>Positive ratings</span><strong id="positiveReviewCount" th:text="${#numbers.formatInteger(positiveReviews, 1, 'COMMA')}">0</strong><small id="positiveReviewPercentage" th:text="${positivePercentage}">0.0% of total</small></div></article>
+                <article class="stat-card"><div class="stat-icon red"><i class="bi bi-hand-thumbs-down-fill"></i></div><div class="stat-content"><span>Low ratings</span><strong id="lowReviewCount" th:text="${#numbers.formatInteger(lowRatedReviews, 1, 'COMMA')}">0</strong><small>Ratings below 3 stars</small></div></article>
+                <article class="stat-card"><div class="stat-icon purple"><i class="bi bi-star-fill"></i></div><div class="stat-content"><span>Average rating</span><strong id="averageReviewRating" th:text="${averageRating}">0.0 / 5</strong><small id="reviewedMealCount" th:text="${mealsReviewed + ' unique meals reviewed'}">0 unique meals reviewed</small></div></article>
             </div>
 
             <article class="panel table-panel">
@@ -49,9 +49,9 @@
                 <div class="table-responsive">
                     <table>
                         <thead><tr><th>Meal</th><th>User</th><th>Rating</th><th>Review</th><th>Submitted</th><th>Rating group</th><th>Actions</th></tr></thead>
-                        <tbody>
-                        <tr th:each="review : ${reviews}" th:data-id="${review.reviewId}" th:data-rating="${review.rating}" th:data-sentiment="${review.rating >= 4 ? 'positive' : (review.rating == 3 ? 'neutral' : 'low')}" th:data-search="${#strings.toLowerCase(review.meal.mealName + ' ' + review.user.email + ' ' + (review.reviewText ?: ''))}">
-                            <td><div class="meal-cell"><span class="meal-thumb"><img th:if="${review.meal.mainImageUrl != null}" th:src="${review.meal.mainImageUrl}" alt=""><i th:unless="${review.meal.mainImageUrl != null}" class="bi bi-egg-fried"></i></span><span><strong th:text="${review.meal.mealName}">Meal</strong><small th:text="${review.meal.category.categoryName}">Category</small></span></div></td>
+                        <tbody id="reviewRows">
+                        <tr th:each="review : ${reviews}" th:data-id="${review.reviewId}" th:data-meal-id="${review.meal.mealId}" th:data-rating="${review.rating}" th:data-sentiment="${review.rating >= 4 ? 'positive' : (review.rating == 3 ? 'neutral' : 'low')}" th:data-search="${#strings.toLowerCase(review.meal.mealName + ' ' + review.user.name + ' ' + review.user.email + ' ' + (review.reviewText ?: ''))}">
+                            <td><div class="meal-cell"><span class="meal-thumb"><img th:if="${review.meal.mainImageUrl != null}" th:src="${review.meal.mainImageUrl}" th:alt="${review.meal.mealName}"><i th:unless="${review.meal.mainImageUrl != null}" class="bi bi-egg-fried"></i></span><span><strong th:text="${review.meal.mealName}">Meal</strong><small th:text="${review.meal.category != null ? review.meal.category.categoryName : 'Uncategorized'}">Category</small></span></div></td>
                             <td><div class="user-cell"><span class="user-avatar" th:text="${review.user.initials}">NH</span><span><strong th:text="${review.user.name}">User</strong><small th:text="${review.user.email}">user@example.com</small></span></div></td>
                             <td><span class="rating-badge"><i class="bi bi-star-fill"></i><b th:text="${review.rating}">5</b><small>/ 5</small></span></td>
                             <td><p class="review-copy" th:text="${review.reviewText != null && !#strings.isEmpty(review.reviewText) ? review.reviewText : 'No written comment'}">Review</p></td>
@@ -59,18 +59,18 @@
                             <td><span class="sentiment-badge" th:classappend="${review.rating >= 4 ? ' sentiment-positive' : (review.rating == 3 ? ' sentiment-neutral' : ' sentiment-low')}" th:text="${review.rating >= 4 ? 'Positive' : (review.rating == 3 ? 'Neutral' : 'Low')}">Positive</span></td>
                             <td><button class="icon-button small danger delete-review" type="button" title="Delete review"><i class="bi bi-trash3"></i></button></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(reviews)}"><td class="empty-state" colspan="7"><i class="bi bi-chat-square-heart"></i><strong>No meal reviews yet</strong><span>User reviews will appear here after meals receive feedback.</span></td></tr>
+                        <tr th:if="${#lists.isEmpty(reviews)}" id="emptyReviewRow"><td class="empty-state" colspan="7"><i class="bi bi-chat-square-heart"></i><strong>No meal reviews yet</strong><span>User reviews will appear here after meals receive feedback.</span></td></tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="pagination-row"><span><span id="filteredReviewTotal" th:text="${totalReviews}">0</span> matching reviews</span><nav class="pagination-controls" aria-label="Review pages"><button class="page-btn" id="pagePrev" type="button" aria-label="Previous"><i class="bi bi-chevron-left"></i></button><div id="pageNumbers" class="page-numbers"></div><button class="page-btn" id="pageNext" type="button" aria-label="Next"><i class="bi bi-chevron-right"></i></button></nav></div>
             </article>
         </section>
-        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Review data updates when this page is refreshed.</span></footer>
+        <footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Review moderation</span></footer>
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-reviews.js}"></script>
+<script th:src="@{/js/admin-reviews.js(v=20260815-1)}"></script>
 </body>
 </html>

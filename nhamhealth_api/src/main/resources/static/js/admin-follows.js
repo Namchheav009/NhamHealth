@@ -1,32 +1,15 @@
-(function(){
-    const search = document.getElementById('followSearch');
-    const status = document.getElementById('followStatus');
-    const clearBtn = document.getElementById('clearFollowFilters');
-    const openBtn = document.getElementById('openFollowModal');
-    const modal = document.getElementById('followModal');
-    const closeBtn = document.getElementById('closeFollowModal');
-    const cancelBtn = document.getElementById('cancelFollowModal');
-    const form = document.getElementById('followForm');
-    const rows = Array.from(document.querySelectorAll('tbody tr[data-follower]'));
-
-    const apply = () => {
-        const q = (search?.value || '').trim().toLowerCase();
-        const s = (status?.value || '').toLowerCase();
-        rows.forEach(r => {
-            const a = (r.dataset.follower || '').toLowerCase();
-            const st = (r.dataset.status || '').toLowerCase();
-            const match = (!q || a.includes(q) || r.innerText.toLowerCase().includes(q)) && (!s || st===s);
-            r.hidden = !match;
-        });
-    };
-
-    search?.addEventListener('input', apply);
-    status?.addEventListener('change', apply);
-    clearBtn?.addEventListener('click', () => { if (!search||!status) return; search.value=''; status.value=''; apply(); });
-    openBtn?.addEventListener('click', ()=> modal?.classList.add('show'));
-    closeBtn?.addEventListener('click', ()=> modal?.classList.remove('show'));
-    cancelBtn?.addEventListener('click', ()=> modal?.classList.remove('show'));
-    modal?.addEventListener('click', (e)=> { if (e.target===modal) modal.classList.remove('show'); });
-    // let the form submit normally to the server (no client-side interception)
-    apply();
+(() => {
+    const $=id=>document.getElementById(id),tbody=$('followRows'),search=$('followSearch'),statusFilter=$('followStatus'),modal=$('followModal'),form=$('followForm');
+    const token=document.querySelector('meta[name="_csrf"]')?.content,header=document.querySelector('meta[name="_csrf_header"]')?.content;
+    const rows=()=>[...tbody.querySelectorAll('tr[data-id]')],csrfHeaders=()=>token&&header?{[header]:token}:{};
+    const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]);
+    const notify=(icon,title,text)=>Swal.fire({icon,title,text,confirmButtonColor:'#078f4a'});
+    const weekAgo=()=>Date.now()-7*24*60*60*1000;
+    function applyFilters(){const query=search.value.trim().toLowerCase(),status=statusFilter.value;rows().forEach(row=>{row.hidden=!((!query||row.textContent.toLowerCase().includes(query))&&(!status||row.dataset.status===status));});}
+    function updateMetrics(){const all=rows();$('totalFollows').textContent=all.length;$('newThisWeek').textContent=all.filter(row=>new Date(row.dataset.requestedAt).getTime()>=weekAgo()).length;const pairs=new Set(all.filter(row=>row.dataset.status==='active').map(row=>`${row.dataset.followerId}:${row.dataset.followingId}`));let mutual=0;pairs.forEach(pair=>{const [a,b]=pair.split(':');if(a<b&&pairs.has(`${b}:${a}`))mutual++;});$('mutualConnections').textContent=mutual;all.forEach((row,index)=>{row.cells[0].textContent=index+1;});}
+    function closeModal(){modal.classList.remove('show');form.reset();}
+    function addRow(follow){tbody.querySelector('.empty-state')?.closest('tr')?.remove();const row=document.createElement('tr');Object.assign(row.dataset,{id:follow.id,followerId:follow.followerId,followingId:follow.followingId,follower:follow.followerEmail,status:follow.status,requestedAt:follow.requestedAt});const since=new Intl.DateTimeFormat(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(follow.requestedAt));row.innerHTML=`<td></td><td><strong>${escapeHtml(follow.followerName)}</strong><small>${escapeHtml(follow.followerEmail)}</small></td><td><strong>${escapeHtml(follow.followingName)}</strong><small>${escapeHtml(follow.followingEmail)}</small></td><td>${since}</td><td><span class="status-pill status-${escapeHtml(follow.status)}">${escapeHtml(follow.status)}</span></td><td><div class="row-actions"><button class="icon-button edit-follow" type="button" aria-label="Change status"><i class="fa-solid fa-pen"></i></button><button class="icon-button danger delete-follow" type="button" aria-label="Remove follow"><i class="fa-solid fa-trash"></i></button></div></td>`;tbody.prepend(row);updateMetrics();applyFilters();}
+    form.addEventListener('submit',async event=>{event.preventDefault();if($('followerUser').value===$('followingUser').value)return notify('warning','Invalid relationship','A user cannot follow themselves.');const submit=form.querySelector('[type="submit"]');submit.disabled=true;try{const response=await fetch(form.action,{method:'POST',headers:csrfHeaders(),body:new FormData(form)});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'The follow could not be created.');addRow(data);closeModal();Swal.fire({icon:'success',title:'Follow created',timer:1500,showConfirmButton:false});}catch(error){notify('error','Create failed',error.message);}finally{submit.disabled=false;}});
+    tbody.addEventListener('click',async event=>{const row=event.target.closest('tr[data-id]');if(!row)return;if(event.target.closest('.edit-follow')){const result=await Swal.fire({title:'Change follow status',input:'select',inputOptions:{active:'Active',blocked:'Blocked'},inputValue:row.dataset.status,showCancelButton:true,confirmButtonText:'Update',confirmButtonColor:'#078f4a'});if(!result.isConfirmed)return;try{const response=await fetch(`/admin/follows/${row.dataset.id}/status`,{method:'PATCH',headers:{...csrfHeaders(),'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({status:result.value})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'The status could not be updated.');row.dataset.status=data.status;const pill=row.querySelector('.status-pill');pill.className=`status-pill status-${data.status}`;pill.textContent=data.status;updateMetrics();applyFilters();Swal.fire({icon:'success',title:'Status updated',timer:1300,showConfirmButton:false});}catch(error){notify('error','Update failed',error.message);}}else if(event.target.closest('.delete-follow')){const result=await Swal.fire({icon:'warning',title:'Remove this follow?',text:'Only this relationship will be deleted.',showCancelButton:true,confirmButtonText:'Remove',confirmButtonColor:'#dc2626'});if(!result.isConfirmed)return;try{const response=await fetch(`/admin/follows/${row.dataset.id}`,{method:'DELETE',headers:csrfHeaders()});if(!response.ok)throw new Error('The follow could not be removed.');row.remove();updateMetrics();notify('success','Follow removed','The relationship was deleted.');}catch(error){notify('error','Remove failed',error.message);}}});
+    $('openFollowModal').addEventListener('click',()=>{modal.classList.add('show');$('followerUser').focus();});$('closeFollowModal').addEventListener('click',closeModal);$('cancelFollowModal').addEventListener('click',closeModal);modal.addEventListener('click',event=>{if(event.target===modal)closeModal();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('show'))closeModal();});search.addEventListener('input',applyFilters);statusFilter.addEventListener('change',applyFilters);$('clearFollowFilters').addEventListener('click',()=>{search.value='';statusFilter.value='';applyFilters();});$('refreshFollows').addEventListener('click',()=>location.reload());$('exportFollows').addEventListener('click',()=>{const data=[['Follower','Following','Since','Status'],...rows().filter(row=>!row.hidden).map(row=>[...row.cells].slice(1,5).map(cell=>cell.innerText.trim()))];const csv=data.map(values=>values.map(value=>`"${value.replace(/"/g,'""')}"`).join(',')).join('\n');const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));link.download=`follows-${new Date().toISOString().slice(0,10)}.csv`;link.click();URL.revokeObjectURL(link.href);Swal.fire({icon:'success',title:'Export ready',timer:1200,showConfirmButton:false});});updateMetrics();applyFilters();
 })();

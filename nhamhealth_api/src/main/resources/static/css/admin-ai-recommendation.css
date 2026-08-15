@@ -22,9 +22,14 @@ th{background:#f9fbfd;color:#667085;font-size:11px;font-weight:800}
 .status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 12px;border-radius:999px;font-size:11px;font-weight:700}
 .status-active{color:#087f41;background:#e5f7ec}
 .status-inactive{color:#b54708;background:#fff2db}
+.status-neutral{color:#475467;background:#f2f4f7}.muted{color:var(--muted);font-style:italic}
+.table-panel td strong,.table-panel td small{display:block}.table-panel td small{margin-top:4px;color:var(--muted)}
+.icon-button{display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid var(--border);border-radius:9px;background:#fff;color:#d92d20;cursor:pointer}.icon-button:hover{background:#fff1f0}
 .empty-state{padding:40px 0;text-align:center;color:var(--muted)}
 .modal{position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:24px;background:rgba(4,18,29,0.55)}
 .modal.show{display:grid}.modal-card{width:min(720px,100%);background:var(--white);border-radius:18px;box-shadow:0 30px 70px rgba(0,0,0,0.22)}
+.modal-header,.modal-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px}.modal-header{border-bottom:1px solid var(--border)}.modal-header h2,.panel-header h2{margin:0}.modal-header p{margin:5px 0 0;color:var(--muted)}
+.modal-body{display:grid;gap:18px;padding:24px}.modal-actions{justify-content:flex-end;border-top:1px solid var(--border)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.modal-body .field-group{display:grid;gap:7px}.modal-body label{font-size:13px;font-weight:700}.modal-body label span{color:var(--muted);font-weight:500}.modal-body input,.modal-body select,.modal-body textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;box-sizing:border-box}.modal-body textarea{resize:vertical}
 @media (max-width:900px){.stats-grid{grid-template-columns:1fr}.filters-grid{grid-template-columns:1fr}}
 
 /* Filters layout: align search + dropdown + actions inline */
@@ -37,4 +42,5 @@ th{background:#f9fbfd;color:#667085;font-size:11px;font-weight:800}
 @media (max-width:900px){
 	.filters-grid{flex-direction:column;align-items:stretch}
 	.filters-grid input[type="search"],.filters-grid select{width:100%}
+	.form-grid{grid-template-columns:1fr}
 }

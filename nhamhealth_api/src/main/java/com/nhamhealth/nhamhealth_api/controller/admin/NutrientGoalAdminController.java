@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -68,36 +69,65 @@ public class NutrientGoalAdminController {
         model.addAttribute("currentGoals", currentGoals);
         model.addAttribute("trackedNutrients", trackedNutrients);
         model.addAttribute("usersWithGoals", usersWithGoals);
+        model.addAttribute("today", today);
         return "admin/nutrient-goal";
     }
 
     @PostMapping("/admin/nutrient-goals")
-    public String createGoal(@RequestParam Integer userId, @RequestParam Integer nutrientId,
+    @ResponseBody
+    public ResponseEntity<?> createGoal(@RequestParam Integer userId, @RequestParam Integer nutrientId,
             @RequestParam BigDecimal goalAmount, @RequestParam LocalDate effectiveFrom,
             @RequestParam(required = false) LocalDate effectiveTo,
-            @RequestParam(defaultValue = "true") Boolean active, RedirectAttributes redirectAttributes) {
+            @RequestParam(defaultValue = "true") Boolean active) {
         if (goalAmount.signum() <= 0 || (effectiveTo != null && effectiveTo.isBefore(effectiveFrom))) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Enter a positive goal and a valid date range.");
-            return "redirect:/admin/nutrient-goals";
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Enter a positive goal and a valid date range."));
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        Nutrient nutrient = nutrientRepository.findById(nutrientId).orElse(null);
+        if (user == null || nutrient == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Select a valid user and nutrient."));
         }
         UserNutrientGoal goal = new UserNutrientGoal();
-        goal.setUser(userRepository.findById(userId).orElseThrow());
-        goal.setNutrient(nutrientRepository.findById(nutrientId).orElseThrow());
+        goal.setUser(user);
+        goal.setNutrient(nutrient);
         goal.setGoalAmount(goalAmount);
         goal.setEffectiveFrom(effectiveFrom);
         goal.setEffectiveTo(effectiveTo);
         goal.setIsActive(active);
         goal.setCreatedAt(LocalDateTime.now());
         goal.setUpdatedAt(LocalDateTime.now());
-        goalRepository.save(goal);
-        redirectAttributes.addFlashAttribute("successMessage", "Nutrient goal added successfully.");
-        return "redirect:/admin/nutrient-goals";
+        return ResponseEntity.ok(toResponse(goalRepository.saveAndFlush(goal)));
     }
 
     @DeleteMapping("/admin/nutrient-goals/{goalId}")
+    @ResponseBody
     public ResponseEntity<Void> deleteGoal(@PathVariable Integer goalId) {
         if (!goalRepository.existsById(goalId)) return ResponseEntity.notFound().build();
         goalRepository.deleteById(goalId);
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, Object> toResponse(UserNutrientGoal goal) {
+        User user = goal.getUser();
+        Nutrient nutrient = goal.getNutrient();
+        return Map.ofEntries(
+                Map.entry("id", goal.getUserNutrientGoalId()),
+                Map.entry("userId", user.getUserId()),
+                Map.entry("userName", nullSafe(user.getName())),
+                Map.entry("userEmail", nullSafe(user.getEmail())),
+                Map.entry("userInitials", nullSafe(user.getInitials())),
+                Map.entry("nutrientId", nutrient.getNutrientId()),
+                Map.entry("nutrientName", nutrient.getNutrientName()),
+                Map.entry("unit", nullSafe(nutrient.getUnit())),
+                Map.entry("goalAmount", goal.getGoalAmount()),
+                Map.entry("effectiveFrom", goal.getEffectiveFrom().toString()),
+                Map.entry("effectiveTo", goal.getEffectiveTo() == null ? "" : goal.getEffectiveTo().toString()),
+                Map.entry("active", Boolean.TRUE.equals(goal.getIsActive())));
+    }
+
+    private String nullSafe(String value) {
+        return value == null ? "" : value;
     }
 }

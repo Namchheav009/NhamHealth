@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminServingSizeRequest;
 import com.nhamhealth.nhamhealth_api.entity.ServingSize;
@@ -45,16 +46,18 @@ public class ServingSizeAdminController {
     }
 
     @PostMapping("/admin/serving-sizes")
+    @ResponseBody
     public ResponseEntity<?> createServingSize(@Valid @RequestBody AdminServingSizeRequest request) {
         if (servingSizeRepository.findByServingSizeNameIgnoreCase(request.servingSizeName().trim()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "A serving size with this name already exists"));
         }
         ServingSize servingSize = new ServingSize();
         apply(servingSize, request);
-        return ResponseEntity.ok(Map.of("id", servingSizeRepository.save(servingSize).getServingSizeId()));
+        return ResponseEntity.ok(toResponse(servingSizeRepository.saveAndFlush(servingSize)));
     }
 
     @PutMapping("/admin/serving-sizes/{servingSizeId}")
+    @ResponseBody
     public ResponseEntity<?> updateServingSize(
             @PathVariable Integer servingSizeId,
             @Valid @RequestBody AdminServingSizeRequest request) {
@@ -68,13 +71,13 @@ public class ServingSizeAdminController {
                                 .body(Map.of("message", "A serving size with this name already exists"));
                     }
                     apply(servingSize, request);
-                    servingSizeRepository.save(servingSize);
-                    return ResponseEntity.ok(Map.of("id", servingSize.getServingSizeId()));
+                    return ResponseEntity.ok(toResponse(servingSizeRepository.saveAndFlush(servingSize)));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/admin/serving-sizes/{servingSizeId}")
+    @ResponseBody
     public ResponseEntity<?> deleteServingSize(@PathVariable Integer servingSizeId) {
         if (!servingSizeRepository.existsById(servingSizeId)) {
             return ResponseEntity.notFound().build();
@@ -95,5 +98,14 @@ public class ServingSizeAdminController {
         servingSize.setDescription(request.description() == null || request.description().isBlank()
                 ? null : request.description().trim());
         servingSize.setIsActive(request.active() == null || request.active());
+    }
+
+    private Map<String, Object> toResponse(ServingSize servingSize) {
+        return Map.of(
+                "id", servingSize.getServingSizeId(),
+                "servingSizeName", servingSize.getServingSizeName(),
+                "multiplier", servingSize.getMultiplier(),
+                "description", servingSize.getDescription() == null ? "" : servingSize.getDescription(),
+                "active", Boolean.TRUE.equals(servingSize.getIsActive()));
     }
 }
