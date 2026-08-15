@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Recommendations | Nham Health Admin</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,7 +33,7 @@
                     <p>Dashboard &gt; AI Features &gt; AI Recommendations</p>
                 </div>
                 <div class="heading-actions">
-                    <button class="btn" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn" id="exportRecommendations" type="button"><i class="fa-solid fa-download"></i> Export</button>
                     <button class="btn btn-primary" id="openRecModal" type="button"><i class="fa-solid fa-plus"></i> Add Recommendation</button>
                 </div>
             </div>
@@ -41,21 +43,21 @@
                     <div class="stat-icon green"><i class="fa-solid fa-lightbulb"></i></div>
                     <div class="stat-content">
                         <span>Total Recommendations</span>
-                        <strong th:text="${totalRecs}">0</strong>
+                        <strong id="totalRecommendations" th:text="${totalRecs}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
                     <div class="stat-content">
                         <span>Unique Users</span>
-                        <strong th:text="${uniqueUsers}">0</strong>
+                        <strong id="uniqueUsers" th:text="${uniqueUsers}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-list"></i></div>
                     <div class="stat-content">
                         <span>Total Items</span>
-                        <strong th:text="${totalItems}">0</strong>
+                        <strong id="totalItems" th:text="${totalItems}">0</strong>
                     </div>
                 </article>
             </div>
@@ -63,15 +65,15 @@
             <section class="filters-grid">
                 <div class="field-group">
                     <label for="recSearch">Search</label>
-                    <input id="recSearch" type="search" placeholder="Search by user or title">
+                    <input id="recSearch" type="search" placeholder="Search user, mood, request, or response">
                 </div>
                 <div class="field-group">
-                    <label for="typeFilter">Filter by Type</label>
-                    <select id="typeFilter">
-                        <option value="">All Types</option>
-                        <option value="meal">Meal</option>
-                        <option value="snack">Snack</option>
-                        <option value="habit">Habit</option>
+                    <label for="statusFilter">Filter by status</label>
+                    <select id="statusFilter">
+                        <option value="">All statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="ready">Ready</option>
+                        <option value="archived">Archived</option>
                     </select>
                 </div>
                 <div class="field-group" style="align-self: end;">
@@ -82,7 +84,7 @@
             <article class="panel table-panel">
                 <div class="panel-header">
                     <h2>Recommendation Feed</h2>
-                    <button class="action-button" type="button">Refresh</button>
+                    <button class="action-button" id="refreshRecommendations" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -93,43 +95,63 @@
                             <th>Request</th>
                             <th>Response</th>
                             <th>Status</th>
+                            <th>Items</th>
                             <th>Created</th>
+                            <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        <tr th:each="rec, iterStat : ${aiRecs}" th:data-user="${rec.user != null ? rec.user.name : 'Unknown'}" th:data-status="${rec.status != null ? rec.status.toLowerCase() : ''}">
+                        <tbody id="recommendationRows">
+                        <tr th:each="rec, iterStat : ${aiRecs}" th:data-id="${rec.recommendationId}" th:data-user-id="${rec.user != null ? rec.user.userId : ''}" th:data-user="${rec.user != null ? rec.user.name : 'Unknown'}" th:data-status="${rec.status != null ? rec.status.toLowerCase() : ''}" th:data-items="${itemCounts[rec.recommendationId]}">
                             <td th:text="${iterStat.count}">1</td>
-                            <td th:text="${rec.user != null ? rec.user.name : 'Unknown'}">user@example.com</td>
+                            <td><strong th:text="${rec.user != null ? rec.user.name : 'Unknown'}">User</strong><small th:text="${rec.user != null ? rec.user.email : ''}">email</small></td>
                             <td th:text="${rec.requestText}">What should I eat?</td>
                             <td th:text="${rec.responseText}">Try more vegetables</td>
-                            <td th:text="${rec.status}">pending</td>
-                            <td th:text="${rec.createdAt}">2026-08-05T12:00:00</td>
+                            <td><span class="status-pill" th:classappend="${rec.status == 'ready' ? ' status-active' : (rec.status == 'archived' ? ' status-neutral' : ' status-inactive')}" th:text="${rec.status}">pending</span></td>
+                            <td th:text="${itemCounts[rec.recommendationId]}">0</td>
+                            <td th:text="${#temporals.format(rec.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                            <td><button class="icon-button delete-recommendation" type="button" aria-label="Delete recommendation"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                         <tr th:if="${aiRecs.empty}">
-                            <td class="empty-state" colspan="6">No AI recommendations found.</td>
+                            <td class="empty-state" colspan="8">No AI recommendations found.</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </article>
 
-            <div class="modal" id="recModal">
+            <div class="modal" id="recModal" role="dialog" aria-modal="true" aria-labelledby="recModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>Add Recommendation</h2>
+                            <h2 id="recModalTitle">Add Recommendation</h2>
                             <p>Create a new AI recommendation record.</p>
                         </div>
                         <button class="icon-button small" id="closeRecModal" type="button"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <form id="recForm" th:action="@{/admin/ai-recommendations}" th:method="post">
                         <div class="modal-body">
+                            <div class="form-grid">
                             <div class="field-group">
-                                <label for="recTitle">Title</label>
-                                <input id="recTitle" name="requestText" type="text" placeholder="User request / title" required>
+                                <label for="recUser">User</label>
+                                <select id="recUser" name="userId" required>
+                                    <option value="">Select user</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
                             </div>
                             <div class="field-group">
-                                <label for="recType">Type</label>
+                                <label for="recMood">Mood <span>(optional)</span></label>
+                                <select id="recMood" name="moodId">
+                                    <option value="">No mood</option>
+                                    <option th:each="mood : ${moods}" th:value="${mood.moodId}" th:text="${mood.moodName}"></option>
+                                </select>
+                            </div>
+                            </div>
+                            <div class="field-group">
+                                <label for="recRequest">User request</label>
+                                <textarea id="recRequest" name="requestText" rows="3" placeholder="What did the user ask the AI?" required></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="recStatus">Status</label>
                                 <select id="recStatus" name="status" required>
                                     <option value="pending">pending</option>
                                     <option value="ready">ready</option>
@@ -137,8 +159,8 @@
                                 </select>
                             </div>
                             <div class="field-group">
-                                <label for="recSummary">Summary</label>
-                                <textarea id="recSummary" name="responseText" rows="4" placeholder="AI response text"></textarea>
+                                <label for="recResponse">AI response <span>(optional)</span></label>
+                                <textarea id="recResponse" name="responseText" rows="5" placeholder="Recommendation response"></textarea>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -160,6 +182,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-ai-recommendation.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-ai-recommendation.js(v=2)}"></script>
 </body>
 </html>

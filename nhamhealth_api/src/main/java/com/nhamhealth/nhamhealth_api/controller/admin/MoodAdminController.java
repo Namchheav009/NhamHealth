@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMoodRequest;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
@@ -45,16 +46,18 @@ public class MoodAdminController {
     }
 
     @PostMapping("/admin/moods")
+    @ResponseBody
     public ResponseEntity<?> createMood(@Valid @RequestBody AdminMoodRequest request) {
         if (moodRepository.findByMoodNameIgnoreCase(request.moodName().trim()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "A mood with this name already exists"));
         }
         Mood mood = new Mood();
         apply(mood, request);
-        return ResponseEntity.ok(Map.of("id", moodRepository.save(mood).getMoodId()));
+        return ResponseEntity.ok(toResponse(moodRepository.saveAndFlush(mood)));
     }
 
     @PutMapping("/admin/moods/{moodId}")
+    @ResponseBody
     public ResponseEntity<?> updateMood(@PathVariable Integer moodId, @Valid @RequestBody AdminMoodRequest request) {
         return moodRepository.findById(moodId)
                 .<ResponseEntity<?>>map(mood -> {
@@ -64,13 +67,13 @@ public class MoodAdminController {
                         return ResponseEntity.badRequest().body(Map.of("message", "A mood with this name already exists"));
                     }
                     apply(mood, request);
-                    moodRepository.save(mood);
-                    return ResponseEntity.ok(Map.of("id", mood.getMoodId()));
+                    return ResponseEntity.ok(toResponse(moodRepository.saveAndFlush(mood)));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/admin/moods/{moodId}")
+    @ResponseBody
     public ResponseEntity<?> deleteMood(@PathVariable Integer moodId) {
         if (!moodRepository.existsById(moodId)) {
             return ResponseEntity.notFound().build();
@@ -90,5 +93,13 @@ public class MoodAdminController {
         mood.setEmojiCode(request.emojiCode() == null || request.emojiCode().isBlank()
                 ? null : request.emojiCode().trim());
         mood.setIsActive(request.active() == null || request.active());
+    }
+
+    private Map<String, Object> toResponse(Mood mood) {
+        return Map.of(
+                "id", mood.getMoodId(),
+                "moodName", mood.getMoodName(),
+                "emojiCode", mood.getEmojiCode() == null ? "" : mood.getEmojiCode(),
+                "active", Boolean.TRUE.equals(mood.getIsActive()));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 import com.nhamhealth.nhamhealth_api.entity.PostFavorite;
@@ -57,6 +58,7 @@ public class FavoritesAdminController {
     }
 
     @DeleteMapping("/admin/favorites/meals/{favoriteId}")
+    @ResponseBody
     public ResponseEntity<Void> deleteMealFavorite(@PathVariable Integer favoriteId) {
         if (!mealFavoriteRepository.existsById(favoriteId)) {
             return ResponseEntity.notFound().build();
@@ -66,6 +68,7 @@ public class FavoritesAdminController {
     }
 
     @DeleteMapping("/admin/favorites/posts/{favoriteId}")
+    @ResponseBody
     public ResponseEntity<Void> deletePostFavorite(@PathVariable Integer favoriteId) {
         if (!postFavoriteRepository.existsById(favoriteId)) {
             return ResponseEntity.notFound().build();

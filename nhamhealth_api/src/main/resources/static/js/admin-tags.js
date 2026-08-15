@@ -303,6 +303,7 @@
     openButton?.addEventListener('click', () => showModal());
     closeButton?.addEventListener('click', hideModal);
     cancelButton?.addEventListener('click', hideModal);
+    form?.addEventListener('submit', saveTag);
     modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && modal?.classList.contains('show')) hideModal();

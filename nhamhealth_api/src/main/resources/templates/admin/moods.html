@@ -42,7 +42,7 @@
                     <div class="stat-icon purple"><i class="bi bi-emoji-smile"></i></div>
                     <div class="stat-content">
                         <span>Total Moods</span>
-                        <strong th:text="${totalMoods}">10</strong>
+                        <strong id="totalMoodCount" th:text="${totalMoods}">10</strong>
                         <small>All mood types</small>
                     </div>
                 </article>
@@ -51,8 +51,8 @@
                     <div class="stat-icon blue"><i class="bi bi-graph-up"></i></div>
                     <div class="stat-content">
                         <span>Active moods</span>
-                        <strong th:text="${activeMoods}">8</strong>
-                        <small th:text="${totalMoods > 0 ? #numbers.formatDecimal(activeMoods * 100.0 / totalMoods, 1, 1) + '% active' : 'No moods yet'}">80% active</small>
+                        <strong id="activeMoodCount" th:text="${activeMoods}">8</strong>
+                        <small id="activeMoodPercentage" th:text="${totalMoods > 0 ? #numbers.formatDecimal(activeMoods * 100.0 / totalMoods, 1, 1) + '% active' : 'No moods yet'}">80% active</small>
                     </div>
                 </article>
 
@@ -60,7 +60,7 @@
                     <div class="stat-icon pink"><i class="bi bi-heart"></i></div>
                     <div class="stat-content">
                         <span>Inactive moods</span>
-                        <strong th:text="${inactiveMoods}">2</strong>
+                        <strong id="inactiveMoodCount" th:text="${inactiveMoods}">2</strong>
                         <small>Unavailable for new selections</small>
                     </div>
                 </article>
@@ -90,7 +90,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="moodRows">
                         <tr th:each="mood : ${moods}" th:data-id="${mood.moodId}" th:data-name="${#strings.toLowerCase(mood.moodName)}" th:data-emoji="${mood.emojiCode ?: ''}" th:data-status="${mood.isActive != null and mood.isActive ? 'active' : 'inactive'}">
                             <td><div class="mood-name"><span class="mood-avatar" th:text="${mood.emojiCode ?: '•'}">😄</span><strong th:text="${mood.moodName}">Happy</strong></div></td>
                             <td><span class="emoji-code" th:text="${mood.emojiCode ?: '—'}">😄</span></td>
@@ -102,7 +102,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(moods)}"><td class="empty-state" colspan="4"><i class="bi bi-emoji-smile"></i><strong>No moods yet</strong><span>Add a mood for wellness tracking and AI recommendations.</span></td></tr>
+                        <tr th:if="${#lists.isEmpty(moods)}" id="emptyMoodRow"><td class="empty-state" colspan="4"><i class="bi bi-emoji-smile"></i><strong>No moods yet</strong><span>Add a mood for wellness tracking and AI recommendations.</span></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -119,7 +119,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="modal" id="moodModal" aria-hidden="true">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="moodModalTitle">
         <div class="modal-header">
             <div>
                 <h2 id="moodModalTitle">Add mood</h2>
@@ -129,7 +129,7 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-        <form id="moodForm">
+        <form id="moodForm" novalidate>
             <input id="moodId" name="moodId" type="hidden">
             <div class="modal-body">
                 <div class="field">
@@ -158,6 +158,6 @@
 </div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-moods.js}" defer></script>
+<script th:src="@{/js/admin-moods.js(v=20260815-1)}" defer></script>
 </body>
 </html>

@@ -28,6 +28,9 @@
 .category-badge { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; color: #3563e9; background: #e7efff; font-size: 9px; font-weight: 800; }
 .icon-button.small { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 9px; background: #fff; }
 .icon-button.small.danger { color: #d92d20; }
+.icon-button.small:hover { border-color: #f4b4ad; background: #fff5f4; }
+.icon-button.small:focus-visible, .tab-buttons .btn:focus-visible { outline: 3px solid rgba(8,174,97,.22); outline-offset: 2px; }
+.icon-button.small:disabled { opacity: .5; cursor: wait; }
 .empty-state { display: table-cell; padding: 54px 20px !important; text-align: center !important; }
 .empty-state i, .empty-state strong, .empty-state span { display: block; }
 .empty-state i { margin-bottom: 8px; font-size: 25px; }

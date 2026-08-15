@@ -1,32 +1,17 @@
 (() => {
-    const search = document.getElementById('reportSearch');
-    const status = document.getElementById('reportStatus');
-    const clearBtn = document.getElementById('clearReportFilters');
-    const openBtn = document.getElementById('openReportModal');
-    const modal = document.getElementById('reportModal');
-    const closeBtn = document.getElementById('closeReportModal');
-    const cancelBtn = document.getElementById('cancelReportModal');
-    const form = document.getElementById('reportForm');
-    const rows = Array.from(document.querySelectorAll('tbody tr[data-reporter]'));
-
-    const apply = () => {
-        const q = (search?.value || '').trim().toLowerCase();
-        const s = (status?.value || '').toLowerCase();
-        rows.forEach(r => {
-            const a = (r.dataset.reporter || '').toLowerCase();
-            const st = (r.dataset.status || '').toLowerCase();
-            const match = (!q || a.includes(q) || r.innerText.toLowerCase().includes(q)) && (!s || st===s);
-            r.hidden = !match;
-        });
-    };
-
-    search?.addEventListener('input', apply);
-    status?.addEventListener('change', apply);
-    clearBtn?.addEventListener('click', () => { if (!search||!status) return; search.value=''; status.value=''; apply(); });
-    openBtn?.addEventListener('click', ()=> modal?.classList.add('show'));
-    closeBtn?.addEventListener('click', ()=> modal?.classList.remove('show'));
-    cancelBtn?.addEventListener('click', ()=> modal?.classList.remove('show'));
-    modal?.addEventListener('click', (e)=> { if (e.target===modal) modal.classList.remove('show'); });
-    form?.addEventListener('submit', e=>{ e.preventDefault(); alert('Create endpoint not implemented yet.'); modal?.classList.remove('show'); });
-    apply();
+    const $ = id => document.getElementById(id);
+    const tbody=$('reportRows'), search=$('reportSearch'), statusFilter=$('reportStatus'), modal=$('reportModal'), form=$('reportForm');
+    const token=document.querySelector('meta[name="_csrf"]')?.content, header=document.querySelector('meta[name="_csrf_header"]')?.content;
+    const rows=()=>[...tbody.querySelectorAll('tr[data-id]')];
+    const csrfHeaders=()=>token&&header?{[header]:token}:{};
+    const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]);
+    const notify=(icon,title,text)=>Swal.fire({icon,title,text,confirmButtonColor:'#078f4a'});
+    function applyFilters(){const query=search.value.trim().toLowerCase(),status=statusFilter.value;rows().forEach(row=>{row.hidden=!((!query||row.textContent.toLowerCase().includes(query))&&(!status||row.dataset.status===status));});}
+    function updateMetrics(){const all=rows();$('totalReports').textContent=all.length;$('uniqueReporters').textContent=new Set(all.map(row=>row.dataset.reporterId).filter(Boolean)).size;$('pendingReports').textContent=all.filter(row=>row.dataset.status==='pending').length;all.forEach((row,index)=>{row.cells[0].textContent=index+1;});}
+    function closeModal(){modal.classList.remove('show');form.reset();}
+    function addRow(report){tbody.querySelector('.empty-state')?.closest('tr')?.remove();const row=document.createElement('tr');Object.assign(row.dataset,{id:report.id,reporterId:report.reporterId,reporter:report.reporterEmail,status:report.status});const created=new Intl.DateTimeFormat(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(report.createdAt));row.innerHTML=`<td></td><td><strong>${escapeHtml(report.reporterName)}</strong><small>${escapeHtml(report.reporterEmail)}</small></td><td class="target-cell">${escapeHtml(report.targetSummary)}</td><td>${escapeHtml(report.reason)}</td><td><span class="status-pill status-${escapeHtml(report.status)}">${escapeHtml(report.status)}</span></td><td>Not reviewed</td><td>${created}</td><td><button class="btn-small review-report" type="button"><i class="fa-solid fa-gavel"></i> Review</button></td>`;tbody.prepend(row);updateMetrics();applyFilters();}
+    form.addEventListener('submit',async event=>{event.preventDefault();const submit=form.querySelector('[type="submit"]');submit.disabled=true;try{const response=await fetch(form.action,{method:'POST',headers:csrfHeaders(),body:new FormData(form)});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'The report could not be created.');addRow(data);closeModal();Swal.fire({icon:'success',title:'Report created',text:'Added to the moderation queue.',timer:1700,showConfirmButton:false});}catch(error){notify('error','Create failed',error.message);}finally{submit.disabled=false;}});
+    tbody.addEventListener('click',async event=>{const button=event.target.closest('.review-report');if(!button)return;const row=button.closest('tr[data-id]');const result=await Swal.fire({title:'Review report',input:'select',inputOptions:{pending:'Pending',resolved:'Resolved',dismissed:'Dismissed'},inputValue:row.dataset.status,showCancelButton:true,confirmButtonText:'Save decision',confirmButtonColor:'#078f4a'});if(!result.isConfirmed)return;try{const body=new URLSearchParams({status:result.value});const response=await fetch(`/admin/reports/${row.dataset.id}/status`,{method:'PATCH',headers:{...csrfHeaders(),'Content-Type':'application/x-www-form-urlencoded'},body});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'The decision could not be saved.');row.dataset.status=data.status;const pill=row.querySelector('.status-pill');pill.className=`status-pill status-${data.status}`;pill.textContent=data.status;row.cells[5].textContent=data.status==='pending'?'Not reviewed':(data.reviewer||'Reviewed');updateMetrics();applyFilters();Swal.fire({icon:'success',title:'Review saved',timer:1400,showConfirmButton:false});}catch(error){notify('error','Review failed',error.message);}});
+    $('openReportModal').addEventListener('click',()=>{modal.classList.add('show');$('reportReporter').focus();});$('closeReportModal').addEventListener('click',closeModal);$('cancelReportModal').addEventListener('click',closeModal);modal.addEventListener('click',event=>{if(event.target===modal)closeModal();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('show'))closeModal();});search.addEventListener('input',applyFilters);statusFilter.addEventListener('change',applyFilters);$('clearReportFilters').addEventListener('click',()=>{search.value='';statusFilter.value='';applyFilters();});$('refreshReports').addEventListener('click',()=>location.reload());
+    $('exportReports').addEventListener('click',()=>{const data=[['Reporter','Target','Reason','Status','Reviewer','Created'],...rows().filter(row=>!row.hidden).map(row=>[...row.cells].slice(1,7).map(cell=>cell.innerText.trim()))];const csv=data.map(values=>values.map(value=>`"${value.replace(/"/g,'""')}"`).join(',')).join('\n');const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));link.download=`reports-${new Date().toISOString().slice(0,10)}.csv`;link.click();URL.revokeObjectURL(link.href);Swal.fire({icon:'success',title:'Export ready',timer:1200,showConfirmButton:false});});updateMetrics();applyFilters();
 })();

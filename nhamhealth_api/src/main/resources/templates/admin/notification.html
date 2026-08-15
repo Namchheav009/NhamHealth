@@ -39,21 +39,21 @@
                     <div class="stat-icon green"><i class="bi bi-bell-fill"></i></div>
                     <div class="stat-content">
                         <span>Total Notifications</span>
-                        <strong th:text="${totalNotifications}">0</strong>
+                        <strong id="totalNotifications" th:text="${totalNotifications}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon blue"><i class="bi bi-envelope-paper-fill"></i></div>
                     <div class="stat-content">
                         <span>Unread</span>
-                        <strong th:text="${unreadNotifications}">0</strong>
+                        <strong id="unreadNotifications" th:text="${unreadNotifications}">0</strong>
                     </div>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon orange"><i class="bi bi-clock-history"></i></div>
                     <div class="stat-content">
                         <span>Last 24h</span>
-                        <strong th:text="${recentNotifications}">0</strong>
+                        <strong id="recentNotifications" th:text="${recentNotifications}">0</strong>
                     </div>
                 </article>
             </div>
@@ -93,9 +93,10 @@
                             <th class="actions-heading">Actions</th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="notificationRows">
                         <tr th:each="n : ${notifications}"
                             th:data-id="${n.notificationId}"
+                            th:data-created-at="${n.createdAt}"
                             th:data-user="${#strings.toLowerCase(n.user.email)}"
                             th:data-status="${n.isRead} ? 'read' : 'unread'"
                             th:data-title="${#strings.toLowerCase(n.title ?: '')}"
@@ -115,20 +116,23 @@
                 </div>
             </article>
 
-            <div class="modal" id="notificationModal">
+            <div class="modal" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">
                         <div>
-                            <h2>New notification</h2>
+                            <h2 id="notificationModalTitle">New notification</h2>
                             <p>Send a message to an existing Nham Health account.</p>
                         </div>
                         <button class="icon-button small" id="closeNotificationModal" type="button" aria-label="Close"><i class="bi bi-x-lg"></i></button>
                     </div>
-                    <form id="notificationForm">
+                    <form id="notificationForm" th:action="@{/admin/notifications}">
                         <div class="modal-body">
                             <div class="field-group">
-                                <label for="notifUser">User Email</label>
-                                <input id="notifUser" name="userEmail" type="email" placeholder="user@example.com" required>
+                                <label for="notifUser">Recipient</label>
+                                <select id="notifUser" name="userEmail" required>
+                                    <option value="">Select a user</option>
+                                    <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
                             </div>
                             <div class="field-group">
                                 <label for="notifType">Type</label>
@@ -168,6 +172,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-notification.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-notification.js(v=2)}"></script>
 </body>
 </html>
