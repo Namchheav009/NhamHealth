@@ -12,9 +12,9 @@ class AiFoodView extends GetView<AiFoodController> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFAFFF8),
+    backgroundColor: const Color(0xFFF7FAF6),
     appBar: AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF7FAF6),
       elevation: 0,
       leading: IconButton(
         onPressed: Get.back,
@@ -31,37 +31,15 @@ class AiFoodView extends GetView<AiFoodController> {
         constraints: const BoxConstraints(maxWidth: 520),
         child: Obx(
           () => ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
             children: [
-              const Text(
-                'Take a photo of your food',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Let AI identify your meal and show estimated nutrition.',
-                style: TextStyle(color: Color(0xFF777777), height: 1.4),
-              ),
-              const SizedBox(height: 18),
+              _intro(),
+              const SizedBox(height: 16),
               if (controller.isModelLoading.value)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: LinearProgressIndicator(color: green),
                 ),
-              _button(
-                controller.isLiveAnalyzing.value
-                    ? Icons.stop_circle_outlined
-                    : Icons.center_focus_strong,
-                controller.isLiveCameraStarting.value
-                    ? 'Starting camera...'
-                    : controller.isLiveAnalyzing.value
-                    ? 'Stop Real-Time AI'
-                    : 'Start Real-Time AI',
-                controller.isLiveCameraStarting.value
-                    ? null
-                    : controller.toggleLiveAnalysis,
-              ),
-              const SizedBox(height: 12),
               _imageCard(),
               const SizedBox(height: 12),
               Row(
@@ -84,6 +62,21 @@ class AiFoodView extends GetView<AiFoodController> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              _button(
+                controller.isLiveAnalyzing.value
+                    ? Icons.stop_circle_outlined
+                    : Icons.center_focus_strong,
+                controller.isLiveCameraStarting.value
+                    ? 'Starting camera...'
+                    : controller.isLiveAnalyzing.value
+                    ? 'Stop live scan'
+                    : 'Scan food live',
+                controller.isLiveCameraStarting.value
+                    ? null
+                    : controller.toggleLiveAnalysis,
+                subtle: true,
               ),
               if (controller.selectedImage.value != null) ...[
                 const SizedBox(height: 12),
@@ -133,18 +126,52 @@ class AiFoodView extends GetView<AiFoodController> {
     ),
   );
 
+  Widget _intro() => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF087A48), Color(0xFF00A651)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: const Row(
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(color: Color(0x2FFFFFFF), shape: BoxShape.circle),
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 26),
+          ),
+        ),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Know what is on your plate', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              SizedBox(height: 5),
+              Text('Snap a clear photo for instant nutrition insights.', style: TextStyle(color: Color(0xDFFFFFFF), height: 1.35)),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
   Widget _imageCard() => GestureDetector(
     onTap:
         controller.isLiveAnalyzing.value
             ? null
             : controller.pickImageFromGallery,
     child: Container(
-      height: 220,
+      height: 236,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFDDEBDD)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFD9E7DA)),
       ),
       child:
           controller.isLiveCameraReady
@@ -212,15 +239,18 @@ class AiFoodView extends GetView<AiFoodController> {
               ? const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.restaurant_rounded, size: 52, color: green),
+                  DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFFE8F7EA), shape: BoxShape.circle),
+                    child: Padding(padding: EdgeInsets.all(16), child: Icon(Icons.add_a_photo_outlined, size: 34, color: green)),
+                  ),
                   SizedBox(height: 10),
                   Text(
-                    'Food Photo',
+                    'Add a meal photo',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Tap to select image',
+                    'Use camera or choose from gallery',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -250,17 +280,19 @@ class AiFoodView extends GetView<AiFoodController> {
     String text,
     VoidCallback? action, {
     bool outlined = false,
+    bool subtle = false,
   }) => SizedBox(
     height: 48,
     child:
-        outlined
+        outlined || subtle
             ? OutlinedButton.icon(
               onPressed: action,
               icon: Icon(icon),
               label: Text(text),
               style: OutlinedButton.styleFrom(
                 foregroundColor: green,
-                side: const BorderSide(color: green),
+                side: BorderSide(color: subtle ? const Color(0xFFCDE2D1) : green),
+                backgroundColor: subtle ? Colors.white : null,
                 shape: const StadiumBorder(),
               ),
             )
@@ -411,10 +443,11 @@ class AiFoodView extends GetView<AiFoodController> {
   );
   Widget _card(Widget child) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: const Color(0x0F004D26)),
       boxShadow: const [
         BoxShadow(
           color: Color(0x12000000),
