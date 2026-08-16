@@ -44,12 +44,17 @@ public class ProfileDashboardService {
 
     @Transactional(readOnly = true)
     public ProfileDashboardResponse load(Integer userId) {
+        return load(userId, LocalDate.now());
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileDashboardResponse load(Integer userId, LocalDate summaryDate) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         UserProfile identity = userProfileRepository.findByUser_UserId(userId).orElse(null);
         WellnessProfile wellness = wellnessProfileRepository.findByUser_UserId(userId).orElse(null);
         DailyWellnessSummary summary = summaryRepository
-                .findByUser_UserIdAndSummaryDate(userId, LocalDate.now())
+                .findByUser_UserIdAndSummaryDate(userId, summaryDate)
                 .orElse(null);
 
         Progress calories = progress(summary, "calorie");
@@ -70,6 +75,8 @@ public class ProfileDashboardService {
                 calories,
                 protein,
                 progress(summary, "water"),
+                progress(summary, "fiber"),
+                progress(summary, "sugar"),
                 summary == null ? null : summary.getAiInsightText());
     }
 

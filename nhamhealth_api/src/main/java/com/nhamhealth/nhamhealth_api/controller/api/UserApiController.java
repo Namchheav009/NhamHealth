@@ -1,5 +1,7 @@
 package com.nhamhealth.nhamhealth_api.controller.api;
 
+import java.time.LocalDate;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.response.ProfileImageResponse;
@@ -38,9 +41,13 @@ public class UserApiController {
     }
 
     @GetMapping("/me/dashboard")
-    public ResponseEntity<?> profileDashboard(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<?> profileDashboard(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Number userId = jwt.getClaim("userId");
-        return ResponseEntity.ok(profileDashboardService.load(userId.intValue()));
+        return ResponseEntity.ok(profileDashboardService.load(
+                userId.intValue(), date == null ? LocalDate.now() : date));
     }
 
     @PutMapping("/me/profile")

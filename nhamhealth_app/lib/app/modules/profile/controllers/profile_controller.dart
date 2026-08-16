@@ -24,7 +24,7 @@ class ProfileController extends GetxController {
   final email = ''.obs;
   final membership = 'WellBite Member'.obs;
   final profileImagePath = ''.obs;
-  final insight = "You've hit 71% of your calories goal today.".obs;
+  final insight = "Start logging meals to build today's progress.".obs;
 
   final age = 21.obs;
   final height = 165.obs;
@@ -43,13 +43,13 @@ class ProfileController extends GetxController {
     return 'Obese';
   }
 
-  final calories = 1420.obs;
+  final calories = 0.obs;
   final caloriesGoal = 2000.obs;
 
-  final protein = 82.obs;
+  final protein = 0.obs;
   final proteinGoal = 120.obs;
 
-  final water = 6.obs;
+  final water = 0.obs;
   final waterGoal = 8.obs;
 
   double get caloriesProgress => caloriesGoal.value <= 0

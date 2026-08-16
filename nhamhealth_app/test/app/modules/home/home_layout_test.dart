@@ -43,6 +43,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  test('AI nutrition is kept per day on the dashboard', () async {
+    final controller = HomeController(
+      repository: HomeRepository(provider: HomeProvider()),
+    );
+    Get.put<AuthService>(_SessionAuthService());
+    Get.put<HomeController>(controller);
+    await controller.loadDashboard();
+
+    controller.addNutritionToToday(calories: 400, protein: 15);
+    expect(controller.dashboard.value!.dailySummary.calories.value, '400');
+    expect(controller.dashboard.value!.dailySummary.protein.value, '15');
+
+    controller.selectDay(DateTime.now().subtract(const Duration(days: 1)));
+    expect(controller.dashboard.value!.dailySummary.calories.value, '0');
+  });
+
 }
 
 class _SessionAuthService extends AuthService {
