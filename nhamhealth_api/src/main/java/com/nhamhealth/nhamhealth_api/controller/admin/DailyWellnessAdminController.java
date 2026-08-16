@@ -64,6 +64,11 @@ public class DailyWellnessAdminController {
         model.addAttribute("activePage", "daily-wellness");
         model.addAttribute("adminName", authentication.getName());
         model.addAttribute("wellnessSummaries", summaries);
+        model.addAttribute("nutrientTotalsBySummary", summaries.stream().collect(
+                java.util.stream.Collectors.toMap(
+                        DailyWellnessSummary::getDailySummaryId,
+                        summary -> dailyNutrientTotalRepository
+                                .findByDailyWellnessSummaryDailySummaryId(summary.getDailySummaryId()))));
         model.addAttribute("users", users);
         model.addAttribute("moods", moods);
         model.addAttribute("balanceStatuses", balances);

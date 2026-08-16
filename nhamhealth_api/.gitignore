@@ -35,3 +35,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local runtime logs ###
+*.stdout.log
+*.stderr.log

@@ -14,6 +14,7 @@ import '../services/food_recommendation_service.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
 import '../../home/controllers/home_controller.dart';
+import '../../profile/repositories/profile_repository.dart';
 
 class AiFoodController extends GetxController {
   AiFoodController({
@@ -22,6 +23,7 @@ class AiFoodController extends GetxController {
     required this.recommendationService,
     required this.caloriesController,
     required this.wellnessController,
+    required this.profileRepository,
     ImagePicker? imagePicker,
   }) : _imagePicker = imagePicker ?? ImagePicker();
 
@@ -31,6 +33,7 @@ class AiFoodController extends GetxController {
   final FoodRecommendationService recommendationService;
   final CaloriesController caloriesController;
   final WellnessController wellnessController;
+  final ProfileRepository profileRepository;
   final ImagePicker _imagePicker;
 
   final isModelLoading = false.obs;
@@ -291,6 +294,14 @@ class AiFoodController extends GetxController {
     }
     isSaving.value = true;
     try {
+      await profileRepository.addDailyNutrition(
+        calories: food.calories,
+        protein: food.protein,
+        sugar: food.sugar,
+        aiRecommendation: recommendation.value == null
+            ? null
+            : '${recommendation.value!.title}: ${recommendation.value!.message}',
+      );
       caloriesController.addFoodSource(
         mealType: _mealTypeNow(),
         foodName: food.name,
@@ -313,6 +324,12 @@ class AiFoodController extends GetxController {
       Get.snackbar(
         'Food added',
         '${food.name} added successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on Object {
+      Get.snackbar(
+        'Could not save food',
+        'Your nutrition was not stored. Please check the server and try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
