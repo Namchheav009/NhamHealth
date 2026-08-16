@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/change_password_controller.dart';
-import '../../../theme/app_spacing.dart';
 
 class ChangePasswordView extends GetView<ChangePasswordController> {
   const ChangePasswordView({super.key});
@@ -22,15 +21,15 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
         backgroundColor: Colors.white,
         body: LayoutBuilder(
           builder: (context, constraints) {
-            // Screenshot design = around 440 logical px wide.
-            final double scale = (constraints.maxWidth / 440).clamp(0.85, 1.10);
+            // The reference frame is 393 logical pixels wide.
+            final double scale = (constraints.maxWidth / 393).clamp(0.90, 1.12);
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
                 width: constraints.maxWidth,
                 height:
-                    constraints.maxHeight < 760 ? 760 : constraints.maxHeight,
+                    constraints.maxHeight < 720 ? 720 : constraints.maxHeight,
                 child: Stack(
                   children: [
                     // ==========================================
@@ -121,25 +120,25 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
                     SafeArea(
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal * scale,
+                          horizontal: 28 * scale,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(height: 58 * scale),
+                            SizedBox(height: 44 * scale),
 
                             // Header
                             _buildHeader(scale),
 
-                            SizedBox(height: 47 * scale),
+                            SizedBox(height: 35 * scale),
 
                             // Subtitle
                             Padding(
-                              padding: EdgeInsets.only(left: 7 * scale),
+                              padding: EdgeInsets.only(left: 4 * scale),
                               child: Text(
-                                'No worries ,We got you .',
+                                "No worries, we've got you.",
                                 style: TextStyle(
-                                  fontSize: 14.5 * scale,
+                                  fontSize: 12 * scale,
                                   height: 1,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFF83A991),
@@ -147,7 +146,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
                               ),
                             ),
 
-                            SizedBox(height: 34 * scale),
+                            SizedBox(height: 25 * scale),
 
                             // Password card
                             _buildPasswordCard(scale),
@@ -179,22 +178,22 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
           onTap: Get.back,
           behavior: HitTestBehavior.opaque,
           child: SizedBox(
-            width: 38 * scale,
-            height: 38 * scale,
+            width: 24 * scale,
+            height: 34 * scale,
             child: Icon(
               Icons.arrow_back_rounded,
-              size: 28 * scale,
+              size: 22 * scale,
               color: darkGreen,
             ),
           ),
         ),
 
-        SizedBox(width: 9 * scale),
+        SizedBox(width: 7 * scale),
 
         Text(
           'Change Password',
           style: TextStyle(
-            fontSize: 24 * scale,
+            fontSize: 20 * scale,
             height: 1,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -212,16 +211,16 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
   Widget _buildPasswordCard(double scale) {
     return Container(
       width: double.infinity,
-      height: 444 * scale,
+      height: 350 * scale,
       padding: EdgeInsets.fromLTRB(
-        7 * scale,
-        31 * scale,
-        7 * scale,
-        34 * scale,
+        5 * scale,
+        25 * scale,
+        5 * scale,
+        36 * scale,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(20 * scale),
+        borderRadius: BorderRadius.circular(16 * scale),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.9),
           width: 1,
@@ -240,47 +239,47 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
             () => _passwordField(
               scale: scale,
               controller: controller.currentPasswordController,
-              hint: 'Current Password',
+              hint: 'Current password',
               obscureText: controller.hideCurrentPassword.value,
               onEyeTap: controller.toggleCurrentPassword,
             ),
           ),
 
-          SizedBox(height: 20 * scale),
+          SizedBox(height: 15 * scale),
 
           Obx(
             () => _passwordField(
               scale: scale,
               controller: controller.newPasswordController,
-              hint: 'New Password',
+              hint: 'New password',
               obscureText: controller.hideNewPassword.value,
               onEyeTap: controller.toggleNewPassword,
             ),
           ),
 
-          SizedBox(height: 20 * scale),
+          SizedBox(height: 15 * scale),
 
           Obx(
             () => _passwordField(
               scale: scale,
               controller: controller.confirmPasswordController,
-              hint: 'Confirm New Password',
+              hint: 'Confirm new password',
               obscureText: controller.hideConfirmPassword.value,
               onEyeTap: controller.toggleConfirmPassword,
             ),
           ),
 
-          SizedBox(height: 10 * scale),
+          SizedBox(height: 11 * scale),
 
           // Forgot password
           Padding(
-            padding: EdgeInsets.only(left: 35 * scale),
+            padding: EdgeInsets.only(left: 28 * scale),
             child: GestureDetector(
               onTap: controller.forgotPassword,
               child: Text(
                 'Forgot password?',
                 style: TextStyle(
-                  fontSize: 14.5 * scale,
+                  fontSize: 11.5 * scale,
                   height: 1,
                   fontWeight: FontWeight.w400,
                   color: darkGreen,
@@ -314,10 +313,10 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
   }) {
     return Container(
       width: double.infinity,
-      height: 60 * scale,
+      height: 47 * scale,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(32 * scale),
+        borderRadius: BorderRadius.circular(25 * scale),
         border: Border(
           top: BorderSide(color: Colors.white, width: 1.2 * scale),
         ),
@@ -333,7 +332,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
         controller: controller,
         obscureText: obscureText,
         style: TextStyle(
-          fontSize: 17 * scale,
+          fontSize: 13.5 * scale,
           fontWeight: FontWeight.w500,
           color: const Color(0xFF404040),
         ),
@@ -342,11 +341,11 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            fontSize: 17 * scale,
+            fontSize: 13.5 * scale,
             fontWeight: FontWeight.w600,
             color: const Color(0xFFB8BCC2),
           ),
-          contentPadding: EdgeInsets.only(left: 35 * scale, right: 16 * scale),
+          contentPadding: EdgeInsets.only(left: 28 * scale, right: 12 * scale),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -355,17 +354,17 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
           suffixIcon: GestureDetector(
             onTap: onEyeTap,
             child: Padding(
-              padding: EdgeInsets.only(right: 23 * scale),
+              padding: EdgeInsets.only(right: 18 * scale),
               child: Icon(
                 obscureText
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                size: 25 * scale,
+                size: 19 * scale,
                 color: const Color(0xFFB7BBC0),
               ),
             ),
           ),
-          suffixIconConstraints: BoxConstraints(minWidth: 60 * scale),
+          suffixIconConstraints: BoxConstraints(minWidth: 48 * scale),
         ),
       ),
     );
@@ -381,11 +380,11 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
         onTap: controller.isLoading.value ? null : controller.updatePassword,
         child: Container(
           width: double.infinity,
-          height: 59 * scale,
+          height: 47 * scale,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: green,
-            borderRadius: BorderRadius.circular(32 * scale),
+            borderRadius: BorderRadius.circular(25 * scale),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.22),
@@ -407,7 +406,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
                   : Text(
                     'Update Password',
                     style: TextStyle(
-                      fontSize: 17.5 * scale,
+                      fontSize: 14 * scale,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),

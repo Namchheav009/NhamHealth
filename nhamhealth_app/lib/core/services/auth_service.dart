@@ -59,6 +59,20 @@ class AuthService {
     });
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final token = await _tokenStorage.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const AuthException('Your session has expired. Please sign in again.');
+    }
+    await _postJson('/api/v1/auth/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    }, accessToken: token);
+  }
+
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
 
   Future<AuthenticatedUser?> restoreSession() async {
@@ -125,8 +139,9 @@ class AuthService {
 
   Future<Map<String, dynamic>> _postJson(
     String path,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    String? accessToken,
+  }) async {
     final http.Response response;
     try {
       final request =
@@ -136,6 +151,11 @@ class AuthService {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             })
+            ..headers.addAll(
+              accessToken == null
+                  ? const <String, String>{}
+                  : {'Authorization': 'Bearer $accessToken'},
+            )
             ..body = jsonEncode(body);
       final streamedResponse = await _client
           .send(request)
