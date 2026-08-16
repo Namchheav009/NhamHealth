@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
+import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +19,14 @@ import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.MealLog;
 import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
+import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.repository.ChatRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
+import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
 import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealLogRepository;
@@ -47,6 +51,7 @@ public class AdminDashboardService {
     private final MealLogRepository mealLogRepository;
     private final ReviewRepository reviewRepository;
     private final DailyWellnessSummaryRepository dailyWellnessSummaryRepository;
+    private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
     private final AiFoodAnalysisRepository aiFoodAnalysisRepository;
     private final AiFoodSuggestionRepository aiFoodSuggestionRepository;
     private final AiRecommendationRepository aiRecommendationRepository;
@@ -64,6 +69,7 @@ public class AdminDashboardService {
             MealLogRepository mealLogRepository,
             ReviewRepository reviewRepository,
             DailyWellnessSummaryRepository dailyWellnessSummaryRepository,
+            DailyNutrientTotalRepository dailyNutrientTotalRepository,
             AiFoodAnalysisRepository aiFoodAnalysisRepository,
             AiFoodSuggestionRepository aiFoodSuggestionRepository,
             AiRecommendationRepository aiRecommendationRepository,
@@ -79,6 +85,7 @@ public class AdminDashboardService {
         this.mealLogRepository = mealLogRepository;
         this.reviewRepository = reviewRepository;
         this.dailyWellnessSummaryRepository = dailyWellnessSummaryRepository;
+        this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
         this.aiFoodAnalysisRepository = aiFoodAnalysisRepository;
         this.aiFoodSuggestionRepository = aiFoodSuggestionRepository;
         this.aiRecommendationRepository = aiRecommendationRepository;
@@ -117,6 +124,8 @@ public class AdminDashboardService {
                 buildCategories(meals),
                 buildRecentUsers(users),
                 buildRecentReviews(reviews),
+                buildNutrientMetrics(today),
+                buildRecentRecommendations(),
                 List.of(
                         new ModuleMetric("Wellness entries", dailyWellnessSummaryRepository.count(), "bi-heart-pulse", "/admin/daily-wellness"),
                         new ModuleMetric("AI requests", aiFoodAnalysisRepository.count() + aiRecommendationRepository.count(), "bi-stars", "/admin/ai-food-analyses"),
@@ -126,6 +135,42 @@ public class AdminDashboardService {
                         new ModuleMetric("Connections", followRepository.count(), "bi-person-plus", "/admin/follows"),
                         new ModuleMetric("Conversations", chatRepository.count() + messageRepository.count(), "bi-chat-dots", "/admin/chats"),
                         new ModuleMetric("Notifications", notificationRepository.count(), "bi-bell", "/admin/notifications")));
+    }
+
+    private List<NutrientMetric> buildNutrientMetrics(LocalDate today) {
+        List<DailyNutrientTotal> todayTotals = dailyNutrientTotalRepository.findAll().stream()
+                .filter(total -> total.getDailyWellnessSummary() != null
+                        && today.equals(total.getDailyWellnessSummary().getSummaryDate()))
+                .toList();
+        return List.of("Calories", "Protein", "Water", "Fiber", "Sugar").stream()
+                .map(name -> {
+                    List<DailyNutrientTotal> matching = todayTotals.stream()
+                            .filter(total -> total.getNutrient() != null
+                                    && total.getNutrient().getNutrientName().toLowerCase()
+                                            .contains(name.toLowerCase().replace("s", "")))
+                            .toList();
+                    BigDecimal consumed = matching.stream().map(DailyNutrientTotal::getConsumedAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal goal = matching.stream().map(DailyNutrientTotal::getGoalAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    String unit = matching.isEmpty() ? defaultUnit(name) : matching.getFirst().getNutrient().getUnit();
+                    return new NutrientMetric(name, consumed, goal, unit, matching.size());
+                }).toList();
+    }
+
+    private String defaultUnit(String name) {
+        if ("Calories".equals(name)) return "kcal";
+        if ("Water".equals(name)) return "glasses";
+        return "g";
+    }
+
+    private List<RecentRecommendation> buildRecentRecommendations() {
+        return aiRecommendationRepository.findAllByOrderByCreatedAtDesc().stream()
+                .limit(5)
+                .map(item -> new RecentRecommendation(
+                        item.getUser() == null ? "Unknown user" : item.getUser().getEmail(),
+                        item.getResponseText(), item.getStatus(), item.getCreatedAt()))
+                .toList();
     }
 
     private List<ActivityPoint> buildActivity(LocalDate startDate, List<User> users, List<MealLog> mealLogs) {
@@ -193,6 +238,8 @@ public class AdminDashboardService {
             List<CategoryMetric> categories,
             List<RecentUser> recentUsers,
             List<RecentReview> recentReviews,
+            List<NutrientMetric> nutrients,
+            List<RecentRecommendation> recentRecommendations,
             List<ModuleMetric> modules) {
     }
 
@@ -206,6 +253,12 @@ public class AdminDashboardService {
     }
 
     public record RecentReview(String mealName, String userEmail, Integer rating, LocalDateTime createdAt) {
+    }
+
+    public record NutrientMetric(String name, BigDecimal consumed, BigDecimal goal, String unit, long users) {
+    }
+
+    public record RecentRecommendation(String userEmail, String text, String status, LocalDateTime createdAt) {
     }
 
     public record ModuleMetric(String label, long count, String icon, String href) {

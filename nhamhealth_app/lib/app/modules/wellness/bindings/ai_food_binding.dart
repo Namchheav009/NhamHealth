@@ -39,6 +39,7 @@ class AiFoodBinding extends Bindings {
         recommendationService: Get.find(),
         caloriesController: Get.find(),
         wellnessController: Get.find(),
+        profileRepository: Get.find(),
       ),
     );
   }
