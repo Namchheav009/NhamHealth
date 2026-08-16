@@ -16,12 +16,16 @@ class ProfileRepository {
   final AuthService _authService;
   final http.Client _client;
 
-  Future<ProfileDashboardModel> getDashboard() async {
+  Future<ProfileDashboardModel> getDashboard({DateTime? date}) async {
     final token = await _accessToken();
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/users/me/dashboard');
+    final requestUri = date == null
+        ? uri
+        : uri.replace(queryParameters: {'date': _dateOnly(date)});
 
     final response = await _client
         .get(
-          Uri.parse('${ApiConfig.baseUrl}/api/v1/users/me/dashboard'),
+          requestUri,
           headers: {
             'Accept': 'application/json',
             'Authorization': 'Bearer $token',

@@ -13,6 +13,7 @@ import '../services/food_ai_service.dart';
 import '../services/food_recommendation_service.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
+import '../../home/controllers/home_controller.dart';
 
 class AiFoodController extends GetxController {
   AiFoodController({
@@ -302,6 +303,12 @@ class AiFoodController extends GetxController {
         protein: food.protein,
         sugar: food.sugar,
       );
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().addNutritionToToday(
+          calories: food.calories.round(),
+          protein: food.protein,
+        );
+      }
       wasAdded.value = true;
       Get.snackbar(
         'Food added',

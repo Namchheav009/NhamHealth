@@ -17,6 +17,8 @@ public record ProfileDashboardResponse(
         Progress calories,
         Progress protein,
         Progress water,
+        Progress fiber,
+        Progress sugar,
         String insight) {
 
     public record Progress(BigDecimal current, BigDecimal goal) {

@@ -14,6 +14,8 @@ class ProfileDashboardModel {
     this.calories,
     this.protein,
     this.water,
+    this.fiber,
+    this.sugar,
     this.insight,
   });
 
@@ -31,6 +33,8 @@ class ProfileDashboardModel {
   final ProfileProgressModel? calories;
   final ProfileProgressModel? protein;
   final ProfileProgressModel? water;
+  final ProfileProgressModel? fiber;
+  final ProfileProgressModel? sugar;
   final String? insight;
 
   factory ProfileDashboardModel.fromJson(Map<String, dynamic> json) {
@@ -49,6 +53,8 @@ class ProfileDashboardModel {
       calories: _progress(json['calories']),
       protein: _progress(json['protein']),
       water: _progress(json['water']),
+      fiber: _progress(json['fiber']),
+      sugar: _progress(json['sugar']),
       insight: json['insight'] as String?,
     );
   }
