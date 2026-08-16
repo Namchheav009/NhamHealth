@@ -14,9 +14,7 @@ class WaterView extends StatelessWidget {
         ),
         title: const Text('Water'),
       ),
-      body: const Center(
-        child: Text('Water Detail Page'),
-      ),
+      body: const Center(child: Text('Water Detail Page')),
     );
   }
 }

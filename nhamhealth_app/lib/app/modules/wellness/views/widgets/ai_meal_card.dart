@@ -4,9 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/wellness_controller.dart';
 
 class AiMealCard extends GetView<WellnessController> {
-  const AiMealCard({
-    super.key,
-  });
+  const AiMealCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,21 +23,20 @@ class AiMealCard extends GetView<WellnessController> {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Transform.translate(
-                    offset: const Offset(-10, 0),
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Image.asset(
-                        'assets/images/wellness/ai_robot.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+        children: [
+          Transform.translate(
+            offset: const Offset(-10, 0),
+            child: SizedBox(
+              width: 120,
+              height: 120,
+              child: Image.asset(
+                'assets/images/wellness/ai_robot.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
 
           // const SizedBox(width: 10),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,13 +69,9 @@ class AiMealCard extends GetView<WellnessController> {
                   height: 38,
                   child: ElevatedButton.icon(
                     // CLICK -> AI PAGE
-                    onPressed:
-                        controller.openAiMealAutoFill,
+                    onPressed: controller.openAiMealAutoFill,
 
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 17,
-                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 17),
 
                     label: const Text(
                       'Open AI Meal Auto-Fill',
@@ -90,12 +83,10 @@ class AiMealCard extends GetView<WellnessController> {
 
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
-                      backgroundColor:
-                          const Color(0xFF00A651),
+                      backgroundColor: const Color(0xFF00A651),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                   ),

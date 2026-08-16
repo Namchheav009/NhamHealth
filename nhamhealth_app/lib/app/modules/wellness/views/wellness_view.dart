@@ -8,9 +8,7 @@ import 'widgets/ai_meal_card.dart';
 import 'widgets/wellness_daily_summary_card.dart';
 
 class WellnessView extends GetView<WellnessController> {
-  const WellnessView({
-    super.key,
-  });
+  const WellnessView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +18,7 @@ class WellnessView extends GetView<WellnessController> {
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              Color(0xFFFFF4F6),
-              Color(0xFFFFFFFF),
-              Color(0xFFF6FFF1),
-            ],
+            colors: [Color(0xFFFFF4F6), Color(0xFFFFFFFF), Color(0xFFF6FFF1)],
           ),
         ),
         child: SafeArea(
@@ -32,9 +26,7 @@ class WellnessView extends GetView<WellnessController> {
             builder: (context, constraints) {
               return Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 520,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 520),
                   child: Column(
                     children: [
                       // Header
@@ -73,12 +65,7 @@ class WellnessView extends GetView<WellnessController> {
 
   Widget _header(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        14,
-        14,
-        10,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       child: Row(
         children: [
           // Back button

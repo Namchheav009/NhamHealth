@@ -73,18 +73,12 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                       const SizedBox(height: 3),
                       const Text(
                         '☕ Medium cup   ⏰ Added 10:30 AM',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.black38,
-                        ),
+                        style: TextStyle(fontSize: 9, color: Colors.black38),
                       ),
                       const SizedBox(height: 3),
                       const Text(
                         'Sweet drink, enjoy in balance.',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.black38,
-                        ),
+                        style: TextStyle(fontSize: 9, color: Colors.black38),
                       ),
                     ],
                   ),
@@ -103,10 +97,7 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     const Text(
                       "of today's\ncalories",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: Colors.black38,
-                      ),
+                      style: TextStyle(fontSize: 9, color: Colors.black38),
                     ),
                   ],
                 ),
@@ -119,9 +110,7 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                 value: controller.progress,
                 minHeight: 7,
                 backgroundColor: const Color(0xFFE3E3E3),
-                valueColor: const AlwaysStoppedAnimation(
-                  Color(0xFFFF641E),
-                ),
+                valueColor: const AlwaysStoppedAnimation(Color(0xFFFF641E)),
               ),
             ),
           ],

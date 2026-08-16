@@ -5,8 +5,7 @@ import '../../controllers/calories_controller.dart';
 import 'add_food_source_sheet.dart';
 import 'food_source_tile.dart';
 
-class FoodSourcesCard
-    extends GetView<CaloriesController> {
+class FoodSourcesCard extends GetView<CaloriesController> {
   const FoodSourcesCard({super.key});
 
   void _showAddFood() {
@@ -26,8 +25,7 @@ class FoodSourcesCard
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color:
-                Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -59,19 +57,15 @@ class FoodSourcesCard
 
               InkWell(
                 onTap: _showAddFood,
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        const Color(0xFF00A651),
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    color: const Color(0xFF00A651),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
                     'Add more',
@@ -91,25 +85,17 @@ class FoodSourcesCard
           Obx(
             () => Column(
               children:
-                  controller.foodSources.map(
-                (source) {
-                  return Padding(
-                    padding:
-                        const EdgeInsets.only(
-                      bottom: 5,
-                    ),
-                    child: FoodSourceTile(
-                      source: source,
-                      onTap: () {
-                        controller
-                            .openFoodSourceDetail(
-                          source,
-                        );
-                      },
-                    ),
-                  );
-                },
-              ).toList(),
+                  controller.foodSources.map((source) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: FoodSourceTile(
+                        source: source,
+                        onTap: () {
+                          controller.openFoodSourceDetail(source);
+                        },
+                      ),
+                    );
+                  }).toList(),
             ),
           ),
         ],

@@ -10,29 +10,30 @@ class CaloriesController extends GetxController {
 
   late final TextEditingController intakeController;
 
-  final foodSources = <FoodSourceModel>[
-    const FoodSourceModel(
-      id: '1',
-      mealType: 'Breakfast',
-      foodName: 'Chicken rice',
-      calories: 520,
-      emoji: '🍛',
-    ),
-    const FoodSourceModel(
-      id: '2',
-      mealType: 'Drink',
-      foodName: 'Milk tea',
-      calories: 280,
-      emoji: '🥤',
-    ),
-    const FoodSourceModel(
-      id: '3',
-      mealType: 'Dinner',
-      foodName: 'Fried Chicken',
-      calories: 620,
-      emoji: '🍗',
-    ),
-  ].obs;
+  final foodSources =
+      <FoodSourceModel>[
+        const FoodSourceModel(
+          id: '1',
+          mealType: 'Breakfast',
+          foodName: 'Chicken rice',
+          calories: 520,
+          emoji: '🍛',
+        ),
+        const FoodSourceModel(
+          id: '2',
+          mealType: 'Drink',
+          foodName: 'Milk tea',
+          calories: 280,
+          emoji: '🥤',
+        ),
+        const FoodSourceModel(
+          id: '3',
+          mealType: 'Dinner',
+          foodName: 'Fried Chicken',
+          calories: 620,
+          emoji: '🍗',
+        ),
+      ].obs;
 
   @override
   void onInit() {
@@ -48,8 +49,7 @@ class CaloriesController extends GetxController {
       return 0;
     }
 
-    return (currentCalories.value / targetCalories.value)
-        .clamp(0.0, 1.0);
+    return (currentCalories.value / targetCalories.value).clamp(0.0, 1.0);
   }
 
   int get percentage {
@@ -61,8 +61,7 @@ class CaloriesController extends GetxController {
       return;
     }
 
-    currentCalories.value =
-        (currentCalories.value - 100).clamp(
+    currentCalories.value = (currentCalories.value - 100).clamp(
       0,
       targetCalories.value * 2,
     );
@@ -89,36 +88,27 @@ class CaloriesController extends GetxController {
   }
 
   void _syncTextField() {
-    intakeController.text =
-        currentCalories.value.toString();
+    intakeController.text = currentCalories.value.toString();
 
-    intakeController.selection =
-        TextSelection.fromPosition(
-      TextPosition(
-        offset: intakeController.text.length,
-      ),
+    intakeController.selection = TextSelection.fromPosition(
+      TextPosition(offset: intakeController.text.length),
     );
   }
 
-  void openFoodSourceDetail(
-    FoodSourceModel source,
-  ) {
-    Get.toNamed(
-      AppRoutes.foodSourceDetail,
-      arguments: source,
-    );
+  void openFoodSourceDetail(FoodSourceModel source) {
+    Get.toNamed(AppRoutes.foodSourceDetail, arguments: source);
   }
 
   void addFoodSource({
     required String mealType,
     required String foodName,
     required int calories,
+    bool closeSheet = true,
+    bool showMessage = true,
   }) {
     foodSources.add(
       FoodSourceModel(
-        id: DateTime.now()
-            .millisecondsSinceEpoch
-            .toString(),
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         mealType: mealType,
         foodName: foodName,
         calories: calories,
@@ -130,13 +120,17 @@ class CaloriesController extends GetxController {
 
     _syncTextField();
 
-    Get.back();
+    if (closeSheet) {
+      Get.back();
+    }
 
-    Get.snackbar(
-      'Food added',
-      '$foodName added successfully.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    if (showMessage) {
+      Get.snackbar(
+        'Food added',
+        '$foodName added successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   String _emojiForMeal(String mealType) {

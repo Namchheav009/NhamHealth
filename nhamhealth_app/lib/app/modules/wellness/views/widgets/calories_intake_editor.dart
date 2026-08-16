@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/calories_controller.dart';
 
-class CalorieIntakeEditor
-    extends GetView<CaloriesController> {
+class CalorieIntakeEditor extends GetView<CaloriesController> {
   const CalorieIntakeEditor({super.key});
 
   @override
@@ -13,8 +12,7 @@ class CalorieIntakeEditor
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Edit intake',
@@ -41,29 +39,17 @@ class CalorieIntakeEditor
                   height: 42,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAFAFA),
-                    borderRadius:
-                        BorderRadius.circular(14),
-                    border: Border.all(
-                      color:
-                          const Color(0xFFE5E5E5),
-                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E5E5)),
                   ),
                   child: TextField(
-                    controller:
-                        controller.intakeController,
-                    keyboardType:
-                        TextInputType.number,
+                    controller: controller.intakeController,
+                    keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    onChanged:
-                        controller
-                            .updateCaloriesFromInput,
-                    decoration:
-                        const InputDecoration(
+                    onChanged: controller.updateCaloriesFromInput,
+                    decoration: const InputDecoration(
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(
-                        vertical: 10,
-                      ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
                     ),
                     style: const TextStyle(
                       fontSize: 15,
@@ -77,10 +63,7 @@ class CalorieIntakeEditor
 
               const Text(
                 'kcal',
-                style: TextStyle(
-                  color: Colors.black38,
-                  fontSize: 10,
-                ),
+                style: TextStyle(color: Colors.black38, fontSize: 10),
               ),
 
               const SizedBox(width: 6),
@@ -95,27 +78,17 @@ class CalorieIntakeEditor
           const SizedBox(height: 12),
 
           Row(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _quickAdd(
-                '+100',
-                () => controller.addCalories(100),
-              ),
+              _quickAdd('+100', () => controller.addCalories(100)),
 
               const SizedBox(width: 8),
 
-              _quickAdd(
-                '+250',
-                () => controller.addCalories(250),
-              ),
+              _quickAdd('+250', () => controller.addCalories(250)),
 
               const SizedBox(width: 8),
 
-              _quickAdd(
-                '+500',
-                () => controller.addCalories(500),
-              ),
+              _quickAdd('+500', () => controller.addCalories(500)),
             ],
           ),
         ],
@@ -123,10 +96,7 @@ class CalorieIntakeEditor
     );
   }
 
-  Widget _roundButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _roundButton({required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -136,36 +106,23 @@ class CalorieIntakeEditor
         decoration: BoxDecoration(
           color: const Color(0xFFFFF4EF),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xFFFFBE9D),
-          ),
+          border: Border.all(color: const Color(0xFFFFBE9D)),
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFFFF641E),
-        ),
+        child: Icon(icon, color: const Color(0xFFFF641E)),
       ),
     );
   }
 
-  Widget _quickAdd(
-    String text,
-    VoidCallback onTap,
-  ) {
+  Widget _quickAdd(String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 7,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF2EC),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFFFC9AE),
-          ),
+          border: Border.all(color: const Color(0xFFFFC9AE)),
         ),
         child: Text(
           text,
@@ -185,8 +142,7 @@ class CalorieIntakeEditor
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(
-          color:
-              Colors.black.withValues(alpha: 0.05),
+          color: Colors.black.withValues(alpha: 0.05),
           blurRadius: 15,
           offset: const Offset(0, 5),
         ),
