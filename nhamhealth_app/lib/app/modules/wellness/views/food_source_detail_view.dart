@@ -20,11 +20,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              Color(0xFFFFF4F6),
-              Colors.white,
-              Color(0xFFF6FFF1),
-            ],
+            colors: [Color(0xFFFFF4F6), Colors.white, Color(0xFFF6FFF1)],
           ),
         ),
         child: SafeArea(
@@ -81,10 +77,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
             child: Center(
               child: Text(
                 'Food Detail',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -105,9 +98,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(45),
                 foregroundColor: const Color(0xFF00A651),
-                side: const BorderSide(
-                  color: Color(0xFF00A651),
-                ),
+                side: const BorderSide(color: Color(0xFF00A651)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),

@@ -33,6 +33,10 @@
 	<string>NhamHealth connects to the local development API.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<key>NSCameraUsageDescription</key>
+	<string>NhamHealth uses the camera to recognize food and estimate nutrition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NhamHealth uses selected food photos for on-device recognition.</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>

@@ -3,22 +3,18 @@ import 'package:get/get.dart';
 
 import '../../controllers/calories_controller.dart';
 
-class AddFoodSourceSheet
-    extends StatefulWidget {
+class AddFoodSourceSheet extends StatefulWidget {
   const AddFoodSourceSheet({super.key});
 
   @override
-  State<AddFoodSourceSheet> createState() =>
-      _AddFoodSourceSheetState();
+  State<AddFoodSourceSheet> createState() => _AddFoodSourceSheetState();
 }
 
-class _AddFoodSourceSheetState
-    extends State<AddFoodSourceSheet> {
+class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
   final controller = Get.find<CaloriesController>();
 
   final foodController = TextEditingController();
-  final caloriesController =
-      TextEditingController();
+  final caloriesController = TextEditingController();
 
   String mealType = 'Breakfast';
 
@@ -36,22 +32,16 @@ class _AddFoodSourceSheetState
         20,
         20,
         20,
-        MediaQuery.of(context)
-                .viewInsets
-                .bottom +
-            20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
@@ -59,8 +49,7 @@ class _AddFoodSourceSheetState
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.black12,
-                  borderRadius:
-                      BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ),
@@ -69,10 +58,7 @@ class _AddFoodSourceSheetState
 
             const Text(
               'Add Food Source',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 18),
@@ -84,26 +70,11 @@ class _AddFoodSourceSheetState
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(
-                  value: 'Breakfast',
-                  child: Text('Breakfast'),
-                ),
-                DropdownMenuItem(
-                  value: 'Lunch',
-                  child: Text('Lunch'),
-                ),
-                DropdownMenuItem(
-                  value: 'Dinner',
-                  child: Text('Dinner'),
-                ),
-                DropdownMenuItem(
-                  value: 'Drink',
-                  child: Text('Drink'),
-                ),
-                DropdownMenuItem(
-                  value: 'Snack',
-                  child: Text('Snack'),
-                ),
+                DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
+                DropdownMenuItem(value: 'Lunch', child: Text('Lunch')),
+                DropdownMenuItem(value: 'Dinner', child: Text('Dinner')),
+                DropdownMenuItem(value: 'Drink', child: Text('Drink')),
+                DropdownMenuItem(value: 'Snack', child: Text('Snack')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -144,16 +115,11 @@ class _AddFoodSourceSheetState
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  final food =
-                      foodController.text.trim();
+                  final food = foodController.text.trim();
 
-                  final calories = int.tryParse(
-                    caloriesController.text.trim(),
-                  );
+                  final calories = int.tryParse(caloriesController.text.trim());
 
-                  if (food.isEmpty ||
-                      calories == null ||
-                      calories <= 0) {
+                  if (food.isEmpty || calories == null || calories <= 0) {
                     Get.snackbar(
                       'Invalid information',
                       'Please enter food name and calories.',
@@ -169,13 +135,10 @@ class _AddFoodSourceSheetState
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF00A651),
+                  backgroundColor: const Color(0xFF00A651),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text(
-                  'Add Food',
-                ),
+                child: const Text('Add Food'),
               ),
             ),
           ],

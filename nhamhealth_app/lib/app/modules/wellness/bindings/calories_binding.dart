@@ -5,8 +5,8 @@ import '../controllers/calories_controller.dart';
 class CaloriesBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<CaloriesController>(
-      () => CaloriesController(),
-    );
+    if (!Get.isRegistered<CaloriesController>()) {
+      Get.lazyPut<CaloriesController>(() => CaloriesController(), fenix: true);
+    }
   }
 }

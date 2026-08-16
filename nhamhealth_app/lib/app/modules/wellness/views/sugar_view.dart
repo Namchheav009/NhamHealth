@@ -14,9 +14,7 @@ class SugarView extends StatelessWidget {
         ),
         title: const Text('Sugar'),
       ),
-      body: const Center(
-        child: Text('Sugar Detail Page'),
-      ),
+      body: const Center(child: Text('Sugar Detail Page')),
     );
   }
 }
