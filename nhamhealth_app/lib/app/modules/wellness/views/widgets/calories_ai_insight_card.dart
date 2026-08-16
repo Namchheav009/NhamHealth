@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CaloriesAiInsightCard
-    extends StatelessWidget {
+class CaloriesAiInsightCard extends StatelessWidget {
   const CaloriesAiInsightCard({super.key});
 
   @override
@@ -13,8 +12,7 @@ class CaloriesAiInsightCard
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color:
-                Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -23,27 +21,25 @@ class CaloriesAiInsightCard
       child: Column(
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Transform.translate(
-                    offset: const Offset(-10, 0),
-                    child: SizedBox(
-                      width: 130,
-                      height: 130,
-                      child: Image.asset(
-                        'assets/images/wellness/ai_search.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                offset: const Offset(-10, 0),
+                child: SizedBox(
+                  width: 130,
+                  height: 130,
+                  child: Image.asset(
+                    'assets/images/wellness/ai_search.png',
+                    fit: BoxFit.cover,
                   ),
+                ),
+              ),
 
               const SizedBox(width: 10),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
@@ -51,30 +47,25 @@ class CaloriesAiInsightCard
                           'AI Insight',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight:
-                                FontWeight.w700,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
 
                         const Spacer(),
 
                         Container(
-                          padding:
-                              const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFFFFEEE6),
-                            borderRadius:
-                                BorderRadius.circular(20),
+                            color: const Color(0xFFFFEEE6),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
                             '⚖️ Needs Balance',
                             style: TextStyle(
-                              color:
-                                  Color(0xFFFF641E),
+                              color: Color(0xFFFF641E),
                               fontSize: 8,
                             ),
                           ),
@@ -123,30 +114,15 @@ class CaloriesAiInsightCard
     );
   }
 
-  Widget _chip(
-    String text,
-    Color background,
-    Color foreground,
-  ) {
+  Widget _chip(String text, Color background, Color foreground) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: foreground.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: foreground.withValues(alpha: 0.2)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 9,
-          color: foreground,
-        ),
-      ),
+      child: Text(text, style: TextStyle(fontSize: 9, color: foreground)),
     );
   }
 }

@@ -19,17 +19,10 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
               children: [
                 Text(
                   'Nutrition estimate',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(width: 5),
-                Icon(
-                  Icons.auto_awesome,
-                  color: Color(0xFF00A651),
-                  size: 15,
-                ),
+                Icon(Icons.auto_awesome, color: Color(0xFF00A651), size: 15),
               ],
             ),
             const SizedBox(height: 12),

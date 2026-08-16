@@ -5,6 +5,35 @@ allprojects {
     }
 }
 
+// Flutter plugins are separate Gradle subprojects. Kotlin 2.3 otherwise uses
+// the installed JDK target for those projects, which can differ from a
+// plugin's Java target (tflite_flutter declares Java 11). Keep every Android
+// Java and Kotlin task on the same JVM target as the application.
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        if (subproject.plugins.hasPlugin("com.android.library")) {
+            subproject.android.compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+            // CameraX 1.6 references CallbackToFutureAdapter in its public API,
+            // so the camera plugin also needs it on its Java compile classpath.
+            if (subproject.name == "camera_android_camerax") {
+                subproject.dependencies.add(
+                    "implementation",
+                    "androidx.concurrent:concurrent-futures:1.3.0"
+                )
+            }
+        }
+    }
+
+    subproject.plugins.withId("org.jetbrains.kotlin.android") {
+        subproject.kotlin.compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
+    }
+}
+
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"

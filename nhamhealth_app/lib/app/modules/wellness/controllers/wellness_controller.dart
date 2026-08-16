@@ -8,53 +8,54 @@ class WellnessController extends GetxController {
   // Selected date
   final selectedDate = DateTime.now().obs;
 
-  final nutrients = <WellnessSummaryModel>[
-    const WellnessSummaryModel(
-      name: 'Calories',
-      current: '1420',
-      target: '2000',
-      unit: 'kcal',
-      percentage: 71,
-      icon: Icons.local_fire_department_rounded,
-      color: Color(0xFFFF641E),
-    ),
-    const WellnessSummaryModel(
-      name: 'Protein',
-      current: '82',
-      target: '120',
-      unit: 'g',
-      percentage: 68,
-      icon: Icons.bolt_rounded,
-      color: Color(0xFF00A651),
-    ),
-    const WellnessSummaryModel(
-      name: 'Water',
-      current: '6',
-      target: '8',
-      unit: 'glasses',
-      percentage: 75,
-      icon: Icons.water_drop_rounded,
-      color: Color(0xFF4FC3F7),
-    ),
-    const WellnessSummaryModel(
-      name: 'Fiber',
-      current: '12',
-      target: '25',
-      unit: 'g',
-      percentage: 48,
-      icon: Icons.air_rounded,
-      color: Color(0xFF9747FF),
-    ),
-    const WellnessSummaryModel(
-      name: 'Sugar',
-      current: '25',
-      target: '50',
-      unit: 'g',
-      percentage: 56,
-      icon: Icons.hexagon_rounded,
-      color: Color(0xFFFF5CB8),
-    ),
-  ].obs;
+  final nutrients =
+      <WellnessSummaryModel>[
+        const WellnessSummaryModel(
+          name: 'Calories',
+          current: '1420',
+          target: '2000',
+          unit: 'kcal',
+          percentage: 71,
+          icon: Icons.local_fire_department_rounded,
+          color: Color(0xFFFF641E),
+        ),
+        const WellnessSummaryModel(
+          name: 'Protein',
+          current: '82',
+          target: '120',
+          unit: 'g',
+          percentage: 68,
+          icon: Icons.bolt_rounded,
+          color: Color(0xFF00A651),
+        ),
+        const WellnessSummaryModel(
+          name: 'Water',
+          current: '6',
+          target: '8',
+          unit: 'glasses',
+          percentage: 75,
+          icon: Icons.water_drop_rounded,
+          color: Color(0xFF4FC3F7),
+        ),
+        const WellnessSummaryModel(
+          name: 'Fiber',
+          current: '12',
+          target: '25',
+          unit: 'g',
+          percentage: 48,
+          icon: Icons.air_rounded,
+          color: Color(0xFF9747FF),
+        ),
+        const WellnessSummaryModel(
+          name: 'Sugar',
+          current: '25',
+          target: '50',
+          unit: 'g',
+          percentage: 56,
+          icon: Icons.hexagon_rounded,
+          color: Color(0xFFFF5CB8),
+        ),
+      ].obs;
 
   // =========================
   // DATE / CALENDAR
@@ -69,9 +70,7 @@ class WellnessController extends GetxController {
       firstDate: DateTime(2024),
 
       // Allow future dates too
-      lastDate: DateTime.now().add(
-        const Duration(days: 365),
-      ),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
 
       helpText: 'Select Date',
       cancelText: 'Cancel',
@@ -104,11 +103,9 @@ class WellnessController extends GetxController {
 
     final DateTime date = selectedDate.value;
 
-    final String day =
-        date.day.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
 
-    final String month =
-        date.month.toString().padLeft(2, '0');
+    final String month = date.month.toString().padLeft(2, '0');
 
     return '$day/$month/${date.year}';
   }
@@ -146,6 +143,36 @@ class WellnessController extends GetxController {
   // =========================
 
   void openAiMealAutoFill() {
-    Get.toNamed(AppRoutes.aiMealAutoFill);
+    Get.toNamed(AppRoutes.aiFood);
+  }
+
+  void addNutrition({
+    required int calories,
+    required double protein,
+    required double sugar,
+  }) {
+    _incrementNutrient('Calories', calories.toDouble());
+    _incrementNutrient('Protein', protein);
+    _incrementNutrient('Sugar', sugar);
+  }
+
+  void _incrementNutrient(String name, double amount) {
+    final index = nutrients.indexWhere((item) => item.name == name);
+    if (index < 0) return;
+    final item = nutrients[index];
+    final current = (double.tryParse(item.current) ?? 0) + amount;
+    final target = double.tryParse(item.target) ?? 1;
+    nutrients[index] = WellnessSummaryModel(
+      name: item.name,
+      current:
+          current % 1 == 0
+              ? current.toInt().toString()
+              : current.toStringAsFixed(1),
+      target: item.target,
+      unit: item.unit,
+      percentage: ((current / target) * 100).round(),
+      icon: item.icon,
+      color: item.color,
+    );
   }
 }

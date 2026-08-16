@@ -28,8 +28,7 @@ class FoodSourceDetailController extends GetxController {
 
       currentCalories.value = arguments.calories;
 
-      amountController.text =
-          currentAmount.value.toString();
+      amountController.text = currentAmount.value.toString();
     } else {
       // This can happen after a web hot restart / refresh.
       Future.microtask(() {
@@ -61,7 +60,9 @@ class FoodSourceDetailController extends GetxController {
   int get estimatedSugar => (currentCalories.value * 0.10).round();
 
   String get hydrationTip {
-    return currentAmount.value >= 350 ? 'Drink 1 glass water' : 'Drink 1/2 glass water';
+    return currentAmount.value >= 350
+        ? 'Drink 1 glass water'
+        : 'Drink 1/2 glass water';
   }
 
   void selectSize(String size) {
@@ -141,10 +142,7 @@ class FoodSourceDetailController extends GetxController {
     currentCalories.value = (source.calories * ratio).round();
   }
 
-  void _applyCaloriesAndAmount({
-    required int calories,
-    required int amount,
-  }) {
+  void _applyCaloriesAndAmount({required int calories, required int amount}) {
     currentCalories.value = calories;
     currentAmount.value = amount;
     amountController.text = amount.toString();

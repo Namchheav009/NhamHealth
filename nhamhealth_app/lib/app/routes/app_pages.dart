@@ -24,7 +24,8 @@ import '../modules/wellness/bindings/water_binding.dart';
 import '../modules/wellness/views/water_view.dart';
 import '../modules/wellness/views/fiber_view.dart';
 import '../modules/wellness/views/sugar_view.dart';
-import '../modules/wellness/views/ai_meal_auto_fill_view.dart';
+import '../modules/wellness/views/ai_food_view.dart';
+import '../modules/wellness/bindings/ai_food_binding.dart';
 import '../modules/wellness/bindings/calories_binding.dart';
 import '../modules/wellness/views/food_source_detail_view.dart';
 import '../modules/wellness/bindings/food_source_detail_binding.dart';
@@ -131,8 +132,14 @@ abstract class AppPages {
 
     GetPage<dynamic>(
       name: AppRoutes.aiMealAutoFill,
-      page: () => const AiMealAutoFillView(),
-      binding: WellnessBinding(),
+      page: () => const AiFoodView(),
+      binding: AiFoodBinding(),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.aiFood,
+      page: () => const AiFoodView(),
+      binding: AiFoodBinding(),
+      transition: Transition.rightToLeft,
     ),
 
     GetPage<dynamic>(

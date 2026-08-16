@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/calories_controller.dart';
 
-class CalorieProgressCard
-    extends GetView<CaloriesController> {
+class CalorieProgressCard extends GetView<CaloriesController> {
   const CalorieProgressCard({super.key});
 
   @override
@@ -35,8 +34,7 @@ class CalorieProgressCard
 
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Calories',
@@ -52,19 +50,15 @@ class CalorieProgressCard
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text:
-                                  '${controller.currentCalories.value}',
+                              text: '${controller.currentCalories.value}',
                               style: const TextStyle(
-                                color:
-                                    Color(0xFFFF641E),
-                                fontWeight:
-                                    FontWeight.w700,
+                                color: Color(0xFFFF641E),
+                                fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
                             ),
                             TextSpan(
-                              text:
-                                  '/${controller.targetCalories.value} kcal',
+                              text: '/${controller.targetCalories.value} kcal',
                               style: const TextStyle(
                                 color: Colors.black38,
                                 fontSize: 10,
@@ -78,10 +72,7 @@ class CalorieProgressCard
 
                       const Text(
                         '✨ You\'re on track today',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.black38,
-                        ),
+                        style: TextStyle(fontSize: 9, color: Colors.black38),
                       ),
                     ],
                   ),
@@ -101,17 +92,12 @@ class CalorieProgressCard
             const SizedBox(height: 16),
 
             ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20),
               child: LinearProgressIndicator(
                 value: controller.progress,
                 minHeight: 7,
-                backgroundColor:
-                    const Color(0xFFE3E3E3),
-                valueColor:
-                    const AlwaysStoppedAnimation(
-                  Color(0xFFFF641E),
-                ),
+                backgroundColor: const Color(0xFFE3E3E3),
+                valueColor: const AlwaysStoppedAnimation(Color(0xFFFF641E)),
               ),
             ),
           ],
@@ -126,8 +112,7 @@ class CalorieProgressCard
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(
-          color:
-              Colors.black.withValues(alpha: 0.06),
+          color: Colors.black.withValues(alpha: 0.06),
           blurRadius: 16,
           offset: const Offset(0, 5),
         ),

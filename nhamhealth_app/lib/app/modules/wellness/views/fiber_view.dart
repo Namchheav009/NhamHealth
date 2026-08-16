@@ -14,9 +14,7 @@ class FiberView extends StatelessWidget {
         ),
         title: const Text('Fiber'),
       ),
-      body: const Center(
-        child: Text('Fiber Detail Page'),
-      ),
+      body: const Center(child: Text('Fiber Detail Page')),
     );
   }
 }

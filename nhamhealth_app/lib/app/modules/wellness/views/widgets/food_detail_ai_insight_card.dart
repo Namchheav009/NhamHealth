@@ -23,16 +23,16 @@ class FoodDetailAiInsightCard extends StatelessWidget {
           Row(
             children: [
               Transform.translate(
-                    offset: const Offset(-10, 0),
-                    child: SizedBox(
-                      width: 130,
-                      height: 130,
-                      child: Image.asset(
-                        'assets/images/wellness/ai_search.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                offset: const Offset(-10, 0),
+                child: SizedBox(
+                  width: 130,
+                  height: 130,
+                  child: Image.asset(
+                    'assets/images/wellness/ai_search.png',
+                    fit: BoxFit.contain,
                   ),
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

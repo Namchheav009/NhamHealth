@@ -43,10 +43,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: controller.reanalyzeWithAi,
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 16,
-                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 16),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF00A651),
                       side: const BorderSide(color: Color(0xFF00A651)),
@@ -64,10 +61,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: controller.toggleManualEditor,
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      size: 16,
-                    ),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF00A651),
                       side: const BorderSide(color: Color(0xFF00A651)),
@@ -119,7 +113,10 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: selected ? const Color(0xFFFF641E) : const Color(0xFF666666),
+                color:
+                    selected
+                        ? const Color(0xFFFF641E)
+                        : const Color(0xFF666666),
               ),
             ),
             if (selected) ...[
@@ -149,10 +146,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
         children: [
           const Text(
             'Edit amount manually',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
 
@@ -192,10 +186,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
               const SizedBox(width: 8),
               const Text(
                 'ml',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.black45,
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.black45),
               ),
               const SizedBox(width: 8),
 
@@ -221,10 +212,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
     );
   }
 
-  Widget _roundButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _roundButton({required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -236,10 +224,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFFFBE9D)),
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFFFF641E),
-        ),
+        child: Icon(icon, color: const Color(0xFFFF641E)),
       ),
     );
   }
