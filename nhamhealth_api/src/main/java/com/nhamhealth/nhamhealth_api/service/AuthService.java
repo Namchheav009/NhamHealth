@@ -13,6 +13,7 @@ import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.entity.AuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -243,5 +244,22 @@ public class AuthService {
                 role,
                 profile == null ? null : profile.getFullName(),
                 profile == null ? null : profile.getProfileImageUrl());
+    }
+
+    @Transactional
+    public void changePassword(Integer userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+
+        if (user.getPasswordHash() == null
+                || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from the current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 }
