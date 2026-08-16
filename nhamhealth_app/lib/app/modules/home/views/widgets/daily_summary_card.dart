@@ -87,7 +87,43 @@ class DailySummaryCard extends GetView<HomeController> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 52,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: controller.recentDays.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 7),
+                    itemBuilder: (_, index) {
+                      final day = controller.recentDays[index];
+                      final selected = day.year == controller.selectedDay.value.year &&
+                          day.month == controller.selectedDay.value.month &&
+                          day.day == controller.selectedDay.value.day;
+                      const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                      return InkWell(
+                        onTap: () => controller.selectDay(day),
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 42,
+                          decoration: BoxDecoration(
+                            color: selected ? AppColors.primaryGreen : Colors.white.withValues(alpha: .72),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(names[day.weekday - 1], style: TextStyle(fontSize: 9, color: selected ? Colors.white70 : AppColors.primaryText)),
+                              const SizedBox(height: 2),
+                              Text('${day.day}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: selected ? Colors.white : AppColors.primaryText)),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

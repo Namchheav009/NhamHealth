@@ -3,8 +3,14 @@ import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../models/wellness_summary_model.dart';
+import '../../profile/repositories/profile_repository.dart';
 
 class WellnessController extends GetxController {
+  WellnessController({ProfileRepository? profileRepository})
+    : _profileRepository = profileRepository;
+
+  final ProfileRepository? _profileRepository;
+  final isLoading = false.obs;
   // Selected date
   final selectedDate = DateTime.now().obs;
 
@@ -12,50 +18,101 @@ class WellnessController extends GetxController {
       <WellnessSummaryModel>[
         const WellnessSummaryModel(
           name: 'Calories',
-          current: '1420',
+          current: '0',
           target: '2000',
           unit: 'kcal',
-          percentage: 71,
+          percentage: 0,
           icon: Icons.local_fire_department_rounded,
           color: Color(0xFFFF641E),
         ),
         const WellnessSummaryModel(
           name: 'Protein',
-          current: '82',
+          current: '0',
           target: '120',
           unit: 'g',
-          percentage: 68,
+          percentage: 0,
           icon: Icons.bolt_rounded,
           color: Color(0xFF00A651),
         ),
         const WellnessSummaryModel(
           name: 'Water',
-          current: '6',
+          current: '0',
           target: '8',
           unit: 'glasses',
-          percentage: 75,
+          percentage: 0,
           icon: Icons.water_drop_rounded,
           color: Color(0xFF4FC3F7),
         ),
         const WellnessSummaryModel(
           name: 'Fiber',
-          current: '12',
+          current: '0',
           target: '25',
           unit: 'g',
-          percentage: 48,
+          percentage: 0,
           icon: Icons.air_rounded,
           color: Color(0xFF9747FF),
         ),
         const WellnessSummaryModel(
           name: 'Sugar',
-          current: '25',
+          current: '0',
           target: '50',
           unit: 'g',
-          percentage: 56,
+          percentage: 0,
           icon: Icons.hexagon_rounded,
           color: Color(0xFFFF5CB8),
         ),
       ].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadDailyWellness();
+  }
+
+  Future<void> loadDailyWellness() async {
+    final repository = _profileRepository;
+    if (repository == null || isLoading.value) return;
+    isLoading.value = true;
+    try {
+      final dashboard = await repository.getDashboard(date: selectedDate.value);
+      _setNutrient('Calories', dashboard.calories?.current ?? 0,
+          dashboard.calories?.goal ?? 2000);
+      _setNutrient('Protein', dashboard.protein?.current ?? 0,
+          dashboard.protein?.goal ?? 120);
+      _setNutrient('Water', dashboard.water?.current ?? 0,
+          dashboard.water?.goal ?? 8);
+      _setNutrient('Fiber', dashboard.fiber?.current ?? 0,
+          dashboard.fiber?.goal ?? 25);
+      _setNutrient('Sugar', dashboard.sugar?.current ?? 0,
+          dashboard.sugar?.goal ?? 50);
+    } on Object {
+      Get.snackbar(
+        'Wellness unavailable',
+        'Unable to load your daily wellness data.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _setNutrient(String name, double current, double target) {
+    final index = nutrients.indexWhere((item) => item.name == name);
+    if (index < 0) return;
+    final item = nutrients[index];
+    nutrients[index] = WellnessSummaryModel(
+      name: item.name,
+      current: _number(current),
+      target: _number(target),
+      unit: item.unit,
+      percentage: target <= 0 ? 0 : ((current / target) * 100).round(),
+      icon: item.icon,
+      color: item.color,
+    );
+  }
+
+  String _number(double value) =>
+      value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
 
   // =========================
   // DATE / CALENDAR
@@ -79,9 +136,7 @@ class WellnessController extends GetxController {
 
     if (pickedDate != null) {
       selectedDate.value = pickedDate;
-
-      // Later when API is ready:
-      // await loadWellnessByDate(pickedDate);
+      await loadDailyWellness();
     }
   }
 

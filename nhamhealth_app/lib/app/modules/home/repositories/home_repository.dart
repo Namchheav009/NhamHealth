@@ -8,7 +8,7 @@ class HomeRepository {
     required this.provider,
   });
 
-  Future<HomeDashboardModel> getHomeDashboard() {
-    return provider.getHomeDashboard();
+  Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) {
+    return provider.getHomeDashboard(date: date);
   }
 }

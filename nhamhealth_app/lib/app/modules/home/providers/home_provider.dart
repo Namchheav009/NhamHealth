@@ -1,34 +1,47 @@
+import '../../profile/repositories/profile_repository.dart';
 import '../models/daily_summary_model.dart';
 import '../models/home_dashboard_model.dart';
 import '../models/nutrition_progress_model.dart';
 import '../models/recommended_meal_model.dart';
 
 class HomeProvider {
-  Future<HomeDashboardModel> getHomeDashboard() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+  HomeProvider({ProfileRepository? profileRepository})
+    : _profileRepository = profileRepository;
 
-    return const HomeDashboardModel(
-      userName: 'Sokchen',
+  final ProfileRepository? _profileRepository;
+
+  Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) async {
+    final profile = await _profileRepository?.getDashboard(date: date);
+
+    final calories = profile?.calories;
+    final protein = profile?.protein;
+    final water = profile?.water;
+    final displayName = profile?.fullName?.trim();
+
+    return HomeDashboardModel(
+      userName: displayName?.isNotEmpty == true
+          ? displayName!.split(RegExp(r'\s+')).first
+          : profile?.email.split('@').first ?? 'Friend',
       dailySummary: DailySummaryModel(
         calories: NutritionProgressModel(
           title: 'Calories',
-          value: '1420',
-          target: '2000',
-          progress: 0.71,
+          value: _number(calories?.current ?? 0),
+          target: _number(calories?.goal ?? 2000),
+          progress: _progress(calories?.current, calories?.goal),
           unit: 'kcal',
         ),
         protein: NutritionProgressModel(
           title: 'Protein',
-          value: '82',
-          target: '120',
-          progress: 0.68,
+          value: _number(protein?.current ?? 0),
+          target: _number(protein?.goal ?? 120),
+          progress: _progress(protein?.current, protein?.goal),
           unit: 'g',
         ),
         water: NutritionProgressModel(
           title: 'Water',
-          value: '6',
-          target: '8',
-          progress: 0.75,
+          value: _number(water?.current ?? 0),
+          target: _number(water?.goal ?? 8),
+          progress: _progress(water?.current, water?.goal),
           unit: 'glasses',
         ),
       ),
@@ -59,5 +72,13 @@ class HomeProvider {
         ),
       ],
     );
+  }
+
+  static String _number(double value) =>
+      value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
+
+  static double _progress(double? current, double? goal) {
+    if (goal == null || goal <= 0) return 0;
+    return ((current ?? 0) / goal).clamp(0.0, 1.0).toDouble();
   }
 }

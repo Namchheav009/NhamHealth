@@ -6,6 +6,8 @@ import '../../auth/services/google_auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../models/home_dashboard_model.dart';
 import '../models/home_route_arguments.dart';
+import '../models/daily_summary_model.dart';
+import '../models/nutrition_progress_model.dart';
 import '../repositories/home_repository.dart';
 
 class HomeController extends GetxController {
@@ -16,8 +18,15 @@ class HomeController extends GetxController {
   final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
   final selectedMoodIndex = 0.obs;
   final selectedBottomIndex = 0.obs;
+  final selectedDay = DateTime.now().obs;
   final isLoggingOut = false.obs;
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
+  final Map<String, DailySummaryModel> _summariesByDay = {};
+
+  List<DateTime> get recentDays => List.generate(
+    7,
+    (index) => DateTime.now().subtract(Duration(days: 6 - index)),
+  );
 
   final moods = <MoodItem>[
     const MoodItem(imageAsset: 'assets/icons/moods/happy.png', label: 'Happy'),
@@ -46,6 +55,10 @@ class HomeController extends GetxController {
     } else {
       _restoreAuthenticatedUser();
     }
+    final initialDashboard = dashboard.value;
+    if (initialDashboard != null) {
+      _summariesByDay[_dayKey(DateTime.now())] = initialDashboard.dailySummary;
+    }
     if (dashboard.value == null) {
       loadDashboard();
     }
@@ -59,6 +72,11 @@ class HomeController extends GetxController {
     try {
       isLoading.value = true;
       dashboard.value = await repository.getHomeDashboard();
+      final value = dashboard.value;
+      if (value != null) {
+        _summariesByDay.putIfAbsent(_dayKey(DateTime.now()), () => value.dailySummary);
+        _showSelectedDay();
+      }
     } catch (_) {
       Get.snackbar(
         'Error',
@@ -69,6 +87,71 @@ class HomeController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> selectDay(DateTime date) async {
+    selectedDay.value = DateTime(date.year, date.month, date.day);
+    final key = _dayKey(date);
+    if (_summariesByDay.containsKey(key)) {
+      _showSelectedDay();
+      return;
+    }
+    try {
+      isLoading.value = true;
+      final result = await repository.getHomeDashboard(date: date);
+      _summariesByDay[key] = result.dailySummary;
+      _showSelectedDay();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void addNutritionToToday({
+    required int calories,
+    required double protein,
+  }) {
+    final today = DateTime.now();
+    final key = _dayKey(today);
+    final current = _summariesByDay[key] ?? _emptySummary;
+    _summariesByDay[key] = DailySummaryModel(
+      calories: _increment(current.calories, calories.toDouble()),
+      protein: _increment(current.protein, protein),
+      water: current.water,
+    );
+    if (_dayKey(selectedDay.value) == key) _showSelectedDay();
+  }
+
+  void _showSelectedDay() {
+    final currentDashboard = dashboard.value;
+    if (currentDashboard == null) return;
+    dashboard.value = HomeDashboardModel(
+      userName: currentDashboard.userName,
+      dailySummary: _summariesByDay[_dayKey(selectedDay.value)] ?? _emptySummary,
+      recommendedMeals: currentDashboard.recommendedMeals,
+    );
+  }
+
+  NutritionProgressModel _increment(NutritionProgressModel item, double amount) {
+    final value = (double.tryParse(item.value) ?? 0) + amount;
+    final target = double.tryParse(item.target) ?? 1;
+    return NutritionProgressModel(
+      title: item.title,
+      value: value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1),
+      target: item.target,
+      progress: (value / target).clamp(0.0, 1.0).toDouble(),
+      unit: item.unit,
+    );
+  }
+
+  String _dayKey(DateTime date) => '${date.year}-${date.month}-${date.day}';
+
+  static const _emptySummary = DailySummaryModel(
+    calories: NutritionProgressModel(
+      title: 'Calories', value: '0', target: '2000', progress: 0, unit: 'kcal'),
+    protein: NutritionProgressModel(
+      title: 'Protein', value: '0', target: '120', progress: 0, unit: 'g'),
+    water: NutritionProgressModel(
+      title: 'Water', value: '0', target: '8', progress: 0, unit: 'glasses'),
+  );
 
   void selectMood(int index) {
     selectedMoodIndex.value = index;
