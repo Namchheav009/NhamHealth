@@ -21,15 +21,10 @@ class WellnessNutrientTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(15),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 9,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: const Color(0xFFECECEC),
-            ),
+            border: Border.all(color: const Color(0xFFECECEC)),
           ),
           child: Row(
             children: [
@@ -41,11 +36,7 @@ class WellnessNutrientTile extends StatelessWidget {
                   color: item.color.withValues(alpha: 0.13),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  item.icon,
-                  color: item.color,
-                  size: 22,
-                ),
+                child: Icon(item.icon, color: item.color, size: 22),
               ),
 
               const SizedBox(width: 10),
@@ -67,9 +58,7 @@ class WellnessNutrientTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 10,
-                        ),
+                        style: const TextStyle(fontSize: 10),
                         children: [
                           TextSpan(
                             text: item.current,
@@ -80,9 +69,7 @@ class WellnessNutrientTile extends StatelessWidget {
                           ),
                           TextSpan(
                             text: '/${item.target} ${item.unit}',
-                            style: const TextStyle(
-                              color: Colors.black38,
-                            ),
+                            style: const TextStyle(color: Colors.black38),
                           ),
                         ],
                       ),
@@ -99,9 +86,7 @@ class WellnessNutrientTile extends StatelessWidget {
                     value: item.progress,
                     minHeight: 5,
                     backgroundColor: const Color(0xFFE8E8E8),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      item.color,
-                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(item.color),
                   ),
                 ),
               ),

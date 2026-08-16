@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AiMealAutoFillView extends StatelessWidget {
-  const AiMealAutoFillView({
-    super.key,
-  });
+  const AiMealAutoFillView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,19 +10,11 @@ class AiMealAutoFillView extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           onPressed: Get.back,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text(
-          'AI Meal Auto-Fill',
-        ),
+        title: const Text('AI Meal Auto-Fill'),
       ),
-      body: const Center(
-        child: Text(
-          'AI Meal Auto-Fill Page',
-        ),
-      ),
+      body: const Center(child: Text('AI Meal Auto-Fill Page')),
     );
   }
 }

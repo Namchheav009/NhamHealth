@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/food_source_model.dart';
 
 class FoodSourceTile extends StatelessWidget {
-  const FoodSourceTile({
-    super.key,
-    required this.source,
-    required this.onTap,
-  });
+  const FoodSourceTile({super.key, required this.source, required this.onTap});
 
   final FoodSourceModel source;
   final VoidCallback onTap;
@@ -21,15 +17,10 @@ class FoodSourceTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFFECECEC),
-            ),
+            border: Border.all(color: const Color(0xFFECECEC)),
           ),
           child: Row(
             children: [
@@ -41,19 +32,14 @@ class FoodSourceTile extends StatelessWidget {
                   color: Color(0xFFFFF3ED),
                   shape: BoxShape.circle,
                 ),
-                child: Text(
-                  source.emoji,
-                  style:
-                      const TextStyle(fontSize: 20),
-                ),
+                child: Text(source.emoji, style: const TextStyle(fontSize: 20)),
               ),
 
               const SizedBox(width: 10),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       source.mealType,
@@ -86,18 +72,12 @@ class FoodSourceTile extends StatelessWidget {
 
               const Text(
                 'kcal',
-                style: TextStyle(
-                  color: Colors.black38,
-                  fontSize: 9,
-                ),
+                style: TextStyle(color: Colors.black38, fontSize: 9),
               ),
 
               const SizedBox(width: 5),
 
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.black26,
-              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.black26),
             ],
           ),
         ),

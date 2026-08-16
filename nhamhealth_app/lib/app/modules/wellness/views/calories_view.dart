@@ -19,27 +19,20 @@ class CaloriesView extends GetView<CaloriesController> {
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              Color(0xFFFFF4F6),
-              Colors.white,
-              Color(0xFFF6FFF1),
-            ],
+            colors: [Color(0xFFFFF4F6), Colors.white, Color(0xFFF6FFF1)],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 520,
-              ),
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 children: [
                   _header(),
 
                   Expanded(
                     child: SingleChildScrollView(
-                      physics:
-                          const BouncingScrollPhysics(),
+                      physics: const BouncingScrollPhysics(),
                       padding: AppSpacing.pagePadding,
                       child: const Column(
                         children: [
@@ -73,12 +66,7 @@ class CaloriesView extends GetView<CaloriesController> {
 
   Widget _header() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        12,
-        14,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
         children: [
           IconButton(
@@ -93,10 +81,7 @@ class CaloriesView extends GetView<CaloriesController> {
             child: Center(
               child: Text(
                 'Calories',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -109,28 +94,18 @@ class CaloriesView extends GetView<CaloriesController> {
 
   Widget _bottomActions() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        8,
-        20,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
       child: Row(
         children: [
           Expanded(
             child: OutlinedButton(
               onPressed: controller.cancelChanges,
               style: OutlinedButton.styleFrom(
-                minimumSize:
-                    const Size.fromHeight(45),
-                foregroundColor:
-                    const Color(0xFF00A651),
-                side: const BorderSide(
-                  color: Color(0xFF00A651),
-                ),
+                minimumSize: const Size.fromHeight(45),
+                foregroundColor: const Color(0xFF00A651),
+                side: const BorderSide(color: Color(0xFF00A651)),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
               child: const Text('Cancel'),
@@ -142,25 +117,17 @@ class CaloriesView extends GetView<CaloriesController> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: controller.saveChanges,
-              icon: const Icon(
-                Icons.check_circle_outline_rounded,
-                size: 18,
-              ),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               style: ElevatedButton.styleFrom(
-                minimumSize:
-                    const Size.fromHeight(45),
-                backgroundColor:
-                    const Color(0xFF00A651),
+                minimumSize: const Size.fromHeight(45),
+                backgroundColor: const Color(0xFF00A651),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: const Text(
-                'Save Changes',
-              ),
+              label: const Text('Save Changes'),
             ),
           ),
         ],

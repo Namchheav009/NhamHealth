@@ -13,7 +13,9 @@ abstract final class ApiConfig {
     }
 
     return switch (defaultTargetPlatform) {
-      TargetPlatform.android => 'http://10.0.2.2:8080',
+      // Android development uses an ADB reverse tunnel so the same URL works
+      // reliably on a USB-connected emulator or physical device.
+      TargetPlatform.android => 'http://127.0.0.1:8080',
       _ => 'http://localhost:8080',
     };
   }

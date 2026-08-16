@@ -5,19 +5,12 @@ import '../../controllers/wellness_controller.dart';
 import 'wellness_nutrient_tile.dart';
 
 class WellnessDailySummaryCard extends GetView<WellnessController> {
-  const WellnessDailySummaryCard({
-    super.key,
-  });
+  const WellnessDailySummaryCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        12,
-        14,
-        12,
-        12,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFCFFF8),
         borderRadius: BorderRadius.circular(22),
@@ -58,26 +51,19 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
 
           Obx(
             () => Column(
-              children: List.generate(
-                controller.nutrients.length,
-                (index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 4,
-                    ),
-                    child: WellnessNutrientTile(
-                      item: controller.nutrients[index],
+              children: List.generate(controller.nutrients.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: WellnessNutrientTile(
+                    item: controller.nutrients[index],
 
-                      // CLICK EACH BOX
-                      onTap: () {
-                        controller.openNutrientDetail(
-                          index,
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+                    // CLICK EACH BOX
+                    onTap: () {
+                      controller.openNutrientDetail(index);
+                    },
+                  ),
+                );
+              }),
             ),
           ),
 
@@ -85,18 +71,11 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
 
           const Row(
             children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 15,
-                color: Colors.black26,
-              ),
+              Icon(Icons.auto_awesome_rounded, size: 15, color: Colors.black26),
               SizedBox(width: 7),
               Text(
                 'Tap a nutrient to edit.',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.black38,
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.black38),
               ),
             ],
           ),

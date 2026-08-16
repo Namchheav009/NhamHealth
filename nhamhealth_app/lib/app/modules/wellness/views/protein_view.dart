@@ -14,9 +14,7 @@ class ProteinView extends StatelessWidget {
         ),
         title: const Text('Protein'),
       ),
-      body: const Center(
-        child: Text('Protein Detail Page'),
-      ),
+      body: const Center(child: Text('Protein Detail Page')),
     );
   }
 }
