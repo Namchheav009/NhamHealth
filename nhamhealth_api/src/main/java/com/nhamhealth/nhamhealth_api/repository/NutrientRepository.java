@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,6 @@ public interface NutrientRepository extends JpaRepository<Nutrient, Integer> {
     boolean existsByNutrientNameIgnoreCase(String nutrientName);
 
     boolean existsByNutrientNameIgnoreCaseAndNutrientIdNot(String nutrientName, Integer nutrientId);
+
+    Optional<Nutrient> findByNutrientNameIgnoreCase(String nutrientName);
 }
