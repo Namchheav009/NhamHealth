@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,8 @@ import com.nhamhealth.nhamhealth_api.dto.response.ProfileImageResponse;
 import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
 import com.nhamhealth.nhamhealth_api.service.ProfileDashboardService;
 import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.DailyNutritionUpdateRequest;
+import com.nhamhealth.nhamhealth_api.service.DailyNutritionService;
 
 import jakarta.validation.Valid;
 import com.nhamhealth.nhamhealth_api.service.UserProfileService;
@@ -30,14 +33,27 @@ public class UserApiController {
     private final UserProfileService userProfileService;
     private final ProfileImageStorageService profileImageStorageService;
     private final ProfileDashboardService profileDashboardService;
+    private final DailyNutritionService dailyNutritionService;
 
     public UserApiController(
             UserProfileService userProfileService,
             ProfileImageStorageService profileImageStorageService,
-            ProfileDashboardService profileDashboardService) {
+            ProfileDashboardService profileDashboardService,
+            DailyNutritionService dailyNutritionService) {
         this.userProfileService = userProfileService;
         this.profileImageStorageService = profileImageStorageService;
         this.profileDashboardService = profileDashboardService;
+        this.dailyNutritionService = dailyNutritionService;
+    }
+
+    @PostMapping("/me/daily-wellness/nutrients")
+    public ResponseEntity<?> addDailyNutrition(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody DailyNutritionUpdateRequest request) {
+        Number userId = jwt.getClaim("userId");
+        dailyNutritionService.add(userId.intValue(), request);
+        LocalDate date = request.date() == null ? LocalDate.now() : request.date();
+        return ResponseEntity.ok(profileDashboardService.load(userId.intValue(), date));
     }
 
     @GetMapping("/me/dashboard")

@@ -50,6 +50,40 @@ class ProfileRepository {
     }
   }
 
+  Future<ProfileDashboardModel> addDailyNutrition({
+    double? calories,
+    double? protein,
+    double? water,
+    double? fiber,
+    double? sugar,
+    String? aiRecommendation,
+    DateTime? date,
+  }) async {
+    final token = await _accessToken();
+    final response = await _client
+        .post(
+          Uri.parse(
+            '${ApiConfig.baseUrl}/api/v1/users/me/daily-wellness/nutrients',
+          ),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            if (date != null) 'date': _dateOnly(date),
+            if (calories != null) 'calories': calories,
+            if (protein != null) 'protein': protein,
+            if (water != null) 'water': water,
+            if (fiber != null) 'fiber': fiber,
+            if (sugar != null) 'sugar': sugar,
+            if (aiRecommendation != null) 'aiRecommendation': aiRecommendation,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    return _dashboardFromResponse(response);
+  }
+
   Future<ProfileDashboardModel> updateProfile({
     required String fullName,
     required String email,
