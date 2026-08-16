@@ -21,6 +21,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ForgotPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
@@ -108,5 +109,18 @@ public class AuthController {
     public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.resetToken(), request.newPassword());
         return new MessageResponse("Password reset successfully");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            Number userId = jwt.getClaim("userId");
+            authService.changePassword(userId.intValue(), request);
+            return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(new AuthErrorResponse(exception.getMessage()));
+        }
     }
 }
