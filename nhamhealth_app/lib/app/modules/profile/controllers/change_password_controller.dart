@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/auth_service.dart';
+import '../../auth/views/forgot_password_view.dart';
+
 class ChangePasswordController extends GetxController {
   final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
@@ -25,19 +28,15 @@ class ChangePasswordController extends GetxController {
   }
 
   void forgotPassword() {
-    // Example:
-    // Get.toNamed(AppRoutes.forgotPassword);
+    Get.to<void>(() => ForgotPasswordPage());
   }
 
   Future<void> updatePassword() async {
-    final currentPassword =
-        currentPasswordController.text.trim();
+    final currentPassword = currentPasswordController.text;
 
-    final newPassword =
-        newPasswordController.text.trim();
+    final newPassword = newPasswordController.text;
 
-    final confirmPassword =
-        confirmPasswordController.text.trim();
+    final confirmPassword = confirmPasswordController.text;
 
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
@@ -68,13 +67,26 @@ class ChangePasswordController extends GetxController {
       return;
     }
 
+    if (newPassword == currentPassword) {
+      Get.snackbar(
+        'Choose a new password',
+        'Your new password must be different from your current password.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      // Connect API here later.
-      await Future.delayed(
-        const Duration(seconds: 1),
+      await Get.find<AuthService>().changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
       );
+
+      currentPasswordController.clear();
+      newPasswordController.clear();
+      confirmPasswordController.clear();
 
       Get.snackbar(
         'Success',
@@ -82,6 +94,18 @@ class ChangePasswordController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFF009B43),
         colorText: Colors.white,
+      );
+    } on AuthException catch (error) {
+      Get.snackbar(
+        'Could not update password',
+        error.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on Object {
+      Get.snackbar(
+        'Could not update password',
+        'Something went wrong. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
       isLoading.value = false;
