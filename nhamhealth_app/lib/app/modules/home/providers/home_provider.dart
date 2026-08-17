@@ -63,6 +63,69 @@ class HomeProvider {
     }
   }
 
+  Future<List<RecommendedMealModel>> getRecommendedMeals({int? moodId}) async {
+    final authService = _authService;
+    if (authService == null) return const [];
+    final token = await authService.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const HomeProviderException('Your session has expired. Please sign in again.');
+    }
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals')
+        .replace(queryParameters: moodId == null ? null : {'moodId': '$moodId'});
+    final response = await _client.get(uri, headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    }).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HomeProviderException(
+        response.statusCode == 401 || response.statusCode == 403
+            ? 'Your session has expired. Please sign in again.'
+            : 'Unable to load recommended meals (HTTP ${response.statusCode}).',
+      );
+    }
+
+    return _parseRecommendedMeals(response);
+  }
+
+  Future<List<RecommendedMealModel>> generateRecommendedMeals({
+    required int moodId,
+    bool refresh = false,
+  }) async {
+    final authService = _authService;
+    if (authService == null) return const [];
+    final token = await authService.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const HomeProviderException('Your session has expired. Please sign in again.');
+    }
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals/generate')
+        .replace(queryParameters: {'moodId': '$moodId', 'refresh': '$refresh'});
+    final response = await _client.post(uri, headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    }).timeout(const Duration(seconds: 45));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HomeProviderException('Unable to generate meal recommendations (HTTP ${response.statusCode}).');
+    }
+    return _parseRecommendedMeals(response);
+  }
+
+  List<RecommendedMealModel> _parseRecommendedMeals(http.Response response) {
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is! List) throw const FormatException();
+      return payload.map((item) {
+        final data = Map<String, dynamic>.from(item as Map);
+        final image = data['imageUrl'] as String?;
+        if (image != null && image.startsWith('/')) data['imageUrl'] = '${ApiConfig.baseUrl}$image';
+        return RecommendedMealModel.fromJson(data);
+      }).toList(growable: false);
+    } on Object {
+      throw const HomeProviderException('The recommended meals response is incomplete.');
+    }
+  }
+
   Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) async {
     final profile = await _profileRepository?.getDashboard(date: date);
 
@@ -98,32 +161,7 @@ class HomeProvider {
           unit: 'glasses',
         ),
       ),
-      recommendedMeals: [
-        RecommendedMealModel(
-          id: 1,
-          name: 'Grilled Chicken Power Bowl',
-          image: 'assets/images/meals/healthy_salad.jpg',
-          calories: 520,
-          cookingTime: '15 min',
-          rating: 4.8,
-        ),
-        RecommendedMealModel(
-          id: 2,
-          name: 'Grilled Chicken Power Bowl',
-          image: 'assets/images/meals/healthy_salad.jpg',
-          calories: 520,
-          cookingTime: '20 min',
-          rating: 4.8,
-        ),
-        RecommendedMealModel(
-          id: 3,
-          name: 'Grilled Chicken Power Bowl',
-          image: 'assets/images/meals/healthy_salad.jpg',
-          calories: 520,
-          cookingTime: '10 min',
-          rating: 4.8,
-        ),
-      ],
+      recommendedMeals: const [],
     );
   }
 

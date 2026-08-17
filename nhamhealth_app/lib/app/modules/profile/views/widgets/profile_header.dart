@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 
 import '../../../../../config/api_config.dart';
@@ -161,7 +162,11 @@ class _ProfileAvatar extends StatelessWidget {
       return CircleAvatar(
         radius: 32,
         backgroundColor: const Color(0xFFE8F5E9),
-        foregroundImage: NetworkImage(imageUrl),
+        foregroundImage: CachedNetworkImageProvider(
+          imageUrl,
+          maxWidth: 256,
+          maxHeight: 256,
+        ),
         child: _initials(user?.initials ?? '?'),
       );
     }

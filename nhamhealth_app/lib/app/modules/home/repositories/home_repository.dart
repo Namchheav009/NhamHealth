@@ -1,5 +1,6 @@
 import '../models/home_dashboard_model.dart';
 import '../models/mood_model.dart';
+import '../models/recommended_meal_model.dart';
 import '../providers/home_provider.dart';
 
 class HomeRepository {
@@ -14,4 +15,12 @@ class HomeRepository {
   }
 
   Future<List<MoodModel>> getMoods() => provider.getMoods();
+
+  Future<List<RecommendedMealModel>> getRecommendedMeals({int? moodId}) =>
+      provider.getRecommendedMeals(moodId: moodId);
+
+  Future<List<RecommendedMealModel>> generateRecommendedMeals({
+    required int moodId,
+    bool refresh = false,
+  }) => provider.generateRecommendedMeals(moodId: moodId, refresh: refresh);
 }

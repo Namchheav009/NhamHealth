@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
@@ -44,12 +45,7 @@ class RecommendedMealCard extends StatelessWidget {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      child: Image.asset(
-                        meal.image,
-                        width: double.infinity,
-                        height: 82,
-                        fit: BoxFit.cover,
-                      ),
+                      child: _MealImage(path: meal.image),
                     ),
                     Positioned(
                       right: 5,
@@ -136,6 +132,42 @@ class RecommendedMealCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MealImage extends StatelessWidget {
+  const _MealImage({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!path.startsWith('http://') && !path.startsWith('https://')) {
+      return Image.asset(
+        path.isEmpty ? 'assets/images/meals/healthy_salad.jpg' : path,
+        width: double.infinity,
+        height: 82,
+        fit: BoxFit.cover,
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: path,
+      width: double.infinity,
+      height: 82,
+      fit: BoxFit.cover,
+      memCacheWidth: 300,
+      fadeInDuration: const Duration(milliseconds: 120),
+      placeholder: (_, _) => const ColoredBox(
+        color: Color(0xFFEAF4EE),
+        child: Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (_, _, _) => Image.asset(
+        'assets/images/meals/healthy_salad.jpg',
+        fit: BoxFit.cover,
       ),
     );
   }

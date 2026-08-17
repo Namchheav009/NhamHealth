@@ -7,9 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "ai_recommendations")
@@ -42,6 +45,9 @@ public class AiRecommendation {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "recommendation")
+    private List<AiRecommendationItem> items = new ArrayList<>();
 
     public AiRecommendation() {
     }
@@ -104,5 +110,9 @@ public class AiRecommendation {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<AiRecommendationItem> getItems() {
+        return items;
     }
 }
