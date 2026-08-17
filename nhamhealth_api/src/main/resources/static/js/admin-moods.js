@@ -17,6 +17,31 @@
     };
     let editingId = null;
 
+    function emojiFromCode(value, fallback) {
+        const raw = String(value || '').trim();
+        if (!raw) return fallback;
+
+        const normalized = raw.replace(/^U\+/i, '').replace(/(?:\s*U\+|[_\s])/gi, '-');
+        if (!/^[0-9a-f]{1,6}(?:-[0-9a-f]{1,6})*$/i.test(normalized)) return raw;
+
+        try {
+            const codePoints = normalized.split('-').map((part) => Number.parseInt(part, 16));
+            if (codePoints.some((codePoint) => codePoint > 0x10ffff)) return raw;
+            return String.fromCodePoint(...codePoints);
+        } catch {
+            return raw;
+        }
+    }
+
+    function renderExistingEmojis() {
+        rows().forEach((row) => {
+            const avatar = row.querySelector('.mood-avatar');
+            const emoji = row.querySelector('.emoji-code');
+            if (avatar) avatar.textContent = emojiFromCode(row.dataset.emoji, '\u2022');
+            if (emoji) emoji.textContent = emojiFromCode(row.dataset.emoji, '\u2014');
+        });
+    }
+
     const emojiPresets = () => [...document.querySelectorAll('[data-mood-preset]')];
 
     function updateEmojiPresetSelection() {
@@ -122,7 +147,7 @@
         nameBox.className = 'mood-name';
         const avatar = document.createElement('span');
         avatar.className = 'mood-avatar';
-        avatar.textContent = item.emojiCode || '•';
+        avatar.textContent = emojiFromCode(item.emojiCode, '\u2022');
         const name = document.createElement('strong');
         name.textContent = item.moodName;
         nameBox.append(avatar, name);
@@ -131,7 +156,7 @@
         const emojiCell = document.createElement('td');
         const emoji = document.createElement('span');
         emoji.className = 'emoji-code';
-        emoji.textContent = item.emojiCode || '—';
+        emoji.textContent = emojiFromCode(item.emojiCode, '\u2014');
         emojiCell.appendChild(emoji);
 
         const statusCell = document.createElement('td');
@@ -276,6 +301,8 @@
     byId('openMoodModal')?.addEventListener('click', () => showModal());
     byId('closeMoodModal')?.addEventListener('click', hideModal);
     byId('cancelMoodModal')?.addEventListener('click', hideModal);
+    renderExistingEmojis();
+
     form?.elements.moodName?.addEventListener('change', setEmojiFromMoodName);
     form?.elements.moodName?.addEventListener('blur', setEmojiFromMoodName);
     form?.elements.emojiCode?.addEventListener('input', updateEmojiPresetSelection);
