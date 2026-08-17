@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../controllers/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
@@ -39,21 +40,27 @@ class HomeView extends GetView<HomeController> {
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: AppSpacing.pagePaddingWithNavigation,
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HomeHeader(),
-                    SizedBox(height: 16),
-                    HomeSearchBar(),
-                    SizedBox(height: 14),
-                    GreetingSection(),
-                    SizedBox(height: 14),
-                    AiRecommendationCard(),
-                    SizedBox(height: 14),
-                    DailySummaryCard(),
-                    SizedBox(height: 12),
-                    _RecommendedMealsSection(),
-                  ],
+                child: Obx(
+                  () =>
+                      controller.isLoading.value &&
+                              controller.dashboard.value == null
+                          ? const PageSkeleton.home()
+                          : const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              HomeHeader(),
+                              SizedBox(height: 16),
+                              HomeSearchBar(),
+                              SizedBox(height: 14),
+                              GreetingSection(),
+                              SizedBox(height: 14),
+                              AiRecommendationCard(),
+                              SizedBox(height: 14),
+                              DailySummaryCard(),
+                              SizedBox(height: 12),
+                              _RecommendedMealsSection(),
+                            ],
+                          ),
                 ),
               ),
             ),
@@ -95,16 +102,17 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                 ),
               ),
               const SizedBox(width: 8),
-              TextButton(
-                onPressed: controller.refreshMeals,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primaryGreen,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              if (meals.isNotEmpty)
+                TextButton(
+                  onPressed: controller.getRecommendation,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryGreen,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Refresh', style: TextStyle(fontSize: 10)),
                 ),
-                child: const Text('Refresh', style: TextStyle(fontSize: 10)),
-              ),
             ],
           ),
           if (controller.isRecommendedMealsLoading.value && meals.isEmpty)
@@ -133,7 +141,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
             const Padding(
               padding: EdgeInsets.only(top: 10, bottom: 8),
               child: Text(
-                'Choose a mood to see your personalized meal recommendations.',
+                'Choose a mood, then tap Get Recommendation to see personalized meals.',
                 style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
               ),
             ),
