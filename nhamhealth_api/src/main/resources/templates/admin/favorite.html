@@ -26,6 +26,7 @@
                     <p>Review meal and community-post favorites across Nham Health.</p>
                 </div>
                 <div class="heading-actions">
+                    <button class="btn btn-primary" id="openFavoriteModal" type="button"><i class="bi bi-plus-lg"></i> Add Favorite</button>
                     <button class="btn" id="exportFavorites" type="button"><i class="bi bi-download"></i> Export CSV</button>
                 </div>
             </div>
@@ -54,12 +55,12 @@
                         <table>
                             <thead><tr><th>Meal</th><th>Category</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
                             <tbody id="mealFavoriteRows">
-                            <tr th:each="favorite : ${foodFavorites}" th:data-id="${favorite.mealFavoriteId}" th:data-user-id="${favorite.user.userId}" th:data-search="${#strings.toLowerCase(favorite.meal.mealName + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
+                            <tr th:each="favorite : ${foodFavorites}" th:data-id="${favorite.mealFavoriteId}" data-kind="meals" th:data-user-id="${favorite.user.userId}" th:data-content-id="${favorite.meal.mealId}" th:data-search="${#strings.toLowerCase(favorite.meal.mealName + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
                                 <td><div class="content-cell"><span class="content-icon meal"><i class="bi bi-egg-fried"></i></span><span><strong th:text="${favorite.meal.mealName}">Meal</strong><small th:text="${favorite.meal.isPublished ? 'Published' : 'Draft'}">Published</small></span></div></td>
                                 <td><span class="category-badge" th:text="${favorite.meal.category != null ? favorite.meal.category.categoryName : 'Uncategorized'}">Category</span></td>
                                 <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
                                 <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
-                                <td><button class="icon-button small danger remove-favorite" type="button" data-kind="meals" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
+                                <td><div class="action-group"><button class="icon-button small edit-favorite" type="button" title="Edit favorite"><i class="bi bi-pencil-square"></i></button><button class="icon-button small danger remove-favorite" type="button" data-kind="meals" title="Remove favorite"><i class="bi bi-trash3"></i></button></div></td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(foodFavorites)}" id="emptyMealFavoriteRow"><td class="empty-state" colspan="5"><i class="bi bi-heart"></i><strong>No meal favorites</strong><span>Meal favorites will appear here when users save meals.</span></td></tr>
                             </tbody>
@@ -72,12 +73,12 @@
                         <table>
                             <thead><tr><th>Post</th><th>Post author</th><th>Saved by</th><th>Saved at</th><th>Actions</th></tr></thead>
                             <tbody id="postFavoriteRows">
-                            <tr th:each="favorite : ${postFavorites}" th:data-id="${favorite.postFavoriteId}" th:data-user-id="${favorite.user.userId}" th:data-search="${#strings.toLowerCase((favorite.post.caption ?: '') + ' ' + favorite.post.user.email + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
+                            <tr th:each="favorite : ${postFavorites}" th:data-id="${favorite.postFavoriteId}" data-kind="posts" th:data-user-id="${favorite.user.userId}" th:data-content-id="${favorite.post.postId}" th:data-search="${#strings.toLowerCase((favorite.post.caption ?: '') + ' ' + favorite.post.user.email + ' ' + favorite.user.name + ' ' + favorite.user.email)}">
                                 <td><div class="content-cell"><span class="content-icon post"><i class="bi bi-file-post"></i></span><span><strong th:text="${favorite.post.caption != null && !#strings.isEmpty(favorite.post.caption) ? favorite.post.caption : 'Post #' + favorite.post.postId}">Post</strong><small th:text="${favorite.post.visibility + ' · ' + favorite.post.status}">PUBLIC · ACTIVE</small></span></div></td>
                                 <td th:text="${favorite.post.user.email}">author@example.com</td>
                                 <td><div class="user-cell"><span class="user-avatar" th:text="${favorite.user.initials}">NH</span><span><strong th:text="${favorite.user.name}">User</strong><small th:text="${favorite.user.email}">user@example.com</small></span></div></td>
                                 <td><time th:text="${favorite.savedAt != null ? #temporals.format(favorite.savedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
-                                <td><button class="icon-button small danger remove-favorite" type="button" data-kind="posts" title="Remove favorite"><i class="bi bi-trash3"></i></button></td>
+                                <td><div class="action-group"><button class="icon-button small edit-favorite" type="button" title="Edit favorite"><i class="bi bi-pencil-square"></i></button><button class="icon-button small danger remove-favorite" type="button" data-kind="posts" title="Remove favorite"><i class="bi bi-trash3"></i></button></div></td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(postFavorites)}" id="emptyPostFavoriteRow"><td class="empty-state" colspan="5"><i class="bi bi-bookmark"></i><strong>No post favorites</strong><span>Post favorites will appear here when users save community posts.</span></td></tr>
                             </tbody>
@@ -90,6 +91,12 @@
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="modal" id="favoriteModal" aria-hidden="true"><section class="modal-card"><div class="modal-header"><div><h2 id="favoriteModalTitle">Add Favorite</h2><p>Choose the user and saved content.</p></div><button class="close" id="closeFavoriteModal" type="button" aria-label="Close dialog"><i class="bi bi-x-lg"></i></button></div><form id="favoriteForm"><div class="modal-body">
+    <div class="field"><label for="favoriteKind">Favorite type</label><select id="favoriteKind" name="favoriteKind" required><option value="meals">Meal</option><option value="posts">Post</option></select></div>
+    <div class="field"><label for="favoriteUser">User</label><select id="favoriteUser" name="favoriteUser" required><option value="">Select user</option><option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' (' + user.email + ')'}">User</option></select></div>
+    <div class="field full" id="favoriteMealField"><label for="favoriteMeal">Meal</label><select id="favoriteMeal" name="favoriteMeal"><option value="">Select meal</option><option th:each="meal : ${meals}" th:value="${meal.mealId}" th:text="${meal.mealName}">Meal</option></select></div>
+    <div class="field full" id="favoritePostField" hidden><label for="favoritePost">Post</label><select id="favoritePost" name="favoritePost"><option value="">Select post</option><option th:each="post : ${posts}" th:value="${post.postId}" th:text="${post.caption != null && !#strings.isEmpty(post.caption) ? post.caption : 'Post #' + post.postId}">Post</option></select></div>
+</div><div class="modal-actions"><button class="btn" id="cancelFavoriteModal" type="button">Cancel</button><button class="btn btn-primary" id="saveFavoriteButton" type="submit">Save Favorite</button></div></form></section></div>
 <script th:src="@{/js/admin-layout.js}"></script>
 <script th:src="@{/js/admin-favorites.js(v=20260815-1)}"></script>
 </body>

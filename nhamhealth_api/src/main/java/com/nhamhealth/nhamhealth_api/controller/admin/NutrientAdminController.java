@@ -22,15 +22,36 @@ import jakarta.validation.Valid;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminNutrientRequest;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
+import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisNutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.MealLogNutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.MealNutritionRepository;
 import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserNutrientGoalRepository;
 
 @Controller
 public class NutrientAdminController {
 
     private final NutrientRepository nutrientRepository;
+    private final AiFoodAnalysisNutrientRepository analysisNutrientRepository;
+    private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
+    private final MealLogNutrientRepository mealLogNutrientRepository;
+    private final MealNutritionRepository mealNutritionRepository;
+    private final UserNutrientGoalRepository userNutrientGoalRepository;
 
-    public NutrientAdminController(NutrientRepository nutrientRepository) {
+    public NutrientAdminController(
+            NutrientRepository nutrientRepository,
+            AiFoodAnalysisNutrientRepository analysisNutrientRepository,
+            DailyNutrientTotalRepository dailyNutrientTotalRepository,
+            MealLogNutrientRepository mealLogNutrientRepository,
+            MealNutritionRepository mealNutritionRepository,
+            UserNutrientGoalRepository userNutrientGoalRepository) {
         this.nutrientRepository = nutrientRepository;
+        this.analysisNutrientRepository = analysisNutrientRepository;
+        this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
+        this.mealLogNutrientRepository = mealLogNutrientRepository;
+        this.mealNutritionRepository = mealNutritionRepository;
+        this.userNutrientGoalRepository = userNutrientGoalRepository;
     }
 
     @GetMapping("/admin/nutrients")
@@ -95,12 +116,17 @@ public class NutrientAdminController {
         }
 
         try {
+            analysisNutrientRepository.deleteByNutrientNutrientId(nutrientId);
+            dailyNutrientTotalRepository.deleteByNutrientNutrientId(nutrientId);
+            mealLogNutrientRepository.deleteByNutrientNutrientId(nutrientId);
+            mealNutritionRepository.deleteByNutrientNutrientId(nutrientId);
+            userNutrientGoalRepository.deleteByNutrientNutrientId(nutrientId);
             nutrientRepository.delete(nutrient);
             nutrientRepository.flush();
             return ResponseEntity.noContent().build();
         } catch (DataIntegrityViolationException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(message("This nutrient is already in use and cannot be deleted."));
+                    .body(message("The nutrient could not be deleted because it is still in use."));
         }
     }
 

@@ -25,7 +25,7 @@
                     <div class="title-line"><h1>Meal Reviews</h1><span>Ratings and user feedback</span></div>
                     <p>Review meal feedback and remove content that violates platform standards.</p>
                 </div>
-                <div class="heading-actions"><button class="btn" id="exportReviews" type="button"><i class="bi bi-download"></i> Export CSV</button></div>
+                <div class="heading-actions"><button class="btn btn-primary" id="openReviewModal" type="button"><i class="bi bi-plus-lg"></i> Add Review</button><button class="btn" id="exportReviews" type="button"><i class="bi bi-download"></i> Export CSV</button></div>
             </div>
 
             <div class="stats-grid">
@@ -50,14 +50,14 @@
                     <table>
                         <thead><tr><th>Meal</th><th>User</th><th>Rating</th><th>Review</th><th>Submitted</th><th>Rating group</th><th>Actions</th></tr></thead>
                         <tbody id="reviewRows">
-                        <tr th:each="review : ${reviews}" th:data-id="${review.reviewId}" th:data-meal-id="${review.meal.mealId}" th:data-rating="${review.rating}" th:data-sentiment="${review.rating >= 4 ? 'positive' : (review.rating == 3 ? 'neutral' : 'low')}" th:data-search="${#strings.toLowerCase(review.meal.mealName + ' ' + review.user.name + ' ' + review.user.email + ' ' + (review.reviewText ?: ''))}">
+                        <tr th:each="review : ${reviews}" th:data-id="${review.reviewId}" th:data-user-id="${review.user.userId}" th:data-meal-id="${review.meal.mealId}" th:data-rating="${review.rating}" th:data-review-text="${review.reviewText}" th:data-sentiment="${review.rating >= 4 ? 'positive' : (review.rating == 3 ? 'neutral' : 'low')}" th:data-search="${#strings.toLowerCase(review.meal.mealName + ' ' + review.user.name + ' ' + review.user.email + ' ' + (review.reviewText ?: ''))}">
                             <td><div class="meal-cell"><span class="meal-thumb"><img th:if="${review.meal.mainImageUrl != null}" th:src="${review.meal.mainImageUrl}" th:alt="${review.meal.mealName}"><i th:unless="${review.meal.mainImageUrl != null}" class="bi bi-egg-fried"></i></span><span><strong th:text="${review.meal.mealName}">Meal</strong><small th:text="${review.meal.category != null ? review.meal.category.categoryName : 'Uncategorized'}">Category</small></span></div></td>
                             <td><div class="user-cell"><span class="user-avatar" th:text="${review.user.initials}">NH</span><span><strong th:text="${review.user.name}">User</strong><small th:text="${review.user.email}">user@example.com</small></span></div></td>
                             <td><span class="rating-badge"><i class="bi bi-star-fill"></i><b th:text="${review.rating}">5</b><small>/ 5</small></span></td>
                             <td><p class="review-copy" th:text="${review.reviewText != null && !#strings.isEmpty(review.reviewText) ? review.reviewText : 'No written comment'}">Review</p></td>
                             <td><time th:text="${review.createdAt != null ? #temporals.format(review.createdAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
                             <td><span class="sentiment-badge" th:classappend="${review.rating >= 4 ? ' sentiment-positive' : (review.rating == 3 ? ' sentiment-neutral' : ' sentiment-low')}" th:text="${review.rating >= 4 ? 'Positive' : (review.rating == 3 ? 'Neutral' : 'Low')}">Positive</span></td>
-                            <td><button class="icon-button small danger delete-review" type="button" title="Delete review"><i class="bi bi-trash3"></i></button></td>
+                            <td><div class="action-group"><button class="icon-button small edit-review" type="button" title="Edit review"><i class="bi bi-pencil-square"></i></button><button class="icon-button small danger delete-review" type="button" title="Delete review"><i class="bi bi-trash3"></i></button></div></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(reviews)}" id="emptyReviewRow"><td class="empty-state" colspan="7"><i class="bi bi-chat-square-heart"></i><strong>No meal reviews yet</strong><span>User reviews will appear here after meals receive feedback.</span></td></tr>
                         </tbody>
@@ -70,6 +70,12 @@
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="modal" id="reviewModal" aria-hidden="true"><section class="modal-card"><div class="modal-header"><div><h2 id="reviewModalTitle">Add Review</h2><p>Enter the meal rating and feedback.</p></div><button class="close" id="closeReviewModal" type="button" aria-label="Close dialog"><i class="bi bi-x-lg"></i></button></div><form id="reviewForm"><div class="modal-body">
+    <div class="field"><label for="reviewUser">User</label><select id="reviewUser" name="reviewUser" required><option value="">Select user</option><option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' (' + user.email + ')'}">User</option></select></div>
+    <div class="field"><label for="reviewMeal">Meal</label><select id="reviewMeal" name="reviewMeal" required><option value="">Select meal</option><option th:each="meal : ${meals}" th:value="${meal.mealId}" th:text="${meal.mealName}">Meal</option></select></div>
+    <div class="field"><label for="reviewRating">Rating</label><select id="reviewRating" name="reviewRating" required><option value="">Select rating</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></div>
+    <div class="field full"><label for="reviewText">Review</label><textarea id="reviewText" name="reviewText" rows="4" maxlength="2000" placeholder="Optional written feedback"></textarea></div>
+</div><div class="modal-actions"><button class="btn" id="cancelReviewModal" type="button">Cancel</button><button class="btn btn-primary" id="saveReviewButton" type="submit">Save Review</button></div></form></section></div>
 <script th:src="@{/js/admin-layout.js}"></script>
 <script th:src="@{/js/admin-reviews.js(v=20260815-1)}"></script>
 </body>
