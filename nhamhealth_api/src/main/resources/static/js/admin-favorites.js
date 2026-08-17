@@ -14,6 +14,10 @@
         error: (text) => Promise.resolve(window.alert(text))
     };
     let activeType = 'meals';
+    const modal = byId('favoriteModal');
+    const form = byId('favoriteForm');
+    const kindSelect = byId('favoriteKind');
+    const saveButton = byId('saveFavoriteButton');
 
     const rowsFor = (type) => [...document.querySelectorAll(`#${type === 'meals' ? 'foodPanel' : 'postPanel'} tbody tr[data-id]`)];
     const requestHeaders = () => ({
@@ -29,6 +33,75 @@
         });
         const body = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
         if (!response.ok) throw new Error(body.message || body.detail || 'Unable to remove this favorite.');
+    }
+
+    function syncContentField() {
+        const isMeal = kindSelect.value === 'meals';
+        const mealSelect = byId('favoriteMeal');
+        const postSelect = byId('favoritePost');
+        byId('favoriteMealField').hidden = !isMeal;
+        byId('favoritePostField').hidden = isMeal;
+        mealSelect.required = isMeal;
+        mealSelect.disabled = !isMeal;
+        postSelect.required = !isMeal;
+        postSelect.disabled = isMeal;
+        if (isMeal) postSelect.value = '';
+        else mealSelect.value = '';
+    }
+
+    function showModal(row = null) {
+        form.reset();
+        form.dataset.favoriteId = row?.dataset.id || '';
+        const editing = Boolean(row);
+        kindSelect.value = row?.dataset.kind || activeType;
+        kindSelect.disabled = editing;
+        byId('favoriteModalTitle').textContent = editing ? 'Edit Favorite' : 'Add Favorite';
+        saveButton.textContent = editing ? 'Save Changes' : 'Save Favorite';
+        if (editing) {
+            byId('favoriteUser').value = row.dataset.userId;
+            byId(row.dataset.kind === 'meals' ? 'favoriteMeal' : 'favoritePost').value = row.dataset.contentId;
+        }
+        syncContentField();
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        form.reset();
+        form.dataset.favoriteId = '';
+        kindSelect.disabled = false;
+    }
+
+    async function saveFavorite(event) {
+        event.preventDefault();
+        if (!form.checkValidity()) return form.reportValidity();
+        const id = form.dataset.favoriteId;
+        const kind = kindSelect.value;
+        const payload = {
+            kind,
+            userId: Number(byId('favoriteUser').value),
+            contentId: Number(byId(kind === 'meals' ? 'favoriteMeal' : 'favoritePost').value)
+        };
+        saveButton.disabled = true;
+        try {
+            const response = await fetch(id ? `/admin/favorites/${kind}/${id}` : '/admin/favorites', {
+                method: id ? 'PUT' : 'POST',
+                headers: { ...requestHeaders(), 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const body = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
+            if (!response.ok) throw new Error(body.message || body.detail || 'The favorite could not be saved.');
+            hideModal();
+            await alerts.success(id ? 'Favorite updated' : 'Favorite added', `The favorite has been ${id ? 'updated' : 'added'} successfully.`);
+            window.location.reload();
+        } catch (error) {
+            await alerts.error(error.message || 'The favorite could not be saved.');
+        } finally {
+            saveButton.disabled = false;
+        }
     }
 
     function applySearch() {
@@ -149,10 +222,21 @@
         searchInput.focus();
     });
     document.addEventListener('click', (event) => {
+        const edit = event.target.closest('.edit-favorite');
+        if (edit) {
+            showModal(edit.closest('tr[data-id]'));
+            return;
+        }
         const button = event.target.closest('.remove-favorite');
         if (button) removeFavorite(button);
     });
     byId('exportFavorites')?.addEventListener('click', exportFavorites);
+    byId('openFavoriteModal')?.addEventListener('click', () => showModal());
+    byId('closeFavoriteModal')?.addEventListener('click', hideModal);
+    byId('cancelFavoriteModal')?.addEventListener('click', hideModal);
+    kindSelect?.addEventListener('change', syncContentField);
+    form?.addEventListener('submit', saveFavorite);
+    modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
 
     updateSummary();
     selectTab('meals');

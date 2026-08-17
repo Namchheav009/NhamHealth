@@ -17,6 +17,9 @@
     const pageSize = 10;
     let currentPage = 1;
     let filteredRows = [];
+    const modal = byId('reviewModal');
+    const form = byId('reviewForm');
+    const saveButton = byId('saveReviewButton');
 
     const rows = () => [...(rowsBox?.querySelectorAll('tr[data-id]') || [])];
 
@@ -102,6 +105,62 @@
         if (!response.ok) throw new Error(body.message || body.detail || 'The review could not be deleted.');
     }
 
+    function showModal(row = null) {
+        form.reset();
+        const editing = Boolean(row);
+        form.dataset.reviewId = row?.dataset.id || '';
+        byId('reviewModalTitle').textContent = editing ? 'Edit Review' : 'Add Review';
+        saveButton.textContent = editing ? 'Save Changes' : 'Save Review';
+        if (editing) {
+            byId('reviewUser').value = row.dataset.userId;
+            byId('reviewMeal').value = row.dataset.mealId;
+            byId('reviewRating').value = row.dataset.rating;
+            byId('reviewText').value = row.dataset.reviewText || '';
+        }
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        form.reset();
+        form.dataset.reviewId = '';
+    }
+
+    async function saveReview(event) {
+        event.preventDefault();
+        if (!form.checkValidity()) return form.reportValidity();
+        const id = form.dataset.reviewId;
+        const payload = {
+            userId: Number(byId('reviewUser').value),
+            mealId: Number(byId('reviewMeal').value),
+            rating: Number(byId('reviewRating').value),
+            reviewText: byId('reviewText').value.trim()
+        };
+        saveButton.disabled = true;
+        try {
+            const response = await fetch(id ? `/admin/reviews/${id}` : '/admin/reviews', {
+                method: id ? 'PUT' : 'POST',
+                headers: {
+                    ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+                    'Content-Type': 'application/json', Accept: 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const body = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
+            if (!response.ok) throw new Error(body.message || body.detail || 'The review could not be saved.');
+            hideModal();
+            await alerts.success(id ? 'Review updated' : 'Review added', `The review has been ${id ? 'updated' : 'added'} successfully.`);
+            window.location.reload();
+        } catch (error) {
+            await alerts.error(error.message || 'The review could not be saved.');
+        } finally {
+            saveButton.disabled = false;
+        }
+    }
+
     async function deleteReview(button) {
         const row = button.closest('tr[data-id]');
         if (!row) return;
@@ -154,9 +213,19 @@
         URL.revokeObjectURL(link.href);
     });
     document.addEventListener('click', (event) => {
+        const edit = event.target.closest('.edit-review');
+        if (edit) {
+            showModal(edit.closest('tr[data-id]'));
+            return;
+        }
         const button = event.target.closest('.delete-review');
         if (button) deleteReview(button);
     });
+    byId('openReviewModal')?.addEventListener('click', () => showModal());
+    byId('closeReviewModal')?.addEventListener('click', hideModal);
+    byId('cancelReviewModal')?.addEventListener('click', hideModal);
+    form?.addEventListener('submit', saveReview);
+    modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
 
     updateSummary();
     render();
