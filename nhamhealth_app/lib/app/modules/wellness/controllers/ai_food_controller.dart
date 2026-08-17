@@ -27,7 +27,7 @@ class AiFoodController extends GetxController {
     ImagePicker? imagePicker,
   }) : _imagePicker = imagePicker ?? ImagePicker();
 
-  static const double lowConfidenceThreshold = 0.50;
+  static const double lowConfidenceThreshold = 0.80;
   final FoodAiService aiService;
   final FoodNutritionRepository nutritionRepository;
   final FoodRecommendationService recommendationService;

@@ -20,15 +20,17 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 @Service
 public class NvidiaFoodVisionService {
     private static final String PROMPT = """
-            Analyze the food visible in this image. Identify the most likely dish and estimate
-            nutrition for the visible portion. Return JSON only with exactly these fields:
-            name (string), confidence (0 to 1), calories, protein, carbs, fat, sugar (numbers),
+            Analyze the food or drink visible in this image. Identify the most likely dish or
+            beverage and estimate nutrition for the visible portion. Return JSON only with exactly these fields:
+            name (specific food or drink name), analysis (one concise sentence describing visible
+            ingredients, preparation style, portion clues, and uncertainty), confidence (0 to 1),
+            calories, protein, carbs, fat, sugar (numbers),
             servingSize (number), servingUnit (string), recommendationTitle (string), and
-            recommendation (one short practical sentence). If no food is visible, use name
+            recommendation (one short practical sentence). If no food or drink is visible, use name
             \"Unknown food\", confidence 0, and zero nutrition. Estimates are not medical advice.
             For visible food, calories, protein, carbs, fat, servingSize, recommendationTitle,
             and recommendation must not be missing. Example shape:
-            {\"name\":\"Hamburger\",\"confidence\":0.8,\"calories\":350,\"protein\":20,
+            {\"name\":\"Hamburger\",\"analysis\":\"A beef patty in a bun with vegetables; portion appears to be one burger.\",\"confidence\":0.8,\"calories\":350,\"protein\":20,
             \"carbs\":30,\"fat\":17,\"sugar\":6,\"servingSize\":1,\"servingUnit\":\"burger\",
             \"recommendationTitle\":\"Balance the meal\",\"recommendation\":\"Add vegetables.\"}
             """;
@@ -102,7 +104,7 @@ public class NvidiaFoodVisionService {
             throws Exception {
         String prompt = """
                 Estimate realistic nutrition for the described food portion. Return JSON only with
-                exactly these keys: name, confidence, calories, protein, carbs, fat, sugar,
+                exactly these keys: name, analysis, confidence, calories, protein, carbs, fat, sugar,
                 servingSize, servingUnit, recommendationTitle, recommendation. All numeric fields
                 must be numbers and calories must be greater than zero. Keep recommendation under
                 20 words. Food: %s. Portion: %s %s. Estimates are not medical advice.
