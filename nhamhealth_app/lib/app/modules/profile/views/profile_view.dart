@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/profile_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/page_skeleton.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import 'widgets/profile_bottom_navigation.dart';
@@ -39,15 +40,6 @@ class ProfileView extends GetView<ProfileController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTopBar(),
-                  Obx(
-                    () => controller.isLoading.value
-                        ? const LinearProgressIndicator(
-                            minHeight: 2,
-                            color: Color(0xFF009B3E),
-                            backgroundColor: Colors.transparent,
-                          )
-                        : const SizedBox(height: 2),
-                  ),
                   Obx(() {
                     final message = controller.errorMessage.value;
                     if (message == null) return const SizedBox.shrink();
@@ -57,24 +49,25 @@ class ProfileView extends GetView<ProfileController> {
                     );
                   }),
                   const SizedBox(height: 12),
-
-                  const ProfileHeader(),
-
-                  const SizedBox(height: 8),
-
-                  const HealthStatsCard(),
-
-                  const SizedBox(height: 8),
-
-                  const ProgressCard(),
-
-                  const SizedBox(height: 8),
-
-                  const InsightCard(),
-
-                  const SizedBox(height: 8),
-
-                  const ProfilePostCard(),
+                  Obx(
+                    () =>
+                        controller.isLoading.value &&
+                                controller.dashboard.value == null
+                            ? const PageSkeleton.profile()
+                            : const Column(
+                              children: [
+                                ProfileHeader(),
+                                SizedBox(height: 8),
+                                HealthStatsCard(),
+                                SizedBox(height: 8),
+                                ProgressCard(),
+                                SizedBox(height: 8),
+                                InsightCard(),
+                                SizedBox(height: 8),
+                                ProfilePostCard(),
+                              ],
+                            ),
+                  ),
                 ],
               ),
             ),
