@@ -107,7 +107,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               ),
             ],
           ),
-          if (controller.isLoading.value && meals.isEmpty)
+          if (controller.isRecommendedMealsLoading.value && meals.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(
@@ -129,7 +129,14 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     (_, index) => RecommendedMealCard(meal: meals[index]),
               ),
             ),
-          ],
+          ] else
+            const Padding(
+              padding: EdgeInsets.only(top: 10, bottom: 8),
+              child: Text(
+                'Choose a mood to see your personalized meal recommendations.',
+                style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+              ),
+            ),
         ],
       );
     });

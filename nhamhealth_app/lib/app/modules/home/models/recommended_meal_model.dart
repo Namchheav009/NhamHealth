@@ -14,4 +14,24 @@ class RecommendedMealModel {
     required this.cookingTime,
     required this.rating,
   });
+
+  factory RecommendedMealModel.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final name = json['name'];
+    if (id is! num || name is! String || name.trim().isEmpty) {
+      throw const FormatException('Recommended meal data is incomplete.');
+    }
+
+    final calories = json['calories'];
+    final cookingTime = json['cookingTimeMinutes'];
+    final rating = json['rating'];
+    return RecommendedMealModel(
+      id: id.toInt(),
+      name: name.trim(),
+      image: (json['imageUrl'] as String? ?? '').trim(),
+      calories: calories is num ? calories.round() : 0,
+      cookingTime: cookingTime is num ? '${cookingTime.toInt()} min' : '',
+      rating: rating is num ? rating.toDouble() : 0,
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
@@ -58,10 +59,12 @@ class AuthenticatedUserAvatar extends StatelessWidget {
   Widget _avatarContent() {
     final imageUrl = user?.profileImageUrl?.trim();
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        _resolveImageUrl(imageUrl),
+      return CachedNetworkImage(
+        imageUrl: _resolveImageUrl(imageUrl),
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _Initials(user: user, size: size),
+        memCacheWidth: (size * 3).round(),
+        placeholder: (_, _) => const ColoredBox(color: AppColors.softGreen),
+        errorWidget: (_, _, _) => _Initials(user: user, size: size),
       );
     }
     return _Initials(user: user, size: size);
