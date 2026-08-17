@@ -1,4 +1,5 @@
 import '../models/home_dashboard_model.dart';
+import '../models/mood_model.dart';
 import '../providers/home_provider.dart';
 
 class HomeRepository {
@@ -11,4 +12,6 @@ class HomeRepository {
   Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) {
     return provider.getHomeDashboard(date: date);
   }
+
+  Future<List<MoodModel>> getMoods() => provider.getMoods();
 }
