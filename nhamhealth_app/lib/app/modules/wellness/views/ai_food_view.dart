@@ -168,7 +168,9 @@ class AiFoodView extends GetView<AiFoodController> {
                                     : "Add to Today's Food",
                                 action:
                                     controller.isSaving.value ||
-                                        controller.wasAdded.value
+                                        controller.wasAdded.value ||
+                                        (controller.prediction.value?.confidence ?? 0) <
+                                            AiFoodController.lowConfidenceThreshold
                                     ? null
                                     : controller.addFoodToToday,
                                 style: controller.wasAdded.value
@@ -181,6 +183,8 @@ class AiFoodView extends GetView<AiFoodController> {
                         )
                       : const SizedBox.shrink(),
                 ),
+                const SizedBox(height: 14),
+                _legalNotice(controller.nutrition.value),
               ],
             ),
           ),
@@ -623,13 +627,30 @@ class AiFoodView extends GetView<AiFoodController> {
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Nutrition',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.2,
-          ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Nutrition estimate',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: (food.databaseMatched ? green : warn).withValues(alpha: .1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                food.databaseMatched ? 'Database matched' : 'AI estimate',
+                style: TextStyle(
+                  color: food.databaseMatched ? greenDark : warn,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         GridView.count(
@@ -788,6 +809,54 @@ class AiFoodView extends GetView<AiFoodController> {
           Text(
             item.message,
             style: const TextStyle(height: 1.45, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legalNotice(FoodNutritionModel? food) {
+    const defaultDisclaimer =
+        'AI nutrition results are estimates for general wellness only. They are not medical advice, a diagnosis, or an official nutrition label.';
+    const defaultPrivacy =
+        'Food photos are sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF3E4A7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.info_outline, size: 17, color: Color(0xFF8A6500)),
+              SizedBox(width: 7),
+              Text('Important information', style: TextStyle(fontWeight: FontWeight.w800)),
+            ],
+          ),
+          if (controller.nutrition.value?.analysis.isNotEmpty == true) ...[
+            const SizedBox(height: 7),
+            Text(
+              controller.nutrition.value!.analysis,
+              style: const TextStyle(
+                color: textMuted,
+                fontSize: 12.5,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 7),
+          Text(
+            food?.disclaimer.isNotEmpty == true ? food!.disclaimer : defaultDisclaimer,
+            style: const TextStyle(fontSize: 11.5, height: 1.4, color: Color(0xFF6E5A18)),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            food?.privacyNotice.isNotEmpty == true ? food!.privacyNotice : defaultPrivacy,
+            style: const TextStyle(fontSize: 11.5, height: 1.4, color: Color(0xFF6E5A18)),
           ),
         ],
       ),

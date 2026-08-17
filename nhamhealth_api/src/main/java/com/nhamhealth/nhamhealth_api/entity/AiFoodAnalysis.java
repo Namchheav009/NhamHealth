@@ -31,6 +31,9 @@ public class AiFoodAnalysis {
     @Column(name = "detected_food_name", length = 150)
     private String detectedFoodName;
 
+    @Column(name = "analysis_text", length = 1000)
+    private String analysisText;
+
     @Column(name = "detected_serving_text", length = 100)
     private String detectedServingText;
 
@@ -72,6 +75,14 @@ public class AiFoodAnalysis {
 
     public void setDetectedFoodName(String detectedFoodName) {
         this.detectedFoodName = detectedFoodName;
+    }
+
+    public String getAnalysisText() {
+        return analysisText;
+    }
+
+    public void setAnalysisText(String analysisText) {
+        this.analysisText = analysisText;
     }
 
     public String getDetectedServingText() {
