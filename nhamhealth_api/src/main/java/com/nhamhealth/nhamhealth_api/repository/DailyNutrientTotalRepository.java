@@ -9,5 +9,7 @@ import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
 public interface DailyNutrientTotalRepository extends JpaRepository<DailyNutrientTotal, Integer> {
     void deleteByDailyWellnessSummaryDailySummaryId(Integer summaryId);
 
+    void deleteByNutrientNutrientId(Integer nutrientId);
+
     List<DailyNutrientTotal> findByDailyWellnessSummaryDailySummaryId(Integer summaryId);
 }

@@ -71,12 +71,12 @@
         return token && header ? { [header]: token } : {};
     }
 
-    async function readError(response) {
+    async function readError(response, fallback = 'The nutrient request could not be completed.') {
         try {
             const body = await response.json();
-            return body.message || 'The nutrient could not be saved.';
+            return body.message || fallback;
         } catch (_) {
-            return 'The nutrient could not be saved.';
+            return fallback;
         }
     }
 
@@ -103,7 +103,7 @@
                 headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error(await readError(response));
+            if (!response.ok) throw new Error(await readError(response, 'The nutrient could not be saved.'));
 
             hideModal();
             await alerts.success(
@@ -135,7 +135,7 @@
                 method: 'DELETE',
                 headers: csrfHeaders()
             });
-            if (!response.ok) throw new Error(await readError(response));
+            if (!response.ok) throw new Error(await readError(response, 'The nutrient could not be deleted.'));
 
             await alerts.success('Nutrient deleted', `${nutrientName} has been deleted.`);
             window.location.reload();
