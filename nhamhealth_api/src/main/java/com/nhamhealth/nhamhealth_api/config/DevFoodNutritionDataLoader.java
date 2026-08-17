@@ -40,6 +40,13 @@ public class DevFoodNutritionDataLoader implements CommandLineRunner {
         seed("Ice Cream", "Ice-Cream,Gelato", 270, 5, 32, 14, 25, "cup");
         seed("Cake", "Slice of Cake,Chocolate Cake", 350, 5, 50, 15, 30, "slice");
         seed("Milk Tea", "Bubble Tea,Boba Tea,Pearl Milk Tea", 280, 4, 52, 7, 28, "cup");
+        seed("Water", "Drinking Water,Mineral Water", 0, 0, 0, 0, 0, "glass");
+        seed("Black Coffee", "Coffee,Americano,Hot Coffee", 5, 0, 1, 0, 0, "cup");
+        seed("Coffee with Milk", "Latte,Cafe Latte,Milk Coffee", 150, 8, 14, 6, 12, "cup");
+        seed("Orange Juice", "Fresh Orange Juice,OJ", 112, 2, 26, 0, 21, "glass");
+        seed("Cola", "Soda,Soft Drink,Coke", 140, 0, 39, 0, 39, "can");
+        seed("Green Tea", "Unsweetened Green Tea,Hot Green Tea", 2, 0, 0, 0, 0, "cup");
+        seed("Smoothie", "Fruit Smoothie,Fruit Shake", 220, 4, 48, 3, 34, "glass");
     }
 
     private void seed(String name, String aliases, int calories, int protein, int carbs, int fat, int sugar, String unit) {

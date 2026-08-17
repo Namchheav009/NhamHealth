@@ -16,4 +16,5 @@ public interface FoodNutritionRepository extends JpaRepository<FoodNutrition, In
     List<FoodNutrition> findAliasMatches(@Param("term") String term);
 
     List<FoodNutrition> findByNameContainingIgnoreCaseAndActiveTrueOrderByNameAsc(String name);
+    List<FoodNutrition> findAllByActiveTrue();
 }
