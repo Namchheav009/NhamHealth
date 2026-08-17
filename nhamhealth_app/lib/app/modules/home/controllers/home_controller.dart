@@ -31,6 +31,7 @@ class HomeController extends GetxController {
 
   final moods = <MoodModel>[].obs;
   final isMoodsLoading = false.obs;
+  final isRecommendedMealsLoading = false.obs;
 
   @override
   void onInit() {
@@ -51,6 +52,8 @@ class HomeController extends GetxController {
     loadMoods();
     if (dashboard.value == null) {
       loadDashboard();
+    } else {
+      loadRecommendedMeals();
     }
   }
 
@@ -84,6 +87,7 @@ class HomeController extends GetxController {
       if (value != null) {
         _summariesByDay.putIfAbsent(_dayKey(DateTime.now()), () => value.dailySummary);
         _showSelectedDay();
+        await loadRecommendedMeals(moodId: selectedMoodId.value);
       }
     } catch (_) {
       Get.snackbar(
@@ -161,8 +165,9 @@ class HomeController extends GetxController {
       title: 'Water', value: '0', target: '8', progress: 0, unit: 'glasses'),
   );
 
-  void selectMood(int moodId) {
+  Future<void> selectMood(int moodId) async {
     selectedMoodId.value = moodId;
+    await loadRecommendedMeals(moodId: moodId, generate: true);
   }
 
   void selectBottomMenu(int index) {
@@ -234,15 +239,69 @@ class HomeController extends GetxController {
     }
   }
 
-  void getRecommendation() {
-    Get.snackbar(
-      'AI Recommendation',
-      'Preparing recommendations based on your wellness.',
-      snackPosition: SnackPosition.BOTTOM,
+  Future<void> getRecommendation() async {
+    final moodId = selectedMoodId.value;
+    if (moodId == null) {
+      Get.snackbar(
+        'Choose your mood',
+        'Select how you are feeling so AI can recommend suitable meals.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    await loadRecommendedMeals(
+      moodId: moodId,
+      generate: true,
+      refresh: true,
+      showMessage: true,
     );
   }
 
   Future<void> refreshMeals() async {
     await Future.wait([loadDashboard(), loadMoods()]);
+  }
+
+  Future<void> loadRecommendedMeals({
+    int? moodId,
+    bool generate = false,
+    bool refresh = false,
+    bool showMessage = false,
+  }) async {
+    try {
+      isRecommendedMealsLoading.value = true;
+      final meals = generate && moodId != null
+          ? await repository.generateRecommendedMeals(
+              moodId: moodId,
+              refresh: refresh,
+            )
+          : await repository.getRecommendedMeals(moodId: moodId);
+      final current = dashboard.value;
+      if (current != null) {
+        dashboard.value = HomeDashboardModel(
+          userName: current.userName,
+          dailySummary: current.dailySummary,
+          recommendedMeals: meals,
+        );
+      }
+      if (showMessage) {
+        Get.snackbar(
+          'AI Recommendation',
+          meals.isEmpty
+              ? 'No ready recommendation is available for this mood yet.'
+              : '${meals.length} personalized meal${meals.length == 1 ? '' : 's'} found.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } on Object {
+      if (showMessage) {
+        Get.snackbar(
+          'AI Recommendation',
+          'Unable to load recommendations.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } finally {
+      isRecommendedMealsLoading.value = false;
+    }
   }
 }

@@ -18,11 +18,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
+import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
+import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
+import com.nhamhealth.nhamhealth_api.repository.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Controller
@@ -32,14 +35,16 @@ public class AiRecommendationAdminController {
     private final AiRecommendationItemRepository itemRepository;
     private final UserRepository userRepository;
     private final MoodRepository moodRepository;
+    private final MealRepository mealRepository;
 
     public AiRecommendationAdminController(AiRecommendationRepository aiRecommendationRepository,
             AiRecommendationItemRepository itemRepository, UserRepository userRepository,
-            MoodRepository moodRepository) {
+            MoodRepository moodRepository, MealRepository mealRepository) {
         this.aiRecommendationRepository = aiRecommendationRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.moodRepository = moodRepository;
+        this.mealRepository = mealRepository;
     }
 
     @GetMapping("/admin/ai-recommendations")
@@ -58,6 +63,11 @@ public class AiRecommendationAdminController {
         model.addAttribute("aiRecs", recs);
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("moods", moodRepository.findAllByOrderByMoodNameAsc());
+        model.addAttribute("meals", mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc());
+        model.addAttribute("recommendationItems", recs.stream().collect(java.util.stream.Collectors.toMap(
+                AiRecommendation::getRecommendationId,
+                rec -> itemRepository.findAllByRecommendationRecommendationIdOrderByRankOrderAsc(
+                        rec.getRecommendationId()))));
         model.addAttribute("itemCounts", recs.stream().collect(java.util.stream.Collectors.toMap(
                 AiRecommendation::getRecommendationId,
                 rec -> itemRepository.countByRecommendationRecommendationId(rec.getRecommendationId()))));
@@ -70,9 +80,11 @@ public class AiRecommendationAdminController {
 
     @PostMapping("/admin/ai-recommendations")
     @ResponseBody
+    @Transactional
     public ResponseEntity<?> createRecommendation(@RequestParam Integer userId,
             @RequestParam(required = false) Integer moodId, @RequestParam String requestText,
-            @RequestParam(required = false) String responseText, @RequestParam String status) {
+            @RequestParam(required = false) String responseText, @RequestParam String status,
+            @RequestParam(required = false) List<Integer> mealIds) {
         if (requestText == null || requestText.isBlank() || status == null || status.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "User, request, and status are required."));
         }
@@ -86,6 +98,10 @@ public class AiRecommendationAdminController {
         if (!List.of("pending", "ready", "archived").contains(normalizedStatus)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Select a valid status."));
         }
+        List<Meal> selectedMeals = mealIds == null ? List.of() : mealRepository.findAllById(mealIds);
+        if (mealIds != null && selectedMeals.size() != mealIds.stream().distinct().count()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "One or more selected meals are invalid."));
+        }
         LocalDateTime now = LocalDateTime.now();
         AiRecommendation rec = new AiRecommendation();
         rec.setUser(user);
@@ -95,7 +111,18 @@ public class AiRecommendationAdminController {
         rec.setStatus(normalizedStatus);
         rec.setCreatedAt(now);
         rec.setUpdatedAt(now);
-        return ResponseEntity.ok(toResponse(aiRecommendationRepository.saveAndFlush(rec)));
+        AiRecommendation saved = aiRecommendationRepository.saveAndFlush(rec);
+        for (int index = 0; index < selectedMeals.size(); index++) {
+            AiRecommendationItem item = new AiRecommendationItem();
+            item.setRecommendation(saved);
+            item.setMeal(selectedMeals.get(index));
+            item.setRankOrder(index + 1);
+            item.setReasonText("Selected for this AI recommendation");
+            item.setCreatedAt(now);
+            itemRepository.save(item);
+        }
+        itemRepository.flush();
+        return ResponseEntity.ok(toResponse(saved, selectedMeals));
     }
 
     @DeleteMapping("/admin/ai-recommendations/{recommendationId}")
@@ -108,7 +135,7 @@ public class AiRecommendationAdminController {
         return ResponseEntity.noContent().build();
     }
 
-    private Map<String, Object> toResponse(AiRecommendation rec) {
+    private Map<String, Object> toResponse(AiRecommendation rec, List<Meal> meals) {
         String userName = rec.getUser().getName();
         String userEmail = rec.getUser().getEmail();
         return Map.ofEntries(
@@ -121,6 +148,10 @@ public class AiRecommendationAdminController {
                 Map.entry("responseText", rec.getResponseText() == null ? "" : rec.getResponseText()),
                 Map.entry("status", rec.getStatus()),
                 Map.entry("createdAt", rec.getCreatedAt().toString()),
-                Map.entry("itemCount", 0));
+                Map.entry("itemCount", meals.size()),
+                Map.entry("meals", meals.stream().map(meal -> Map.of(
+                        "name", meal.getMealName(),
+                        "calories", meal.getCaloriesCached() == null ? "Not set" : meal.getCaloriesCached().stripTrailingZeros().toPlainString() + " kcal"
+                )).toList()));
     }
 }
