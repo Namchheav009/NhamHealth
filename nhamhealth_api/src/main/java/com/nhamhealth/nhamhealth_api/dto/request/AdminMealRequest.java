@@ -9,7 +9,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
 public record AdminMealRequest(
@@ -22,5 +21,5 @@ public record AdminMealRequest(
         @Min(0) @Max(1440) Integer cookingTimeMinutes,
         boolean published,
         @NotBlank @Size(max = 255) String mainImageUrl,
-        @NotEmpty List<@Valid AdminRecipeStepRequest> recipeSteps) {
+        @NotNull List<@Valid AdminRecipeStepRequest> recipeSteps) {
 }
