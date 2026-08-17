@@ -14,12 +14,10 @@ import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
 import com.nhamhealth.nhamhealth_api.entity.DailyWellnessSummary;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
 
 @Service
 public class DailyNutritionService {
@@ -27,18 +25,15 @@ public class DailyNutritionService {
     private final DailyWellnessSummaryRepository summaryRepository;
     private final DailyNutrientTotalRepository totalRepository;
     private final NutrientRepository nutrientRepository;
-    private final AiRecommendationRepository recommendationRepository;
 
     public DailyNutritionService(UserRepository userRepository,
             DailyWellnessSummaryRepository summaryRepository,
             DailyNutrientTotalRepository totalRepository,
-            NutrientRepository nutrientRepository,
-            AiRecommendationRepository recommendationRepository) {
+            NutrientRepository nutrientRepository) {
         this.userRepository = userRepository;
         this.summaryRepository = summaryRepository;
         this.totalRepository = totalRepository;
         this.nutrientRepository = nutrientRepository;
-        this.recommendationRepository = recommendationRepository;
     }
 
     @Transactional
@@ -57,21 +52,9 @@ public class DailyNutritionService {
         if (request.aiRecommendation() != null && !request.aiRecommendation().isBlank()) {
             String insight = request.aiRecommendation().trim();
             summary.setAiInsightText(insight);
-            saveRecommendation(summary.getUser(), insight);
         }
         summary.setUpdatedAt(LocalDateTime.now());
         summaryRepository.save(summary);
-    }
-
-    private void saveRecommendation(User user, String responseText) {
-        AiRecommendation item = new AiRecommendation();
-        item.setUser(user);
-        item.setRequestText("AI Food Check");
-        item.setResponseText(responseText);
-        item.setStatus("COMPLETED");
-        item.setCreatedAt(LocalDateTime.now());
-        item.setUpdatedAt(LocalDateTime.now());
-        recommendationRepository.save(item);
     }
 
     private DailyWellnessSummary createSummary(Integer userId, LocalDate date) {

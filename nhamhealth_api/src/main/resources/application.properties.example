@@ -1,4 +1,6 @@
 spring.application.name=nhamhealth_api
+server.address=0.0.0.0
+server.port=8080
 spring.profiles.active=supabase
 
 # Keep Tomcat session files out of the shared Windows temp directory. Spring

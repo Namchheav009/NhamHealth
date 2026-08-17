@@ -1,5 +1,6 @@
 HELP.md
 target/
+.m2-repository/
 uploads/
 src/main/resources/application.properties
 .mvn/wrapper/maven-wrapper.jar
