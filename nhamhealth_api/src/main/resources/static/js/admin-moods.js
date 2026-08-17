@@ -17,6 +17,38 @@
     };
     let editingId = null;
 
+    const emojiPresets = () => [...document.querySelectorAll('[data-mood-preset]')];
+
+    function updateEmojiPresetSelection() {
+        const selectedEmoji = form?.elements.emojiCode?.value.trim() || '';
+        emojiPresets().forEach((preset) => {
+            const selected = preset.dataset.emoji === selectedEmoji;
+            preset.classList.toggle('selected', selected);
+            preset.setAttribute('aria-pressed', String(selected));
+        });
+    }
+
+    function chooseEmojiPreset(preset) {
+        if (!form) return;
+        form.elements.emojiCode.value = preset.dataset.emoji || '';
+        if (!form.elements.moodName.value.trim()) {
+            form.elements.moodName.value = preset.dataset.name || '';
+        }
+        updateEmojiPresetSelection();
+        form.elements.moodName.focus();
+    }
+
+    function setEmojiFromMoodName() {
+        if (!form || form.elements.emojiCode.value.trim()) return;
+        const moodName = form.elements.moodName.value.trim().toLocaleLowerCase();
+        const matchingPreset = emojiPresets().find(
+            (preset) => preset.dataset.name.toLocaleLowerCase() === moodName
+        );
+        if (!matchingPreset) return;
+        form.elements.emojiCode.value = matchingPreset.dataset.emoji || '';
+        updateEmojiPresetSelection();
+    }
+
     const rows = () => [...(rowsBox?.querySelectorAll('tr[data-id]') || [])];
     const headers = (json = false) => ({
         ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
@@ -165,6 +197,7 @@
             byId('moodModalDescription').textContent = 'Create an emotion option for wellness tracking.';
             saveButton.textContent = 'Save mood';
         }
+        updateEmojiPresetSelection();
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
@@ -177,6 +210,7 @@
         document.body.classList.remove('modal-open');
         editingId = null;
         form.reset();
+        updateEmojiPresetSelection();
     }
 
     async function saveMood(event) {
@@ -242,6 +276,13 @@
     byId('openMoodModal')?.addEventListener('click', () => showModal());
     byId('closeMoodModal')?.addEventListener('click', hideModal);
     byId('cancelMoodModal')?.addEventListener('click', hideModal);
+    form?.elements.moodName?.addEventListener('change', setEmojiFromMoodName);
+    form?.elements.moodName?.addEventListener('blur', setEmojiFromMoodName);
+    form?.elements.emojiCode?.addEventListener('input', updateEmojiPresetSelection);
+    document.addEventListener('click', (event) => {
+        const preset = event.target.closest('[data-mood-preset]');
+        if (preset) chooseEmojiPreset(preset);
+    });
     modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
     form?.addEventListener('submit', saveMood);
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal?.classList.contains('show')) hideModal(); });
