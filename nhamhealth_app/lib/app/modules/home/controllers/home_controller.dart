@@ -8,6 +8,7 @@ import '../models/home_dashboard_model.dart';
 import '../models/home_route_arguments.dart';
 import '../models/daily_summary_model.dart';
 import '../models/nutrition_progress_model.dart';
+import '../models/mood_model.dart';
 import '../repositories/home_repository.dart';
 
 class HomeController extends GetxController {
@@ -16,7 +17,7 @@ class HomeController extends GetxController {
   final HomeRepository repository;
   final isLoading = false.obs;
   final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
-  final selectedMoodIndex = 0.obs;
+  final selectedMoodId = RxnInt();
   final selectedBottomIndex = 0.obs;
   final selectedDay = DateTime.now().obs;
   final isLoggingOut = false.obs;
@@ -28,20 +29,8 @@ class HomeController extends GetxController {
     (index) => DateTime.now().subtract(Duration(days: 6 - index)),
   );
 
-  final moods = <MoodItem>[
-    const MoodItem(imageAsset: 'assets/icons/moods/happy.png', label: 'Happy'),
-    const MoodItem(imageAsset: 'assets/icons/moods/tired.png', label: 'Tired'),
-    const MoodItem(
-      imageAsset: 'assets/icons/moods/stressed.png',
-      label: 'Stressed',
-    ),
-    const MoodItem(imageAsset: 'assets/icons/moods/busy.png', label: 'Busy'),
-    const MoodItem(
-      imageAsset: 'assets/icons/moods/sleepy.png',
-      label: 'Sleepy',
-    ),
-    const MoodItem(imageAsset: 'assets/icons/moods/great.png', label: 'Great'),
-  ];
+  final moods = <MoodModel>[].obs;
+  final isMoodsLoading = false.obs;
 
   @override
   void onInit() {
@@ -59,8 +48,27 @@ class HomeController extends GetxController {
     if (initialDashboard != null) {
       _summariesByDay[_dayKey(DateTime.now())] = initialDashboard.dailySummary;
     }
+    loadMoods();
     if (dashboard.value == null) {
       loadDashboard();
+    }
+  }
+
+  Future<void> loadMoods() async {
+    try {
+      isMoodsLoading.value = true;
+      final result = await repository.getMoods();
+      moods.assignAll(result);
+      if (!result.any((mood) => mood.id == selectedMoodId.value)) {
+        selectedMoodId.value = null;
+      }
+    } on Object {
+      // Mood selection is supplementary to the dashboard. Leave the card empty
+      // rather than displaying stale values after an admin update or deletion.
+      moods.clear();
+      selectedMoodId.value = null;
+    } finally {
+      isMoodsLoading.value = false;
     }
   }
 
@@ -153,8 +161,8 @@ class HomeController extends GetxController {
       title: 'Water', value: '0', target: '8', progress: 0, unit: 'glasses'),
   );
 
-  void selectMood(int index) {
-    selectedMoodIndex.value = index;
+  void selectMood(int moodId) {
+    selectedMoodId.value = moodId;
   }
 
   void selectBottomMenu(int index) {
@@ -234,14 +242,7 @@ class HomeController extends GetxController {
     );
   }
 
-  void refreshMeals() {
-    loadDashboard();
+  Future<void> refreshMeals() async {
+    await Future.wait([loadDashboard(), loadMoods()]);
   }
-}
-
-class MoodItem {
-  const MoodItem({required this.imageAsset, required this.label});
-
-  final String imageAsset;
-  final String label;
 }

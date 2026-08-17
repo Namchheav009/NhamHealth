@@ -1,14 +1,67 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import '../../../../config/api_config.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../profile/repositories/profile_repository.dart';
 import '../models/daily_summary_model.dart';
 import '../models/home_dashboard_model.dart';
+import '../models/mood_model.dart';
 import '../models/nutrition_progress_model.dart';
 import '../models/recommended_meal_model.dart';
 
 class HomeProvider {
-  HomeProvider({ProfileRepository? profileRepository})
-    : _profileRepository = profileRepository;
+  HomeProvider({
+    ProfileRepository? profileRepository,
+    AuthService? authService,
+    http.Client? client,
+  }) : _profileRepository = profileRepository,
+       _authService = authService,
+       _client = client ?? http.Client();
 
   final ProfileRepository? _profileRepository;
+  final AuthService? _authService;
+  final http.Client _client;
+
+  Future<List<MoodModel>> getMoods() async {
+    // Keeping this optional makes the provider usable in isolated widget tests.
+    final authService = _authService;
+    if (authService == null) return const [];
+
+    final token = await authService.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const HomeProviderException('Your session has expired. Please sign in again.');
+    }
+
+    final response = await _client
+        .get(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/moods'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HomeProviderException(
+        response.statusCode == 401 || response.statusCode == 403
+            ? 'Your session has expired. Please sign in again.'
+            : 'Unable to load moods (HTTP ${response.statusCode}).',
+      );
+    }
+
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is! List) throw const FormatException();
+      return payload
+          .map((item) => MoodModel.fromJson(item as Map<String, dynamic>))
+          .toList(growable: false);
+    } on Object {
+      throw const HomeProviderException('The mood response is incomplete.');
+    }
+  }
 
   Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) async {
     final profile = await _profileRepository?.getDashboard(date: date);
@@ -81,4 +134,13 @@ class HomeProvider {
     if (goal == null || goal <= 0) return 0;
     return ((current ?? 0) / goal).clamp(0.0, 1.0).toDouble();
   }
+}
+
+class HomeProviderException implements Exception {
+  const HomeProviderException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
