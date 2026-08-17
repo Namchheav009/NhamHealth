@@ -5,14 +5,14 @@ import '../../../../theme/app_shadows.dart';
 import 'inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
-  final String imageAsset;
+  final String emoji;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const MoodCard({
     super.key,
-    required this.imageAsset,
+    required this.emoji,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -52,20 +52,17 @@ class MoodCard extends StatelessWidget {
                       width: 36,
                       height: 36,
                       child: Center(
-                        child: Image.asset(
-                          imageAsset,
-                          width: 36,
-                          height: 36,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                          excludeFromSemantics: true,
-                          errorBuilder:
-                              (_, _, _) => const Icon(
+                        child: emoji.isEmpty
+                            ? const Icon(
                                 Icons.mood_rounded,
                                 color: Color(0xFFFFB02E),
                                 size: 28,
+                              )
+                            : Text(
+                                emoji,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 28),
                               ),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 2),
