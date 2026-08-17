@@ -138,7 +138,7 @@
                 </div>
                 <div class="field">
                     <label for="moodEmoji">Emoji</label>
-                    <input id="moodEmoji" name="emojiCode" type="text" maxlength="30" placeholder="😄">
+                    <input id="moodEmoji" name="emojiCode" type="text" maxlength="30" placeholder="😄" autocomplete="off">
                 </div>
                 <div class="field">
                     <label for="moodStatus">Status</label>
@@ -146,6 +146,56 @@
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
+                </div>
+                <div class="field full emoji-picker-field">
+                    <div class="emoji-picker-heading">
+                        <label id="feelingEmojiLabel">Feeling emoji</label>
+                        <small>Choose one to fill the emoji field. You can still enter a custom emoji.</small>
+                    </div>
+                    <div class="emoji-presets" role="group" aria-labelledby="feelingEmojiLabel">
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Happy" data-emoji="😄" aria-label="Happy emoji">😄<span>Happy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Great" data-emoji="🤩" aria-label="Great emoji">🤩<span>Great</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Excited" data-emoji="🤗" aria-label="Excited emoji">🤗<span>Excited</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Joyful" data-emoji="😁" aria-label="Joyful emoji">😁<span>Joyful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Loved" data-emoji="🥰" aria-label="Loved emoji">🥰<span>Loved</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Calm" data-emoji="😌" aria-label="Calm emoji">😌<span>Calm</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Relaxed" data-emoji="😎" aria-label="Relaxed emoji">😎<span>Relaxed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Grateful" data-emoji="🙏" aria-label="Grateful emoji">🙏<span>Grateful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Motivated" data-emoji="💪" aria-label="Motivated emoji">💪<span>Motivated</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Focused" data-emoji="🧠" aria-label="Focused emoji">🧠<span>Focused</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Energized" data-emoji="⚡" aria-label="Energized emoji">⚡<span>Energized</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hopeful" data-emoji="🤞" aria-label="Hopeful emoji">🤞<span>Hopeful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Okay" data-emoji="🙂" aria-label="Okay emoji">🙂<span>Okay</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Proud" data-emoji="🥳" aria-label="Proud emoji">🥳<span>Proud</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Playful" data-emoji="😜" aria-label="Playful emoji">😜<span>Playful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Curious" data-emoji="🧐" aria-label="Curious emoji">🧐<span>Curious</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Surprised" data-emoji="😲" aria-label="Surprised emoji">😲<span>Surprised</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Confident" data-emoji="😏" aria-label="Confident emoji">😏<span>Confident</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Peaceful" data-emoji="🕊️" aria-label="Peaceful emoji">🕊️<span>Peaceful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Relieved" data-emoji="😮‍💨" aria-label="Relieved emoji">😮‍💨<span>Relieved</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Busy" data-emoji="😵‍💫" aria-label="Busy emoji">😵‍💫<span>Busy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Tired" data-emoji="😫" aria-label="Tired emoji">😫<span>Tired</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sleepy" data-emoji="😴" aria-label="Sleepy emoji">😴<span>Sleepy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Stressed" data-emoji="😖" aria-label="Stressed emoji">😖<span>Stressed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Anxious" data-emoji="😰" aria-label="Anxious emoji">😰<span>Anxious</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Overwhelmed" data-emoji="😵" aria-label="Overwhelmed emoji">😵<span>Overwhelmed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Confused" data-emoji="😕" aria-label="Confused emoji">😕<span>Confused</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Bored" data-emoji="😐" aria-label="Bored emoji">😐<span>Bored</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sad" data-emoji="😢" aria-label="Sad emoji">😢<span>Sad</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Lonely" data-emoji="😔" aria-label="Lonely emoji">😔<span>Lonely</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Angry" data-emoji="😠" aria-label="Angry emoji">😠<span>Angry</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Frustrated" data-emoji="😤" aria-label="Frustrated emoji">😤<span>Frustrated</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Disappointed" data-emoji="😞" aria-label="Disappointed emoji">😞<span>Disappointed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Embarrassed" data-emoji="😳" aria-label="Embarrassed emoji">😳<span>Embarrassed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Nervous" data-emoji="😬" aria-label="Nervous emoji">😬<span>Nervous</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Afraid" data-emoji="😨" aria-label="Afraid emoji">😨<span>Afraid</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hurt" data-emoji="🤕" aria-label="Hurt emoji">🤕<span>Hurt</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Jealous" data-emoji="😒" aria-label="Jealous emoji">😒<span>Jealous</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Drained" data-emoji="🫠" aria-label="Drained emoji">🫠<span>Drained</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Restless" data-emoji="😣" aria-label="Restless emoji">😣<span>Restless</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sick" data-emoji="🤒" aria-label="Sick emoji">🤒<span>Sick</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hungry" data-emoji="😋" aria-label="Hungry emoji">😋<span>Hungry</span></button>
+                    </div>
                 </div>
                 <p class="form-error full" id="moodFormError" role="alert" hidden></p>
             </div>
@@ -158,6 +208,6 @@
 </div>
 
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-moods.js(v=20260815-1)}" defer></script>
+<script th:src="@{/js/admin-moods.js(v=20260817-1)}" defer></script>
 </body>
 </html>
