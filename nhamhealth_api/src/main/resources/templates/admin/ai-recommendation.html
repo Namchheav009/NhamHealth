@@ -92,6 +92,7 @@
                         <tr>
                             <th>#</th>
                             <th>User</th>
+                            <th>Mood</th>
                             <th>Request</th>
                             <th>Response</th>
                             <th>Status</th>
@@ -104,15 +105,20 @@
                         <tr th:each="rec, iterStat : ${aiRecs}" th:data-id="${rec.recommendationId}" th:data-user-id="${rec.user != null ? rec.user.userId : ''}" th:data-user="${rec.user != null ? rec.user.name : 'Unknown'}" th:data-status="${rec.status != null ? rec.status.toLowerCase() : ''}" th:data-items="${itemCounts[rec.recommendationId]}">
                             <td th:text="${iterStat.count}">1</td>
                             <td><strong th:text="${rec.user != null ? rec.user.name : 'Unknown'}">User</strong><small th:text="${rec.user != null ? rec.user.email : ''}">email</small></td>
+                            <td><span class="mood-pill" th:text="${rec.mood != null ? rec.mood.moodName : 'No mood'}">Happy</span></td>
                             <td th:text="${rec.requestText}">What should I eat?</td>
                             <td th:text="${rec.responseText}">Try more vegetables</td>
                             <td><span class="status-pill" th:classappend="${rec.status == 'ready' ? ' status-active' : (rec.status == 'archived' ? ' status-neutral' : ' status-inactive')}" th:text="${rec.status}">pending</span></td>
-                            <td th:text="${itemCounts[rec.recommendationId]}">0</td>
+                            <td>
+                                <strong th:text="${itemCounts[rec.recommendationId] + ' meal(s)'}">0 meals</strong>
+                                <small th:each="item : ${recommendationItems[rec.recommendationId]}"
+                                       th:text="${item.meal.mealName + ' · ' + (item.meal.caloriesCached != null ? item.meal.caloriesCached + ' kcal' : 'calories not set')}">Meal · 400 kcal</small>
+                            </td>
                             <td th:text="${#temporals.format(rec.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
                             <td><button class="icon-button delete-recommendation" type="button" aria-label="Delete recommendation"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                         <tr th:if="${aiRecs.empty}">
-                            <td class="empty-state" colspan="8">No AI recommendations found.</td>
+                            <td class="empty-state" colspan="9">No AI recommendations found.</td>
                         </tr>
                         </tbody>
                     </table>
@@ -157,6 +163,14 @@
                                     <option value="ready">ready</option>
                                     <option value="archived">archived</option>
                                 </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="recMeals">Recommended meals <span>(optional)</span></label>
+                                <select id="recMeals" name="mealIds" multiple size="5">
+                                    <option th:each="meal : ${meals}" th:value="${meal.mealId}"
+                                            th:text="${meal.mealName + ' · ' + (meal.caloriesCached != null ? meal.caloriesCached + ' kcal' : 'calories not set')}">Meal · 400 kcal</option>
+                                </select>
+                                <small class="field-help">Use Ctrl (Windows) or Command (Mac) to select several meals. Calories come from the meal model.</small>
                             </div>
                             <div class="field-group">
                                 <label for="recResponse">AI response <span>(optional)</span></label>

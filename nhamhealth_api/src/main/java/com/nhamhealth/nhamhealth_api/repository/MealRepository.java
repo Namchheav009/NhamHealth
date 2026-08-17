@@ -10,5 +10,7 @@ public interface MealRepository extends JpaRepository<Meal, Integer> {
 
     List<Meal> findAllByOrderByUpdatedAtDesc();
 
+    List<Meal> findAllByIsPublishedTrueOrderByMealNameAsc();
+
     long countByCategoryCategoryId(Integer categoryId);
 }

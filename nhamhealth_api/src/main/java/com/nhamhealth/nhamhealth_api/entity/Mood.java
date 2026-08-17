@@ -5,7 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "moods")
@@ -24,6 +28,9 @@ public class Mood {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
+
+    @OneToMany(mappedBy = "mood")
+    private List<AiRecommendation> aiRecommendations = new ArrayList<>();
 
     public Mood() {
     }
@@ -54,5 +61,9 @@ public class Mood {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public List<AiRecommendation> getAiRecommendations() {
+        return aiRecommendations;
     }
 }
