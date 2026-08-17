@@ -25,15 +25,58 @@ class GreetingSection extends GetView<HomeController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'How are you feeling today?',
-                  style: TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'How are you feeling today?',
+                        style: TextStyle(
+                          color: AppColors.primaryGreen,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Obx(() {
+                      final selected = controller.moods.firstWhereOrNull(
+                        (mood) => mood.id == controller.selectedMoodId.value,
+                      );
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child:
+                            selected == null
+                                ? const Text(
+                                  'Select one',
+                                  key: ValueKey('empty-mood'),
+                                  style: TextStyle(
+                                    color: AppColors.secondaryText,
+                                    fontSize: 10,
+                                  ),
+                                )
+                                : Container(
+                                  key: ValueKey(selected.id),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.softGreen,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${selected.emoji} ${selected.name}',
+                                    style: const TextStyle(
+                                      color: AppColors.darkGreen,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                      );
+                    }),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
@@ -41,29 +84,34 @@ class GreetingSection extends GetView<HomeController> {
                 final moods = controller.moods;
                 if (controller.isMoodsLoading.value && moods.isEmpty) {
                   return const SizedBox(
-                    height: 70,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    height: 78,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
                 }
                 if (moods.isEmpty) {
                   return const SizedBox(
-                    height: 70,
+                    height: 78,
                     child: Center(
                       child: Text(
                         'No moods are available right now.',
-                        style: TextStyle(color: AppColors.primaryText, fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   );
                 }
                 return SizedBox(
-                  height: 70,
+                  height: 78,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     physics: const BouncingScrollPhysics(),
                     itemCount: moods.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
                       final mood = moods[index];
                       return MoodCard(

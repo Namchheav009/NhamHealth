@@ -53,7 +53,7 @@ class HomeController extends GetxController {
     if (dashboard.value == null) {
       loadDashboard();
     } else {
-      loadRecommendedMeals();
+      _clearRecommendedMeals();
     }
   }
 
@@ -85,9 +85,11 @@ class HomeController extends GetxController {
       dashboard.value = await repository.getHomeDashboard();
       final value = dashboard.value;
       if (value != null) {
-        _summariesByDay.putIfAbsent(_dayKey(DateTime.now()), () => value.dailySummary);
+        _summariesByDay.putIfAbsent(
+          _dayKey(DateTime.now()),
+          () => value.dailySummary,
+        );
         _showSelectedDay();
-        await loadRecommendedMeals(moodId: selectedMoodId.value);
       }
     } catch (_) {
       Get.snackbar(
@@ -117,10 +119,7 @@ class HomeController extends GetxController {
     }
   }
 
-  void addNutritionToToday({
-    required int calories,
-    required double protein,
-  }) {
+  void addNutritionToToday({required int calories, required double protein}) {
     final today = DateTime.now();
     final key = _dayKey(today);
     final current = _summariesByDay[key] ?? _emptySummary;
@@ -137,17 +136,22 @@ class HomeController extends GetxController {
     if (currentDashboard == null) return;
     dashboard.value = HomeDashboardModel(
       userName: currentDashboard.userName,
-      dailySummary: _summariesByDay[_dayKey(selectedDay.value)] ?? _emptySummary,
+      dailySummary:
+          _summariesByDay[_dayKey(selectedDay.value)] ?? _emptySummary,
       recommendedMeals: currentDashboard.recommendedMeals,
     );
   }
 
-  NutritionProgressModel _increment(NutritionProgressModel item, double amount) {
+  NutritionProgressModel _increment(
+    NutritionProgressModel item,
+    double amount,
+  ) {
     final value = (double.tryParse(item.value) ?? 0) + amount;
     final target = double.tryParse(item.target) ?? 1;
     return NutritionProgressModel(
       title: item.title,
-      value: value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1),
+      value:
+          value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1),
       target: item.target,
       progress: (value / target).clamp(0.0, 1.0).toDouble(),
       unit: item.unit,
@@ -158,16 +162,31 @@ class HomeController extends GetxController {
 
   static const _emptySummary = DailySummaryModel(
     calories: NutritionProgressModel(
-      title: 'Calories', value: '0', target: '2000', progress: 0, unit: 'kcal'),
+      title: 'Calories',
+      value: '0',
+      target: '2000',
+      progress: 0,
+      unit: 'kcal',
+    ),
     protein: NutritionProgressModel(
-      title: 'Protein', value: '0', target: '120', progress: 0, unit: 'g'),
+      title: 'Protein',
+      value: '0',
+      target: '120',
+      progress: 0,
+      unit: 'g',
+    ),
     water: NutritionProgressModel(
-      title: 'Water', value: '0', target: '8', progress: 0, unit: 'glasses'),
+      title: 'Water',
+      value: '0',
+      target: '8',
+      progress: 0,
+      unit: 'glasses',
+    ),
   );
 
-  Future<void> selectMood(int moodId) async {
+  void selectMood(int moodId) {
     selectedMoodId.value = moodId;
-    await loadRecommendedMeals(moodId: moodId, generate: true);
+    _clearRecommendedMeals();
   }
 
   void selectBottomMenu(int index) {
@@ -261,6 +280,16 @@ class HomeController extends GetxController {
     await Future.wait([loadDashboard(), loadMoods()]);
   }
 
+  void _clearRecommendedMeals() {
+    final current = dashboard.value;
+    if (current == null || current.recommendedMeals.isEmpty) return;
+    dashboard.value = HomeDashboardModel(
+      userName: current.userName,
+      dailySummary: current.dailySummary,
+      recommendedMeals: const [],
+    );
+  }
+
   Future<void> loadRecommendedMeals({
     int? moodId,
     bool generate = false,
@@ -269,12 +298,13 @@ class HomeController extends GetxController {
   }) async {
     try {
       isRecommendedMealsLoading.value = true;
-      final meals = generate && moodId != null
-          ? await repository.generateRecommendedMeals(
-              moodId: moodId,
-              refresh: refresh,
-            )
-          : await repository.getRecommendedMeals(moodId: moodId);
+      final meals =
+          generate && moodId != null
+              ? await repository.generateRecommendedMeals(
+                moodId: moodId,
+                refresh: refresh,
+              )
+              : await repository.getRecommendedMeals(moodId: moodId);
       final current = dashboard.value;
       if (current != null) {
         dashboard.value = HomeDashboardModel(
