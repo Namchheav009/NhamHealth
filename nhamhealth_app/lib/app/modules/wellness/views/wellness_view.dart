@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/wellness_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/page_skeleton.dart';
 import 'widgets/ai_insight_card.dart';
 import 'widgets/ai_meal_card.dart';
 import 'widgets/wellness_daily_summary_card.dart';
@@ -34,21 +35,26 @@ class WellnessView extends GetView<WellnessController> {
 
                       // Scrollable content
                       Expanded(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: AppSpacing.pagePadding,
-                          child: const Column(
-                            children: [
-                              WellnessDailySummaryCard(),
+                        child: Obx(
+                          () => SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: AppSpacing.pagePadding,
+                            child:
+                                controller.isLoading.value
+                                    ? const PageSkeleton.wellness()
+                                    : const Column(
+                                      children: [
+                                        WellnessDailySummaryCard(),
 
-                              SizedBox(height: 14),
+                                        SizedBox(height: 14),
 
-                              AiMealCard(),
+                                        AiMealCard(),
 
-                              SizedBox(height: 14),
+                                        SizedBox(height: 14),
 
-                              AiInsightCard(),
-                            ],
+                                        AiInsightCard(),
+                                      ],
+                                    ),
                           ),
                         ),
                       ),
