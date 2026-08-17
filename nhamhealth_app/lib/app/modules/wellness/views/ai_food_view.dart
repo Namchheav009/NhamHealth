@@ -6,153 +6,267 @@ import '../controllers/ai_food_controller.dart';
 import '../models/food_nutrition_model.dart';
 import '../models/food_recommendation_model.dart';
 
+/// -----------------------------------------------------------------------
+/// AiFoodView — restyled
+/// Same controller contract as before (AiFoodController via GetView), only
+/// the presentation layer changed:
+///   - Consistent color/spacing system
+///   - Animated appearance for cards (AnimatedSwitcher / AnimatedSize)
+///   - Icon-coded nutrition metrics
+///   - Real confidence meter instead of plain text
+///   - Nicer empty / live-camera states
+/// -----------------------------------------------------------------------
 class AiFoodView extends GetView<AiFoodController> {
   const AiFoodView({super.key});
+
+  // ---- Design tokens ----------------------------------------------------
   static const green = Color(0xFF00A651);
+  static const greenDark = Color(0xFF087A48);
+  static const bg = Color(0xFFF7FAF6);
+  static const cardBorder = Color(0x0F004D26);
+  static const warn = Color(0xFFFF7A45);
+  static const textMuted = Color(0xFF6B7A70);
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF7FAF6),
-    appBar: AppBar(
-      backgroundColor: const Color(0xFFF7FAF6),
-      elevation: 0,
-      leading: IconButton(
-        onPressed: Get.back,
-        icon: const Icon(Icons.arrow_back_rounded, color: green),
-      ),
-      title: const Text(
-        'AI Food Check',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      centerTitle: true,
-    ),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Obx(
-          () => ListView(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
-            children: [
-              _intro(),
-              const SizedBox(height: 16),
-              if (controller.isModelLoading.value)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: LinearProgressIndicator(color: green),
-                ),
-              _imageCard(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _button(
-                      Icons.photo_camera_outlined,
-                      'Take Photo',
-                      controller.takePhoto,
-                      outlined: true,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _button(
-                      Icons.photo_library_outlined,
-                      'Gallery',
-                      controller.pickImageFromGallery,
-                      outlined: true,
-                    ),
-                  ),
+    backgroundColor: bg,
+    appBar: _appBar(),
+    body: SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Obx(
+            () => ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+              children: [
+                _intro(),
+                const SizedBox(height: 18),
+                if (controller.isModelLoading.value) ...[
+                  const _ModelLoadingBar(),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              const SizedBox(height: 10),
-              _button(
-                controller.isLiveAnalyzing.value
-                    ? Icons.stop_circle_outlined
-                    : Icons.center_focus_strong,
-                controller.isLiveCameraStarting.value
-                    ? 'Starting camera...'
-                    : controller.isLiveAnalyzing.value
-                    ? 'Stop live scan'
-                    : 'Scan food live',
-                controller.isLiveCameraStarting.value
-                    ? null
-                    : controller.toggleLiveAnalysis,
-                subtle: true,
-              ),
-              if (controller.selectedImage.value != null) ...[
-                const SizedBox(height: 12),
-                _button(
-                  Icons.auto_awesome,
-                  controller.isAnalyzing.value
-                      ? 'Analyzing your food...'
-                      : 'Analyze Food',
-                  controller.isAnalyzing.value ? null : controller.analyzeFood,
+                _imageCard(),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _button(
+                        icon: Icons.photo_camera_outlined,
+                        text: 'Take Photo',
+                        action: controller.takePhoto,
+                        style: _ButtonStyle.outlined,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _button(
+                        icon: Icons.photo_library_outlined,
+                        text: 'Gallery',
+                        action: controller.pickImageFromGallery,
+                        style: _ButtonStyle.outlined,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-              if (controller.errorMessage.value != null)
-                _message(controller.errorMessage.value!, Colors.red.shade700),
-              if (controller.prediction.value != null) ...[
-                const SizedBox(height: 16),
-                _predictionCard(),
-              ],
-              if (controller.isNutritionLoading.value)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator(color: green)),
-                ),
-              if (controller.nutrition.value != null) ...[
-                const SizedBox(height: 14),
-                _nutritionCard(controller.nutrition.value!),
-              ],
-              if (controller.recommendation.value != null) ...[
-                const SizedBox(height: 14),
-                _recommendationCard(controller.recommendation.value!),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _button(
-                  Icons.add_circle_outline,
-                  controller.wasAdded.value
-                      ? 'Added to Today'
-                      : controller.isSaving.value
-                      ? 'Adding...'
-                      : "Add to Today's Food",
-                  controller.isSaving.value || controller.wasAdded.value
+                  icon: controller.isLiveAnalyzing.value
+                      ? Icons.stop_circle_outlined
+                      : Icons.center_focus_strong,
+                  text: controller.isLiveCameraStarting.value
+                      ? 'Starting camera...'
+                      : controller.isLiveAnalyzing.value
+                      ? 'Stop live scan'
+                      : 'Scan food live',
+                  action: controller.isLiveCameraStarting.value
                       ? null
-                      : controller.addFoodToToday,
+                      : controller.toggleLiveAnalysis,
+                  style: controller.isLiveAnalyzing.value
+                      ? _ButtonStyle.warning
+                      : _ButtonStyle.subtle,
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  child: controller.selectedImage.value != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: _button(
+                            icon: Icons.auto_awesome,
+                            text: controller.isAnalyzing.value
+                                ? 'Analyzing your food...'
+                                : 'Analyze Food',
+                            action: controller.isAnalyzing.value
+                                ? null
+                                : controller.analyzeFood,
+                            style: _ButtonStyle.primary,
+                            loading: controller.isAnalyzing.value,
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity),
+                ),
+                if (controller.errorMessage.value != null)
+                  _message(
+                    controller.errorMessage.value!,
+                    Colors.red.shade700,
+                    Icons.error_outline_rounded,
+                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: controller.prediction.value != null
+                      ? Padding(
+                          key: const ValueKey('prediction'),
+                          padding: const EdgeInsets.only(top: 16),
+                          child: _predictionCard(),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (controller.isNutritionLoading.value)
+                  const Padding(
+                    padding: EdgeInsets.all(28),
+                    child: Center(
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          color: green,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: controller.nutrition.value != null
+                      ? Padding(
+                          key: const ValueKey('nutrition'),
+                          padding: const EdgeInsets.only(top: 14),
+                          child: _nutritionCard(controller.nutrition.value!),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: controller.recommendation.value != null
+                      ? Padding(
+                          key: const ValueKey('recommendation'),
+                          padding: const EdgeInsets.only(top: 14),
+                          child: Column(
+                            children: [
+                              _recommendationCard(
+                                controller.recommendation.value!,
+                              ),
+                              const SizedBox(height: 14),
+                              _button(
+                                icon: controller.wasAdded.value
+                                    ? Icons.check_circle
+                                    : Icons.add_circle_outline,
+                                text: controller.wasAdded.value
+                                    ? 'Added to Today'
+                                    : controller.isSaving.value
+                                    ? 'Adding...'
+                                    : "Add to Today's Food",
+                                action:
+                                    controller.isSaving.value ||
+                                        controller.wasAdded.value
+                                    ? null
+                                    : controller.addFoodToToday,
+                                style: controller.wasAdded.value
+                                    ? _ButtonStyle.success
+                                    : _ButtonStyle.primary,
+                                loading: controller.isSaving.value,
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
     ),
   );
 
+  // ---- AppBar -------------------------------------------------------------
+
+  PreferredSizeWidget _appBar() => AppBar(
+    backgroundColor: bg,
+    surfaceTintColor: bg,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    leading: IconButton(
+      onPressed: Get.back,
+      icon: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: cardBorder),
+        ),
+        child: const Icon(Icons.arrow_back_rounded, color: green, size: 20),
+      ),
+    ),
+    title: const Text(
+      'AI Food Check',
+      style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.2),
+    ),
+    centerTitle: true,
+  );
+
+  // ---- Hero / intro ---------------------------------------------------
+
   Widget _intro() => Container(
-    padding: const EdgeInsets.all(18),
+    padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [Color(0xFF087A48), Color(0xFF00A651)],
+        colors: [greenDark, green],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(26),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x2600A651),
+          blurRadius: 22,
+          offset: Offset(0, 10),
+        ),
+      ],
     ),
-    child: const Row(
+    child: Row(
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(color: Color(0x2FFFFFFF), shape: BoxShape.circle),
-          child: Padding(
-            padding: EdgeInsets.all(12),
-            child: Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 26),
+        Container(
+          decoration: const BoxDecoration(
+            color: Color(0x2FFFFFFF),
+            shape: BoxShape.circle,
+          ),
+          padding: const EdgeInsets.all(13),
+          child: const Icon(
+            Icons.auto_awesome_rounded,
+            color: Colors.white,
+            size: 26,
           ),
         ),
-        SizedBox(width: 14),
-        Expanded(
+        const SizedBox(width: 14),
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Know what is on your plate', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                'Know what is on your plate',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
               SizedBox(height: 5),
-              Text('Snap a clear photo for instant nutrition insights.', style: TextStyle(color: Color(0xDFFFFFFF), height: 1.35)),
+              Text(
+                'Snap a clear photo for instant nutrition insights.',
+                style: TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
+              ),
             ],
           ),
         ),
@@ -160,181 +274,342 @@ class AiFoodView extends GetView<AiFoodController> {
     ),
   );
 
+  // ---- Image / camera card ---------------------------------------------
+
   Widget _imageCard() => GestureDetector(
-    onTap:
-        controller.isLiveAnalyzing.value
-            ? null
-            : controller.pickImageFromGallery,
-    child: Container(
-      height: 236,
+    onTap: controller.isLiveAnalyzing.value
+        ? null
+        : controller.pickImageFromGallery,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 240,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFD9E7DA)),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: controller.selectedImage.value != null
+              ? green.withValues(alpha: .35)
+              : const Color(0xFFD9E7DA),
+          width: controller.selectedImage.value != null ? 1.5 : 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
-      child:
-          controller.isLiveCameraReady
-              ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width:
-                          controller
-                              .liveCameraController!
-                              .value
-                              .previewSize!
-                              .height,
-                      height:
-                          controller
-                              .liveCameraController!
-                              .value
-                              .previewSize!
-                              .width,
-                      child: CameraPreview(controller.liveCameraController!),
-                    ),
-                  ),
-                  Positioned(
-                    left: 12,
-                    top: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 8,
-                            height: 8,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 7),
-                          Text(
-                            'LIVE AI',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              )
-              : controller.selectedImage.value == null
-              ? const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(color: Color(0xFFE8F7EA), shape: BoxShape.circle),
-                    child: Padding(padding: EdgeInsets.all(16), child: Icon(Icons.add_a_photo_outlined, size: 34, color: green)),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Add a meal photo',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Use camera or choose from gallery',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              )
-              : Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.file(
-                    controller.selectedImage.value!,
-                    fit: BoxFit.cover,
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton.filled(
-                      onPressed: controller.clearImage,
-                      icon: const Icon(Icons.close),
-                    ),
-                  ),
-                ],
-              ),
+      child: controller.isLiveCameraReady
+          ? _liveCameraPreview()
+          : controller.selectedImage.value == null
+          ? _emptyImageState()
+          : _selectedImagePreview(),
     ),
   );
 
-  Widget _button(
-    IconData icon,
-    String text,
-    VoidCallback? action, {
-    bool outlined = false,
-    bool subtle = false,
-  }) => SizedBox(
-    height: 48,
-    child:
-        outlined || subtle
-            ? OutlinedButton.icon(
-              onPressed: action,
-              icon: Icon(icon),
-              label: Text(text),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: green,
-                side: BorderSide(color: subtle ? const Color(0xFFCDE2D1) : green),
-                backgroundColor: subtle ? Colors.white : null,
-                shape: const StadiumBorder(),
-              ),
-            )
-            : FilledButton.icon(
-              onPressed: action,
-              icon: Icon(icon),
-              label: Text(text),
-              style: FilledButton.styleFrom(
-                backgroundColor: green,
-                shape: const StadiumBorder(),
+  Widget _liveCameraPreview() => Stack(
+    fit: StackFit.expand,
+    children: [
+      FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: controller.liveCameraController!.value.previewSize!.height,
+          height: controller.liveCameraController!.value.previewSize!.width,
+          child: CameraPreview(controller.liveCameraController!),
+        ),
+      ),
+      // subtle scan-frame overlay
+      Positioned.fill(
+        child: IgnorePointer(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: .55),
+                  width: 1.4,
+                ),
               ),
             ),
+          ),
+        ),
+      ),
+      Positioned(
+        left: 12,
+        top: 12,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _Pulse(),
+              SizedBox(width: 7),
+              Text(
+                'LIVE AI',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
   );
+
+  Widget _emptyImageState() => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFE8F7EA),
+          shape: BoxShape.circle,
+        ),
+        padding: const EdgeInsets.all(18),
+        child: const Icon(
+          Icons.add_a_photo_outlined,
+          size: 32,
+          color: green,
+        ),
+      ),
+      const SizedBox(height: 12),
+      const Text(
+        'Add a meal photo',
+        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+      ),
+      const SizedBox(height: 4),
+      const Text(
+        'Use camera or choose from gallery',
+        style: TextStyle(color: textMuted, fontSize: 13),
+      ),
+    ],
+  );
+
+  Widget _selectedImagePreview() => Stack(
+    fit: StackFit.expand,
+    children: [
+      Image.file(controller.selectedImage.value!, fit: BoxFit.cover),
+      // gradient scrim so the close button stays legible on bright photos
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 64,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black.withValues(alpha: .35), Colors.transparent],
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        top: 10,
+        right: 10,
+        child: Material(
+          color: Colors.black.withValues(alpha: .45),
+          shape: const CircleBorder(),
+          child: IconButton(
+            onPressed: controller.clearImage,
+            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  // ---- Buttons -----------------------------------------------------------
+
+  Widget _button({
+    required IconData icon,
+    required String text,
+    required VoidCallback? action,
+    _ButtonStyle style = _ButtonStyle.primary,
+    bool loading = false,
+  }) {
+    final child = loading
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: style == _ButtonStyle.primary
+                      ? Colors.white
+                      : green,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(text),
+            ],
+          )
+        : null;
+
+    switch (style) {
+      case _ButtonStyle.primary:
+        return SizedBox(
+          height: 50,
+          child: FilledButton.icon(
+            onPressed: action,
+            icon: loading ? const SizedBox.shrink() : Icon(icon),
+            label: child ?? Text(text),
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              disabledBackgroundColor: green.withValues(alpha: .5),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        );
+      case _ButtonStyle.success:
+        return SizedBox(
+          height: 50,
+          child: FilledButton.icon(
+            onPressed: action,
+            icon: Icon(icon),
+            label: Text(text),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE8F7EA),
+              foregroundColor: greenDark,
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        );
+      case _ButtonStyle.outlined:
+        return SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: action,
+            icon: Icon(icon, size: 20),
+            label: Text(text),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: green,
+              side: const BorderSide(color: green),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      case _ButtonStyle.subtle:
+        return SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: action,
+            icon: Icon(icon, size: 20),
+            label: Text(text),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: green,
+              side: const BorderSide(color: Color(0xFFCDE2D1)),
+              backgroundColor: Colors.white,
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      case _ButtonStyle.warning:
+        return SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: action,
+            icon: Icon(icon, size: 20, color: warn),
+            label: Text(text, style: const TextStyle(color: warn)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: warn),
+              backgroundColor: Colors.white,
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+    }
+  }
+
+  // ---- Prediction ----------------------------------------------------
 
   Widget _predictionCard() {
     final value = controller.prediction.value!;
     final low = value.confidence < AiFoodController.lowConfidenceThreshold;
+    final pct = (value.confidence * 100).round();
     return _card(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            low ? 'Not sure about this food' : 'Detected Food',
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          Row(
+            children: [
+              Icon(
+                low ? Icons.help_outline_rounded : Icons.restaurant_rounded,
+                size: 16,
+                color: low ? warn : green,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                low ? 'Not sure about this food' : 'Detected Food',
+                style: const TextStyle(fontSize: 13, color: textMuted),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             value.foodName,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
-          ),
-          Text(
-            '${(value.confidence * 100).round()}% confidence',
-            style: TextStyle(
-              color: low ? Colors.orange : green,
-              fontWeight: FontWeight.w700,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: value.confidence.clamp(0, 1),
+                    minHeight: 7,
+                    backgroundColor: const Color(0xFFEFF3EE),
+                    valueColor: AlwaysStoppedAnimation(low ? warn : green),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$pct%',
+                style: TextStyle(
+                  color: low ? warn : green,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
           if (low)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Try another photo with better lighting, the food centered, and fewer objects around it.',
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: warn.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Try another photo with better lighting, the food centered, and fewer objects around it.',
+                  style: TextStyle(fontSize: 12.5, height: 1.4),
+                ),
               ),
             ),
         ],
@@ -342,27 +617,62 @@ class AiFoodView extends GetView<AiFoodController> {
     );
   }
 
+  // ---- Nutrition ---------------------------------------------------------
+
   Widget _nutritionCard(FoodNutritionModel food) => _card(
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           'Nutrition',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: 2.25,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 2.35,
           children: [
-            _metric('${food.calories.round()} kcal', 'Calories'),
-            _metric('${food.protein.toStringAsFixed(1)}g', 'Protein'),
-            _metric('${food.carbs.toStringAsFixed(1)}g', 'Carbs'),
-            _metric('${food.fat.toStringAsFixed(1)}g', 'Fat'),
-            _metric('${food.sugar.toStringAsFixed(1)}g', 'Sugar'),
             _metric(
+              Icons.local_fire_department_rounded,
+              const Color(0xFFFF7A45),
+              '${food.calories.round()} kcal',
+              'Calories',
+            ),
+            _metric(
+              Icons.fitness_center_rounded,
+              const Color(0xFF3B82F6),
+              '${food.protein.toStringAsFixed(1)}g',
+              'Protein',
+            ),
+            _metric(
+              Icons.grain_rounded,
+              const Color(0xFFC2A100),
+              '${food.carbs.toStringAsFixed(1)}g',
+              'Carbs',
+            ),
+            _metric(
+              Icons.opacity_rounded,
+              const Color(0xFFF43F5E),
+              '${food.fat.toStringAsFixed(1)}g',
+              'Fat',
+            ),
+            _metric(
+              Icons.icecream_rounded,
+              const Color(0xFFA855F7),
+              '${food.sugar.toStringAsFixed(1)}g',
+              'Sugar',
+            ),
+            _metric(
+              Icons.restaurant_menu_rounded,
+              green,
               '${food.servingSize.toStringAsFixed(food.servingSize % 1 == 0 ? 0 : 1)} ${food.servingUnit}',
               'Serving',
             ),
@@ -372,82 +682,147 @@ class AiFoodView extends GetView<AiFoodController> {
     ),
   );
 
-  Widget _metric(String value, String label) => Padding(
-    padding: const EdgeInsets.all(6),
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4FAF2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
+  Widget _metric(IconData icon, Color color, String value, String label) =>
+      DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7FAF6),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
         ),
-      ),
-    ),
-  );
-
-  Widget _recommendationCard(FoodRecommendationModel item) {
-    final color =
-        item.type == FoodRecommendationType.warning
-            ? const Color(0xFFFF7A45)
-            : green;
-    return _card(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'AI Recommendation',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 6),
-          Row(
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
             children: [
-              Icon(Icons.check_circle, color: color),
-              const SizedBox(width: 7),
-              Text(
-                item.title,
-                style: TextStyle(
-                  fontSize: 18,
-                  color: color,
-                  fontWeight: FontWeight.w800,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      style: const TextStyle(color: textMuted, fontSize: 11.5),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 7),
-          Text(item.message, style: const TextStyle(height: 1.4)),
+        ),
+      );
+
+  // ---- Recommendation -----------------------------------------------
+
+  Widget _recommendationCard(FoodRecommendationModel item) {
+    final isWarning = item.type == FoodRecommendationType.warning;
+    final color = isWarning ? warn : green;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border(left: BorderSide(color: color, width: 4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'AI Recommendation',
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isWarning ? Icons.priority_high_rounded : Icons.check_rounded,
+                  color: color,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            item.message,
+            style: const TextStyle(height: 1.45, fontSize: 14),
+          ),
         ],
       ),
     );
   }
 
-  Widget _message(String text, Color color) => Padding(
+  // ---- Misc ----------------------------------------------------------
+
+  Widget _message(String text, Color color, IconData icon) => Padding(
     padding: const EdgeInsets.only(top: 12),
     child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(text, style: TextStyle(color: color)),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(color: color, fontSize: 13.5)),
+          ),
+        ],
+      ),
     ),
   );
+
   Widget _card(Widget child) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0x0F004D26)),
+      border: Border.all(color: cardBorder),
       boxShadow: const [
         BoxShadow(
           color: Color(0x12000000),
@@ -457,5 +832,57 @@ class AiFoodView extends GetView<AiFoodController> {
       ],
     ),
     child: child,
+  );
+}
+
+enum _ButtonStyle { primary, outlined, subtle, warning, success }
+
+/// Slim animated loading bar shown while the on-device model loads.
+class _ModelLoadingBar extends StatelessWidget {
+  const _ModelLoadingBar();
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(8),
+    child: const LinearProgressIndicator(
+      color: AiFoodView.green,
+      backgroundColor: Color(0xFFE8F7EA),
+      minHeight: 6,
+    ),
+  );
+}
+
+/// Small pulsing red dot used in the "LIVE AI" badge.
+class _Pulse extends StatefulWidget {
+  const _Pulse();
+
+  @override
+  State<_Pulse> createState() => _PulseState();
+}
+
+class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: Tween(begin: 0.35, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    ),
+    child: const SizedBox(
+      width: 8,
+      height: 8,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+      ),
+    ),
   );
 }

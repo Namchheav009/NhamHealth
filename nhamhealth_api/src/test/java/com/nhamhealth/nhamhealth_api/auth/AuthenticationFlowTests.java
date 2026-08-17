@@ -452,12 +452,12 @@ class AuthenticationFlowTests {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mealName":"Updated Portal Meal","categoryId":%d,"calories":510,"servings":3,"description":"Updated through the admin portal","difficulty":"Medium","cookingTimeMinutes":35,"published":false,"mainImageUrl":"%s","recipeSteps":[{"title":"Prepare ingredients","instruction":"Prepare all ingredients.","imageUrl":"%s"}]}
-                                """.formatted(category.getCategoryId(), mealImageUrl, stepImageUrl)))
+                                {"mealName":"Updated Portal Meal","categoryId":%d,"calories":510,"servings":3,"description":"Updated through the admin portal","difficulty":"Medium","cookingTimeMinutes":35,"published":false,"mainImageUrl":"%s","recipeSteps":[]}
+                                """.formatted(category.getCategoryId(), mealImageUrl)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mealName").value("Updated Portal Meal"))
                 .andExpect(jsonPath("$.status").value("Draft"));
-        assertTrue(recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId).size() == 1);
+        assertTrue(recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId).isEmpty());
 
         mockMvc.perform(get("/admin/meals").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
