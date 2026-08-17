@@ -13,9 +13,9 @@ abstract final class ApiConfig {
     }
 
     return switch (defaultTargetPlatform) {
-      // Android development uses an ADB reverse tunnel so the same URL works
-      // reliably on a USB-connected emulator or physical device.
-      TargetPlatform.android => 'http://127.0.0.1:8080',
+      // 10.0.2.2 is the Android Emulator alias for the host computer.
+      // Physical devices must provide API_BASE_URL with the computer's LAN IP.
+      TargetPlatform.android => 'http://10.0.2.2:8080',
       _ => 'http://localhost:8080',
     };
   }

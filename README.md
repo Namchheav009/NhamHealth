@@ -232,6 +232,21 @@ For Android, start an emulator or connect a device before running
 `flutter devices`. Building and running the iOS client requires macOS and
 Xcode.
 
+From the repository root, the Windows launcher checks API health and selects
+the correct Android connection automatically:
+
+```powershell
+.\run-android.ps1 -Mode emulator
+.\run-android.ps1 -Mode usb
+.\run-android.ps1 -Mode wifi
+```
+
+USB mode requires USB debugging and uses `adb reverse`, so it does not depend
+on Wi-Fi, the computer's IP address, or a firewall rule. Wi-Fi mode detects the
+computer's current Wi-Fi IPv4 address; use `-ComputerIp 192.168.1.10` only when
+automatic detection is not appropriate. Pass `-DeviceId <id>` when more than
+one Android target is connected.
+
 ## Supabase PostgreSQL
 
 The API reads its Supabase connection directly from
