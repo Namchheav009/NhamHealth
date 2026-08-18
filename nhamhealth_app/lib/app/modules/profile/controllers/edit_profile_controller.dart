@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../widgets/app_alert.dart';
+import '../repositories/profile_repository.dart';
 import 'profile_controller.dart';
 
 class EditProfileController extends GetxController {
@@ -96,9 +100,10 @@ class EditProfileController extends GetxController {
     if (dashboard != null) {
       phone.value = dashboard.phone ?? '';
       dateOfBirth.value = dashboard.dateOfBirth ?? dateOfBirth.value;
-      gender.value = dashboard.gender?.trim().isNotEmpty == true
-          ? dashboard.gender!.trim()
-          : 'Prefer not to say';
+      gender.value =
+          dashboard.gender?.trim().isNotEmpty == true
+              ? dashboard.gender!.trim()
+              : 'Prefer not to say';
     }
   }
 
@@ -120,22 +125,30 @@ class EditProfileController extends GetxController {
         weightKg: weight.value,
         imagePath: profileImagePath.value,
       );
+      await AppAlert.dismiss();
+      if (Get.isSnackbarOpen) {
+        await Get.closeCurrentSnackbar();
+      }
       Get.back<void>();
-      Get.snackbar(
-        'Profile Updated',
-        'Your changes are now synced with the dashboard.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF00A651),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
+      await AppAlert.success(
+        title: 'Profile saved',
+        message:
+            'Your photo and profile details are now available on your dashboard.',
       );
-    } on Object catch (error) {
-      Get.snackbar(
-        'Unable to save profile',
-        error.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+    } on ProfileException catch (error) {
+      await AppAlert.error(
+        title: 'Profile couldn\'t be saved',
+        message: error.message,
+      );
+    } on TimeoutException {
+      await AppAlert.error(
+        title: 'Upload took too long',
+        message: 'Check your connection and try saving your profile again.',
+      );
+    } on Object {
+      await AppAlert.error(
+        title: 'Profile couldn\'t be saved',
+        message: 'Something went wrong while saving. Please try again.',
       );
     } finally {
       isSaving.value = false;
@@ -162,11 +175,9 @@ class EditProfileController extends GetxController {
 
       if (image != null) profileImagePath.value = image.path;
     } catch (_) {
-      Get.snackbar(
-        'Image selection failed',
-        'Could not open the gallery. Please check photo permissions.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      await AppAlert.error(
+        title: 'Couldn\'t open your photos',
+        message: 'Check photo permissions, then choose the image again.',
       );
     }
   }
@@ -302,9 +313,10 @@ class EditProfileController extends GetxController {
       () => ListTile(
         contentPadding: EdgeInsets.zero,
         title: Text(value),
-        trailing: gender.value == value
-            ? const Icon(Icons.check_circle, color: Color(0xFF00A651))
-            : null,
+        trailing:
+            gender.value == value
+                ? const Icon(Icons.check_circle, color: Color(0xFF00A651))
+                : null,
         onTap: () {
           gender.value = value;
           Get.back();
@@ -314,12 +326,7 @@ class EditProfileController extends GetxController {
   }
 
   void _showInputError(String message) {
-    Get.snackbar(
-      'Invalid value',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-    );
+    unawaited(AppAlert.error(title: 'Check this value', message: message));
   }
 
   Future<void> _showTextEditor({
