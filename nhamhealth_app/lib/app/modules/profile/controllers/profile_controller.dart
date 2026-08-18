@@ -15,6 +15,7 @@ class ProfileController extends GetxController {
     : _repository = repository;
 
   final ProfileRepository _repository;
+  String? _uploadedProfileImagePath;
   final selectedNavIndex = 4.obs;
   final isLoading = false.obs;
   final errorMessage = RxnString();
@@ -53,17 +54,14 @@ class ProfileController extends GetxController {
   final water = 0.obs;
   final waterGoal = 8.obs;
 
-  double get caloriesProgress => caloriesGoal.value <= 0
-      ? 0
-      : calories.value / caloriesGoal.value;
+  double get caloriesProgress =>
+      caloriesGoal.value <= 0 ? 0 : calories.value / caloriesGoal.value;
 
-  double get proteinProgress => proteinGoal.value <= 0
-      ? 0
-      : protein.value / proteinGoal.value;
+  double get proteinProgress =>
+      proteinGoal.value <= 0 ? 0 : protein.value / proteinGoal.value;
 
-  double get waterProgress => waterGoal.value <= 0
-      ? 0
-      : water.value / waterGoal.value;
+  double get waterProgress =>
+      waterGoal.value <= 0 ? 0 : water.value / waterGoal.value;
 
   @override
   void onInit() {
@@ -103,13 +101,15 @@ class ProfileController extends GetxController {
   void _applyDashboard(ProfileDashboardModel dashboard) {
     this.dashboard.value = dashboard;
     final fullName = dashboard.fullName?.trim();
-    name.value = fullName == null || fullName.isEmpty
-        ? dashboard.email.split('@').first
-        : fullName;
+    name.value =
+        fullName == null || fullName.isEmpty
+            ? dashboard.email.split('@').first
+            : fullName;
     email.value = dashboard.email;
-    membership.value = dashboard.membership?.trim().isNotEmpty == true
-        ? dashboard.membership!.trim()
-        : 'WellBite Member';
+    membership.value =
+        dashboard.membership?.trim().isNotEmpty == true
+            ? dashboard.membership!.trim()
+            : 'WellBite Member';
     if (dashboard.age != null) age.value = dashboard.age!;
     if (dashboard.heightCm != null) height.value = dashboard.heightCm!.round();
     if (dashboard.weightKg != null) weight.value = dashboard.weightKg!.round();
@@ -138,6 +138,7 @@ class ProfileController extends GetxController {
       role: authenticatedUser.value?.role ?? 'USER',
       fullName: dashboard.fullName,
       profileImageUrl: dashboard.profileImageUrl,
+      hasPin: authenticatedUser.value?.hasPin ?? false,
     );
     errorMessage.value = null;
   }
@@ -152,21 +153,40 @@ class ProfileController extends GetxController {
     required double weightKg,
     String? imagePath,
   }) async {
-    if (imagePath != null && imagePath.trim().isNotEmpty) {
-      await _repository.uploadProfileImage(imagePath);
+    final selectedImagePath = imagePath?.trim();
+    final hasSelectedImage =
+        selectedImagePath != null && selectedImagePath.isNotEmpty;
+    if (hasSelectedImage && _uploadedProfileImagePath != selectedImagePath) {
+      await _repository.uploadProfileImage(selectedImagePath);
+      _uploadedProfileImagePath = selectedImagePath;
     }
-    _applyDashboard(
-      await _repository.updateProfile(
-        fullName: fullName,
-        email: email,
-        phone: phone,
-        dateOfBirth: dateOfBirth,
-        gender: gender,
-        heightCm: heightCm,
-        weightKg: weightKg,
-      ),
-    );
-    profileImagePath.value = '';
+    try {
+      _applyDashboard(
+        await _repository.updateProfile(
+          fullName: fullName,
+          email: email,
+          phone: phone,
+          dateOfBirth: dateOfBirth,
+          gender: gender,
+          heightCm: heightCm,
+          weightKg: weightKg,
+        ),
+      );
+      profileImagePath.value = '';
+      _uploadedProfileImagePath = null;
+    } on Object {
+      // The image endpoint commits before the profile-details request. If the
+      // second request fails (for example, because an email is already used),
+      // refresh so the stored photo is still reflected in the dashboard.
+      if (hasSelectedImage && _uploadedProfileImagePath == selectedImagePath) {
+        try {
+          _applyDashboard(await _repository.getDashboard());
+        } on Object {
+          // Preserve the original, more useful save error.
+        }
+      }
+      rethrow;
+    }
   }
 
   void changeNavigation(int index) {
@@ -192,7 +212,11 @@ class ProfileController extends GetxController {
   }
 
   Future<void> editProfile() async {
-    if (!await PrivacyAuth.require(reason: 'Unlock to edit your personal profile.')) return;
+    if (!await PrivacyAuth.require(
+      reason: 'Unlock to edit your personal profile.',
+    )) {
+      return;
+    }
     Get.to(
       () => const EditProfileView(),
       binding: BindingsBuilder(() {

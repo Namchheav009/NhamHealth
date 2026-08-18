@@ -36,6 +36,7 @@ import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Service
@@ -46,6 +47,7 @@ public class AdminDashboardService {
     private static final DateTimeFormatter PERIOD_LABEL = DateTimeFormatter.ofPattern("MMM d, uuuu");
 
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final MealRepository mealRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final MealLogRepository mealLogRepository;
@@ -64,6 +66,7 @@ public class AdminDashboardService {
 
     public AdminDashboardService(
             UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
             MealRepository mealRepository,
             MealCategoryRepository mealCategoryRepository,
             MealLogRepository mealLogRepository,
@@ -80,6 +83,7 @@ public class AdminDashboardService {
             MessageRepository messageRepository,
             NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
+        this.userProfileRepository = userProfileRepository;
         this.mealRepository = mealRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.mealLogRepository = mealLogRepository;
@@ -205,7 +209,14 @@ public class AdminDashboardService {
         return users.stream()
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(5)
-                .map(user -> new RecentUser(user.getInitials(), user.getEmail(), user.getStatus(), user.getCreatedAt()))
+                .map(user -> new RecentUser(
+                        user.getInitials(),
+                        user.getEmail(),
+                        userProfileRepository.findByUser_UserId(user.getUserId())
+                                .map(profile -> profile.getProfileImageUrl())
+                                .orElse(null),
+                        user.getStatus(),
+                        user.getCreatedAt()))
                 .toList();
     }
 
@@ -249,7 +260,12 @@ public class AdminDashboardService {
     public record CategoryMetric(String name, long count) {
     }
 
-    public record RecentUser(String initials, String email, String status, LocalDateTime createdAt) {
+    public record RecentUser(
+            String initials,
+            String email,
+            String profileImageUrl,
+            String status,
+            LocalDateTime createdAt) {
     }
 
     public record RecentReview(String mealName, String userEmail, Integer rating, LocalDateTime createdAt) {
