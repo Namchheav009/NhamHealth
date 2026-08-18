@@ -5,6 +5,7 @@ import '../../../../core/services/app_security_service.dart';
 import '../../../widgets/pin_keypad_dialog.dart';
 import 'change_password_view.dart';
 import '../bindings/change_password_binding.dart';
+import '../../../widgets/app_background.dart';
 
 class SecurityView extends StatefulWidget {
   const SecurityView({
@@ -142,13 +143,7 @@ class _SecurityViewState extends State<SecurityView> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFFFFBFC),
-    body: Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/background/bg.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
+    body: AppBackground(
       child: SafeArea(
         child: Column(
           children: [

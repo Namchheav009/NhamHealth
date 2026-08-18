@@ -9,6 +9,7 @@ import '../models/authenticated_user_model.dart';
 import '../services/google_auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
 import '../../profile/views/security_view.dart';
+import '../../../widgets/pin_setup_prompt.dart';
 
 class LoginController extends GetxController {
   LoginController({AuthService? authService, GoogleAuthService? googleAuth})
@@ -70,6 +71,9 @@ class LoginController extends GetxController {
     if (user.hasPin) {
       Get.offAllNamed(AppRoutes.home, arguments: user);
       return;
+    }
+    if (Get.context != null) {
+      await showPinSetupPrompt(Get.context!);
     }
     Get.offAll<void>(
       () => SecurityView(

@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../controllers/profile_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/app_background.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import 'widgets/profile_bottom_navigation.dart';
@@ -18,14 +20,8 @@ class ProfileView extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: Colors.white,
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background/bg.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+      backgroundColor: const Color(0xFFFFFBFC),
+      body: AppBackground(
         child: SafeArea(
           bottom: false,
           child: RefreshIndicator(
@@ -50,11 +46,12 @@ class ProfileView extends GetView<ProfileController> {
                   }),
                   const SizedBox(height: 12),
                   Obx(
-                    () =>
-                        controller.isLoading.value &&
-                                controller.dashboard.value == null
-                            ? const PageSkeleton.profile()
-                            : const Column(
+                    () => LoadingContentTransition(
+                      isLoading:
+                          controller.isLoading.value &&
+                          controller.dashboard.value == null,
+                      loading: const PageSkeleton.profile(),
+                      content: const Column(
                               children: [
                                 ProfileHeader(),
                                 SizedBox(height: 8),
@@ -67,12 +64,13 @@ class ProfileView extends GetView<ProfileController> {
                                 ProfilePostCard(),
                               ],
                             ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        ),
+          ),
       ),
       bottomNavigationBar: const SafeArea(
         top: false,
