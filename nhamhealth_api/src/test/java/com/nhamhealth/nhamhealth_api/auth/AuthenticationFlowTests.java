@@ -2,6 +2,7 @@ package com.nhamhealth.nhamhealth_api.auth;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.Properties;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockMultipartFile;
@@ -46,6 +49,8 @@ import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
 import com.nhamhealth.nhamhealth_api.service.GoogleTokenVerifier;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -84,8 +89,13 @@ class AuthenticationFlowTests {
     @MockitoBean
     private GoogleTokenVerifier googleTokenVerifier;
 
+    @MockitoBean
+    private JavaMailSender mailSender;
+
     @BeforeEach
     void createTestAccounts() {
+        when(mailSender.createMimeMessage()).thenReturn(
+                new MimeMessage(Session.getInstance(new Properties())));
         Role adminRole = findOrCreateRole("ADMIN");
         Role userRole = findOrCreateRole("USER");
         createUserIfMissing("admin@nhamhealth.local", "Admin123!", adminRole);
@@ -166,7 +176,7 @@ class AuthenticationFlowTests {
     }
 
     @Test
-    void userCanRegisterAndImmediatelyReceiveBearerToken() throws Exception {
+    void userRegistrationRequiresEmailVerification() throws Exception {
         String email = "new-" + UUID.randomUUID() + "@example.com";
 
         mockMvc.perform(post("/api/v1/auth/register")
@@ -174,12 +184,12 @@ class AuthenticationFlowTests {
                         .content("""
                                 {"fullName":"New User","email":"%s","password":"StrongPass123!"}
                                 """.formatted(email)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.user.email").value(email))
-                .andExpect(jsonPath("$.user.role").value("USER"))
-                .andExpect(jsonPath("$.user.fullName").value("New User"))
-                .andExpect(jsonPath("$.user.profileImageUrl").isEmpty());
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.message").value("Verification code sent to your email"));
+
+        User pending = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+        assertEquals(false, pending.getIsVerified());
+        assertEquals("PENDING", pending.getStatus());
     }
 
     @Test
@@ -315,12 +325,16 @@ class AuthenticationFlowTests {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        assertTrue(userRepository.findById(userId).isEmpty());
-        assertTrue(userProfileRepository.findByUser_UserId(userId).isEmpty());
+        var deletedUser = userRepository.findById(userId).orElseThrow();
+        assertEquals("DELETED", deletedUser.getStatus());
+        assertFalse(deletedUser.getIsVerified());
+        assertTrue(userProfileRepository.findByUser_UserId(userId).isPresent());
 
         mockMvc.perform(get("/admin/users").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/users"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(email))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Edit user")));
     }
 

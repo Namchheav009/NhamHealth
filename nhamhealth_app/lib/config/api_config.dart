@@ -17,8 +17,9 @@ abstract final class ApiConfig {
     }
 
     return switch (defaultTargetPlatform) {
-      // Android Emulator -> access laptop localhost
-      TargetPlatform.android => 'http://10.0.2.2:8080',
+      // Default Android development target is the physical phone on the same
+      // Wi-Fi as this workstation. Emulator launches override this value.
+      TargetPlatform.android => 'http://172.16.130.26:8080',
 
       // Windows/Desktop
       TargetPlatform.windows => 'http://localhost:8080',

@@ -22,11 +22,13 @@ import com.nhamhealth.nhamhealth_api.dto.request.ForgotPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.VerifyRegistrationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.AuthService;
 import com.nhamhealth.nhamhealth_api.service.PasswordResetService;
+import com.nhamhealth.nhamhealth_api.service.RegistrationVerificationService;
 
 import jakarta.validation.Valid;
 
@@ -36,10 +38,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final RegistrationVerificationService registrationVerificationService;
 
-    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
+    public AuthController(AuthService authService, PasswordResetService passwordResetService,
+            RegistrationVerificationService registrationVerificationService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
+        this.registrationVerificationService = registrationVerificationService;
     }
 
     @PostMapping("/login")
@@ -58,8 +63,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(authService.registerMobileUser(request));
+            registrationVerificationService.register(request);
+            return ResponseEntity.status(HttpStatus.ACCEPTED)
+                    .body(new MessageResponse("Verification code sent to your email"));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new AuthErrorResponse(exception.getMessage()));
@@ -109,6 +115,18 @@ public class AuthController {
     public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.resetToken(), request.newPassword());
         return new MessageResponse("Password reset successfully");
+    }
+
+    @PostMapping("/verify-registration")
+    public ResponseEntity<?> verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request) {
+        return ResponseEntity.ok(registrationVerificationService.verify(request.email(), request.code()));
+    }
+
+    @PostMapping("/resend-registration-code")
+    public ResponseEntity<MessageResponse> resendRegistrationCode(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        registrationVerificationService.resend(request.email());
+        return ResponseEntity.accepted().body(new MessageResponse("A new verification code was sent"));
     }
 
     @PostMapping("/change-password")

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
 import '../models/wellness_summary_model.dart';
 import '../../profile/repositories/profile_repository.dart';
+import '../../../widgets/privacy_auth_dialog.dart';
 
 class WellnessController extends GetxController {
   WellnessController({ProfileRepository? profileRepository})
@@ -197,7 +198,8 @@ class WellnessController extends GetxController {
   // AI MEAL
   // =========================
 
-  void openAiMealAutoFill() {
+  Future<void> openAiMealAutoFill() async {
+    if (!await PrivacyAuth.require(reason: 'Unlock to use AI Food Check.')) return;
     Get.toNamed(AppRoutes.aiFood);
   }
 
