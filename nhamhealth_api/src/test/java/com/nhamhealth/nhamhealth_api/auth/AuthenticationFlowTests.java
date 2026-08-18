@@ -1,8 +1,14 @@
 package com.nhamhealth.nhamhealth_api.auth;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.Properties;
+
+import javax.imageio.ImageIO;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -127,8 +133,8 @@ class AuthenticationFlowTests {
                 .andExpect(jsonPath("$.role").value("USER"));
 
         MockMultipartFile imageFile = new MockMultipartFile(
-                "file", "profile.png", MediaType.IMAGE_PNG_VALUE, new byte[] { 1, 2, 3 });
-        mockMvc.perform(multipart("/api/v1/users/me/profile-image")
+                "file", "profile.jpg", MediaType.APPLICATION_OCTET_STREAM_VALUE, jpegBytes());
+        MvcResult imageResult = mockMvc.perform(multipart("/api/v1/users/me/profile-image")
                         .file(imageFile)
                         .with(request -> {
                             request.setMethod("PUT");
@@ -137,13 +143,20 @@ class AuthenticationFlowTests {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.profileImageUrl").value(org.hamcrest.Matchers.startsWith("/uploads/profile-images/")));
+                .andExpect(jsonPath("$.profileImageUrl").value(org.hamcrest.Matchers.startsWith("/uploads/profile-images/")))
+                .andReturn();
+        String profileImageUrl = JsonPath.read(
+                imageResult.getResponse().getContentAsString(), "$.profileImageUrl");
 
         mockMvc.perform(get("/api/v1/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.profileImageUrl")
-                        .value(org.hamcrest.Matchers.startsWith("/uploads/profile-images/")));
+                .andExpect(jsonPath("$.profileImageUrl").value(profileImageUrl));
+
+        mockMvc.perform(get("/api/v1/users/me/dashboard")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profileImageUrl").value(profileImageUrl));
 
         User user = userRepository.findByEmailIgnoreCase("user@nhamhealth.local").orElseThrow();
         assertTrue(userProfileRepository.findByUser_UserId(user.getUserId())
@@ -309,6 +322,25 @@ class AuthenticationFlowTests {
 
     @Test
     void adminCanUseFormLoginAndOpenDashboard() throws Exception {
+        Role userRole = findOrCreateRole("USER");
+        User dashboardUser = new User();
+        dashboardUser.setEmail("dashboard-avatar-" + UUID.randomUUID() + "@example.com");
+        dashboardUser.setPasswordHash(passwordEncoder.encode("User123!"));
+        dashboardUser.setRole(userRole);
+        dashboardUser.setStatus("ACTIVE");
+        dashboardUser.setIsVerified(true);
+        dashboardUser.setVerifiedAt(LocalDateTime.now());
+        dashboardUser = userRepository.save(dashboardUser);
+
+        String dashboardImageUrl = "/uploads/profile-images/dashboard-avatar.jpg";
+        UserProfile dashboardProfile = new UserProfile();
+        dashboardProfile.setUser(dashboardUser);
+        dashboardProfile.setFullName("Dashboard Avatar User");
+        dashboardProfile.setProfileImageUrl(dashboardImageUrl);
+        dashboardProfile.setCreatedAt(LocalDateTime.now());
+        dashboardProfile.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(dashboardProfile);
+
         mockMvc.perform(post("/login")
                         .with(csrf())
                         .param("email", "admin@nhamhealth.local")
@@ -318,7 +350,8 @@ class AuthenticationFlowTests {
 
         mockMvc.perform(get("/dashboard").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin/dashboard"));
+                .andExpect(view().name("admin/dashboard"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(dashboardImageUrl)));
     }
 
     @Test
@@ -387,7 +420,7 @@ class AuthenticationFlowTests {
     @Test
     void adminCanUploadAProfileImageFromThePortal() throws Exception {
         MockMultipartFile imageFile = new MockMultipartFile(
-                "file", "admin-profile.webp", "image/webp", new byte[] { 1, 2, 3 });
+                "file", "admin-profile.webp", "image/webp", webpBytes());
 
         MvcResult result = mockMvc.perform(multipart("/admin/profile-images")
                         .file(imageFile)
@@ -455,7 +488,7 @@ class AuthenticationFlowTests {
         category = mealCategoryRepository.save(category);
 
         MockMultipartFile mealImage = new MockMultipartFile(
-                "file", "portal-meal.png", MediaType.IMAGE_PNG_VALUE, new byte[] { 1, 2, 3 });
+                "file", "portal-meal.png", MediaType.IMAGE_PNG_VALUE, pngBytes());
         MvcResult imageResult = mockMvc.perform(multipart("/admin/meal-images")
                         .file(mealImage)
                         .with(user("admin").roles("ADMIN"))
@@ -466,7 +499,7 @@ class AuthenticationFlowTests {
         String mealImageUrl = JsonPath.read(imageResult.getResponse().getContentAsString(), "$.mainImageUrl");
 
         MockMultipartFile recipeStepImage = new MockMultipartFile(
-                "file", "portal-step.webp", "image/webp", new byte[] { 4, 5, 6 });
+                "file", "portal-step.webp", "image/webp", webpBytes());
         MvcResult stepImageResult = mockMvc.perform(multipart("/admin/recipe-step-images")
                         .file(recipeStepImage)
                         .with(user("admin").roles("ADMIN"))
@@ -576,7 +609,7 @@ class AuthenticationFlowTests {
     void adminCanManageIngredientsFromTheAdminPortal() throws Exception {
         String ingredientName = "Ingredient " + UUID.randomUUID();
         MockMultipartFile ingredientImage = new MockMultipartFile(
-                "file", "ingredient.png", MediaType.IMAGE_PNG_VALUE, new byte[] { 7, 8, 9 });
+                "file", "ingredient.png", MediaType.IMAGE_PNG_VALUE, pngBytes());
         MvcResult imageResult = mockMvc.perform(multipart("/admin/ingredient-images")
                         .file(ingredientImage)
                         .with(user("admin").roles("ADMIN"))
@@ -676,6 +709,31 @@ class AuthenticationFlowTests {
                         .param("password", "User123!"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?error=not-admin"));
+    }
+
+    private byte[] jpegBytes() {
+        return rasterImageBytes("jpg");
+    }
+
+    private byte[] pngBytes() {
+        return rasterImageBytes("png");
+    }
+
+    private byte[] webpBytes() {
+        return Base64.getDecoder().decode(
+                "UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==");
+    }
+
+    private byte[] rasterImageBytes(String format) {
+        BufferedImage image = new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB);
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (!ImageIO.write(image, format, output)) {
+                throw new IllegalStateException("No test image writer for " + format);
+            }
+            return output.toByteArray();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to create a test image", exception);
+        }
     }
 
     private Role findOrCreateRole(String roleName) {
