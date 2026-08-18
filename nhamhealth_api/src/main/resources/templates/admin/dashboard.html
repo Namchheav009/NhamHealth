@@ -129,7 +129,13 @@
                             <tbody>
                             <tr th:if="${#lists.isEmpty(dashboard.recentUsers())}"><td colspan="3" class="table-empty">No users yet.</td></tr>
                             <tr th:each="user : ${dashboard.recentUsers()}">
-                                <td class="user-cell"><span class="mini-avatar" th:text="${user.initials()}">NH</span><span th:text="${user.email()}">user@example.com</span></td>
+                                <td class="user-cell">
+                                    <span class="mini-avatar">
+                                        <img th:if="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}" th:src="${user.profileImageUrl()}" th:alt="${user.email()}">
+                                        <span th:unless="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}" th:text="${user.initials()}">NH</span>
+                                    </span>
+                                    <span th:text="${user.email()}">user@example.com</span>
+                                </td>
                                 <td><span class="status-badge" th:classappend="${user.status() != null && user.status().equalsIgnoreCase('ACTIVE')} ? ' active-status' : ' pending-status'" th:text="${user.status() ?: 'Unknown'}">ACTIVE</span></td>
                                 <td th:text="${user.createdAt() != null ? #temporals.format(user.createdAt(), 'MMM d, yyyy') : '—'}">—</td>
                             </tr>
