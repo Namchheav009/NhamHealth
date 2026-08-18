@@ -5,12 +5,11 @@ import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/google_auth_service.dart';
 import '../bindings/appearance_binding.dart';
-import '../bindings/change_password_binding.dart';
 import '../bindings/language_binding.dart';
 import '../bindings/terms_privacy_binding.dart';
 import '../bindings/help_support_binding.dart';
 import '../views/appearance_view.dart';
-import '../views/change_password_view.dart';
+import '../views/security_view.dart';
 import '../views/language_view.dart';
 import '../views/terms_privacy_view.dart';
 import '../views/widgets/logout_dialog.dart';
@@ -22,8 +21,7 @@ class SettingsController extends GetxController {
 
   void openPasswordSecurity() {
     Get.to<void>(
-      () => const ChangePasswordView(),
-      binding: ChangePasswordBinding(),
+      () => const SecurityView(),
       transition: Transition.rightToLeft,
     );
   }

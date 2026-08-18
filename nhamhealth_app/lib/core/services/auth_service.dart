@@ -22,8 +22,27 @@ class AuthService {
   Future<LoginResponse> login(LoginRequest request) =>
       _authenticate('/api/v1/auth/login', request.toJson());
 
-  Future<LoginResponse> register(RegisterRequest request) =>
-      _authenticate('/api/v1/auth/register', request.toJson());
+  Future<void> register(RegisterRequest request) async {
+    await _postJson(
+      '/api/v1/auth/register',
+      request.toJson(),
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
+  Future<LoginResponse> verifyRegistration({
+    required String email,
+    required String code,
+  }) => _authenticate('/api/v1/auth/verify-registration', {
+    'email': email.trim().toLowerCase(),
+    'code': code,
+  });
+
+  Future<void> resendRegistrationCode(String email) async {
+    await _postJson('/api/v1/auth/resend-registration-code', {
+      'email': email.trim().toLowerCase(),
+    }, timeout: const Duration(seconds: 30));
+  }
 
   Future<LoginResponse> loginWithGoogle(GoogleLoginRequest request) =>
       _authenticate('/api/v1/auth/google', request.toJson());
@@ -65,7 +84,9 @@ class AuthService {
   }) async {
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {
-      throw const AuthException('Your session has expired. Please sign in again.');
+      throw const AuthException(
+        'Your session has expired. Please sign in again.',
+      );
     }
     await _postJson('/api/v1/auth/change-password', {
       'currentPassword': currentPassword,
@@ -141,6 +162,7 @@ class AuthService {
     String path,
     Map<String, dynamic> body, {
     String? accessToken,
+    Duration timeout = const Duration(seconds: 15),
   }) async {
     final http.Response response;
     try {
@@ -157,13 +179,11 @@ class AuthService {
                   : {'Authorization': 'Bearer $accessToken'},
             )
             ..body = jsonEncode(body);
-      final streamedResponse = await _client
-          .send(request)
-          .timeout(const Duration(seconds: 15));
+      final streamedResponse = await _client.send(request).timeout(timeout);
       response = await http.Response.fromStream(streamedResponse);
     } on TimeoutException {
       throw const AuthException(
-        'The server took too long to respond. Please try again.',
+        'Could not reach the NhamHealth server in time. Check that the API is running and that this phone is on the same network.',
       );
     } on http.ClientException {
       throw const AuthException(

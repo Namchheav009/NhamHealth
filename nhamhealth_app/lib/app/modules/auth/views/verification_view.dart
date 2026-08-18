@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_security_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../routes/app_routes.dart';
 import 'widgets/auth_flow_scaffold.dart';
 import 'widgets/social_login_button.dart';
 import 'reset_password_view.dart';
@@ -27,6 +29,7 @@ class VerificationController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxBool isLoading = false.obs;
   final RxBool isResending = false.obs;
+  final RxBool isRegistration = false.obs;
   final RxInt codeSeconds = codeLifetimeSeconds.obs;
   final RxInt resendSeconds = resendCooldownSeconds.obs;
   Timer? _countdownTimer;
@@ -45,7 +48,9 @@ class VerificationController extends GetxController {
     final args = Get.arguments;
     if (args is Map && args['email'] is String) {
       userEmail.value = args['email'] as String;
+      isRegistration.value = args['purpose'] == 'registration';
     }
+    codeSeconds.value = isRegistration.value ? 5 * 60 : codeLifetimeSeconds;
     codeFocusNode.addListener(_syncFocusState);
     _restartCountdowns(resetCodeLifetime: true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -91,17 +96,29 @@ class VerificationController extends GetxController {
     FocusManager.instance.primaryFocus?.unfocus();
     try {
       isLoading.value = true;
-      final resetToken = await _authService.verifyPasswordResetCode(
-        email: userEmail.value,
-        code: code.value,
-      );
-      _countdownTimer?.cancel();
-      Get.off(
-        () => const ResetPasswordView(),
-        arguments: {'resetToken': resetToken},
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 300),
-      );
+      if (isRegistration.value) {
+        final response = await _authService.verifyRegistration(
+          email: userEmail.value,
+          code: code.value,
+        );
+        await Get.find<AppSecurityService>().markSetupPendingFor(
+          response.user.id,
+        );
+        _countdownTimer?.cancel();
+        Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
+      } else {
+        final resetToken = await _authService.verifyPasswordResetCode(
+          email: userEmail.value,
+          code: code.value,
+        );
+        _countdownTimer?.cancel();
+        Get.off(
+          () => const ResetPasswordView(),
+          arguments: {'resetToken': resetToken},
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 300),
+        );
+      }
     } on AuthException catch (error) {
       if (error.message.toLowerCase().contains('expired')) {
         codeSeconds.value = 0;
@@ -123,7 +140,11 @@ class VerificationController extends GetxController {
     if (resendSeconds.value > 0 || isResending.value || isLoading.value) return;
     try {
       isResending.value = true;
-      await _authService.requestPasswordReset(userEmail.value);
+      if (isRegistration.value) {
+        await _authService.resendRegistrationCode(userEmail.value);
+      } else {
+        await _authService.requestPasswordReset(userEmail.value);
+      }
       codeController.clear();
       code.value = '';
       hasError.value = false;
@@ -131,7 +152,7 @@ class VerificationController extends GetxController {
       codeFocusNode.requestFocus();
       Get.snackbar(
         'New code sent',
-        'Check your email. The new code is valid for 3 minutes.',
+        'Check your email. The new code is valid for ${isRegistration.value ? 5 : 3} minutes.',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
         backgroundColor: AppColors.primaryGreen,
@@ -158,7 +179,9 @@ class VerificationController extends GetxController {
 
   void _restartCountdowns({required bool resetCodeLifetime}) {
     _countdownTimer?.cancel();
-    if (resetCodeLifetime) codeSeconds.value = codeLifetimeSeconds;
+    if (resetCodeLifetime) {
+      codeSeconds.value = isRegistration.value ? 5 * 60 : codeLifetimeSeconds;
+    }
     resendSeconds.value = resendCooldownSeconds;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (codeSeconds.value > 0) {

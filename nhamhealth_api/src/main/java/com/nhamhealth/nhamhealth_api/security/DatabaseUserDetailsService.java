@@ -21,7 +21,9 @@ public class DatabaseUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmailIgnoreCase(email.trim())
                 .filter(candidate -> candidate.getPasswordHash() != null
-                        && !candidate.getPasswordHash().isBlank())
+                        && !candidate.getPasswordHash().isBlank()
+                        && Boolean.TRUE.equals(candidate.getIsVerified())
+                        && "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
 
         return AppUserPrincipal.from(user);

@@ -5,29 +5,32 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "nhamhealth_api",
+      "name": "NhamHealth API (Supabase)",
       "cwd": "nhamhealth_api",
       "request": "launch",
       "type": "java",
-      "mainClass": "com.nhamhealth.api.NhamHealthApiApplication",
-      "args": "",
-      "vmArgs": "-Dspring.profiles.active=local"
+      "mainClass": "com.nhamhealth.nhamhealth_api.NhamhealthApiApplication",
+      "args": ""
     },
     {
-      "name": "nhamhealth_api",
-      "cwd": "nhamhealth_api",
-      "request": "launch",
-      "type": "java",
-      "mainClass": "com.nhamhealth.api.NhamHealthApiApplication",
-      "args": "",
-      "vmArgs": "-Dspring.profiles.active=dev"
-    },
-    {
-      "name": "nhamhealth_app",
+      "name": "NhamHealth App (Android emulator)",
       "cwd": "nhamhealth_app",
       "request": "launch",
       "type": "dart",
-      "toolArgs": ["--dart-define-from-file=config/google_oauth.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/google_oauth.json",
+        "--dart-define=API_BASE_URL=http://10.0.2.2:8080"
+      ]
+    },
+    {
+      "name": "NhamHealth App (physical phone)",
+      "cwd": "nhamhealth_app",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define-from-file=config/google_oauth.json",
+        "--dart-define=API_BASE_URL=http://172.16.130.26:8080"
+      ]
     },
     {
       "name": "nhamhealth_app (profile mode)",
