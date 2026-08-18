@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
 import '../../../../core/services/auth_service.dart';
 import '../models/google_login_request.dart';
-import '../models/login_request.dart';
 import '../models/register_request.dart';
 import '../services/google_auth_service.dart';
+import '../views/verification_view.dart';
 
 class RegisterController extends GetxController {
   RegisterController({AuthService? authService, GoogleAuthService? googleAuth})
@@ -49,26 +49,17 @@ class RegisterController extends GetxController {
     }
 
     await _run(() async {
-      try {
-        final response = await _authService.register(
-          RegisterRequest(fullName: fullName, email: email, password: password),
-        );
-        Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
-      } on AuthException catch (error) {
-        if (error.statusCode != 409) rethrow;
-
-        try {
-          final response = await _authService.login(
-            LoginRequest(email: email, password: password),
-          );
-          Get.offAllNamed(AppRoutes.home, arguments: response.user);
-        } on AuthException {
-          throw const AuthException(
-            'This email is already registered. Use your original password '
-            'on the Sign In tab, or continue with Google.',
-          );
-        }
-      }
+      await _authService.register(
+        RegisterRequest(fullName: fullName, email: email, password: password),
+      );
+      Get.to(
+        () => const VerificationView(),
+        arguments: {
+          'email': email.trim().toLowerCase(),
+          'purpose': 'registration',
+        },
+        transition: Transition.rightToLeft,
+      );
     });
   }
 

@@ -8,6 +8,7 @@ import '../views/edit_profile_view.dart';
 import '../views/setting_view.dart';
 import 'edit_profile_controller.dart';
 import 'setting_controller.dart';
+import '../../../widgets/privacy_auth_dialog.dart';
 
 class ProfileController extends GetxController {
   ProfileController({required ProfileRepository repository})
@@ -190,7 +191,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  void editProfile() {
+  Future<void> editProfile() async {
+    if (!await PrivacyAuth.require(reason: 'Unlock to edit your personal profile.')) return;
     Get.to(
       () => const EditProfileView(),
       binding: BindingsBuilder(() {

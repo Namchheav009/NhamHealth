@@ -151,12 +151,14 @@ public class AdminUserService {
             throw new IllegalArgumentException("You cannot delete your own account");
         }
 
-        wellnessProfileRepository.findByUser_UserId(userId)
-                .ifPresent(wellnessProfileRepository::delete);
-        userProfileRepository.findByUser_UserId(userId)
-                .ifPresent(userProfileRepository::delete);
-        userRepository.delete(user);
-        userRepository.flush();
+        // Keep the row so its related audit and activity records retain a valid
+        // foreign key. Deleted users are excluded by loadUsers(), and only ACTIVE
+        // users can authenticate, so this immediately removes portal and account
+        // access without requiring every user-owned table to be manually purged.
+        user.setStatus("DELETED");
+        user.setIsVerified(false);
+        user.setVerifiedAt(null);
+        userRepository.saveAndFlush(user);
     }
 
     private UserProfile createProfile(User user, LocalDateTime now) {

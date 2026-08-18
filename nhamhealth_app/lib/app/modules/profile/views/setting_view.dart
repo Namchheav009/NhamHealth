@@ -230,7 +230,7 @@ class SettingsView extends GetView<SettingsController> {
       child: _SettingsItem(
         icon: Icons.lock_outline_rounded,
         title: 'Password and Security',
-        subtitle: 'Update your password',
+        subtitle: 'PIN, fingerprint, Face ID and password',
         onTap: controller.openPasswordSecurity,
       ),
     );

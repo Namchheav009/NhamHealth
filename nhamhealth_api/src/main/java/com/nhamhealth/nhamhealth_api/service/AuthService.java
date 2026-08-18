@@ -81,7 +81,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse registerMobileUser(RegisterRequest request) {
+    public User registerPendingMobileUser(RegisterRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             throw new IllegalArgumentException("An account with this email already exists");
@@ -91,13 +91,21 @@ public class AuthService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(requiredUserRole());
+        user.setStatus("PENDING");
+        user.setIsVerified(false);
+        user = userRepository.save(user);
+
+        createProfile(user, request.fullName().trim(), null);
+        return user;
+    }
+
+    @Transactional
+    public AuthResponse activateVerifiedUser(User user) {
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
         user.setVerifiedAt(LocalDateTime.now());
         user.setLastLoginAt(LocalDateTime.now());
-        user = userRepository.save(user);
-
-        createProfile(user, request.fullName().trim(), null);
+        userRepository.save(user);
         return issueToken(AppUserPrincipal.from(user));
     }
 
