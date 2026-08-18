@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -55,8 +56,7 @@ public class NutrientGoalAdminController {
 
         List<User> users = userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getName, String.CASE_INSENSITIVE_ORDER)).toList();
-        List<Nutrient> nutrients = nutrientRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .filter(nutrient -> Boolean.TRUE.equals(nutrient.getIsActive())).toList();
+        List<Nutrient> nutrients = nutrientRepository.findAllByOrderByDisplayOrderAsc();
 
         model.addAttribute("pageTitle", "Nutrient Goals");
         model.addAttribute("activePage", "nutrient-goals");
@@ -79,26 +79,34 @@ public class NutrientGoalAdminController {
             @RequestParam BigDecimal goalAmount, @RequestParam LocalDate effectiveFrom,
             @RequestParam(required = false) LocalDate effectiveTo,
             @RequestParam(defaultValue = "true") Boolean active) {
-        if (goalAmount.signum() <= 0 || (effectiveTo != null && effectiveTo.isBefore(effectiveFrom))) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Enter a positive goal and a valid date range."));
+        try {
+            UserNutrientGoal goal = new UserNutrientGoal();
+            apply(goal, userId, nutrientId, goalAmount, effectiveFrom, effectiveTo, active);
+            LocalDateTime now = LocalDateTime.now();
+            goal.setCreatedAt(now);
+            goal.setUpdatedAt(now);
+            return ResponseEntity.ok(toResponse(goalRepository.saveAndFlush(goal)));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        User user = userRepository.findById(userId).orElse(null);
-        Nutrient nutrient = nutrientRepository.findById(nutrientId).orElse(null);
-        if (user == null || nutrient == null) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Select a valid user and nutrient."));
+    }
+
+    @PutMapping("/admin/nutrient-goals/{goalId}")
+    @ResponseBody
+    public ResponseEntity<?> updateGoal(@PathVariable Integer goalId,
+            @RequestParam Integer userId, @RequestParam Integer nutrientId,
+            @RequestParam BigDecimal goalAmount, @RequestParam LocalDate effectiveFrom,
+            @RequestParam(required = false) LocalDate effectiveTo,
+            @RequestParam(defaultValue = "true") Boolean active) {
+        UserNutrientGoal goal = goalRepository.findById(goalId).orElse(null);
+        if (goal == null) return ResponseEntity.notFound().build();
+        try {
+            apply(goal, userId, nutrientId, goalAmount, effectiveFrom, effectiveTo, active);
+            goal.setUpdatedAt(LocalDateTime.now());
+            return ResponseEntity.ok(toResponse(goalRepository.saveAndFlush(goal)));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        UserNutrientGoal goal = new UserNutrientGoal();
-        goal.setUser(user);
-        goal.setNutrient(nutrient);
-        goal.setGoalAmount(goalAmount);
-        goal.setEffectiveFrom(effectiveFrom);
-        goal.setEffectiveTo(effectiveTo);
-        goal.setIsActive(active);
-        goal.setCreatedAt(LocalDateTime.now());
-        goal.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(toResponse(goalRepository.saveAndFlush(goal)));
     }
 
     @DeleteMapping("/admin/nutrient-goals/{goalId}")
@@ -107,6 +115,25 @@ public class NutrientGoalAdminController {
         if (!goalRepository.existsById(goalId)) return ResponseEntity.notFound().build();
         goalRepository.deleteById(goalId);
         return ResponseEntity.noContent().build();
+    }
+
+    private void apply(UserNutrientGoal goal, Integer userId, Integer nutrientId,
+            BigDecimal goalAmount, LocalDate effectiveFrom, LocalDate effectiveTo, Boolean active) {
+        if (goalAmount == null || goalAmount.signum() <= 0 || effectiveFrom == null
+                || (effectiveTo != null && effectiveTo.isBefore(effectiveFrom))) {
+            throw new IllegalArgumentException("Enter a positive goal and a valid date range.");
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        Nutrient nutrient = nutrientRepository.findById(nutrientId).orElse(null);
+        if (user == null || nutrient == null) {
+            throw new IllegalArgumentException("Select a valid user and nutrient.");
+        }
+        goal.setUser(user);
+        goal.setNutrient(nutrient);
+        goal.setGoalAmount(goalAmount);
+        goal.setEffectiveFrom(effectiveFrom);
+        goal.setEffectiveTo(effectiveTo);
+        goal.setIsActive(Boolean.TRUE.equals(active));
     }
 
     private Map<String, Object> toResponse(UserNutrientGoal goal) {

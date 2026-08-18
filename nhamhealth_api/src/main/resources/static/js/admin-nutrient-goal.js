@@ -21,6 +21,7 @@
     const pageSize = 10;
     let page = 1;
     let filtered = [];
+    let editingGoalId = null;
 
     const rows = () => [...(rowsBox?.querySelectorAll('tr[data-id]') || [])];
     const setText = (id, value) => { const node = byId(id); if (node) node.textContent = String(value); };
@@ -91,7 +92,13 @@
         setText('goalUserCount', new Set(allRows.map((row) => row.dataset.userId).filter(Boolean)).size);
     }
 
-    function actionButton() {
+    function actionButtons() {
+        const actions = document.createElement('div');
+        actions.className = 'goal-actions';
+        const edit = document.createElement('button');
+        edit.type = 'button'; edit.className = 'icon-button edit-goal';
+        edit.title = 'Edit nutrient goal'; edit.setAttribute('aria-label', 'Edit nutrient goal');
+        const editIcon = document.createElement('i'); editIcon.className = 'bi bi-pencil'; edit.appendChild(editIcon);
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'icon-button danger delete-goal';
@@ -100,7 +107,8 @@
         const icon = document.createElement('i');
         icon.className = 'bi bi-trash3';
         button.appendChild(icon);
-        return button;
+        actions.append(edit, button);
+        return actions;
     }
 
     function createRow(goal) {
@@ -108,6 +116,8 @@
         const active = Boolean(goal.active);
         Object.assign(row.dataset, {
             id: String(goal.id), userId: String(goal.userId), nutrientId: String(goal.nutrientId),
+            goalAmount: String(goal.goalAmount), effectiveFrom: goal.effectiveFrom,
+            effectiveTo: goal.effectiveTo || '', active: String(active),
             current: String(isCurrent(active, goal.effectiveFrom, goal.effectiveTo)),
             nutrient: goal.nutrientName.toLowerCase(), status: active ? 'active' : 'inactive',
             search: `${goal.userName} ${goal.userEmail} ${goal.nutrientName}`.toLowerCase()
@@ -135,7 +145,7 @@
         const toCell = document.createElement('td'); const to = document.createElement('time'); to.textContent = formatDate(goal.effectiveTo); if (goal.effectiveTo) to.dateTime = goal.effectiveTo; toCell.appendChild(to);
         const statusCell = document.createElement('td');
         const badge = document.createElement('span'); badge.className = `status-pill ${active ? 'status-active' : 'status-inactive'}`; badge.textContent = active ? 'Active' : 'Inactive'; statusCell.appendChild(badge);
-        const actionCell = document.createElement('td'); actionCell.appendChild(actionButton());
+        const actionCell = document.createElement('td'); actionCell.appendChild(actionButtons());
         row.append(userCell, nutrientCell, amountCell, fromCell, toCell, statusCell, actionCell);
         return row;
     }
@@ -159,13 +169,37 @@
         formError.hidden = true;
         modal.classList.add('show'); modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
-        form.elements.effectiveFrom.value ||= localToday();
         form.elements.userId.focus();
     }
 
     function hideModal() {
         modal.classList.remove('show'); modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open'); form.reset(); formError.hidden = true;
+        document.body.classList.remove('modal-open'); form.reset(); formError.hidden = true; editingGoalId = null;
+    }
+
+    function openCreateModal() {
+        editingGoalId = null;
+        form.reset();
+        form.elements.effectiveFrom.value = localToday();
+        byId('goalModalTitle').textContent = 'Add nutrient goal';
+        byId('saveGoalButton').innerHTML = '<i class="bi bi-check-lg"></i> Save goal';
+        showModal();
+    }
+
+    function editGoal(button) {
+        const row = button.closest('tr[data-id]');
+        if (!row) return;
+        editingGoalId = row.dataset.id;
+        form.reset();
+        form.elements.userId.value = row.dataset.userId || '';
+        form.elements.nutrientId.value = row.dataset.nutrientId || '';
+        form.elements.goalAmount.value = row.dataset.goalAmount || '';
+        form.elements.effectiveFrom.value = row.dataset.effectiveFrom || '';
+        form.elements.effectiveTo.value = row.dataset.effectiveTo || '';
+        form.elements.active.value = row.dataset.active === 'true' ? 'true' : 'false';
+        byId('goalModalTitle').textContent = 'Edit nutrient goal';
+        byId('saveGoalButton').innerHTML = '<i class="bi bi-check-lg"></i> Update goal';
+        showModal();
     }
 
     async function saveGoal(event) {
@@ -184,9 +218,17 @@
         saveButton.disabled = true; saveButton.textContent = 'Saving...'; formError.hidden = true;
         try {
             data.delete(document.querySelector('#goalForm input[type="hidden"]')?.name || '_csrf');
-            const goal = await request('/admin/nutrient-goals', 'POST', new URLSearchParams(data));
-            addGoal(goal); hideModal();
-            await alerts.success('Nutrient goal added', `${goal.userName}'s ${goal.nutrientName} goal has been added.`);
+            const isUpdate = Boolean(editingGoalId);
+            const goal = await request(isUpdate ? `/admin/nutrient-goals/${editingGoalId}` : '/admin/nutrient-goals', isUpdate ? 'PUT' : 'POST', new URLSearchParams(data));
+            if (isUpdate) {
+                const currentRow = rows().find((row) => row.dataset.id === String(goal.id));
+                currentRow?.replaceWith(createRow(goal));
+                updateSummary(); render();
+            } else {
+                addGoal(goal);
+            }
+            hideModal();
+            await alerts.success(isUpdate ? 'Nutrient goal updated' : 'Nutrient goal added', `${goal.userName}'s ${goal.nutrientName} goal has been ${isUpdate ? 'updated' : 'added'}.`);
         } catch (error) {
             formError.textContent = error.message; formError.hidden = false;
             await alerts.error(error.message || 'The nutrient goal could not be saved.');
@@ -210,11 +252,16 @@
     byId('clearFilters')?.addEventListener('click', () => { search.value = ''; nutrient.value = 'all'; status.value = 'all'; page = 1; render(); search.focus(); });
     prev?.addEventListener('click', () => { if (page > 1) { page -= 1; render(); } });
     next?.addEventListener('click', () => { if (page * pageSize < filtered.length) { page += 1; render(); } });
-    byId('openGoalModal')?.addEventListener('click', showModal); byId('closeGoalModal')?.addEventListener('click', hideModal); byId('cancelGoalModal')?.addEventListener('click', hideModal);
+    byId('openGoalModal')?.addEventListener('click', openCreateModal); byId('closeGoalModal')?.addEventListener('click', hideModal); byId('cancelGoalModal')?.addEventListener('click', hideModal);
     modal?.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal?.classList.contains('show')) hideModal(); });
     form?.addEventListener('submit', saveGoal);
-    document.addEventListener('click', (event) => { const button = event.target.closest('.delete-goal'); if (button) deleteGoal(button); });
+    document.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.edit-goal');
+        if (editButton) editGoal(editButton);
+        const deleteButton = event.target.closest('.delete-goal');
+        if (deleteButton) deleteGoal(deleteButton);
+    });
     byId('exportGoals')?.addEventListener('click', () => {
         filterRows(); const headings = ['User', 'Nutrient', 'Goal amount', 'Effective from', 'Effective to', 'Status'];
         const data = filtered.map((row) => [...row.cells].slice(0, 6).map((cell) => cell.innerText.trim()));
