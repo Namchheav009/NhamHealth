@@ -4,6 +4,10 @@
     const search = byId('mealLogSearch');
     const type = byId('typeFilter');
     const method = byId('methodFilter');
+    const modal = byId('mealLogModal');
+    const form = byId('mealLogForm');
+    const savedMeal = byId('mealLogMeal');
+    const customFood = byId('mealLogCustomFood');
     const pageNumbers = byId('pageNumbers');
     const prev = byId('pagePrev');
     const next = byId('pageNext');
@@ -17,6 +21,7 @@
     const pageSize = 10;
     let page = 1;
     let filtered = [];
+    let editingMealLogId = null;
 
     const rows = () => [...(rowsBox?.querySelectorAll('tr[data-id]') || [])];
     const setText = (id, value) => { const node = byId(id); if (node) node.textContent = String(value); };
@@ -119,6 +124,117 @@
         }
     }
 
+    function toDateTimeLocal(value) {
+        if (!value) return '';
+        return String(value).slice(0, 16);
+    }
+
+    function setDefaultLoggedAt() {
+        const input = byId('mealLogLoggedAt');
+        if (!input) return;
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        input.value = now.toISOString().slice(0, 16);
+    }
+
+    function toggleFoodInputs() {
+        if (!savedMeal || !customFood) return;
+        customFood.disabled = Boolean(savedMeal.value);
+        savedMeal.disabled = Boolean(customFood.value.trim());
+    }
+
+    function openCreateModal() {
+        if (!modal || !form) return;
+        editingMealLogId = null;
+        form.reset();
+        byId('mealLogModalTitle').textContent = 'Add meal log';
+        byId('mealLogModalText').textContent = 'Record a meal on behalf of a user.';
+        byId('saveMealLogButton').textContent = 'Save meal log';
+        byId('mealLogMethod').value = 'Manual';
+        setDefaultLoggedAt();
+        toggleFoodInputs();
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        byId('mealLogUser').focus();
+    }
+
+    async function openEditModal(mealLogId) {
+        if (!modal || !form) return;
+        try {
+            const response = await fetch(`/admin/meal-logs/${mealLogId}`, { credentials: 'same-origin' });
+            const body = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
+            if (!response.ok) throw new Error(body.message || 'The meal log could not be loaded.');
+            editingMealLogId = mealLogId;
+            form.reset();
+            form.elements.userId.value = body.userId ?? '';
+            form.elements.mealLogTypeId.value = body.mealLogTypeId ?? '';
+            form.elements.mealId.value = body.mealId ?? '';
+            form.elements.servingSizeId.value = body.servingSizeId ?? '';
+            form.elements.customFoodName.value = body.customFoodName ?? '';
+            form.elements.quantity.value = body.quantity ?? '';
+            form.elements.entryMethod.value = body.entryMethod ?? '';
+            form.elements.loggedAt.value = toDateTimeLocal(body.loggedAt);
+            form.elements.notes.value = body.notes ?? '';
+            byId('mealLogModalTitle').textContent = 'Edit meal log';
+            byId('mealLogModalText').textContent = 'Update this user’s recorded meal entry.';
+            byId('saveMealLogButton').textContent = 'Update meal log';
+            toggleFoodInputs();
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+        } catch (error) {
+            await alerts.error(error.message || 'The meal log could not be loaded.');
+        }
+    }
+
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        editingMealLogId = null;
+    }
+
+    async function saveMealLog(event) {
+        event.preventDefault();
+        if (!form) return;
+        const mealId = form.elements.mealId.value;
+        const customFoodName = form.elements.customFoodName.value.trim();
+        if (!mealId && !customFoodName) {
+            customFood.setCustomValidity('Select a saved meal or enter a custom food name.');
+            customFood.reportValidity();
+            return;
+        }
+        customFood.setCustomValidity('');
+        const payload = Object.fromEntries(new FormData(form).entries());
+        ['mealId', 'servingSizeId', 'customFoodName', 'notes'].forEach((key) => {
+            if (!payload[key]) payload[key] = null;
+        });
+        if (payload.mealId) payload.customFoodName = null;
+        const saveButton = byId('saveMealLogButton');
+        saveButton.disabled = true;
+        try {
+            const response = await fetch(editingMealLogId ? `/admin/meal-logs/${editingMealLogId}` : '/admin/meal-logs', {
+                method: editingMealLogId ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const body = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
+            if (!response.ok) throw new Error(body.message || body.detail || 'The meal log could not be saved.');
+            const action = editingMealLogId ? 'updated' : 'added';
+            closeModal();
+            await alerts.success(`Meal log ${action}`, `The meal log has been ${action}.`);
+            window.location.reload();
+        } catch (error) {
+            await alerts.error(error.message || 'The meal log could not be saved.');
+        } finally {
+            saveButton.disabled = false;
+        }
+    }
+
     [search, type, method].forEach((control) => control?.addEventListener(control === search ? 'input' : 'change', () => {
         page = 1;
         render();
@@ -134,6 +250,21 @@
     prev?.addEventListener('click', () => { if (page > 1) { page -= 1; render(); } });
     next?.addEventListener('click', () => { if (page * pageSize < filtered.length) { page += 1; render(); } });
     byId('refreshMealLogs')?.addEventListener('click', () => window.location.reload());
+    byId('openMealLogModal')?.addEventListener('click', openCreateModal);
+    byId('closeMealLogModal')?.addEventListener('click', closeModal);
+    byId('cancelMealLogModal')?.addEventListener('click', closeModal);
+    savedMeal?.addEventListener('change', () => {
+        if (savedMeal.value) customFood.value = '';
+        toggleFoodInputs();
+    });
+    customFood?.addEventListener('input', () => {
+        if (customFood.value.trim()) savedMeal.value = '';
+        customFood.setCustomValidity('');
+        toggleFoodInputs();
+    });
+    form?.addEventListener('submit', saveMealLog);
+    modal?.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal?.classList.contains('show')) closeModal(); });
     byId('exportMealLogs')?.addEventListener('click', () => {
         applyFilters();
         const headings = ['Food', 'User', 'Meal type', 'Quantity', 'Entry method', 'Logged at', 'Notes'];
@@ -149,6 +280,8 @@
     document.addEventListener('click', (event) => {
         const button = event.target.closest('.delete-meal-log');
         if (button) deleteMealLog(button);
+        const editButton = event.target.closest('.edit-meal-log');
+        if (editButton) openEditModal(editButton.closest('tr[data-id]')?.dataset.id);
     });
 
     updateSummary();

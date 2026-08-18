@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -55,8 +56,7 @@ public class DailyWellnessAdminController {
         long todayEntries = summaries.stream().filter(summary -> today.equals(summary.getSummaryDate())).count();
         List<User> users = userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getName, String.CASE_INSENSITIVE_ORDER)).toList();
-        List<Mood> moods = moodRepository.findAllByOrderByMoodNameAsc().stream()
-                .filter(mood -> Boolean.TRUE.equals(mood.getIsActive())).toList();
+        List<Mood> moods = moodRepository.findAllByOrderByMoodNameAsc();
         List<String> balances = summaries.stream().map(DailyWellnessSummary::getBalanceStatus)
                 .filter(value -> value != null && !value.isBlank()).distinct().sorted().toList();
 
@@ -85,25 +85,33 @@ public class DailyWellnessAdminController {
     public ResponseEntity<?> createSummary(@RequestParam Integer userId, @RequestParam LocalDate summaryDate,
             @RequestParam(required = false) Integer moodId, @RequestParam(required = false) String balanceStatus,
             @RequestParam(required = false) String aiInsightText) {
-        if (summaryRepository.existsByUserUserIdAndSummaryDate(userId, summaryDate)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "That user already has a wellness summary for this date."));
+        try {
+            DailyWellnessSummary summary = new DailyWellnessSummary();
+            apply(summary, userId, summaryDate, moodId, balanceStatus, aiInsightText);
+            LocalDateTime now = LocalDateTime.now();
+            summary.setCreatedAt(now);
+            summary.setUpdatedAt(now);
+            return ResponseEntity.ok(toResponse(summaryRepository.saveAndFlush(summary)));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        User user = userRepository.findById(userId).orElse(null);
-        Mood mood = moodId == null ? null : moodRepository.findById(moodId).orElse(null);
-        if (user == null || (moodId != null && mood == null)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Select a valid user and mood."));
+    }
+
+    @PutMapping("/admin/daily-wellness/{summaryId}")
+    @ResponseBody
+    public ResponseEntity<?> updateSummary(@PathVariable Integer summaryId,
+            @RequestParam Integer userId, @RequestParam LocalDate summaryDate,
+            @RequestParam(required = false) Integer moodId, @RequestParam(required = false) String balanceStatus,
+            @RequestParam(required = false) String aiInsightText) {
+        DailyWellnessSummary summary = summaryRepository.findById(summaryId).orElse(null);
+        if (summary == null) return ResponseEntity.notFound().build();
+        try {
+            apply(summary, userId, summaryDate, moodId, balanceStatus, aiInsightText);
+            summary.setUpdatedAt(LocalDateTime.now());
+            return ResponseEntity.ok(toResponse(summaryRepository.saveAndFlush(summary)));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        DailyWellnessSummary summary = new DailyWellnessSummary();
-        summary.setUser(user);
-        summary.setMood(mood);
-        summary.setSummaryDate(summaryDate);
-        summary.setBalanceStatus(clean(balanceStatus));
-        summary.setAiInsightText(clean(aiInsightText));
-        summary.setCreatedAt(LocalDateTime.now());
-        summary.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(toResponse(summaryRepository.saveAndFlush(summary)));
     }
 
     @DeleteMapping("/admin/daily-wellness/{summaryId}")
@@ -114,6 +122,33 @@ public class DailyWellnessAdminController {
         dailyNutrientTotalRepository.deleteByDailyWellnessSummaryDailySummaryId(summaryId);
         summaryRepository.deleteById(summaryId);
         return ResponseEntity.noContent().build();
+    }
+
+    private void apply(DailyWellnessSummary summary, Integer userId, LocalDate summaryDate,
+            Integer moodId, String balanceStatus, String aiInsightText) {
+        if (summaryDate == null) {
+            throw new IllegalArgumentException("Summary date is required.");
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        Mood mood = moodId == null ? null : moodRepository.findById(moodId).orElse(null);
+        if (user == null || (moodId != null && mood == null)) {
+            throw new IllegalArgumentException("Select a valid user and mood.");
+        }
+        boolean duplicate = summaryRepository.findByUser_UserIdAndSummaryDate(userId, summaryDate)
+                .filter(existing -> !existing.getDailySummaryId().equals(summary.getDailySummaryId()))
+                .isPresent();
+        if (duplicate) {
+            throw new IllegalArgumentException("That user already has a wellness summary for this date.");
+        }
+        String cleanedBalance = clean(balanceStatus);
+        if (cleanedBalance != null && cleanedBalance.length() > 30) {
+            throw new IllegalArgumentException("Balance status must not exceed 30 characters.");
+        }
+        summary.setUser(user);
+        summary.setMood(mood);
+        summary.setSummaryDate(summaryDate);
+        summary.setBalanceStatus(cleanedBalance);
+        summary.setAiInsightText(clean(aiInsightText));
     }
 
     private String clean(String value) {
