@@ -22,9 +22,11 @@ import com.nhamhealth.nhamhealth_api.dto.request.ForgotPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AppPinRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyRegistrationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.PinVerificationResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.AuthService;
 import com.nhamhealth.nhamhealth_api.service.PasswordResetService;
@@ -140,5 +142,30 @@ public class AuthController {
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(new AuthErrorResponse(exception.getMessage()));
         }
+    }
+
+    @PostMapping("/pin")
+    public MessageResponse setPin(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AppPinRequest request) {
+        Number userId = jwt.getClaim("userId");
+        authService.setAppPin(userId.intValue(), request.pin());
+        return new MessageResponse("App PIN saved securely");
+    }
+
+    @PostMapping("/pin/verify")
+    public PinVerificationResponse verifyPin(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AppPinRequest request) {
+        Number userId = jwt.getClaim("userId");
+        return new PinVerificationResponse(
+                authService.verifyAppPin(userId.intValue(), request.pin()));
+    }
+
+    @PostMapping("/pin/disable")
+    public MessageResponse disablePin(@AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("userId");
+        authService.disableAppPin(userId.intValue());
+        return new MessageResponse("App PIN disabled");
     }
 }

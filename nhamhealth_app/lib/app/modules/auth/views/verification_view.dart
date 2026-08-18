@@ -101,9 +101,9 @@ class VerificationController extends GetxController {
           email: userEmail.value,
           code: code.value,
         );
-        await Get.find<AppSecurityService>().markSetupPendingFor(
-          response.user.id,
-        );
+        final security = Get.find<AppSecurityService>();
+        security.syncPinState(response.user.hasPin);
+        await security.markSetupPendingFor(response.user.id);
         _countdownTimer?.cancel();
         Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
       } else {

@@ -251,7 +251,34 @@ public class AuthService {
                 currentEmail,
                 role,
                 profile == null ? null : profile.getFullName(),
-                profile == null ? null : profile.getProfileImageUrl());
+                profile == null ? null : profile.getProfileImageUrl(),
+                userRepository.findById(userId).map(User::hasPin).orElse(false));
+    }
+
+    @Transactional
+    public void setAppPin(Integer userId, String pin) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        user.setPinHash(passwordEncoder.encode(pin));
+        user.setPinLength(pin.length());
+        userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean verifyAppPin(Integer userId, String pin) {
+        return userRepository.findById(userId)
+                .filter(User::hasPin)
+                .map(user -> passwordEncoder.matches(pin, user.getPinHash()))
+                .orElse(false);
+    }
+
+    @Transactional
+    public void disableAppPin(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        user.setPinHash(null);
+        user.setPinLength(null);
+        userRepository.save(user);
     }
 
     @Transactional
