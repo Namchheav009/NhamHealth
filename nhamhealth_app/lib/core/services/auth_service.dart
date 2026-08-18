@@ -94,6 +94,32 @@ class AuthService {
     }, accessToken: token);
   }
 
+  Future<void> setAppPin(String pin) async {
+    await _authenticatedPost('/api/v1/auth/pin', {'pin': pin});
+  }
+
+  Future<bool> verifyAppPin(String pin) async {
+    final payload = await _authenticatedPost('/api/v1/auth/pin/verify', {
+      'pin': pin,
+    });
+    return payload['valid'] == true;
+  }
+
+  Future<void> disableAppPin() async {
+    await _authenticatedPost('/api/v1/auth/pin/disable', const {});
+  }
+
+  Future<Map<String, dynamic>> _authenticatedPost(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final token = await _tokenStorage.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const AuthException('Your session has expired. Please sign in again.');
+    }
+    return _postJson(path, body, accessToken: token);
+  }
+
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
 
   Future<AuthenticatedUser?> restoreSession() async {

@@ -33,6 +33,12 @@ public class User {
     @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "pin_hash", length = 100)
+    private String pinHash;
+
+    @Column(name = "pin_length")
+    private Integer pinLength;
+
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
@@ -80,6 +86,26 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getPinHash() {
+        return pinHash;
+    }
+
+    public void setPinHash(String pinHash) {
+        this.pinHash = pinHash;
+    }
+
+    public Integer getPinLength() {
+        return pinLength;
+    }
+
+    public void setPinLength(Integer pinLength) {
+        this.pinLength = pinLength;
+    }
+
+    public boolean hasPin() {
+        return pinHash != null && !pinHash.isBlank() && Integer.valueOf(6).equals(pinLength);
     }
 
     public String getStatus() {

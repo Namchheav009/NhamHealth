@@ -272,7 +272,6 @@ class HomeController extends GetxController {
       moodId: moodId,
       generate: true,
       refresh: true,
-      showMessage: true,
     );
   }
 
@@ -294,7 +293,6 @@ class HomeController extends GetxController {
     int? moodId,
     bool generate = false,
     bool refresh = false,
-    bool showMessage = false,
   }) async {
     try {
       isRecommendedMealsLoading.value = true;
@@ -313,23 +311,9 @@ class HomeController extends GetxController {
           recommendedMeals: meals,
         );
       }
-      if (showMessage) {
-        Get.snackbar(
-          'AI Recommendation',
-          meals.isEmpty
-              ? 'No ready recommendation is available for this mood yet.'
-              : '${meals.length} personalized meal${meals.length == 1 ? '' : 's'} found.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
     } on Object {
-      if (showMessage) {
-        Get.snackbar(
-          'AI Recommendation',
-          'Unable to load recommendations.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      // Keep the recommendation card in place without covering the bottom of
+      // the home screen with a transient AI Recommendation alert.
     } finally {
       isRecommendedMealsLoading.value = false;
     }
