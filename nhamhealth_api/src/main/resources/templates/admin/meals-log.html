@@ -22,7 +22,7 @@
         <section class="page-content">
             <div class="page-heading">
                 <div><div class="title-line"><h1>Meal Logs</h1><span>Nutrition activity across Nham Health</span></div><p>Review meals recorded by users and their entry details.</p></div>
-                <div class="heading-actions"><button class="btn" id="exportMealLogs" type="button"><i class="bi bi-download"></i> Export CSV</button><button class="btn btn-secondary" id="refreshMealLogs" type="button"><i class="bi bi-arrow-clockwise"></i> Refresh</button></div>
+                <div class="heading-actions"><button class="btn" id="exportMealLogs" type="button"><i class="bi bi-download"></i> Export CSV</button><button class="btn btn-secondary" id="refreshMealLogs" type="button"><i class="bi bi-arrow-clockwise"></i> Refresh</button><button class="btn btn-primary" id="openMealLogModal" type="button"><i class="bi bi-plus-lg"></i> Add meal log</button></div>
             </div>
 
             <div class="stats-grid">
@@ -53,7 +53,7 @@
                             <td><span class="method-badge" th:text="${log.entryMethod ?: 'Unknown'}">Manual</span></td>
                             <td><time th:text="${log.loggedAt != null ? #temporals.format(log.loggedAt, 'MMM d, yyyy HH:mm') : '—'}">—</time></td>
                             <td><p class="notes-copy" th:text="${log.notes != null && !#strings.isEmpty(log.notes) ? log.notes : 'No notes'}">No notes</p></td>
-                            <td><button class="icon-button danger delete-meal-log" type="button" title="Delete meal log"><i class="bi bi-trash3"></i></button></td>
+                            <td><div class="log-actions"><button class="icon-button edit-meal-log" type="button" title="Edit meal log"><i class="bi bi-pencil"></i></button><button class="icon-button danger delete-meal-log" type="button" title="Delete meal log"><i class="bi bi-trash3"></i></button></div></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(mealLogs)}" id="emptyMealLogRow"><td class="empty-state" colspan="8"><i class="bi bi-journal-x"></i><strong>No meal logs yet</strong><span>Meal activity will appear here when users record food.</span></td></tr>
                         </tbody>
@@ -66,6 +66,26 @@
     </main>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="modal" id="mealLogModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mealLogModalTitle">
+        <div class="modal-header"><div><h2 id="mealLogModalTitle">Add meal log</h2><p id="mealLogModalText">Record a meal on behalf of a user.</p></div><button class="close" id="closeMealLogModal" type="button" aria-label="Close"><i class="bi bi-x-lg"></i></button></div>
+        <form id="mealLogForm">
+            <div class="modal-body meal-log-modal-body">
+                <div class="field"><label for="mealLogUser">User</label><select id="mealLogUser" name="userId" required><option value="">Select user</option><option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' — ' + user.email}">User</option></select></div>
+                <div class="field"><label for="mealLogType">Meal type</label><select id="mealLogType" name="mealLogTypeId" required><option value="">Select meal type</option><option th:each="logType : ${mealLogTypeOptions}" th:value="${logType.mealLogTypeId}" th:text="${logType.mealLogTypeName}">Breakfast</option></select></div>
+                <div class="field"><label for="mealLogMeal">Saved meal <span>(optional)</span></label><select id="mealLogMeal" name="mealId"><option value="">Custom food instead</option><option th:each="meal : ${meals}" th:value="${meal.mealId}" th:text="${meal.mealName}">Meal</option></select></div>
+                <div class="field"><label for="mealLogCustomFood">Custom food <span>(optional)</span></label><input id="mealLogCustomFood" name="customFoodName" maxlength="150" type="text" placeholder="e.g. Homemade soup"></div>
+                <p class="field-help full">Choose a saved meal or enter a custom food name.</p>
+                <div class="field"><label for="mealLogQuantity">Quantity</label><input id="mealLogQuantity" name="quantity" type="number" min="0.01" max="9999999999" step="0.01" required></div>
+                <div class="field"><label for="mealLogServingSize">Serving size</label><select id="mealLogServingSize" name="servingSizeId"><option value="">Not specified</option><option th:each="servingSize : ${servingSizes}" th:value="${servingSize.servingSizeId}" th:text="${servingSize.servingSizeName}">Serving</option></select></div>
+                <div class="field"><label for="mealLogMethod">Entry method</label><input id="mealLogMethod" name="entryMethod" list="entryMethodOptions" maxlength="20" placeholder="Manual" required><datalist id="entryMethodOptions"><option th:each="entryMethod : ${entryMethods}" th:value="${entryMethod}">Manual</option><option value="Manual"></option><option value="AI"></option><option value="Barcode"></option></datalist></div>
+                <div class="field"><label for="mealLogLoggedAt">Logged at</label><input id="mealLogLoggedAt" name="loggedAt" type="datetime-local" required></div>
+                <div class="field full"><label for="mealLogNotes">Notes <span>(optional)</span></label><textarea id="mealLogNotes" name="notes" placeholder="Add any useful details..."></textarea></div>
+            </div>
+            <div class="modal-actions"><button class="btn" id="cancelMealLogModal" type="button">Cancel</button><button class="btn btn-primary" id="saveMealLogButton" type="submit">Save meal log</button></div>
+        </form>
+    </section>
+</div>
 <script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-meal-logs.js(v=20260815-1)}"></script>
+<script th:src="@{/js/admin-meal-logs.js(v=20260818-2)}"></script>
 </body></html>
