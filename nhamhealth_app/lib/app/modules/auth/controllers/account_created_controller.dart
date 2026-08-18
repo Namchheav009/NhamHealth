@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
@@ -9,6 +8,7 @@ import '../../home/repositories/home_repository.dart';
 import '../models/authenticated_user_model.dart';
 import '../../../../core/services/app_security_service.dart';
 import '../../profile/views/security_view.dart';
+import '../../../widgets/pin_setup_prompt.dart';
 
 class AccountCreatedController extends GetxController {
   AccountCreatedController({
@@ -63,23 +63,7 @@ class AccountCreatedController extends GetxController {
 
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (Get.context == null) return;
-    await Get.dialog<void>(
-      AlertDialog(
-        icon: const Icon(Icons.pin_rounded, color: Color(0xFF00A651), size: 42),
-        title: const Text('Create your app PIN'),
-        content: const Text(
-          'Protect your health information with a 6-digit PIN. You can also enable fingerprint or Face ID afterward.',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          FilledButton(
-            onPressed: Get.back,
-            child: const Text('Create PIN'),
-          ),
-        ],
-      ),
-      barrierDismissible: false,
-    );
+    await showPinSetupPrompt(Get.context!);
     await security.markSetupPromptedFor(user.id);
     final created = await Get.to<bool>(
       () => SecurityView(

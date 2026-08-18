@@ -7,6 +7,7 @@ import '../../../../config/api_config.dart';
 import '../../../theme/app_spacing.dart';
 import '../controllers/edit_profile_controller.dart';
 import 'widgets/edit_info_row.dart';
+import '../../../widgets/app_background.dart';
 
 class EditProfileView extends GetView<EditProfileController> {
   const EditProfileView({super.key});
@@ -17,13 +18,7 @@ class EditProfileView extends GetView<EditProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background/bg.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+      body: AppBackground(
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
