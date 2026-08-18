@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/wellness_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import 'widgets/ai_insight_card.dart';
 import 'widgets/ai_meal_card.dart';
@@ -39,10 +40,10 @@ class WellnessView extends GetView<WellnessController> {
                           () => SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
                             padding: AppSpacing.pagePadding,
-                            child:
-                                controller.isLoading.value
-                                    ? const PageSkeleton.wellness()
-                                    : const Column(
+                            child: LoadingContentTransition(
+                              isLoading: controller.isLoading.value,
+                              loading: const PageSkeleton.wellness(),
+                              content: const Column(
                                       children: [
                                         WellnessDailySummaryCard(),
 
@@ -55,6 +56,7 @@ class WellnessView extends GetView<WellnessController> {
                                         AiInsightCard(),
                                       ],
                                     ),
+                            ),
                           ),
                         ),
                       ),
