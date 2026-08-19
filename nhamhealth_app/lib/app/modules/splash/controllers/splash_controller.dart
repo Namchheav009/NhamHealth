@@ -6,6 +6,10 @@ import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_security_service.dart';
+import '../../../widgets/privacy_auth_dialog.dart';
+import '../../profile/views/security_view.dart';
+import '../../../widgets/pin_setup_prompt.dart';
 
 class SplashController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -129,7 +133,29 @@ class SplashController extends GetxController
     if (isClosed) return;
 
     if (user != null) {
-      Get.offAllNamed(AppRoutes.home, arguments: user);
+      final security = Get.find<AppSecurityService>();
+      security.syncPinState(user.hasPin);
+      if (!user.hasPin) {
+        if (Get.context != null) {
+          await showPinSetupPrompt(Get.context!);
+        }
+        Get.offAll<void>(
+          () => SecurityView(
+            promptCreatePin: true,
+            requirePinCreation: true,
+            onPinCreated:
+                () => Get.offAllNamed(AppRoutes.home, arguments: user),
+          ),
+        );
+        return;
+      }
+      final unlocked = await PrivacyAuth.require(
+        reason: 'Enter your PIN to open NhamHealth.',
+        allowCancel: false,
+      );
+      if (unlocked && !isClosed) {
+        Get.offAllNamed(AppRoutes.home, arguments: user);
+      }
     } else {
       Get.offAllNamed(AppRoutes.onboarding);
     }

@@ -13,7 +13,10 @@ class InitialBinding extends Bindings {
       Get.put<GoogleAuthService>(GoogleAuthService(), permanent: true);
     }
     if (!Get.isRegistered<AppSecurityService>()) {
-      Get.put<AppSecurityService>(AppSecurityService(), permanent: true);
+      Get.put<AppSecurityService>(
+        AppSecurityService(authService: Get.find<AuthService>()),
+        permanent: true,
+      );
     }
   }
 
