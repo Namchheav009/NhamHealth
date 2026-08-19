@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
@@ -150,23 +151,9 @@ class VerificationController extends GetxController {
       hasError.value = false;
       _restartCountdowns(resetCodeLifetime: true);
       codeFocusNode.requestFocus();
-      Get.snackbar(
-        'New code sent',
-        'Check your email. The new code is valid for ${isRegistration.value ? 5 : 3} minutes.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: AppColors.primaryGreen,
-        colorText: Colors.white,
-      );
+      AppAlert.success(title: 'New code sent', message: 'Check your email. The new code is valid for ${isRegistration.value ? 5 : 3} minutes.');
     } on AuthException catch (error) {
-      Get.snackbar(
-        'Could not resend code',
-        error.message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: AppColors.errorCoral,
-        colorText: Colors.white,
-      );
+      AppAlert.error(title: 'Could not resend code', message: error.message);
     } finally {
       isResending.value = false;
     }

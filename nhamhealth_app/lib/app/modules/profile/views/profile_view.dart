@@ -7,6 +7,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_top_bar.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import 'widgets/profile_bottom_navigation.dart';
@@ -82,80 +83,18 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildTopBar() {
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'My Profile',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-            ),
-          ),
-        ),
-
-        IconButton(
-          onPressed: () => Get.toNamed<void>(AppRoutes.favorites),
-          icon: const Icon(
-            Icons.favorite_border_rounded,
-            color: Colors.red,
-            size: 25,
-          ),
-        ),
-
-        const SizedBox(width: 2),
-
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              onPressed: controller.openNotifications,
-              icon: const Icon(
-                Icons.notifications_none_rounded,
-                size: 25,
-                color: Color(0xFF777777),
-              ),
-            ),
-
-            Positioned(
-              right: 3,
-              top: 0,
-              child: Container(
-                width: 18,
-                height: 18,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFFF4E50),
-                ),
-                child: const Text(
-                  '2',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(width: 2),
-
-        IconButton(
-          onPressed: controller.openSettings,
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: Color(0xFF777777),
-            size: 25,
-          ),
-        ),
+    return Obx(() => AppTopBar(
+      user: controller.authenticatedUser.value,
+      unreadNotificationCount: controller.unreadNotificationCount.value,
+      onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
+      onNotifications: controller.openNotifications,
+      menuActions: [
+        AppTopBarAction(label: 'Edit Profile', icon: Icons.edit_outlined, onTap: controller.editProfile),
+        AppTopBarAction(label: 'Notifications', icon: Icons.notifications_none_rounded, onTap: controller.openNotifications),
+        AppTopBarAction(label: 'Settings', icon: Icons.settings_outlined, onTap: controller.openSettings),
+        AppTopBarAction(label: 'Logout', icon: Icons.logout_rounded, color: const Color(0xFFD32F2F), dividerBefore: true, onTap: controller.requestLogout),
       ],
-    );
+    ));
   }
 }
 

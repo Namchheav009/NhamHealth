@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../routes/app_routes.dart';
 import '../models/food_source_model.dart';
@@ -125,11 +126,7 @@ class CaloriesController extends GetxController {
     }
 
     if (showMessage) {
-      Get.snackbar(
-        'Food added',
-        '$foodName added successfully.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.success(title: 'Food added', message: '$foodName added successfully.');
     }
   }
 
@@ -158,11 +155,7 @@ class CaloriesController extends GetxController {
     // Later:
     // await repository.saveCalories(...);
 
-    Get.snackbar(
-      'Saved',
-      'Your calorie changes have been saved.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppAlert.success(title: 'Saved', message: 'Your calorie changes have been saved.');
   }
 
   @override

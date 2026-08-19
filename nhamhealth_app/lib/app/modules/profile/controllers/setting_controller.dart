@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
@@ -89,11 +90,7 @@ class SettingsController extends GetxController {
 
       Get.offAllNamed<void>(AppRoutes.login);
     } on Object {
-      Get.snackbar(
-        'Logout failed',
-        'Unable to clear your session. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Logout failed', message: 'Unable to clear your session. Please try again.');
     } finally {
       isLoggingOut.value = false;
     }

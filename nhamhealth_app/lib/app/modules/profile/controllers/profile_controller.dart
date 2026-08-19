@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
@@ -21,6 +23,8 @@ class ProfileController extends GetxController {
   final errorMessage = RxnString();
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
+  final unreadNotificationCount = 0.obs;
+  Timer? _notificationCountTimer;
 
   final name = 'My Profile'.obs;
   final email = ''.obs;
@@ -71,6 +75,19 @@ class ProfileController extends GetxController {
       _applyUser(routeUser);
     }
     loadProfile();
+    loadUnreadNotificationCount();
+    _notificationCountTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => loadUnreadNotificationCount(),
+    );
+  }
+
+  Future<void> loadUnreadNotificationCount() async {
+    try {
+      unreadNotificationCount.value = await _repository.getUnreadNotificationCount();
+    } on Object {
+      // Preserve the last count if the network is temporarily unavailable.
+    }
   }
 
   Future<void> loadProfile() async {
@@ -227,8 +244,9 @@ class ProfileController extends GetxController {
     );
   }
 
-  void openNotifications() {
-    Get.toNamed<void>(AppRoutes.notifications);
+  Future<void> openNotifications() async {
+    await Get.toNamed<void>(AppRoutes.notifications);
+    await loadUnreadNotificationCount();
   }
 
   void openSettings() {
@@ -240,11 +258,24 @@ class ProfileController extends GetxController {
     );
   }
 
+  void requestLogout() {
+    final settings = Get.isRegistered<SettingsController>()
+        ? Get.find<SettingsController>()
+        : Get.put(SettingsController());
+    settings.logout();
+  }
+
   void openProgressDetails() {
     // Get.toNamed(AppRoutes.progress);
   }
 
   void openInsights() {
     // Get.toNamed(AppRoutes.insights);
+  }
+
+  @override
+  void onClose() {
+    _notificationCountTimer?.cancel();
+    super.onClose();
   }
 }

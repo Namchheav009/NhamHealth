@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../widgets/app_alert.dart';
 
 import '../../controllers/calories_controller.dart';
 
@@ -120,10 +121,7 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
                   final calories = int.tryParse(caloriesController.text.trim());
 
                   if (food.isEmpty || calories == null || calories <= 0) {
-                    Get.snackbar(
-                      'Invalid information',
-                      'Please enter food name and calories.',
-                    );
+                    AppAlert.error(title: 'Invalid information', message: 'Please enter food name and calories.');
 
                     return;
                   }

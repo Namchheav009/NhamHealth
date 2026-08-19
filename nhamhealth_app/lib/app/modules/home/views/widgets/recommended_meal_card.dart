@@ -12,11 +12,13 @@ class RecommendedMealCard extends StatelessWidget {
     required this.meal,
     this.onTap,
     this.onFavorite,
+    this.isFavorite = false,
   });
 
   final RecommendedMealModel meal;
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
+  final bool isFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +69,19 @@ class RecommendedMealCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.favorite_border_rounded,
-                            size: 16,
-                            color: Color(0xFF8A8D8B),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            child: Icon(
+                              isFavorite
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              key: ValueKey<bool>(isFavorite),
+                              size: 16,
+                              color:
+                                  isFavorite
+                                      ? AppColors.favoriteRed
+                                      : const Color(0xFF8A8D8B),
+                            ),
                           ),
                         ),
                       ),

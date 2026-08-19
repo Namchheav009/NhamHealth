@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in_web/web_only.dart' as web;
+import '../../../../widgets/app_alert.dart';
 
 import '../../services/google_auth_service.dart';
 
@@ -64,14 +65,7 @@ class _PlatformGoogleSignInButtonState
 
   void _showError(Object error) {
     if (!mounted) return;
-    Get.snackbar(
-      'Google sign in failed',
-      error.toString(),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: const Color(0xFFB3261E),
-      colorText: Colors.white,
-    );
+    AppAlert.error(title: 'Google sign in failed', message: error.toString());
   }
 
   @override
