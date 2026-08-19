@@ -13,4 +13,8 @@ public interface MealFavoriteRepository extends JpaRepository<MealFavorite, Inte
     boolean existsByUserUserIdAndMealMealIdAndMealFavoriteIdNot(Integer userId, Integer mealId, Integer favoriteId);
 
     java.util.List<MealFavorite> findAllByOrderBySavedAtDesc();
+
+    java.util.List<MealFavorite> findAllByUserUserIdOrderBySavedAtDesc(Integer userId);
+
+    java.util.Optional<MealFavorite> findByUserUserIdAndMealMealId(Integer userId, Integer mealId);
 }

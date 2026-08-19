@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../../core/services/auth_service.dart';
@@ -100,13 +101,6 @@ class LoginController extends GetxController {
   }
 
   void _showError(String message) {
-    Get.snackbar(
-      'Sign in failed',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: const Color(0xFFB3261E),
-      colorText: Colors.white,
-    );
+    AppAlert.error(title: 'Sign in failed', message: message);
   }
 }

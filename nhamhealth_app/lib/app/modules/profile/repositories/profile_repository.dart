@@ -16,6 +16,17 @@ class ProfileRepository {
   final AuthService _authService;
   final http.Client _client;
 
+  Future<int> getUnreadNotificationCount() async {
+    final token = await _accessToken();
+    final response = await _client.get(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/notifications/unread-count'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) return 0;
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return (payload['count'] as num?)?.toInt() ?? 0;
+  }
+
   Future<ProfileDashboardModel> getDashboard({DateTime? date}) async {
     final token = await _accessToken();
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/users/me/dashboard');

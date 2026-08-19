@@ -111,6 +111,51 @@ class HomeProvider {
     return _parseRecommendedMeals(response);
   }
 
+  Future<Set<int>> getFavoriteMealIds() async {
+    final response = await _favoriteRequest('GET');
+    final payload = jsonDecode(response.body) as List<dynamic>;
+    return payload.map((item) => ((item as Map)['id'] as num).toInt()).toSet();
+  }
+
+  Future<int> getUnreadNotificationCount() async {
+    final authService = _authService;
+    if (authService == null) return 0;
+    final token = await authService.readAccessToken();
+    if (token == null || token.isEmpty) return 0;
+    final response = await _client.get(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/notifications/unread-count'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HomeProviderException('Unable to load notification count.');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return (payload['count'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<void> setMealFavorite(int mealId, {required bool favorite}) async {
+    await _favoriteRequest(favorite ? 'POST' : 'DELETE', mealId: mealId);
+  }
+
+  Future<http.Response> _favoriteRequest(String method, {int? mealId}) async {
+    final authService = _authService;
+    if (authService == null) throw const HomeProviderException('Authentication is required.');
+    final token = await authService.readAccessToken();
+    if (token == null || token.isEmpty) throw const HomeProviderException('Your session has expired.');
+    final suffix = mealId == null ? '' : '/$mealId';
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals$suffix');
+    final headers = {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
+    final response = method == 'POST'
+        ? await _client.post(uri, headers: headers)
+        : method == 'DELETE'
+            ? await _client.delete(uri, headers: headers)
+            : await _client.get(uri, headers: headers);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HomeProviderException('Unable to update favorite (HTTP ${response.statusCode}).');
+    }
+    return response;
+  }
+
   List<RecommendedMealModel> _parseRecommendedMeals(http.Response response) {
     try {
       final payload = jsonDecode(response.body);

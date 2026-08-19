@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../auth/models/authenticated_user_model.dart';
@@ -10,6 +13,8 @@ import '../models/daily_summary_model.dart';
 import '../models/nutrition_progress_model.dart';
 import '../models/mood_model.dart';
 import '../repositories/home_repository.dart';
+import '../../profile/controllers/setting_controller.dart';
+import '../../profile/views/setting_view.dart';
 
 class HomeController extends GetxController {
   HomeController({required this.repository});
@@ -32,6 +37,9 @@ class HomeController extends GetxController {
   final moods = <MoodModel>[].obs;
   final isMoodsLoading = false.obs;
   final isRecommendedMealsLoading = false.obs;
+  final favoriteMealIds = <int>{}.obs;
+  final unreadNotificationCount = 0.obs;
+  Timer? _notificationCountTimer;
 
   @override
   void onInit() {
@@ -50,11 +58,60 @@ class HomeController extends GetxController {
       _summariesByDay[_dayKey(DateTime.now())] = initialDashboard.dailySummary;
     }
     loadMoods();
+    loadFavoriteMeals();
+    loadUnreadNotificationCount();
+    _notificationCountTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => loadUnreadNotificationCount(),
+    );
     if (dashboard.value == null) {
       loadDashboard();
     } else {
       _clearRecommendedMeals();
     }
+  }
+
+  Future<void> loadUnreadNotificationCount() async {
+    try {
+      unreadNotificationCount.value = await repository.getUnreadNotificationCount();
+    } on Object {
+      // Keep the last known badge count while the API is temporarily unavailable.
+    }
+  }
+
+  Future<void> loadFavoriteMeals() async {
+    try {
+      favoriteMealIds.assignAll(await repository.getFavoriteMealIds());
+    } on Object {
+      // Favorites remain usable after the next successful refresh.
+    }
+  }
+
+  Future<void> toggleMealFavorite(int mealId) async {
+    final wasFavorite = favoriteMealIds.contains(mealId);
+    _setMealFavoriteState(mealId, favorite: !wasFavorite);
+    try {
+      await repository.setMealFavorite(mealId, favorite: !wasFavorite);
+      AppAlert.success(
+        title: wasFavorite ? 'Favorite removed' : 'Favorite saved',
+        message:
+            wasFavorite
+                ? 'This meal was removed from your Favorites page.'
+                : 'This meal is now available on your Favorites page.',
+      );
+    } on Object catch (error) {
+      _setMealFavoriteState(mealId, favorite: wasFavorite);
+      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+    }
+  }
+
+  void _setMealFavoriteState(int mealId, {required bool favorite}) {
+    if (favorite) {
+      favoriteMealIds.add(mealId);
+    } else {
+      favoriteMealIds.remove(mealId);
+    }
+    favoriteMealIds.refresh();
   }
 
   Future<void> loadMoods() async {
@@ -92,11 +149,7 @@ class HomeController extends GetxController {
         _showSelectedDay();
       }
     } catch (_) {
-      Get.snackbar(
-        'Error',
-        'Unable to load home data.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Home unavailable', message: 'Unable to load home data.');
     } finally {
       isLoading.value = false;
     }
@@ -213,8 +266,9 @@ class HomeController extends GetxController {
     }
   }
 
-  void openNotifications() {
-    Get.toNamed<void>(AppRoutes.notifications);
+  Future<void> openNotifications() async {
+    await Get.toNamed<void>(AppRoutes.notifications);
+    await loadUnreadNotificationCount();
   }
 
   void openFavorites() {
@@ -223,6 +277,15 @@ class HomeController extends GetxController {
 
   void openProfile() {
     selectBottomMenu(4);
+  }
+
+  void openSettings() {
+    Get.to<void>(
+      () => const SettingsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SettingsController>(() => SettingsController());
+      }),
+    );
   }
 
   void openWellnessDetails() {
@@ -248,11 +311,7 @@ class HomeController extends GetxController {
 
       Get.offAllNamed(AppRoutes.login);
     } on Object {
-      Get.snackbar(
-        'Logout failed',
-        'Unable to clear your session. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Logout failed', message: 'Unable to clear your session. Please try again.');
     } finally {
       isLoggingOut.value = false;
     }
@@ -261,11 +320,7 @@ class HomeController extends GetxController {
   Future<void> getRecommendation() async {
     final moodId = selectedMoodId.value;
     if (moodId == null) {
-      Get.snackbar(
-        'Choose your mood',
-        'Select how you are feeling so AI can recommend suitable meals.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Choose your mood', message: 'Select how you are feeling so AI can recommend suitable meals.');
       return;
     }
     await loadRecommendedMeals(
@@ -317,5 +372,11 @@ class HomeController extends GetxController {
     } finally {
       isRecommendedMealsLoading.value = false;
     }
+  }
+
+  @override
+  void onClose() {
+    _notificationCountTimer?.cancel();
+    super.onClose();
   }
 }
