@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../../core/services/auth_service.dart';
@@ -44,20 +45,12 @@ class ResetPasswordController extends GetxController {
     confirmPasswordHasError.value = false;
 
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      Get.snackbar(
-        'Required',
-        'Please fill in both password fields.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Required', message: 'Please fill in both password fields.');
       return;
     }
 
     if (newPassword.length < 8) {
-      Get.snackbar(
-        'Password too short',
-        'Use at least 8 characters for your new password.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Password too short', message: 'Use at least 8 characters for your new password.');
       return;
     }
 
@@ -67,11 +60,7 @@ class ResetPasswordController extends GetxController {
     }
 
     if (resetToken.isEmpty) {
-      Get.snackbar(
-        'Reset session expired',
-        'Request a new verification code and try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Reset session expired', message: 'Request a new verification code and try again.');
       return;
     }
 
@@ -88,13 +77,7 @@ class ResetPasswordController extends GetxController {
         duration: const Duration(milliseconds: 300),
       );
     } on AuthException catch (error) {
-      Get.snackbar(
-        'Could not reset password',
-        error.message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.errorCoral,
-        colorText: Colors.white,
-      );
+      AppAlert.error(title: 'Could not reset password', message: error.message);
     } finally {
       isLoading.value = false;
     }

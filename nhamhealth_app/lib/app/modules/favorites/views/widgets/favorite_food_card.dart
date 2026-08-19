@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../models/favorite_food.dart';
@@ -14,14 +15,11 @@ class FavoriteFoodCard extends StatelessWidget {
     clipBehavior: Clip.antiAlias,
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Expanded(child: Stack(fit: StackFit.expand, children: [
-        Image.asset(
-          food.image,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => const ColoredBox(
-            color: Color(0xFFEAF4EE),
-            child: Icon(Icons.restaurant_rounded, color: Color(0xFF0AA653)),
-          ),
-        ),
+        food.image.startsWith('http')
+          ? CachedNetworkImage(imageUrl: food.image, fit: BoxFit.cover, errorWidget: (_, _, _) => const _FoodFallback())
+          : food.image.isEmpty
+            ? const _FoodFallback()
+            : Image.asset(food.image, fit: BoxFit.cover, errorBuilder: (_, _, _) => const _FoodFallback()),
         Positioned(top: 6, right: 6, child: Material(color: Colors.white, shape: const CircleBorder(), elevation: 1, child: InkWell(
           onTap: onRemove,
           customBorder: const CircleBorder(),
@@ -34,5 +32,14 @@ class FavoriteFoodCard extends StatelessWidget {
         Row(children: [Expanded(child: Text('${food.calories} kcal', style: const TextStyle(fontSize: 9, color: AppColors.secondaryText))), const Icon(Icons.star_rounded, color: Color(0xFFFFBE0B), size: 14), Text(food.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 9))]),
       ])),
     ]),
+  );
+}
+
+class _FoodFallback extends StatelessWidget {
+  const _FoodFallback();
+  @override
+  Widget build(BuildContext context) => const ColoredBox(
+    color: Color(0xFFEAF4EE),
+    child: Center(child: Icon(Icons.restaurant_rounded, color: Color(0xFF0AA653))),
   );
 }

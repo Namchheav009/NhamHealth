@@ -23,4 +23,11 @@ class HomeRepository {
     required int moodId,
     bool refresh = false,
   }) => provider.generateRecommendedMeals(moodId: moodId, refresh: refresh);
+
+  Future<Set<int>> getFavoriteMealIds() => provider.getFavoriteMealIds();
+
+  Future<int> getUnreadNotificationCount() => provider.getUnreadNotificationCount();
+
+  Future<void> setMealFavorite(int mealId, {required bool favorite}) =>
+      provider.setMealFavorite(mealId, favorite: favorite);
 }

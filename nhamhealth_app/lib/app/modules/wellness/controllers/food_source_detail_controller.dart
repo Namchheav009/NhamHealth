@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../models/food_source_model.dart';
 import '../../../routes/app_routes.dart';
@@ -34,11 +35,7 @@ class FoodSourceDetailController extends GetxController {
       Future.microtask(() {
         Get.offNamed(AppRoutes.calories);
 
-        Get.snackbar(
-          'Food not found',
-          'Please select a food source again.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        AppAlert.error(title: 'Food not found', message: 'Please select a food source again.');
       });
     }
 
@@ -149,19 +146,11 @@ class FoodSourceDetailController extends GetxController {
   }
 
   void reanalyzeWithAi() {
-    Get.snackbar(
-      'AI Re-analysis',
-      'Re-analyzing your food amount...',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppAlert.success(title: 'AI Re-analysis', message: 'Re-analyzing your food amount...');
   }
 
   void saveChanges() {
-    Get.snackbar(
-      'Saved',
-      'Food detail changes saved successfully.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppAlert.success(title: 'Saved', message: 'Food detail changes saved successfully.');
   }
 
   void cancelChanges() {

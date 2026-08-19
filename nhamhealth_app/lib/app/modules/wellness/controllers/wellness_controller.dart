@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../routes/app_routes.dart';
 import '../models/wellness_summary_model.dart';
@@ -89,11 +90,7 @@ class WellnessController extends GetxController {
       _setNutrient('Sugar', dashboard.sugar?.current ?? 0,
           dashboard.sugar?.goal ?? 50);
     } on Object {
-      Get.snackbar(
-        'Wellness unavailable',
-        'Unable to load your daily wellness data.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Wellness unavailable', message: 'Unable to load your daily wellness data.');
     } finally {
       isLoading.value = false;
     }

@@ -33,8 +33,11 @@ class FavoritesView extends GetView<FavoritesController> {
     const SizedBox(height: 10),
     Expanded(child: Obx(() {
       final category = controller.selectedFoodCategory.value;
-      final visible = controller.foods.where((food) => !controller.hiddenFoodIds.contains(food.id) && (category == 'All' || food.category == category)).toList();
-      if (visible.isEmpty) return const _EmptyFavorites(message: 'No foods match this filter');
+      if (controller.isLoading.value && controller.foods.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      final visible = controller.foods.where((food) => category == 'All' || food.category == category).toList();
+      if (visible.isEmpty) return _EmptyFavorites(message: category == 'All' ? 'No favorite foods yet' : 'No foods match this filter');
       return LayoutBuilder(builder: (context, constraints) {
         final columns = constraints.maxWidth < 330 ? 2 : 3;
         final cardWidth = (constraints.maxWidth - ((columns - 1) * 8)) / columns;
