@@ -3,6 +3,8 @@ package com.nhamhealth.nhamhealth_api.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import jakarta.persistence.EntityManager;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminIngredientRequest;
@@ -54,6 +56,15 @@ public class IngredientAdminService {
             throw new IllegalArgumentException("This ingredient is used by meals and cannot be deleted");
         }
         ingredientRepository.delete(ingredient);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminIngredientDto> search(String query) {
+        String normalizedQuery = query == null ? "" : query.trim();
+        List<Ingredient> ingredients = normalizedQuery.isEmpty()
+                ? ingredientRepository.findAllByOrderByIngredientNameAsc().stream().limit(20).toList()
+                : ingredientRepository.findTop20ByIngredientNameContainingIgnoreCaseOrderByIngredientNameAsc(normalizedQuery);
+        return ingredients.stream().map(this::toDto).toList();
     }
 
     private Ingredient findIngredient(Integer ingredientId) {

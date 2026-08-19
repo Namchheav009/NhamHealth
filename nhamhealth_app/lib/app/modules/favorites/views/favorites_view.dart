@@ -106,7 +106,7 @@ class FavoritesView extends GetView<FavoritesController> {
   void _showFoodFilter() {
     Get.bottomSheet<void>(
       FoodFilterSheet(
-        categories: FavoritesController.foodCategories,
+        categories: controller.foodCategories.toList(growable: false),
         initialCategory: controller.selectedFoodCategory.value,
         onApply: controller.applyFoodCategory,
       ),

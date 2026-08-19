@@ -10,7 +10,10 @@ import jakarta.persistence.EntityManager;
 import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealEditorDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminRecipeStepDto;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminMealIngredientDto;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
+import com.nhamhealth.nhamhealth_api.entity.Ingredient;
+import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
 import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
@@ -21,6 +24,8 @@ import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
+import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.MealIngredientRepository;
 
 @Service
 public class MealAdminService {
@@ -31,6 +36,8 @@ public class MealAdminService {
     private final ReviewRepository reviewRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final RecipeStepRepository recipeStepRepository;
+    private final IngredientRepository ingredientRepository;
+    private final MealIngredientRepository mealIngredientRepository;
     private final ProfileImageStorageService profileImageStorageService;
     private final EntityManager entityManager;
 
@@ -41,6 +48,8 @@ public class MealAdminService {
             ReviewRepository reviewRepository,
             MealCategoryRepository mealCategoryRepository,
             RecipeStepRepository recipeStepRepository,
+            IngredientRepository ingredientRepository,
+            MealIngredientRepository mealIngredientRepository,
             ProfileImageStorageService profileImageStorageService,
             EntityManager entityManager) {
         this.mealRepository = mealRepository;
@@ -49,6 +58,8 @@ public class MealAdminService {
         this.reviewRepository = reviewRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.recipeStepRepository = recipeStepRepository;
+        this.ingredientRepository = ingredientRepository;
+        this.mealIngredientRepository = mealIngredientRepository;
         this.profileImageStorageService = profileImageStorageService;
         this.entityManager = entityManager;
     }
@@ -67,6 +78,7 @@ public class MealAdminService {
         meal.setCreatedAt(now);
         meal.setUpdatedAt(now);
         Meal savedMeal = mealRepository.save(meal);
+        saveMealIngredients(savedMeal, request);
         saveRecipeSteps(savedMeal, request);
         return toAdminRow(savedMeal);
     }
@@ -78,10 +90,16 @@ public class MealAdminService {
                 .map(step -> new AdminRecipeStepDto(
                         step.getStepId(), step.getStepNumber(), step.getStepTitle(), step.getInstruction(), step.getImageUrl()))
                 .toList();
+        List<AdminMealIngredientDto> ingredients = mealIngredientRepository.findByMealMealIdOrderByDisplayOrderAsc(mealId).stream()
+                .map(ingredient -> new AdminMealIngredientDto(
+                        ingredient.getIngredient().getIngredientId(), ingredient.getIngredient().getIngredientName(),
+                        ingredient.getIngredient().getDefaultUnit(), ingredient.getQuantity(), ingredient.getUnit(),
+                        ingredient.getPreparationNote()))
+                .toList();
         return new AdminMealEditorDto(
                 meal.getMealId(), meal.getMealName(), meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), meal.getDifficulty(), meal.getCookingTimeMinutes(),
-                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), recipeSteps);
+                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, recipeSteps);
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -90,8 +108,10 @@ public class MealAdminService {
         applyMealRequest(meal, request);
         meal.setUpdatedAt(java.time.LocalDateTime.now());
         Meal savedMeal = mealRepository.save(meal);
+        mealIngredientRepository.deleteByMealMealId(mealId);
         recipeStepRepository.deleteByMealMealId(mealId);
         entityManager.flush();
+        saveMealIngredients(savedMeal, request);
         saveRecipeSteps(savedMeal, request);
         return toAdminRow(savedMeal);
     }
@@ -148,6 +168,28 @@ public class MealAdminService {
             recipeSteps.add(recipeStep);
         }
         recipeStepRepository.saveAll(recipeSteps);
+    }
+
+    private void saveMealIngredients(Meal savedMeal, AdminMealRequest request) {
+        java.util.Set<Integer> selectedIngredientIds = new java.util.HashSet<>();
+        List<MealIngredient> mealIngredients = new java.util.ArrayList<>();
+        for (int index = 0; index < request.ingredients().size(); index++) {
+            var requestedIngredient = request.ingredients().get(index);
+            if (!selectedIngredientIds.add(requestedIngredient.ingredientId())) {
+                throw new IllegalArgumentException("Each ingredient can only be added once");
+            }
+            Ingredient ingredient = ingredientRepository.findById(requestedIngredient.ingredientId())
+                    .orElseThrow(() -> new IllegalArgumentException("Selected ingredient was not found"));
+            MealIngredient mealIngredient = new MealIngredient();
+            mealIngredient.setMeal(savedMeal);
+            mealIngredient.setIngredient(ingredient);
+            mealIngredient.setQuantity(requestedIngredient.quantity());
+            mealIngredient.setUnit(blankToNull(requestedIngredient.unit()));
+            mealIngredient.setPreparationNote(blankToNull(requestedIngredient.preparationNote()));
+            mealIngredient.setDisplayOrder(index + 1);
+            mealIngredients.add(mealIngredient);
+        }
+        mealIngredientRepository.saveAll(mealIngredients);
     }
 
     private Meal findMeal(Integer mealId) {

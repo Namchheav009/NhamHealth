@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminIngredientRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminIngredientDto;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
 import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.service.IngredientAdminService;
@@ -51,6 +52,13 @@ public class IngredientAdminController {
         model.addAttribute("ingredients", ingredients);
         model.addAttribute("totalIngredients", ingredientRepository.count());
         return "admin/ingredients";
+    }
+
+    @GetMapping("/admin/ingredients/search")
+    @ResponseBody
+    public ResponseEntity<List<AdminIngredientDto>> searchIngredients(
+            @RequestParam(value = "q", required = false) String query) {
+        return ResponseEntity.ok(ingredientAdminService.search(query));
     }
 
     @PostMapping("/admin/ingredients")
