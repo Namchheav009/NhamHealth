@@ -5,6 +5,7 @@ class AuthenticatedUser {
     required this.role,
     this.fullName,
     this.profileImageUrl,
+    this.hasPin = false,
   });
 
   final int id;
@@ -12,6 +13,7 @@ class AuthenticatedUser {
   final String role;
   final String? fullName;
   final String? profileImageUrl;
+  final bool hasPin;
 
   String get displayName {
     final name = fullName?.trim();
@@ -40,6 +42,7 @@ class AuthenticatedUser {
       role: json['role'] as String,
       fullName: json['fullName'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
+      hasPin: json['hasPin'] as bool? ?? false,
     );
   }
 }

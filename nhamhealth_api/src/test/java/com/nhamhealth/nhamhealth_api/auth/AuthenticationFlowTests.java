@@ -163,6 +163,52 @@ class AuthenticationFlowTests {
     }
 
     @Test
+    void authenticatedUserCanStoreVerifyAndDisableHashedAppPin() throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String accessToken = JsonPath.read(
+                login.getResponse().getContentAsString(), "$.accessToken");
+
+        mockMvc.perform(post("/api/v1/auth/pin")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pin\":\"258025\"}"))
+                .andExpect(status().isOk());
+
+        User saved = userRepository.findByEmailIgnoreCase("user@nhamhealth.local").orElseThrow();
+        assertTrue(saved.hasPin());
+        assertEquals(6, saved.getPinLength());
+        assertFalse("258025".equals(saved.getPinHash()));
+        assertTrue(passwordEncoder.matches("258025", saved.getPinHash()));
+
+        mockMvc.perform(post("/api/v1/auth/pin/verify")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pin\":\"258025\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(true));
+
+        mockMvc.perform(post("/api/v1/auth/pin/verify")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pin\":\"000000\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(false));
+
+        mockMvc.perform(post("/api/v1/auth/pin/disable")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+        assertFalse(userRepository.findById(saved.getUserId()).orElseThrow().hasPin());
+    }
+
+    @Test
     void invalidMobileLoginPayloadAlwaysReturnsJson() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

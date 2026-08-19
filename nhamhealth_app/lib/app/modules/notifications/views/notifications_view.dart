@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/inner_shadow.dart';
 import '../models/notification_item.dart';
 
@@ -85,13 +86,7 @@ class NotificationsView extends StatelessWidget {
       maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: AppColors.homeBackground,
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/background/bg.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
+        body: AppBackground(
           child: SafeArea(
             child: Column(
               children: [
