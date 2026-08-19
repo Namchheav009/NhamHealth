@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
+import '../../../widgets/favorite_removal_confirmation.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../auth/models/authenticated_user_model.dart';
@@ -89,7 +90,9 @@ class HomeController extends GetxController {
 
   Future<void> toggleMealFavorite(int mealId) async {
     final wasFavorite = favoriteMealIds.contains(mealId);
-    _setMealFavoriteState(mealId, favorite: !wasFavorite);
+    if (wasFavorite && !await confirmFavoriteRemoval()) return;
+
+    setMealFavoriteState(mealId, favorite: !wasFavorite);
     try {
       await repository.setMealFavorite(mealId, favorite: !wasFavorite);
       AppAlert.success(
@@ -100,12 +103,13 @@ class HomeController extends GetxController {
                 : 'This meal is now available on your Favorites page.',
       );
     } on Object catch (error) {
-      _setMealFavoriteState(mealId, favorite: wasFavorite);
+      setMealFavoriteState(mealId, favorite: wasFavorite);
       AppAlert.error(title: 'Favorites unavailable', message: error.toString());
     }
   }
 
-  void _setMealFavoriteState(int mealId, {required bool favorite}) {
+  /// Keeps the home meal cards in sync when favorites are changed elsewhere.
+  void setMealFavoriteState(int mealId, {required bool favorite}) {
     if (favorite) {
       favoriteMealIds.add(mealId);
     } else {

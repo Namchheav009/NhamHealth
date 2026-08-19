@@ -142,8 +142,19 @@
                 <div class="field"><label>Cooking time (minutes)</label><input name="cookingTimeMinutes" type="number" min="0" max="1440"></div>
                 <div class="field"><label>Difficulty</label><select name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
                 <div class="field"><label>Status</label><select name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
-                <div class="field full"><label>Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><img id="mealImagePreviewImage" alt="Meal image preview"><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users.</span></div></div></div>
+                <div class="field full"><label>Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><button id="openMealImageViewer" class="meal-image-preview-button" type="button" aria-label="View meal image at full size"><img id="mealImagePreviewImage" alt="Meal image preview"></button><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users. Select the image to view it larger.</span></div></div></div>
                 <div class="field full"><label>Description</label><textarea name="description" maxlength="500" placeholder="Meal description..."></textarea></div>
+                <div class="field full meal-ingredients-field">
+                    <div class="meal-ingredients-heading">
+                        <div><label for="ingredientSearchInput">Ingredients</label><span>Search the ingredient catalog, select each ingredient, then add its recipe details.</span></div>
+                    </div>
+                    <div class="ingredient-picker">
+                        <input id="ingredientSearchInput" type="search" autocomplete="off" placeholder="Search ingredients to add..." aria-controls="ingredientSearchResults">
+                        <div id="ingredientSearchResults" class="ingredient-search-results" role="listbox" aria-label="Ingredient search results"></div>
+                    </div>
+                    <div id="selectedMealIngredients" class="selected-meal-ingredients" aria-live="polite"></div>
+                    <span class="field-help">At least one ingredient is required. Quantity, unit, and preparation note are optional.</span>
+                </div>
                 <div class="field full recipe-steps-field">
                     <div class="recipe-steps-heading">
                         <div><label>Cooking steps</label><span>Add the instructions users need to prepare this meal.</span></div>
@@ -171,6 +182,14 @@
                 <button class="btn btn-primary" id="saveMealButton" type="submit">Save Meal</button>
             </div>
         </form>
+    </section>
+</div>
+
+<div class="image-viewer" id="mealImageViewer" hidden aria-hidden="true">
+    <button class="image-viewer-backdrop" id="closeMealImageViewer" type="button" aria-label="Close image viewer"></button>
+    <section class="image-viewer-content" role="dialog" aria-modal="true" aria-label="Meal image preview">
+        <button class="close image-viewer-close" id="closeMealImageViewerButton" type="button" aria-label="Close image viewer"><i class="fa-solid fa-xmark"></i></button>
+        <img id="mealImageViewerImage" alt="Full size meal image">
     </section>
 </div>
 

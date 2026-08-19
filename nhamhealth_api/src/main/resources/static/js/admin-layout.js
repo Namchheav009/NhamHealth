@@ -54,6 +54,7 @@
     const logoutForm = document.getElementById('logoutForm');
     const desktopBreakpoint = 850;
     const sidebarPreferenceKey = 'nhamHealthAdminSidebarCollapsed';
+    const sidebarScrollKey = 'nhamHealthAdminSidebarScrollTop';
 
     const isMobile = () => window.innerWidth <= desktopBreakpoint;
     const saveDesktopPreference = (isCollapsed) => {
@@ -68,6 +69,23 @@
             return window.localStorage.getItem(sidebarPreferenceKey) === 'true';
         } catch (_) {
             return false;
+        }
+    };
+    const saveSidebarScrollPosition = () => {
+        if (!sidebar) return;
+        try {
+            window.sessionStorage.setItem(sidebarScrollKey, String(sidebar.scrollTop));
+        } catch (_) {
+            // The layout still works when browser storage is unavailable.
+        }
+    };
+    const restoreSidebarScrollPosition = () => {
+        if (!sidebar) return;
+        try {
+            const savedScrollTop = Number(window.sessionStorage.getItem(sidebarScrollKey));
+            if (Number.isFinite(savedScrollTop)) sidebar.scrollTop = savedScrollTop;
+        } catch (_) {
+            // The sidebar simply starts at the top when browser storage is unavailable.
         }
     };
 
@@ -121,9 +139,12 @@
     sidebar?.querySelectorAll('.nav-link')?.forEach(link => {
         link.addEventListener('click', () => {
             // Keep the desktop sidebar in its selected state while navigating.
+            saveSidebarScrollPosition();
             if (isMobile()) closeSidebar();
         });
     });
+    sidebar?.addEventListener('scroll', saveSidebarScrollPosition, { passive: true });
+    window.addEventListener('pagehide', saveSidebarScrollPosition);
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
@@ -147,6 +168,7 @@
     } else {
         setDesktopSidebarCollapsed(getDesktopPreference(), false);
     }
+    restoreSidebarScrollPosition();
 
     if (searchInput) {
         searchInput.addEventListener('input', (event) => {
