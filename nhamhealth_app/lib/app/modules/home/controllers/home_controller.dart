@@ -218,7 +218,7 @@ class HomeController extends GetxController {
   }
 
   void openFavorites() {
-    // Get.toNamed(AppRoutes.favorites);
+    Get.toNamed<void>(AppRoutes.favorites);
   }
 
   void openProfile() {
