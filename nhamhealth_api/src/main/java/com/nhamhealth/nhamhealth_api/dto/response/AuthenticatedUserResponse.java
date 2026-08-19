@@ -5,5 +5,6 @@ public record AuthenticatedUserResponse(
         String email,
         String role,
         String fullName,
-        String profileImageUrl) {
+        String profileImageUrl,
+        boolean hasPin) {
 }

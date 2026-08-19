@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/app_background.dart';
 import '../controllers/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
@@ -23,13 +25,7 @@ class HomeView extends GetView<HomeController> {
       child: Scaffold(
         extendBody: true,
         backgroundColor: AppColors.homeBackground,
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/background/bg.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
+        body: AppBackground(
           child: SafeArea(
             bottom: false,
             child: RefreshIndicator(
@@ -41,11 +37,12 @@ class HomeView extends GetView<HomeController> {
                 ),
                 padding: AppSpacing.pagePaddingWithNavigation,
                 child: Obx(
-                  () =>
-                      controller.isLoading.value &&
-                              controller.dashboard.value == null
-                          ? const PageSkeleton.home()
-                          : const Column(
+                  () => LoadingContentTransition(
+                    isLoading:
+                        controller.isLoading.value &&
+                        controller.dashboard.value == null,
+                    loading: const PageSkeleton.home(),
+                    content: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               HomeHeader(),
@@ -61,6 +58,7 @@ class HomeView extends GetView<HomeController> {
                               _RecommendedMealsSection(),
                             ],
                           ),
+                  ),
                 ),
               ),
             ),

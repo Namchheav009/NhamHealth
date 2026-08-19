@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/app_security_service.dart';
+import '../../../widgets/pin_keypad_dialog.dart';
 import 'change_password_view.dart';
 import '../bindings/change_password_binding.dart';
+import '../../../widgets/app_background.dart';
 
 class SecurityView extends StatefulWidget {
-  const SecurityView({super.key});
+  const SecurityView({
+    super.key,
+    this.promptCreatePin = false,
+    this.requirePinCreation = false,
+    this.onPinCreated,
+  });
+
+  final bool promptCreatePin;
+  final bool requirePinCreation;
+  final VoidCallback? onPinCreated;
 
   @override
   State<SecurityView> createState() => _SecurityViewState();
@@ -19,6 +29,8 @@ class _SecurityViewState extends State<SecurityView> {
   bool _hasPin = false;
   bool _biometrics = false;
   bool _canUseBiometrics = false;
+  AppBiometricKind _biometricKind = AppBiometricKind.generic;
+  bool _didAutoPrompt = false;
 
   @override
   void initState() {
@@ -31,112 +43,43 @@ class _SecurityViewState extends State<SecurityView> {
       _security.hasPin,
       _security.biometricsEnabled,
       _security.canUseBiometrics(),
+      _security.biometricKind,
     ]);
     if (!mounted) return;
     setState(() {
-      _hasPin = values[0];
-      _biometrics = values[1];
-      _canUseBiometrics = values[2];
+      _hasPin = values[0] as bool;
+      _biometrics = values[1] as bool;
+      _canUseBiometrics = values[2] as bool;
+      _biometricKind = values[3] as AppBiometricKind;
       _loading = false;
     });
+    if (widget.promptCreatePin && !_hasPin && !_didAutoPrompt) {
+      _didAutoPrompt = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _setOrChangePin();
+      });
+    }
   }
 
   Future<String?> _askPin(String title, {bool confirm = false}) async {
-    final first = TextEditingController();
-    final second = TextEditingController();
-    String? error;
-    final result = await showDialog<String>(
+    return showPinKeypadDialog(
       context: context,
-      barrierDismissible: false,
-      builder:
-          (dialogContext) => StatefulBuilder(
-            builder:
-                (context, setDialogState) => AlertDialog(
-                  title: Text(title),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _pinField(
-                        first,
-                        confirm ? 'New 4-digit PIN' : 'Current PIN',
-                      ),
-                      if (confirm) ...[
-                        const SizedBox(height: 12),
-                        _pinField(second, 'Confirm PIN'),
-                      ],
-                      if (error != null) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          error!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: const Text('Cancel'),
-                    ),
-                    FilledButton(
-                      onPressed: () async {
-                        if (first.text.length != 4) {
-                          setDialogState(
-                            () => error = 'Enter exactly 4 digits.',
-                          );
-                        } else if (confirm && first.text != second.text) {
-                          setDialogState(() => error = 'PINs do not match.');
-                        } else {
-                          Navigator.pop(dialogContext, first.text);
-                        }
-                      },
-                      child: const Text('Continue'),
-                    ),
-                  ],
-                ),
-          ),
+      title: title,
+      subtitle:
+          confirm ? 'Choose a memorable 6-digit PIN' : 'Enter your 6-digit PIN',
+      confirmPin: confirm,
+      allowCancel: !widget.requirePinCreation,
     );
-    // showDialog completes when pop starts, before the reverse route animation
-    // has released every TextField dependency. Disposing immediately can trip
-    // Flutter's `_dependents.isEmpty` assertion in debug builds.
-    _disposeControllersAfterRoute(first, second);
-    return result;
   }
-
-  Future<void> _disposeControllersAfterRoute(
-    TextEditingController first,
-    TextEditingController second,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    first.dispose();
-    second.dispose();
-  }
-
-  Widget _pinField(TextEditingController controller, String label) => TextField(
-    controller: controller,
-    obscureText: true,
-    keyboardType: TextInputType.number,
-    maxLength: 4,
-    autofocus: true,
-    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-    decoration: InputDecoration(
-      labelText: label,
-      counterText: '',
-      border: const OutlineInputBorder(),
-    ),
-  );
 
   Future<bool> _verifyCurrentPin() async {
     final pin = await _askPin('Verify your PIN');
     if (pin == null) return false;
-    if (await _security.verifyPin(pin)) return true;
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Incorrect PIN.')));
+    try {
+      if (await _security.verifyPin(pin)) return true;
+      _showSecurityMessage('Incorrect PIN.');
+    } on Object {
+      _showSecurityMessage('Could not verify your PIN. Check your connection.');
     }
     return false;
   }
@@ -149,8 +92,14 @@ class _SecurityViewState extends State<SecurityView> {
       confirm: true,
     );
     if (pin == null) return;
-    await _security.setPin(pin);
-    await _load();
+    try {
+      await _security.setPin(pin);
+      await _load();
+      _showSecurityMessage('Your app PIN was saved securely.');
+      widget.onPinCreated?.call();
+    } on Object {
+      _showSecurityMessage('Could not save your PIN. Check your connection.');
+    }
   }
 
   Future<void> _toggleBiometrics(bool enabled) async {
@@ -160,7 +109,7 @@ class _SecurityViewState extends State<SecurityView> {
     }
     try {
       if (enabled &&
-          !await _security.authenticateBiometrically(
+          !await _security.confirmDeviceBiometrics(
             'Confirm biometrics for NhamHealth',
           )) {
         return;
@@ -178,20 +127,23 @@ class _SecurityViewState extends State<SecurityView> {
 
   Future<void> _disableLock() async {
     if (!await _verifyCurrentPin()) return;
-    await _security.disable();
-    await _load();
+    try {
+      await _security.disable();
+      await _load();
+    } on Object {
+      _showSecurityMessage('Could not turn off app protection.');
+    }
+  }
+
+  void _showSecurityMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFFFFBFC),
-    body: Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/background/bg.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
+    body: AppBackground(
       child: SafeArea(
         child: Column(
           children: [
@@ -236,11 +188,14 @@ class _SecurityViewState extends State<SecurityView> {
     padding: const EdgeInsets.fromLTRB(10, 8, 20, 10),
     child: Row(
       children: [
-        IconButton(
-          onPressed: Get.back,
-          icon: const Icon(Icons.arrow_back_rounded),
-          color: const Color(0xFF006B38),
-        ),
+        if (widget.requirePinCreation && !_hasPin)
+          const SizedBox(width: 48)
+        else
+          IconButton(
+            onPressed: Get.back,
+            icon: const Icon(Icons.arrow_back_rounded),
+            color: const Color(0xFF006B38),
+          ),
         const SizedBox(width: 4),
         const Expanded(
           child: Text(
@@ -333,8 +288,8 @@ class _SecurityViewState extends State<SecurityView> {
         title: _hasPin ? 'Change app PIN' : 'Create app PIN',
         subtitle:
             _hasPin
-                ? 'Your 4-digit backup PIN is active'
-                : 'Set a 4-digit unlock code',
+                ? 'Your 6-digit backup PIN is active'
+                : 'Set a 6-digit unlock code',
         trailing: const Icon(
           Icons.chevron_right_rounded,
           color: Color(0xFF6E7B73),
@@ -343,8 +298,15 @@ class _SecurityViewState extends State<SecurityView> {
       ),
       _divider(),
       _SecurityTile(
-        icon: Icons.fingerprint_rounded,
-        title: 'Fingerprint / Face ID',
+        icon:
+            _biometricKind == AppBiometricKind.face
+                ? Icons.face_rounded
+                : Icons.fingerprint_rounded,
+        title: switch (_biometricKind) {
+          AppBiometricKind.face => 'Face ID',
+          AppBiometricKind.fingerprint => 'Fingerprint',
+          AppBiometricKind.generic => 'Biometric unlock',
+        },
         subtitle:
             _canUseBiometrics
                 ? (_biometrics
