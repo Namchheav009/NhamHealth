@@ -13,6 +13,12 @@ const mealImagePreview = document.getElementById("mealImagePreview");
 const mealImagePreviewImage = document.getElementById("mealImagePreviewImage");
 const mealImagePreviewTitle = document.getElementById("mealImagePreviewTitle");
 const mealImagePreviewText = document.getElementById("mealImagePreviewText");
+const openMealImageViewer = document.getElementById("openMealImageViewer");
+const mealImageViewer = document.getElementById("mealImageViewer");
+const mealImageViewerImage = document.getElementById("mealImageViewerImage");
+const ingredientSearchInput = document.getElementById("ingredientSearchInput");
+const ingredientSearchResults = document.getElementById("ingredientSearchResults");
+const selectedMealIngredients = document.getElementById("selectedMealIngredients");
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
@@ -22,6 +28,9 @@ let meals = [];
 let editingMealId = null;
 let currentMainImageUrl = null;
 let previewObjectUrl = null;
+let ingredientSearchMatches = [];
+let selectedIngredients = [];
+let ingredientSearchTimer = null;
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;"
@@ -53,6 +62,19 @@ function showImagePreview(imageUrl, title, text) {
     mealImagePreviewTitle.textContent = title;
     mealImagePreviewText.textContent = text;
     mealImagePreview.hidden = false;
+}
+
+function openImageViewer() {
+    if (!mealImagePreviewImage.src) return;
+    mealImageViewerImage.src = mealImagePreviewImage.src;
+    mealImageViewer.hidden = false;
+    mealImageViewer.setAttribute("aria-hidden", "false");
+}
+
+function closeImageViewer() {
+    mealImageViewer.hidden = true;
+    mealImageViewer.setAttribute("aria-hidden", "true");
+    mealImageViewerImage.removeAttribute("src");
 }
 
 function drawRows(list) {
@@ -190,6 +212,61 @@ function resetRecipeSteps() {
     appendRecipeStep();
 }
 
+function renderSelectedIngredients() {
+    if (!selectedIngredients.length) {
+        selectedMealIngredients.innerHTML = '<p class="no-selected-ingredients">No ingredients selected yet.</p>';
+        return;
+    }
+    selectedMealIngredients.innerHTML = selectedIngredients.map((ingredient, index) => `
+        <article class="selected-ingredient" data-ingredient-id="${ingredient.ingredientId}">
+            <div class="selected-ingredient-name"><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>${escapeHtml(ingredient.ingredientType || "Ingredient")}</span></div>
+            <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
+            <label>Unit<input data-ingredient-unit type="text" maxlength="30" value="${escapeHtml(ingredient.unit ?? ingredient.defaultUnit ?? "")}" placeholder="e.g. g"></label>
+            <label class="ingredient-note">Preparation note<input data-ingredient-note type="text" maxlength="150" value="${escapeHtml(ingredient.preparationNote ?? "")}" placeholder="e.g. finely chopped"></label>
+            <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="fa-solid fa-trash-can"></i></button>
+        </article>`).join("");
+}
+
+function renderIngredientSearchResults() {
+    if (!ingredientSearchMatches.length) {
+        ingredientSearchResults.innerHTML = '<p class="ingredient-search-empty">No ingredients found.</p>';
+        return;
+    }
+    ingredientSearchResults.innerHTML = ingredientSearchMatches.map(ingredient => {
+        const alreadySelected = selectedIngredients.some(item => item.ingredientId === ingredient.ingredientId);
+        return `<button type="button" role="option" class="ingredient-search-result" data-ingredient-id="${ingredient.ingredientId}" ${alreadySelected ? "disabled" : ""}><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>${escapeHtml(ingredient.ingredientType || "Ingredient")}${ingredient.defaultUnit ? ` · ${escapeHtml(ingredient.defaultUnit)}` : ""}${alreadySelected ? " · Added" : ""}</span></button>`;
+    }).join("");
+}
+
+async function loadIngredientSearchResults(query = "") {
+    try {
+        const response = await fetch(`/admin/ingredients/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error("Unable to search ingredients");
+        ingredientSearchMatches = await response.json();
+        renderIngredientSearchResults();
+    } catch (error) {
+        ingredientSearchResults.innerHTML = '<p class="ingredient-search-empty">Unable to load ingredients.</p>';
+        console.error(error);
+    }
+}
+
+function resetMealIngredients() {
+    selectedIngredients = [];
+    ingredientSearchMatches = [];
+    ingredientSearchInput.value = "";
+    renderSelectedIngredients();
+    loadIngredientSearchResults();
+}
+
+function selectedIngredientPayload() {
+    return [...selectedMealIngredients.querySelectorAll(".selected-ingredient")].map(row => ({
+        ingredientId: Number(row.dataset.ingredientId),
+        quantity: row.querySelector("[data-ingredient-quantity]").value || null,
+        unit: row.querySelector("[data-ingredient-unit]").value.trim(),
+        preparationNote: row.querySelector("[data-ingredient-note]").value.trim()
+    }));
+}
+
 function openCreateModal() {
     editingMealId = null;
     currentMainImageUrl = null;
@@ -198,6 +275,7 @@ function openCreateModal() {
     form.elements.categoryId.querySelector("option[data-inactive-category]")?.remove();
     mealImageFile.required = true;
     mealImageHelp.textContent = "JPG, PNG, or WebP. Maximum 5 MB.";
+    resetMealIngredients();
     resetRecipeSteps();
     document.getElementById("mealModalTitle").textContent = "Add Meal";
     document.getElementById("mealModalText").textContent = "Enter meal information for your catalog.";
@@ -227,6 +305,10 @@ async function openEditModal(mealId) {
         form.elements.difficulty.value = meal.difficulty ?? "";
         form.elements.published.value = String(meal.published);
         form.elements.description.value = meal.description ?? "";
+        selectedIngredients = meal.ingredients || [];
+        renderSelectedIngredients();
+        ingredientSearchInput.value = "";
+        loadIngredientSearchResults();
         mealImageFile.required = false;
         mealImageHelp.textContent = "Leave empty to keep the current meal image. JPG, PNG, or WebP; maximum 5 MB.";
         showImagePreview(meal.mainImageUrl, "Current meal image", "This is the image currently shown to users.");
@@ -243,6 +325,7 @@ async function openEditModal(mealId) {
 }
 
 function closeModal() {
+    closeImageViewer();
     clearImagePreview();
     clearAllStepImagePreviews();
     modal.classList.remove("show");
@@ -268,6 +351,11 @@ async function saveMeal(event) {
         if (payload[key] === "") delete payload[key];
     });
     payload.published = payload.published === "true";
+    payload.ingredients = selectedIngredientPayload();
+    if (!payload.ingredients.length) {
+        window.adminAlerts?.error("Add an ingredient", "Select at least one ingredient for this meal.") ?? window.alert("Select at least one ingredient for this meal.");
+        return;
+    }
     try {
         payload.mainImageUrl = imageFile?.size
             ? await uploadImage("/admin/meal-images", imageFile, "mainImageUrl")
@@ -340,6 +428,30 @@ document.getElementById("openModal").onclick = openCreateModal;
 document.getElementById("closeModal").onclick = closeModal;
 document.getElementById("cancelModal").onclick = closeModal;
 document.getElementById("addRecipeStep").onclick = () => appendRecipeStep();
+openMealImageViewer.addEventListener("click", openImageViewer);
+document.getElementById("closeMealImageViewer").addEventListener("click", closeImageViewer);
+document.getElementById("closeMealImageViewerButton").addEventListener("click", closeImageViewer);
+ingredientSearchInput.addEventListener("input", () => {
+    window.clearTimeout(ingredientSearchTimer);
+    ingredientSearchTimer = window.setTimeout(() => loadIngredientSearchResults(ingredientSearchInput.value), 200);
+});
+ingredientSearchResults.addEventListener("click", event => {
+    const button = event.target.closest("[data-ingredient-id]");
+    if (!button || button.disabled) return;
+    const ingredient = ingredientSearchMatches.find(item => String(item.ingredientId) === button.dataset.ingredientId);
+    if (!ingredient || selectedIngredients.some(item => item.ingredientId === ingredient.ingredientId)) return;
+    selectedIngredients.push(ingredient);
+    renderSelectedIngredients();
+    renderIngredientSearchResults();
+    ingredientSearchInput.focus();
+});
+selectedMealIngredients.addEventListener("click", event => {
+    const button = event.target.closest("[data-remove-ingredient]");
+    if (!button) return;
+    selectedIngredients.splice(Number(button.dataset.removeIngredient), 1);
+    renderSelectedIngredients();
+    renderIngredientSearchResults();
+});
 mealImageFile.addEventListener("change", () => {
     const file = mealImageFile.files[0];
     if (!file) {
@@ -382,5 +494,8 @@ recipeStepsBox.addEventListener("change", event => {
     step.querySelector("[data-step-image-preview]").hidden = false;
 });
 form.addEventListener("submit", saveMeal);
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !mealImageViewer.hidden) closeImageViewer();
+});
 updateRecipeStepLabels();
 loadMeals();

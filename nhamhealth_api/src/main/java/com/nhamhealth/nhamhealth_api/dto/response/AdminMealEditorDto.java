@@ -14,5 +14,6 @@ public record AdminMealEditorDto(
         Integer cookingTimeMinutes,
         boolean published,
         String mainImageUrl,
+        List<AdminMealIngredientDto> ingredients,
         List<AdminRecipeStepDto> recipeSteps) {
 }

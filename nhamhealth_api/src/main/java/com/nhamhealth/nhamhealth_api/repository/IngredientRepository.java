@@ -11,5 +11,7 @@ public interface IngredientRepository extends JpaRepository<Ingredient, Integer>
 
     List<Ingredient> findAllByOrderByIngredientNameAsc();
 
+    List<Ingredient> findTop20ByIngredientNameContainingIgnoreCaseOrderByIngredientNameAsc(String ingredientName);
+
     Optional<Ingredient> findByIngredientNameIgnoreCase(String ingredientName);
 }
