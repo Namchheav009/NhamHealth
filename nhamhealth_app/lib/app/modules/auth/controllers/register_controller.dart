@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_security_service.dart';
 import '../models/google_login_request.dart';
 import '../models/register_request.dart';
 import '../services/google_auth_service.dart';
@@ -78,6 +79,11 @@ class RegisterController extends GetxController {
     final response = await _authService.loginWithGoogle(
       GoogleLoginRequest(idToken: idToken),
     );
+    final security = Get.find<AppSecurityService>();
+    security.syncPinState(response.user.hasPin);
+    if (!response.user.hasPin) {
+      await security.markSetupPendingFor(response.user.id);
+    }
     Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
   }
 
