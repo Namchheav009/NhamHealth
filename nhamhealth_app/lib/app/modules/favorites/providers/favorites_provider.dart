@@ -27,6 +27,34 @@ class FavoritesProvider {
     }).toList(growable: false);
   }
 
+  Future<List<String>> getFoodCategories() async {
+    final token = await _authService.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const FavoritesException('Your session has expired.');
+    }
+
+    final response = await _client.get(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FavoritesException(
+        'Unable to load meal categories (HTTP ${response.statusCode}).',
+      );
+    }
+
+    try {
+      final payload = jsonDecode(response.body) as List<dynamic>;
+      return payload
+          .map((item) => (item as Map)['name'] as String? ?? '')
+          .map((name) => name.trim())
+          .where((name) => name.isNotEmpty)
+          .toList(growable: false);
+    } on Object {
+      throw const FavoritesException('The meal category response is incomplete.');
+    }
+  }
+
   Future<void> addFood(int mealId) async => _request('POST', mealId: mealId);
 
   Future<void> removeFood(int mealId) async => _request('DELETE', mealId: mealId);

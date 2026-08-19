@@ -11,5 +11,7 @@ public interface MealCategoryRepository extends JpaRepository<MealCategory, Inte
 
     List<MealCategory> findAllByOrderBySortOrderAsc();
 
+    List<MealCategory> findAllByIsActiveTrueOrderBySortOrderAsc();
+
     Optional<MealCategory> findByCategoryNameIgnoreCase(String categoryName);
 }

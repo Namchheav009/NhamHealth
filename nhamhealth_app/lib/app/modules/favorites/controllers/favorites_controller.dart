@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
+import '../../../widgets/favorite_removal_confirmation.dart';
 
+import '../../home/controllers/home_controller.dart';
 import '../models/favorite_food.dart';
 import '../models/favorite_post.dart';
 import '../repositories/favorites_repository.dart';
@@ -18,16 +20,8 @@ class FavoritesController extends GetxController {
   final selectedFoodCategory = 'All'.obs;
   final postSort = FavoritePostSort.newest.obs;
   final foods = <FavoriteFood>[].obs;
+  final foodCategories = <String>['All'].obs;
   final isLoading = false.obs;
-
-  static const foodCategories = <String>[
-    'All',
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Snack',
-    'Drink',
-  ];
 
   final posts = const <FavoritePost>[
     FavoritePost(id: 1, author: 'Sophia Martinez', role: 'Nutritionist', timeAgo: '2h ago', title: 'Healthy breakfast idea!', body: 'Avocado toast with poached egg and fresh fruits.\nSimple, quick and nutritious!', image: 'assets/images/meals/healthy_salad.jpg', likes: 1000, comments: 200, shares: 10),
@@ -38,6 +32,7 @@ class FavoritesController extends GetxController {
   void onInit() {
     super.onInit();
     loadFoods();
+    loadFoodCategories();
   }
 
   Future<void> loadFoods() async {
@@ -51,15 +46,35 @@ class FavoritesController extends GetxController {
     }
   }
 
+  Future<void> loadFoodCategories() async {
+    try {
+      final categories = await repository.getFoodCategories();
+      foodCategories.assignAll(['All', ...categories.toSet()]);
+      if (!foodCategories.contains(selectedFoodCategory.value)) {
+        selectedFoodCategory.value = 'All';
+      }
+    } on Object {
+      // The default "All" filter remains usable if categories cannot load.
+      foodCategories.assignAll(const ['All']);
+    }
+  }
+
   void selectTab(FavoritesTab tab) => selectedTab.value = tab;
   void applyFoodCategory(String category) => selectedFoodCategory.value = category;
   void setPostSort(FavoritePostSort sort) => postSort.value = sort;
   Future<void> removeFood(int id) async {
     final index = foods.indexWhere((food) => food.id == id);
     if (index < 0) return;
+    if (!await confirmFavoriteRemoval()) return;
+
     final removed = foods.removeAt(index);
     try {
       await repository.removeFood(id);
+      // The Home screen remains in the navigation stack. Update its local
+      // favorite IDs so its heart is immediately ready to add this meal again.
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().setMealFavoriteState(id, favorite: false);
+      }
     } on Object catch (error) {
       foods.insert(index, removed);
       AppAlert.error(title: 'Favorite not removed', message: error.toString());

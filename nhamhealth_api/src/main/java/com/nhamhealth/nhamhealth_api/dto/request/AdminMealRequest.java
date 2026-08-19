@@ -21,5 +21,6 @@ public record AdminMealRequest(
         @Min(0) @Max(1440) Integer cookingTimeMinutes,
         boolean published,
         @NotBlank @Size(max = 255) String mainImageUrl,
+        @NotNull @Size(min = 1) List<@Valid AdminMealIngredientRequest> ingredients,
         @NotNull List<@Valid AdminRecipeStepRequest> recipeSteps) {
 }
