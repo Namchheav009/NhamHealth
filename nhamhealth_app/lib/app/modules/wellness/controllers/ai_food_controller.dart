@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/food_nutrition_model.dart';
@@ -321,17 +322,9 @@ class AiFoodController extends GetxController {
         );
       }
       wasAdded.value = true;
-      Get.snackbar(
-        'Food added',
-        '${food.name} added successfully.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.success(title: 'Food added', message: '${food.name} added successfully.');
     } on Object {
-      Get.snackbar(
-        'Could not save food',
-        'Your nutrition was not stored. Please check the server and try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Could not save food', message: 'Your nutrition was not stored. Please check the server and try again.');
     } finally {
       isSaving.value = false;
     }

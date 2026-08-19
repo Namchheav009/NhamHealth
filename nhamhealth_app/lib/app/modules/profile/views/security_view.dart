@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../widgets/app_alert.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/app_security_service.dart';
@@ -118,9 +119,7 @@ class _SecurityViewState extends State<SecurityView> {
       await _load();
     } on Object {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometrics could not be enabled.')),
-        );
+        AppAlert.error(title: 'Biometrics unavailable', message: 'Biometrics could not be enabled.');
       }
     }
   }
@@ -137,7 +136,7 @@ class _SecurityViewState extends State<SecurityView> {
 
   void _showSecurityMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    AppAlert.error(title: 'Security update failed', message: message);
   }
 
   @override

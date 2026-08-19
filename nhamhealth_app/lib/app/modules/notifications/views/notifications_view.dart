@@ -6,82 +6,17 @@ import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/inner_shadow.dart';
+import '../controllers/notifications_controller.dart';
 import '../models/notification_item.dart';
 
 class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});
 
-  static const List<NotificationItem> _newNotifications = [
-    NotificationItem(
-      title: 'Sarah K.',
-      message: 'like your\nhealthy meal post.',
-      time: '2 min ago',
-      kind: NotificationKind.social,
-      isUnread: true,
-    ),
-  ];
-
-  static const List<NotificationItem> _todayNotifications = [
-    NotificationItem(
-      title: 'Maya L.',
-      message: 'commented on your\nquinoa bowl post.',
-      time: '10 min ago',
-      kind: NotificationKind.social,
-    ),
-    NotificationItem(
-      title: 'Daniel R.',
-      message: 'sent you a message.',
-      time: '25 min ago',
-      kind: NotificationKind.social,
-      hasMessageBadge: true,
-    ),
-  ];
-
-  static const List<NotificationItem> _earlierNotifications = [
-    NotificationItem(
-      title: 'Sarah K.',
-      message: 'shared your\nhealthy meal post.',
-      time: '30 min ago',
-      kind: NotificationKind.social,
-      hasMessageBadge: true,
-    ),
-    NotificationItem(
-      title: 'AI recommendation',
-      message: 'is\nready for you.',
-      time: 'Today',
-      kind: NotificationKind.recommendation,
-    ),
-    NotificationItem(
-      title: 'Weekly wellness reminder:',
-      message: '\nlog your meals and water intake.',
-      time: 'Today',
-      kind: NotificationKind.wellness,
-    ),
-    NotificationItem(
-      title: 'Sarah K.',
-      message: 'shared your\nhealthy meal post.',
-      time: '30 min ago',
-      kind: NotificationKind.social,
-      hasMessageBadge: true,
-    ),
-    NotificationItem(
-      title: 'Sarah K.',
-      message: 'shared your\nhealthy meal post.',
-      time: '30 min ago',
-      kind: NotificationKind.social,
-      hasMessageBadge: true,
-    ),
-    NotificationItem(
-      title: 'Sarah K.',
-      message: 'shared your\nhealthy meal post.',
-      time: '30 min ago',
-      kind: NotificationKind.social,
-      hasMessageBadge: true,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final controller = Get.isRegistered<NotificationsController>()
+        ? Get.find<NotificationsController>()
+        : Get.put(NotificationsController());
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
@@ -91,29 +26,44 @@ class NotificationsView extends StatelessWidget {
             child: Column(
               children: [
                 const _NotificationsHeader(),
-                Expanded(
-                  child: ListView(
-                    key: const ValueKey<String>('notifications-list'),
-                    physics: const BouncingScrollPhysics(),
-                    padding: AppSpacing.pagePadding,
-                    children: const [
-                      _NotificationSection(
-                        title: 'New',
-                        notifications: _newNotifications,
+                Expanded(child: Obx(() {
+                  if (controller.isLoading.value && controller.notifications.isEmpty) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+                  }
+                  if (controller.notifications.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: () => controller.load(),
+                      child: ListView(
+                        key: const ValueKey<String>('notifications-list'),
+                        padding: AppSpacing.pagePadding,
+                        children: [
+                          _NotificationSection(title: 'New', notifications: const [], onTap: (_) {}),
+                          const SizedBox(height: 13),
+                          _NotificationSection(title: 'Today', notifications: const [], onTap: (_) {}),
+                          const SizedBox(height: 13),
+                          _NotificationSection(title: 'Earlier', notifications: const [], onTap: (_) {}),
+                          const SizedBox(height: 100),
+                          const Center(child: Text('No notifications yet')),
+                        ],
                       ),
-                      SizedBox(height: 13),
-                      _NotificationSection(
-                        title: 'Today',
-                        notifications: _todayNotifications,
-                      ),
-                      SizedBox(height: 13),
-                      _NotificationSection(
-                        title: 'Earlier',
-                        notifications: _earlierNotifications,
-                      ),
-                    ],
-                  ),
-                ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () => controller.load(),
+                    child: ListView(
+                      key: const ValueKey<String>('notifications-list'),
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      padding: AppSpacing.pagePadding,
+                      children: [
+                        _NotificationSection(title: 'New', notifications: controller.unread, onTap: controller.markRead),
+                        const SizedBox(height: 13),
+                        _NotificationSection(title: 'Today', notifications: controller.today, onTap: controller.markRead),
+                        const SizedBox(height: 13),
+                        _NotificationSection(title: 'Earlier', notifications: controller.earlier, onTap: controller.markRead),
+                      ],
+                    ),
+                  );
+                })),
               ],
             ),
           ),
@@ -164,10 +114,12 @@ class _NotificationSection extends StatelessWidget {
   const _NotificationSection({
     required this.title,
     required this.notifications,
+    required this.onTap,
   });
 
   final String title;
   final List<NotificationItem> notifications;
+  final ValueChanged<NotificationItem> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +140,7 @@ class _NotificationSection extends StatelessWidget {
         ...notifications.map(
           (notification) => Padding(
             padding: const EdgeInsets.only(bottom: 7),
-            child: _NotificationTile(notification: notification),
+            child: _NotificationTile(notification: notification, onTap: () => onTap(notification)),
           ),
         ),
       ],
@@ -197,13 +149,17 @@ class _NotificationSection extends StatelessWidget {
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.notification});
+  const _NotificationTile({required this.notification, required this.onTap});
 
   final NotificationItem notification;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
       constraints: const BoxConstraints(minHeight: 60),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.82),
@@ -234,6 +190,7 @@ class _NotificationTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

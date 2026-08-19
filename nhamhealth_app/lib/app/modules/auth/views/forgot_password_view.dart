@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../../core/services/auth_service.dart';
@@ -21,28 +22,14 @@ class ForgotPasswordController extends GetxController {
     final value = emailOrPhoneController.text.trim();
 
     if (!GetUtils.isEmail(value)) {
-      Get.snackbar(
-        'Invalid email',
-        'Please enter a valid email address.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppAlert.error(title: 'Invalid email', message: 'Please enter a valid email address.');
       return;
     }
 
     try {
       isLoading.value = true;
       await _authService.requestPasswordReset(value);
-      Get.snackbar(
-        'Check your email',
-        'If an account exists for this email, the code is on its way.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: AppColors.primaryGreen,
-        colorText: Colors.white,
-      );
+      AppAlert.success(title: 'Check your email', message: 'If an account exists for this email, the code is on its way.');
       Get.to(
         () => const VerificationView(),
         arguments: {'email': value.trim().toLowerCase()},
@@ -50,14 +37,7 @@ class ForgotPasswordController extends GetxController {
         duration: const Duration(milliseconds: 300),
       );
     } on AuthException catch (error) {
-      Get.snackbar(
-        'Could not send code',
-        error.message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: AppColors.errorCoral,
-        colorText: Colors.white,
-      );
+      AppAlert.error(title: 'Could not send code', message: error.message);
     } finally {
       isLoading.value = false;
     }

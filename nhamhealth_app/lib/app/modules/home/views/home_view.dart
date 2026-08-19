@@ -132,7 +132,11 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                 itemCount: meals.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 7),
                 itemBuilder:
-                    (_, index) => RecommendedMealCard(meal: meals[index]),
+                    (_, index) => RecommendedMealCard(
+                      meal: meals[index],
+                      isFavorite: controller.favoriteMealIds.contains(meals[index].id),
+                      onFavorite: () => controller.toggleMealFavorite(meals[index].id),
+                    ),
               ),
             ),
           ] else

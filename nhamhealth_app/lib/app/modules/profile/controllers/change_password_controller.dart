@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../auth/views/forgot_password_view.dart';
@@ -41,38 +42,22 @@ class ChangePasswordController extends GetxController {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      Get.snackbar(
-        'Required',
-        'Please complete all password fields.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Required', message: 'Please complete all password fields.');
       return;
     }
 
     if (newPassword != confirmPassword) {
-      Get.snackbar(
-        'Password does not match',
-        'Please confirm your new password correctly.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Password does not match', message: 'Please confirm your new password correctly.');
       return;
     }
 
     if (newPassword.length < 8) {
-      Get.snackbar(
-        'Password too short',
-        'Use at least 8 characters.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Password too short', message: 'Use at least 8 characters.');
       return;
     }
 
     if (newPassword == currentPassword) {
-      Get.snackbar(
-        'Choose a new password',
-        'Your new password must be different from your current password.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Choose a new password', message: 'Your new password must be different from your current password.');
       return;
     }
 
@@ -88,25 +73,11 @@ class ChangePasswordController extends GetxController {
       newPasswordController.clear();
       confirmPasswordController.clear();
 
-      Get.snackbar(
-        'Success',
-        'Your password has been updated.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF009B43),
-        colorText: Colors.white,
-      );
+      AppAlert.success(title: 'Password updated', message: 'Your password has been updated.');
     } on AuthException catch (error) {
-      Get.snackbar(
-        'Could not update password',
-        error.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Could not update password', message: error.message);
     } on Object {
-      Get.snackbar(
-        'Could not update password',
-        'Something went wrong. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppAlert.error(title: 'Could not update password', message: 'Something went wrong. Please try again.');
     } finally {
       isLoading.value = false;
     }
