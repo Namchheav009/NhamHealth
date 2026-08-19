@@ -11,6 +11,8 @@ import '../modules/auth/views/account_created_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/notifications/views/notifications_view.dart';
+import '../modules/favorites/bindings/favorites_binding.dart';
+import '../modules/favorites/views/favorites_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/bindings/change_password_binding.dart';
 import '../modules/profile/views/change_password_view.dart';
@@ -91,6 +93,12 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.notifications,
       page: () => const NotificationsView(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.favorites,
+      page: () => const FavoritesView(),
+      binding: FavoritesBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
