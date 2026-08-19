@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../routes/app_routes.dart';
 
 import '../controllers/profile_controller.dart';
 import '../../../theme/app_spacing.dart';
@@ -97,7 +98,7 @@ class ProfileView extends GetView<ProfileController> {
         ),
 
         IconButton(
-          onPressed: () {},
+          onPressed: () => Get.toNamed<void>(AppRoutes.favorites),
           icon: const Icon(
             Icons.favorite_border_rounded,
             color: Colors.red,
