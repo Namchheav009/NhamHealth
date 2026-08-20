@@ -274,6 +274,14 @@ class HomeController extends GetxController {
     }
   }
 
+  void openMeals({String? query}) {
+    final normalizedQuery = query?.replaceAll('\n', ' ').trim() ?? '';
+    Get.toNamed<void>(
+      AppRoutes.meals,
+      arguments: normalizedQuery.isEmpty ? null : {'query': normalizedQuery},
+    );
+  }
+
   Future<void> openNotifications() async {
     await Get.toNamed<void>(AppRoutes.notifications);
     await loadUnreadNotificationCount();
