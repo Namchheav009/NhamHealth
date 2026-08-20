@@ -46,7 +46,7 @@ class FoodAiService {
         'That image could not be read. Try another photo.',
       );
     }
-    return _analyzeImage(decoded);
+    return _analyzeImage(img.bakeOrientation(decoded));
   }
 
   Future<FoodPredictionModel> analyzeCameraImage(
@@ -126,7 +126,18 @@ class FoodAiService {
       }
       final height = shape[1];
       final width = shape[2];
-      final resized = img.copyResize(decoded, width: width, height: height);
+      // Classifiers are trained with square crops. Stretching a portrait meal
+      // photo into a square distorts the food and noticeably hurts accuracy.
+      final cropSize =
+          decoded.width < decoded.height ? decoded.width : decoded.height;
+      final cropped = img.copyCrop(
+        decoded,
+        x: (decoded.width - cropSize) ~/ 2,
+        y: (decoded.height - cropSize) ~/ 2,
+        width: cropSize,
+        height: cropSize,
+      );
+      final resized = img.copyResize(cropped, width: width, height: height);
       final Object inputData;
       if (input.type == TensorType.uint8) {
         inputData = [
@@ -172,9 +183,15 @@ class FoodAiService {
       }
       var confidence = raw[best].toDouble();
       if (output.type == TensorType.uint8) confidence /= 255;
+      final label =
+          best < _labels.length ? _labels[best] : 'Food class ${best + 1}';
+      if (best == 0 || label == '__background__') {
+        throw const FoodAiException(
+          'No food was detected. Center one meal in the frame and try again.',
+        );
+      }
       return FoodPredictionModel(
-        foodName:
-            best < _labels.length ? _labels[best] : 'Food class ${best + 1}',
+        foodName: label,
         confidence: confidence.clamp(0, 1),
         classIndex: best,
       );
