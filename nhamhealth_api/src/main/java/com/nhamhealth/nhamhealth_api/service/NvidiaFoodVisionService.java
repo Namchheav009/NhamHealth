@@ -86,13 +86,16 @@ public class NvidiaFoodVisionService {
             String json = content.replaceFirst("(?s)^\\s*```(?:json)?\\s*", "")
                     .replaceFirst("(?s)\\s*```\\s*$", "").trim();
             AiFoodAnalysisResponse result = mapper.readValue(json, AiFoodAnalysisResponse.class);
-            if (!"Unknown food".equalsIgnoreCase(result.name()) && result.calories() <= 0) {
-                result = estimateNutrition(result.name(), result.servingSize(), result.servingUnit());
+            if (!isUnknown(result) && !NutritionEstimateValidator.isPlausible(result)) {
+                log.info("Vision nutrition estimate for '{}' failed validation; running nutrition pass", result.name());
+                AiFoodAnalysisResponse nutrition = estimateNutrition(
+                        result.name(), result.servingSize(), result.servingUnit());
+                result = mergeVisionAndNutrition(result, nutrition);
             }
-            if (!"Unknown food".equalsIgnoreCase(result.name())
-                    && (result.calories() <= 0 || result.servingSize() <= 0
+            if (!isUnknown(result)
+                    && (!NutritionEstimateValidator.isPlausible(result)
                     || result.recommendation() == null || result.recommendation().isBlank())) {
-                throw new IllegalStateException("NVIDIA returned incomplete nutrition data.");
+                throw new IllegalStateException("NVIDIA returned implausible or incomplete nutrition data.");
             }
             return result;
         } catch (ResponseStatusException error) {
@@ -101,6 +104,29 @@ public class NvidiaFoodVisionService {
             throw new ResponseStatusException(BAD_GATEWAY,
                     "The NVIDIA food vision service could not analyze this image.", error);
         }
+    }
+
+    private boolean isUnknown(AiFoodAnalysisResponse result) {
+        return result.name() == null || "Unknown food".equalsIgnoreCase(result.name().trim());
+    }
+
+    private AiFoodAnalysisResponse mergeVisionAndNutrition(
+            AiFoodAnalysisResponse vision, AiFoodAnalysisResponse nutrition) {
+        return new AiFoodAnalysisResponse(
+                vision.name(),
+                vision.analysis(),
+                Math.clamp(vision.confidence(), 0, 1),
+                nutrition.calories(),
+                nutrition.protein(),
+                nutrition.carbs(),
+                nutrition.fat(),
+                nutrition.sugar(),
+                vision.servingSize() > 0 ? vision.servingSize() : nutrition.servingSize(),
+                vision.servingUnit() == null || vision.servingUnit().isBlank()
+                        ? nutrition.servingUnit() : vision.servingUnit(),
+                nutrition.recommendationTitle(),
+                nutrition.recommendation(),
+                false, 0, false, null, null, null);
     }
 
     private String requestWithRetry(Map<String, Object> body) {

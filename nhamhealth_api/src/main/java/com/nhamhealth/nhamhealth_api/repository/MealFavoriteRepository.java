@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 
@@ -14,6 +15,7 @@ public interface MealFavoriteRepository extends JpaRepository<MealFavorite, Inte
 
     java.util.List<MealFavorite> findAllByOrderBySavedAtDesc();
 
+    @EntityGraph(attributePaths = { "meal", "meal.category" })
     java.util.List<MealFavorite> findAllByUserUserIdOrderBySavedAtDesc(Integer userId);
 
     java.util.Optional<MealFavorite> findByUserUserIdAndMealMealId(Integer userId, Integer mealId);

@@ -14,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,7 @@ import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
 
 @Service
 public class AiMealRecommendationService {
+    private static final Logger log = LoggerFactory.getLogger(AiMealRecommendationService.class);
     private final AiRecommendationRepository recommendationRepository;
     private final AiRecommendationItemRepository itemRepository;
     private final MealRepository mealRepository;
@@ -162,28 +165,53 @@ public class AiMealRecommendationService {
                     User context: %s
                     Catalog: %s
                     """.formatted(mood.getMoodName(), mapper.writeValueAsString(context), catalog);
-            Map<String, Object> body = Map.of(
-                    "model", model,
-                    "temperature", 0.2,
-                    "max_tokens", 900,
-                    "chat_template_kwargs", Map.of("enable_thinking", false),
-                    "messages", List.of(Map.of("role", "user", "content", prompt)));
-            String responseBody = client.post().uri("/chat/completions")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body).retrieve().body(String.class);
-            JsonNode response = mapper.readTree(responseBody);
-            String content = response.path("choices").path(0).path("message").path("content").asText();
-            String json = content.replaceFirst("(?s)^\\s*```(?:json)?\\s*", "")
-                    .replaceFirst("(?s)\\s*```\\s*$", "").trim();
-            JsonNode result = mapper.readTree(json);
-            List<MealChoice> choices = new ArrayList<>();
-            result.path("meals").forEach(node -> choices.add(new MealChoice(
-                    node.path("id").asInt(), node.path("reason").asText("Selected by AI"))));
-            return new ModelDecision(result.path("summary").asText("Meals selected for your mood."), choices);
-        } catch (Exception ignored) {
+            Exception lastError = null;
+            for (int attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    return requestModelDecision(prompt, attempt);
+                } catch (Exception error) {
+                    lastError = error;
+                    if (attempt == 1) {
+                        log.warn("AI meal ranking returned invalid JSON; retrying once: {}", error.getMessage());
+                    }
+                }
+            }
+            throw lastError == null ? new IllegalStateException("AI meal ranking failed.") : lastError;
+        } catch (Exception error) {
+            log.warn("AI meal ranking failed; using deterministic fallback: {}", error.getMessage());
             return null;
         }
+    }
+
+    private ModelDecision requestModelDecision(String prompt, int attempt) throws Exception {
+        String retryInstruction = attempt == 1 ? "" : "\nYour previous response was invalid or truncated. Return one compact, complete JSON object only.";
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "temperature", 0.1,
+                "max_tokens", 1_200,
+                "chat_template_kwargs", Map.of("enable_thinking", false),
+                "messages", List.of(Map.of("role", "user", "content", prompt + retryInstruction)));
+        String responseBody = client.post().uri("/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body).retrieve().body(String.class);
+        JsonNode response = mapper.readTree(responseBody);
+        String content = response.path("choices").path(0).path("message").path("content").asText();
+        JsonNode result = mapper.readTree(ModelJsonExtractor.extractObject(content));
+        if (!result.path("meals").isArray()) {
+            throw new IllegalArgumentException("The model response has no meals array.");
+        }
+        List<MealChoice> choices = new ArrayList<>();
+        result.path("meals").forEach(node -> {
+            int id = node.path("id").asInt(0);
+            String reason = node.path("reason").asText("").trim();
+            if (id > 0 && !reason.isBlank()) choices.add(new MealChoice(id, reason));
+        });
+        if (choices.isEmpty()) {
+            throw new IllegalArgumentException("The model response contains no valid meal choices.");
+        }
+        return new ModelDecision(
+                result.path("summary").asText("Meals selected for your mood."), choices);
     }
 
     private ModelDecision fallbackDecision(
