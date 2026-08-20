@@ -17,7 +17,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
       // Keeps text size stable like your design.
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: true,  
         backgroundColor: Colors.white,
         body: LayoutBuilder(
           builder: (context, constraints) {
