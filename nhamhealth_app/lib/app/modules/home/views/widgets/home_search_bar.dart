@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
+import '../../controllers/home_controller.dart';
 import 'inner_shadow.dart';
 
-class HomeSearchBar extends StatelessWidget {
+class HomeSearchBar extends GetView<HomeController> {
   const HomeSearchBar({super.key});
 
   @override
@@ -19,21 +21,26 @@ class HomeSearchBar extends StatelessWidget {
       ),
       child: InnerShadow(
         borderRadius: BorderRadius.circular(28),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.search_rounded,
                 color: AppColors.secondaryText,
                 size: 25,
               ),
-              SizedBox(width: 13),
+              const SizedBox(width: 13),
               Expanded(
                 child: TextField(
-                  style: TextStyle(fontSize: 11, color: AppColors.primaryText),
+                  onSubmitted: (query) => controller.openMeals(query: query),
+                  textInputAction: TextInputAction.search,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.primaryText,
+                  ),
                   cursorColor: AppColors.primaryGreen,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Search for meals, tips or healthy groceries',
                     hintStyle: TextStyle(
                       fontSize: 11,

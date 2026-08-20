@@ -55,6 +55,7 @@ class AiFoodController extends GetxController {
   String? _candidateLabel;
   int _candidateCount = 0;
   String? _lastNutritionLookup;
+  int _scanGeneration = 0;
 
   bool get isLiveCameraReady =>
       isLiveAnalyzing.value &&
@@ -90,10 +91,14 @@ class AiFoodController extends GetxController {
 
   Future<void> startLiveAnalysis() async {
     if (isLiveCameraStarting.value || isLiveAnalyzing.value) return;
+    final generation = ++_scanGeneration;
     isLiveCameraStarting.value = true;
     errorMessage.value = null;
     try {
+      await aiService.load();
+      if (generation != _scanGeneration) return;
       final cameras = await availableCameras();
+      if (generation != _scanGeneration) return;
       if (cameras.isEmpty) {
         throw CameraException('noCamera', 'No camera is available.');
       }
@@ -107,12 +112,21 @@ class AiFoodController extends GetxController {
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.yuv420,
       );
-      await camera.initialize();
       liveCameraController = camera;
+      await camera.initialize();
+      if (generation != _scanGeneration) {
+        await camera.dispose();
+        if (identical(liveCameraController, camera)) {
+          liveCameraController = null;
+        }
+        return;
+      }
       selectedImage.value = null;
       clearResult();
       isLiveAnalyzing.value = true;
       await camera.startImageStream(_onCameraFrame);
+    } on FoodAiException catch (error) {
+      errorMessage.value = error.message;
     } on CameraException catch (error) {
       await liveCameraController?.dispose();
       liveCameraController = null;
@@ -128,6 +142,7 @@ class AiFoodController extends GetxController {
 
   Future<void> stopLiveAnalysis() async {
     final camera = liveCameraController;
+    _scanGeneration++;
     isLiveAnalyzing.value = false;
     liveCameraController = null;
     _processingFrame = false;
@@ -148,6 +163,7 @@ class AiFoodController extends GetxController {
     }
     _lastFrameAt = now;
     _processingFrame = true;
+    final generation = _scanGeneration;
     try {
       final camera = liveCameraController;
       if (camera == null) return;
@@ -155,6 +171,7 @@ class AiFoodController extends GetxController {
         frame,
         rotationDegrees: camera.description.sensorOrientation,
       );
+      if (!isLiveAnalyzing.value || generation != _scanGeneration) return;
       prediction.value = result;
       if (result.foodName == _candidateLabel) {
         _candidateCount++;
@@ -170,7 +187,7 @@ class AiFoodController extends GetxController {
           frame,
           rotationDegrees: camera.description.sensorOrientation,
         );
-        await _analyzeWithCloud(bytes);
+        await _analyzeWithCloud(bytes, generation: generation);
       }
     } on FoodAiException catch (error) {
       errorMessage.value = error.message;
@@ -181,6 +198,9 @@ class AiFoodController extends GetxController {
 
   Future<void> _pick(ImageSource source) async {
     try {
+      if (isLiveAnalyzing.value || isLiveCameraStarting.value) {
+        await stopLiveAnalysis();
+      }
       final image = await _imagePicker.pickImage(
         source: source,
         imageQuality: 90,
@@ -206,12 +226,14 @@ class AiFoodController extends GetxController {
       return;
     }
     isAnalyzing.value = true;
+    final generation = ++_scanGeneration;
     errorMessage.value = null;
     clearResult();
     try {
       await _analyzeWithCloud(
         await image.readAsBytes(),
         filename: image.path.split(Platform.pathSeparator).last,
+        generation: generation,
       );
     } on FoodAiException catch (error) {
       errorMessage.value = error.message;
@@ -225,6 +247,7 @@ class AiFoodController extends GetxController {
   Future<void> _analyzeWithCloud(
     List<int> bytes, {
     String filename = 'food.jpg',
+    int? generation,
   }) async {
     isNutritionLoading.value = true;
     try {
@@ -232,6 +255,7 @@ class AiFoodController extends GetxController {
         Uint8List.fromList(bytes),
         filename: filename,
       );
+      if (generation != null && generation != _scanGeneration) return;
       nutrition.value = food;
       prediction.value = FoodPredictionModel(
         foodName: food.name,
@@ -299,9 +323,10 @@ class AiFoodController extends GetxController {
         calories: food.calories,
         protein: food.protein,
         sugar: food.sugar,
-        aiRecommendation: recommendation.value == null
-            ? null
-            : '${recommendation.value!.title}: ${recommendation.value!.message}',
+        aiRecommendation:
+            recommendation.value == null
+                ? null
+                : '${recommendation.value!.title}: ${recommendation.value!.message}',
       );
       caloriesController.addFoodSource(
         mealType: _mealTypeNow(),
@@ -322,9 +347,16 @@ class AiFoodController extends GetxController {
         );
       }
       wasAdded.value = true;
-      AppAlert.success(title: 'Food added', message: '${food.name} added successfully.');
+      AppAlert.success(
+        title: 'Food added',
+        message: '${food.name} added successfully.',
+      );
     } on Object {
-      AppAlert.error(title: 'Could not save food', message: 'Your nutrition was not stored. Please check the server and try again.');
+      AppAlert.error(
+        title: 'Could not save food',
+        message:
+            'Your nutrition was not stored. Please check the server and try again.',
+      );
     } finally {
       isSaving.value = false;
     }
@@ -338,6 +370,7 @@ class AiFoodController extends GetxController {
   }
 
   void clearImage() {
+    _scanGeneration++;
     selectedImage.value = null;
     clearResult();
   }
