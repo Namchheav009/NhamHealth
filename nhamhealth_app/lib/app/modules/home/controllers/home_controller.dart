@@ -74,7 +74,8 @@ class HomeController extends GetxController {
 
   Future<void> loadUnreadNotificationCount() async {
     try {
-      unreadNotificationCount.value = await repository.getUnreadNotificationCount();
+      unreadNotificationCount.value =
+          await repository.getUnreadNotificationCount();
     } on Object {
       // Keep the last known badge count while the API is temporarily unavailable.
     }
@@ -153,7 +154,10 @@ class HomeController extends GetxController {
         _showSelectedDay();
       }
     } catch (_) {
-      AppAlert.error(title: 'Home unavailable', message: 'Unable to load home data.');
+      AppAlert.error(
+        title: 'Home unavailable',
+        message: 'Unable to load home data.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -253,7 +257,7 @@ class HomeController extends GetxController {
       case 0:
         break;
       case 1:
-        // Get.toNamed(AppRoutes.meals);
+        Get.offNamed<void>(AppRoutes.meals);
         break;
       case 2:
         // Get.toNamed(AppRoutes.createPost);
@@ -315,7 +319,10 @@ class HomeController extends GetxController {
 
       Get.offAllNamed(AppRoutes.login);
     } on Object {
-      AppAlert.error(title: 'Logout failed', message: 'Unable to clear your session. Please try again.');
+      AppAlert.error(
+        title: 'Logout failed',
+        message: 'Unable to clear your session. Please try again.',
+      );
     } finally {
       isLoggingOut.value = false;
     }
@@ -324,14 +331,14 @@ class HomeController extends GetxController {
   Future<void> getRecommendation() async {
     final moodId = selectedMoodId.value;
     if (moodId == null) {
-      AppAlert.error(title: 'Choose your mood', message: 'Select how you are feeling so AI can recommend suitable meals.');
+      AppAlert.error(
+        title: 'Choose your mood',
+        message:
+            'Select how you are feeling so AI can recommend suitable meals.',
+      );
       return;
     }
-    await loadRecommendedMeals(
-      moodId: moodId,
-      generate: true,
-      refresh: true,
-    );
+    await loadRecommendedMeals(moodId: moodId, generate: true, refresh: true);
   }
 
   Future<void> refreshMeals() async {
