@@ -29,6 +29,7 @@ class MealController extends GetxController {
   final TextEditingController searchController = TextEditingController();
 
   Timer? _slideTimer;
+  Set<int> _favoriteMealIds = const <int>{};
 
   final categories = <MealCategoryModel>[MealCategoryModel.all].obs;
 
@@ -87,29 +88,54 @@ class MealController extends GetxController {
   }
 
   Future<void> loadMeals() async {
+    if (isLoading.value) return;
+
+    // These requests are optional for the first paint. Let them update the UI
+    // independently instead of making the meal list wait for the slowest call.
+    unawaited(_loadCategories());
+    unawaited(_loadFavoriteMealIds());
+
     try {
       isLoading.value = true;
       errorMessage.value = null;
-      final results = await Future.wait<Object>([
-        repository.getMeals(),
-        repository.getCategories(),
-        repository.getFavoriteMealIds(),
-      ]);
-      final loadedMeals = results[0] as List<MealModel>;
-      final loadedCategories = results[1] as List<MealCategoryModel>;
-      final favoriteIds = results[2] as Set<int>;
+
+      final loadedMeals = await repository.getMeals();
       for (final meal in loadedMeals) {
-        meal.isFavorite = favoriteIds.contains(meal.id);
+        meal.isFavorite = _favoriteMealIds.contains(meal.id);
       }
       meals.assignAll(loadedMeals);
-      categories.assignAll([MealCategoryModel.all, ...loadedCategories]);
-      if (selectedCategory.value >= categories.length) {
-        selectedCategory.value = 0;
-      }
     } on Object catch (error) {
       errorMessage.value = error.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final selectedId = selectedCategory.value < categories.length
+          ? categories[selectedCategory.value].id
+          : MealCategoryModel.all.id;
+      final loaded = await repository.getCategories();
+      categories.assignAll([MealCategoryModel.all, ...loaded]);
+      final restoredIndex = categories.indexWhere(
+        (category) => category.id == selectedId,
+      );
+      selectedCategory.value = restoredIndex < 0 ? 0 : restoredIndex;
+    } on Object {
+      // "All" remains usable if category metadata cannot be refreshed.
+    }
+  }
+
+  Future<void> _loadFavoriteMealIds() async {
+    try {
+      _favoriteMealIds = await repository.getFavoriteMealIds();
+      for (final meal in meals) {
+        meal.isFavorite = _favoriteMealIds.contains(meal.id);
+      }
+      meals.refresh();
+    } on Object {
+      // Favorites must not delay or hide the meal list.
     }
   }
 
@@ -129,6 +155,7 @@ class MealController extends GetxController {
   }
 
   void selectCategory(int index) {
+    if (index < 0 || index >= categories.length) return;
     selectedCategory.value = index;
   }
 

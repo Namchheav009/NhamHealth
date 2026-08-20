@@ -1,4 +1,3 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -47,69 +46,6 @@ class FoodAiService {
       );
     }
     return _analyzeImage(img.bakeOrientation(decoded));
-  }
-
-  Future<FoodPredictionModel> analyzeCameraImage(
-    CameraImage cameraImage, {
-    int rotationDegrees = 0,
-  }) async {
-    final converted = _cameraImageToRgb(cameraImage);
-    final upright =
-        rotationDegrees == 0
-            ? converted
-            : img.copyRotate(converted, angle: rotationDegrees);
-    return _analyzeImage(upright);
-  }
-
-  Uint8List cameraImageToJpeg(
-    CameraImage cameraImage, {
-    int rotationDegrees = 0,
-  }) {
-    final converted = _cameraImageToRgb(cameraImage);
-    final upright =
-        rotationDegrees == 0
-            ? converted
-            : img.copyRotate(converted, angle: rotationDegrees);
-    return Uint8List.fromList(img.encodeJpg(upright, quality: 78));
-  }
-
-  img.Image _cameraImageToRgb(CameraImage frame) {
-    if (frame.format.group == ImageFormatGroup.bgra8888) {
-      return img.Image.fromBytes(
-        width: frame.width,
-        height: frame.height,
-        bytes: frame.planes.first.bytes.buffer,
-        rowStride: frame.planes.first.bytesPerRow,
-        order: img.ChannelOrder.bgra,
-      );
-    }
-    if (frame.planes.length < 3) {
-      throw const FoodAiException('Unsupported live camera image format.');
-    }
-
-    final image = img.Image(width: frame.width, height: frame.height);
-    final yPlane = frame.planes[0];
-    final uPlane = frame.planes[1];
-    final vPlane = frame.planes[2];
-    final uvPixelStride = uPlane.bytesPerPixel ?? 1;
-    for (var y = 0; y < frame.height; y++) {
-      final uvRow = y ~/ 2;
-      for (var x = 0; x < frame.width; x++) {
-        final uvIndex = uvRow * uPlane.bytesPerRow + (x ~/ 2) * uvPixelStride;
-        final yValue = yPlane.bytes[y * yPlane.bytesPerRow + x];
-        final uValue = uPlane.bytes[uvIndex];
-        final vValue = vPlane.bytes[uvIndex];
-        final r = (yValue + 1.402 * (vValue - 128)).round().clamp(0, 255);
-        final g = (yValue -
-                0.344136 * (uValue - 128) -
-                0.714136 * (vValue - 128))
-            .round()
-            .clamp(0, 255);
-        final b = (yValue + 1.772 * (uValue - 128)).round().clamp(0, 255);
-        image.setPixelRgb(x, y, r, g, b);
-      }
-    }
-    return image;
   }
 
   Future<FoodPredictionModel> _analyzeImage(img.Image decoded) async {

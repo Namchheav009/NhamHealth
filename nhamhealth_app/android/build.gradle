@@ -16,14 +16,6 @@ subprojects { subproject ->
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
             }
-            // CameraX 1.6 references CallbackToFutureAdapter in its public API,
-            // so the camera plugin also needs it on its Java compile classpath.
-            if (subproject.name == "camera_android_camerax") {
-                subproject.dependencies.add(
-                    "implementation",
-                    "androidx.concurrent:concurrent-futures:1.3.0"
-                )
-            }
         }
     }
 

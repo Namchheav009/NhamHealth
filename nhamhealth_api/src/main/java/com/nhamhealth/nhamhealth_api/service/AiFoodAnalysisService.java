@@ -72,7 +72,9 @@ public class AiFoodAnalysisService {
     private AiFoodAnalysisResponse enrichWithDatabase(AiFoodAnalysisResponse ai) {
         Match match = bestDatabaseMatch(ai.name());
         boolean databaseMatched = match != null && match.score() >= 0.80;
-        double finalConfidence = databaseMatched ? Math.max(ai.confidence(), match.score()) : ai.confidence();
+        // A text match verifies nutrition data, not whether the image was recognized correctly.
+        // Never promote low visual confidence solely because a database name matched.
+        double finalConfidence = Math.clamp(ai.confidence(), 0, 1);
         boolean needsConfirmation = finalConfidence < 0.80;
         FoodNutrition food = databaseMatched ? match.food() : null;
         return new AiFoodAnalysisResponse(
