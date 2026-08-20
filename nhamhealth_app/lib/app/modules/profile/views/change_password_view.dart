@@ -211,12 +211,12 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
   Widget _buildPasswordCard(double scale) {
     return Container(
       width: double.infinity,
-      height: 350 * scale,
+      height: 420 * scale,
       padding: EdgeInsets.fromLTRB(
         5 * scale,
-        25 * scale,
+        30 * scale,
         5 * scale,
-        36 * scale,
+        45 * scale,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.58),
@@ -245,7 +245,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
             ),
           ),
 
-          SizedBox(height: 15 * scale),
+          SizedBox(height: 19 * scale),
 
           Obx(
             () => _passwordField(
@@ -257,7 +257,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
             ),
           ),
 
-          SizedBox(height: 15 * scale),
+          SizedBox(height: 19 * scale),
 
           Obx(
             () => _passwordField(
@@ -269,23 +269,26 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
             ),
           ),
 
-          SizedBox(height: 11 * scale),
+          SizedBox(height: 20 * scale),
 
           // Forgot password
-          Padding(
-            padding: EdgeInsets.only(left: 28 * scale),
-            child: GestureDetector(
-              onTap: controller.forgotPassword,
-              child: Text(
-                'Forgot password?',
-                style: TextStyle(
-                  fontSize: 11.5 * scale,
-                  height: 1,
-                  fontWeight: FontWeight.w400,
-                  color: darkGreen,
-                  decoration: TextDecoration.underline,
-                  decorationColor: darkGreen,
-                  decorationThickness: 1,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 34 * scale),
+              child: GestureDetector(
+                onTap: controller.forgotPassword,
+                child: Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    fontSize: 13 * scale,
+                    height: 1,
+                    fontWeight: FontWeight.w400,
+                    color: darkGreen,
+                    decoration: TextDecoration.underline,
+                    decorationColor: darkGreen,
+                    decorationThickness: 1,
+                  ),
                 ),
               ),
             ),
@@ -313,7 +316,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
   }) {
     return Container(
       width: double.infinity,
-      height: 47 * scale,
+      height: 56 * scale,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(25 * scale),
@@ -337,15 +340,17 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
           color: const Color(0xFF404040),
         ),
         cursorColor: green,
+        textAlign: TextAlign.left,
         textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
+          isDense: true,
           hintText: hint,
           hintStyle: TextStyle(
             fontSize: 13.5 * scale,
             fontWeight: FontWeight.w600,
             color: const Color(0xFFB8BCC2),
           ),
-          contentPadding: EdgeInsets.only(left: 28 * scale, right: 12 * scale),
+          contentPadding: EdgeInsets.only(left: 32 * scale),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -353,18 +358,25 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
           // Eye icon
           suffixIcon: GestureDetector(
             onTap: onEyeTap,
-            child: Padding(
-              padding: EdgeInsets.only(right: 18 * scale),
-              child: Icon(
-                obscureText
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                size: 19 * scale,
-                color: const Color(0xFFB7BBC0),
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              width: 48 * scale,
+              height: 56 * scale,
+              child: Center(
+                child: Icon(
+                  obscureText
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 19 * scale,
+                  color: const Color(0xFFB7BBC0),
+                ),
               ),
             ),
           ),
-          suffixIconConstraints: BoxConstraints(minWidth: 48 * scale),
+          suffixIconConstraints: BoxConstraints.tightFor(
+            width: 48 * scale,
+            height: 56 * scale,
+          ),
         ),
       ),
     );
@@ -380,7 +392,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
         onTap: controller.isLoading.value ? null : controller.updatePassword,
         child: Container(
           width: double.infinity,
-          height: 47 * scale,
+          height: 55 * scale,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: green,
