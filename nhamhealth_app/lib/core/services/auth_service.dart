@@ -3,11 +3,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../app/modules/auth/models/google_login_request.dart';
-import '../../app/modules/auth/models/authenticated_user_model.dart';
-import '../../app/modules/auth/models/login_request.dart';
-import '../../app/modules/auth/models/login_response.dart';
-import '../../app/modules/auth/models/register_request.dart';
+import '../../app/modules/models/auth/google_login_request.dart';
+import '../../app/modules/models/auth/authenticated_user_model.dart';
+import '../../app/modules/models/auth/login_request.dart';
+import '../../app/modules/models/auth/login_response.dart';
+import '../../app/modules/models/auth/register_request.dart';
 import '../../config/api_config.dart';
 import '../storage/token_storage.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/wellness/models/food_nutrition_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/wellness/food_nutrition_model.dart';
 
 void main() {
   test('parses mixed numeric JSON safely', () {
