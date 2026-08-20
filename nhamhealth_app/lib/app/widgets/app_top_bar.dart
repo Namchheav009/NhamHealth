@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../modules/auth/models/authenticated_user_model.dart';
-import '../modules/home/views/widgets/authenticated_user_avatar.dart';
+import '../modules/models/auth/authenticated_user_model.dart';
+import '../modules/views/home/widgets/authenticated_user_avatar.dart';
 import '../theme/app_colors.dart';
 
 class AppTopBarAction {

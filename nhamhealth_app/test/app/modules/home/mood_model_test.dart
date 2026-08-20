@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/home/models/mood_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/home/mood_model.dart';
 
 void main() {
   group('MoodModel.fromJson', () {

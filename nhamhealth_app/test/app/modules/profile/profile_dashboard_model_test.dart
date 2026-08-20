@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/profile/models/profile_dashboard_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/profile/profile_dashboard_model.dart';
 
 void main() {
   test('parses all daily nutrient progress values', () {
