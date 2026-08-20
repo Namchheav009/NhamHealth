@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../controllers/meal_controller.dart';
+import '../../models/meal_model.dart';
 
 class MealCard extends StatelessWidget {
   final MealModel meal;
@@ -21,13 +21,7 @@ class MealCard extends StatelessWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.asset(
-                meal.image,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
+              child: _MealImage(path: meal.image),
             ),
           ),
 
@@ -92,6 +86,33 @@ class MealCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MealImage extends StatelessWidget {
+  const _MealImage({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    const fallback = 'assets/images/meals/healthy_salad.jpg';
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(
+        path,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Image.asset(fallback, fit: BoxFit.cover),
+      );
+    }
+    return Image.asset(
+      path.isEmpty ? fallback : path,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => Image.asset(fallback, fit: BoxFit.cover),
     );
   }
 }

@@ -134,6 +134,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                 itemBuilder:
                     (_, index) => RecommendedMealCard(
                       meal: meals[index],
+                      onTap: () => controller.openMeals(),
                       isFavorite: controller.favoriteMealIds.contains(meals[index].id),
                       onFavorite: () => controller.toggleMealFavorite(meals[index].id),
                     ),
