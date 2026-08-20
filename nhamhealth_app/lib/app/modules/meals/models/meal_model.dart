@@ -6,6 +6,10 @@ class MealModel {
     required this.image,
     required this.category,
     required this.categoryId,
+    this.description = '',
+    this.cookingTimeMinutes,
+    this.difficulty = '',
+    this.servings,
     this.isFavorite = false,
   });
 
@@ -15,6 +19,10 @@ class MealModel {
   final String image;
   final String category;
   final int categoryId;
+  final String description;
+  final int? cookingTimeMinutes;
+  final String difficulty;
+  final int? servings;
   bool isFavorite;
 
   factory MealModel.fromJson(
@@ -34,6 +42,10 @@ class MealModel {
       image: rawImage.startsWith('/') ? '$baseUrl$rawImage' : rawImage,
       category: (json['category'] as String? ?? 'Uncategorized').trim(),
       categoryId: (json['categoryId'] as num?)?.toInt() ?? 0,
+      description: (json['description'] as String? ?? '').trim(),
+      cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
+      difficulty: (json['difficulty'] as String? ?? '').trim(),
+      servings: (json['servings'] as num?)?.toInt(),
     );
   }
 }

@@ -166,30 +166,6 @@ class WellnessController extends GetxController {
   // NUTRIENT NAVIGATION
   // =========================
 
-  void openNutrientDetail(int index) {
-    switch (index) {
-      case 0:
-        Get.toNamed(AppRoutes.calories);
-        break;
-
-      case 1:
-        Get.toNamed(AppRoutes.protein);
-        break;
-
-      case 2:
-        Get.toNamed(AppRoutes.water);
-        break;
-
-      case 3:
-        Get.toNamed(AppRoutes.fiber);
-        break;
-
-      case 4:
-        Get.toNamed(AppRoutes.sugar);
-        break;
-    }
-  }
-
   // =========================
   // AI MEAL
   // =========================

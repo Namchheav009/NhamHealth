@@ -56,28 +56,10 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: WellnessNutrientTile(
                     item: controller.nutrients[index],
-
-                    // CLICK EACH BOX
-                    onTap: () {
-                      controller.openNutrientDetail(index);
-                    },
                   ),
                 );
               }),
             ),
-          ),
-
-          const SizedBox(height: 7),
-
-          const Row(
-            children: [
-              Icon(Icons.auto_awesome_rounded, size: 15, color: Colors.black26),
-              SizedBox(width: 7),
-              Text(
-                'Tap a nutrient to edit.',
-                style: TextStyle(fontSize: 10, color: Colors.black38),
-              ),
-            ],
           ),
         ],
       ),

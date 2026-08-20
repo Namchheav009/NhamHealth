@@ -6,7 +6,11 @@ class MealCard extends StatelessWidget {
   final MealModel meal;
   final VoidCallback onFavorite;
 
-  const MealCard({super.key, required this.meal, required this.onFavorite});
+  const MealCard({
+    super.key,
+    required this.meal,
+    required this.onFavorite,
+  });
 
   @override
   Widget build(BuildContext context) {

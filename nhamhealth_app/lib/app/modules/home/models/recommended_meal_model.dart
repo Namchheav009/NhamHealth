@@ -5,6 +5,7 @@ class RecommendedMealModel {
   final int calories;
   final String cookingTime;
   final double rating;
+  final String reason;
 
   const RecommendedMealModel({
     required this.id,
@@ -13,6 +14,7 @@ class RecommendedMealModel {
     required this.calories,
     required this.cookingTime,
     required this.rating,
+    this.reason = '',
   });
 
   factory RecommendedMealModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class RecommendedMealModel {
       calories: calories is num ? calories.round() : 0,
       cookingTime: cookingTime is num ? '${cookingTime.toInt()} min' : '',
       rating: rating is num ? rating.toDouble() : 0,
+      reason: (json['reason'] as String? ?? '').trim(),
     );
   }
 }
