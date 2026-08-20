@@ -7,6 +7,7 @@ abstract class AppRoutes {
   static const String register = '/register';
   static const String accountCreated = '/account-created';
   static const String home = '/home';
+  static const String meals = '/meals';
   static const String profile = '/profile';
   static const String changePassword = '/profile/change-password';
   static const String notifications = '/notifications';

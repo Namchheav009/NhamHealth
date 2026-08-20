@@ -10,6 +10,8 @@ import '../modules/auth/controllers/account_created_controller.dart';
 import '../modules/auth/views/account_created_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/meals/bindings/meal_binding.dart';
+import '../modules/meals/views/meal_view.dart';
 import '../modules/notifications/views/notifications_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/favorites/bindings/favorites_binding.dart';
@@ -77,6 +79,12 @@ abstract class AppPages {
       name: AppRoutes.home,
       page: () => const HomeView(),
       binding: HomeBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.meals,
+      page: () => const MealView(),
+      binding: MealBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
