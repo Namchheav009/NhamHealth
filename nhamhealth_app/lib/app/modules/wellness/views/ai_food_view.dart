@@ -1,4 +1,3 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,7 +13,7 @@ import '../models/food_recommendation_model.dart';
 ///   - Animated appearance for cards (AnimatedSwitcher / AnimatedSize)
 ///   - Icon-coded nutrition metrics
 ///   - Real confidence meter instead of plain text
-///   - Nicer empty / live-camera states
+///   - Clear empty and selected-image states
 /// -----------------------------------------------------------------------
 class AiFoodView extends GetView<AiFoodController> {
   const AiFoodView({super.key});
@@ -68,42 +67,28 @@ class AiFoodView extends GetView<AiFoodController> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                _button(
-                  icon: controller.isLiveAnalyzing.value
-                      ? Icons.stop_circle_outlined
-                      : Icons.center_focus_strong,
-                  text: controller.isLiveCameraStarting.value
-                      ? 'Starting camera...'
-                      : controller.isLiveAnalyzing.value
-                      ? 'Stop live scan'
-                      : 'Scan food live',
-                  action: controller.isLiveCameraStarting.value
-                      ? null
-                      : controller.toggleLiveAnalysis,
-                  style: controller.isLiveAnalyzing.value
-                      ? _ButtonStyle.warning
-                      : _ButtonStyle.subtle,
-                ),
                 AnimatedSize(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
-                  child: controller.selectedImage.value != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: _button(
-                            icon: Icons.auto_awesome,
-                            text: controller.isAnalyzing.value
-                                ? 'Analyzing your food...'
-                                : 'Analyze Food',
-                            action: controller.isAnalyzing.value
-                                ? null
-                                : controller.analyzeFood,
-                            style: _ButtonStyle.primary,
-                            loading: controller.isAnalyzing.value,
-                          ),
-                        )
-                      : const SizedBox(width: double.infinity),
+                  child:
+                      controller.selectedImage.value != null
+                          ? Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: _button(
+                              icon: Icons.auto_awesome,
+                              text:
+                                  controller.isAnalyzing.value
+                                      ? 'Analyzing your food...'
+                                      : 'Analyze Food',
+                              action:
+                                  controller.isAnalyzing.value
+                                      ? null
+                                      : controller.analyzeFood,
+                              style: _ButtonStyle.primary,
+                              loading: controller.isAnalyzing.value,
+                            ),
+                          )
+                          : const SizedBox(width: double.infinity),
                 ),
                 if (controller.errorMessage.value != null)
                   _message(
@@ -113,61 +98,72 @@ class AiFoodView extends GetView<AiFoodController> {
                   ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: controller.prediction.value != null
-                      ? Padding(
-                          key: const ValueKey('prediction'),
-                          padding: const EdgeInsets.only(top: 16),
-                          child: _predictionCard(),
-                        )
-                      : const SizedBox.shrink(),
+                  child:
+                      controller.prediction.value != null
+                          ? Padding(
+                            key: const ValueKey('prediction'),
+                            padding: const EdgeInsets.only(top: 16),
+                            child: _predictionCard(),
+                          )
+                          : const SizedBox.shrink(),
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: controller.nutrition.value != null
-                      ? Padding(
-                          key: const ValueKey('nutrition'),
-                          padding: const EdgeInsets.only(top: 14),
-                          child: _nutritionCard(controller.nutrition.value!),
-                        )
-                      : const SizedBox.shrink(),
+                  child:
+                      controller.nutrition.value != null
+                          ? Padding(
+                            key: const ValueKey('nutrition'),
+                            padding: const EdgeInsets.only(top: 14),
+                            child: _nutritionCard(controller.nutrition.value!),
+                          )
+                          : const SizedBox.shrink(),
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: controller.recommendation.value != null
-                      ? Padding(
-                          key: const ValueKey('recommendation'),
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Column(
-                            children: [
-                              _recommendationCard(
-                                controller.recommendation.value!,
-                              ),
-                              const SizedBox(height: 14),
-                              _button(
-                                icon: controller.wasAdded.value
-                                    ? Icons.check_circle
-                                    : Icons.add_circle_outline,
-                                text: controller.wasAdded.value
-                                    ? 'Added to Today'
-                                    : controller.isSaving.value
-                                    ? 'Adding...'
-                                    : "Add to Today's Food",
-                                action:
-                                    controller.isSaving.value ||
-                                        controller.wasAdded.value ||
-                                        (controller.prediction.value?.confidence ?? 0) <
-                                            AiFoodController.lowConfidenceThreshold
-                                    ? null
-                                    : controller.addFoodToToday,
-                                style: controller.wasAdded.value
-                                    ? _ButtonStyle.success
-                                    : _ButtonStyle.primary,
-                                loading: controller.isSaving.value,
-                              ),
-                            ],
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+                  child:
+                      controller.recommendation.value != null
+                          ? Padding(
+                            key: const ValueKey('recommendation'),
+                            padding: const EdgeInsets.only(top: 14),
+                            child: Column(
+                              children: [
+                                _recommendationCard(
+                                  controller.recommendation.value!,
+                                ),
+                                const SizedBox(height: 14),
+                                _button(
+                                  icon:
+                                      controller.wasAdded.value
+                                          ? Icons.check_circle
+                                          : Icons.add_circle_outline,
+                                  text:
+                                      controller.wasAdded.value
+                                          ? 'Added to Today'
+                                          : controller.isSaving.value
+                                          ? 'Adding...'
+                                          : "Add to Today's Food",
+                                  action:
+                                      controller.isSaving.value ||
+                                              controller.wasAdded.value ||
+                                              (controller
+                                                          .prediction
+                                                          .value
+                                                          ?.confidence ??
+                                                      0) <
+                                                  AiFoodController
+                                                      .lowConfidenceThreshold
+                                          ? null
+                                          : controller.addFoodToToday,
+                                  style:
+                                      controller.wasAdded.value
+                                          ? _ButtonStyle.success
+                                          : _ButtonStyle.primary,
+                                  loading: controller.isSaving.value,
+                                ),
+                              ],
+                            ),
+                          )
+                          : const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 14),
                 _legalNotice(controller.nutrition.value),
@@ -267,9 +263,7 @@ class AiFoodView extends GetView<AiFoodController> {
   // ---- Image / camera card ---------------------------------------------
 
   Widget _imageCard() => GestureDetector(
-    onTap: controller.isLiveAnalyzing.value
-        ? null
-        : controller.pickImageFromGallery,
+    onTap: controller.pickImageFromGallery,
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 240,
@@ -278,9 +272,10 @@ class AiFoodView extends GetView<AiFoodController> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color: controller.selectedImage.value != null
-              ? green.withValues(alpha: .35)
-              : const Color(0xFFD9E7DA),
+          color:
+              controller.selectedImage.value != null
+                  ? green.withValues(alpha: .35)
+                  : const Color(0xFFD9E7DA),
           width: controller.selectedImage.value != null ? 1.5 : 1,
         ),
         boxShadow: const [
@@ -291,70 +286,11 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
         ],
       ),
-      child: controller.isLiveCameraReady
-          ? _liveCameraPreview()
-          : controller.selectedImage.value == null
-          ? _emptyImageState()
-          : _selectedImagePreview(),
+      child:
+          controller.selectedImage.value == null
+              ? _emptyImageState()
+              : _selectedImagePreview(),
     ),
-  );
-
-  Widget _liveCameraPreview() => Stack(
-    fit: StackFit.expand,
-    children: [
-      FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: controller.liveCameraController!.value.previewSize!.height,
-          height: controller.liveCameraController!.value.previewSize!.width,
-          child: CameraPreview(controller.liveCameraController!),
-        ),
-      ),
-      // subtle scan-frame overlay
-      Positioned.fill(
-        child: IgnorePointer(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: .55),
-                  width: 1.4,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      Positioned(
-        left: 12,
-        top: 12,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _Pulse(),
-              SizedBox(width: 7),
-              Text(
-                'LIVE AI',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
   );
 
   Widget _emptyImageState() => Column(
@@ -366,11 +302,7 @@ class AiFoodView extends GetView<AiFoodController> {
           shape: BoxShape.circle,
         ),
         padding: const EdgeInsets.all(18),
-        child: const Icon(
-          Icons.add_a_photo_outlined,
-          size: 32,
-          color: green,
-        ),
+        child: const Icon(Icons.add_a_photo_outlined, size: 32, color: green),
       ),
       const SizedBox(height: 12),
       const Text(
@@ -429,25 +361,24 @@ class AiFoodView extends GetView<AiFoodController> {
     _ButtonStyle style = _ButtonStyle.primary,
     bool loading = false,
   }) {
-    final child = loading
-        ? Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: style == _ButtonStyle.primary
-                      ? Colors.white
-                      : green,
+    final child =
+        loading
+            ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: style == _ButtonStyle.primary ? Colors.white : green,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(text),
-            ],
-          )
-        : null;
+                const SizedBox(width: 10),
+                Text(text),
+              ],
+            )
+            : null;
 
     switch (style) {
       case _ButtonStyle.primary:
@@ -490,37 +421,6 @@ class AiFoodView extends GetView<AiFoodController> {
             style: OutlinedButton.styleFrom(
               foregroundColor: green,
               side: const BorderSide(color: green),
-              shape: const StadiumBorder(),
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      case _ButtonStyle.subtle:
-        return SizedBox(
-          height: 48,
-          child: OutlinedButton.icon(
-            onPressed: action,
-            icon: Icon(icon, size: 20),
-            label: Text(text),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: green,
-              side: const BorderSide(color: Color(0xFFCDE2D1)),
-              backgroundColor: Colors.white,
-              shape: const StadiumBorder(),
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      case _ButtonStyle.warning:
-        return SizedBox(
-          height: 48,
-          child: OutlinedButton.icon(
-            onPressed: action,
-            icon: Icon(icon, size: 20, color: warn),
-            label: Text(text, style: const TextStyle(color: warn)),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: warn),
-              backgroundColor: Colors.white,
               shape: const StadiumBorder(),
               textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -624,7 +524,9 @@ class AiFoodView extends GetView<AiFoodController> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
-                color: (food.databaseMatched ? green : warn).withValues(alpha: .1),
+                color: (food.databaseMatched ? green : warn).withValues(
+                  alpha: .1,
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -820,7 +722,10 @@ class AiFoodView extends GetView<AiFoodController> {
             children: [
               Icon(Icons.info_outline, size: 17, color: Color(0xFF8A6500)),
               SizedBox(width: 7),
-              Text('Important information', style: TextStyle(fontWeight: FontWeight.w800)),
+              Text(
+                'Important information',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ],
           ),
           if (controller.nutrition.value?.analysis.isNotEmpty == true) ...[
@@ -836,13 +741,25 @@ class AiFoodView extends GetView<AiFoodController> {
           ],
           const SizedBox(height: 7),
           Text(
-            food?.disclaimer.isNotEmpty == true ? food!.disclaimer : defaultDisclaimer,
-            style: const TextStyle(fontSize: 11.5, height: 1.4, color: Color(0xFF6E5A18)),
+            food?.disclaimer.isNotEmpty == true
+                ? food!.disclaimer
+                : defaultDisclaimer,
+            style: const TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              color: Color(0xFF6E5A18),
+            ),
           ),
           const SizedBox(height: 5),
           Text(
-            food?.privacyNotice.isNotEmpty == true ? food!.privacyNotice : defaultPrivacy,
-            style: const TextStyle(fontSize: 11.5, height: 1.4, color: Color(0xFF6E5A18)),
+            food?.privacyNotice.isNotEmpty == true
+                ? food!.privacyNotice
+                : defaultPrivacy,
+            style: const TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              color: Color(0xFF6E5A18),
+            ),
           ),
         ],
       ),
@@ -890,7 +807,7 @@ class AiFoodView extends GetView<AiFoodController> {
   );
 }
 
-enum _ButtonStyle { primary, outlined, subtle, warning, success }
+enum _ButtonStyle { primary, outlined, success }
 
 /// Slim animated loading bar shown while the on-device model loads.
 class _ModelLoadingBar extends StatelessWidget {
@@ -903,41 +820,6 @@ class _ModelLoadingBar extends StatelessWidget {
       color: AiFoodView.green,
       backgroundColor: Color(0xFFE8F7EA),
       minHeight: 6,
-    ),
-  );
-}
-
-/// Small pulsing red dot used in the "LIVE AI" badge.
-class _Pulse extends StatefulWidget {
-  const _Pulse();
-
-  @override
-  State<_Pulse> createState() => _PulseState();
-}
-
-class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => FadeTransition(
-    opacity: Tween(begin: 0.35, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    ),
-    child: const SizedBox(
-      width: 8,
-      height: 8,
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-      ),
     ),
   );
 }
