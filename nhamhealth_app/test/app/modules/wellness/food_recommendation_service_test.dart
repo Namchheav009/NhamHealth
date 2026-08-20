@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/wellness/models/food_nutrition_model.dart';
-import 'package:nhamhealth_flutter/app/modules/wellness/models/food_recommendation_model.dart';
-import 'package:nhamhealth_flutter/app/modules/wellness/services/food_recommendation_service.dart';
+import 'package:nhamhealth_flutter/app/modules/models/wellness/food_nutrition_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/wellness/food_recommendation_model.dart';
+import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommendation_service.dart';
 
 void main() {
   final service = FoodRecommendationService();

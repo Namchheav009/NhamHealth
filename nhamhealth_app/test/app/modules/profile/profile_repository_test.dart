@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:image/image.dart' as image;
-import 'package:nhamhealth_flutter/app/modules/profile/repositories/profile_repository.dart';
+import 'package:nhamhealth_flutter/app/modules/repositories/profile/profile_repository.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
