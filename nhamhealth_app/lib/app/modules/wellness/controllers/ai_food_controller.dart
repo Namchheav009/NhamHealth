@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:camera/camera.dart';
 import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
@@ -41,25 +40,13 @@ class AiFoodController extends GetxController {
   final isAnalyzing = false.obs;
   final isNutritionLoading = false.obs;
   final isSaving = false.obs;
-  final isLiveCameraStarting = false.obs;
-  final isLiveAnalyzing = false.obs;
   final selectedImage = Rxn<File>();
   final prediction = Rxn<FoodPredictionModel>();
   final nutrition = Rxn<FoodNutritionModel>();
   final recommendation = Rxn<FoodRecommendationModel>();
   final errorMessage = RxnString();
   final wasAdded = false.obs;
-  CameraController? liveCameraController;
-  bool _processingFrame = false;
-  DateTime? _lastFrameAt;
-  String? _candidateLabel;
-  int _candidateCount = 0;
-  String? _lastNutritionLookup;
   int _scanGeneration = 0;
-
-  bool get isLiveCameraReady =>
-      isLiveAnalyzing.value &&
-      (liveCameraController?.value.isInitialized ?? false);
 
   @override
   void onInit() {
@@ -81,126 +68,8 @@ class AiFoodController extends GetxController {
   Future<void> takePhoto() => _pick(ImageSource.camera);
   Future<void> pickImageFromGallery() => _pick(ImageSource.gallery);
 
-  Future<void> toggleLiveAnalysis() async {
-    if (isLiveAnalyzing.value || isLiveCameraStarting.value) {
-      await stopLiveAnalysis();
-    } else {
-      await startLiveAnalysis();
-    }
-  }
-
-  Future<void> startLiveAnalysis() async {
-    if (isLiveCameraStarting.value || isLiveAnalyzing.value) return;
-    final generation = ++_scanGeneration;
-    isLiveCameraStarting.value = true;
-    errorMessage.value = null;
-    try {
-      await aiService.load();
-      if (generation != _scanGeneration) return;
-      final cameras = await availableCameras();
-      if (generation != _scanGeneration) return;
-      if (cameras.isEmpty) {
-        throw CameraException('noCamera', 'No camera is available.');
-      }
-      final selected = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      final camera = CameraController(
-        selected,
-        ResolutionPreset.low,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.yuv420,
-      );
-      liveCameraController = camera;
-      await camera.initialize();
-      if (generation != _scanGeneration) {
-        await camera.dispose();
-        if (identical(liveCameraController, camera)) {
-          liveCameraController = null;
-        }
-        return;
-      }
-      selectedImage.value = null;
-      clearResult();
-      isLiveAnalyzing.value = true;
-      await camera.startImageStream(_onCameraFrame);
-    } on FoodAiException catch (error) {
-      errorMessage.value = error.message;
-    } on CameraException catch (error) {
-      await liveCameraController?.dispose();
-      liveCameraController = null;
-      errorMessage.value =
-          error.code == 'CameraAccessDenied'
-              ? 'Camera permission is required for live food analysis.'
-              : 'Live camera could not start. ${error.description ?? ''}'
-                  .trim();
-    } finally {
-      isLiveCameraStarting.value = false;
-    }
-  }
-
-  Future<void> stopLiveAnalysis() async {
-    final camera = liveCameraController;
-    _scanGeneration++;
-    isLiveAnalyzing.value = false;
-    liveCameraController = null;
-    _processingFrame = false;
-    _candidateLabel = null;
-    _candidateCount = 0;
-    if (camera != null) {
-      if (camera.value.isStreamingImages) await camera.stopImageStream();
-      await camera.dispose();
-    }
-  }
-
-  Future<void> _onCameraFrame(CameraImage frame) async {
-    if (!isLiveAnalyzing.value || _processingFrame) return;
-    final now = DateTime.now();
-    if (_lastFrameAt != null &&
-        now.difference(_lastFrameAt!) < const Duration(milliseconds: 1200)) {
-      return;
-    }
-    _lastFrameAt = now;
-    _processingFrame = true;
-    final generation = _scanGeneration;
-    try {
-      final camera = liveCameraController;
-      if (camera == null) return;
-      final result = await aiService.analyzeCameraImage(
-        frame,
-        rotationDegrees: camera.description.sensorOrientation,
-      );
-      if (!isLiveAnalyzing.value || generation != _scanGeneration) return;
-      prediction.value = result;
-      if (result.foodName == _candidateLabel) {
-        _candidateCount++;
-      } else {
-        _candidateLabel = result.foodName;
-        _candidateCount = 1;
-      }
-      if (_candidateCount >= 2 &&
-          result.confidence >= lowConfidenceThreshold &&
-          result.foodName != _lastNutritionLookup) {
-        _lastNutritionLookup = result.foodName;
-        final bytes = aiService.cameraImageToJpeg(
-          frame,
-          rotationDegrees: camera.description.sensorOrientation,
-        );
-        await _analyzeWithCloud(bytes, generation: generation);
-      }
-    } on FoodAiException catch (error) {
-      errorMessage.value = error.message;
-    } finally {
-      _processingFrame = false;
-    }
-  }
-
   Future<void> _pick(ImageSource source) async {
     try {
-      if (isLiveAnalyzing.value || isLiveCameraStarting.value) {
-        await stopLiveAnalysis();
-      }
       final image = await _imagePicker.pickImage(
         source: source,
         imageQuality: 90,
@@ -409,16 +278,10 @@ class AiFoodController extends GetxController {
     recommendation.value = null;
     errorMessage.value = null;
     wasAdded.value = false;
-    _lastNutritionLookup = null;
   }
 
   @override
   void onClose() {
-    final camera = liveCameraController;
-    if (camera?.value.isStreamingImages ?? false) {
-      camera?.stopImageStream();
-    }
-    camera?.dispose();
     aiService.dispose();
     super.onClose();
   }
