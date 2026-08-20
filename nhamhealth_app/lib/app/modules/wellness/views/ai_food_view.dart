@@ -121,20 +121,6 @@ class AiFoodView extends GetView<AiFoodController> {
                         )
                       : const SizedBox.shrink(),
                 ),
-                if (controller.isNutritionLoading.value)
-                  const Padding(
-                    padding: EdgeInsets.all(28),
-                    child: Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(
-                          color: green,
-                          strokeWidth: 3,
-                        ),
-                      ),
-                    ),
-                  ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: controller.nutrition.value != null

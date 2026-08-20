@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_shadows.dart';
 import '../../../widgets/app_top_bar.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../controllers/meal_controller.dart';
 import '../../home/views/widgets/inner_shadow.dart';
@@ -23,28 +24,24 @@ class MealView extends GetView<MealController> {
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: Colors.white,
-
-        body: Stack(
-          children: [
-            const _MealBackground(),
-
-            SafeArea(
-              bottom: false,
-              child: RefreshIndicator(
-                color: AppColors.primaryGreen,
-                onRefresh: controller.loadMeals,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(27, 24, 27, 125),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 430),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+        backgroundColor: AppColors.homeBackground,
+        body: AppBackground(
+          child: SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              color: AppColors.primaryGreen,
+              onRefresh: controller.loadMeals,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.fromLTRB(27, 24, 27, 125),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                           Obx(
                             () => AppTopBar(
                               user: controller.authenticatedUser.value,
@@ -87,14 +84,13 @@ class MealView extends GetView<MealController> {
                                   ],
                                 ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
 
         // YOUR EXISTING NAVIGATION
@@ -249,21 +245,6 @@ class MealView extends GetView<MealController> {
           },
         );
       },
-    );
-  }
-}
-
-class _MealBackground extends StatelessWidget {
-  const _MealBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: Image.asset(
-        'assets/images/background/bg.png',
-        fit: BoxFit.cover,
-        alignment: Alignment.topCenter,
-      ),
     );
   }
 }

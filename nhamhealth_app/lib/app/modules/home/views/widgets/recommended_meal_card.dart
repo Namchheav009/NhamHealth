@@ -50,6 +50,45 @@ class RecommendedMealCard extends StatelessWidget {
                       child: _MealImage(path: meal.image),
                     ),
                     Positioned(
+                      left: 5,
+                      top: 5,
+                      child: Tooltip(
+                        message:
+                            meal.reason.isEmpty
+                                ? 'AI recommended for your selected mood'
+                                : meal.reason,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withValues(alpha: .9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome_rounded,
+                                color: Colors.white,
+                                size: 9,
+                              ),
+                              SizedBox(width: 2),
+                              Text(
+                                'AI',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 7,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       right: 5,
                       top: 5,
                       child: InkWell(

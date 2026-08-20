@@ -11,7 +11,11 @@ public record MealResponse(
         Integer categoryId,
         String category,
         String imageUrl,
-        BigDecimal calories) {
+        BigDecimal calories,
+        String description,
+        Integer cookingTimeMinutes,
+        String difficulty,
+        Integer servings) {
 
     public static MealResponse from(Meal meal) {
         String categoryName = meal.getCategory() == null
@@ -23,6 +27,10 @@ public record MealResponse(
                 meal.getCategory() == null ? null : meal.getCategory().getCategoryId(),
                 categoryName,
                 meal.getMainImageUrl(),
-                meal.getCaloriesCached());
+                meal.getCaloriesCached(),
+                meal.getDescription(),
+                meal.getCookingTimeMinutes(),
+                meal.getDifficulty(),
+                meal.getServings());
     }
 }

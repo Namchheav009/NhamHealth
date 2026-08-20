@@ -6,27 +6,20 @@ class WellnessNutrientTile extends StatelessWidget {
   const WellnessNutrientTile({
     super.key,
     required this.item,
-    required this.onTap,
   });
 
   final WellnessSummaryModel item;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: const Color(0xFFECECEC)),
-          ),
-          child: Row(
+        border: Border.all(color: const Color(0xFFECECEC)),
+      ),
+      child: Row(
             children: [
               // Icon
               Container(
@@ -102,17 +95,8 @@ class WellnessNutrientTile extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 3),
-
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFFD0D0D0),
-                size: 20,
-              ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
