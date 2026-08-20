@@ -84,7 +84,8 @@ class ProfileController extends GetxController {
 
   Future<void> loadUnreadNotificationCount() async {
     try {
-      unreadNotificationCount.value = await _repository.getUnreadNotificationCount();
+      unreadNotificationCount.value =
+          await _repository.getUnreadNotificationCount();
     } on Object {
       // Preserve the last count if the network is temporarily unavailable.
     }
@@ -214,7 +215,7 @@ class ProfileController extends GetxController {
         Get.offNamed<void>(AppRoutes.home);
         break;
       case 1:
-        // Get.offNamed(AppRoutes.food);
+        Get.offNamed<void>(AppRoutes.meals);
         break;
       case 2:
         // Create post
@@ -259,9 +260,10 @@ class ProfileController extends GetxController {
   }
 
   void requestLogout() {
-    final settings = Get.isRegistered<SettingsController>()
-        ? Get.find<SettingsController>()
-        : Get.put(SettingsController());
+    final settings =
+        Get.isRegistered<SettingsController>()
+            ? Get.find<SettingsController>()
+            : Get.put(SettingsController());
     settings.logout();
   }
 
