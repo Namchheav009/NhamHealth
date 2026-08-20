@@ -262,20 +262,48 @@ class AiFoodController extends GetxController {
         confidence: food.confidence.clamp(0, 1),
         classIndex: -1,
       );
+      final localGuidance = recommendationService.create(
+        food: food,
+        currentCalories: caloriesController.currentCalories.value,
+        targetCalories: caloriesController.targetCalories.value,
+      );
       recommendation.value = FoodRecommendationModel(
-        title: food.recommendationTitle,
-        message: food.recommendation,
-        type:
-            food.sugar >= 20 ||
-                    food.calories >
-                        (caloriesController.targetCalories.value -
-                            caloriesController.currentCalories.value)
-                ? FoodRecommendationType.warning
-                : FoodRecommendationType.good,
+        title:
+            food.needsUserConfirmation || food.recommendationTitle.isEmpty
+                ? localGuidance.title
+                : food.recommendationTitle,
+        message:
+            food.needsUserConfirmation || food.recommendation.isEmpty
+                ? localGuidance.message
+                : food.recommendation,
+        type: localGuidance.type,
       );
       errorMessage.value = null;
-    } on FoodNutritionException catch (error) {
-      errorMessage.value = error.message;
+    } on FoodNutritionException catch (cloudError) {
+      try {
+        final localPrediction = await aiService.analyze(
+          Uint8List.fromList(bytes),
+        );
+        if (generation != null && generation != _scanGeneration) return;
+        prediction.value = localPrediction;
+        final localNutrition = await nutritionRepository.searchFood(
+          localPrediction.foodName,
+        );
+        if (localNutrition == null) {
+          throw const FoodNutritionException(
+            'Food recognized locally, but nutrition was not found.',
+          );
+        }
+        nutrition.value = localNutrition;
+        recommendation.value = recommendationService.create(
+          food: localNutrition,
+          currentCalories: caloriesController.currentCalories.value,
+          targetCalories: caloriesController.targetCalories.value,
+        );
+        errorMessage.value = null;
+      } on Object {
+        errorMessage.value = cloudError.message;
+      }
     } finally {
       isNutritionLoading.value = false;
     }

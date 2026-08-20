@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,14 +22,20 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
 @Service
 public class NvidiaFoodVisionService {
+    private static final Logger log = LoggerFactory.getLogger(NvidiaFoodVisionService.class);
     private static final String PROMPT = """
-            Analyze the food or drink visible in this image. Identify the most likely dish or
-            beverage and estimate nutrition for the visible portion. Return JSON only with exactly these fields:
+            Analyze only the food or drink visible in this image. First assess image quality,
+            separate the main dish from sides and drinks, identify preparation method, and estimate
+            portion using visible plates, bowls, utensils, packaging, or hand-scale cues. Do not
+            assume hidden ingredients. Calibrate confidence: 0.85+ only for a clear, unambiguous
+            dish and portion; 0.60-0.84 for plausible ambiguity; below 0.60 for unclear or mixed food.
+            Cross-check calories against protein, carbs, and fat before responding.
+            Return JSON only with exactly these fields:
             name (specific food or drink name), analysis (one concise sentence describing visible
             ingredients, preparation style, portion clues, and uncertainty), confidence (0 to 1),
             calories, protein, carbs, fat, sugar (numbers),
             servingSize (number), servingUnit (string), recommendationTitle (string), and
-            recommendation (one short practical sentence). If no food or drink is visible, use name
+            recommendation (one short, specific action based on the estimated macros). If no food or drink is visible, use name
             \"Unknown food\", confidence 0, and zero nutrition. Estimates are not medical advice.
             For visible food, calories, protein, carbs, fat, servingSize, recommendationTitle,
             and recommendation must not be missing. Example shape:
@@ -68,16 +77,10 @@ public class NvidiaFoodVisionService {
                 "messages", List.of(Map.of(
                         "role", "user",
                         "content", List.of(
-                                Map.of("type", "text", "text", PROMPT),
-                                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl))))));
+                                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl)),
+                                Map.of("type", "text", "text", PROMPT)))));
         try {
-            String responseBody = client.post()
-                    .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(String.class);
+            String responseBody = requestWithRetry(body);
             JsonNode response = mapper.readTree(responseBody);
             String content = response.path("choices").path(0).path("message").path("content").asText();
             String json = content.replaceFirst("(?s)^\\s*```(?:json)?\\s*", "")
@@ -98,6 +101,36 @@ public class NvidiaFoodVisionService {
             throw new ResponseStatusException(BAD_GATEWAY,
                     "The NVIDIA food vision service could not analyze this image.", error);
         }
+    }
+
+    private String requestWithRetry(Map<String, Object> body) {
+        RestClientResponseException lastError = null;
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                return client.post()
+                        .uri("/chat/completions")
+                        .header("Authorization", "Bearer " + apiKey)
+                        .header("Accept", MediaType.APPLICATION_JSON_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .body(String.class);
+            } catch (RestClientResponseException error) {
+                lastError = error;
+                int status = error.getStatusCode().value();
+                if (attempt == 2 || (status != 502 && status != 503 && status != 504)) {
+                    throw error;
+                }
+                log.warn("NVIDIA vision request returned HTTP {}; retrying once", status);
+                try {
+                    Thread.sleep(350);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw error;
+                }
+            }
+        }
+        throw lastError;
     }
 
     private AiFoodAnalysisResponse estimateNutrition(String name, double servingSize, String servingUnit)
