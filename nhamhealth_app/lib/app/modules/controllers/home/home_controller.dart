@@ -263,7 +263,7 @@ class HomeController extends GetxController {
         // Get.toNamed(AppRoutes.createPost);
         break;
       case 3:
-        // Get.toNamed(AppRoutes.community);
+        Get.offNamed<void>(AppRoutes.feed);
         break;
       case 4:
         Get.offNamed<void>(

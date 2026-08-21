@@ -38,6 +38,7 @@ import '../modules/views/wellness/food_source_detail_view.dart';
 import '../modules/bindings/wellness/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
+import '../modules/views/feed/feed_page.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -173,6 +174,12 @@ abstract class AppPages {
       name: AppRoutes.foodSourceDetail,
       page: () => const FoodSourceDetailView(),
       binding: FoodSourceDetailBinding(),
+      transition: Transition.rightToLeft,
+    ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.feed,
+      page: () => const FeedPage(),
       transition: Transition.rightToLeft,
     ),
   ];
