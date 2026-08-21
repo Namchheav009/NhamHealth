@@ -1,8 +1,10 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
-import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -39,14 +41,21 @@ public class MealAdminController {
         model.addAttribute("activePage", "meals");
         model.addAttribute("adminName", authentication.getName());
         model.addAttribute("mealCategories", mealAdminService.getActiveCategories());
-        model.addAttribute("mealTotal", mealAdminService.getMealsForAdmin().size());
+        model.addAttribute("mealTags", mealAdminService.getMealTags());
+        model.addAttribute("mealTotal", mealAdminService.getMealCount());
         return "admin/meals";
     }
 
     @GetMapping("/admin/meals/data")
     @ResponseBody
-    public ResponseEntity<List<MealAdminRowDto>> listMeals() {
-        return ResponseEntity.ok(mealAdminService.getMealsForAdmin());
+    public ResponseEntity<Page<MealAdminRowDto>> listMeals(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String tag) {
+        PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        return ResponseEntity.ok(mealAdminService.getMealsForAdmin(search, category, status, tag, pageRequest));
     }
 
     @PostMapping("/admin/meals")
