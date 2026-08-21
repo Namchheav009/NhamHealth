@@ -1,8 +1,11 @@
 package com.nhamhealth.nhamhealth_api.repository;
 
 import java.util.List;
+import java.time.LocalDate;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
 
@@ -12,4 +15,13 @@ public interface DailyNutrientTotalRepository extends JpaRepository<DailyNutrien
     void deleteByNutrientNutrientId(Integer nutrientId);
 
     List<DailyNutrientTotal> findByDailyWellnessSummaryDailySummaryId(Integer summaryId);
+
+    @Query("""
+            select total.nutrient.nutrientName, total.nutrient.unit,
+                   sum(total.consumedAmount), sum(total.goalAmount), count(total)
+            from DailyNutrientTotal total
+            where total.dailyWellnessSummary.summaryDate = :summaryDate
+            group by total.nutrient.nutrientName, total.nutrient.unit
+            """)
+    List<Object[]> summarizeBySummaryDate(@Param("summaryDate") LocalDate summaryDate);
 }
