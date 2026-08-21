@@ -5,6 +5,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'inner_shadow.dart';
+import '../../../../routes/app_routes.dart';
 
 class HomeBottomNavigation extends GetView<HomeController> {
   const HomeBottomNavigation({super.key});
