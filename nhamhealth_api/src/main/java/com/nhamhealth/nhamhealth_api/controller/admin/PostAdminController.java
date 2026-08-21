@@ -48,17 +48,33 @@ public class PostAdminController {
     @GetMapping("/admin/posts")
     public String postsPage(Authentication authentication, Model model) {
         List<Post> posts = postRepository.findAllByOrderByUpdatedAtDescCreatedAtDesc();
+        List<Integer> postIds = posts.stream().map(Post::getPostId).toList();
+        Map<Integer, Long> commentCounts = postIds.stream()
+                .collect(Collectors.toMap(id -> id, ignored -> 0L));
+        if (!postIds.isEmpty()) {
+            commentRepository.countByPostIds(postIds)
+                    .forEach(count -> commentCounts.put(count.getPostId(), count.getTotal()));
+        }
+        Map<Integer, Long> favoriteCounts = postIds.stream()
+                .collect(Collectors.toMap(id -> id, ignored -> 0L));
+        if (!postIds.isEmpty()) {
+            favoriteRepository.countByPostIds(postIds)
+                    .forEach(count -> favoriteCounts.put(count.getPostId(), count.getTotal()));
+        }
+        Map<Integer, Long> reportCounts = postIds.stream()
+                .collect(Collectors.toMap(id -> id, ignored -> 0L));
+        if (!postIds.isEmpty()) {
+            reportRepository.countByPostIdsAndStatusIgnoreCase(postIds, "pending")
+                    .forEach(count -> reportCounts.put(count.getPostId(), count.getTotal()));
+        }
         model.addAttribute("pageTitle", "Posts");
         model.addAttribute("activePage", "posts");
         model.addAttribute("adminName", authentication != null ? authentication.getName() : "admin");
         model.addAttribute("posts", posts);
         model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("commentCounts", posts.stream().collect(Collectors.toMap(Post::getPostId,
-                post -> commentRepository.countByPostPostId(post.getPostId()))));
-        model.addAttribute("favoriteCounts", posts.stream().collect(Collectors.toMap(Post::getPostId,
-                post -> favoriteRepository.countByPostPostId(post.getPostId()))));
-        model.addAttribute("reportCounts", posts.stream().collect(Collectors.toMap(Post::getPostId,
-                post -> reportRepository.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "pending"))));
+        model.addAttribute("commentCounts", commentCounts);
+        model.addAttribute("favoriteCounts", favoriteCounts);
+        model.addAttribute("reportCounts", reportCounts);
         model.addAttribute("totalPosts", posts.size());
         model.addAttribute("activeAuthors", postRepository.countDistinctAuthors());
         model.addAttribute("pendingReports", reportRepository.countByStatusIgnoreCase("pending"));
