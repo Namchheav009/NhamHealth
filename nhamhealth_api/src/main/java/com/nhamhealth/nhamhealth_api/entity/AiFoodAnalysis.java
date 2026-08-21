@@ -46,6 +46,42 @@ public class AiFoodAnalysis {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "model_name", length = 120)
+    private String modelName;
+
+    @Column(name = "prompt_version", length = 50)
+    private String promptVersion;
+
+    @Column(name = "database_matched")
+    private Boolean databaseMatched;
+
+    @Column(name = "user_confirmed")
+    private Boolean userConfirmed;
+
+    @Column(name = "corrected_food_name", length = 150)
+    private String correctedFoodName;
+
+    @Column(name = "corrected_serving_size", precision = 10, scale = 2)
+    private BigDecimal correctedServingSize;
+
+    @Column(name = "corrected_serving_unit", length = 40)
+    private String correctedServingUnit;
+
+    @Column(name = "feedback_at")
+    private LocalDateTime feedbackAt;
+
+    @Column(name = "nutrition_fallback_used")
+    private Boolean nutritionFallbackUsed;
+
+    @Column(name = "prompt_tokens")
+    private Integer promptTokens;
+
+    @Column(name = "completion_tokens")
+    private Integer completionTokens;
+
+    @Column(name = "latency_ms")
+    private Long latencyMs;
+
     public AiFoodAnalysis() {
     }
 
@@ -116,4 +152,29 @@ public class AiFoodAnalysis {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getModelName() { return modelName; }
+    public void setModelName(String modelName) { this.modelName = modelName; }
+    public String getPromptVersion() { return promptVersion; }
+    public void setPromptVersion(String promptVersion) { this.promptVersion = promptVersion; }
+    public Boolean getDatabaseMatched() { return databaseMatched; }
+    public void setDatabaseMatched(Boolean databaseMatched) { this.databaseMatched = databaseMatched; }
+    public Boolean getUserConfirmed() { return userConfirmed; }
+    public void setUserConfirmed(Boolean userConfirmed) { this.userConfirmed = userConfirmed; }
+    public String getCorrectedFoodName() { return correctedFoodName; }
+    public void setCorrectedFoodName(String correctedFoodName) { this.correctedFoodName = correctedFoodName; }
+    public BigDecimal getCorrectedServingSize() { return correctedServingSize; }
+    public void setCorrectedServingSize(BigDecimal correctedServingSize) { this.correctedServingSize = correctedServingSize; }
+    public String getCorrectedServingUnit() { return correctedServingUnit; }
+    public void setCorrectedServingUnit(String correctedServingUnit) { this.correctedServingUnit = correctedServingUnit; }
+    public LocalDateTime getFeedbackAt() { return feedbackAt; }
+    public void setFeedbackAt(LocalDateTime feedbackAt) { this.feedbackAt = feedbackAt; }
+    public Boolean getNutritionFallbackUsed() { return nutritionFallbackUsed; }
+    public void setNutritionFallbackUsed(Boolean nutritionFallbackUsed) { this.nutritionFallbackUsed = nutritionFallbackUsed; }
+    public Integer getPromptTokens() { return promptTokens; }
+    public void setPromptTokens(Integer promptTokens) { this.promptTokens = promptTokens; }
+    public Integer getCompletionTokens() { return completionTokens; }
+    public void setCompletionTokens(Integer completionTokens) { this.completionTokens = completionTokens; }
+    public Long getLatencyMs() { return latencyMs; }
+    public void setLatencyMs(Long latencyMs) { this.latencyMs = latencyMs; }
 }

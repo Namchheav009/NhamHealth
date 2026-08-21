@@ -114,7 +114,15 @@ class AiFoodView extends GetView<AiFoodController> {
                           ? Padding(
                             key: const ValueKey('nutrition'),
                             padding: const EdgeInsets.only(top: 14),
-                            child: _nutritionCard(controller.nutrition.value!),
+                            child: Column(
+                              children: [
+                                if (!controller.isUserConfirmed.value) ...[
+                                  _feedbackCard(context),
+                                  const SizedBox(height: 14),
+                                ],
+                                _nutritionCard(controller.nutrition.value!),
+                              ],
+                            ),
                           )
                           : const SizedBox.shrink(),
                 ),
@@ -145,13 +153,7 @@ class AiFoodView extends GetView<AiFoodController> {
                                   action:
                                       controller.isSaving.value ||
                                               controller.wasAdded.value ||
-                                              (controller
-                                                          .prediction
-                                                          .value
-                                                          ?.confidence ??
-                                                      0) <
-                                                  AiFoodController
-                                                      .lowConfidenceThreshold
+                                              !controller.canAddFood
                                           ? null
                                           : controller.addFoodToToday,
                                   style:
@@ -590,6 +592,150 @@ class AiFoodView extends GetView<AiFoodController> {
       ],
     ),
   );
+
+  Widget _feedbackCard(BuildContext context) {
+    final low =
+        (controller.prediction.value?.confidence ?? 0) <
+        AiFoodController.lowConfidenceThreshold;
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                low
+                    ? Icons.fact_check_outlined
+                    : Icons.rate_review_outlined,
+                color: low ? warn : greenDark,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  low
+                      ? 'Please confirm before logging'
+                      : 'Help improve this result',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Check both the food name and serving amount. Corrections are saved as quality feedback.',
+            style: TextStyle(color: textMuted, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      controller.isFeedbackSaving.value
+                          ? null
+                          : controller.confirmFood,
+                  icon: const Icon(Icons.check_rounded),
+                  label: const Text('Looks right'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed:
+                      controller.isFeedbackSaving.value
+                          ? null
+                          : () => _showCorrectionDialog(context),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit result'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCorrectionDialog(BuildContext context) async {
+    final food = controller.nutrition.value;
+    if (food == null) return;
+    final nameController = TextEditingController(text: food.name);
+    final sizeController = TextEditingController(
+      text: food.servingSize.toString(),
+    );
+    final unitController = TextEditingController(text: food.servingUnit);
+    final submit = await showDialog<bool>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Correct food result'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Food name',
+                      prefixIcon: Icon(Icons.restaurant_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: sizeController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Amount',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: unitController,
+                          decoration: const InputDecoration(
+                            labelText: 'Unit',
+                            hintText: 'g, bowl, serving',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Save correction'),
+              ),
+            ],
+          ),
+    );
+    if (submit == true) {
+      await controller.correctFood(
+        foodName: nameController.text,
+        servingSize: double.tryParse(sizeController.text) ?? 0,
+        servingUnit: unitController.text,
+      );
+    }
+    nameController.dispose();
+    sizeController.dispose();
+    unitController.dispose();
+  }
 
   Widget _metric(IconData icon, Color color, String value, String label) =>
       DecoratedBox(

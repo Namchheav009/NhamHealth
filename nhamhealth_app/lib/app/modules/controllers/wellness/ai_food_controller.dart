@@ -40,6 +40,8 @@ class AiFoodController extends GetxController {
   final isAnalyzing = false.obs;
   final isNutritionLoading = false.obs;
   final isSaving = false.obs;
+  final isFeedbackSaving = false.obs;
+  final isUserConfirmed = false.obs;
   final selectedImage = Rxn<File>();
   final prediction = Rxn<FoodPredictionModel>();
   final nutrition = Rxn<FoodNutritionModel>();
@@ -126,6 +128,7 @@ class AiFoodController extends GetxController {
       );
       if (generation != null && generation != _scanGeneration) return;
       nutrition.value = food;
+      isUserConfirmed.value = !food.needsUserConfirmation;
       prediction.value = FoodPredictionModel(
         foodName: food.name,
         confidence: food.confidence.clamp(0, 1),
@@ -164,6 +167,7 @@ class AiFoodController extends GetxController {
           );
         }
         nutrition.value = localNutrition;
+        isUserConfirmed.value = false;
         recommendation.value = recommendationService.create(
           food: localNutrition,
           currentCalories: caloriesController.currentCalories.value,
@@ -208,10 +212,7 @@ class AiFoodController extends GetxController {
 
   Future<void> addFoodToToday() async {
     final food = nutrition.value;
-    if (food == null ||
-        isSaving.value ||
-        wasAdded.value ||
-        (prediction.value?.confidence ?? 0) < lowConfidenceThreshold) {
+    if (food == null || isSaving.value || wasAdded.value || !canAddFood) {
       return;
     }
     isSaving.value = true;
@@ -259,6 +260,102 @@ class AiFoodController extends GetxController {
     }
   }
 
+  bool get canAddFood =>
+      nutrition.value != null &&
+      (isUserConfirmed.value ||
+          (prediction.value?.confidence ?? 0) >= lowConfidenceThreshold);
+
+  Future<void> confirmFood() async {
+    final food = nutrition.value;
+    if (food == null || isFeedbackSaving.value) return;
+    isFeedbackSaving.value = true;
+    try {
+      if (food.analysisId != null) {
+        await nutritionRepository.submitFeedback(
+          analysisId: food.analysisId!,
+          confirmed: true,
+          foodName: food.name,
+          servingSize: food.servingSize,
+          servingUnit: food.servingUnit,
+        );
+      }
+      isUserConfirmed.value = true;
+      errorMessage.value = null;
+      AppAlert.success(
+        title: 'Food confirmed',
+        message: 'Thanks—your confirmation helps improve future results.',
+      );
+    } on FoodNutritionException catch (error) {
+      errorMessage.value = error.message;
+    } finally {
+      isFeedbackSaving.value = false;
+    }
+  }
+
+  Future<void> correctFood({
+    required String foodName,
+    required double servingSize,
+    required String servingUnit,
+  }) async {
+    final current = nutrition.value;
+    if (current == null || isFeedbackSaving.value) return;
+    final cleanName = foodName.trim();
+    final cleanUnit = servingUnit.trim();
+    if (cleanName.isEmpty || cleanUnit.isEmpty || servingSize <= 0) {
+      errorMessage.value =
+          'Enter a food, a serving amount, and a serving unit.';
+      return;
+    }
+    isFeedbackSaving.value = true;
+    try {
+      final databaseFood = await nutritionRepository.searchFood(cleanName);
+      if (databaseFood == null) {
+        throw const FoodNutritionException(
+          'That food is not in the nutrition database yet. Try a more specific name.',
+        );
+      }
+      if (cleanUnit.toLowerCase() !=
+          databaseFood.servingUnit.trim().toLowerCase()) {
+        throw FoodNutritionException(
+          'Use ${databaseFood.servingUnit} for ${databaseFood.name} so nutrition can be scaled safely.',
+        );
+      }
+      final corrected = databaseFood
+          .withAnalysisId(current.analysisId)
+          .withServing(size: servingSize, unit: cleanUnit);
+      if (current.analysisId != null) {
+        await nutritionRepository.submitFeedback(
+          analysisId: current.analysisId!,
+          confirmed: false,
+          foodName: corrected.name,
+          servingSize: corrected.servingSize,
+          servingUnit: corrected.servingUnit,
+        );
+      }
+      nutrition.value = corrected;
+      prediction.value = FoodPredictionModel(
+        foodName: corrected.name,
+        confidence: 1,
+        classIndex: -1,
+      );
+      recommendation.value = recommendationService.create(
+        food: corrected,
+        currentCalories: caloriesController.currentCalories.value,
+        targetCalories: caloriesController.targetCalories.value,
+      );
+      isUserConfirmed.value = true;
+      errorMessage.value = null;
+      AppAlert.success(
+        title: 'Correction saved',
+        message: 'Nutrition was recalculated from the database.',
+      );
+    } on FoodNutritionException catch (error) {
+      errorMessage.value = error.message;
+    } finally {
+      isFeedbackSaving.value = false;
+    }
+  }
+
   String _mealTypeNow() {
     final hour = DateTime.now().hour;
     if (hour < 11) return 'Breakfast';
@@ -278,6 +375,7 @@ class AiFoodController extends GetxController {
     recommendation.value = null;
     errorMessage.value = null;
     wasAdded.value = false;
+    isUserConfirmed.value = false;
   }
 
   @override
