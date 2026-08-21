@@ -1,16 +1,21 @@
-# nhamhealth_flutter
+# NhamHealth Flutter app
 
-A new Flutter project.
+## Run on a physical Android phone
 
-## Getting Started
+Connect the computer and phone to the same Wi-Fi network, start the Spring Boot
+API, and then use either of these options:
 
-This project is a starting point for a Flutter application.
+- In VS Code, launch **NhamHealth App (physical phone)**. Its pre-launch task
+  detects the computer's current Wi-Fi IPv4 address automatically.
+- From PowerShell in this directory, run:
 
-A few resources to get you started if this is your first Flutter project:
+```powershell
+.\tool\run_android_phone.ps1
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The helper verifies the API health endpoint and writes the current URL to the
+ignored `config/local_api.json` file before Flutter compiles the app. No Wi-Fi
+address is committed to the source code.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For an Android emulator, use the **NhamHealth App (Android emulator)** launch
+configuration; it uses `http://10.0.2.2:8080`.

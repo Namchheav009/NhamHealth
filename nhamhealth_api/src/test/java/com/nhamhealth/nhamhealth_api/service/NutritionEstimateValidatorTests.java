@@ -1,6 +1,9 @@
 package com.nhamhealth.nhamhealth_api.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -29,9 +32,27 @@ class NutritionEstimateValidatorTests {
         assertFalse(NutritionEstimateValidator.isPlausible(food(250, 5, 20, 10, 40)));
     }
 
+    @Test
+    void normalizesMacroMismatchAndLowersConfidence() {
+        AiFoodAnalysisResponse normalized = NutritionEstimateValidator.normalize(
+                food(50, 20, 70, 15, 90));
+
+        assertNotNull(normalized);
+        assertEquals(495, normalized.calories());
+        assertEquals(70, normalized.sugar());
+        assertEquals(0.59, normalized.confidence());
+        assertTrue(NutritionEstimateValidator.isPlausible(normalized));
+    }
+
+    @Test
+    void refusesToInventMacrosWithoutEnergyEvidence() {
+        assertNull(NutritionEstimateValidator.normalize(food(500, 0, 0, 0, 0)));
+    }
+
     private AiFoodAnalysisResponse food(
             double calories, double protein, double carbs, double fat, double sugar) {
         return new AiFoodAnalysisResponse(
+                null,
                 "Test meal", "Visible test meal", 0.85,
                 calories, protein, carbs, fat, sugar,
                 1, "plate", "Balance the meal", "Add vegetables.",
