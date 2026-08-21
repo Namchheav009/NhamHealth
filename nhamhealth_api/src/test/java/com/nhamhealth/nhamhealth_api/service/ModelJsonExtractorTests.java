@@ -19,6 +19,18 @@ class ModelJsonExtractorTests {
     }
 
     @Test
+    void repairsOnlyAMissingFinalObjectBrace() {
+        assertEquals("{\"name\":\"Egg fried rice\"}",
+                ModelJsonExtractor.extractObject("{\"name\":\"Egg fried rice\""));
+    }
+
+    @Test
+    void rejectsContentCutOffInsideAString() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ModelJsonExtractor.extractObject("{\"name\":\"Egg fried"));
+    }
+
+    @Test
     void rejectsEmptyContent() {
         assertThrows(IllegalArgumentException.class,
                 () -> ModelJsonExtractor.extractObject("  "));

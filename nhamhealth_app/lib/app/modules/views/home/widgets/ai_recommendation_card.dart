@@ -78,10 +78,10 @@ class AiRecommendationCard extends GetView<HomeController> {
                       const SizedBox(height: 10),
                       const Expanded(
                         child: Text(
-                          'Get personalized meal &\n'
-                          'activity suggestions based\n'
-                          'on your mood, and\n'
-                          'ingredients.',
+                          'Get 10-15 personalized meals\n'
+                          'ranked for your mood, daily\n'
+                          'nutrition, preferences, and\n'
+                          'cooking time.',
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -94,28 +94,37 @@ class AiRecommendationCard extends GetView<HomeController> {
                       SizedBox(
                         width: constraints.maxWidth * 0.55,
                         height: 36,
-                        child: ElevatedButton(
-                          onPressed: controller.getRecommendation,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: Colors.white,
-                            elevation: 3,
-                            shadowColor: AppColors.primaryGreen.withValues(
-                              alpha: 0.2,
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed:
+                                controller.isRecommendedMealsLoading.value
+                                    ? null
+                                    : controller.getRecommendation,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              foregroundColor: Colors.white,
+                              elevation: 3,
+                              shadowColor: AppColors.primaryGreen.withValues(
+                                alpha: 0.2,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                          ),
-                          child: const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Get Recommendation',
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                controller.isRecommendedMealsLoading.value
+                                    ? 'Generating...'
+                                    : 'Get Recommendation',
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),

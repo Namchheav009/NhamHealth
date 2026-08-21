@@ -337,6 +337,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> getRecommendation() async {
+    if (isRecommendedMealsLoading.value) return;
     final moodId = selectedMoodId.value;
     if (moodId == null) {
       AppAlert.error(
@@ -386,8 +387,10 @@ class HomeController extends GetxController {
         );
       }
     } on Object {
-      // Keep the recommendation card in place without covering the bottom of
-      // the home screen with a transient AI Recommendation alert.
+      AppAlert.error(
+        title: 'Recommendations unavailable',
+        message: 'Could not generate meals right now. Please try again.',
+      );
     } finally {
       isRecommendedMealsLoading.value = false;
     }

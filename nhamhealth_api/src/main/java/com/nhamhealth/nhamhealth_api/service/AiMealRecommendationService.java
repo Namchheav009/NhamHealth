@@ -37,6 +37,8 @@ import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
 @Service
 public class AiMealRecommendationService {
     private static final Logger log = LoggerFactory.getLogger(AiMealRecommendationService.class);
+    private static final int MIN_RECOMMENDATIONS = 10;
+    private static final int MAX_RECOMMENDATIONS = 15;
     private final AiRecommendationRepository recommendationRepository;
     private final AiRecommendationItemRepository itemRepository;
     private final MealRepository mealRepository;
@@ -50,6 +52,8 @@ public class AiMealRecommendationService {
     private final ObjectMapper mapper;
     private final String apiKey;
     private final String model;
+    private final int textMaxTokens;
+    private final String reasoningEffort;
 
     public AiMealRecommendationService(
             AiRecommendationRepository recommendationRepository,
@@ -63,7 +67,9 @@ public class AiMealRecommendationService {
             WellnessProfileRepository wellnessProfileRepository,
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.recommendation-model:nvidia/nemotron-3-nano-30b-a3b}") String model) {
+            @Value("${app.ai.nvidia.recommendation-model:openai/gpt-oss-20b}") String model,
+            @Value("${app.ai.nvidia.text-max-tokens:4096}") int textMaxTokens,
+            @Value("${app.ai.nvidia.reasoning-effort:low}") String reasoningEffort) {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
         this.mealRepository = mealRepository;
@@ -77,6 +83,8 @@ public class AiMealRecommendationService {
         this.mapper = new ObjectMapper();
         this.apiKey = apiKey;
         this.model = model;
+        this.textMaxTokens = Math.max(1_200, textMaxTokens);
+        this.reasoningEffort = reasoningEffort;
     }
 
     @Transactional
@@ -103,16 +111,22 @@ public class AiMealRecommendationService {
             decision = fallbackDecision(mood, catalog, context);
         }
 
+        int targetCount = Math.min(MAX_RECOMMENDATIONS, catalog.size());
         Map<Integer, Meal> mealsById = new HashMap<>();
         catalog.forEach(meal -> mealsById.put(meal.getMealId(), meal));
         LinkedHashMap<Integer, String> selected = new LinkedHashMap<>();
         for (MealChoice choice : decision.mealIds()) {
             if (mealsById.containsKey(choice.id())) selected.putIfAbsent(choice.id(), choice.reason());
-            if (selected.size() == 5) break;
+            if (selected.size() == targetCount) break;
         }
-        if (selected.isEmpty()) decision = fallbackDecision(mood, catalog, context);
-        if (selected.isEmpty()) {
-            for (MealChoice choice : decision.mealIds()) selected.put(choice.id(), choice.reason());
+        if (selected.size() < targetCount) {
+            ModelDecision fallback = fallbackDecision(mood, catalog, context);
+            for (MealChoice choice : fallback.mealIds()) {
+                if (mealsById.containsKey(choice.id())) {
+                    selected.putIfAbsent(choice.id(), choice.reason());
+                }
+                if (selected.size() == targetCount) break;
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -143,6 +157,7 @@ public class AiMealRecommendationService {
     private ModelDecision askModel(Mood mood, List<Meal> meals, RecommendationContext context) {
         if (apiKey == null || apiKey.isBlank()) return null;
         try {
+            int targetCount = Math.min(MAX_RECOMMENDATIONS, meals.size());
             String catalog = mapper.writeValueAsString(meals.stream().map(meal -> Map.of(
                     "id", meal.getMealId(),
                     "name", meal.getMealName(),
@@ -153,18 +168,25 @@ public class AiMealRecommendationService {
                     "cookingMinutes", meal.getCookingTimeMinutes() == null ? 0 : meal.getCookingTimeMinutes()
             )).toList());
             String prompt = """
-                    You are a wellness meal-ranking model. Select 3 to 5 meals only from the supplied
-                    catalog. Rank for the user's mood, remaining nutrition today, activity level,
-                    cooking effort, and prior favorites. Prefer a useful mix of categories instead of
-                    near-duplicate meals. Favorites are preference signals, not mandatory selections.
-                    Do not infer allergies or medical needs. Never invent IDs or nutrition values.
-                    Each reason must name a concrete benefit from the supplied data in 18 words or less.
+                    You are a wellness meal-ranking model. Select exactly %d distinct meals only from
+                    the supplied catalog. Rank them for the user's mood, remaining calories and protein
+                    today, activity level, cooking effort, and prior favorites. Include at least %d meals
+                    whenever the catalog has that many. Maximize category and ingredient diversity;
+                    avoid near-duplicates. Favorites are preference signals, not mandatory selections.
+                    Never infer allergies or medical needs. Never invent IDs, ingredients, or nutrition.
+                    Each reason must cite a concrete catalog or user-context fact in 18 words or less.
+                    Keep the summary under 20 words. Output one compact object with no commentary.
                     Return JSON only in this exact shape:
                     {"summary":"short explanation","meals":[{"id":1,"reason":"short reason"}]}
                     Mood: %s
                     User context: %s
                     Catalog: %s
-                    """.formatted(mood.getMoodName(), mapper.writeValueAsString(context), catalog);
+                    """.formatted(
+                            targetCount,
+                            Math.min(MIN_RECOMMENDATIONS, targetCount),
+                            mood.getMoodName(),
+                            mapper.writeValueAsString(context),
+                            catalog);
             Exception lastError = null;
             for (int attempt = 1; attempt <= 2; attempt++) {
                 try {
@@ -187,17 +209,31 @@ public class AiMealRecommendationService {
         String retryInstruction = attempt == 1 ? "" : "\nYour previous response was invalid or truncated. Return one compact, complete JSON object only.";
         Map<String, Object> body = Map.of(
                 "model", model,
-                "temperature", 0.1,
-                "max_tokens", 1_200,
-                "chat_template_kwargs", Map.of("enable_thinking", false),
+                "temperature", 1,
+                "top_p", 1,
+                "max_tokens", textMaxTokens,
+                "reasoning_effort", reasoningEffort,
+                "stream", false,
+                "response_format", Map.of("type", "json_object"),
                 "messages", List.of(Map.of("role", "user", "content", prompt + retryInstruction)));
         String responseBody = client.post().uri("/chat/completions")
                 .header("Authorization", "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body).retrieve().body(String.class);
         JsonNode response = mapper.readTree(responseBody);
-        String content = response.path("choices").path(0).path("message").path("content").asText();
-        JsonNode result = mapper.readTree(ModelJsonExtractor.extractObject(content));
+        JsonNode choice = response.path("choices").path(0);
+        String content = choice.path("message").path("content").asText();
+        try {
+            content = ModelJsonExtractor.extractObject(content);
+        } catch (IllegalArgumentException error) {
+            String finishReason = choice.path("finish_reason").asText("unknown");
+            int completionTokens = response.path("usage").path("completion_tokens").asInt(0);
+            throw new IllegalArgumentException(
+                    "Incomplete GPT-OSS JSON (finish_reason=" + finishReason
+                            + ", completion_tokens=" + completionTokens + ").",
+                    error);
+        }
+        JsonNode result = mapper.readTree(content);
         if (!result.path("meals").isArray()) {
             throw new IllegalArgumentException("The model response has no meals array.");
         }
@@ -225,13 +261,14 @@ public class AiMealRecommendationService {
                 .toList();
         List<Meal> diverse = new ArrayList<>();
         var usedCategories = new java.util.HashSet<Integer>();
+        int targetCount = Math.min(MAX_RECOMMENDATIONS, meals.size());
         for (Meal meal : ranked) {
             Integer categoryId = meal.getCategory().getCategoryId();
             if (usedCategories.add(categoryId)) diverse.add(meal);
-            if (diverse.size() == 5) break;
+            if (diverse.size() == targetCount) break;
         }
         for (Meal meal : ranked) {
-            if (diverse.size() == 5) break;
+            if (diverse.size() == targetCount) break;
             if (!diverse.contains(meal)) diverse.add(meal);
         }
         List<MealChoice> choices = diverse.stream().map(meal -> new MealChoice(
