@@ -5,22 +5,20 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.math.BigDecimal;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.entity.MealLog;
 import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
-import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
+import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
@@ -102,32 +100,22 @@ public class AdminDashboardService {
     }
 
     public DashboardSnapshot loadDashboard() {
-        List<User> users = userRepository.findAll();
-        List<Meal> meals = mealRepository.findAll();
-        List<MealLog> mealLogs = mealLogRepository.findAll();
-        List<Review> reviews = reviewRepository.findAll();
         LocalDate today = LocalDate.now();
         LocalDate startDate = today.minusDays(6);
 
-        long publishedMeals = meals.stream().filter(meal -> Boolean.TRUE.equals(meal.getIsPublished())).count();
-        long verifiedUsers = users.stream().filter(user -> Boolean.TRUE.equals(user.getIsVerified())).count();
-        long unreadNotifications = notificationRepository.findAll().stream()
-                .filter(notification -> !Boolean.TRUE.equals(notification.getIsRead()))
-                .count();
-
         return new DashboardSnapshot(
-                users.size(),
-                verifiedUsers,
-                meals.size(),
-                publishedMeals,
-                mealLogs.size(),
-                reviews.size(),
-                unreadNotifications,
+                userRepository.count(),
+                userRepository.countByIsVerifiedTrue(),
+                mealRepository.count(),
+                mealRepository.countByIsPublishedTrue(),
+                mealLogRepository.count(),
+                reviewRepository.count(),
+                notificationRepository.countByIsReadFalse(),
                 startDate.format(PERIOD_LABEL) + " – " + today.format(PERIOD_LABEL),
-                buildActivity(startDate, users, mealLogs),
-                buildCategories(meals),
-                buildRecentUsers(users),
-                buildRecentReviews(reviews),
+                buildActivity(startDate),
+                buildCategories(),
+                buildRecentUsers(),
+                buildRecentReviews(),
                 buildNutrientMetrics(today),
                 buildRecentRecommendations(),
                 List.of(
@@ -142,23 +130,20 @@ public class AdminDashboardService {
     }
 
     private List<NutrientMetric> buildNutrientMetrics(LocalDate today) {
-        List<DailyNutrientTotal> todayTotals = dailyNutrientTotalRepository.findAll().stream()
-                .filter(total -> total.getDailyWellnessSummary() != null
-                        && today.equals(total.getDailyWellnessSummary().getSummaryDate()))
-                .toList();
+        List<Object[]> todayTotals = dailyNutrientTotalRepository.summarizeBySummaryDate(today);
         return List.of("Calories", "Protein", "Water", "Fiber", "Sugar").stream()
                 .map(name -> {
-                    List<DailyNutrientTotal> matching = todayTotals.stream()
-                            .filter(total -> total.getNutrient() != null
-                                    && total.getNutrient().getNutrientName().toLowerCase()
-                                            .contains(name.toLowerCase().replace("s", "")))
+                    List<Object[]> matching = todayTotals.stream()
+                            .filter(total -> String.valueOf(total[0]).toLowerCase()
+                                    .contains(name.toLowerCase().replace("s", "")))
                             .toList();
-                    BigDecimal consumed = matching.stream().map(DailyNutrientTotal::getConsumedAmount)
+                    BigDecimal consumed = matching.stream().map(total -> (BigDecimal) total[2])
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal goal = matching.stream().map(DailyNutrientTotal::getGoalAmount)
+                    BigDecimal goal = matching.stream().map(total -> (BigDecimal) total[3])
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    String unit = matching.isEmpty() ? defaultUnit(name) : matching.getFirst().getNutrient().getUnit();
-                    return new NutrientMetric(name, consumed, goal, unit, matching.size());
+                    String unit = matching.isEmpty() ? defaultUnit(name) : String.valueOf(matching.getFirst()[1]);
+                    long users = matching.stream().mapToLong(total -> ((Number) total[4]).longValue()).sum();
+                    return new NutrientMetric(name, consumed, goal, unit, users);
                 }).toList();
     }
 
@@ -169,32 +154,31 @@ public class AdminDashboardService {
     }
 
     private List<RecentRecommendation> buildRecentRecommendations() {
-        return aiRecommendationRepository.findAllByOrderByCreatedAtDesc().stream()
-                .limit(5)
+        return aiRecommendationRepository.findTop5ByOrderByCreatedAtDesc().stream()
                 .map(item -> new RecentRecommendation(
                         item.getUser() == null ? "Unknown user" : item.getUser().getEmail(),
                         item.getResponseText(), item.getStatus(), item.getCreatedAt()))
                 .toList();
     }
 
-    private List<ActivityPoint> buildActivity(LocalDate startDate, List<User> users, List<MealLog> mealLogs) {
+    private List<ActivityPoint> buildActivity(LocalDate startDate) {
         return IntStream.range(0, 7)
                 .mapToObj(offset -> {
                     LocalDate date = startDate.plusDays(offset);
-                    long newUsers = users.stream().filter(user -> date.equals(toDate(user.getCreatedAt()))).count();
-                    long logs = mealLogs.stream().filter(log -> date.equals(toDate(log.getLoggedAt()))).count();
+                    LocalDateTime dayStart = date.atStartOfDay();
+                    LocalDateTime dayEnd = dayStart.plusDays(1);
+                    long newUsers = userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(dayStart, dayEnd);
+                    long logs = mealLogRepository.countByLoggedAtGreaterThanEqualAndLoggedAtLessThan(dayStart, dayEnd);
                     return new ActivityPoint(date.format(DAY_LABEL), newUsers, logs);
                 })
                 .toList();
     }
 
-    private List<CategoryMetric> buildCategories(List<Meal> meals) {
-        Map<Integer, Long> counts = new HashMap<>();
-        for (Meal meal : meals) {
-            if (meal.getCategory() != null && meal.getCategory().getCategoryId() != null) {
-                counts.merge(meal.getCategory().getCategoryId(), 1L, Long::sum);
-            }
-        }
+    private List<CategoryMetric> buildCategories() {
+        Map<Integer, Long> counts = mealRepository.countMealsByCategory().stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).intValue(),
+                        row -> ((Number) row[1]).longValue()));
 
         List<CategoryMetric> categories = new ArrayList<>();
         for (MealCategory category : mealCategoryRepository.findAllByOrderBySortOrderAsc()) {
@@ -205,35 +189,29 @@ public class AdminDashboardService {
                 .toList();
     }
 
-    private List<RecentUser> buildRecentUsers(List<User> users) {
+    private List<RecentUser> buildRecentUsers() {
+        List<User> users = userRepository.findTop5ByOrderByCreatedAtDesc();
+        Map<Integer, UserProfile> profiles = userProfileRepository.findByUser_UserIdIn(
+                users.stream().map(User::getUserId).toList()).stream()
+                .collect(Collectors.toMap(profile -> profile.getUser().getUserId(), Function.identity()));
         return users.stream()
-                .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(5)
                 .map(user -> new RecentUser(
                         user.getInitials(),
                         user.getEmail(),
-                        userProfileRepository.findByUser_UserId(user.getUserId())
-                                .map(profile -> profile.getProfileImageUrl())
-                                .orElse(null),
+                        profiles.containsKey(user.getUserId()) ? profiles.get(user.getUserId()).getProfileImageUrl() : null,
                         user.getStatus(),
                         user.getCreatedAt()))
                 .toList();
     }
 
-    private List<RecentReview> buildRecentReviews(List<Review> reviews) {
-        return reviews.stream()
-                .sorted(Comparator.comparing(Review::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(5)
+    private List<RecentReview> buildRecentReviews() {
+        return reviewRepository.findTop5ByOrderByCreatedAtDesc().stream()
                 .map(review -> new RecentReview(
                         review.getMeal() != null ? review.getMeal().getMealName() : "Unknown meal",
                         review.getUser() != null ? review.getUser().getEmail() : "Unknown user",
                         review.getRating(),
                         review.getCreatedAt()))
                 .toList();
-    }
-
-    private LocalDate toDate(LocalDateTime value) {
-        return value == null ? null : value.toLocalDate();
     }
 
     public record DashboardSnapshot(

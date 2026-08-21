@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -50,6 +51,17 @@ public class AiRecommendationAdminController {
     @GetMapping("/admin/ai-recommendations")
     public String aiRecommendationsPage(Authentication authentication, Model model) {
         List<AiRecommendation> recs = aiRecommendationRepository.findAllByOrderByCreatedAtDesc();
+        List<Integer> recommendationIds = recs.stream().map(AiRecommendation::getRecommendationId).toList();
+        Map<Integer, List<AiRecommendationItem>> recommendationItems = recommendationIds.isEmpty()
+                ? new java.util.HashMap<>()
+                : itemRepository
+                        .findAllByRecommendationRecommendationIdInOrderByRecommendationRecommendationIdAscRankOrderAsc(
+                                recommendationIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(item -> item.getRecommendation().getRecommendationId()));
+        recommendationIds.forEach(id -> recommendationItems.putIfAbsent(id, List.of()));
+        Map<Integer, Integer> itemCounts = recommendationItems.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size()));
 
         long uniqueUsers = recs.stream()
                 .map(r -> r.getUser() != null ? r.getUser().getUserId() : null)
@@ -64,13 +76,8 @@ public class AiRecommendationAdminController {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("moods", moodRepository.findAllByOrderByMoodNameAsc());
         model.addAttribute("meals", mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc());
-        model.addAttribute("recommendationItems", recs.stream().collect(java.util.stream.Collectors.toMap(
-                AiRecommendation::getRecommendationId,
-                rec -> itemRepository.findAllByRecommendationRecommendationIdOrderByRankOrderAsc(
-                        rec.getRecommendationId()))));
-        model.addAttribute("itemCounts", recs.stream().collect(java.util.stream.Collectors.toMap(
-                AiRecommendation::getRecommendationId,
-                rec -> itemRepository.countByRecommendationRecommendationId(rec.getRecommendationId()))));
+        model.addAttribute("recommendationItems", recommendationItems);
+        model.addAttribute("itemCounts", itemCounts);
         model.addAttribute("totalRecs", recs.size());
         model.addAttribute("uniqueUsers", uniqueUsers);
         model.addAttribute("totalItems", itemRepository.count());
