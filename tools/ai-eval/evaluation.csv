@@ -1,0 +1,3 @@
+case_id,image_path,expected_food,predicted_food,expected_calories,predicted_calories,expected_protein,predicted_protein,confidence
+sample-clear-rice,replace-with-relative-image-path,Rice,Rice,205,205,4.3,4.3,0.92
+sample-abstain,replace-with-relative-image-path,Unknown food,Unknown food,0,0,0,0,0.10

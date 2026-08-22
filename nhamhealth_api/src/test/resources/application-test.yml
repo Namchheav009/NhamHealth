@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: nhamhealth_api
+  datasource:
+    url: jdbc:h2:mem:nhamhealth-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: public
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  mail:
+    host: localhost
+    port: 2525
+    username: ""
+    password: ""
+
+server:
+  port: 0
+
+app:
+  auth:
+    jwt:
+      secret: test-only-jwt-secret-that-is-at-least-32-characters
+      issuer: nhamhealth-api
+      expiration: PT24H
+    google:
+      client-id: ""
+      client-secret: ""
+  seed:
+    admin-email: admin@nhamhealth.local
+    admin-password: Admin123!
+    user-email: user@nhamhealth.local
+    user-password: User123!
+  upload:
+    directory: target/test-uploads
+  storage:
+    supabase:
+      url: ""
+      service-key: ""
+      bucket: nhamhealth-images
+  ai:
+    prompt-version: food-vision-v3-gpt-oss-refine-v3
+    nvidia:
+      base-url: https://integrate.api.nvidia.com/v1
+      api-key: ""
+      model: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+      nutrition-model: openai/gpt-oss-20b
+      recommendation-model: openai/gpt-oss-20b
+      text-max-tokens: 4096
+      reasoning-effort: low
+  mail:
+    from: no-reply@nhamhealth.local

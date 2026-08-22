@@ -42,15 +42,26 @@ public class ChatAdminController {
     @GetMapping("/admin/chats")
     public String chatsPage(Authentication authentication, Model model) {
         List<Chat> chats = chatRepository.findAllByOrderByLastMessageAtDescCreatedAtDesc();
+        List<Integer> chatIds = chats.stream().map(Chat::getChatId).toList();
+        Map<Integer, Long> participantCounts = chatIds.stream()
+                .collect(Collectors.toMap(id -> id, ignored -> 0L));
+        if (!chatIds.isEmpty()) {
+            participantRepository.countActiveByChatIds(chatIds)
+                    .forEach(count -> participantCounts.put(count.getChatId(), count.getTotal()));
+        }
+        Map<Integer, Long> messageCounts = chatIds.stream()
+                .collect(Collectors.toMap(id -> id, ignored -> 0L));
+        if (!chatIds.isEmpty()) {
+            messageRepository.countActiveByChatIds(chatIds)
+                    .forEach(count -> messageCounts.put(count.getChatId(), count.getTotal()));
+        }
         model.addAttribute("pageTitle", "Chats");
         model.addAttribute("activePage", "chats");
         model.addAttribute("adminName", authentication != null ? authentication.getName() : "admin");
         model.addAttribute("chats", chats);
         model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("participantCounts", chats.stream().collect(Collectors.toMap(Chat::getChatId,
-                chat -> participantRepository.countByChatChatIdAndLeftAtIsNull(chat.getChatId()))));
-        model.addAttribute("messageCounts", chats.stream().collect(Collectors.toMap(Chat::getChatId,
-                chat -> messageRepository.countByChatChatIdAndDeletedAtIsNull(chat.getChatId()))));
+        model.addAttribute("participantCounts", participantCounts);
+        model.addAttribute("messageCounts", messageCounts);
         model.addAttribute("totalChats", chats.size());
         model.addAttribute("activeUsers", participantRepository.countActiveUsers());
         model.addAttribute("recentMessages",
