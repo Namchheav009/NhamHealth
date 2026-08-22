@@ -11,7 +11,11 @@ import '../modules/views/auth/account_created_view.dart';
 import '../modules/bindings/home/home_binding.dart';
 import '../modules/views/home/home_view.dart';
 import '../modules/bindings/meals/meal_binding.dart';
+import '../modules/bindings/meals/food_detail_binding.dart';
+import '../modules/bindings/meals/ingredient_binding.dart';
 import '../modules/views/meals/meal_view.dart';
+import '../modules/views/meals/food_detail_view.dart';
+import '../modules/views/meals/ingredient_view.dart';
 import '../modules/views/notifications/notifications_view.dart';
 import '../modules/bindings/notifications/notifications_binding.dart';
 import '../modules/bindings/favorites/favorites_binding.dart';
@@ -89,6 +93,18 @@ abstract class AppPages {
       page: () => const MealView(),
       binding: MealBinding(),
       transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.foodDetail,
+      page: () => const FoodDetailView(),
+      binding: FoodDetailBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.ingredients,
+      page: () => const IngredientView(),
+      binding: IngredientBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.profile,
