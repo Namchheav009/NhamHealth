@@ -17,7 +17,7 @@ class FavoritesController extends GetxController {
   final FavoritesRepository repository;
   final selectedTab = FavoritesTab.foods.obs;
   final hiddenPostIds = <int>{}.obs;
-  final selectedFoodCategory = 'All'.obs;
+  final selectedFoodCategories = <String>{}.obs;
   final postSort = FavoritePostSort.newest.obs;
   final foods = <FavoriteFood>[].obs;
   final foodCategories = <String>['All'].obs;
@@ -50,17 +50,20 @@ class FavoritesController extends GetxController {
     try {
       final categories = await repository.getFoodCategories();
       foodCategories.assignAll(['All', ...categories.toSet()]);
-      if (!foodCategories.contains(selectedFoodCategory.value)) {
-        selectedFoodCategory.value = 'All';
-      }
+      selectedFoodCategories.removeWhere(
+        (category) => !foodCategories.contains(category),
+      );
     } on Object {
       // The default "All" filter remains usable if categories cannot load.
       foodCategories.assignAll(const ['All']);
+      selectedFoodCategories.clear();
     }
   }
 
   void selectTab(FavoritesTab tab) => selectedTab.value = tab;
-  void applyFoodCategory(String category) => selectedFoodCategory.value = category;
+  void applyFoodCategories(Set<String> categories) {
+    selectedFoodCategories.assignAll(categories.where(foodCategories.contains));
+  }
   void setPostSort(FavoritePostSort sort) => postSort.value = sort;
   Future<void> removeFood(int id) async {
     final index = foods.indexWhere((food) => food.id == id);
