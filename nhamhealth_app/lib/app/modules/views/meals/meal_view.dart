@@ -67,11 +67,7 @@ class MealView extends GetView<MealController> {
                           ),
                         ),
 
-<<<<<<< Updated upstream
                         const SizedBox(height: AppSpacing.topBarBottom),
-=======
-                        const SizedBox(height: 16),
->>>>>>> Stashed changes
                         Obx(
                           () =>
                               controller.isLoading.value &&
@@ -247,10 +243,7 @@ class MealView extends GetView<MealController> {
               final meal = meals[index];
               return MealCard(
                 meal: meal,
-<<<<<<< Updated upstream
-=======
                 onTap: () => controller.openFoodDetail(meal),
->>>>>>> Stashed changes
                 onFavorite:
                     () => controller.toggleFavorite(
                       controller.meals.indexOf(meal),
