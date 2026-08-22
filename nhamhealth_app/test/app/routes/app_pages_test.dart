@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/home/views/home_view.dart';
-import 'package:nhamhealth_flutter/app/modules/auth/views/account_created_view.dart';
-import 'package:nhamhealth_flutter/app/modules/notifications/views/notifications_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/app/routes/app_routes.dart';
 

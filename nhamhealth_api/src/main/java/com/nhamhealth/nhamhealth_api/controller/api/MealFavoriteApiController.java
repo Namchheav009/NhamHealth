@@ -6,6 +6,8 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,8 +50,25 @@ public class MealFavoriteApiController {
     @GetMapping
     @Transactional(readOnly = true)
     public List<FavoriteMealResponse> list(@AuthenticationPrincipal Jwt jwt) {
-        return favoriteRepository.findAllByUserUserIdOrderBySavedAtDesc(userId(jwt))
-                .stream().map(this::toResponse).toList();
+        List<MealFavorite> favorites = favoriteRepository
+                .findAllByUserUserIdOrderBySavedAtDesc(userId(jwt));
+        if (favorites.isEmpty()) return List.of();
+
+        List<Integer> mealIds = favorites.stream()
+                .map(favorite -> favorite.getMeal().getMealId())
+                .toList();
+        Map<Integer, Double> ratings = reviewRepository
+                .findAverageRatingsByMealIds(mealIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).intValue(),
+                        row -> ((Number) row[1]).doubleValue()));
+
+        return favorites.stream()
+                .map(favorite -> toResponse(
+                        favorite,
+                        ratings.getOrDefault(favorite.getMeal().getMealId(), 0.0)))
+                .toList();
     }
 
     @PostMapping("/{mealId}")
@@ -95,6 +114,11 @@ public class MealFavoriteApiController {
         double rating = reviewRepository.findByMealMealId(meal.getMealId()).stream()
                 .mapToInt(review -> review.getRating() == null ? 0 : review.getRating())
                 .average().orElse(0);
+        return toResponse(favorite, rating);
+    }
+
+    private FavoriteMealResponse toResponse(MealFavorite favorite, double rating) {
+        Meal meal = favorite.getMeal();
         return new FavoriteMealResponse(meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
                 meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(), rating,
                 meal.getCategory().getCategoryName(), favorite.getSavedAt());

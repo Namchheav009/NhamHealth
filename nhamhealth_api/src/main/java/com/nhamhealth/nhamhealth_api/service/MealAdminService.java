@@ -1,8 +1,11 @@
 package com.nhamhealth.nhamhealth_api.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;
@@ -64,10 +67,15 @@ public class MealAdminService {
         this.entityManager = entityManager;
     }
 
-    public List<MealAdminRowDto> getMealsForAdmin() {
-        return mealRepository.findAllByOrderByUpdatedAtDesc().stream()
-                .map(this::toAdminRow)
-                .collect(Collectors.toList());
+    public Page<MealAdminRowDto> getMealsForAdmin(
+            String search, String category, String status, String tag, Pageable pageable) {
+        return mealRepository.findForAdmin(
+                normalizeFilter(search), normalizeFilter(category), normalizeFilter(status), normalizeFilter(tag), pageable)
+                .map(this::toAdminRow);
+    }
+
+    public long getMealCount() {
+        return mealRepository.count();
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -207,6 +215,18 @@ public class MealAdminService {
         return mealCategoryRepository.findAllByOrderBySortOrderAsc().stream()
                 .filter(category -> Boolean.TRUE.equals(category.getIsActive()))
                 .toList();
+    }
+
+    public List<String> getMealTags() {
+        return mealTagRepository.findDistinctTagNames();
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String normalizeFilter(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private String blankToNull(String value) {

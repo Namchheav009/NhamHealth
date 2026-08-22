@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 
 import '../../core/services/auth_service.dart';
 import '../../core/services/app_security_service.dart';
-import '../modules/auth/services/google_auth_service.dart';
+import '../modules/services/auth/google_auth_service.dart';
 
 class InitialBinding extends Bindings {
   static void ensureRegistered() {

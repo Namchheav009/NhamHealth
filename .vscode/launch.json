@@ -27,9 +27,10 @@
       "cwd": "nhamhealth_app",
       "request": "launch",
       "type": "dart",
+      "preLaunchTask": "Configure physical phone API",
       "toolArgs": [
         "--dart-define-from-file=config/google_oauth.json",
-        "--dart-define=API_BASE_URL=http://172.16.130.26:8080"
+        "--dart-define-from-file=config/local_api.json"
       ]
     },
     {

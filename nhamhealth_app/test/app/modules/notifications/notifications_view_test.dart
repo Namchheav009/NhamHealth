@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:nhamhealth_flutter/app/modules/notifications/views/notifications_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
 
 void main() {
   tearDown(Get.reset);

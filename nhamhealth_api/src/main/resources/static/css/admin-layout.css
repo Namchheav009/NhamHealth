@@ -394,24 +394,69 @@ textarea:focus-visible {
         background: #f8fbff;
     }
 
-    .page-btn {
-        min-width: 36px;
-        min-height: 36px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: #fff;
-        color: #475569;
-        display: inline-flex;
+    .app-shell .admin-pagination-wrap,
+    .app-shell .pagination-row,
+    .app-shell .table-footer {
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
+        gap: 12px;
+        padding: 14px 18px;
+        border-top: 1px solid var(--border);
+        background: #fbfcfe;
     }
 
-    .page-btn.active {
-        background: linear-gradient(90deg, var(--primary), #05a45b);
-        color: #fff;
-        border-color: transparent;
+    .admin-pagination-summary {
+        color: #8b96a7;
+        font-size: 11px;
     }
+
+    .app-shell .admin-pagination-nav,
+    .app-shell .pagination-controls,
+    .app-shell .pagination {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .app-shell .admin-page-button,
+    .app-shell .page-btn,
+    .app-shell .pagination button {
+        display: inline-grid;
+        min-width: 32px;
+        height: 32px;
+        place-items: center;
+        padding: 0 8px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        background: #fff;
+        color: #667085;
+        font: inherit;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .app-shell .admin-page-button { cursor: pointer; }
+    .app-shell .admin-page-button:disabled { cursor: not-allowed; opacity: .55; }
+    .app-shell .admin-page-previous,
+    .app-shell .admin-page-next { min-width: auto; padding: 0 3px; border-color: transparent; background: transparent; }
+    .app-shell .admin-page-previous:disabled,
+    .app-shell .admin-page-next:disabled { visibility: hidden; }
+    .app-shell .admin-page-button.active,
+    .app-shell .page-btn.active,
+    .app-shell .pagination .active {
+        border-color: #3f83dc !important;
+        background: #3f83dc !important;
+        color: #fff !important;
+    }
+    .app-shell .admin-page-numbers,
+    .app-shell .page-numbers { display: flex; align-items: center; gap: 5px; }
+    .app-shell .admin-pagination-ellipsis { display: inline-grid; width: 24px; height: 32px; place-items: center; color: #98a2b3; font-size: 13px; }
+    .app-shell .admin-page-jump { display: inline-flex; align-items: center; gap: 5px; color: #667085; font-size: 10px; white-space: nowrap; }
+    .app-shell .admin-page-jump select { width: 43px; height: 27px; padding: 0 5px; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: #344054; font: inherit; font-size: 10px; }
+    .app-shell .admin-page-jump span { color: #98a2b3; }
+    .app-shell .pagination-row > :first-child,
+    .app-shell .table-footer > :first-child { margin-right: auto; }
 
     .page-footer {
         display: flex;
@@ -480,7 +525,7 @@ textarea:focus-visible {
     .panel-tools, .heading-actions { width: 100%; }
     .panel-tools > *, .heading-actions > * { max-width: 100%; }
     .table-responsive { padding-right: 12px; padding-left: 12px; }
-    .pagination-wrap, .page-footer { align-items: flex-start; flex-direction: column; }
+    .pagination-wrap, .admin-pagination-wrap, .pagination-row, .table-footer, .page-footer { align-items: flex-start; flex-direction: column; }
     .page-footer { padding-right: 12px; padding-left: 12px; }
     .modal, .modal-backdrop { padding: 12px; }
     .modal-card { width: 100%; max-height: calc(100dvh - 24px); border-radius: 12px; }
