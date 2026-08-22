@@ -60,16 +60,18 @@ class MealController extends GetxController {
     final category = categories[selectedCategory.value];
     final query = searchQuery.value.trim().toLowerCase();
 
-    return meals.where((meal) {
-      final matchesCategory =
-          category.id == MealCategoryModel.all.id ||
-          meal.categoryId == category.id;
-      final matchesSearch =
-          query.isEmpty ||
-          meal.name.replaceAll('\n', ' ').toLowerCase().contains(query) ||
-          meal.category.toLowerCase().contains(query);
-      return matchesCategory && matchesSearch;
-    }).toList(growable: false);
+    return meals
+        .where((meal) {
+          final matchesCategory =
+              category.id == MealCategoryModel.all.id ||
+              meal.categoryId == category.id;
+          final matchesSearch =
+              query.isEmpty ||
+              meal.name.replaceAll('\n', ' ').toLowerCase().contains(query) ||
+              meal.category.toLowerCase().contains(query);
+          return matchesCategory && matchesSearch;
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -113,9 +115,10 @@ class MealController extends GetxController {
 
   Future<void> _loadCategories() async {
     try {
-      final selectedId = selectedCategory.value < categories.length
-          ? categories[selectedCategory.value].id
-          : MealCategoryModel.all.id;
+      final selectedId =
+          selectedCategory.value < categories.length
+              ? categories[selectedCategory.value].id
+              : MealCategoryModel.all.id;
       final loaded = await repository.getCategories();
       categories.assignAll([MealCategoryModel.all, ...loaded]);
       final restoredIndex = categories.indexWhere(
@@ -168,15 +171,16 @@ class MealController extends GetxController {
 
   void openFavorites() => Get.toNamed<void>(AppRoutes.favorites);
 
+  void openFoodDetail(MealModel meal) =>
+      Get.toNamed<void>(AppRoutes.foodDetail, arguments: meal);
+
   Future<void> openNotifications() async {
     await Get.toNamed<void>(AppRoutes.notifications);
     await loadUnreadNotificationCount();
   }
 
-  void openProfile() => Get.offNamed<void>(
-    AppRoutes.profile,
-    arguments: authenticatedUser.value,
-  );
+  void openProfile() =>
+      Get.offNamed<void>(AppRoutes.profile, arguments: authenticatedUser.value);
 
   Future<void> logout() async {
     if (Get.isRegistered<AuthService>()) {
