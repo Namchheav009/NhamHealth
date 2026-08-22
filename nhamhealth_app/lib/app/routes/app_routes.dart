@@ -24,5 +24,5 @@ abstract class AppRoutes {
   static const String aiFood = '/wellness/ai-food';
   static const String foodSourceDetail =
       '/wellness/calories/food-source-detail';
- static const String feed = '/feed';  
+  static const String feed = '/feed';
 }
