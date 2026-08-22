@@ -4,27 +4,28 @@ class FoodFilterSheet extends StatefulWidget {
   const FoodFilterSheet({
     super.key,
     required this.categories,
-    required this.initialCategory,
+    required this.initialCategories,
     required this.onApply,
   });
 
   final List<String> categories;
-  final String initialCategory;
-  final ValueChanged<String> onApply;
+  final Set<String> initialCategories;
+  final ValueChanged<Set<String>> onApply;
 
   @override
   State<FoodFilterSheet> createState() => _FoodFilterSheetState();
 }
 
 class _FoodFilterSheetState extends State<FoodFilterSheet> {
-  late String selectedCategory;
+  late Set<String> selectedCategories;
 
   @override
   void initState() {
     super.initState();
-    selectedCategory = widget.categories.contains(widget.initialCategory)
-        ? widget.initialCategory
-        : 'All';
+    selectedCategories = widget.initialCategories
+        .where(widget.categories.contains)
+        .where((category) => category != 'All')
+        .toSet();
   }
 
   @override
@@ -84,9 +85,9 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                   ),
                 ),
                 TextButton(
-                  onPressed: selectedCategory == 'All'
+                  onPressed: selectedCategories.isEmpty
                       ? null
-                      : () => setState(() => selectedCategory = 'All'),
+                      : () => setState(selectedCategories.clear),
                   child: const Text('Reset'),
                 ),
               ],
@@ -106,10 +107,16 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                             width: chipWidth,
                             child: _CategoryChip(
                               label: category,
-                              selected: category == selectedCategory,
-                              onTap: () => setState(
-                                () => selectedCategory = category,
-                              ),
+                              selected: category == 'All'
+                                  ? selectedCategories.isEmpty
+                                  : selectedCategories.contains(category),
+                              onTap: () => setState(() {
+                                if (category == 'All') {
+                                  selectedCategories.clear();
+                                } else if (!selectedCategories.add(category)) {
+                                  selectedCategories.remove(category);
+                                }
+                              }),
                             ),
                           ),
                       ],
@@ -124,7 +131,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
               height: 50,
               child: FilledButton(
                 onPressed: () {
-                  widget.onApply(selectedCategory);
+                  widget.onApply(Set<String>.of(selectedCategories));
                   Navigator.of(context).pop();
                 },
                 style: FilledButton.styleFrom(
