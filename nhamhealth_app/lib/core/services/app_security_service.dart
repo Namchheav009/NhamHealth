@@ -45,6 +45,7 @@ class AppSecurityService {
     if (!hasPin) {
       _pinHashCache = null;
       _pinStateLoaded = true;
+      _biometricsEnabledCache = false;
     }
   }
 
@@ -57,18 +58,31 @@ class AppSecurityService {
       throw const FormatException('PIN must contain exactly 6 digits.');
     }
     await _authService.setAppPin(pin);
-    await _storage.write(key: _pinHashKey, value: _hash(pin));
-    _pinHashCache = _hash(pin);
-    _pinStateLoaded = true;
     _serverHasPin = true;
+    _pinStateLoaded = true;
+    try {
+      final hash = _hash(pin);
+      await _storage.write(key: _pinHashKey, value: hash);
+      _pinHashCache = hash;
+    } on Object {
+      // The server is authoritative. A local cache failure must not make a
+      // successfully saved server PIN appear to have failed.
+      _pinHashCache = null;
+    }
   }
 
   Future<bool> verifyPin(String pin) async {
     final valid = await _authService.verifyAppPin(pin);
     if (valid) {
-      await _storage.write(key: _pinHashKey, value: _hash(pin));
-      _pinHashCache = _hash(pin);
       _pinStateLoaded = true;
+      _serverHasPin = true;
+      try {
+        final hash = _hash(pin);
+        await _storage.write(key: _pinHashKey, value: hash);
+        _pinHashCache = hash;
+      } on Object {
+        _pinHashCache = null;
+      }
     }
     return valid;
   }
@@ -134,12 +148,19 @@ class AppSecurityService {
 
   Future<void> disable() async {
     await _authService.disableAppPin();
-    await _storage.delete(key: _pinHashKey);
-    await _storage.delete(key: _biometricsKey);
     _pinHashCache = null;
     _pinStateLoaded = true;
     _serverHasPin = false;
     _biometricsEnabledCache = false;
+    await _clearLocalProtectionCache();
+  }
+
+  Future<void> clearInvalidSession() async {
+    _pinHashCache = null;
+    _pinStateLoaded = true;
+    _serverHasPin = false;
+    _biometricsEnabledCache = false;
+    await _clearLocalProtectionCache();
   }
 
   Future<bool> wasSetupPromptedFor(int userId) async =>
@@ -156,6 +177,19 @@ class AppSecurityService {
 
   Future<void> clearSetupPendingFor(int userId) =>
       _storage.delete(key: '$_setupPendingPrefix$userId');
+
+  Future<void> _clearLocalProtectionCache() async {
+    try {
+      await _storage.delete(key: _pinHashKey);
+    } on Object {
+      // In-memory state is already cleared. Retry naturally on a later launch.
+    }
+    try {
+      await _storage.delete(key: _biometricsKey);
+    } on Object {
+      // In-memory state is already cleared. Retry naturally on a later launch.
+    }
+  }
 
   String _hash(String pin) => sha256.convert(utf8.encode(pin)).toString();
 }

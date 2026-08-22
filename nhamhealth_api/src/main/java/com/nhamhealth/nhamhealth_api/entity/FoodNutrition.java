@@ -35,6 +35,10 @@ public class FoodNutrition {
     private BigDecimal fat;
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal sugar;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal fiber;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal sodium;
 
     @Column(name = "serving_size", nullable = false, precision = 10, scale = 2)
     private BigDecimal servingSize;
@@ -69,6 +73,10 @@ public class FoodNutrition {
     public void setFat(BigDecimal fat) { this.fat = fat; }
     public BigDecimal getSugar() { return sugar; }
     public void setSugar(BigDecimal sugar) { this.sugar = sugar; }
+    public BigDecimal getFiber() { return fiber; }
+    public void setFiber(BigDecimal fiber) { this.fiber = fiber; }
+    public BigDecimal getSodium() { return sodium; }
+    public void setSodium(BigDecimal sodium) { this.sodium = sodium; }
     public BigDecimal getServingSize() { return servingSize; }
     public void setServingSize(BigDecimal servingSize) { this.servingSize = servingSize; }
     public String getServingUnit() { return servingUnit; }
