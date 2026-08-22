@@ -1,6 +1,8 @@
 package com.nhamhealth.nhamhealth_api.repository;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,9 @@ import com.nhamhealth.nhamhealth_api.entity.Post;
 public interface PostRepository extends JpaRepository<Post, Integer> {
     @EntityGraph(attributePaths = "user")
     List<Post> findAllByOrderByUpdatedAtDescCreatedAtDesc();
+
+    @EntityGraph(attributePaths = "user")
+    Page<Post> findAllByOrderByUpdatedAtDescCreatedAtDesc(Pageable pageable);
 
     @Query("select count(distinct post.user.userId) from Post post")
     long countDistinctAuthors();

@@ -18,7 +18,7 @@ public class PostMedia {
     @Column(name = "post_media_id")
     private Integer postMediaId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 

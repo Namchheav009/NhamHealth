@@ -20,11 +20,11 @@ public class AiFoodAnalysisNutrient {
     @Column(name = "analysis_nutrient_id")
     private Integer analysisNutrientId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "ai_food_analysis_id", nullable = false)
     private AiFoodAnalysis aiFoodAnalysis;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "nutrient_id", nullable = false)
     private Nutrient nutrient;
 

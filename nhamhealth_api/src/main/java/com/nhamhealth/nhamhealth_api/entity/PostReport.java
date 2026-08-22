@@ -22,22 +22,22 @@ public class PostReport {
     @Column(name = "report_id")
     private Integer reportId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "reported_by_user_id", nullable = false)
     private User reportedByUser;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "report_reason_id", nullable = false)
     private ReportReason reportReason;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_user_id")
     private User reviewedByUser;
 

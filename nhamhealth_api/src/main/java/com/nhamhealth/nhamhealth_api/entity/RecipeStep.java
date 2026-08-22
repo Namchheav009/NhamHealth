@@ -18,7 +18,7 @@ public class RecipeStep {
     @Column(name = "step_id")
     private Integer stepId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 

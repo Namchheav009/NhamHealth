@@ -20,11 +20,11 @@ public class DailyNutrientTotal {
     @Column(name = "daily_nutrient_total_id")
     private Integer dailyNutrientTotalId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "daily_summary_id", nullable = false)
     private DailyWellnessSummary dailyWellnessSummary;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "nutrient_id", nullable = false)
     private Nutrient nutrient;
 

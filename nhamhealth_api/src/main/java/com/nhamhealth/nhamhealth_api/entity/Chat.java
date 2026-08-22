@@ -10,7 +10,9 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chats")
+@Table(name = "chats", indexes = {
+    @jakarta.persistence.Index(name = "idx_chats_last_message_at", columnList = "last_message_at")
+})
 public class Chat {
 
     @Id

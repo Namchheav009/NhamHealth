@@ -33,7 +33,7 @@ public class NotificationApiController {
     @GetMapping
     @Transactional(readOnly = true)
     public List<NotificationResponse> list(@AuthenticationPrincipal Jwt jwt) {
-        return repository.findAllByUserUserIdOrderByCreatedAtDesc(userId(jwt))
+        return repository.findTop20ByUserUserIdOrderByCreatedAtDesc(userId(jwt))
                 .stream().map(this::response).toList();
     }
 

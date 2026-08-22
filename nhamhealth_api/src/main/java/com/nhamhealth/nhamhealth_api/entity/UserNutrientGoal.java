@@ -24,11 +24,11 @@ public class UserNutrientGoal {
     @Column(name = "user_nutrient_goal_id")
     private Integer userNutrientGoalId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "nutrient_id", nullable = false)
     private Nutrient nutrient;
 

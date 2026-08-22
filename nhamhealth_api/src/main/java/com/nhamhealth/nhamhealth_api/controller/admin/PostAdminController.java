@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -46,8 +48,12 @@ public class PostAdminController {
     }
 
     @GetMapping("/admin/posts")
-    public String postsPage(Authentication authentication, Model model) {
-        List<Post> posts = postRepository.findAllByOrderByUpdatedAtDescCreatedAtDesc();
+    public String postsPage(Authentication authentication, Model model,
+            @RequestParam(defaultValue = "0") int page) {
+        var postPage = postRepository.findAllByOrderByUpdatedAtDescCreatedAtDesc(
+                PageRequest.of(Math.max(page, 0), 20,
+                        Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("createdAt"))));
+        List<Post> posts = postPage.getContent();
         List<Integer> postIds = posts.stream().map(Post::getPostId).toList();
         Map<Integer, Long> commentCounts = postIds.stream()
                 .collect(Collectors.toMap(id -> id, ignored -> 0L));
@@ -75,7 +81,9 @@ public class PostAdminController {
         model.addAttribute("commentCounts", commentCounts);
         model.addAttribute("favoriteCounts", favoriteCounts);
         model.addAttribute("reportCounts", reportCounts);
-        model.addAttribute("totalPosts", posts.size());
+        model.addAttribute("totalPosts", postPage.getTotalElements());
+        model.addAttribute("postPage", postPage.getNumber());
+        model.addAttribute("postTotalPages", postPage.getTotalPages());
         model.addAttribute("activeAuthors", postRepository.countDistinctAuthors());
         model.addAttribute("pendingReports", reportRepository.countByStatusIgnoreCase("pending"));
         return "admin/post";

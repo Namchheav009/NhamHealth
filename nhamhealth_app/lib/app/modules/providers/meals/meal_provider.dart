@@ -15,22 +15,28 @@ class MealProvider {
   final AuthService _authService;
   final http.Client _client;
 
-  Future<List<MealModel>> getMeals() async {
-    final payload = await _getList('/api/v1/meals');
+  Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) async {
+    final query = <String, String>{};
+    if (keyword.trim().isNotEmpty) query['keyword'] = keyword.trim();
+    if (categoryId != 0) query['categoryId'] = '$categoryId';
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/meals').replace(
+      queryParameters: query,
+    );
+    final payload = await _getList(uri);
     return payload
         .map((item) => MealModel.fromJson(item, baseUrl: ApiConfig.baseUrl))
         .toList(growable: false);
   }
 
   Future<List<MealCategoryModel>> getCategories() async {
-    final payload = await _getList('/api/v1/meal-categories');
+    final payload = await _getList(Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'));
     return payload
         .map(MealCategoryModel.fromJson)
         .toList(growable: false);
   }
 
   Future<Set<int>> getFavoriteMealIds() async {
-    final payload = await _getList('/api/v1/favorites/meals');
+    final payload = await _getList(Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals'));
     return payload
         .map((item) => (item['id'] as num).toInt())
         .toSet();
@@ -53,11 +59,11 @@ class MealProvider {
     _ensureSuccess(response, 'Unable to update favorite');
   }
 
-  Future<List<Map<String, dynamic>>> _getList(String path) async {
+  Future<List<Map<String, dynamic>>> _getList(Uri uri) async {
     final token = await _token();
     final response = await _client
         .get(
-          Uri.parse('${ApiConfig.baseUrl}$path'),
+          uri,
           headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
         )
         .timeout(const Duration(seconds: 15));
