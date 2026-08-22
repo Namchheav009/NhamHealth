@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-enum PageSkeletonType { home, profile, wellness }
+enum PageSkeletonType {
+  home,
+  meals,
+  profile,
+  wellness,
+  notifications,
+  favorites,
+}
 
 class PageSkeleton extends StatefulWidget {
   const PageSkeleton({
@@ -21,10 +28,25 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1750),
   }) : type = PageSkeletonType.profile;
 
+  const PageSkeleton.meals({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.meals;
+
   const PageSkeleton.wellness({
     super.key,
     this.duration = const Duration(milliseconds: 1650),
   }) : type = PageSkeletonType.wellness;
+
+  const PageSkeleton.notifications({
+    super.key,
+    this.duration = const Duration(milliseconds: 1500),
+  }) : type = PageSkeletonType.notifications;
+
+  const PageSkeleton.favorites({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.favorites;
 
   final PageSkeletonType type;
   final Duration duration;
@@ -91,6 +113,20 @@ class _PageSkeletonState extends State<PageSkeleton>
         _SkeletonCard(height: 190),
       ],
     ),
+    PageSkeletonType.meals => const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SkeletonBox(height: 54, radius: 27),
+        SizedBox(height: 14),
+        _MealCategoryPlaceholder(),
+        SizedBox(height: 22),
+        _SkeletonBox(height: 205, radius: 17),
+        SizedBox(height: 10),
+        Center(child: _SkeletonBox(width: 42, height: 7, radius: 4)),
+        SizedBox(height: 23),
+        _MealGridPlaceholder(),
+      ],
+    ),
     PageSkeletonType.profile => const Column(
       children: [
         _ProfileHeaderPlaceholder(),
@@ -111,6 +147,8 @@ class _PageSkeletonState extends State<PageSkeleton>
         _TextLines(widths: [.45, .92, .78]),
       ],
     ),
+    PageSkeletonType.notifications => const _NotificationsPlaceholder(),
+    PageSkeletonType.favorites => const _FavoritesPlaceholder(),
   };
 }
 
@@ -233,5 +271,155 @@ class _SkeletonCard extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+class _MealCategoryPlaceholder extends StatelessWidget {
+  const _MealCategoryPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    children: [
+      _SkeletonBox(width: 56, height: 36, radius: 16),
+      SizedBox(width: 8),
+      _SkeletonBox(width: 94, height: 36, radius: 16),
+      SizedBox(width: 8),
+      _SkeletonBox(width: 72, height: 36, radius: 16),
+      SizedBox(width: 8),
+      Expanded(child: _SkeletonBox(height: 36, radius: 16)),
+    ],
+  );
+}
+
+class _MealGridPlaceholder extends StatelessWidget {
+  const _MealGridPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: 6,
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 16,
+      childAspectRatio: .67,
+    ),
+    itemBuilder: (_, _) => const _MealCardPlaceholder(),
+  );
+}
+
+class _MealCardPlaceholder extends StatelessWidget {
+  const _MealCardPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(child: _SkeletonBox(height: 96, radius: 14)),
+      SizedBox(height: 8),
+      _SkeletonBox(height: 11, radius: 6),
+      SizedBox(height: 6),
+      FractionallySizedBox(
+        widthFactor: .72,
+        child: _SkeletonBox(height: 11, radius: 6),
+      ),
+      SizedBox(height: 10),
+      FractionallySizedBox(
+        widthFactor: .5,
+        child: _SkeletonBox(height: 10, radius: 5),
+      ),
+    ],
+  );
+}
+
+class _NotificationsPlaceholder extends StatelessWidget {
+  const _NotificationsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonBox(width: 42, height: 13, radius: 7),
+      SizedBox(height: 9),
+      _NotificationTilePlaceholder(),
+      SizedBox(height: 7),
+      _NotificationTilePlaceholder(),
+      SizedBox(height: 15),
+      _SkeletonBox(width: 52, height: 13, radius: 7),
+      SizedBox(height: 9),
+      _NotificationTilePlaceholder(),
+      SizedBox(height: 7),
+      _NotificationTilePlaceholder(),
+      SizedBox(height: 15),
+      _SkeletonBox(width: 48, height: 13, radius: 7),
+      SizedBox(height: 9),
+      _NotificationTilePlaceholder(),
+    ],
+  );
+}
+
+class _NotificationTilePlaceholder extends StatelessWidget {
+  const _NotificationTilePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 60,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: AppColors.cardSurface.withValues(alpha: .72),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: const Row(
+      children: [
+        _SkeletonBox(width: 43, height: 43, radius: 22),
+        SizedBox(width: 11),
+        Expanded(child: _TextLines(widths: [.88, .42])),
+        SizedBox(width: 12),
+        _SkeletonBox(width: 6, height: 6, radius: 3),
+      ],
+    ),
+  );
+}
+
+class _FavoritesPlaceholder extends StatelessWidget {
+  const _FavoritesPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = constraints.maxWidth < 330 ? 2 : 3;
+      return GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 24),
+        itemCount: 6,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 10,
+          childAspectRatio: .68,
+        ),
+        itemBuilder: (_, _) => const _FavoriteCardPlaceholder(),
+      );
+    },
+  );
+}
+
+class _FavoriteCardPlaceholder extends StatelessWidget {
+  const _FavoriteCardPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(child: _SkeletonBox(height: 130, radius: 16)),
+      SizedBox(height: 8),
+      _SkeletonBox(height: 12, radius: 6),
+      SizedBox(height: 6),
+      FractionallySizedBox(
+        widthFactor: .68,
+        child: _SkeletonBox(height: 10, radius: 5),
+      ),
+    ],
   );
 }

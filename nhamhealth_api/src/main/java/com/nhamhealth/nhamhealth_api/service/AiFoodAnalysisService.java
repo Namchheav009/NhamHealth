@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysisNutrient;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
@@ -18,6 +19,8 @@ import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.FoodNutritionRepository;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 public class AiFoodAnalysisService {
@@ -46,7 +49,8 @@ public class AiFoodAnalysisService {
     @Transactional
     public AiFoodAnalysisResponse analyzeAndSave(
             Integer userId, String fileName, byte[] image, String contentType) {
-        AiFoodAnalysisResponse result = enrichWithDatabase(visionService.analyze(image, contentType));
+        AiFoodModelResult modelResult = visionService.analyze(image, contentType);
+        AiFoodAnalysisResponse result = enrichWithDatabase(modelResult.response());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -59,6 +63,13 @@ public class AiFoodAnalysisService {
         analysis.setConfidenceScore(BigDecimal.valueOf(result.confidence()));
         analysis.setStatus(result.needsUserConfirmation() ? "REVIEW" : "COMPLETED");
         analysis.setCreatedAt(LocalDateTime.now());
+        analysis.setModelName(modelResult.modelName());
+        analysis.setPromptVersion(modelResult.promptVersion());
+        analysis.setDatabaseMatched(result.databaseMatched());
+        analysis.setNutritionFallbackUsed(modelResult.nutritionFallbackUsed());
+        analysis.setPromptTokens(modelResult.promptTokens());
+        analysis.setCompletionTokens(modelResult.completionTokens());
+        analysis.setLatencyMs(modelResult.latencyMs());
         analysisRepository.saveAndFlush(analysis);
 
         saveNutrient(analysis, "Calories", "kcal", 1, result.calories());
@@ -66,16 +77,33 @@ public class AiFoodAnalysisService {
         saveNutrient(analysis, "Carbs", "g", 3, result.carbs());
         saveNutrient(analysis, "Fat", "g", 4, result.fat());
         saveNutrient(analysis, "Sugar", "g", 5, result.sugar());
-        return result;
+        return result.withAnalysisId(analysis.getAiFoodAnalysisId());
+    }
+
+    @Transactional
+    public void saveFeedback(Integer userId, Integer analysisId, AiFoodFeedbackRequest request) {
+        AiFoodAnalysis analysis = analysisRepository
+                .findByAiFoodAnalysisIdAndUserUserId(analysisId, userId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "AI analysis not found."));
+        analysis.setUserConfirmed(request.confirmed());
+        analysis.setCorrectedFoodName(request.foodName().trim());
+        analysis.setCorrectedServingSize(request.servingSize());
+        analysis.setCorrectedServingUnit(request.servingUnit().trim());
+        analysis.setFeedbackAt(LocalDateTime.now());
+        analysis.setStatus(Boolean.TRUE.equals(request.confirmed()) ? "CONFIRMED" : "CORRECTED");
+        analysisRepository.save(analysis);
     }
 
     private AiFoodAnalysisResponse enrichWithDatabase(AiFoodAnalysisResponse ai) {
         Match match = bestDatabaseMatch(ai.name());
         boolean databaseMatched = match != null && match.score() >= 0.80;
-        double finalConfidence = databaseMatched ? Math.max(ai.confidence(), match.score()) : ai.confidence();
+        // A text match verifies nutrition data, not whether the image was recognized correctly.
+        // Never promote low visual confidence solely because a database name matched.
+        double finalConfidence = Math.clamp(ai.confidence(), 0, 1);
         boolean needsConfirmation = finalConfidence < 0.80;
         FoodNutrition food = databaseMatched ? match.food() : null;
         return new AiFoodAnalysisResponse(
+                ai.analysisId(),
                 food == null ? ai.name() : food.getName(),
                 databaseMatched
                         ? safeAnalysis(ai.analysis()) + " Nutrition values matched the database record for " + food.getName() + "."

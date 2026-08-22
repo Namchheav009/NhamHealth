@@ -22,15 +22,28 @@ const selectedMealIngredients = document.getElementById("selectedMealIngredients
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-document.querySelector(".pagination")?.remove();
+const pagination = document.getElementById("mealPagination");
+pagination.innerHTML = `
+    <button id="previousMealPage" class="admin-page-button admin-page-previous" type="button" aria-label="Previous page">Previous</button>
+    <div id="mealPageNumbers" class="admin-page-numbers"></div>
+    <button id="nextMealPage" class="admin-page-button admin-page-next" type="button" aria-label="Next page">Next</button>
+    <label class="admin-page-jump">Page <select id="mealPageJump" aria-label="Select meal page"></select><span id="mealPageTotal"></span></label>`;
+const previousMealPage = document.getElementById("previousMealPage");
+const nextMealPage = document.getElementById("nextMealPage");
+const mealPageNumbers = document.getElementById("mealPageNumbers");
+const mealPageJump = document.getElementById("mealPageJump");
+const mealPageTotal = document.getElementById("mealPageTotal");
 
 let meals = [];
+let mealPage = 0;
+let mealPageData = null;
 let editingMealId = null;
 let currentMainImageUrl = null;
 let previewObjectUrl = null;
 let ingredientSearchMatches = [];
 let selectedIngredients = [];
 let ingredientSearchTimer = null;
+let mealFilterTimer = null;
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;"
@@ -102,17 +115,13 @@ function drawRows(list) {
                 </tr>`);
         });
     }
-    resultText.textContent = `${list.length} meal${list.length === 1 ? "" : "s"}`;
-    showingText.textContent = list.length ? `Showing 1 to ${list.length} of ${meals.length} meals` : "No meals to show";
-}
-
-function populateFilter(id, values, label) {
-    const select = document.getElementById(id);
-    const selected = select.value;
-    select.replaceChildren(new Option(`All ${label}`, ""));
-    [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))
-        .forEach(value => select.add(new Option(value, value.toLowerCase())));
-    select.value = [...select.options].some(option => option.value === selected) ? selected : "";
+    const totalMeals = mealPageData?.totalElements ?? meals.length;
+    const firstResult = list.length ? mealPage * 10 + 1 : 0;
+    const lastResult = list.length ? firstResult + list.length - 1 : 0;
+    resultText.textContent = `${totalMeals} meal${totalMeals === 1 ? "" : "s"}`;
+    showingText.textContent = list.length
+        ? `Showing ${firstResult} to ${lastResult} of ${totalMeals} meals`
+        : "No meals to show";
 }
 
 function updateSummary() {
@@ -122,31 +131,80 @@ function updateSummary() {
         return match && Number(match[2]) ? Array(Number(match[2])).fill(Number(match[1])) : [];
     });
     const rating = ratings.length ? ratings.reduce((total, value) => total + value, 0) / ratings.length : 0;
-    totalMeals.textContent = meals.length.toLocaleString();
+    totalMeals.textContent = (mealPageData?.totalElements ?? meals.length).toLocaleString();
     averageRating.textContent = `${rating.toFixed(1)} / 5`;
     favoritesSaved.textContent = favorites.toLocaleString();
 }
 
 function filterMeals() {
-    const search = document.getElementById("searchInput").value.toLowerCase();
-    const category = document.getElementById("categoryFilter").value.toLowerCase();
-    const status = document.getElementById("statusFilter").value.toLowerCase();
-    const tag = document.getElementById("tagFilter").value.toLowerCase();
-    drawRows(meals.filter(meal => meal.mealName.toLowerCase().includes(search)
-        && (!category || meal.category.toLowerCase() === category)
-        && (!status || meal.status.toLowerCase() === status)
-        && (!tag || (meal.tags || []).some(item => item.toLowerCase() === tag))));
+    mealPage = 0;
+    loadMeals(0);
 }
 
-async function loadMeals() {
+function updatePagination() {
+    const totalPages = mealPageData?.totalPages ?? 0;
+    const currentPage = totalPages ? mealPage + 1 : 1;
+    const pagesToShow = totalPages <= 5
+        ? Array.from({ length: totalPages }, (_, index) => index + 1)
+        : currentPage <= 3 ? [1, 2, 3, totalPages]
+            : currentPage >= totalPages - 2 ? [1, totalPages - 2, totalPages - 1, totalPages]
+                : [1, currentPage - 1, currentPage, currentPage + 1, totalPages];
+    mealPageNumbers.replaceChildren();
+    let previousPage = 0;
+    pagesToShow.forEach(pageNumber => {
+        if (pageNumber > previousPage + 1) {
+            const ellipsis = document.createElement("span");
+            ellipsis.className = "admin-pagination-ellipsis";
+            ellipsis.textContent = "\u2026";
+            mealPageNumbers.appendChild(ellipsis);
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `admin-page-button${pageNumber === currentPage ? " active" : ""}`;
+        button.textContent = String(pageNumber);
+        button.setAttribute("aria-label", `Page ${pageNumber}`);
+        if (pageNumber === currentPage) button.setAttribute("aria-current", "page");
+        button.addEventListener("click", () => loadMeals(pageNumber - 1));
+        mealPageNumbers.appendChild(button);
+        previousPage = pageNumber;
+    });
+    mealPageJump.replaceChildren();
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+        const option = document.createElement("option");
+        option.value = String(pageNumber - 1);
+        option.textContent = String(pageNumber);
+        option.selected = pageNumber === currentPage;
+        mealPageJump.appendChild(option);
+    }
+    mealPageJump.disabled = totalPages <= 1;
+    mealPageTotal.textContent = `of ${totalPages}`;
+    previousMealPage.disabled = !mealPageData || mealPageData.first;
+    nextMealPage.disabled = !mealPageData || mealPageData.last;
+}
+
+async function loadMeals(page = mealPage) {
     try {
-        const response = await fetch("/admin/meals/data");
+        const params = new URLSearchParams({ page: String(Math.max(page, 0)) });
+        const filters = {
+            search: document.getElementById("searchInput").value.trim(),
+            category: document.getElementById("categoryFilter").value,
+            status: document.getElementById("statusFilter").value,
+            tag: document.getElementById("tagFilter").value
+        };
+        Object.entries(filters).forEach(([name, value]) => {
+            if (value) params.set(name, value);
+        });
+        const response = await fetch(`/admin/meals/data?${params}`);
         if (!response.ok) throw new Error("Unable to load meals");
-        meals = await response.json();
-        populateFilter("categoryFilter", meals.map(meal => meal.category), "Categories");
-        populateFilter("tagFilter", meals.flatMap(meal => meal.tags || []), "Tags");
+        mealPageData = await response.json();
+        if (!mealPageData.content.length && mealPageData.totalPages && page >= mealPageData.totalPages) {
+            return loadMeals(mealPageData.totalPages - 1);
+        }
+        mealPage = mealPageData.number;
+        meals = mealPageData.content;
         updateSummary();
-        filterMeals();
+        drawRows(meals);
+        updatePagination();
     } catch (error) {
         rowsBox.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center">Unable to load meals from the API.</td></tr>';
         console.error(error);
@@ -415,7 +473,10 @@ rowsBox.addEventListener("click", async event => {
 
 ["searchInput", "categoryFilter", "statusFilter", "tagFilter"].forEach(id => {
     const element = document.getElementById(id);
-    element.addEventListener(element.tagName === "INPUT" ? "input" : "change", filterMeals);
+    element.addEventListener(element.tagName === "INPUT" ? "input" : "change", () => {
+        window.clearTimeout(mealFilterTimer);
+        mealFilterTimer = window.setTimeout(filterMeals, element.tagName === "INPUT" ? 250 : 0);
+    });
 });
 document.getElementById("clearFilters").onclick = () => {
     document.getElementById("searchInput").value = "";
@@ -424,6 +485,13 @@ document.getElementById("clearFilters").onclick = () => {
     document.getElementById("tagFilter").value = "";
     filterMeals();
 };
+previousMealPage.addEventListener("click", () => {
+    if (!mealPageData?.first) loadMeals(mealPage - 1);
+});
+nextMealPage.addEventListener("click", () => {
+    if (!mealPageData?.last) loadMeals(mealPage + 1);
+});
+mealPageJump.addEventListener("change", () => loadMeals(Number(mealPageJump.value)));
 document.getElementById("openModal").onclick = openCreateModal;
 document.getElementById("closeModal").onclick = closeModal;
 document.getElementById("cancelModal").onclick = closeModal;

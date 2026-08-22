@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Configure physical phone API",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/nhamhealth_app/tool/run_android_phone.ps1",
+        "-ConfigureOnly"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

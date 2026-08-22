@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:nhamhealth_flutter/app/modules/auth/models/authenticated_user_model.dart';
-import 'package:nhamhealth_flutter/app/modules/home/controllers/home_controller.dart';
-import 'package:nhamhealth_flutter/app/modules/home/providers/home_provider.dart';
-import 'package:nhamhealth_flutter/app/modules/home/repositories/home_repository.dart';
-import 'package:nhamhealth_flutter/app/modules/home/views/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
+import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
+import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
