@@ -127,6 +127,17 @@ class AiFoodController extends GetxController {
         filename: filename,
       );
       if (generation != null && generation != _scanGeneration) return;
+      if (!food.foodDetected) {
+        prediction.value = null;
+        nutrition.value = null;
+        recommendation.value = null;
+        isUserConfirmed.value = false;
+        errorMessage.value =
+            food.reason.isEmpty
+                ? "We couldn't detect food in this photo. Try another clear photo."
+                : food.reason;
+        return;
+      }
       _publishPrediction(food);
       final localGuidance = recommendationService.create(
         food: food,
@@ -265,6 +276,7 @@ class AiFoodController extends GetxController {
 
   bool get canAddFood =>
       nutrition.value != null &&
+      nutrition.value!.hasCompleteNutrition &&
       (isUserConfirmed.value ||
           (prediction.value?.confidence ?? 0) >= lowConfidenceThreshold);
 

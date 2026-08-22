@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../widgets/app_alert.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
+import '../../../routes/app_routes.dart';
 import '../../../widgets/pin_keypad_dialog.dart';
 import 'change_password_view.dart';
 import '../../bindings/profile/change_password_binding.dart';
@@ -78,9 +80,14 @@ class _SecurityViewState extends State<SecurityView> {
     if (pin == null) return false;
     try {
       if (await _security.verifyPin(pin)) return true;
-      _showSecurityMessage('Incorrect PIN.');
+      _showSecurityError('Incorrect PIN', 'The PIN you entered is incorrect.');
+    } on AuthException catch (error) {
+      await _handleAuthFailure(error, action: 'Could not verify PIN');
     } on Object {
-      _showSecurityMessage('Could not verify your PIN. Check your connection.');
+      _showSecurityError(
+        'Could not verify PIN',
+        'Something went wrong. Please try again.',
+      );
     }
     return false;
   }
@@ -96,10 +103,20 @@ class _SecurityViewState extends State<SecurityView> {
     try {
       await _security.setPin(pin);
       await _load();
-      _showSecurityMessage('Your app PIN was saved securely.');
+      AppAlert.success(
+        title: 'App PIN saved',
+        message: 'Your app PIN was saved securely.',
+      );
       widget.onPinCreated?.call();
+    } on AuthException catch (error) {
+      await _handleAuthFailure(error, action: 'Could not save PIN');
+    } on FormatException catch (error) {
+      _showSecurityError('Could not save PIN', error.message);
     } on Object {
-      _showSecurityMessage('Could not save your PIN. Check your connection.');
+      _showSecurityError(
+        'Could not save PIN',
+        'Something went wrong. Please try again.',
+      );
     }
   }
 
@@ -119,7 +136,10 @@ class _SecurityViewState extends State<SecurityView> {
       await _load();
     } on Object {
       if (mounted) {
-        AppAlert.error(title: 'Biometrics unavailable', message: 'Biometrics could not be enabled.');
+        AppAlert.error(
+          title: 'Biometrics unavailable',
+          message: 'Biometrics could not be enabled.',
+        );
       }
     }
   }
@@ -129,14 +149,47 @@ class _SecurityViewState extends State<SecurityView> {
     try {
       await _security.disable();
       await _load();
+    } on AuthException catch (error) {
+      await _handleAuthFailure(
+        error,
+        action: 'Could not turn off app protection',
+      );
     } on Object {
-      _showSecurityMessage('Could not turn off app protection.');
+      _showSecurityError(
+        'Could not update security',
+        'Could not turn off app protection.',
+      );
     }
   }
 
-  void _showSecurityMessage(String message) {
+  Future<void> _handleAuthFailure(
+    AuthException error, {
+    required String action,
+  }) async {
+    final sessionInvalid =
+        error.statusCode == 401 ||
+        error.statusCode == 403 ||
+        error.message.toLowerCase().contains('session has expired') ||
+        error.message.toLowerCase().contains('session is no longer valid');
+    if (!sessionInvalid) {
+      _showSecurityError(action, error.message);
+      return;
+    }
+
+    await _security.clearInvalidSession();
     if (!mounted) return;
-    AppAlert.error(title: 'Security update failed', message: message);
+    AppAlert.error(
+      title: 'Session expired',
+      message:
+          'This account is no longer available in the configured database. '
+          'Please sign in or create the account again.',
+    );
+    Get.offAllNamed<void>(AppRoutes.login);
+  }
+
+  void _showSecurityError(String title, String message) {
+    if (!mounted) return;
+    AppAlert.error(title: title, message: message);
   }
 
   @override

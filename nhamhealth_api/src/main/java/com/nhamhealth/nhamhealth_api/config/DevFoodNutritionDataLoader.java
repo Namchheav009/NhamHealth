@@ -62,6 +62,16 @@ public class DevFoodNutritionDataLoader implements CommandLineRunner {
         seed("Cola", "Soda,Soft Drink,Coke", 140, 0, 39, 0, 39, "can");
         seed("Green Tea", "Unsweetened Green Tea,Hot Green Tea", 2, 0, 0, 0, 0, "cup");
         seed("Smoothie", "Fruit Smoothie,Fruit Shake", 220, 4, 48, 3, 34, "glass");
+        seedMeasured("Cooked Jasmine Rice", "Cooked Rice,White Rice,Steamed Rice,Jasmine Rice Cooked",
+                130, 2.7, 28, 0.3, 0.1, 0.4, 1, 100, "g");
+        seedMeasured("Grilled Chicken Breast", "Grilled Chicken,Chicken Breast Grilled,Sliced Grilled Chicken",
+                165, 31, 0, 3.6, 0, 0, 74, 100, "g");
+        seedMeasured("Grilled Pork", "Barbecued Pork,BBQ Pork,Sliced Grilled Pork",
+                242, 27, 0, 14, 0, 0, 75, 100, "g");
+        seedMeasured("Sweet Chili Sauce", "Chili Sauce,Thai Sweet Chili Sauce,Orange Red Sauce",
+                240, 0.7, 60, 0.2, 55, 0.5, 1_000, 100, "g");
+        seedMeasured("Cooked Tapioca Pearls", "Tapioca Pearls,Boba Pearls,Bubble Tea Pearls",
+                160, 0.2, 38, 0, 5, 0.3, 5, 100, "g");
     }
 
     private String rootMessage(Throwable error) {
@@ -91,7 +101,30 @@ public class DevFoodNutritionDataLoader implements CommandLineRunner {
         food.setCarbs(BigDecimal.valueOf(carbs));
         food.setFat(BigDecimal.valueOf(fat));
         food.setSugar(BigDecimal.valueOf(sugar));
+        food.setFiber(BigDecimal.ZERO);
+        food.setSodium(BigDecimal.ZERO);
         food.setServingSize(BigDecimal.ONE);
+        food.setServingUnit(unit);
+        food.setActive(true);
+        repository.save(food);
+    }
+
+    private void seedMeasured(
+            String name, String aliases,
+            double calories, double protein, double carbs, double fat, double sugar,
+            double fiber, double sodium, double servingSize, String unit) {
+        if (repository.findFirstByNameIgnoreCaseAndActiveTrue(name).isPresent()) return;
+        FoodNutrition food = new FoodNutrition();
+        food.setName(name);
+        food.setAliases(aliases);
+        food.setCalories(BigDecimal.valueOf(calories));
+        food.setProtein(BigDecimal.valueOf(protein));
+        food.setCarbs(BigDecimal.valueOf(carbs));
+        food.setFat(BigDecimal.valueOf(fat));
+        food.setSugar(BigDecimal.valueOf(sugar));
+        food.setFiber(BigDecimal.valueOf(fiber));
+        food.setSodium(BigDecimal.valueOf(sodium));
+        food.setServingSize(BigDecimal.valueOf(servingSize));
         food.setServingUnit(unit);
         food.setActive(true);
         repository.save(food);

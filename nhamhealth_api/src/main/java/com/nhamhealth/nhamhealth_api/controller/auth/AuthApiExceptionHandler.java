@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.nhamhealth.nhamhealth_api.dto.response.AuthErrorResponse;
+import com.nhamhealth.nhamhealth_api.exception.InvalidSessionException;
 import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
 
 @RestControllerAdvice(assignableTypes = AuthController.class)
@@ -36,6 +37,12 @@ public class AuthApiExceptionHandler {
     @ExceptionHandler(PasswordResetException.class)
     ResponseEntity<AuthErrorResponse> handlePasswordReset(PasswordResetException exception) {
         return ResponseEntity.status(exception.getStatus())
+                .body(new AuthErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidSessionException.class)
+    ResponseEntity<AuthErrorResponse> handleInvalidSession(InvalidSessionException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new AuthErrorResponse(exception.getMessage()));
     }
 

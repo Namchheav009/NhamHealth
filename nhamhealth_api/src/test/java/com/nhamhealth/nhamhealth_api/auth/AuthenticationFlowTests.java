@@ -11,6 +11,7 @@ import java.util.Properties;
 import javax.imageio.ImageIO;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -219,6 +220,29 @@ class AuthenticationFlowTests {
                         .content("{}"))
                 .andExpect(status().isOk());
         assertFalse(userRepository.findById(saved.getUserId()).orElseThrow().hasPin());
+    }
+
+    @Test
+    void staleJwtCannotRestoreMissingAccountOrSavePin() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .with(jwt().jwt(token -> token
+                                .subject("missing-user@example.com")
+                                .claim("userId", Integer.MAX_VALUE)
+                                .claim("roles", java.util.List.of("USER")))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message")
+                        .value("Your session is no longer valid. Please sign in again."));
+
+        mockMvc.perform(post("/api/v1/auth/pin")
+                        .with(jwt().jwt(token -> token
+                                .subject("missing-user@example.com")
+                                .claim("userId", Integer.MAX_VALUE)
+                                .claim("roles", java.util.List.of("USER"))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pin\":\"258025\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message")
+                        .value("Your session is no longer valid. Please sign in again."));
     }
 
     @Test
