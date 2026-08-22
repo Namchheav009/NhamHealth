@@ -101,7 +101,7 @@ class FavoritesView extends GetView<FavoritesController> {
               message:
                   categories.isEmpty
                       ? 'No favorite foods yet'
-                      : 'No foods match this filter',
+                      : 'No foods match these filters',
             );
           }
           return LayoutBuilder(
