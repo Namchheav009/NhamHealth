@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record AiFoodAnalysisResponse(
+        Integer analysisId,
         String name,
         String analysis,
         double confidence,
@@ -22,4 +23,11 @@ public record AiFoodAnalysisResponse(
         String dataSource,
         String disclaimer,
         String privacyNotice) {
+
+    public AiFoodAnalysisResponse withAnalysisId(Integer value) {
+        return new AiFoodAnalysisResponse(value, name, analysis, confidence, calories, protein,
+                carbs, fat, sugar, servingSize, servingUnit, recommendationTitle,
+                recommendation, databaseMatched, databaseMatchConfidence,
+                needsUserConfirmation, dataSource, disclaimer, privacyNotice);
+    }
 }

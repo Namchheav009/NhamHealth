@@ -1,41 +1,44 @@
 import 'package:get/get.dart';
 
-import '../modules/onboarding/bindings/onboarding_binding.dart';
-import '../modules/onboarding/views/onboarding_view.dart';
-import '../modules/splash/bindings/splash_binding.dart';
-import '../modules/splash/views/splash_view.dart';
-import '../modules/auth/views/login_view.dart';
-import '../modules/auth/views/register_view.dart';
-import '../modules/auth/controllers/account_created_controller.dart';
-import '../modules/auth/views/account_created_view.dart';
-import '../modules/home/bindings/home_binding.dart';
-import '../modules/home/views/home_view.dart';
-import '../modules/meals/bindings/meal_binding.dart';
-import '../modules/meals/views/meal_view.dart';
-import '../modules/notifications/views/notifications_view.dart';
-import '../modules/notifications/bindings/notifications_binding.dart';
-import '../modules/favorites/bindings/favorites_binding.dart';
-import '../modules/favorites/views/favorites_view.dart';
-import '../modules/profile/bindings/profile_binding.dart';
-import '../modules/profile/bindings/change_password_binding.dart';
-import '../modules/profile/views/change_password_view.dart';
-import '../modules/profile/views/profile_view.dart';
+import '../modules/bindings/onboarding/onboarding_binding.dart';
+import '../modules/views/onboarding/onboarding_view.dart';
+import '../modules/bindings/splash/splash_binding.dart';
+import '../modules/views/splash/splash_view.dart';
+import '../modules/views/auth/login_view.dart';
+import '../modules/views/auth/register_view.dart';
+import '../modules/controllers/auth/account_created_controller.dart';
+import '../modules/views/auth/account_created_view.dart';
+import '../modules/bindings/home/home_binding.dart';
+import '../modules/views/home/home_view.dart';
+import '../modules/bindings/meals/meal_binding.dart';
+import '../modules/views/meals/meal_view.dart';
+import '../modules/views/notifications/notifications_view.dart';
+import '../modules/bindings/notifications/notifications_binding.dart';
+import '../modules/bindings/favorites/favorites_binding.dart';
+import '../modules/views/favorites/favorites_view.dart';
+import '../modules/bindings/profile/profile_binding.dart';
+import '../modules/bindings/profile/change_password_binding.dart';
+import '../modules/views/profile/change_password_view.dart';
+import '../modules/views/profile/profile_view.dart';
 
-import '../modules/wellness/bindings/wellness_binding.dart';
-import '../modules/wellness/views/wellness_view.dart';
-import '../modules/wellness/views/calories_view.dart';
-import '../modules/wellness/views/protein_view.dart';
-import '../modules/wellness/bindings/water_binding.dart';
-import '../modules/wellness/views/water_view.dart';
-import '../modules/wellness/views/fiber_view.dart';
-import '../modules/wellness/views/sugar_view.dart';
-import '../modules/wellness/views/ai_food_view.dart';
-import '../modules/wellness/bindings/ai_food_binding.dart';
-import '../modules/wellness/bindings/calories_binding.dart';
-import '../modules/wellness/views/food_source_detail_view.dart';
-import '../modules/wellness/bindings/food_source_detail_binding.dart';
+import '../modules/bindings/wellness/wellness_binding.dart';
+import '../modules/views/wellness/wellness_view.dart';
+import '../modules/views/wellness/calories_view.dart';
+import '../modules/views/wellness/protein_view.dart';
+import '../modules/bindings/wellness/water_binding.dart';
+import '../modules/views/wellness/water_view.dart';
+import '../modules/views/wellness/fiber_view.dart';
+import '../modules/views/wellness/sugar_view.dart';
+import '../modules/views/wellness/ai_food_view.dart';
+import '../modules/views/wellness/ai_meal_auto_fill_view.dart';
+import '../modules/bindings/wellness/ai_food_binding.dart';
+import '../modules/bindings/wellness/ai_meal_auto_fill_binding.dart';
+import '../modules/bindings/wellness/calories_binding.dart';
+import '../modules/views/wellness/food_source_detail_view.dart';
+import '../modules/bindings/wellness/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
+import '../modules/views/feed/feed_page.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -150,8 +153,8 @@ abstract class AppPages {
 
     GetPage<dynamic>(
       name: AppRoutes.aiMealAutoFill,
-      page: () => const AiFoodView(),
-      binding: AiFoodBinding(),
+      page: () => const AiMealAutoFillView(),
+      binding: AiMealAutoFillBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.aiFood,
@@ -171,6 +174,12 @@ abstract class AppPages {
       name: AppRoutes.foodSourceDetail,
       page: () => const FoodSourceDetailView(),
       binding: FoodSourceDetailBinding(),
+      transition: Transition.rightToLeft,
+    ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.feed,
+      page: () => const FeedPage(),
       transition: Transition.rightToLeft,
     ),
   ];

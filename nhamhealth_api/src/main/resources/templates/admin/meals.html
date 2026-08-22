@@ -46,6 +46,7 @@
                     <label class="filter"><span>Category</span>
                         <select id="categoryFilter">
                             <option value="">All Categories</option>
+                            <option th:each="category : ${mealCategories}" th:value="${category.categoryName}" th:text="${category.categoryName}">Category</option>
                         </select>
                     </label>
                     <label class="filter"><span>Status</span>
@@ -58,6 +59,7 @@
                     <label class="filter"><span>Tag</span>
                         <select id="tagFilter">
                             <option value="">All Tags</option>
+                            <option th:each="tag : ${mealTags}" th:value="${tag}" th:text="${tag}">Tag</option>
                         </select>
                     </label>
                     <button class="btn clear-btn" id="clearFilters" type="button"><i class="fa-solid fa-xmark"></i> Clear Filters</button>
@@ -107,9 +109,9 @@
                     </div>
                     <div class="table-footer">
                         <span id="showingText">Loading meals...</span>
-                        <div class="pagination">
+                        <nav class="pagination" id="mealPagination" aria-label="Meal pages">
                             <button>‹</button><button class="active">1</button><button>2</button><button>3</button><button>…</button><button>156</button><button>›</button>
-                        </div>
+                        </nav>
                     </div>
                 </section>
             </div>

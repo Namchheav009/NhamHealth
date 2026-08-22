@@ -45,3 +45,4 @@ app.*.map.json
 # Local OAuth configuration. Copy the tracked example and keep real values out
 # of source control.
 /config/google_oauth.json
+/config/local_api.json

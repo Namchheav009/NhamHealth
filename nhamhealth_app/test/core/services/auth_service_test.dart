@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:nhamhealth_flutter/app/modules/auth/models/login_request.dart';
-import 'package:nhamhealth_flutter/app/modules/auth/models/register_request.dart';
+import 'package:nhamhealth_flutter/app/modules/models/auth/login_request.dart';
+import 'package:nhamhealth_flutter/app/modules/models/auth/register_request.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 import 'package:nhamhealth_flutter/core/storage/token_storage.dart';
 
