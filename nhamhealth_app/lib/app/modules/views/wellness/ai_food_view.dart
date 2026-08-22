@@ -25,6 +25,11 @@ class AiFoodView extends GetView<AiFoodController> {
   static const cardBorder = Color(0x0F004D26);
   static const warn = Color(0xFFFF7A45);
   static const textMuted = Color(0xFF6B7A70);
+  static const double pageHorizontalPadding = 20;
+  static const double sectionSpacing = 16;
+  static const double imageAspectRatio = 16 / 9;
+  static const double imageMinHeight = 190;
+  static const double imageMaxHeight = 230;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -36,16 +41,21 @@ class AiFoodView extends GetView<AiFoodController> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Obx(
             () => ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+              padding: const EdgeInsets.fromLTRB(
+                pageHorizontalPadding,
+                8,
+                pageHorizontalPadding,
+                40,
+              ),
               children: [
                 _intro(),
-                const SizedBox(height: 18),
+                const SizedBox(height: sectionSpacing),
                 if (controller.isModelLoading.value) ...[
                   const _ModelLoadingBar(),
                   const SizedBox(height: 12),
                 ],
                 _imageCard(),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -56,7 +66,7 @@ class AiFoodView extends GetView<AiFoodController> {
                         style: _ButtonStyle.outlined,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _button(
                         icon: Icons.photo_library_outlined,
@@ -73,7 +83,7 @@ class AiFoodView extends GetView<AiFoodController> {
                   child:
                       controller.selectedImage.value != null
                           ? Padding(
-                            padding: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: 14),
                             child: _button(
                               icon: Icons.auto_awesome,
                               text:
@@ -99,23 +109,14 @@ class AiFoodView extends GetView<AiFoodController> {
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child:
-                      controller.prediction.value != null
-                          ? Padding(
-                            key: const ValueKey('prediction'),
-                            padding: const EdgeInsets.only(top: 16),
-                            child: _predictionCard(),
-                          )
-                          : const SizedBox.shrink(),
-                ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child:
-                      controller.nutrition.value != null
+                      controller.hasCompleteResult
                           ? Padding(
                             key: const ValueKey('nutrition'),
                             padding: const EdgeInsets.only(top: 14),
                             child: Column(
                               children: [
+                                _confidenceLine(),
+                                const SizedBox(height: 14),
                                 if (!controller.isUserConfirmed.value) ...[
                                   _feedbackCard(context),
                                   const SizedBox(height: 14),
@@ -266,32 +267,41 @@ class AiFoodView extends GetView<AiFoodController> {
 
   Widget _imageCard() => GestureDetector(
     onTap: controller.pickImageFromGallery,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 240,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color:
-              controller.selectedImage.value != null
-                  ? green.withValues(alpha: .35)
-                  : const Color(0xFFD9E7DA),
-          width: controller.selectedImage.value != null ? 1.5 : 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final previewHeight = (constraints.maxWidth / imageAspectRatio).clamp(
+          imageMinHeight,
+          imageMaxHeight,
+        );
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          height: previewHeight,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color:
+                  controller.selectedImage.value != null
+                      ? green.withValues(alpha: .35)
+                      : const Color(0xFFD9E7DA),
+              width: controller.selectedImage.value != null ? 1.5 : 1,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child:
-          controller.selectedImage.value == null
-              ? _emptyImageState()
-              : _selectedImagePreview(),
+          child:
+              controller.selectedImage.value == null
+                  ? _emptyImageState()
+                  : _selectedImagePreview(),
+        );
+      },
     ),
   );
 
@@ -322,7 +332,12 @@ class AiFoodView extends GetView<AiFoodController> {
   Widget _selectedImagePreview() => Stack(
     fit: StackFit.expand,
     children: [
-      Image.file(controller.selectedImage.value!, fit: BoxFit.cover),
+      Image.file(
+        controller.selectedImage.value!,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+      ),
       // gradient scrim so the close button stays legible on bright photos
       Positioned(
         top: 0,
@@ -431,85 +446,53 @@ class AiFoodView extends GetView<AiFoodController> {
     }
   }
 
-  // ---- Prediction ----------------------------------------------------
+  // ---- Nutrition ---------------------------------------------------------
 
-  Widget _predictionCard() {
-    final value = controller.prediction.value!;
-    final low = value.confidence < AiFoodController.lowConfidenceThreshold;
-    final pct = (value.confidence * 100).round();
+  Widget _confidenceLine() {
+    final confidence = (controller.prediction.value?.confidence ?? 0).clamp(
+      0.0,
+      1.0,
+    );
+    final percentage = (confidence * 100).round();
+    final low = confidence < AiFoodController.lowConfidenceThreshold;
+    final color = low ? warn : green;
+
     return _card(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                low ? Icons.help_outline_rounded : Icons.restaurant_rounded,
-                size: 16,
-                color: low ? warn : green,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                low ? 'Not sure about this food' : 'Detected Food',
-                style: const TextStyle(fontSize: 13, color: textMuted),
-              ),
-            ],
+          const Text(
+            'Confidence',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 6),
-          Text(
-            value.foodName,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+          const SizedBox(width: 12),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: confidence,
+                minHeight: 7,
+                backgroundColor: const Color(0xFFEFF3EE),
+                valueColor: AlwaysStoppedAnimation(color),
+              ),
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: value.confidence.clamp(0, 1),
-                    minHeight: 7,
-                    backgroundColor: const Color(0xFFEFF3EE),
-                    valueColor: AlwaysStoppedAnimation(low ? warn : green),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '$pct%',
-                style: TextStyle(
-                  color: low ? warn : green,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          if (low)
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: warn.withValues(alpha: .08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'Try another photo with better lighting, the food centered, and fewer objects around it.',
-                  style: TextStyle(fontSize: 12.5, height: 1.4),
-                ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 42,
+            child: Text(
+              '$percentage%',
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
               ),
             ),
+          ),
         ],
       ),
     );
   }
-
-  // ---- Nutrition ---------------------------------------------------------
 
   Widget _nutritionCard(FoodNutritionModel food) => _card(
     Column(
@@ -604,9 +587,7 @@ class AiFoodView extends GetView<AiFoodController> {
           Row(
             children: [
               Icon(
-                low
-                    ? Icons.fact_check_outlined
-                    : Icons.rate_review_outlined,
+                low ? Icons.fact_check_outlined : Icons.rate_review_outlined,
                 color: low ? warn : greenDark,
               ),
               const SizedBox(width: 10),
@@ -625,7 +606,7 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Check both the food name and serving amount. Corrections are saved as quality feedback.',
+            'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.',
             style: TextStyle(color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -874,17 +855,6 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
             ],
           ),
-          if (controller.nutrition.value?.analysis.isNotEmpty == true) ...[
-            const SizedBox(height: 7),
-            Text(
-              controller.nutrition.value!.analysis,
-              style: const TextStyle(
-                color: textMuted,
-                fontSize: 12.5,
-                height: 1.4,
-              ),
-            ),
-          ],
           const SizedBox(height: 7),
           Text(
             food?.disclaimer.isNotEmpty == true

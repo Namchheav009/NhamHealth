@@ -30,6 +30,7 @@ app.storage.supabase.bucket=nhamhealth-images
 app.ai.nvidia.api-key=${NVIDIA_API_KEY:}
 app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
 app.ai.nvidia.model=nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+app.ai.nvidia.fallback-vision-model=meta/llama-3.2-90b-vision-instruct
 app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
 app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
 app.ai.nvidia.text-max-tokens=4096

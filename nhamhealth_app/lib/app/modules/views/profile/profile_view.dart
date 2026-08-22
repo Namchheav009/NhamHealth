@@ -10,7 +10,7 @@ import '../../../widgets/app_background.dart';
 import '../../../widgets/app_top_bar.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
-import 'widgets/profile_bottom_navigation.dart';
+import '../home/widgets/home_bottom_navigation.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
 import 'widgets/progress_card.dart';
@@ -46,7 +46,7 @@ class ProfileView extends GetView<ProfileController> {
                       onRetry: controller.loadProfile,
                     );
                   }),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.topBarBottom),
                   Obx(
                     () => LoadingContentTransition(
                       isLoading:
@@ -54,47 +54,72 @@ class ProfileView extends GetView<ProfileController> {
                           controller.dashboard.value == null,
                       loading: const PageSkeleton.profile(),
                       content: const Column(
-                              children: [
-                                ProfileHeader(),
-                                SizedBox(height: 8),
-                                HealthStatsCard(),
-                                SizedBox(height: 8),
-                                ProgressCard(),
-                                SizedBox(height: 8),
-                                InsightCard(),
-                                SizedBox(height: 8),
-                                ProfilePostCard(),
-                              ],
-                            ),
+                        children: [
+                          ProfileHeader(),
+                          SizedBox(height: 8),
+                          HealthStatsCard(),
+                          SizedBox(height: 8),
+                          ProgressCard(),
+                          SizedBox(height: 8),
+                          InsightCard(),
+                          SizedBox(height: 8),
+                          ProfilePostCard(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          ),
+        ),
       ),
-      bottomNavigationBar: const SafeArea(
+      bottomNavigationBar: SafeArea(
         top: false,
-        minimum: EdgeInsets.fromLTRB(25, 0, 25, 14),
-        child: ProfileBottomNavigation(),
+        minimum: const EdgeInsets.fromLTRB(25, 0, 25, 14),
+        child: Obx(
+          () => AppBottomNavigation(
+            selectedIndex: controller.selectedNavIndex.value,
+            onSelect: controller.changeNavigation,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildTopBar() {
-    return Obx(() => AppTopBar(
-      user: controller.authenticatedUser.value,
-      unreadNotificationCount: controller.unreadNotificationCount.value,
-      onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
-      onNotifications: controller.openNotifications,
-      menuActions: [
-        AppTopBarAction(label: 'Edit Profile', icon: Icons.edit_outlined, onTap: controller.editProfile),
-        AppTopBarAction(label: 'Notifications', icon: Icons.notifications_none_rounded, onTap: controller.openNotifications),
-        AppTopBarAction(label: 'Settings', icon: Icons.settings_outlined, onTap: controller.openSettings),
-        AppTopBarAction(label: 'Logout', icon: Icons.logout_rounded, color: const Color(0xFFD32F2F), dividerBefore: true, onTap: controller.requestLogout),
-      ],
-    ));
+    return Obx(
+      () => AppTopBar(
+        user: controller.authenticatedUser.value,
+        unreadNotificationCount: controller.unreadNotificationCount.value,
+        onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
+        onNotifications: controller.openNotifications,
+        menuActions: [
+          AppTopBarAction(
+            label: 'Edit Profile',
+            icon: Icons.edit_outlined,
+            onTap: controller.editProfile,
+          ),
+          AppTopBarAction(
+            label: 'Notifications',
+            icon: Icons.notifications_none_rounded,
+            onTap: controller.openNotifications,
+          ),
+          AppTopBarAction(
+            label: 'Settings',
+            icon: Icons.settings_outlined,
+            onTap: controller.openSettings,
+          ),
+          AppTopBarAction(
+            label: 'Logout',
+            icon: Icons.logout_rounded,
+            color: const Color(0xFFD32F2F),
+            dividerBefore: true,
+            onTap: controller.requestLogout,
+          ),
+        ],
+      ),
+    );
   }
 }
 
