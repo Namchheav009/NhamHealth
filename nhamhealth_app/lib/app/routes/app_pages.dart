@@ -180,7 +180,7 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.feed,
       page: () => const FeedPage(),
-      transition: Transition.rightToLeft,
+      transition: Transition.fadeIn,
     ),
   ];
 }

@@ -9,6 +9,7 @@ enum PageSkeletonType {
   wellness,
   notifications,
   favorites,
+  community,
 }
 
 class PageSkeleton extends StatefulWidget {
@@ -47,6 +48,11 @@ class PageSkeleton extends StatefulWidget {
     super.key,
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.favorites;
+
+  const PageSkeleton.community({
+    super.key,
+    this.duration = const Duration(milliseconds: 1600),
+  }) : type = PageSkeletonType.community;
 
   final PageSkeletonType type;
   final Duration duration;
@@ -102,8 +108,6 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.home => const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _AvatarRow(),
-        SizedBox(height: 18),
         _SkeletonBox(height: 48, radius: 24),
         SizedBox(height: 18),
         _TextLines(widths: [.56, .82]),
@@ -149,6 +153,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     ),
     PageSkeletonType.notifications => const _NotificationsPlaceholder(),
     PageSkeletonType.favorites => const _FavoritesPlaceholder(),
+    PageSkeletonType.community => const _CommunityPlaceholder(),
   };
 }
 
@@ -186,23 +191,6 @@ class _TextLines extends StatelessWidget {
         ),
         if (index != widths.length - 1) const SizedBox(height: 10),
       ],
-    ],
-  );
-}
-
-class _AvatarRow extends StatelessWidget {
-  const _AvatarRow();
-
-  @override
-  Widget build(BuildContext context) => const Row(
-    children: [
-      _SkeletonBox(width: 54, height: 54, radius: 27),
-      SizedBox(width: 14),
-      Expanded(child: _TextLines(widths: [.62, .38])),
-      SizedBox(width: 14),
-      _SkeletonBox(width: 40, height: 40, radius: 20),
-      SizedBox(width: 9),
-      _SkeletonBox(width: 40, height: 40, radius: 20),
     ],
   );
 }
@@ -421,5 +409,52 @@ class _FavoriteCardPlaceholder extends StatelessWidget {
         child: _SkeletonBox(height: 10, radius: 5),
       ),
     ],
+  );
+}
+
+class _CommunityPlaceholder extends StatelessWidget {
+  const _CommunityPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    children: [
+      _CommunityPostPlaceholder(),
+      SizedBox(height: 14),
+      _CommunityPostPlaceholder(),
+    ],
+  );
+}
+
+class _CommunityPostPlaceholder extends StatelessWidget {
+  const _CommunityPostPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    height: 286,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.cardSurface.withValues(alpha: .72),
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: const Color(0xFFE2EAE5)),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _SkeletonBox(width: 44, height: 44, radius: 22),
+            SizedBox(width: 11),
+            Expanded(child: _TextLines(widths: [.48, .28])),
+          ],
+        ),
+        SizedBox(height: 14),
+        _TextLines(widths: [.62, .94, .76]),
+        SizedBox(height: 14),
+        Expanded(child: _SkeletonBox(height: 150, radius: 18)),
+        SizedBox(height: 12),
+        _SkeletonBox(height: 34, radius: 17),
+      ],
+    ),
   );
 }

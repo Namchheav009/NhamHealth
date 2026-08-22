@@ -36,29 +36,34 @@ class HomeView extends GetView<HomeController> {
                   parent: BouncingScrollPhysics(),
                 ),
                 padding: AppSpacing.pagePaddingWithNavigation,
-                child: Obx(
-                  () => LoadingContentTransition(
-                    isLoading:
-                        controller.isLoading.value &&
-                        controller.dashboard.value == null,
-                    loading: const PageSkeleton.home(),
-                    content: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              HomeHeader(),
-                              SizedBox(height: 16),
-                              HomeSearchBar(),
-                              SizedBox(height: 14),
-                              GreetingSection(),
-                              SizedBox(height: 14),
-                              AiRecommendationCard(),
-                              SizedBox(height: 14),
-                              DailySummaryCard(),
-                              SizedBox(height: 12),
-                              _RecommendedMealsSection(),
-                            ],
-                          ),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const HomeHeader(),
+                    const SizedBox(height: AppSpacing.topBarBottom),
+                    Obx(
+                      () => LoadingContentTransition(
+                        isLoading:
+                            controller.isLoading.value &&
+                            controller.dashboard.value == null,
+                        loading: const PageSkeleton.home(),
+                        content: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeSearchBar(),
+                            SizedBox(height: 14),
+                            GreetingSection(),
+                            SizedBox(height: 14),
+                            AiRecommendationCard(),
+                            SizedBox(height: 14),
+                            DailySummaryCard(),
+                            SizedBox(height: 12),
+                            _RecommendedMealsSection(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -135,8 +140,11 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     (_, index) => RecommendedMealCard(
                       meal: meals[index],
                       onTap: () => controller.openMeals(),
-                      isFavorite: controller.favoriteMealIds.contains(meals[index].id),
-                      onFavorite: () => controller.toggleMealFavorite(meals[index].id),
+                      isFavorite: controller.favoriteMealIds.contains(
+                        meals[index].id,
+                      ),
+                      onFavorite:
+                          () => controller.toggleMealFavorite(meals[index].id),
                     ),
               ),
             ),

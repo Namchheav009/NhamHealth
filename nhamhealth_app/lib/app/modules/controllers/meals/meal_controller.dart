@@ -223,7 +223,7 @@ class MealController extends GetxController {
         // Create post route is not available yet.
         break;
       case 3:
-        // Community route is not available yet.
+        Get.offNamed<void>(AppRoutes.feed);
         break;
       case 4:
         Get.offNamed<void>(AppRoutes.profile);

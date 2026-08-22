@@ -47,7 +47,7 @@ class FoodNutritionModel {
       FoodNutritionModel(
         id: _integer(json['id']),
         analysisId: _integer(json['analysisId']),
-        name: json['name']?.toString() ?? 'Unknown food',
+        name: _foodName(json['name']),
         analysis: json['analysis']?.toString() ?? '',
         calories: _number(json['calories']),
         protein: _number(json['protein']),
@@ -171,6 +171,12 @@ class FoodNutritionModel {
       value is num
           ? value.toDouble()
           : double.tryParse(value?.toString() ?? '') ?? fallback;
+
+  static String _foodName(Object? value) {
+    final name = value?.toString().trim() ?? '';
+    return name.isEmpty ? 'Unknown food' : name;
+  }
+
   static int? _integer(Object? value) =>
       value is num ? value.toInt() : int.tryParse(value?.toString() ?? '');
 }
