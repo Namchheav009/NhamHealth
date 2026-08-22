@@ -32,12 +32,14 @@ class FavoritesView extends GetView<FavoritesController> {
     _sectionHeader('Favorite foods', Icons.filter_list_rounded, onTap: _showFoodFilter),
     const SizedBox(height: 10),
     Expanded(child: Obx(() {
-      final category = controller.selectedFoodCategory.value;
+      final categories = controller.selectedFoodCategories;
       if (controller.isLoading.value && controller.foods.isEmpty) {
         return const Center(child: CircularProgressIndicator());
       }
-      final visible = controller.foods.where((food) => category == 'All' || food.category == category).toList();
-      if (visible.isEmpty) return _EmptyFavorites(message: category == 'All' ? 'No favorite foods yet' : 'No foods match this filter');
+      final visible = controller.foods
+          .where((food) => categories.isEmpty || categories.contains(food.category))
+          .toList();
+      if (visible.isEmpty) return _EmptyFavorites(message: categories.isEmpty ? 'No favorite foods yet' : 'No foods match these filters');
       return LayoutBuilder(builder: (context, constraints) {
         final columns = constraints.maxWidth < 330 ? 2 : 3;
         final cardWidth = (constraints.maxWidth - ((columns - 1) * 8)) / columns;
@@ -107,8 +109,8 @@ class FavoritesView extends GetView<FavoritesController> {
     Get.bottomSheet<void>(
       FoodFilterSheet(
         categories: controller.foodCategories.toList(growable: false),
-        initialCategory: controller.selectedFoodCategory.value,
-        onApply: controller.applyFoodCategory,
+        initialCategories: controller.selectedFoodCategories.toSet(),
+        onApply: controller.applyFoodCategories,
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
