@@ -183,6 +183,38 @@ void main() {
     expect(storage.accessToken, isNull);
   });
 
+  test('authenticated PIN request clears a stale rejected token', () async {
+    final storage = _MemoryTokenStorage()..accessToken = 'stale-token';
+    final service = AuthService(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/auth/pin');
+        expect(request.headers['Authorization'], 'Bearer stale-token');
+        return http.Response(
+          jsonEncode({
+            'message': 'Your session is no longer valid. Please sign in again.',
+          }),
+          401,
+        );
+      }),
+      tokenStorage: storage,
+    );
+
+    await expectLater(
+      service.setAppPin('258025'),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 401)
+            .having(
+              (error) => error.message,
+              'message',
+              'Your session is no longer valid. Please sign in again.',
+            ),
+      ),
+    );
+    expect(storage.accessToken, isNull);
+  });
+
   test('password reset calls all three public API endpoints', () async {
     var step = 0;
     final service = AuthService(

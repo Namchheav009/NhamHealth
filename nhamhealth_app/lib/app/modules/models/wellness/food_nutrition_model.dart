@@ -1,3 +1,5 @@
+import 'food_analysis_model.dart';
+
 class FoodNutritionModel {
   final int? id;
   final int? analysisId;
@@ -8,6 +10,8 @@ class FoodNutritionModel {
   final double carbs;
   final double fat;
   final double sugar;
+  final double fiber;
+  final double sodium;
   final double servingSize;
   final String servingUnit;
   final double confidence;
@@ -19,6 +23,18 @@ class FoodNutritionModel {
   final String dataSource;
   final String disclaimer;
   final String privacyNotice;
+  final bool foodDetected;
+  final String reason;
+  final String mealName;
+  final String cuisine;
+  final String mealType;
+  final bool requiresDrinkDetails;
+  final double mealIdentityConfidence;
+  final double portionConfidence;
+  final double preparationConfidence;
+  final List<DetectedFoodComponentModel> components;
+  final List<FoodCandidateModel> candidates;
+  final bool nutritionComplete;
 
   const FoodNutritionModel({
     this.id,
@@ -30,6 +46,8 @@ class FoodNutritionModel {
     required this.carbs,
     required this.fat,
     required this.sugar,
+    this.fiber = 0,
+    this.sodium = 0,
     required this.servingSize,
     required this.servingUnit,
     this.confidence = 0,
@@ -41,32 +59,90 @@ class FoodNutritionModel {
     this.dataSource = 'AI_ESTIMATE',
     this.disclaimer = '',
     this.privacyNotice = '',
-  });
+    this.foodDetected = true,
+    this.reason = '',
+    String? mealName,
+    this.cuisine = 'Unknown',
+    this.mealType = 'food',
+    this.requiresDrinkDetails = false,
+    double? mealIdentityConfidence,
+    this.portionConfidence = 0,
+    this.preparationConfidence = 0,
+    this.components = const [],
+    this.candidates = const [],
+    this.nutritionComplete = true,
+  }) : mealName = mealName ?? name,
+       mealIdentityConfidence = mealIdentityConfidence ?? confidence;
 
-  factory FoodNutritionModel.fromJson(Map<String, dynamic> json) =>
-      FoodNutritionModel(
-        id: _integer(json['id']),
-        analysisId: _integer(json['analysisId']),
-        name: _foodName(json['name']),
-        analysis: json['analysis']?.toString() ?? '',
-        calories: _number(json['calories']),
-        protein: _number(json['protein']),
-        carbs: _number(json['carbs']),
-        fat: _number(json['fat']),
-        sugar: _number(json['sugar']),
-        servingSize: _number(json['servingSize'], fallback: 1),
-        servingUnit: json['servingUnit']?.toString() ?? 'serving',
-        confidence: _number(json['confidence']),
-        recommendationTitle:
-            json['recommendationTitle']?.toString() ?? 'AI Recommendation',
-        recommendation: json['recommendation']?.toString() ?? '',
-        databaseMatched: json['databaseMatched'] == true,
-        databaseMatchConfidence: _number(json['databaseMatchConfidence']),
-        needsUserConfirmation: json['needsUserConfirmation'] == true,
-        dataSource: json['dataSource']?.toString() ?? 'AI_ESTIMATE',
-        disclaimer: json['disclaimer']?.toString() ?? '',
-        privacyNotice: json['privacyNotice']?.toString() ?? '',
-      );
+  factory FoodNutritionModel.fromJson(Map<String, dynamic> json) {
+    final nutrition =
+        json['nutrition'] is Map
+            ? Map<String, dynamic>.from(json['nutrition'] as Map)
+            : const <String, dynamic>{};
+    final mealName =
+        json['mealName']?.toString().trim() ??
+        json['name']?.toString().trim() ??
+        '';
+    final mealConfidence = _number(
+      json['mealIdentityConfidence'],
+      fallback: _number(json['confidence']),
+    );
+    return FoodNutritionModel(
+      id: _integer(json['id']),
+      analysisId: _integer(json['analysisId']),
+      name: _foodName(json['name'] ?? json['mealName']),
+      analysis: json['analysis']?.toString() ?? '',
+      calories: _number(
+        json['calories'],
+        fallback: _number(nutrition['calories']),
+      ),
+      protein: _number(
+        json['protein'],
+        fallback: _number(nutrition['protein']),
+      ),
+      carbs: _number(
+        json['carbs'],
+        fallback: _number(nutrition['carbohydrates']),
+      ),
+      fat: _number(json['fat'], fallback: _number(nutrition['fat'])),
+      sugar: _number(json['sugar'], fallback: _number(nutrition['sugar'])),
+      fiber: _number(json['fiber'], fallback: _number(nutrition['fiber'])),
+      sodium: _number(json['sodium'], fallback: _number(nutrition['sodium'])),
+      servingSize: _number(json['servingSize'], fallback: 1),
+      servingUnit: json['servingUnit']?.toString() ?? 'serving',
+      confidence: mealConfidence,
+      recommendationTitle:
+          json['recommendationTitle']?.toString() ?? 'AI Recommendation',
+      recommendation: json['recommendation']?.toString() ?? '',
+      databaseMatched: json['databaseMatched'] == true,
+      databaseMatchConfidence: _number(json['databaseMatchConfidence']),
+      needsUserConfirmation: json['needsUserConfirmation'] == true,
+      dataSource:
+          json['dataSource']?.toString() ??
+          nutrition['source']?.toString() ??
+          'AI_ESTIMATE',
+      disclaimer: json['disclaimer']?.toString() ?? '',
+      privacyNotice: json['privacyNotice']?.toString() ?? '',
+      foodDetected: json['foodDetected'] != false,
+      reason: json['reason']?.toString() ?? '',
+      mealName: mealName.isEmpty ? 'Unknown food' : mealName,
+      cuisine: json['cuisine']?.toString() ?? 'Unknown',
+      mealType: json['type']?.toString() ?? 'food',
+      requiresDrinkDetails: json['requiresDrinkDetails'] == true,
+      mealIdentityConfidence: mealConfidence,
+      portionConfidence: _number(json['portionConfidence']),
+      preparationConfidence: _number(json['preparationConfidence']),
+      components: _modelList(
+        json['components'],
+        DetectedFoodComponentModel.fromJson,
+      ),
+      candidates: _modelList(json['candidates'], FoodCandidateModel.fromJson),
+      nutritionComplete:
+          nutrition.isEmpty
+              ? _number(json['calories']) > 0
+              : nutrition['complete'] == true,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -78,6 +154,8 @@ class FoodNutritionModel {
     'carbs': carbs,
     'fat': fat,
     'sugar': sugar,
+    'fiber': fiber,
+    'sodium': sodium,
     'servingSize': servingSize,
     'servingUnit': servingUnit,
     'confidence': confidence,
@@ -89,6 +167,28 @@ class FoodNutritionModel {
     'dataSource': dataSource,
     'disclaimer': disclaimer,
     'privacyNotice': privacyNotice,
+    'foodDetected': foodDetected,
+    'reason': reason,
+    'mealName': mealName,
+    'cuisine': cuisine,
+    'type': mealType,
+    'requiresDrinkDetails': requiresDrinkDetails,
+    'mealIdentityConfidence': mealIdentityConfidence,
+    'portionConfidence': portionConfidence,
+    'preparationConfidence': preparationConfidence,
+    'components': components.map((item) => item.toJson()).toList(),
+    'candidates': candidates.map((item) => item.toJson()).toList(),
+    'nutrition': {
+      'calories': calories,
+      'protein': protein,
+      'carbohydrates': carbs,
+      'fat': fat,
+      'sugar': sugar,
+      'fiber': fiber,
+      'sodium': sodium,
+      'source': dataSource,
+      'complete': nutritionComplete,
+    },
   };
 
   FoodNutritionModel withServing({required double size, required String unit}) {
@@ -107,6 +207,8 @@ class FoodNutritionModel {
       carbs: carbs * factor,
       fat: fat * factor,
       sugar: sugar * factor,
+      fiber: fiber * factor,
+      sodium: sodium * factor,
       servingSize: safeSize,
       servingUnit: sameUnit ? requestedUnit : servingUnit,
       confidence: confidence,
@@ -118,6 +220,18 @@ class FoodNutritionModel {
       dataSource: dataSource,
       disclaimer: disclaimer,
       privacyNotice: privacyNotice,
+      foodDetected: foodDetected,
+      reason: reason,
+      mealName: mealName,
+      cuisine: cuisine,
+      mealType: mealType,
+      requiresDrinkDetails: requiresDrinkDetails,
+      mealIdentityConfidence: mealIdentityConfidence,
+      portionConfidence: portionConfidence,
+      preparationConfidence: preparationConfidence,
+      components: components,
+      candidates: candidates,
+      nutritionComplete: nutritionComplete,
     );
   }
 
@@ -131,6 +245,8 @@ class FoodNutritionModel {
     carbs: carbs,
     fat: fat,
     sugar: sugar,
+    fiber: fiber,
+    sodium: sodium,
     servingSize: servingSize,
     servingUnit: servingUnit,
     confidence: confidence,
@@ -142,6 +258,18 @@ class FoodNutritionModel {
     dataSource: dataSource,
     disclaimer: disclaimer,
     privacyNotice: privacyNotice,
+    foodDetected: foodDetected,
+    reason: reason,
+    mealName: mealName,
+    cuisine: cuisine,
+    mealType: mealType,
+    requiresDrinkDetails: requiresDrinkDetails,
+    mealIdentityConfidence: mealIdentityConfidence,
+    portionConfidence: portionConfidence,
+    preparationConfidence: preparationConfidence,
+    components: components,
+    candidates: candidates,
+    nutritionComplete: nutritionComplete,
   );
 
   FoodNutritionModel asDatabaseVerified() => FoodNutritionModel(
@@ -154,6 +282,8 @@ class FoodNutritionModel {
     carbs: carbs,
     fat: fat,
     sugar: sugar,
+    fiber: fiber,
+    sodium: sodium,
     servingSize: servingSize,
     servingUnit: servingUnit,
     confidence: confidence,
@@ -165,7 +295,38 @@ class FoodNutritionModel {
     dataSource: 'DATABASE_VERIFIED',
     disclaimer: disclaimer,
     privacyNotice: privacyNotice,
+    foodDetected: foodDetected,
+    reason: reason,
+    mealName: mealName,
+    cuisine: cuisine,
+    mealType: mealType,
+    requiresDrinkDetails: requiresDrinkDetails,
+    mealIdentityConfidence: mealIdentityConfidence,
+    portionConfidence: portionConfidence,
+    preparationConfidence: preparationConfidence,
+    components: components,
+    candidates: candidates,
+    nutritionComplete: true,
   );
+
+  bool get hasCompleteNutrition =>
+      nutritionComplete &&
+      dataSource != 'UNAVAILABLE' &&
+      dataSource != 'PARTIAL_DATABASE';
+
+  bool get hasNutritionEstimate => dataSource != 'UNAVAILABLE';
+
+  bool get isDatabaseCalculated => dataSource == 'DATABASE_CALCULATED';
+
+  String get nutritionSourceLabel => switch (dataSource) {
+    'DATABASE_CALCULATED' => 'Database calculated',
+    'HYBRID_ESTIMATED' => 'Database + AI estimate',
+    'AI_ESTIMATED' || 'AI_ESTIMATE' => 'AI estimate',
+    'PARTIAL_DATABASE' => 'Partial nutrition',
+    'USER_ENTERED' => 'User entered',
+    'UNAVAILABLE' => 'Nutrition unavailable',
+    _ => databaseMatched ? 'Database matched' : 'Nutrition estimate',
+  };
 
   static double _number(Object? value, {double fallback = 0}) =>
       value is num
@@ -179,4 +340,15 @@ class FoodNutritionModel {
 
   static int? _integer(Object? value) =>
       value is num ? value.toInt() : int.tryParse(value?.toString() ?? '');
+
+  static List<T> _modelList<T>(
+    Object? value,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((item) => fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
 }

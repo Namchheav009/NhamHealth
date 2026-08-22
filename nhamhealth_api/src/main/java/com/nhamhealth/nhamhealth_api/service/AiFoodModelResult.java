@@ -1,9 +1,9 @@
 package com.nhamhealth.nhamhealth_api.service;
 
-import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 
 public record AiFoodModelResult(
-        AiFoodAnalysisResponse response,
+        FoodVisionResult response,
         String modelName,
         String promptVersion,
         boolean nutritionFallbackUsed,
