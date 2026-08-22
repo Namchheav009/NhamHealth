@@ -58,27 +58,7 @@ class MealController extends GetxController {
 
   final meals = <MealModel>[].obs;
 
-<<<<<<< Updated upstream
-  List<MealModel> get filteredMeals {
-    final category = categories[selectedCategory.value];
-    final query = searchQuery.value.trim().toLowerCase();
-
-    return meals
-        .where((meal) {
-          final matchesCategory =
-              category.id == MealCategoryModel.all.id ||
-              meal.categoryId == category.id;
-          final matchesSearch =
-              query.isEmpty ||
-              meal.name.replaceAll('\n', ' ').toLowerCase().contains(query) ||
-              meal.category.toLowerCase().contains(query);
-          return matchesCategory && matchesSearch;
-        })
-        .toList(growable: false);
-  }
-=======
   List<MealModel> get filteredMeals => meals.toList(growable: false);
->>>>>>> Stashed changes
 
   @override
   void onInit() {
