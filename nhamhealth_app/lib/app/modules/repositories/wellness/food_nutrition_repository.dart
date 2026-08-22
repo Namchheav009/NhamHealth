@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -96,7 +97,7 @@ class FoodNutritionRepository {
     try {
       final streamed = await _client
           .send(request)
-          .timeout(const Duration(seconds: 75));
+          .timeout(const Duration(seconds: 180));
       final response = await http.Response.fromStream(streamed);
       if (response.statusCode == 401 || response.statusCode == 403) {
         throw const FoodNutritionException(
@@ -117,9 +118,13 @@ class FoodNutritionRepository {
       return FoodNutritionModel.fromJson(payload);
     } on FoodNutritionException {
       rethrow;
-    } catch (_) {
+    } on TimeoutException {
       throw const FoodNutritionException(
-        'Could not reach cloud food AI. Check the server connection.',
+        'Food analysis took too long. Please try again with a smaller, clearer photo.',
+      );
+    } catch (_) {
+      throw FoodNutritionException(
+        'Could not reach the NhamHealth API at ${ApiConfig.baseUrl}. Start the API server and try again.',
       );
     }
   }
@@ -165,7 +170,7 @@ class FoodNutritionRepository {
     }
     final oriented = image.bakeOrientation(decoded);
     Uint8List? smallest;
-    for (final maxDimension in const [768, 640, 512, 384]) {
+    for (final maxDimension in const [896, 768, 640, 512]) {
       final image.Image resized;
       if (oriented.width <= maxDimension && oriented.height <= maxDimension) {
         resized = oriented;
@@ -182,7 +187,7 @@ class FoodNutritionRepository {
           interpolation: image.Interpolation.average,
         );
       }
-      for (final quality in const [78, 65, 52, 40]) {
+      for (final quality in const [82, 72, 60, 48]) {
         final encoded = Uint8List.fromList(
           image.encodeJpg(resized, quality: quality),
         );

@@ -127,13 +127,7 @@ class AiFoodController extends GetxController {
         filename: filename,
       );
       if (generation != null && generation != _scanGeneration) return;
-      nutrition.value = food;
-      isUserConfirmed.value = !food.needsUserConfirmation;
-      prediction.value = FoodPredictionModel(
-        foodName: food.name,
-        confidence: food.confidence.clamp(0, 1),
-        classIndex: -1,
-      );
+      _publishPrediction(food);
       final localGuidance = recommendationService.create(
         food: food,
         currentCalories: caloriesController.currentCalories.value,
@@ -157,7 +151,6 @@ class AiFoodController extends GetxController {
           Uint8List.fromList(bytes),
         );
         if (generation != null && generation != _scanGeneration) return;
-        prediction.value = localPrediction;
         final localNutrition = await nutritionRepository.searchFood(
           localPrediction.foodName,
         );
@@ -166,7 +159,13 @@ class AiFoodController extends GetxController {
             'Food recognized locally, but nutrition was not found.',
           );
         }
+        if (generation != null && generation != _scanGeneration) return;
         nutrition.value = localNutrition;
+        prediction.value = FoodPredictionModel(
+          foodName: localNutrition.name,
+          confidence: localPrediction.confidence.clamp(0, 1),
+          classIndex: localPrediction.classIndex,
+        );
         isUserConfirmed.value = false;
         recommendation.value = recommendationService.create(
           food: localNutrition,
@@ -175,6 +174,10 @@ class AiFoodController extends GetxController {
         );
         errorMessage.value = null;
       } on Object {
+        prediction.value = null;
+        nutrition.value = null;
+        recommendation.value = null;
+        isUserConfirmed.value = false;
         errorMessage.value = cloudError.message;
       }
     } finally {
@@ -264,6 +267,11 @@ class AiFoodController extends GetxController {
       nutrition.value != null &&
       (isUserConfirmed.value ||
           (prediction.value?.confidence ?? 0) >= lowConfidenceThreshold);
+
+  bool get hasCompleteResult =>
+      prediction.value != null &&
+      nutrition.value != null &&
+      errorMessage.value == null;
 
   Future<void> confirmFood() async {
     final food = nutrition.value;
@@ -376,6 +384,16 @@ class AiFoodController extends GetxController {
     errorMessage.value = null;
     wasAdded.value = false;
     isUserConfirmed.value = false;
+  }
+
+  void _publishPrediction(FoodNutritionModel food) {
+    nutrition.value = food;
+    prediction.value = FoodPredictionModel(
+      foodName: food.name,
+      confidence: food.confidence.clamp(0, 1),
+      classIndex: -1,
+    );
+    isUserConfirmed.value = !food.needsUserConfirmation;
   }
 
   @override

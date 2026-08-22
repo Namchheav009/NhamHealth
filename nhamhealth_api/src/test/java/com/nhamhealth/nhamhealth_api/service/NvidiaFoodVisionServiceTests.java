@@ -40,7 +40,7 @@ class NvidiaFoodVisionServiceTests {
         try {
             NvidiaFoodVisionService service = new NvidiaFoodVisionService(
                     "http://127.0.0.1:" + server.getAddress().getPort(),
-                    "test-key", "vision-model", "nutrition-model",
+                    "test-key", "vision-model", "fallback-vision-model", "nutrition-model",
                     "test-prompt", 4096, "low");
 
             AiFoodModelResult result = service.analyze(
@@ -48,7 +48,38 @@ class NvidiaFoodVisionServiceTests {
 
             assertEquals(3, requests.get());
             assertEquals("Egg fried rice", result.response().name());
+            assertTrue(result.modelName().contains("fallback-vision-model"));
             assertTrue(result.modelName().contains("nutrition-model"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void recoversFoodNameWhenFallbackJsonIsMalformed() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String malformedIdentity = "{\"name\":\"Milk Tea\" broken response}";
+        List<String> responses = List.of(
+                completion(mapper, "{\"name\":\"Milk", "length"),
+                completion(mapper, malformedIdentity, "stop"));
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/chat/completions", exchange -> respond(
+                exchange, responses.get(Math.min(requests.getAndIncrement(), responses.size() - 1))));
+        server.start();
+
+        try {
+            NvidiaFoodVisionService service = new NvidiaFoodVisionService(
+                    "http://127.0.0.1:" + server.getAddress().getPort(),
+                    "test-key", "vision-model", "fallback-vision-model", "nutrition-model",
+                    "test-prompt", 4096, "low");
+
+            AiFoodModelResult result = service.analyze(
+                    new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF}, "image/jpeg");
+
+            assertEquals(2, requests.get());
+            assertEquals("Milk Tea", result.response().name());
+            assertEquals("IDENTITY_ONLY", result.response().dataSource());
         } finally {
             server.stop(0);
         }
@@ -70,7 +101,7 @@ class NvidiaFoodVisionServiceTests {
         try {
             NvidiaFoodVisionService service = new NvidiaFoodVisionService(
                     "http://127.0.0.1:" + server.getAddress().getPort(),
-                    "test-key", "vision-model", "nutrition-model",
+                    "test-key", "vision-model", "fallback-vision-model", "nutrition-model",
                     "test-prompt", 4096, "low");
 
             AiFoodModelResult result = service.analyze(
@@ -105,7 +136,7 @@ class NvidiaFoodVisionServiceTests {
         try {
             NvidiaFoodVisionService service = new NvidiaFoodVisionService(
                     "http://127.0.0.1:" + server.getAddress().getPort(),
-                    "test-key", "vision-model", "nutrition-model",
+                    "test-key", "vision-model", "fallback-vision-model", "nutrition-model",
                     "test-prompt", 4096, "low");
 
             AiFoodModelResult result = service.analyze(

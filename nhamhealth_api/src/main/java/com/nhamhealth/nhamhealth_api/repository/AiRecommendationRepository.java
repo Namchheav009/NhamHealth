@@ -11,7 +11,7 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
 
 public interface AiRecommendationRepository extends JpaRepository<AiRecommendation, Integer> {
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "mood"})
     List<AiRecommendation> findAllByOrderByCreatedAtDesc();
 
     @EntityGraph(attributePaths = "user")

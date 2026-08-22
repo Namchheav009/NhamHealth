@@ -5,103 +5,117 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'inner_shadow.dart';
-import '../../../../routes/app_routes.dart';
 
 class HomeBottomNavigation extends GetView<HomeController> {
   const HomeBottomNavigation({super.key});
+
+  @override
+  Widget build(BuildContext context) => Obx(
+    () => AppBottomNavigation(
+      selectedIndex: controller.selectedBottomIndex.value,
+      onSelect: controller.selectBottomMenu,
+    ),
+  );
+}
+
+class AppBottomNavigation extends StatelessWidget {
+  const AppBottomNavigation({
+    super.key,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
 
   static const Color _activeGreen = AppColors.navigationGreen;
   static const Color _inactiveGray = AppColors.inactiveText;
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final selectedIndex = controller.selectedBottomIndex.value;
-
-      return SizedBox(
-        height: 84,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 64,
-              child: PhysicalShape(
-                clipper: const _NavigationBarClipper(),
-                clipBehavior: Clip.antiAlias,
-                color: Colors.white,
-                shadowColor: const Color(0x1A31543F),
-                elevation: 4,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        AppColors.homeBackground,
-                        AppColors.cardSurface,
-                        AppColors.softGreen,
+    return SizedBox(
+      height: 84,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 64,
+            child: PhysicalShape(
+              clipper: const _NavigationBarClipper(),
+              clipBehavior: Clip.antiAlias,
+              color: Colors.white,
+              shadowColor: const Color(0x1A31543F),
+              elevation: 4,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      AppColors.homeBackground,
+                      AppColors.cardSurface,
+                      AppColors.softGreen,
+                    ],
+                  ),
+                ),
+                child: CustomPaint(
+                  foregroundPainter: const _NavigationInnerShadowPainter(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _NavItem(
+                          icon: Icons.home_rounded,
+                          label: 'Home',
+                          selected: selectedIndex == 0,
+                          onTap: () => onSelect(0),
+                        ),
+                        _NavItem(
+                          icon: Icons.restaurant_menu_rounded,
+                          label: 'Meals',
+                          selected: selectedIndex == 1,
+                          onTap: () => onSelect(1),
+                        ),
+                        const SizedBox(width: 48),
+                        _NavItem(
+                          icon: Icons.people_outline_rounded,
+                          selectedIcon: Icons.people_rounded,
+                          label: 'Community',
+                          selected: selectedIndex == 3,
+                          onTap: () => onSelect(3),
+                        ),
+                        _NavItem(
+                          icon: Icons.person_outline_rounded,
+                          selectedIcon: Icons.person_rounded,
+                          label: 'Profile',
+                          selected: selectedIndex == 4,
+                          onTap: () => onSelect(4),
+                        ),
                       ],
                     ),
                   ),
-                  child: CustomPaint(
-                    foregroundPainter: const _NavigationInnerShadowPainter(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _NavItem(
-                            icon: Icons.home_rounded,
-                            label: 'Home',
-                            selected: selectedIndex == 0,
-                            onTap: () => controller.selectBottomMenu(0),
-                          ),
-                          _NavItem(
-                            icon: Icons.restaurant_menu_rounded,
-                            label: 'Meals',
-                            selected: selectedIndex == 1,
-                            onTap: () => controller.selectBottomMenu(1),
-                          ),
-                          const SizedBox(width: 48),
-                          _NavItem(
-                            icon: Icons.people_outline_rounded,
-                            selectedIcon: Icons.people_rounded,
-                            label: 'Community',
-                            selected: selectedIndex == 3,
-                            onTap: () => controller.selectBottomMenu(3),
-                          ),
-                          _NavItem(
-                            icon: Icons.person_outline_rounded,
-                            selectedIcon: Icons.person_rounded,
-                            label: 'Profile',
-                            selected: selectedIndex == 4,
-                            onTap: () => controller.selectBottomMenu(4),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: Center(
-                child: _PostButton(
-                  selected: selectedIndex == 2,
-                  onTap: () => controller.selectBottomMenu(2),
-                ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: Center(
+              child: _PostButton(
+                selected: selectedIndex == 2,
+                onTap: () => onSelect(2),
               ),
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -243,7 +257,7 @@ class _NavItem extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   selected
-                      ? HomeBottomNavigation._activeGreen
+                      ? AppBottomNavigation._activeGreen
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(25),
               boxShadow: selected ? AppShadows.selectedNavigation : null,
@@ -257,7 +271,7 @@ class _NavItem extends StatelessWidget {
                   color:
                       selected
                           ? Colors.white
-                          : HomeBottomNavigation._inactiveGray,
+                          : AppBottomNavigation._inactiveGray,
                   size: 25,
                 ),
               ),
@@ -327,7 +341,7 @@ class _PostButton extends StatelessWidget {
                     color:
                         selected
                             ? AppColors.primaryGreen
-                            : HomeBottomNavigation._inactiveGray,
+                            : AppBottomNavigation._inactiveGray,
                     fontSize: 11,
                     height: 1,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
