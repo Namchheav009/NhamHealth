@@ -14,7 +14,10 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+    @jakarta.persistence.Index(name = "idx_notifications_user_created_at", columnList = "user_id, created_at"),
+    @jakarta.persistence.Index(name = "idx_notifications_actor_user_id", columnList = "actor_user_id")
+})
 public class Notification {
 
     @Id
@@ -22,11 +25,11 @@ public class Notification {
     @Column(name = "notification_id")
     private Integer notificationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "actor_user_id")
     private User actorUser;
 

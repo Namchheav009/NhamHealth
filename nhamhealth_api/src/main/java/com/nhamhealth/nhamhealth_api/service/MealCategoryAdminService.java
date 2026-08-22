@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealCategoryRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealCategoryDto;
@@ -22,7 +24,11 @@ public class MealCategoryAdminService {
         this.mealRepository = mealRepository;
     }
 
-    @Transactional
+        @Transactional
+        @Caching(evict = {
+            @CacheEvict(value = "mealCategories", allEntries = true),
+            @CacheEvict(value = "activeMealCategories", allEntries = true)
+        })
     public AdminMealCategoryDto create(AdminMealCategoryRequest request) {
         String name = request.categoryName().trim();
         if (mealCategoryRepository.findByCategoryNameIgnoreCase(name).isPresent()) {
@@ -36,7 +42,11 @@ public class MealCategoryAdminService {
         return toDto(mealCategoryRepository.save(category));
     }
 
-    @Transactional
+        @Transactional
+        @Caching(evict = {
+            @CacheEvict(value = "mealCategories", allEntries = true),
+            @CacheEvict(value = "activeMealCategories", allEntries = true)
+        })
     public AdminMealCategoryDto update(Integer categoryId, AdminMealCategoryRequest request) {
         MealCategory category = getCategory(categoryId);
         String name = request.categoryName().trim();
@@ -47,7 +57,11 @@ public class MealCategoryAdminService {
         return toDto(mealCategoryRepository.save(category));
     }
 
-    @Transactional
+        @Transactional
+        @Caching(evict = {
+            @CacheEvict(value = "mealCategories", allEntries = true),
+            @CacheEvict(value = "activeMealCategories", allEntries = true)
+        })
     public void delete(Integer categoryId) {
         MealCategory category = getCategory(categoryId);
         if (mealRepository.countByCategoryCategoryId(categoryId) > 0) {

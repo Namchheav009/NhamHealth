@@ -22,9 +22,11 @@ public class MealApiController {
 
     /** Returns published meals from the Supabase-backed PostgreSQL database. */
     @GetMapping
-    public ResponseEntity<List<MealResponse>> publishedMeals() {
+    public ResponseEntity<List<MealResponse>> publishedMeals(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "") String keyword,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") Integer categoryId) {
         List<MealResponse> meals = mealRepository
-                .findAllByIsPublishedTrueOrderByMealNameAsc()
+                .findPublishedMeals(keyword.trim(), categoryId)
                 .stream()
                 .map(MealResponse::from)
                 .toList();

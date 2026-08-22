@@ -23,7 +23,7 @@ public class WellnessProfile {
     @Column(name = "wellness_profile_id")
     private Integer wellnessProfileId;
 
-    @OneToOne
+    @OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

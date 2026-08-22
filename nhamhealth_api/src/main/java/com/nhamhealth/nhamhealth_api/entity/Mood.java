@@ -29,7 +29,7 @@ public class Mood {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-    @OneToMany(mappedBy = "mood")
+    @OneToMany(mappedBy = "mood", fetch = jakarta.persistence.FetchType.LAZY)
     private List<AiRecommendation> aiRecommendations = new ArrayList<>();
 
     public Mood() {

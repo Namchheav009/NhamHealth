@@ -22,7 +22,7 @@ public class PasswordResetToken {
     @Column(name = "reset_token_id")
     private Integer resetTokenId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 
 import jakarta.persistence.EntityManager;
 
@@ -14,6 +15,9 @@ import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealEditorDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminRecipeStepDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealIngredientDto;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminMealNutritionDto;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminMealReviewDto;
+import com.nhamhealth.nhamhealth_api.dto.response.MealAdminAggregateProjection;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
 import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
@@ -29,6 +33,7 @@ import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealIngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.MealNutritionRepository;
 
 @Service
 public class MealAdminService {
@@ -41,6 +46,7 @@ public class MealAdminService {
     private final RecipeStepRepository recipeStepRepository;
     private final IngredientRepository ingredientRepository;
     private final MealIngredientRepository mealIngredientRepository;
+    private final MealNutritionRepository mealNutritionRepository;
     private final ProfileImageStorageService profileImageStorageService;
     private final EntityManager entityManager;
 
@@ -53,6 +59,7 @@ public class MealAdminService {
             RecipeStepRepository recipeStepRepository,
             IngredientRepository ingredientRepository,
             MealIngredientRepository mealIngredientRepository,
+            MealNutritionRepository mealNutritionRepository,
             ProfileImageStorageService profileImageStorageService,
             EntityManager entityManager) {
         this.mealRepository = mealRepository;
@@ -63,6 +70,7 @@ public class MealAdminService {
         this.recipeStepRepository = recipeStepRepository;
         this.ingredientRepository = ingredientRepository;
         this.mealIngredientRepository = mealIngredientRepository;
+        this.mealNutritionRepository = mealNutritionRepository;
         this.profileImageStorageService = profileImageStorageService;
         this.entityManager = entityManager;
     }
@@ -71,11 +79,19 @@ public class MealAdminService {
             String search, String category, String status, String tag, Pageable pageable) {
         return mealRepository.findForAdmin(
                 normalizeFilter(search), normalizeFilter(category), normalizeFilter(status), normalizeFilter(tag), pageable)
-                .map(this::toAdminRow);
+            .map(this::toAdminRow);
     }
 
     public long getMealCount() {
         return mealRepository.count();
+    }
+
+    public double getAverageRating() {
+        return reviewRepository.findAverageRating();
+    }
+
+    public long getFavoriteCount() {
+        return mealFavoriteRepository.countAllFavorites();
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -104,10 +120,20 @@ public class MealAdminService {
                         ingredient.getIngredient().getDefaultUnit(), ingredient.getQuantity(), ingredient.getUnit(),
                         ingredient.getPreparationNote()))
                 .toList();
+            List<AdminMealNutritionDto> nutrition = mealNutritionRepository.findByMealMealIdOrderByNutrientDisplayOrderAsc(mealId).stream()
+                .map(item -> new AdminMealNutritionDto(
+                    item.getNutrient().getNutrientId(), item.getNutrient().getNutrientName(),
+                    item.getAmountPerServing(), item.getNutrient().getUnit()))
+                .toList();
+            List<AdminMealReviewDto> reviews = reviewRepository.findByMealMealId(mealId).stream()
+                .map(review -> new AdminMealReviewDto(
+                    review.getReviewId(), review.getUser() == null ? "Unknown user" : review.getUser().getEmail(),
+                    review.getRating(), review.getReviewText(), review.getCreatedAt()))
+                .toList();
         return new AdminMealEditorDto(
                 meal.getMealId(), meal.getMealName(), meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), meal.getDifficulty(), meal.getCookingTimeMinutes(),
-                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, recipeSteps);
+                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition, recipeSteps, reviews);
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -217,6 +243,7 @@ public class MealAdminService {
                 .toList();
     }
 
+    @Cacheable("mealTagNames")
     public List<String> getMealTags() {
         return mealTagRepository.findDistinctTagNames();
     }
@@ -253,7 +280,7 @@ public class MealAdminService {
                 .mapToDouble(Review::getRating)
                 .average()
                 .orElse(0.0);
-        String reviewsText = reviews.isEmpty() ? "0 (0)" : String.format("%.1f (%d)", averageRating, reviews.size());
+        String rating = String.format("%.1f", averageRating);
 
         long favorites = mealFavoriteRepository.countByMealMealId(meal.getMealId());
 
@@ -261,34 +288,55 @@ public class MealAdminService {
                 meal.getMealId(),
                 mealIconClass(category),
                 meal.getMainImageUrl(),
+                profileImageStorageService.mealThumbnailUrl(meal.getMainImageUrl()),
                 meal.getMealName(),
                 category,
                 calories,
                 servingSize,
                 tags,
-                reviewsText,
+                rating,
+                reviews.size(),
                 Math.toIntExact(favorites),
                 status,
                 updatedDate);
     }
 
+        private MealAdminRowDto toAdminRow(MealAdminAggregateProjection meal) {
+        String category = meal.getCategory() == null ? "Uncategorized" : meal.getCategory();
+        String status = Boolean.TRUE.equals(meal.getPublished()) ? "Published" : "Draft";
+        String calories = meal.getCalories() == null ? "—"
+            : meal.getCalories().setScale(0, java.math.RoundingMode.HALF_UP).toPlainString() + " kcal";
+        String servingSize = meal.getServings() == null ? "—" : meal.getServings() + " serving";
+        String updatedDate = meal.getUpdatedAt() == null ? "—"
+            : meal.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+        List<String> tags = mealTagRepository.findByMealMealId(meal.getMealId()).stream()
+            .map(tag -> tag.getTag() != null ? tag.getTag().getTagName() : null)
+            .filter(tag -> tag != null && !tag.isBlank())
+            .collect(Collectors.toList());
+        return new MealAdminRowDto(
+            meal.getMealId(), mealIconClass(category), meal.getMainImageUrl(),
+            profileImageStorageService.mealThumbnailUrl(meal.getMainImageUrl()), meal.getMealName(), category,
+            calories, servingSize, tags, String.format("%.1f", meal.getRating() == null ? 0 : meal.getRating()),
+            Math.toIntExact(meal.getReviewCount()), Math.toIntExact(meal.getFavorites()), status, updatedDate);
+        }
+
     private String mealIconClass(String category) {
         String normalized = category == null ? "" : category.toLowerCase();
         if (normalized.contains("soup") || normalized.contains("bowl")) {
-            return "fa-bowl-food";
+            return "bi-egg-fried";
         }
         if (normalized.contains("salad")) {
-            return "fa-leaf";
+            return "bi-leaf";
         }
         if (normalized.contains("breakfast")) {
-            return "fa-egg";
+            return "bi-egg";
         }
         if (normalized.contains("fish") || normalized.contains("salmon")) {
-            return "fa-fish";
+            return "bi-fish";
         }
         if (normalized.contains("stir") || normalized.contains("rice")) {
-            return "fa-bowl-rice";
+            return "bi-egg-fried";
         }
-        return "fa-utensils";
+        return "bi-egg-fried";
     }
 }

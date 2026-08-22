@@ -10,6 +10,11 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  cache:
+    type: caffeine
+    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=60s
     properties:
       hibernate:
         default_schema: public

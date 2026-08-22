@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.cache.annotation.CacheEvict;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminTagRequest;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
@@ -50,6 +51,7 @@ public class TagAdminController {
     }
 
     @PostMapping("/admin/tags")
+    @CacheEvict(value = {"tags", "mealTagNames"}, allEntries = true)
     @ResponseBody
     public ResponseEntity<?> createTag(@Valid @RequestBody AdminTagRequest request) {
         if (tagTypeRepository.findByTagNameIgnoreCase(request.tagName().trim()).isPresent()) {
@@ -61,6 +63,7 @@ public class TagAdminController {
     }
 
     @PutMapping("/admin/tags/{tagId}")
+    @CacheEvict(value = {"tags", "mealTagNames"}, allEntries = true)
     @ResponseBody
     public ResponseEntity<?> updateTag(@PathVariable Integer tagId, @Valid @RequestBody AdminTagRequest request) {
         return tagTypeRepository.findById(tagId)
@@ -77,6 +80,7 @@ public class TagAdminController {
     }
 
     @DeleteMapping("/admin/tags/{tagId}")
+    @CacheEvict(value = {"tags", "mealTagNames"}, allEntries = true)
     @ResponseBody
     public ResponseEntity<?> deleteTag(@PathVariable Integer tagId) {
         if (!tagTypeRepository.existsById(tagId)) {

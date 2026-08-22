@@ -22,11 +22,11 @@ public class UserAuthProvider {
     @Column(name = "user_auth_provider_id")
     private Integer userAuthProviderId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
     private AuthProvider authProvider;
 

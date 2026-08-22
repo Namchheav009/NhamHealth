@@ -37,6 +37,7 @@ const mealPageTotal = document.getElementById("mealPageTotal");
 let meals = [];
 let mealPage = 0;
 let mealPageData = null;
+let mealSummary = null;
 let editingMealId = null;
 let currentMainImageUrl = null;
 let previewObjectUrl = null;
@@ -93,13 +94,13 @@ function closeImageViewer() {
 function drawRows(list) {
     rowsBox.innerHTML = "";
     if (!list.length) {
-        rowsBox.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center">No meals found.</td></tr>';
+        rowsBox.innerHTML = '<tr><td colspan="11" style="padding:40px;text-align:center">No meals found.</td></tr>';
     } else {
         list.forEach(meal => {
             const tags = (meal.tags || []).map(tag => `<span class="pill ${tagClass(tag)}">${escapeHtml(tag)}</span>`).join(" ");
             const thumbnail = meal.mainImageUrl
-                ? `<img src="${escapeHtml(meal.mainImageUrl)}" alt="${escapeHtml(meal.mealName)}">`
-                : `<i class="fa-solid ${escapeHtml(meal.iconClass || "fa-utensils")}"></i>`;
+                ? `<img src="${escapeHtml(meal.thumbnailUrl || meal.mainImageUrl)}" alt="${escapeHtml(meal.mealName)}" loading="lazy" width="50" height="50">`
+                : `<i class="bi ${escapeHtml(meal.iconClass || "bi-egg-fried")}"></i>`;
             rowsBox.insertAdjacentHTML("beforeend", `
                 <tr>
                     <td><div class="meal-cell"><div class="meal-thumb">${thumbnail}</div><div><strong>${escapeHtml(meal.mealName)}</strong><small>${escapeHtml(meal.category)} meal</small></div></div></td>
@@ -107,11 +108,13 @@ function drawRows(list) {
                     <td>${escapeHtml(meal.calories)}</td>
                     <td>${escapeHtml(meal.servingSize)}</td>
                     <td>${tags}</td>
-                    <td><i class="fa-solid fa-star" style="color:#f5a623"></i> ${escapeHtml(meal.reviews)}</td>
+                    <td><i class="bi bi-star-fill" style="color:#f5a623"></i> ${escapeHtml(meal.rating)}</td>
+                    <td>${Number(meal.reviewCount || 0).toLocaleString()}</td>
                     <td>${Number(meal.favorites || 0).toLocaleString()}</td>
                     <td><span class="pill ${statusClass(meal.status)}">${escapeHtml(meal.status)}</span></td>
                     <td>${escapeHtml(meal.updatedDate)}</td>
-                    <td><div class="meal-actions"><button class="action" data-action="edit" data-meal-id="${meal.mealId}" type="button" aria-label="Edit meal"><i class="fa-solid fa-pen"></i></button><button class="action danger-action" data-action="delete" data-meal-id="${meal.mealId}" type="button" aria-label="Delete meal"><i class="fa-solid fa-trash"></i></button></div></td>
+                    <td class="image-url-cell" title="${escapeHtml(meal.mainImageUrl)}">${escapeHtml(meal.mainImageUrl || "—")}</td>
+                    <td><div class="meal-actions"><button class="action" data-action="edit" data-meal-id="${meal.mealId}" type="button" aria-label="Edit meal"><i class="bi bi-pencil"></i></button><button class="action danger-action" data-action="delete" data-meal-id="${meal.mealId}" type="button" aria-label="Delete meal"><i class="bi bi-trash3"></i></button></div></td>
                 </tr>`);
         });
     }
@@ -125,15 +128,9 @@ function drawRows(list) {
 }
 
 function updateSummary() {
-    const favorites = meals.reduce((total, meal) => total + (Number(meal.favorites) || 0), 0);
-    const ratings = meals.flatMap(meal => {
-        const match = String(meal.reviews || "").match(/^([\d.]+) \((\d+)\)$/);
-        return match && Number(match[2]) ? Array(Number(match[2])).fill(Number(match[1])) : [];
-    });
-    const rating = ratings.length ? ratings.reduce((total, value) => total + value, 0) / ratings.length : 0;
-    totalMeals.textContent = (mealPageData?.totalElements ?? meals.length).toLocaleString();
-    averageRating.textContent = `${rating.toFixed(1)} / 5`;
-    favoritesSaved.textContent = favorites.toLocaleString();
+    totalMeals.textContent = Number(mealSummary?.totalMeals ?? mealPageData?.totalElements ?? meals.length).toLocaleString();
+    averageRating.textContent = `${Number(mealSummary?.averageRating ?? 0).toFixed(1)} / 5`;
+    favoritesSaved.textContent = Number(mealSummary?.favoriteCount ?? 0).toLocaleString();
 }
 
 function filterMeals() {
@@ -197,6 +194,9 @@ async function loadMeals(page = mealPage) {
         const response = await fetch(`/admin/meals/data?${params}`);
         if (!response.ok) throw new Error("Unable to load meals");
         mealPageData = await response.json();
+        const summaryResponse = await fetch("/admin/meals/summary");
+        if (!summaryResponse.ok) throw new Error("Unable to load meal summary");
+        mealSummary = await summaryResponse.json();
         if (!mealPageData.content.length && mealPageData.totalPages && page >= mealPageData.totalPages) {
             return loadMeals(mealPageData.totalPages - 1);
         }
@@ -206,13 +206,13 @@ async function loadMeals(page = mealPage) {
         drawRows(meals);
         updatePagination();
     } catch (error) {
-        rowsBox.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center">Unable to load meals from the API.</td></tr>';
+        rowsBox.innerHTML = '<tr><td colspan="11" style="padding:40px;text-align:center">Unable to load meals from the API.</td></tr>';
         console.error(error);
     }
 }
 
 function recipeStepMarkup(number) {
-    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="fa-solid fa-trash-can"></i></button></div><input data-step-title type="text" maxlength="150" placeholder="Step title (optional)"><textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea><input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step ${number}"><div class="recipe-step-image-preview" data-step-image-preview hidden><img data-step-image-preview-image alt="Cooking step image preview"><div><strong data-step-image-preview-title>Current step image</strong><span data-step-image-preview-text>This image is currently shown to users.</span></div></div></article>`;
+    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div><input data-step-title type="text" maxlength="150" placeholder="Step title (optional)"><textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea><input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step ${number}"><div class="recipe-step-image-preview" data-step-image-preview hidden><img data-step-image-preview-image alt="Cooking step image preview"><div><strong data-step-image-preview-title>Current step image</strong><span data-step-image-preview-text>This image is currently shown to users.</span></div></div></article>`;
 }
 
 function clearStepImagePreview(step) {
@@ -281,7 +281,7 @@ function renderSelectedIngredients() {
             <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
             <label>Unit<input data-ingredient-unit type="text" maxlength="30" value="${escapeHtml(ingredient.unit ?? ingredient.defaultUnit ?? "")}" placeholder="e.g. g"></label>
             <label class="ingredient-note">Preparation note<input data-ingredient-note type="text" maxlength="150" value="${escapeHtml(ingredient.preparationNote ?? "")}" placeholder="e.g. finely chopped"></label>
-            <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="fa-solid fa-trash-can"></i></button>
+            <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="bi bi-trash3"></i></button>
         </article>`).join("");
 }
 
@@ -335,6 +335,7 @@ function openCreateModal() {
     mealImageHelp.textContent = "JPG, PNG, or WebP. Maximum 5 MB.";
     resetMealIngredients();
     resetRecipeSteps();
+    document.getElementById("mealRelatedData").hidden = true;
     document.getElementById("mealModalTitle").textContent = "Add Meal";
     document.getElementById("mealModalText").textContent = "Enter meal information for your catalog.";
     document.getElementById("saveMealButton").textContent = "Save Meal";
@@ -373,6 +374,11 @@ async function openEditModal(mealId) {
         clearAllStepImagePreviews();
         recipeStepsBox.innerHTML = "";
         meal.recipeSteps.forEach(appendRecipeStep);
+        const relatedData = document.getElementById("mealRelatedData");
+        relatedData.hidden = false;
+        ["ingredients", "nutrition", "recipeSteps", "reviews"].forEach(key => {
+            relatedData.querySelector(`[data-related-count="${key}"]`).textContent = (meal[key] || []).length;
+        });
         document.getElementById("mealModalTitle").textContent = "Edit Meal";
         document.getElementById("mealModalText").textContent = "Update the meal and its cooking steps.";
         document.getElementById("saveMealButton").textContent = "Update Meal";
@@ -390,12 +396,42 @@ function closeModal() {
 }
 
 async function uploadImage(endpoint, file, responseField) {
+    const optimizedFile = await optimizeImage(file);
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", optimizedFile);
     const response = await fetch(endpoint, { method: "POST", headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}, body: data });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.message || "Unable to upload image");
     return body[responseField];
+}
+
+async function optimizeImage(file) {
+    if (!file || file.type === "image/webp") return file;
+    const objectUrl = URL.createObjectURL(file);
+    try {
+        const image = await new Promise((resolve, reject) => {
+            const element = new Image();
+            element.onload = () => resolve(element);
+            element.onerror = reject;
+            element.src = objectUrl;
+        });
+        const maxDimension = 1600;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
+        if (!blob) return file;
+        return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {
+            type: "image/webp",
+            lastModified: file.lastModified
+        });
+    } catch (_) {
+        return file;
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
 }
 
 async function saveMeal(event) {
@@ -440,6 +476,7 @@ async function saveMeal(event) {
             isUpdate ? "The meal has been updated successfully." : "The new meal has been added successfully."
         ) ?? Promise.resolve(window.alert(isUpdate ? "The meal has been updated successfully." : "The new meal has been added successfully.")));
         closeModal();
+        mealSummary = null;
         await loadMeals();
     } catch (error) {
         window.adminAlerts?.error(error.message) ?? window.alert(error.message);
@@ -465,6 +502,7 @@ rowsBox.addEventListener("click", async event => {
             throw new Error(body.message || "Unable to delete meal");
         }
         await window.adminAlerts?.success("Deleted!", "The meal has been deleted.");
+        mealSummary = null;
         await loadMeals();
     } catch (error) {
         window.adminAlerts?.error(error.message) ?? window.alert(error.message);
@@ -475,7 +513,7 @@ rowsBox.addEventListener("click", async event => {
     const element = document.getElementById(id);
     element.addEventListener(element.tagName === "INPUT" ? "input" : "change", () => {
         window.clearTimeout(mealFilterTimer);
-        mealFilterTimer = window.setTimeout(filterMeals, element.tagName === "INPUT" ? 250 : 0);
+        mealFilterTimer = window.setTimeout(filterMeals, element.tagName === "INPUT" ? 400 : 0);
     });
 });
 document.getElementById("clearFilters").onclick = () => {

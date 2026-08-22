@@ -20,11 +20,11 @@ public class MealLogNutrient {
     @Column(name = "meal_log_nutrient_id")
     private Integer mealLogNutrientId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_log_id", nullable = false)
     private MealLog mealLog;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "nutrient_id", nullable = false)
     private Nutrient nutrient;
 

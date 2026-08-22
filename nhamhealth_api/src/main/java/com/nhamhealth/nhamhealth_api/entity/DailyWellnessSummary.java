@@ -15,7 +15,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "daily_wellness_summaries")
+@Table(name = "daily_wellness_summaries", indexes = {
+    @jakarta.persistence.Index(name = "idx_daily_wellness_user_date", columnList = "user_id, summary_date"),
+    @jakarta.persistence.Index(name = "idx_daily_wellness_mood_id", columnList = "mood_id")
+})
 public class DailyWellnessSummary {
 
     @Id
@@ -23,14 +26,14 @@ public class DailyWellnessSummary {
     @Column(name = "daily_summary_id")
     private Integer dailySummaryId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "summary_date", nullable = false)
     private LocalDate summaryDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "mood_id")
     private Mood mood;
 

@@ -120,6 +120,14 @@
                 </div>
             </article>
 
+                <nav class="pagination-row" aria-label="Post pages" th:if="${postTotalPages > 1}">
+                     <a class="page-btn" th:classappend="${postPage == 0 ? ' disabled' : ''}"
+                         th:href="@{/admin/posts(page=${postPage - 1})}">Previous</a>
+                     <span>Page <strong th:text="${postPage + 1}">1</strong> of <strong th:text="${postTotalPages}">1</strong></span>
+                     <a class="page-btn" th:classappend="${postPage + 1 >= postTotalPages ? ' disabled' : ''}"
+                         th:href="@{/admin/posts(page=${postPage + 1})}">Next</a>
+                </nav>
+
             <div class="modal" id="postModal" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
                 <section class="modal-card">
                     <div class="modal-header">

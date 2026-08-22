@@ -15,5 +15,7 @@ public record AdminMealEditorDto(
         boolean published,
         String mainImageUrl,
         List<AdminMealIngredientDto> ingredients,
-        List<AdminRecipeStepDto> recipeSteps) {
+        List<AdminMealNutritionDto> nutrition,
+        List<AdminRecipeStepDto> recipeSteps,
+        List<AdminMealReviewDto> reviews) {
 }

@@ -11,6 +11,9 @@ import com.nhamhealth.nhamhealth_api.entity.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
+    @Query(value = "SELECT COALESCE(AVG(rating), 0) FROM reviews", nativeQuery = true)
+    double findAverageRating();
+
     List<Review> findByMealMealId(Integer mealId);
 
     List<Review> findAllByOrderByCreatedAtDesc();

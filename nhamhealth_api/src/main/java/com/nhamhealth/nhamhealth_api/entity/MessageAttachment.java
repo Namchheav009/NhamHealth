@@ -18,7 +18,7 @@ public class MessageAttachment {
     @Column(name = "attachment_id")
     private Integer attachmentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "message_id", nullable = false)
     private Message message;
 
