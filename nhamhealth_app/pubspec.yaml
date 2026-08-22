@@ -86,6 +86,26 @@ flutter:
     - assets/images/meals/slideshow2.png
     - assets/images/meals/slideshow3.png
 
+    - assets/images/food_detail/salad.png
+    - assets/images/food_detail/howtomake.png
+    - assets/images/food_detail/cherry_tomato.png
+    - assets/images/food_detail/ingredent.png
+    - assets/images/food_detail/lettuce.png
+    - assets/images/food_detail/cucumber.png
+    - assets/images/food_detail/red_onion.png
+    - assets/images/food_detail/feta_cheese.png
+    - assets/images/food_detail/parsley.png
+
+    - assets/images/food_detail/background.png
+
+
+    - assets/images/food_detail/wash_vegetable.png
+    - assets/images/food_detail/prepare_vegetable.png
+    - assets/images/food_detail/add_the_lettuce.png
+    - assets/images/food_detail/add_vegetables.png
+    - assets/images/food_detail/add_cheese.png
+    - assets/images/food_detail/make_the_dressing.png
+
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png
     - assets/ai/
