@@ -22,11 +22,11 @@ public class Share {
     @Column(name = "share_id")
     private Integer shareId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "sender_user_id", nullable = false)
     private User senderUser;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "receiver_user_id")
     private User receiverUser;
 
@@ -39,7 +39,7 @@ public class Share {
     @Column(name = "shared_via", nullable = false, length = 50)
     private String sharedVia;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "chat_id")
     private Chat chat;
 

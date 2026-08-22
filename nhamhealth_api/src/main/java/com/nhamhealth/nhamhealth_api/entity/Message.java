@@ -14,7 +14,11 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "messages")
+@Table(name = "messages", indexes = {
+    @jakarta.persistence.Index(name = "idx_messages_chat_id_created_at", columnList = "chat_id, created_at"),
+    @jakarta.persistence.Index(name = "idx_messages_sender_user_id", columnList = "sender_user_id"),
+    @jakarta.persistence.Index(name = "idx_messages_reply_to_message_id", columnList = "reply_to_message_id")
+})
 public class Message {
 
     @Id
@@ -22,15 +26,15 @@ public class Message {
     @Column(name = "message_id")
     private Integer messageId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "chat_id", nullable = false)
     private Chat chat;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "sender_user_id", nullable = false)
     private User senderUser;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "reply_to_message_id")
     private Message replyToMessage;
 

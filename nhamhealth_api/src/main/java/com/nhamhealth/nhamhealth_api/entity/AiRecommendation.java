@@ -23,11 +23,11 @@ public class AiRecommendation {
     @Column(name = "recommendation_id")
     private Integer recommendationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "mood_id")
     private Mood mood;
 
@@ -46,7 +46,7 @@ public class AiRecommendation {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "recommendation")
+    @OneToMany(mappedBy = "recommendation", fetch = jakarta.persistence.FetchType.LAZY)
     private List<AiRecommendationItem> items = new ArrayList<>();
 
     public AiRecommendation() {

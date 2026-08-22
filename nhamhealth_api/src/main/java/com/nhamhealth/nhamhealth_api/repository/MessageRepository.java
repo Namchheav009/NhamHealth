@@ -12,6 +12,8 @@ import com.nhamhealth.nhamhealth_api.entity.Message;
 public interface MessageRepository extends JpaRepository<Message, Integer> {
     long countByChatChatIdAndDeletedAtIsNull(Integer chatId);
 
+    List<Message> findTop50ByChatChatIdAndDeletedAtIsNullOrderByCreatedAtDesc(Integer chatId);
+
     @Query("""
             select message.chat.chatId as chatId, count(message) as total
             from Message message

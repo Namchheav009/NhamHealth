@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
 
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.Review;
@@ -99,7 +100,8 @@ public class AdminDashboardService {
         this.notificationRepository = notificationRepository;
     }
 
-    public DashboardSnapshot loadDashboard() {
+        @Cacheable("adminDashboard")
+        public DashboardSnapshot loadDashboard() {
         LocalDate today = LocalDate.now();
         LocalDate startDate = today.minusDays(6);
 

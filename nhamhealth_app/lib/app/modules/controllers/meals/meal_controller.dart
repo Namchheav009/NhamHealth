@@ -29,6 +29,8 @@ class MealController extends GetxController {
   final TextEditingController searchController = TextEditingController();
 
   Timer? _slideTimer;
+  Timer? _searchTimer;
+  int _mealRequestVersion = 0;
   Set<int> _favoriteMealIds = const <int>{};
 
   final categories = <MealCategoryModel>[MealCategoryModel.all].obs;
@@ -56,6 +58,7 @@ class MealController extends GetxController {
 
   final meals = <MealModel>[].obs;
 
+<<<<<<< Updated upstream
   List<MealModel> get filteredMeals {
     final category = categories[selectedCategory.value];
     final query = searchQuery.value.trim().toLowerCase();
@@ -73,6 +76,9 @@ class MealController extends GetxController {
         })
         .toList(growable: false);
   }
+=======
+  List<MealModel> get filteredMeals => meals.toList(growable: false);
+>>>>>>> Stashed changes
 
   @override
   void onInit() {
@@ -85,31 +91,36 @@ class MealController extends GetxController {
       searchQuery.value = query;
     }
     startSlideShow();
+    unawaited(_loadCategories());
+    unawaited(_loadFavoriteMealIds());
     loadMeals();
     loadUnreadNotificationCount();
   }
 
   Future<void> loadMeals() async {
-    if (isLoading.value) return;
-
-    // These requests are optional for the first paint. Let them update the UI
-    // independently instead of making the meal list wait for the slowest call.
-    unawaited(_loadCategories());
-    unawaited(_loadFavoriteMealIds());
+    final requestVersion = ++_mealRequestVersion;
+    final categoryId = selectedCategory.value < categories.length
+        ? categories[selectedCategory.value].id
+        : MealCategoryModel.all.id;
 
     try {
       isLoading.value = true;
       errorMessage.value = null;
 
-      final loadedMeals = await repository.getMeals();
+      final loadedMeals = await repository.getMeals(
+        keyword: searchQuery.value,
+        categoryId: categoryId,
+      );
+      if (requestVersion != _mealRequestVersion) return;
       for (final meal in loadedMeals) {
         meal.isFavorite = _favoriteMealIds.contains(meal.id);
       }
       meals.assignAll(loadedMeals);
     } on Object catch (error) {
+      if (requestVersion != _mealRequestVersion) return;
       errorMessage.value = error.toString();
     } finally {
-      isLoading.value = false;
+      if (requestVersion == _mealRequestVersion) isLoading.value = false;
     }
   }
 
@@ -160,13 +171,21 @@ class MealController extends GetxController {
   void selectCategory(int index) {
     if (index < 0 || index >= categories.length) return;
     selectedCategory.value = index;
+    _searchTimer?.cancel();
+    loadMeals();
   }
 
-  void updateSearch(String value) => searchQuery.value = value;
+  void updateSearch(String value) {
+    searchQuery.value = value;
+    _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(milliseconds: 400), loadMeals);
+  }
 
   void clearSearch() {
     searchController.clear();
     searchQuery.value = '';
+    _searchTimer?.cancel();
+    loadMeals();
   }
 
   void openFavorites() => Get.toNamed<void>(AppRoutes.favorites);
@@ -258,6 +277,7 @@ class MealController extends GetxController {
   @override
   void onClose() {
     _slideTimer?.cancel();
+    _searchTimer?.cancel();
     slideController.dispose();
     searchController.dispose();
     super.onClose();

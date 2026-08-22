@@ -112,6 +112,20 @@ public class ProfileImageStorageService {
         return isStoredImageUrl(imageUrl, "/uploads/meal-images/", "meal-images");
     }
 
+    public String mealThumbnailUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return imageUrl;
+        }
+        String normalizedUrl = imageUrl.trim();
+        String publicPrefix = supabaseUrl + "/storage/v1/object/public/" + supabaseBucket + "/";
+        if (!usesSupabaseStorage() || !normalizedUrl.startsWith(publicPrefix)) {
+            return normalizedUrl;
+        }
+        String objectPath = normalizedUrl.substring(publicPrefix.length());
+        return supabaseUrl + "/storage/v1/render/image/public/" + supabaseBucket + "/"
+                + objectPath + "?width=300&height=300&resize=cover&quality=75&format=webp";
+    }
+
     public boolean isStoredRecipeStepImageUrl(String imageUrl) {
         return isStoredImageUrl(imageUrl, "/uploads/recipe-step-images/", "recipe-step-images");
     }

@@ -50,11 +50,7 @@ public class ReviewAdminController {
                 .filter(review -> review.getRating() != null && review.getRating() < 3)
                 .count();
 
-        double averageRating = reviews.stream()
-                .filter(r -> r.getRating() != null)
-                .mapToInt(review -> review.getRating())
-                .average()
-                .orElse(0.0);
+        double averageRating = reviewRepository.findAverageRating();
 
         long mealsReviewed = reviews.stream()
                 .map(r -> r.getMeal() != null ? r.getMeal().getMealId() : null)

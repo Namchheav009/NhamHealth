@@ -7,7 +7,8 @@ class MealRepository {
 
   final MealProvider _provider;
 
-  Future<List<MealModel>> getMeals() => _provider.getMeals();
+    Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) =>
+            _provider.getMeals(keyword: keyword, categoryId: categoryId);
   Future<List<MealCategoryModel>> getCategories() => _provider.getCategories();
   Future<Set<int>> getFavoriteMealIds() => _provider.getFavoriteMealIds();
   Future<int> getUnreadNotificationCount() =>

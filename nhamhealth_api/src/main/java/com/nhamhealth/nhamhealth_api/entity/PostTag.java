@@ -17,11 +17,11 @@ public class PostTag {
     @jakarta.persistence.Column(name = "post_tag_id")
     private Integer postTagId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private TagType tag;
 

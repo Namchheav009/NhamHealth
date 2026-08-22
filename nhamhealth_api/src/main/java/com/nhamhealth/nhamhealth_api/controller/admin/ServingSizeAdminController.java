@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.cache.annotation.CacheEvict;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminServingSizeRequest;
 import com.nhamhealth.nhamhealth_api.entity.ServingSize;
@@ -46,6 +47,7 @@ public class ServingSizeAdminController {
     }
 
     @PostMapping("/admin/serving-sizes")
+    @CacheEvict(value = "servingSizes", allEntries = true)
     @ResponseBody
     public ResponseEntity<?> createServingSize(@Valid @RequestBody AdminServingSizeRequest request) {
         if (servingSizeRepository.findByServingSizeNameIgnoreCase(request.servingSizeName().trim()).isPresent()) {
@@ -57,6 +59,7 @@ public class ServingSizeAdminController {
     }
 
     @PutMapping("/admin/serving-sizes/{servingSizeId}")
+    @CacheEvict(value = "servingSizes", allEntries = true)
     @ResponseBody
     public ResponseEntity<?> updateServingSize(
             @PathVariable Integer servingSizeId,
@@ -77,6 +80,7 @@ public class ServingSizeAdminController {
     }
 
     @DeleteMapping("/admin/serving-sizes/{servingSizeId}")
+    @CacheEvict(value = "servingSizes", allEntries = true)
     @ResponseBody
     public ResponseEntity<?> deleteServingSize(@PathVariable Integer servingSizeId) {
         if (!servingSizeRepository.existsById(servingSizeId)) {

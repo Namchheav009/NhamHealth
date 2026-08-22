@@ -12,7 +12,10 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "meal_ingredients")
+@Table(name = "meal_ingredients", indexes = {
+    @jakarta.persistence.Index(name = "idx_meal_ingredients_meal_id", columnList = "meal_id"),
+    @jakarta.persistence.Index(name = "idx_meal_ingredients_ingredient_id", columnList = "ingredient_id")
+})
 public class MealIngredient {
 
     @Id
@@ -20,11 +23,11 @@ public class MealIngredient {
     @Column(name = "meal_ingredient_id")
     private Integer mealIngredientId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 

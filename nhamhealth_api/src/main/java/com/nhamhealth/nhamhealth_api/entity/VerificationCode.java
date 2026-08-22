@@ -22,7 +22,7 @@ public class VerificationCode {
     @Column(name = "verification_id")
     private Integer verificationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 

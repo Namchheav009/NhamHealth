@@ -1,6 +1,9 @@
 spring.application.name=nhamhealth_api
 server.address=0.0.0.0
 server.port=8080
+server.compression.enabled=true
+server.compression.min-response-size=1024
+server.compression.mime-types=text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
 spring.profiles.active=supabase
 
 # Keep Tomcat session files out of the shared Windows temp directory. Spring
@@ -52,8 +55,8 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 spring.datasource.hikari.data-source-properties.sslmode=require
 spring.datasource.hikari.maximum-pool-size=5
 spring.datasource.hikari.minimum-idle=1
-spring.datasource.hikari.idle-timeout=600000
-spring.datasource.hikari.max-lifetime=1800000
+spring.datasource.hikari.idle-timeout=60000
+spring.datasource.hikari.max-lifetime=300000
 spring.datasource.hikari.keepalive-time=120000
 spring.datasource.hikari.validation-timeout=5000
 spring.datasource.hikari.connection-timeout=30000
@@ -61,9 +64,14 @@ spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
 # Supabase may close an idle pooled session between checks. Hikari discards and
 # replaces it automatically, so hide only this recoverable validation warning.
 logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
+logging.level.root=INFO
 spring.jpa.properties.hibernate.default_schema=public
+spring.jpa.properties.hibernate.default_batch_fetch_size=20
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
+spring.cache.type=caffeine
+spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients
+spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=60s
 
 # Gmail SMTP (set GMAIL_USERNAME and GMAIL_APP_PASSWORD in your environment)
 spring.mail.host=smtp.gmail.com
