@@ -228,6 +228,10 @@ class AuthService {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (accessToken != null &&
+          (response.statusCode == 401 || response.statusCode == 403)) {
+        await _tokenStorage.clear();
+      }
       throw AuthException(
         _errorMessage(response, payload),
         statusCode: response.statusCode,

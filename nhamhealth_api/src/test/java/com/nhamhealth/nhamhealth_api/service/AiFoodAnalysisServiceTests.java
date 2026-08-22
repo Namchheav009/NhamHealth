@@ -1,0 +1,159 @@
+package com.nhamhealth.nhamhealth_api.service;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodCandidate;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodComponentNutritionEstimate;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
+import com.nhamhealth.nhamhealth_api.dto.response.NutritionSource;
+import com.nhamhealth.nhamhealth_api.entity.FoodNutrition;
+import com.nhamhealth.nhamhealth_api.entity.Nutrient;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisNutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
+import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.FoodDatabaseMatchingService.MatchCandidate;
+
+class AiFoodAnalysisServiceTests {
+    @Test
+    void calculatesMealNutritionFromMatchedComponents() {
+        FoodVisionProvider visionProvider = mock(FoodVisionProvider.class);
+        FoodDatabaseMatchingService matchingService = mock(FoodDatabaseMatchingService.class);
+        FoodNutritionEstimationProvider estimationProvider =
+                mock(FoodNutritionEstimationProvider.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        AiFoodAnalysisRepository analysisRepository = mock(AiFoodAnalysisRepository.class);
+        AiFoodAnalysisNutrientRepository analysisNutrientRepository =
+                mock(AiFoodAnalysisNutrientRepository.class);
+        NutrientRepository nutrientRepository = mock(NutrientRepository.class);
+        User user = new User();
+        when(userRepository.findById(7)).thenReturn(Optional.of(user));
+        when(nutrientRepository.findByNutrientNameIgnoreCase(any()))
+                .thenReturn(Optional.of(new Nutrient()));
+
+        FoodVisionComponent riceDetection = new FoodVisionComponent(
+                "Cooked rice", 200, "g", 0.90, 0.82,
+                "steamed", "white rice occupies half the plate");
+        FoodVisionResult vision = new FoodVisionResult(
+                true, "", "Chicken Rice", "Unknown", "food",
+                0.82, 0.80, 0.82,
+                List.of(riceDetection),
+                List.of(
+                        new FoodCandidate("Chicken Rice", 0.82),
+                        new FoodCandidate("Fried Rice", 0.10)));
+        when(visionProvider.analyze(any(), any())).thenReturn(new AiFoodModelResult(
+                vision, "vision-model", "prompt-v1", false, 10, 20, 100));
+        FoodNutrition rice = food();
+        when(matchingService.findReliableMatches(List.of("Cooked rice")))
+                .thenReturn(List.of(Optional.of(new MatchCandidate(rice, 0.95))));
+
+        AiFoodAnalysisService service = new AiFoodAnalysisService(
+                visionProvider,
+                matchingService,
+                new FoodNutritionCalculationService(),
+                estimationProvider,
+                new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                userRepository,
+                analysisRepository,
+                analysisNutrientRepository,
+                nutrientRepository);
+
+        var result = service.analyzeAndSave(
+                7, "food.jpg", new byte[] {1, 2, 3}, "image/jpeg");
+
+        assertEquals("Chicken Rice", result.mealName());
+        assertEquals(260, result.nutrition().calories());
+        assertEquals(56, result.nutrition().carbohydrates());
+        assertEquals(NutritionSource.DATABASE_CALCULATED, result.nutrition().source());
+        assertTrue(result.databaseMatched());
+        assertFalse(result.needsUserConfirmation());
+        verify(visionProvider).analyze(any(), any());
+    }
+
+    @Test
+    void estimatesNutritionForARecognizedComponentMissingFromTheDatabase() {
+        FoodVisionProvider visionProvider = mock(FoodVisionProvider.class);
+        FoodDatabaseMatchingService matchingService = mock(FoodDatabaseMatchingService.class);
+        FoodNutritionEstimationProvider estimationProvider =
+                mock(FoodNutritionEstimationProvider.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        AiFoodAnalysisRepository analysisRepository = mock(AiFoodAnalysisRepository.class);
+        AiFoodAnalysisNutrientRepository analysisNutrientRepository =
+                mock(AiFoodAnalysisNutrientRepository.class);
+        NutrientRepository nutrientRepository = mock(NutrientRepository.class);
+        User user = new User();
+        when(userRepository.findById(7)).thenReturn(Optional.of(user));
+        when(nutrientRepository.findByNutrientNameIgnoreCase(any()))
+                .thenReturn(Optional.of(new Nutrient()));
+
+        FoodVisionComponent drink = new FoodVisionComponent(
+                "Chocolate Frappuccino", 350, "ml", 0.95, 0.82,
+                "blended", "a chocolate blended coffee drink fills the cup");
+        FoodVisionResult vision = new FoodVisionResult(
+                true, "", "Chocolate Frappuccino", "Unknown", "drink",
+                0.95, 0.82, 0.80,
+                List.of(drink),
+                List.of(new FoodCandidate("Chocolate Frappuccino", 0.95)));
+        when(visionProvider.analyze(any(), any())).thenReturn(new AiFoodModelResult(
+                vision, "vision-model", "prompt-v1", false, 10, 20, 100));
+        when(matchingService.findReliableMatches(List.of("Chocolate Frappuccino")))
+                .thenReturn(List.of(Optional.empty()));
+        when(estimationProvider.estimate(List.of(drink))).thenReturn(
+                new FoodNutritionEstimationResult(
+                        List.of(new FoodComponentNutritionEstimate(
+                                0, 420, 6, 68, 14, 55, 2, 260, 0.68)),
+                        "nutrition-model", 15, 25, 80));
+
+        AiFoodAnalysisService service = new AiFoodAnalysisService(
+                visionProvider,
+                matchingService,
+                new FoodNutritionCalculationService(),
+                estimationProvider,
+                new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                userRepository,
+                analysisRepository,
+                analysisNutrientRepository,
+                nutrientRepository);
+
+        var result = service.analyzeAndSave(
+                7, "drink.jpg", new byte[] {1, 2, 3}, "image/jpeg");
+
+        assertEquals(420, result.nutrition().calories());
+        assertEquals(68, result.nutrition().carbohydrates());
+        assertEquals(NutritionSource.AI_ESTIMATED, result.nutrition().source());
+        assertTrue(result.nutrition().complete());
+        assertTrue(result.needsUserConfirmation());
+        assertFalse(result.databaseMatched());
+        verify(estimationProvider).estimate(List.of(drink));
+    }
+
+    private FoodNutrition food() {
+        FoodNutrition food = new FoodNutrition();
+        food.setName("Cooked Jasmine Rice");
+        food.setCalories(BigDecimal.valueOf(130));
+        food.setProtein(BigDecimal.valueOf(2.7));
+        food.setCarbs(BigDecimal.valueOf(28));
+        food.setFat(BigDecimal.valueOf(0.3));
+        food.setSugar(BigDecimal.valueOf(0.1));
+        food.setFiber(BigDecimal.valueOf(0.4));
+        food.setSodium(BigDecimal.ONE);
+        food.setServingSize(BigDecimal.valueOf(100));
+        food.setServingUnit("g");
+        food.setActive(true);
+        return food;
+    }
+}

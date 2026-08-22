@@ -35,7 +35,12 @@ app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
 app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
 app.ai.nvidia.text-max-tokens=4096
 app.ai.nvidia.reasoning-effort=low
-app.ai.prompt-version=food-vision-v3-gpt-oss-refine-v3
+app.ai.prompt-version=food-vision-components-v1
+app.ai.food.confirmation-threshold=0.75
+app.ai.food.candidate-margin-threshold=0.15
+app.ai.food.portion-confirmation-threshold=0.70
+app.ai.food.component-confirmation-threshold=0.65
+app.ai.food.database-match-threshold=0.78
 spring.servlet.multipart.max-file-size=5MB
 spring.servlet.multipart.max-request-size=6MB
 

@@ -1,62 +1,73 @@
 package com.nhamhealth.nhamhealth_api.service;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.Period;
-import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Comparator;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.DetectedFoodComponent;
+import com.nhamhealth.nhamhealth_api.dto.response.NutritionSource;
+import com.nhamhealth.nhamhealth_api.dto.response.NutritionSummaryResponse;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysisNutrient;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
-import com.nhamhealth.nhamhealth_api.entity.FoodNutrition;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisNutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.repository.FoodNutritionRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
-import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
-import org.springframework.web.server.ResponseStatusException;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import com.nhamhealth.nhamhealth_api.service.FoodDatabaseMatchingService.MatchCandidate;
 
 @Service
 public class AiFoodAnalysisService {
-    private final NvidiaFoodVisionService visionService;
+    private static final Logger log = LoggerFactory.getLogger(AiFoodAnalysisService.class);
+    private static final String DISCLAIMER =
+            "Nutrition is calculated from matched database foods when available; unmatched components may use a clearly labeled AI estimate. Results are for general wellness only, not medical advice or an official nutrition label.";
+    private static final String PRIVACY_NOTICE =
+            "Your food image is sent to the configured AI provider for recognition. Do not include faces, documents, or other personal information.";
+
+    private final FoodVisionProvider visionProvider;
+    private final FoodDatabaseMatchingService matchingService;
+    private final FoodNutritionCalculationService calculationService;
+    private final FoodNutritionEstimationProvider nutritionEstimationProvider;
+    private final FoodAnalysisConfidencePolicy confidencePolicy;
     private final UserRepository userRepository;
     private final AiFoodAnalysisRepository analysisRepository;
     private final AiFoodAnalysisNutrientRepository analysisNutrientRepository;
     private final NutrientRepository nutrientRepository;
-    private final FoodNutritionRepository foodNutritionRepository;
-    private final UserProfileRepository userProfileRepository;
-    private final WellnessProfileRepository wellnessProfileRepository;
 
     public AiFoodAnalysisService(
-            NvidiaFoodVisionService visionService,
+            FoodVisionProvider visionProvider,
+            FoodDatabaseMatchingService matchingService,
+            FoodNutritionCalculationService calculationService,
+            FoodNutritionEstimationProvider nutritionEstimationProvider,
+            FoodAnalysisConfidencePolicy confidencePolicy,
             UserRepository userRepository,
             AiFoodAnalysisRepository analysisRepository,
             AiFoodAnalysisNutrientRepository analysisNutrientRepository,
-            NutrientRepository nutrientRepository,
-            FoodNutritionRepository foodNutritionRepository,
-            UserProfileRepository userProfileRepository,
-            WellnessProfileRepository wellnessProfileRepository) {
-        this.visionService = visionService;
+            NutrientRepository nutrientRepository) {
+        this.visionProvider = visionProvider;
+        this.matchingService = matchingService;
+        this.calculationService = calculationService;
+        this.nutritionEstimationProvider = nutritionEstimationProvider;
+        this.confidencePolicy = confidencePolicy;
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.analysisNutrientRepository = analysisNutrientRepository;
         this.nutrientRepository = nutrientRepository;
-        this.foodNutritionRepository = foodNutritionRepository;
-        this.userProfileRepository = userProfileRepository;
-        this.wellnessProfileRepository = wellnessProfileRepository;
     }
 
     @Transactional
@@ -64,85 +75,189 @@ public class AiFoodAnalysisService {
             Integer userId, String fileName, byte[] image, String contentType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        List<FoodNutrition> activeFoods = foodNutritionRepository.findAllByActiveTrue();
-        UserNutritionContext userContext = loadUserContext(userId);
-        AiFoodModelResult modelResult = visionService.analyze(
-                image, contentType, userContext, buildFoodCatalog(activeFoods));
-        AiFoodAnalysisResponse result = enrichWithDatabase(modelResult.response(), activeFoods);
+        AiFoodModelResult modelResult = visionProvider.analyze(image, contentType);
+        FoodVisionResult vision = modelResult.response();
+
+        ComponentEnrichment enrichment = matchCalculateAndEstimate(vision.components());
+        List<DetectedFoodComponent> components = enrichment.components();
+        FoodNutritionEstimationResult estimation = enrichment.estimation();
+        NutritionSummaryResponse nutrition = calculationService.aggregate(components);
+        boolean needsConfirmation = confidencePolicy.requiresConfirmation(vision, components);
+        AiFoodAnalysisResponse result = buildResponse(
+                vision, components, nutrition, needsConfirmation);
 
         AiFoodAnalysis analysis = new AiFoodAnalysis();
         analysis.setUser(user);
         analysis.setInputText(fileName == null || fileName.isBlank() ? "Food image" : fileName);
         analysis.setDetectedFoodName(result.name());
-        analysis.setAnalysisText(result.analysis());
+        analysis.setAnalysisText(limit(result.analysis(), 1_000));
         analysis.setDetectedServingText(formatServing(result.servingSize(), result.servingUnit()));
-        analysis.setConfidenceScore(BigDecimal.valueOf(result.confidence()));
-        analysis.setStatus(result.needsUserConfirmation() ? "REVIEW" : "COMPLETED");
+        analysis.setConfidenceScore(BigDecimal.valueOf(result.mealIdentityConfidence()));
+        analysis.setStatus(!result.foodDetected()
+                ? "FAILED" : result.needsUserConfirmation() ? "NEEDS_CONFIRMATION" : "COMPLETED");
         analysis.setCreatedAt(LocalDateTime.now());
-        analysis.setModelName(modelResult.modelName());
+        String modelsUsed = estimation.used() && !estimation.modelName().isBlank()
+                ? modelResult.modelName() + " + " + estimation.modelName()
+                : modelResult.modelName();
+        analysis.setModelName(limit(modelsUsed, 120));
         analysis.setPromptVersion(modelResult.promptVersion());
         analysis.setDatabaseMatched(result.databaseMatched());
-        analysis.setNutritionFallbackUsed(modelResult.nutritionFallbackUsed());
-        analysis.setPromptTokens(modelResult.promptTokens());
-        analysis.setCompletionTokens(modelResult.completionTokens());
-        analysis.setLatencyMs(modelResult.latencyMs());
+        analysis.setNutritionFallbackUsed(estimation.used());
+        analysis.setPromptTokens(modelResult.promptTokens() + estimation.promptTokens());
+        analysis.setCompletionTokens(
+                modelResult.completionTokens() + estimation.completionTokens());
+        analysis.setLatencyMs(modelResult.latencyMs() + estimation.latencyMs());
         analysisRepository.saveAndFlush(analysis);
 
-        saveNutrient(analysis, "Calories", "kcal", 1, result.calories());
-        saveNutrient(analysis, "Protein", "g", 2, result.protein());
-        saveNutrient(analysis, "Carbs", "g", 3, result.carbs());
-        saveNutrient(analysis, "Fat", "g", 4, result.fat());
-        saveNutrient(analysis, "Sugar", "g", 5, result.sugar());
+        saveNutrient(analysis, "Calories", "kcal", 1, nutrition.calories());
+        saveNutrient(analysis, "Protein", "g", 2, nutrition.protein());
+        saveNutrient(analysis, "Carbs", "g", 3, nutrition.carbohydrates());
+        saveNutrient(analysis, "Fat", "g", 4, nutrition.fat());
+        saveNutrient(analysis, "Sugar", "g", 5, nutrition.sugar());
+        saveNutrient(analysis, "Fiber", "g", 6, nutrition.fiber());
+        saveNutrient(analysis, "Sodium", "mg", 7, nutrition.sodium());
+
+        int databaseMatchCount = (int) components.stream()
+                .filter(DetectedFoodComponent::databaseMatched).count();
+        log.info("AI food analysis completed analysisId={} providerModel={} durationMs={} foodDetected={} componentCount={} databaseMatchCount={} aiEstimatedCount={} needsConfirmation={} nutritionSource={}",
+                analysis.getAiFoodAnalysisId(), modelsUsed, analysis.getLatencyMs(),
+                result.foodDetected(), components.size(), databaseMatchCount,
+                estimation.components().size(),
+                needsConfirmation, nutrition.source());
         return result.withAnalysisId(analysis.getAiFoodAnalysisId());
     }
 
-    private UserNutritionContext loadUserContext(Integer userId) {
-        var wellness = wellnessProfileRepository.findByUser_UserId(userId).orElse(null);
-        var profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
-        Integer age = profile != null && profile.getDateOfBirth() != null
-                ? Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears()
-                : wellness != null && wellness.getAgeCached() != null
-                        ? wellness.getAgeCached().intValue() : null;
-        BigDecimal height = wellness == null ? null : wellness.getHeightCm();
-        BigDecimal weight = wellness == null ? null : wellness.getWeightKg();
-        BigDecimal bmi = null;
-        if (height != null && weight != null && height.signum() > 0) {
-            BigDecimal heightMeters = height.movePointLeft(2);
-            bmi = weight.divide(heightMeters.multiply(heightMeters), 1, RoundingMode.HALF_UP);
+    private ComponentEnrichment matchCalculateAndEstimate(List<FoodVisionComponent> detected) {
+        if (detected == null || detected.isEmpty()) {
+            return new ComponentEnrichment(List.of(), FoodNutritionEstimationResult.empty());
         }
-        return new UserNutritionContext(age, height, weight, bmi,
-                wellness == null ? null : wellness.getActivityLevel());
+        List<Optional<MatchCandidate>> matches = matchingService.findReliableMatches(
+                detected.stream().map(FoodVisionComponent::name).toList());
+        List<DetectedFoodComponent> calculated = new ArrayList<>(detected.size());
+        for (int index = 0; index < detected.size(); index++) {
+            Optional<MatchCandidate> match = index < matches.size()
+                    ? matches.get(index) : Optional.empty();
+            calculated.add(calculationService.calculate(detected.get(index), match));
+        }
+
+        List<Integer> pendingIndexes = new ArrayList<>();
+        List<FoodVisionComponent> pendingComponents = new ArrayList<>();
+        for (int index = 0; index < calculated.size(); index++) {
+            if (calculated.get(index).nutritionSource() == NutritionSource.UNAVAILABLE) {
+                pendingIndexes.add(index);
+                pendingComponents.add(detected.get(index));
+            }
+        }
+        if (pendingComponents.isEmpty()) {
+            return new ComponentEnrichment(
+                    List.copyOf(calculated), FoodNutritionEstimationResult.empty());
+        }
+
+        try {
+            FoodNutritionEstimationResult estimation =
+                    nutritionEstimationProvider.estimate(List.copyOf(pendingComponents));
+            for (var estimate : estimation.components()) {
+                int originalIndex = pendingIndexes.get(estimate.index());
+                calculated.set(originalIndex, calculationService.applyAiEstimate(
+                        calculated.get(originalIndex), estimate));
+            }
+            return new ComponentEnrichment(List.copyOf(calculated), estimation);
+        } catch (RuntimeException error) {
+            log.warn("AI nutrition fallback was unavailable; returning an incomplete result: {}",
+                    safeMessage(error));
+            return new ComponentEnrichment(
+                    List.copyOf(calculated), FoodNutritionEstimationResult.empty());
+        }
     }
 
-    private String buildFoodCatalog(List<FoodNutrition> foods) {
-        return foods.stream()
-                .sorted(Comparator.comparing((FoodNutrition food) -> !isCambodianFood(food))
-                        .thenComparing(FoodNutrition::getName, String.CASE_INSENSITIVE_ORDER))
-                .limit(150)
-                .map(this::formatCatalogFood)
-                .reduce((left, right) -> left + "\n" + right)
-                .orElse("No database foods available");
+    private AiFoodAnalysisResponse buildResponse(
+            FoodVisionResult vision,
+            List<DetectedFoodComponent> components,
+            NutritionSummaryResponse nutrition,
+            boolean needsConfirmation) {
+        boolean databaseMatched = nutrition.complete()
+                && !components.isEmpty()
+                && components.stream().allMatch(DetectedFoodComponent::databaseMatched);
+        double databaseMatchConfidence = components.stream()
+                .filter(DetectedFoodComponent::databaseMatched)
+                .mapToDouble(DetectedFoodComponent::databaseMatchConfidence)
+                .average().orElse(0);
+        String mealName = vision.foodDetected() ? vision.mealName() : "Unknown food";
+        String recommendationTitle;
+        String recommendation;
+        if (!vision.foodDetected()) {
+            recommendationTitle = "Try another photo";
+            recommendation = "Use better lighting and show the entire food or drink clearly.";
+        } else if (!nutrition.complete()) {
+            recommendationTitle = "Review meal components";
+            recommendation = "One or more components could not be calculated safely from the nutrition database.";
+        } else if (needsConfirmation) {
+            recommendationTitle = "Please confirm this meal";
+            recommendation = "Review the meal identity and component portions before saving.";
+        } else {
+            recommendationTitle = "Database nutrition calculated";
+            recommendation = "Nutrition was calculated from the matched components and visible portions.";
+        }
+        return new AiFoodAnalysisResponse(
+                null,
+                mealName,
+                buildAnalysis(vision, components, nutrition),
+                vision.mealConfidence(),
+                nutrition.calories(),
+                nutrition.protein(),
+                nutrition.carbohydrates(),
+                nutrition.fat(),
+                nutrition.sugar(),
+                1,
+                "serving",
+                recommendationTitle,
+                recommendation,
+                databaseMatched,
+                round(databaseMatchConfidence, 3),
+                needsConfirmation,
+                nutrition.source().name(),
+                DISCLAIMER,
+                PRIVACY_NOTICE,
+                vision.foodDetected(),
+                vision.reason(),
+                mealName,
+                vision.cuisine(),
+                vision.type(),
+                "drink".equals(vision.type()),
+                vision.mealConfidence(),
+                vision.portionConfidence(),
+                vision.preparationConfidence(),
+                components,
+                vision.candidates(),
+                nutrition);
     }
 
-    private boolean isCambodianFood(FoodNutrition food) {
-        String searchable = normalize(food.getName() + " "
-                + (food.getAliases() == null ? "" : food.getAliases()));
-        return searchable.matches(".*[\u1780-\u17ff].*")
-                || searchable.contains("khmer") || searchable.contains("cambodian")
-                || searchable.contains("samlor") || searchable.contains("somlor");
-    }
-
-    private String formatCatalogFood(FoodNutrition food) {
-        String aliases = food.getAliases() == null || food.getAliases().isBlank()
-                ? "" : "; aliases=" + food.getAliases();
-        return "- name=" + food.getName() + aliases
-                + "; databaseServing=" + food.getServingSize().stripTrailingZeros().toPlainString()
-                + " " + food.getServingUnit()
-                + "; kcal=" + food.getCalories().stripTrailingZeros().toPlainString()
-                + "; protein=" + food.getProtein().stripTrailingZeros().toPlainString()
-                + "g; carbs=" + food.getCarbs().stripTrailingZeros().toPlainString()
-                + "g; fat=" + food.getFat().stripTrailingZeros().toPlainString()
-                + "g; sugar=" + food.getSugar().stripTrailingZeros().toPlainString() + "g";
+    private String buildAnalysis(
+            FoodVisionResult vision,
+            List<DetectedFoodComponent> components,
+            NutritionSummaryResponse nutrition) {
+        if (!vision.foodDetected()) return vision.reason();
+        String componentSummary = components.stream()
+                .map(component -> component.name() + " "
+                        + formatServing(component.estimatedAmount(), component.unit())
+                        + (component.databaseMatched()
+                                ? " matched to " + component.matchedFoodName()
+                                : " not matched"))
+                .reduce((left, right) -> left + "; " + right)
+                .orElse("No components were returned");
+        String completeness = nutrition.complete()
+                ? switch (nutrition.source()) {
+                    case DATABASE_CALCULATED ->
+                            "All component nutrition was calculated from database records.";
+                    case AI_ESTIMATED ->
+                            "Component nutrition is an AI estimate and requires confirmation.";
+                    case HYBRID_ESTIMATED ->
+                            "Nutrition combines database calculations with AI estimates and requires confirmation.";
+                    default -> "The component nutrition estimate is complete.";
+                }
+                : "The nutrition total is incomplete and requires review.";
+        return "Recognized " + vision.mealName() + ". Components: "
+                + componentSummary + ". " + completeness;
     }
 
     @Transactional
@@ -158,118 +273,6 @@ public class AiFoodAnalysisService {
         analysis.setStatus(Boolean.TRUE.equals(request.confirmed()) ? "CONFIRMED" : "CORRECTED");
         analysisRepository.save(analysis);
     }
-
-    private AiFoodAnalysisResponse enrichWithDatabase(
-            AiFoodAnalysisResponse ai, List<FoodNutrition> activeFoods) {
-        Match match = bestDatabaseMatch(ai.name(), activeFoods);
-        boolean databaseMatched = match != null && match.score() >= 0.80;
-        if ("IDENTITY_ONLY".equals(ai.dataSource()) && !databaseMatched) {
-            throw new ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_GATEWAY,
-                    "The AI identified a possible food, but it could not be verified in the nutrition database.");
-        }
-        // A text match verifies nutrition data, not whether the image was recognized correctly.
-        // Never promote low visual confidence solely because a database name matched.
-        double finalConfidence = Math.clamp(ai.confidence(), 0, 1);
-        boolean needsConfirmation = finalConfidence < 0.80;
-        FoodNutrition food = databaseMatched ? match.food() : null;
-        return new AiFoodAnalysisResponse(
-                ai.analysisId(),
-                food == null ? ai.name() : food.getName(),
-                buildDetailedAnalysis(ai, food),
-                Math.min(1, finalConfidence),
-                food == null ? ai.calories() : food.getCalories().doubleValue(),
-                food == null ? ai.protein() : food.getProtein().doubleValue(),
-                food == null ? ai.carbs() : food.getCarbs().doubleValue(),
-                food == null ? ai.fat() : food.getFat().doubleValue(),
-                food == null ? ai.sugar() : food.getSugar().doubleValue(),
-                food == null ? ai.servingSize() : food.getServingSize().doubleValue(),
-                food == null ? ai.servingUnit() : food.getServingUnit(),
-                needsConfirmation ? "Please confirm this food" : ai.recommendationTitle(),
-                needsConfirmation
-                        ? "Confidence is below 80%. Retake the photo or confirm the food before saving."
-                        : ai.recommendation(),
-                databaseMatched,
-                match == null ? 0 : match.score(),
-                needsConfirmation,
-                databaseMatched ? "DATABASE_VERIFIED" : "AI_ESTIMATE",
-                "AI nutrition values are estimates for wellness information only, not a medical diagnosis or an official nutrition label.",
-                "Your food image is sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.");
-    }
-
-    private String buildDetailedAnalysis(AiFoodAnalysisResponse ai, FoodNutrition food) {
-        String portion = formatServing(
-                food == null ? ai.servingSize() : food.getServingSize().doubleValue(),
-                food == null ? ai.servingUnit() : food.getServingUnit());
-        double calories = food == null ? ai.calories() : food.getCalories().doubleValue();
-        double protein = food == null ? ai.protein() : food.getProtein().doubleValue();
-        double carbs = food == null ? ai.carbs() : food.getCarbs().doubleValue();
-        double fat = food == null ? ai.fat() : food.getFat().doubleValue();
-        double sugar = food == null ? ai.sugar() : food.getSugar().doubleValue();
-        String source = food == null
-                ? "These values are a validated AI estimate because no strong database name or alias match was found."
-                : "The identification and nutrition baseline were verified against the database record for "
-                        + food.getName() + ".";
-        return "Visual assessment: " + safeAnalysis(ai.analysis())
-                + " Portion basis: " + portion + "."
-                + " Nutrition interpretation: approximately " + formatNumber(calories) + " kcal, "
-                + formatNumber(protein) + " g protein, " + formatNumber(carbs) + " g carbohydrates, "
-                + formatNumber(fat) + " g fat, and " + formatNumber(sugar) + " g sugar. " + source;
-    }
-
-    private String formatNumber(double value) {
-        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
-    }
-
-    private Match bestDatabaseMatch(String detectedName, List<FoodNutrition> activeFoods) {
-        String detected = normalize(detectedName);
-        if (detected.isBlank() || "unknown food".equals(detected)) return null;
-        Match best = null;
-        for (FoodNutrition food : activeFoods) {
-            double score = similarity(detected, normalize(food.getName()));
-            if (food.getAliases() != null) {
-                for (String alias : food.getAliases().split("[,;|]")) {
-                    score = Math.max(score, similarity(detected, normalize(alias)));
-                }
-            }
-            if (best == null || score > best.score()) best = new Match(food, score);
-        }
-        return best;
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9\\p{L}]+", " ").trim();
-    }
-
-    private String safeAnalysis(String value) {
-        return value == null || value.isBlank()
-                ? "The AI identified the visible food from its appearance."
-                : value.trim();
-    }
-
-    private double similarity(String left, String right) {
-        if (left.equals(right)) return 1;
-        if (left.isBlank() || right.isBlank()) return 0;
-        if (left.contains(right) || right.contains(left)) {
-            return (double) Math.min(left.length(), right.length()) / Math.max(left.length(), right.length());
-        }
-        int[] previous = new int[right.length() + 1];
-        for (int column = 0; column <= right.length(); column++) previous[column] = column;
-        for (int row = 1; row <= left.length(); row++) {
-            int[] current = new int[right.length() + 1];
-            current[0] = row;
-            for (int column = 1; column <= right.length(); column++) {
-                int cost = left.charAt(row - 1) == right.charAt(column - 1) ? 0 : 1;
-                current[column] = Math.min(Math.min(current[column - 1] + 1, previous[column] + 1),
-                        previous[column - 1] + cost);
-            }
-            previous = current;
-        }
-        return 1 - (double) previous[right.length()] / Math.max(left.length(), right.length());
-    }
-
-    private record Match(FoodNutrition food, double score) {}
 
     private void saveNutrient(
             AiFoodAnalysis analysis, String name, String unit, int displayOrder, double amount) {
@@ -295,5 +298,29 @@ public class AiFoodAnalysisService {
     private String formatServing(double size, String unit) {
         String formattedSize = BigDecimal.valueOf(size).stripTrailingZeros().toPlainString();
         return unit == null || unit.isBlank() ? formattedSize : formattedSize + " " + unit.trim();
+    }
+
+    private String limit(String value, int maximum) {
+        if (value == null) return "";
+        return value.length() <= maximum ? value : value.substring(0, maximum);
+    }
+
+    private double round(double value, int scale) {
+        double factor = Math.pow(10, scale);
+        return Math.round(value * factor) / factor;
+    }
+
+    private String safeMessage(Throwable error) {
+        Throwable root = error;
+        while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+        String message = root.getMessage();
+        if (message == null || message.isBlank()) return root.getClass().getSimpleName();
+        message = message.replaceAll("[\\r\\n\\t]+", " ");
+        return message.length() <= 240 ? message : message.substring(0, 240);
+    }
+
+    private record ComponentEnrichment(
+            List<DetectedFoodComponent> components,
+            FoodNutritionEstimationResult estimation) {
     }
 }

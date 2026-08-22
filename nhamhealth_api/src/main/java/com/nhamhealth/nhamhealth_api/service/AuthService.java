@@ -17,6 +17,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.entity.AuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.exception.InvalidSessionException;
 import com.nhamhealth.nhamhealth_api.entity.UserAuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
@@ -242,23 +243,20 @@ public class AuthService {
             Integer userId,
             String email,
             String role) {
-        String currentEmail = userRepository.findById(userId)
-                .map(User::getEmail)
-                .orElse(email);
+        User user = requireActiveUser(userId);
         UserProfile profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
         return new AuthenticatedUserResponse(
                 userId,
-                currentEmail,
-                role,
+                user.getEmail(),
+                user.getRoleLabel(),
                 profile == null ? null : profile.getFullName(),
                 profile == null ? null : profile.getProfileImageUrl(),
-                userRepository.findById(userId).map(User::hasPin).orElse(false));
+                user.hasPin());
     }
 
     @Transactional
     public void setAppPin(Integer userId, String pin) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        User user = requireActiveUser(userId);
         user.setPinHash(passwordEncoder.encode(pin));
         user.setPinLength(pin.length());
         userRepository.save(user);
@@ -266,16 +264,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public boolean verifyAppPin(Integer userId, String pin) {
-        return userRepository.findById(userId)
-                .filter(User::hasPin)
-                .map(user -> passwordEncoder.matches(pin, user.getPinHash()))
-                .orElse(false);
+        User user = requireActiveUser(userId);
+        return user.hasPin() && passwordEncoder.matches(pin, user.getPinHash());
     }
 
     @Transactional
     public void disableAppPin(Integer userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        User user = requireActiveUser(userId);
         user.setPinHash(null);
         user.setPinLength(null);
         userRepository.save(user);
@@ -283,8 +278,7 @@ public class AuthService {
 
     @Transactional
     public void changePassword(Integer userId, ChangePasswordRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        User user = requireActiveUser(userId);
 
         if (user.getPasswordHash() == null
                 || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
@@ -296,5 +290,15 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+    }
+
+    private User requireActiveUser(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(InvalidSessionException::new);
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())
+                || !Boolean.TRUE.equals(user.getIsVerified())) {
+            throw new InvalidSessionException();
+        }
+        return user;
     }
 }

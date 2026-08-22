@@ -48,7 +48,13 @@ app:
       service-key: ""
       bucket: nhamhealth-images
   ai:
-    prompt-version: food-vision-v3-gpt-oss-refine-v3
+    prompt-version: food-vision-components-v1
+    food:
+      confirmation-threshold: 0.75
+      candidate-margin-threshold: 0.15
+      portion-confirmation-threshold: 0.70
+      component-confirmation-threshold: 0.65
+      database-match-threshold: 0.78
     nvidia:
       base-url: https://integrate.api.nvidia.com/v1
       api-key: ""

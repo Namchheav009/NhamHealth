@@ -509,15 +509,15 @@ class AiFoodView extends GetView<AiFoodController> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
-                color: (food.databaseMatched ? green : warn).withValues(
+                color: (food.isDatabaseCalculated ? green : warn).withValues(
                   alpha: .1,
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                food.databaseMatched ? 'Database matched' : 'AI estimate',
+                food.nutritionSourceLabel,
                 style: TextStyle(
-                  color: food.databaseMatched ? greenDark : warn,
+                  color: food.isDatabaseCalculated ? greenDark : warn,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -537,31 +537,41 @@ class AiFoodView extends GetView<AiFoodController> {
             _metric(
               Icons.local_fire_department_rounded,
               const Color(0xFFFF7A45),
-              '${food.calories.round()} kcal',
+              food.hasNutritionEstimate
+                  ? '${food.calories.round()} kcal'
+                  : '--',
               'Calories',
             ),
             _metric(
               Icons.fitness_center_rounded,
               const Color(0xFF3B82F6),
-              '${food.protein.toStringAsFixed(1)}g',
+              food.hasNutritionEstimate
+                  ? '${food.protein.toStringAsFixed(1)}g'
+                  : '--',
               'Protein',
             ),
             _metric(
               Icons.grain_rounded,
               const Color(0xFFC2A100),
-              '${food.carbs.toStringAsFixed(1)}g',
+              food.hasNutritionEstimate
+                  ? '${food.carbs.toStringAsFixed(1)}g'
+                  : '--',
               'Carbs',
             ),
             _metric(
               Icons.opacity_rounded,
               const Color(0xFFF43F5E),
-              '${food.fat.toStringAsFixed(1)}g',
+              food.hasNutritionEstimate
+                  ? '${food.fat.toStringAsFixed(1)}g'
+                  : '--',
               'Fat',
             ),
             _metric(
               Icons.icecream_rounded,
               const Color(0xFFA855F7),
-              '${food.sugar.toStringAsFixed(1)}g',
+              food.hasNutritionEstimate
+                  ? '${food.sugar.toStringAsFixed(1)}g'
+                  : '--',
               'Sugar',
             ),
             _metric(
