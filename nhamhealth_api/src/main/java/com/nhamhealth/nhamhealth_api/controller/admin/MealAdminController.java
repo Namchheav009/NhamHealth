@@ -58,6 +58,15 @@ public class MealAdminController {
         return ResponseEntity.ok(mealAdminService.getMealsForAdmin(search, category, status, tag, pageRequest));
     }
 
+    @GetMapping("/admin/meals/summary")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> mealSummary() {
+        return ResponseEntity.ok(Map.of(
+                "totalMeals", mealAdminService.getMealCount(),
+                "averageRating", mealAdminService.getAverageRating(),
+                "favoriteCount", mealAdminService.getFavoriteCount()));
+    }
+
     @PostMapping("/admin/meals")
     @ResponseBody
     public ResponseEntity<?> createMeal(@jakarta.validation.Valid @RequestBody AdminMealRequest request) {

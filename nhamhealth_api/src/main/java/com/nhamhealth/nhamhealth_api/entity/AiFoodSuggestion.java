@@ -18,7 +18,7 @@ public class AiFoodSuggestion {
     @Column(name = "ai_food_suggestion_id")
     private Integer aiFoodSuggestionId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "ai_food_analysis_id", nullable = false)
     private AiFoodAnalysis aiFoodAnalysis;
 

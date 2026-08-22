@@ -22,11 +22,11 @@ public class CommentLike {
     @Column(name = "comment_like_id")
     private Integer commentLikeId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
     private PostComment postComment;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

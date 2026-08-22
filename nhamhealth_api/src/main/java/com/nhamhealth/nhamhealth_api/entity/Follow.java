@@ -20,11 +20,11 @@ public class Follow {
     @Column(name = "follow_id")
     private Integer followId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "follower_user_id", nullable = false)
     private User followerUser;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "following_user_id", nullable = false)
     private User followingUser;
 

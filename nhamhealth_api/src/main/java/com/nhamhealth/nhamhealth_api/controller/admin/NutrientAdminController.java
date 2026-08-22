@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.cache.annotation.CacheEvict;
 
 import jakarta.validation.Valid;
 
@@ -76,6 +77,7 @@ public class NutrientAdminController {
     }
 
     @PostMapping("/admin/nutrients")
+    @CacheEvict(value = "nutrients", allEntries = true)
     @ResponseBody
     public ResponseEntity<?> createNutrient(@Valid @RequestBody AdminNutrientRequest request) {
         if (nutrientRepository.existsByNutrientNameIgnoreCase(request.nutrientName().trim())) {
@@ -89,6 +91,7 @@ public class NutrientAdminController {
     }
 
     @PutMapping("/admin/nutrients/{nutrientId}")
+    @CacheEvict(value = "nutrients", allEntries = true)
     @ResponseBody
     public ResponseEntity<?> updateNutrient(
             @PathVariable Integer nutrientId,
@@ -108,6 +111,7 @@ public class NutrientAdminController {
 
     @DeleteMapping("/admin/nutrients/{nutrientId}")
     @ResponseBody
+    @CacheEvict(value = "nutrients", allEntries = true)
     @Transactional
     public ResponseEntity<?> deleteNutrient(@PathVariable Integer nutrientId) {
         Nutrient nutrient = nutrientRepository.findById(nutrientId).orElse(null);

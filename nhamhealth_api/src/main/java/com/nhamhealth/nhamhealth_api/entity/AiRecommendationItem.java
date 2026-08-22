@@ -20,11 +20,11 @@ public class AiRecommendationItem {
     @Column(name = "recommendation_item_id")
     private Integer recommendationItemId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "recommendation_id", nullable = false)
     private AiRecommendation recommendation;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 

@@ -14,7 +14,11 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "post_comments")
+@Table(name = "post_comments", indexes = {
+    @jakarta.persistence.Index(name = "idx_post_comments_post_id_created_at", columnList = "post_id, created_at"),
+    @jakarta.persistence.Index(name = "idx_post_comments_user_id", columnList = "user_id"),
+    @jakarta.persistence.Index(name = "idx_post_comments_parent_comment_id", columnList = "parent_comment_id")
+})
 public class PostComment {
 
     @Id
@@ -22,15 +26,15 @@ public class PostComment {
     @Column(name = "comment_id")
     private Integer commentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     private PostComment parentComment;
 

@@ -22,11 +22,11 @@ public class MessageReaction {
     @Column(name = "message_reaction_id")
     private Integer messageReactionId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "message_id", nullable = false)
     private Message message;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

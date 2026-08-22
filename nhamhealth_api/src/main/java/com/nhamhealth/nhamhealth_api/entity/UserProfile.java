@@ -23,7 +23,7 @@ public class UserProfile {
     @Column(name = "user_profile_id")
     private Integer userProfileId;
 
-    @OneToOne
+    @OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

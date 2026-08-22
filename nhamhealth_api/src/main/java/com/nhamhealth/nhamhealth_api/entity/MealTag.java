@@ -9,7 +9,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "meal_tags")
+@Table(name = "meal_tags", indexes = {
+    @jakarta.persistence.Index(name = "idx_meal_tags_meal_id", columnList = "meal_id"),
+    @jakarta.persistence.Index(name = "idx_meal_tags_tag_id", columnList = "tag_id")
+})
 public class MealTag {
 
     @Id
@@ -17,11 +20,11 @@ public class MealTag {
     @jakarta.persistence.Column(name = "meal_tag_id")
     private Integer mealTagId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private TagType tag;
 

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -17,11 +18,13 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.FavoriteMealResponse;
+import com.nhamhealth.nhamhealth_api.dto.request.BulkMealFavoritesRequest;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
@@ -90,6 +93,27 @@ public class MealFavoriteApiController {
                 });
         return ResponseEntity.ok(toResponse(favorite));
     }
+
+        @PostMapping("/bulk")
+        @Transactional
+        public ResponseEntity<Void> addAll(
+                        @AuthenticationPrincipal Jwt jwt,
+                        @RequestBody BulkMealFavoritesRequest request) {
+                List<Integer> mealIds = request == null || request.mealIds() == null
+                                ? List.of()
+                                : request.mealIds().stream().filter(Objects::nonNull).distinct().limit(100).toList();
+                if (!mealIds.isEmpty()) {
+                        favoriteRepository.addAllPublishedByUserId(userId(jwt), mealIds);
+                }
+                return ResponseEntity.noContent().build();
+        }
+
+        @DeleteMapping
+        @Transactional
+        public ResponseEntity<Void> removeAll(@AuthenticationPrincipal Jwt jwt) {
+                favoriteRepository.deleteAllByUserId(userId(jwt));
+                return ResponseEntity.noContent().build();
+        }
 
     @DeleteMapping("/{mealId}")
     @Transactional

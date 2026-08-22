@@ -18,7 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "meals")
+@Table(name = "meals", indexes = {
+    @jakarta.persistence.Index(name = "idx_meals_category_id", columnList = "category_id"),
+    @jakarta.persistence.Index(name = "idx_meals_created_by_user_id", columnList = "created_by_user_id"),
+    @jakarta.persistence.Index(name = "idx_meals_updated_at", columnList = "updated_at")
+})
 public class Meal {
 
     @Id
@@ -26,11 +30,11 @@ public class Meal {
     @Column(name = "meal_id")
     private Integer mealId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private MealCategory category;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
     private User createdByUser;
 
@@ -67,7 +71,7 @@ public class Meal {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "meal")
+    @OneToMany(mappedBy = "meal", fetch = jakarta.persistence.FetchType.LAZY)
     private List<AiRecommendationItem> aiRecommendationItems = new ArrayList<>();
 
     public Meal() {

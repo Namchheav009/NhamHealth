@@ -14,7 +14,10 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", indexes = {
+    @jakarta.persistence.Index(name = "idx_reviews_meal_id", columnList = "meal_id"),
+    @jakarta.persistence.Index(name = "idx_reviews_user_id", columnList = "user_id")
+})
 public class Review {
 
     @Id
@@ -22,11 +25,11 @@ public class Review {
     @Column(name = "review_id")
     private Integer reviewId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 

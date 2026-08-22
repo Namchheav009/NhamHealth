@@ -15,7 +15,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "meal_logs")
+@Table(name = "meal_logs", indexes = {
+    @jakarta.persistence.Index(name = "idx_meal_logs_user_logged_at", columnList = "user_id, logged_at"),
+    @jakarta.persistence.Index(name = "idx_meal_logs_meal_id", columnList = "meal_id"),
+    @jakarta.persistence.Index(name = "idx_meal_logs_serving_size_id", columnList = "serving_size_id")
+})
 public class MealLog {
 
     @Id
@@ -23,23 +27,23 @@ public class MealLog {
     @Column(name = "meal_log_id")
     private Integer mealLogId;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_log_type_id", nullable = false)
     private MealLogType mealLogType;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "meal_id")
     private Meal meal;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "serving_size_id")
     private ServingSize servingSize;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "ai_food_analysis_id")
     private AiFoodAnalysis aiFoodAnalysis;
 
