@@ -17,7 +17,7 @@ app.auth.jwt.expiration=PT24H
 app.auth.google.client-id=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 app.auth.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
 
-# Development seed accounts (used only when the supabase profile is inactive)
+# Development seed accounts
 app.seed.admin-email=admin@nhamhealth.local
 app.seed.admin-password=CHANGE_THIS_ADMIN_PASSWORD
 app.seed.user-email=user@nhamhealth.local
