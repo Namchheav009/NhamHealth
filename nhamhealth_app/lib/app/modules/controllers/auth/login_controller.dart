@@ -28,6 +28,17 @@ class LoginController extends GetxController {
   final AuthService _authService;
   final GoogleAuthService _googleAuth;
   final RxBool isLoading = false.obs;
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  Future<void> submit() => login(emailController.text, passwordController.text);
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
 
   Future<void> login(String email, String password) async {
     final normalizedEmail = email.trim();

@@ -11,7 +11,7 @@ class HealthStatsCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(20),
@@ -25,32 +25,52 @@ class HealthStatsCard extends GetView<ProfileController> {
       ),
       child: Obx(
         () => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _stat(
+            Expanded(
+              child: _stat(
               icon: Icons.person_outline,
               title: 'Age',
-              value: '${controller.age.value}',
+              value: controller.age.value > 0 ? '${controller.age.value}' : '--',
               unit: 'Years',
             ),
-            _stat(
+            ),
+            const _StatDivider(),
+            Expanded(
+              child: _stat(
               icon: Icons.straighten,
               title: 'Height',
-              value: '${controller.height.value}',
+              value:
+                  controller.height.value > 0
+                      ? '${controller.height.value}'
+                      : '--',
               unit: 'cm',
             ),
-            _stat(
+            ),
+            const _StatDivider(),
+            Expanded(
+              child: _stat(
               icon: Icons.monitor_weight_outlined,
               title: 'Weight',
-              value: '${controller.weight.value}',
+              value:
+                  controller.weight.value > 0
+                      ? '${controller.weight.value}'
+                      : '--',
               unit: 'kg',
             ),
-            _stat(
+            ),
+            const _StatDivider(),
+            Expanded(
+              child: _stat(
               icon: Icons.monitor_heart_outlined,
               title: 'BMI',
-              value: controller.bmi.toStringAsFixed(1),
+              value:
+                  controller.bmi > 0
+                      ? controller.bmi.toStringAsFixed(1)
+                      : '--',
               unit: controller.bmiStatus,
               unitColor: green,
+            ),
             ),
           ],
         ),
@@ -65,64 +85,70 @@ class HealthStatsCard extends GetView<ProfileController> {
     required String unit,
     Color? unitColor,
   }) {
-    return Expanded(
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: const Color(0xFFF7FBEF),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 7,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(icon, color: green, size: 20),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          title,
+          maxLines: 1,
+          style: const TextStyle(
+            color: Color(0xFF65766C),
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
           ),
-
-          const SizedBox(width: 5),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF52617B),
-                    fontSize: 11,
-                  ),
-                ),
-
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-
-                Text(
-                  unit,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: unitColor ?? const Color(0xFF52617B),
-                    fontSize: 10,
-                  ),
-                ),
-              ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Color(0xFF26322B),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        SizedBox(
+          height: 14,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              unit,
+              maxLines: 1,
+              style: TextStyle(
+                color: unitColor ?? const Color(0xFF65766C),
+                fontSize: 10,
+                fontWeight: unitColor == null
+                    ? FontWeight.w400
+                    : FontWeight.w600,
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 1,
+    height: 72,
+    margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+    color: const Color(0xFFE4EAE6),
+  );
 }

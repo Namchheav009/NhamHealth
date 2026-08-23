@@ -38,6 +38,7 @@ public interface MealFavoriteRepository extends JpaRepository<MealFavorite, Inte
 
     boolean existsByUserUserIdAndMealMealIdAndMealFavoriteIdNot(Integer userId, Integer mealId, Integer favoriteId);
 
+    @EntityGraph(attributePaths = { "user", "meal", "meal.category" })
     java.util.List<MealFavorite> findAllByOrderBySavedAtDesc();
 
     @EntityGraph(attributePaths = { "meal", "meal.category" })

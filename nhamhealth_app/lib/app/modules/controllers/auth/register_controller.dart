@@ -26,6 +26,26 @@ class RegisterController extends GetxController {
   final AuthService _authService;
   final GoogleAuthService _googleAuth;
   final RxBool isLoading = false.obs;
+  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  Future<void> submit() => register(
+    fullName: fullNameController.text,
+    email: emailController.text,
+    password: passwordController.text,
+    confirmPassword: confirmPasswordController.text,
+  );
+
+  @override
+  void onClose() {
+    fullNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.onClose();
+  }
 
   Future<void> register({
     required String fullName,

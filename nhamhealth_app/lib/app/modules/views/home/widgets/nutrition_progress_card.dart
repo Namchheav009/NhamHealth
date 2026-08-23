@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/nutrition_progress_model.dart';
 
 class NutritionProgressCard extends StatelessWidget {
@@ -32,7 +31,8 @@ class NutritionProgressCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.secondaryText,
                   ),
                 ),
@@ -45,8 +45,8 @@ class NutritionProgressCard extends StatelessWidget {
             maxLines: 1,
             style: const TextStyle(
               color: AppColors.primaryText,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
@@ -56,7 +56,7 @@ class NutritionProgressCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 10, color: AppColors.inactiveText),
           ),
-          const SizedBox(height: 9),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Container(
@@ -65,19 +65,12 @@ class NutritionProgressCard extends StatelessWidget {
                 color: AppColors.progressTrack,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: InnerShadow(
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                shadows: const [
-                  BoxShadow(
-                    color: Color(0x24004A2A),
-                    blurRadius: 3,
-                    offset: Offset(-1, -1),
-                  ),
-                ],
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: FractionallySizedBox(
-                    widthFactor: data.progress,
+                    widthFactor: data.progress.clamp(0.0, 1.0),
                     child: Container(
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen,

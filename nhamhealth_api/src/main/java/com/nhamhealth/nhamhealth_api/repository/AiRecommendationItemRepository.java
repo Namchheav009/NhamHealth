@@ -10,6 +10,7 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 public interface AiRecommendationItemRepository extends JpaRepository<AiRecommendationItem, Integer> {
     long countByRecommendationRecommendationId(Integer recommendationId);
 
+    @EntityGraph(attributePaths = { "recommendation", "meal" })
     List<AiRecommendationItem> findAllByRecommendationRecommendationIdOrderByRankOrderAsc(Integer recommendationId);
 
     @EntityGraph(attributePaths = { "recommendation", "meal" })

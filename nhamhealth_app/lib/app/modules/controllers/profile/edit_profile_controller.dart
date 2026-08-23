@@ -26,13 +26,13 @@ class EditProfileController extends GetxController {
   final email = ''.obs;
   final phone = ''.obs;
 
-  final dateOfBirth = DateTime(DateTime.now().year - 21, 1, 1).obs;
-  final gender = 'Prefer not to say'.obs;
+  final Rxn<DateTime> dateOfBirth = Rxn<DateTime>();
+  final gender = ''.obs;
 
   // Health information
-  final age = 21.obs;
-  final height = 158.0.obs;
-  final weight = 62.0.obs;
+  final age = 0.obs;
+  final height = 0.0.obs;
+  final weight = 0.0.obs;
 
   String get formattedDateOfBirth {
     const months = [
@@ -51,6 +51,7 @@ class EditProfileController extends GetxController {
     ];
 
     final date = dateOfBirth.value;
+    if (date == null) return 'Not set';
 
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -89,7 +90,7 @@ class EditProfileController extends GetxController {
     super.onInit();
     profileName.value = profileController.name.value;
     profileEmail.value = profileController.email.value;
-    fullName.value = profileController.name.value;
+    fullName.value = profileController.dashboard.value?.fullName ?? '';
     email.value = profileController.email.value;
     membership.value = profileController.membership.value;
     profileImagePath.value = profileController.profileImagePath.value;
@@ -99,11 +100,11 @@ class EditProfileController extends GetxController {
     final dashboard = profileController.dashboard.value;
     if (dashboard != null) {
       phone.value = dashboard.phone ?? '';
-      dateOfBirth.value = dashboard.dateOfBirth ?? dateOfBirth.value;
+      dateOfBirth.value = dashboard.dateOfBirth;
       gender.value =
           dashboard.gender?.trim().isNotEmpty == true
               ? dashboard.gender!.trim()
-              : 'Prefer not to say';
+              : '';
     }
   }
 
@@ -113,6 +114,13 @@ class EditProfileController extends GetxController {
 
   Future<void> saveProfile() async {
     if (isSaving.value) return;
+    if (fullName.value.trim().length < 2) {
+      await AppAlert.error(
+        title: 'Add your name',
+        message: 'Enter your full name before saving your profile.',
+      );
+      return;
+    }
     isSaving.value = true;
     try {
       await profileController.saveProfile(
@@ -120,9 +128,9 @@ class EditProfileController extends GetxController {
         email: email.value,
         phone: phone.value,
         dateOfBirth: dateOfBirth.value,
-        gender: gender.value,
-        heightCm: height.value,
-        weightKg: weight.value,
+        gender: gender.value.isEmpty ? null : gender.value,
+        heightCm: height.value > 0 ? height.value : null,
+        weightKg: weight.value > 0 ? weight.value : null,
         imagePath: profileImagePath.value,
       );
       await AppAlert.dismiss();
@@ -231,7 +239,7 @@ class EditProfileController extends GetxController {
 
         if (number != null && number > 0 && number <= 120) {
           age.value = number;
-          final current = dateOfBirth.value;
+          final current = dateOfBirth.value ?? DateTime.now();
           final year = DateTime.now().year - number;
           dateOfBirth.value = DateTime(
             year,
@@ -267,7 +275,8 @@ class EditProfileController extends GetxController {
   Future<void> selectDateOfBirth(BuildContext context) async {
     final selectedDate = await showDatePicker(
       context: context,
-      initialDate: dateOfBirth.value,
+      initialDate:
+          dateOfBirth.value ?? DateTime(DateTime.now().year - 18, 1, 1),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/app_background.dart';
-import '../../../widgets/inner_shadow.dart';
+import '../../../widgets/app_search_bar.dart';
+import '../../../widgets/loading_content_transition.dart';
+import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/meal_controller.dart';
 import '../home/widgets/home_bottom_navigation.dart';
@@ -39,7 +39,9 @@ class MealView extends GetView<MealController> {
                 padding: AppSpacing.pagePaddingWithNavigation,
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 430),
+                    constraints: const BoxConstraints(
+                      maxWidth: AppSpacing.maxContentWidth,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -57,24 +59,31 @@ class MealView extends GetView<MealController> {
                         ),
 
                         const SizedBox(height: AppSpacing.topBarBottom),
-                        Obx(
-                          () =>
-                              controller.isLoading.value &&
-                                      controller.meals.isEmpty
-                                  ? const PageSkeleton.meals()
-                                  : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _buildSearch(),
-                                      const SizedBox(height: 14),
-                                      const MealCategory(),
-                                      const SizedBox(height: 22),
-                                      const MealSlideShow(),
-                                      const SizedBox(height: 23),
-                                      _buildMealGrid(),
-                                    ],
-                                  ),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 430),
+                            child: Obx(
+                              () => LoadingContentTransition(
+                                isLoading:
+                                    controller.isLoading.value &&
+                                    controller.meals.isEmpty,
+                                loading: const PageSkeleton.meals(),
+                                content: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    _buildSearch(),
+                                    const SizedBox(height: 14),
+                                    const MealCategory(),
+                                    const SizedBox(height: 22),
+                                    const MealSlideShow(),
+                                    const SizedBox(height: 23),
+                                    _buildMealGrid(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -88,11 +97,19 @@ class MealView extends GetView<MealController> {
         // YOUR EXISTING NAVIGATION
         bottomNavigationBar: SafeArea(
           top: false,
-          minimum: const EdgeInsets.fromLTRB(25, 0, 25, 14),
-          child: Obx(
-            () => AppBottomNavigation(
-              selectedIndex: controller.selectedBottomIndex.value,
-              onSelect: controller.selectBottomMenu,
+          minimum: AppSpacing.navigationMargin,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppSpacing.maxContentWidth,
+              ),
+              child: Obx(
+                () => AppBottomNavigation(
+                  selectedIndex: controller.selectedBottomIndex.value,
+                  onSelect: controller.selectBottomMenu,
+                ),
+              ),
             ),
           ),
         ),
@@ -101,70 +118,13 @@ class MealView extends GetView<MealController> {
   }
 
   Widget _buildSearch() {
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white),
-        boxShadow: AppShadows.search,
-      ),
-      child: InnerShadow(
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20, right: 8),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.search_rounded,
-                color: AppColors.secondaryText,
-                size: 25,
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: TextField(
-                  controller: controller.searchController,
-                  onChanged: controller.updateSearch,
-                  textInputAction: TextInputAction.search,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.primaryText,
-                  ),
-                  cursorColor: AppColors.primaryGreen,
-                  decoration: const InputDecoration(
-                    hintText: 'Search for meals, tips or healthy groceries',
-                    hintStyle: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.secondaryText,
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    isCollapsed: true,
-                  ),
-                ),
-              ),
-              Obx(
-                () => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  child:
-                      controller.searchQuery.value.isEmpty
-                          ? const SizedBox(width: 36)
-                          : IconButton(
-                            key: const ValueKey('clear-meal-search'),
-                            onPressed: controller.clearSearch,
-                            tooltip: 'Clear search',
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              size: 19,
-                              color: AppColors.secondaryText,
-                            ),
-                          ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return Obx(
+      () => AppSearchBar(
+        hintText: 'Search meals and healthy ideas',
+        controller: controller.searchController,
+        onChanged: controller.updateSearch,
+        showClear: controller.searchQuery.value.isNotEmpty,
+        onClear: controller.clearSearch,
       ),
     );
   }

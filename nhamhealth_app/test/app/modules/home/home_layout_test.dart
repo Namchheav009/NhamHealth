@@ -43,6 +43,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final size in <Size>[
+    const Size(320, 700),
+    const Size(768, 1024),
+    const Size(1440, 900),
+  ]) {
+    testWidgets('home layout is responsive at ${size.width.toInt()} px', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.reset);
+
+      Get.put<AuthService>(_SessionAuthService());
+      Get.put<HomeController>(
+        HomeController(repository: HomeRepository(provider: HomeProvider())),
+      );
+
+      await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
+      await tester.pump(const Duration(milliseconds: 900));
+
+      expect(find.text('How are you feeling today?'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   test('AI nutrition is kept per day on the dashboard', () async {
     final controller = HomeController(
       repository: HomeRepository(provider: HomeProvider()),

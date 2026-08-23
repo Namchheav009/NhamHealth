@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class LoadingContentTransition extends StatelessWidget {
@@ -19,9 +17,9 @@ class LoadingContentTransition extends StatelessWidget {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return AnimatedSwitcher(
       duration:
-          reduceMotion ? Duration.zero : const Duration(milliseconds: 820),
+          reduceMotion ? Duration.zero : const Duration(milliseconds: 360),
       reverseDuration:
-          reduceMotion ? Duration.zero : const Duration(milliseconds: 260),
+          reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       layoutBuilder:
@@ -52,33 +50,12 @@ class LoadingContentTransition extends StatelessWidget {
             curve: isContent ? Curves.easeOutBack : Curves.easeOut,
           ),
         );
-        final scale = Tween<double>(
-          begin: isContent ? .965 : .995,
-          end: 1,
-        ).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
-        );
-
-        return AnimatedBuilder(
-          animation: animation,
-          child: child,
-          builder: (context, child) {
-            final blur = isContent ? (1 - animation.value) * 5 : 0.0;
-            return ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-              child: FadeTransition(
-                opacity: fade,
-                child: SlideTransition(
-                  position: slide,
-                  child: ScaleTransition(
-                    alignment: Alignment.topCenter,
-                    scale: scale,
-                    child: child,
-                  ),
-                ),
-              ),
-            );
-          },
+        return FadeTransition(
+          opacity: fade,
+          child: SlideTransition(
+            position: slide,
+            child: child,
+          ),
         );
       },
       child: KeyedSubtree(

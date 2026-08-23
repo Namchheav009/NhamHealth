@@ -32,9 +32,9 @@ class ProfileController extends GetxController {
   final profileImagePath = ''.obs;
   final insight = "Start logging meals to build today's progress.".obs;
 
-  final age = 21.obs;
-  final height = 165.obs;
-  final weight = 58.obs;
+  final age = 0.obs;
+  final height = 0.obs;
+  final weight = 0.obs;
 
   double get bmi {
     final heightInMeters = height.value / 100;
@@ -43,6 +43,7 @@ class ProfileController extends GetxController {
   }
 
   String get bmiStatus {
+    if (height.value <= 0 || weight.value <= 0) return 'Not set';
     if (bmi < 18.5) return 'Underweight';
     if (bmi < 25) return 'Normal';
     if (bmi < 30) return 'Overweight';
@@ -165,10 +166,10 @@ class ProfileController extends GetxController {
     required String fullName,
     required String email,
     required String phone,
-    required DateTime dateOfBirth,
-    required String gender,
-    required double heightCm,
-    required double weightKg,
+    DateTime? dateOfBirth,
+    String? gender,
+    double? heightCm,
+    double? weightKg,
     String? imagePath,
   }) async {
     final selectedImagePath = imagePath?.trim();
@@ -208,6 +209,7 @@ class ProfileController extends GetxController {
   }
 
   void changeNavigation(int index) {
+    if (index == selectedNavIndex.value) return;
     selectedNavIndex.value = index;
 
     switch (index) {
@@ -246,6 +248,7 @@ class ProfileController extends GetxController {
   }
 
   void openProfile() {
+    if (Get.currentRoute == AppRoutes.profile) return;
     Get.offNamed<void>(AppRoutes.profile, arguments: authenticatedUser.value);
   }
 

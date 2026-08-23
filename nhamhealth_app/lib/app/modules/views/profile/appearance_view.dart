@@ -12,10 +12,8 @@ class AppearanceView extends GetView<AppearanceController> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
-    return MediaQuery(
-      data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: const Color(0xFFFDFBFB),
         body: Stack(
@@ -23,19 +21,16 @@ class AppearanceView extends GetView<AppearanceController> {
             const _SettingsBackground(),
 
             SafeArea(
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 390),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.pageHorizontal,
-                    ),
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: AppSpacing.pagePadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 37),
-
-                        // HEADER
                         Row(
                           children: [
                             GestureDetector(
@@ -66,10 +61,9 @@ class AppearanceView extends GetView<AppearanceController> {
                           ],
                         ),
 
-                        const SizedBox(height: 43),
-
+                        const SizedBox(height: 24),
                         const Text(
-                          'Customize the look and feel of the',
+                          'Choose how NhamHealth looks on this device.',
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.4,
@@ -78,19 +72,7 @@ class AppearanceView extends GetView<AppearanceController> {
                           ),
                         ),
 
-                        const SizedBox(height: 4),
-
-                        const Text(
-                          'app to suit your preference.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.4,
-                            color: Color(0xFF687185),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 24),
 
                         const Padding(
                           padding: EdgeInsets.only(left: 6),
@@ -104,7 +86,7 @@ class AppearanceView extends GetView<AppearanceController> {
                           ),
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
                         _buildThemeCard(),
                       ],
@@ -124,7 +106,8 @@ class AppearanceView extends GetView<AppearanceController> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE3EBE6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.045),
@@ -160,7 +143,7 @@ class AppearanceView extends GetView<AppearanceController> {
               iconBackground: const Color(0xFFF1F1F1),
               iconColor: const Color(0xFF555555),
               title: 'Dark Mode',
-              subtitle: 'Dart theme for a comfortable viewing',
+              subtitle: 'Dark theme for comfortable viewing',
               selected: controller.selectedTheme.value == 'dark',
               onTap: controller.selectDarkMode,
             ),
@@ -194,9 +177,14 @@ class _ThemeItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
-      child: SizedBox(
-        height: 70,
+      borderRadius: BorderRadius.circular(17),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        height: 76,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF0FAF3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(17),
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13),
           child: Row(
@@ -205,7 +193,7 @@ class _ThemeItem extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(13),
                   color: iconBackground,
                 ),
                 child: Icon(icon, size: 23, color: iconColor),
@@ -221,8 +209,8 @@ class _ThemeItem extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF171717),
                       ),
                     ),
@@ -230,7 +218,7 @@ class _ThemeItem extends StatelessWidget {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 11,
                         color: Color(0xFF707788),
                       ),
                     ),

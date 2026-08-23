@@ -1,458 +1,397 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/profile/change_password_controller.dart';
 
 class ChangePasswordView extends GetView<ChangePasswordController> {
   const ChangePasswordView({super.key});
 
-  static const Color green = Color(0xFF009B43);
-  static const Color darkGreen = Color(0xFF00652E);
-
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-
-    return MediaQuery(
-      // Keeps text size stable like your design.
-      data: media.copyWith(textScaler: TextScaler.noScaling),
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
       child: Scaffold(
-        resizeToAvoidBottomInset: true,  
-        backgroundColor: Colors.white,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            // The reference frame is 393 logical pixels wide.
-            final double scale = (constraints.maxWidth / 393).clamp(0.90, 1.12);
-
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: SizedBox(
-                width: constraints.maxWidth,
-                height:
-                    constraints.maxHeight < 720 ? 720 : constraints.maxHeight,
-                child: Stack(
-                  children: [
-                    // ==========================================
-                    // BACKGROUND
-                    // ==========================================
-                    const Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage(
-                              'assets/images/background/bg.png',
-                            ),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+        backgroundColor: AppColors.homeBackground,
+        resizeToAvoidBottomInset: true,
+        body: AppBackground(
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final side = constraints.maxWidth < 360 ? 16.0 : 24.0;
+                return SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    side,
+                    8,
+                    side,
+                    32 + MediaQuery.viewInsetsOf(context).bottom,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _PageHeader(),
+                          const SizedBox(height: 26),
+                          const _SecurityIntro(),
+                          const SizedBox(height: 22),
+                          _PasswordForm(controller: controller),
+                        ],
                       ),
                     ),
-
-                    // Pink glow top left
-                    Positioned(
-                      top: -110 * scale,
-                      left: -150 * scale,
-                      child: _backgroundGlow(
-                        width: 410 * scale,
-                        height: 440 * scale,
-                        color: const Color(0xFFFFE9ED),
-                      ),
-                    ),
-
-                    // Green glow top right
-                    Positioned(
-                      top: -90 * scale,
-                      right: -140 * scale,
-                      child: _backgroundGlow(
-                        width: 400 * scale,
-                        height: 440 * scale,
-                        color: const Color(0xFFE9FFD9),
-                      ),
-                    ),
-
-                    // Pink glow middle left
-                    Positioned(
-                      top: 330 * scale,
-                      left: -160 * scale,
-                      child: _backgroundGlow(
-                        width: 390 * scale,
-                        height: 400 * scale,
-                        color: const Color(0xFFFFECEF),
-                      ),
-                    ),
-
-                    // Green glow center/right
-                    Positioned(
-                      top: 310 * scale,
-                      right: -160 * scale,
-                      child: _backgroundGlow(
-                        width: 420 * scale,
-                        height: 410 * scale,
-                        color: const Color(0xFFE9FFE5),
-                      ),
-                    ),
-
-                    // Pink bottom
-                    Positioned(
-                      bottom: -140 * scale,
-                      left: -160 * scale,
-                      child: _backgroundGlow(
-                        width: 430 * scale,
-                        height: 450 * scale,
-                        color: const Color(0xFFFFEDF0),
-                      ),
-                    ),
-
-                    // Green bottom right
-                    Positioned(
-                      bottom: -110 * scale,
-                      right: -150 * scale,
-                      child: _backgroundGlow(
-                        width: 420 * scale,
-                        height: 460 * scale,
-                        color: const Color(0xFFE9FFDD),
-                      ),
-                    ),
-
-                    // ==========================================
-                    // MAIN CONTENT
-                    // ==========================================
-                    SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 28 * scale,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 44 * scale),
-
-                            // Header
-                            _buildHeader(scale),
-
-                            SizedBox(height: 35 * scale),
-
-                            // Subtitle
-                            Padding(
-                              padding: EdgeInsets.only(left: 4 * scale),
-                              child: Text(
-                                "No worries, we've got you.",
-                                style: TextStyle(
-                                  fontSize: 12 * scale,
-                                  height: 1,
-                                  fontWeight: FontWeight.w400,
-                                  color: const Color(0xFF83A991),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 25 * scale),
-
-                            // Password card
-                            _buildPasswordCard(scale),
-
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
   }
+}
 
-  // ============================================================
-  // HEADER
-  // ============================================================
+class _PageHeader extends StatelessWidget {
+  const _PageHeader();
 
-  Widget _buildHeader(double scale) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 48,
+    child: Row(
       children: [
-        GestureDetector(
-          onTap: Get.back,
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: 24 * scale,
-            height: 34 * scale,
-            child: Icon(
-              Icons.arrow_back_rounded,
-              size: 22 * scale,
-              color: darkGreen,
-            ),
-          ),
+        IconButton(
+          tooltip: 'Back',
+          onPressed: Get.back,
+          icon: const Icon(Icons.arrow_back_rounded),
+          color: AppColors.darkGreen,
         ),
-
-        SizedBox(width: 7 * scale),
-
-        Text(
-          'Change Password',
-          style: TextStyle(
-            fontSize: 20 * scale,
-            height: 1,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-            color: Colors.black,
+        const SizedBox(width: 4),
+        const Expanded(
+          child: Text(
+            'Change password',
+            style: TextStyle(
+              color: Color(0xFF17211B),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.45,
+            ),
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  // ============================================================
-  // MAIN CARD
-  // ============================================================
+class _SecurityIntro extends StatelessWidget {
+  const _SecurityIntro();
 
-  Widget _buildPasswordCard(double scale) {
-    return Container(
-      width: double.infinity,
-      height: 420 * scale,
-      padding: EdgeInsets.fromLTRB(
-        5 * scale,
-        30 * scale,
-        5 * scale,
-        45 * scale,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
-          width: 1,
+  @override
+  Widget build(BuildContext context) => const Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _IntroIcon(),
+      SizedBox(width: 15),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Secure your account',
+              style: TextStyle(
+                color: AppColors.primaryText,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              'Choose a strong password you have not used before.',
+              style: TextStyle(
+                color: AppColors.mutedText,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 20 * scale,
-            offset: Offset(0, 8 * scale),
-          ),
-        ],
       ),
+    ],
+  );
+}
+
+class _IntroIcon extends StatelessWidget {
+  const _IntroIcon();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 52,
+    height: 52,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE8F7EC),
+      borderRadius: BorderRadius.circular(17),
+    ),
+    child: const Icon(
+      Icons.lock_reset_rounded,
+      color: AppColors.primaryGreen,
+      size: 28,
+    ),
+  );
+}
+
+class _PasswordForm extends StatelessWidget {
+  const _PasswordForm({required this.controller});
+
+  final ChangePasswordController controller;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: Colors.white, width: 1.2),
+      boxShadow: AppShadows.surface,
+    ),
+    child: AutofillGroup(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Obx(
-            () => _passwordField(
-              scale: scale,
-              controller: controller.currentPasswordController,
-              hint: 'Current password',
+            () => _PasswordField(
+              label: 'Current password',
+              hint: 'Enter your current password',
+              textController: controller.currentPasswordController,
               obscureText: controller.hideCurrentPassword.value,
-              onEyeTap: controller.toggleCurrentPassword,
+              onVisibilityPressed: controller.toggleCurrentPassword,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.password],
             ),
           ),
-
-          SizedBox(height: 19 * scale),
-
-          Obx(
-            () => _passwordField(
-              scale: scale,
-              controller: controller.newPasswordController,
-              hint: 'New password',
-              obscureText: controller.hideNewPassword.value,
-              onEyeTap: controller.toggleNewPassword,
-            ),
-          ),
-
-          SizedBox(height: 19 * scale),
-
-          Obx(
-            () => _passwordField(
-              scale: scale,
-              controller: controller.confirmPasswordController,
-              hint: 'Confirm new password',
-              obscureText: controller.hideConfirmPassword.value,
-              onEyeTap: controller.toggleConfirmPassword,
-            ),
-          ),
-
-          SizedBox(height: 20 * scale),
-
-          // Forgot password
           Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 34 * scale),
-              child: GestureDetector(
-                onTap: controller.forgotPassword,
-                child: Text(
-                  'Forgot password?',
-                  style: TextStyle(
-                    fontSize: 13 * scale,
-                    height: 1,
-                    fontWeight: FontWeight.w400,
-                    color: darkGreen,
-                    decoration: TextDecoration.underline,
-                    decorationColor: darkGreen,
-                    decorationThickness: 1,
-                  ),
-                ),
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: controller.forgotPassword,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.darkGreen,
+                minimumSize: const Size(48, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+              child: const Text(
+                'Forgot password?',
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
-
-          const Spacer(),
-
-          // Update password button
-          _buildUpdateButton(scale),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // PASSWORD FIELD
-  // ============================================================
-
-  Widget _passwordField({
-    required double scale,
-    required TextEditingController controller,
-    required String hint,
-    required bool obscureText,
-    required VoidCallback onEyeTap,
-  }) {
-    return Container(
-      width: double.infinity,
-      height: 56 * scale,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(25 * scale),
-        border: Border(
-          top: BorderSide(color: Colors.white, width: 1.2 * scale),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.012),
-            blurRadius: 10 * scale,
-            offset: Offset(0, 3 * scale),
+          const SizedBox(height: 8),
+          Obx(
+            () => _PasswordField(
+              label: 'New password',
+              hint: 'Create a new password',
+              textController: controller.newPasswordController,
+              obscureText: controller.hideNewPassword.value,
+              onVisibilityPressed: controller.toggleNewPassword,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Obx(
+            () => _PasswordField(
+              label: 'Confirm new password',
+              hint: 'Enter the new password again',
+              textController: controller.confirmPasswordController,
+              obscureText: controller.hideConfirmPassword.value,
+              onVisibilityPressed: controller.toggleConfirmPassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!controller.isLoading.value) controller.updatePassword();
+              },
+              autofillHints: const [AutofillHints.newPassword],
+            ),
+          ),
+          const SizedBox(height: 18),
+          const _PasswordGuidance(),
+          const SizedBox(height: 24),
+          Obx(
+            () => _SubmitButton(
+              loading: controller.isLoading.value,
+              onPressed: controller.updatePassword,
+            ),
           ),
         ],
       ),
-      child: TextField(
-        controller: controller,
+    ),
+  );
+}
+
+class _PasswordField extends StatelessWidget {
+  const _PasswordField({
+    required this.label,
+    required this.hint,
+    required this.textController,
+    required this.obscureText,
+    required this.onVisibilityPressed,
+    required this.textInputAction,
+    required this.autofillHints,
+    this.onSubmitted,
+  });
+
+  final String label;
+  final String hint;
+  final TextEditingController textController;
+  final bool obscureText;
+  final VoidCallback onVisibilityPressed;
+  final TextInputAction textInputAction;
+  final Iterable<String> autofillHints;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF29352E),
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: textController,
         obscureText: obscureText,
-        style: TextStyle(
-          fontSize: 13.5 * scale,
+        enableSuggestions: false,
+        autocorrect: false,
+        autofillHints: autofillHints,
+        textInputAction: textInputAction,
+        onSubmitted: onSubmitted,
+        cursorColor: AppColors.primaryGreen,
+        style: const TextStyle(
+          color: AppColors.primaryText,
+          fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: const Color(0xFF404040),
         ),
-        cursorColor: green,
-        textAlign: TextAlign.left,
-        textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
-          isDense: true,
           hintText: hint,
-          hintStyle: TextStyle(
-            fontSize: 13.5 * scale,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFFB8BCC2),
+          hintStyle: const TextStyle(
+            color: AppColors.placeholder,
+            fontSize: 14,
           ),
-          contentPadding: EdgeInsets.only(left: 32 * scale),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-
-          // Eye icon
-          suffixIcon: GestureDetector(
-            onTap: onEyeTap,
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 48 * scale,
-              height: 56 * scale,
-              child: Center(
-                child: Icon(
-                  obscureText
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  size: 19 * scale,
-                  color: const Color(0xFFB7BBC0),
-                ),
-              ),
+          prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+          suffixIcon: IconButton(
+            tooltip: obscureText ? 'Show password' : 'Hide password',
+            onPressed: onVisibilityPressed,
+            icon: Icon(
+              obscureText
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+              size: 20,
             ),
           ),
-          suffixIconConstraints: BoxConstraints.tightFor(
-            width: 48 * scale,
-            height: 56 * scale,
+          filled: true,
+          fillColor: const Color(0xFFF8FBF8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 17,
+          ),
+          prefixIconColor: AppColors.mutedText,
+          suffixIconColor: AppColors.mutedText,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(
+              color: AppColors.primaryGreen,
+              width: 1.6,
+            ),
           ),
         ),
       ),
-    );
-  }
+    ],
+  );
+}
 
-  // ============================================================
-  // UPDATE BUTTON
-  // ============================================================
+class _PasswordGuidance extends StatelessWidget {
+  const _PasswordGuidance();
 
-  Widget _buildUpdateButton(double scale) {
-    return Obx(
-      () => GestureDetector(
-        onTap: controller.isLoading.value ? null : controller.updatePassword,
-        child: Container(
-          width: double.infinity,
-          height: 55 * scale,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: green,
-            borderRadius: BorderRadius.circular(25 * scale),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 5 * scale,
-                offset: Offset(0, 5 * scale),
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF2F9F4),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFFDCEEE1)),
+    ),
+    child: const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline_rounded, color: AppColors.darkGreen, size: 19),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Use at least 8 characters. Your new password must be different from your current password.',
+            style: TextStyle(
+              color: Color(0xFF577063),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _SubmitButton extends StatelessWidget {
+  const _SubmitButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => FilledButton(
+    onPressed: loading ? null : onPressed,
+    style: FilledButton.styleFrom(
+      minimumSize: const Size.fromHeight(54),
+      backgroundColor: AppColors.primaryGreen,
+      disabledBackgroundColor: AppColors.primaryGreen.withValues(alpha: 0.55),
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      shadowColor: AppColors.darkGreen.withValues(alpha: 0.28),
+    ),
+    child: AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      child: loading
+          ? const SizedBox(
+              key: ValueKey('loading'),
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: Colors.white,
               ),
-            ],
-          ),
-          child:
-              controller.isLoading.value
-                  ? SizedBox(
-                    width: 23 * scale,
-                    height: 23 * scale,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  )
-                  : Text(
-                    'Update Password',
-                    style: TextStyle(
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // BACKGROUND GLOW
-  // ============================================================
-
-  Widget _backgroundGlow({
-    required double width,
-    required double height,
-    required Color color,
-  }) {
-    return IgnorePointer(
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(width),
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.55),
-              color.withValues(alpha: 0.25),
-              color.withValues(alpha: 0),
-            ],
-            stops: const [0, 0.48, 1],
-          ),
-        ),
-      ),
-    );
-  }
+            )
+          : const Row(
+              key: ValueKey('label'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_reset_rounded, size: 20),
+                SizedBox(width: 9),
+                Text(
+                  'Update password',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+    ),
+  );
 }

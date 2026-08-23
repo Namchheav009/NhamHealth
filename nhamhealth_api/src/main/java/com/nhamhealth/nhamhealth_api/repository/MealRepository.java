@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -64,6 +65,7 @@ public interface MealRepository extends JpaRepository<Meal, Integer> {
 
     List<Meal> findAllByIsPublishedTrueOrderByMealNameAsc();
 
+    @EntityGraph(attributePaths = "category")
     @Query("""
             select meal from Meal meal
             where meal.isPublished = true

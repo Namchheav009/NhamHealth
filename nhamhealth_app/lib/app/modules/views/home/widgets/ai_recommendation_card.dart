@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
-import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 
 class AiRecommendationCard extends GetView<HomeController> {
@@ -13,52 +12,34 @@ class AiRecommendationCard extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compact = constraints.maxWidth < 340;
         return Container(
-          height: 188,
+          height: 176,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(15),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFF3FBF5), Colors.white],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFDCEEE1)),
             boxShadow: AppShadows.surface,
           ),
-          child: InnerShadow(
-            borderRadius: BorderRadius.circular(15),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -40,
-                  top: 27,
-                  child: Container(
-                    width: 148,
-                    height: 148,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                      boxShadow: AppShadows.image,
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/meals/healthy_salad.jpg',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  top: 18,
-                  bottom: 19,
-                  width: constraints.maxWidth * 0.61,
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 17, 10, 17),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
                           Icon(
-                            Icons.auto_awesome,
-                            size: 19,
-                            color: Color(0xFFFFB800),
+                            Icons.auto_awesome_rounded,
+                            size: 18,
+                            color: Color(0xFFFFA928),
                           ),
                           SizedBox(width: 7),
                           Expanded(
@@ -67,62 +48,54 @@ class AiRecommendationCard extends GetView<HomeController> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                color: AppColors.darkGreen,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 9),
                       const Expanded(
                         child: Text(
-                          'Get 10-15 personalized meals\n'
-                          'ranked for your mood, daily\n'
-                          'nutrition, preferences, and\n'
-                          'cooking time.',
+                          'Personalized meals for your mood, nutrition goals, and cooking time.',
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 14,
-                            height: 1.08,
-                            color: AppColors.primaryText,
+                            fontSize: 12,
+                            height: 1.35,
+                            color: AppColors.secondaryText,
                           ),
                         ),
                       ),
                       SizedBox(
-                        width: constraints.maxWidth * 0.55,
-                        height: 36,
+                        height: 40,
                         child: Obx(
-                          () => ElevatedButton(
+                          () => FilledButton(
                             onPressed:
                                 controller.isRecommendedMealsLoading.value
                                     ? null
                                     : controller.getRecommendation,
-                            style: ElevatedButton.styleFrom(
+                            style: FilledButton.styleFrom(
                               backgroundColor: AppColors.primaryGreen,
                               foregroundColor: Colors.white,
-                              elevation: 3,
-                              shadowColor: AppColors.primaryGreen.withValues(
-                                alpha: 0.2,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
+                              disabledBackgroundColor: AppColors.primaryGreen
+                                  .withValues(alpha: 0.55),
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
+                                borderRadius: BorderRadius.circular(13),
                               ),
                             ),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 controller.isRecommendedMealsLoading.value
-                                    ? 'Generating...'
-                                    : 'Get Recommendation',
+                                    ? 'Generating…'
+                                    : 'Get recommendations',
                                 maxLines: 1,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -133,8 +106,22 @@ class AiRecommendationCard extends GetView<HomeController> {
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              Container(
+                width: compact ? 92 : 118,
+                height: double.infinity,
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: AppShadows.image,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/images/meals/healthy_salad.jpg',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
           ),
         );
       },
