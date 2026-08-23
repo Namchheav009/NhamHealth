@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
+import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
-import 'inner_shadow.dart';
 
 class HomeSearchBar extends GetView<HomeController> {
   const HomeSearchBar({super.key});

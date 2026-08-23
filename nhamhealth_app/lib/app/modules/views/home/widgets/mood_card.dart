@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
-import 'inner_shadow.dart';
+import '../../../../widgets/inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
   final String emoji;
