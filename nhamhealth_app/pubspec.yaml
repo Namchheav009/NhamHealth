@@ -75,6 +75,7 @@ flutter:
     - assets/images/onboarding/onboarding2.png
     - assets/icons/google.png
     - assets/icons/moods/
+    - assets/icons/lang/
     - assets/images/auth/forgot_password.png
     - assets/images/auth/verification.png
     - assets/images/auth/reset.png

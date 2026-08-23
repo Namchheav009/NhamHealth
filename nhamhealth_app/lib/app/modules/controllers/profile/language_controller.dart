@@ -4,6 +4,13 @@ import 'package:get/get.dart';
 class LanguageController extends GetxController {
   final selectedLanguage = 'English'.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    selectedLanguage.value =
+        Get.locale?.languageCode == 'km' ? 'Khmer' : 'English';
+  }
+
   void selectEnglish() {
     selectedLanguage.value = 'English';
 

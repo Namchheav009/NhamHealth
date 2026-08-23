@@ -13,7 +13,6 @@ import 'widgets/insight_card.dart';
 import '../home/widgets/home_bottom_navigation.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
-import 'widgets/progress_card.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -34,9 +33,14 @@ class ProfileView extends GetView<ProfileController> {
                 parent: BouncingScrollPhysics(),
               ),
               padding: AppSpacing.pagePaddingWithNavigation,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSpacing.maxContentWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   _buildTopBar(),
                   Obx(() {
                     final message = controller.errorMessage.value;
@@ -56,19 +60,31 @@ class ProfileView extends GetView<ProfileController> {
                       content: const Column(
                         children: [
                           ProfileHeader(),
-                          SizedBox(height: 8),
+                          SizedBox(height: 14),
                           HealthStatsCard(),
-                          SizedBox(height: 8),
-                          ProgressCard(),
-                          SizedBox(height: 8),
+                          SizedBox(height: 14),
                           InsightCard(),
-                          SizedBox(height: 8),
+                          SizedBox(height: 22),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Recent activity',
+                              style: TextStyle(
+                                color: Color(0xFF26322B),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10),
                           ProfilePostCard(),
                         ],
                       ),
                     ),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -76,11 +92,19 @@ class ProfileView extends GetView<ProfileController> {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(25, 0, 25, 14),
-        child: Obx(
-          () => AppBottomNavigation(
-            selectedIndex: controller.selectedNavIndex.value,
-            onSelect: controller.changeNavigation,
+        minimum: AppSpacing.navigationMargin,
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxContentWidth,
+            ),
+            child: Obx(
+              () => AppBottomNavigation(
+                selectedIndex: controller.selectedNavIndex.value,
+                onSelect: controller.changeNavigation,
+              ),
+            ),
           ),
         ),
       ),

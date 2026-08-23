@@ -100,10 +100,10 @@ class ProfileRepository {
     required String fullName,
     required String email,
     required String phone,
-    required DateTime dateOfBirth,
-    required String gender,
-    required double heightCm,
-    required double weightKg,
+    DateTime? dateOfBirth,
+    String? gender,
+    double? heightCm,
+    double? weightKg,
   }) async {
     final token = await _accessToken();
     final response = await _client
@@ -118,7 +118,7 @@ class ProfileRepository {
             'fullName': fullName.trim(),
             'email': email.trim(),
             'phone': phone.trim(),
-            'dateOfBirth': _dateOnly(dateOfBirth),
+            'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth),
             'gender': gender,
             'heightCm': heightCm,
             'weightKg': weightKg,

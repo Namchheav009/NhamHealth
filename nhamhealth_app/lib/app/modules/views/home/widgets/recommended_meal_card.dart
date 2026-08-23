@@ -23,21 +23,21 @@ class RecommendedMealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 100,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.cardSurface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE3E8E5)),
         boxShadow: AppShadows.tile,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(16),
         shadows: AppShadows.innerSurface,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -45,7 +45,7 @@ class RecommendedMealCard extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
+                        top: Radius.circular(15),
                       ),
                       child: _MealImage(path: meal.image),
                     ),
@@ -90,7 +90,7 @@ class RecommendedMealCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 5),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -101,9 +101,9 @@ class RecommendedMealCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: AppColors.primaryText,
-                              fontSize: 9,
-                              height: 1.12,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              height: 1.2,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -113,7 +113,7 @@ class RecommendedMealCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Color(0xFFAAA9A9),
-                            fontSize: 8,
+                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -140,14 +140,14 @@ class _MealImage extends StatelessWidget {
       return Image.asset(
         path.isEmpty ? 'assets/images/meals/healthy_salad.jpg' : path,
         width: double.infinity,
-        height: 82,
+        height: 96,
         fit: BoxFit.cover,
       );
     }
     return CachedNetworkImage(
       imageUrl: path,
       width: double.infinity,
-      height: 82,
+      height: 96,
       fit: BoxFit.cover,
       memCacheWidth: 300,
       fadeInDuration: const Duration(milliseconds: 120),

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
-import '../../../../widgets/inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
   final String emoji;
@@ -72,7 +70,7 @@ class MoodCard extends StatelessWidget {
 
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: 70,
+      width: 72,
       decoration: BoxDecoration(
         gradient:
             selected
@@ -83,21 +81,20 @@ class MoodCard extends StatelessWidget {
                 )
                 : null,
         color: selected ? null : AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: selected ? AppColors.primaryGreen : AppColors.border,
           width: selected ? 1.6 : 1,
         ),
-        boxShadow:
-            selected
-                ? const [
-                  BoxShadow(
-                    color: Color(0x2600A651),
-                    blurRadius: 9,
-                    offset: Offset(0, 3),
-                  ),
-                ]
-                : AppShadows.tile,
+        boxShadow: selected
+            ? const [
+                BoxShadow(
+                  color: Color(0x1F00A651),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -106,12 +103,8 @@ class MoodCard extends StatelessWidget {
             HapticFeedback.selectionClick();
             onTap();
           },
-          borderRadius: BorderRadius.circular(12),
-          child: InnerShadow(
-            borderRadius: BorderRadius.circular(12),
-            shadows: AppShadows.innerSurface,
-            child: content,
-          ),
+          borderRadius: BorderRadius.circular(14),
+          child: content,
         ),
       ),
     );

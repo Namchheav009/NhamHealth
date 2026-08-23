@@ -96,7 +96,6 @@ public class AuthService {
         user.setIsVerified(false);
         user = userRepository.save(user);
 
-        createProfile(user, request.fullName().trim(), null);
         return user;
     }
 
@@ -146,14 +145,7 @@ public class AuthService {
             created.setStatus("ACTIVE");
             created.setIsVerified(true);
             created.setVerifiedAt(LocalDateTime.now());
-            User saved = userRepository.save(created);
-            createProfile(
-                    saved,
-                    identity.name() == null || identity.name().isBlank()
-                            ? email.substring(0, email.indexOf('@'))
-                            : identity.name(),
-                    identity.pictureUrl());
-            return saved;
+            return userRepository.save(created);
         });
 
         AuthProvider google = authProviderRepository
@@ -185,32 +177,15 @@ public class AuthService {
                 });
     }
 
-    private void createProfile(User user, String fullName, String pictureUrl) {
-        if (userProfileRepository.findByUser_UserId(user.getUserId()).isPresent()) {
-            return;
-        }
-        LocalDateTime now = LocalDateTime.now();
-        UserProfile profile = new UserProfile();
-        profile.setUser(user);
-        profile.setFullName(fullName);
-        profile.setProfileImageUrl(pictureUrl);
-        profile.setCreatedAt(now);
-        profile.setUpdatedAt(now);
-        userProfileRepository.save(profile);
-    }
-
     private void syncGoogleProfile(
             User user,
             GoogleTokenVerifier.GoogleIdentity identity) {
         LocalDateTime now = LocalDateTime.now();
         UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId())
-                .orElseGet(() -> {
-                    UserProfile created = new UserProfile();
-                    created.setUser(user);
-                    created.setFullName(defaultGoogleName(identity));
-                    created.setCreatedAt(now);
-                    return created;
-                });
+                .orElse(null);
+        if (profile == null) {
+            return;
+        }
 
         if (identity.name() != null && !identity.name().isBlank()) {
             profile.setFullName(identity.name().trim());
@@ -220,15 +195,6 @@ public class AuthService {
         }
         profile.setUpdatedAt(now);
         userProfileRepository.save(profile);
-    }
-
-    private String defaultGoogleName(GoogleTokenVerifier.GoogleIdentity identity) {
-        if (identity.name() != null && !identity.name().isBlank()) {
-            return identity.name().trim();
-        }
-        String email = identity.email().trim();
-        int separator = email.indexOf('@');
-        return separator > 0 ? email.substring(0, separator) : email;
     }
 
     private AuthResponse issueToken(AppUserPrincipal principal) {
