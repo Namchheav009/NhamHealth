@@ -28,22 +28,27 @@ class AuthPrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
           ),
         ),
-        child:
-            loading
-                ? const SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.4,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child:
+              loading
+                  ? const SizedBox.square(
+                    key: ValueKey('auth-loading'),
+                    dimension: 22,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.4,
+                    ),
+                  )
+                  : Text(
+                    label,
+                    key: const ValueKey('auth-label'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                )
-                : Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+        ),
       ),
     );
   }

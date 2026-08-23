@@ -14,6 +14,7 @@ abstract class AppRoutes {
   static const String changePassword = '/profile/change-password';
   static const String notifications = '/notifications';
   static const String favorites = '/favorites';
+  static const String language = '/profile/language';
 
   static const String wellness = '/wellness';
   static const String calories = '/wellness/calories';

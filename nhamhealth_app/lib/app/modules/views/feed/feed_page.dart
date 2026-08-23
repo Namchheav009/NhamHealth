@@ -2,78 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
-import '../../../widgets/nham_app_bar.dart';
-import '../../../widgets/app_background.dart';
-import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
-import '../../../../core/services/auth_service.dart';
-import '../../models/auth/authenticated_user_model.dart';
-import '../../providers/home/home_provider.dart';
+import '../../../widgets/app_background.dart';
+import '../../../widgets/loading_content_transition.dart';
+import '../../../widgets/nham_app_bar.dart';
+import '../../../widgets/page_skeleton.dart';
+import '../../controllers/feed/feed_controller.dart';
 import '../home/widgets/home_bottom_navigation.dart';
 import '../../controllers/profile/setting_controller.dart';
 import '../profile/setting_view.dart';
 
-class FeedPage extends StatefulWidget {
+class FeedPage extends GetView<FeedController> {
   const FeedPage({super.key});
 
-  @override
-  State<FeedPage> createState() => _FeedPageState();
-}
-
-class _FeedPageState extends State<FeedPage> {
   static const Color green = Color(0xFF18A957);
-
-  int selectedTab = 0;
-
-  bool likedPost1 = false;
-  bool likedPost2 = false;
-
-  int likesPost1 = 1000;
-  int likesPost2 = 820;
-
-  AuthenticatedUser? _authenticatedUser;
-  int _unreadNotificationCount = 0;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  Future<void> _reload() async {
-    if (mounted) setState(() => _isLoading = true);
-    await Future.wait<void>([
-      _loadTopBar(),
-      Future<void>.delayed(const Duration(milliseconds: 350)),
-    ]);
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  Future<void> _loadTopBar() async {
-    if (!Get.isRegistered<AuthService>()) return;
-    final authService = Get.find<AuthService>();
-    final user = await authService.restoreSession();
-    var unreadCount = 0;
-    try {
-      unreadCount =
-          await HomeProvider(
-            authService: authService,
-          ).getUnreadNotificationCount();
-    } on Object {
-      // Community content remains available when the badge cannot refresh.
-    }
-    if (!mounted) return;
-    setState(() {
-      _authenticatedUser = user;
-      _unreadNotificationCount = unreadCount;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return MediaQuery.withClampedTextScaling(
+    return Obx(() => MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
         extendBody: true,
@@ -88,40 +35,37 @@ class _FeedPageState extends State<FeedPage> {
                 _tabs(),
                 const SizedBox(height: 10),
                 Expanded(
-                  child:
-                      _isLoading
-                          ? const SingleChildScrollView(
-                            physics: NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(
-                              AppSpacing.pageHorizontal,
-                              4,
-                              AppSpacing.pageHorizontal,
-                              110,
-                            ),
-                            child: PageSkeleton.community(),
-                          )
-                          : RefreshIndicator(
-                            color: green,
-                            onRefresh: _reload,
-                            child:
-                                selectedTab == 0
-                                    ? _feedList()
-                                    : ListView(
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(
-                                            parent: BouncingScrollPhysics(),
-                                          ),
-                                      padding: const EdgeInsets.only(
-                                        bottom: 110,
-                                      ),
-                                      children: [
-                                        SizedBox(
-                                          height: 420,
-                                          child: _following(),
-                                        ),
-                                      ],
-                                    ),
-                          ),
+                  child: LoadingContentTransition(
+                    isLoading:
+                        controller.isLoading.value &&
+                        !controller.hasLoaded.value,
+                    loading: const SingleChildScrollView(
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageHorizontal,
+                        4,
+                        AppSpacing.pageHorizontal,
+                        110,
+                      ),
+                      child: PageSkeleton.community(),
+                    ),
+                    content: RefreshIndicator(
+                      color: green,
+                      onRefresh: controller.reload,
+                      child:
+                          controller.selectedTab.value == 0
+                              ? _feedList()
+                              : ListView(
+                                physics: const AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                padding: const EdgeInsets.only(bottom: 110),
+                                children: [
+                                  SizedBox(height: 420, child: _following()),
+                                ],
+                              ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -129,7 +73,7 @@ class _FeedPageState extends State<FeedPage> {
         ),
         bottomNavigationBar: _bottomNav(),
       ),
-    );
+    ));
   }
 
   // ============================================================
@@ -137,23 +81,31 @@ class _FeedPageState extends State<FeedPage> {
   // ============================================================
 
   Widget _header() {
-    return Padding(
-      padding: AppSpacing.topBarPagePadding,
-      child: NhamAppBar(
-        user: _authenticatedUser,
-        unreadNotificationCount: _unreadNotificationCount,
-        onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
-        onNotifications: () async {
-          await Get.toNamed<void>(AppRoutes.notifications);
-          await _loadTopBar();
-        },
-        onProfile:
-            () => Get.offNamed<void>(
-              AppRoutes.profile,
-              arguments: _authenticatedUser,
-            ),
-        onSettings: _openSettings,
-        onLogout: _logout,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppSpacing.maxPaddedContentWidth,
+        ),
+        child: Padding(
+          padding: AppSpacing.topBarPagePadding,
+          child: NhamAppBar(
+            user: controller.authenticatedUser.value,
+            unreadNotificationCount:
+                controller.unreadNotificationCount.value,
+            onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
+            onNotifications: () async {
+              await Get.toNamed<void>(AppRoutes.notifications);
+              await controller.loadTopBar();
+            },
+            onProfile:
+                () => Get.offNamed<void>(
+                  AppRoutes.profile,
+                  arguments: controller.authenticatedUser.value,
+                ),
+            onSettings: _openSettings,
+            onLogout: _logout,
+          ),
+        ),
       ),
     );
   }
@@ -168,9 +120,7 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<void> _logout() async {
-    if (Get.isRegistered<AuthService>()) {
-      await Get.find<AuthService>().logout();
-    }
+    await controller.logout();
     Get.offAllNamed<void>(AppRoutes.login);
   }
 
@@ -179,48 +129,59 @@ class _FeedPageState extends State<FeedPage> {
   // ============================================================
 
   Widget _tabs() {
-    return Container(
-      height: 54,
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal),
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(27),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppSpacing.maxPaddedContentWidth,
+        ),
+        child: Container(
+          height: 50,
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
           ),
-        ],
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2EBE5)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D31543F),
+                blurRadius: 14,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [_tabButton('Feed', 0), _tabButton('Following', 1)],
+          ),
+        ),
       ),
-      child: Row(children: [_tabButton('Feed', 0), _tabButton('Following', 1)]),
     );
   }
 
   Widget _tabButton(String title, int index) {
-    final bool selected = selectedTab == index;
+    final bool selected = controller.selectedTab.value == index;
 
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTab = index;
-          });
-        },
+        onTap: () => controller.selectTab(index),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? green : Colors.transparent,
-            borderRadius: BorderRadius.circular(23),
+            color: selected ? const Color(0xFFE6F6EC) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             title,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : Colors.black87,
+              color:
+                  selected
+                      ? const Color(0xFF087A3B)
+                      : AppColors.secondaryText,
             ),
           ),
         ),
@@ -233,42 +194,44 @@ class _FeedPageState extends State<FeedPage> {
   // ============================================================
 
   Widget _feedList() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        8,
-        AppSpacing.pageHorizontal,
-        110,
-      ),
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      children: [
-        _createPost(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = constraints.maxWidth > AppSpacing.maxPaddedContentWidth
+            ? (constraints.maxWidth - AppSpacing.maxContentWidth) / 2
+            : AppSpacing.pageHorizontal;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(side, 12, side, 110),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          children: [
+            _createPost(),
 
-        _postCard(
-          postIndex: 1,
-          title: 'Healthy breakfast idea!',
-          description:
-              'Avocado toast with poached egg and fresh fruits.\n'
-              'Simple, quick and nutritious!',
-          image:
-              'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=1200',
-          tags: const ['#HealthyMeal', '#HighProtein'],
-        ),
+            _postCard(
+              postIndex: 1,
+              title: 'Healthy breakfast idea!',
+              description:
+                  'Avocado toast with poached egg and fresh fruits.\n'
+                  'Simple, quick and nutritious!',
+              image:
+                  'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=1200',
+              tags: const ['#HealthyMeal', '#HighProtein'],
+            ),
 
-        const SizedBox(height: 18),
+            const SizedBox(height: 18),
 
-        _postCard(
-          postIndex: 2,
-          title: 'Fresh fruit for your day!',
-          description:
-              'Fresh fruits are a simple way to add vitamins and color to your breakfast.',
-          image:
-              'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=1200',
-          tags: const ['#HealthyMeal', '#FreshFruit'],
-        ),
-      ],
+            _postCard(
+              postIndex: 2,
+              title: 'Fresh fruit for your day!',
+              description:
+                  'Fresh fruits are a simple way to add vitamins and color to your breakfast.',
+              image:
+                  'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=1200',
+              tags: const ['#HealthyMeal', '#FreshFruit'],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -277,25 +240,38 @@ class _FeedPageState extends State<FeedPage> {
   // ============================================================
 
   Widget _createPost() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE4EBE6)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D31543F),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 26,
+            radius: 22,
             backgroundColor: Color(0xFFEAF7EE),
             child: Icon(Icons.person, color: green),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           Expanded(
             child: GestureDetector(
               onTap: () {},
               child: const Text(
-                'What’s on your mind ?',
+                'Share something with the community…',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 13,
                   color: Color(0xFFB1B1B1),
                   fontWeight: FontWeight.w500,
                 ),
@@ -307,8 +283,8 @@ class _FeedPageState extends State<FeedPage> {
             onTap: () {},
             child: const Icon(
               Icons.image_outlined,
-              size: 28,
-              color: Color(0xFF6B786F),
+              size: 24,
+              color: green,
             ),
           ),
         ],
@@ -327,21 +303,20 @@ class _FeedPageState extends State<FeedPage> {
     required String image,
     required List<String> tags,
   }) {
-    final bool liked = postIndex == 1 ? likedPost1 : likedPost2;
-
-    final int likes = postIndex == 1 ? likesPost1 : likesPost2;
+    final bool liked = controller.isPostLiked(postIndex);
+    final int likes = controller.likesForPost(postIndex);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F1F1)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5ECE7)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -560,27 +535,7 @@ class _FeedPageState extends State<FeedPage> {
               // LIKE
               Expanded(
                 child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      if (postIndex == 1) {
-                        likedPost1 = !likedPost1;
-
-                        if (likedPost1) {
-                          likesPost1++;
-                        } else {
-                          likesPost1--;
-                        }
-                      } else {
-                        likedPost2 = !likedPost2;
-
-                        if (likedPost2) {
-                          likesPost2++;
-                        } else {
-                          likesPost2--;
-                        }
-                      }
-                    });
-                  },
+                  onTap: () => controller.togglePostLike(postIndex),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
@@ -735,12 +690,24 @@ class _FeedPageState extends State<FeedPage> {
   Widget _bottomNav() {
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(25, 0, 25, 14),
-      child: AppBottomNavigation(selectedIndex: 3, onSelect: _selectBottomMenu),
+      minimum: AppSpacing.navigationMargin,
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppSpacing.maxContentWidth,
+          ),
+          child: AppBottomNavigation(
+            selectedIndex: 3,
+            onSelect: _selectBottomMenu,
+          ),
+        ),
+      ),
     );
   }
 
   void _selectBottomMenu(int index) {
+    if (index == 3) return;
     switch (index) {
       case 0:
         Get.offNamed<void>(AppRoutes.home);
@@ -758,7 +725,10 @@ class _FeedPageState extends State<FeedPage> {
       case 3:
         break;
       case 4:
-        Get.offNamed<void>(AppRoutes.profile, arguments: _authenticatedUser);
+        Get.offNamed<void>(
+          AppRoutes.profile,
+          arguments: controller.authenticatedUser.value,
+        );
         return;
     }
   }

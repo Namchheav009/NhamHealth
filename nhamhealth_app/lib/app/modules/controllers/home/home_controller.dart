@@ -251,6 +251,7 @@ class HomeController extends GetxController {
   }
 
   void selectBottomMenu(int index) {
+    if (index == selectedBottomIndex.value) return;
     selectedBottomIndex.value = index;
 
     switch (index) {

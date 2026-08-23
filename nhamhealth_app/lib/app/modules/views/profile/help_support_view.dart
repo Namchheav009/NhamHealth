@@ -12,10 +12,8 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
-    return MediaQuery(
-      data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: const Color(0xFFFDFBFB),
         body: Stack(
@@ -26,7 +24,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 390),
+                  constraints: const BoxConstraints(maxWidth: 520),
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: AppSpacing.pagePadding,
@@ -135,7 +133,8 @@ class HelpSupportView extends GetView<HelpSupportController> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.80),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE3EBE6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -300,7 +299,11 @@ class _FaqItem extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              expanded ? const Color(0xFFBFE4CB) : const Color(0xFFE5ECE7),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),

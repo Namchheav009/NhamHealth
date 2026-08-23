@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/profile/language_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/language_flag.dart';
 
 class LanguageView extends GetView<LanguageController> {
   const LanguageView({super.key});
@@ -12,10 +13,8 @@ class LanguageView extends GetView<LanguageController> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
-    return MediaQuery(
-      data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: const Color(0xFFFDFBFB),
         body: Stack(
@@ -23,21 +22,19 @@ class LanguageView extends GetView<LanguageController> {
             const _SettingsBackground(),
 
             SafeArea(
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 390),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.pageHorizontal,
-                    ),
-                    child: Stack(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: AppSpacing.pagePadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 37),
-
-                            // HEADER
                             Row(
                               children: [
                                 GestureDetector(
@@ -68,7 +65,7 @@ class LanguageView extends GetView<LanguageController> {
                               ],
                             ),
 
-                            const SizedBox(height: 48),
+                            const SizedBox(height: 26),
 
                             const Padding(
                               padding: EdgeInsets.only(left: 6),
@@ -96,18 +93,13 @@ class LanguageView extends GetView<LanguageController> {
                               ),
                             ),
 
-                            const SizedBox(height: 27),
+                            const SizedBox(height: 18),
 
                             _buildLanguageCard(),
                           ],
                         ),
-
-                        Positioned(
-                          left: 4,
-                          right: 4,
-                          bottom: 83,
-                          child: _buildInfo(),
-                        ),
+                        const SizedBox(height: 24),
+                        _buildInfo(),
                       ],
                     ),
                   ),
@@ -125,7 +117,8 @@ class LanguageView extends GetView<LanguageController> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.84),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE3EBE6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.045),
@@ -138,7 +131,7 @@ class LanguageView extends GetView<LanguageController> {
         () => Column(
           children: [
             _LanguageItem(
-              languageIcon: 'ខ្មែរ',
+              languageCode: 'km',
               title: 'Khmer',
               selected: controller.selectedLanguage.value == 'Khmer',
               onTap: controller.selectKhmer,
@@ -154,7 +147,7 @@ class LanguageView extends GetView<LanguageController> {
             ),
 
             _LanguageItem(
-              languageIcon: 'EN',
+              languageCode: 'en',
               title: 'English',
               selected: controller.selectedLanguage.value == 'English',
               onTap: controller.selectEnglish,
@@ -166,7 +159,14 @@ class LanguageView extends GetView<LanguageController> {
   }
 
   Widget _buildInfo() {
-    return const Row(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7EE),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCDE9D5)),
+      ),
+      child: const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -192,8 +192,7 @@ class LanguageView extends GetView<LanguageController> {
               SizedBox(height: 9),
 
               Text(
-                'The app will restart to apply your new\n'
-                'Language preference',
+                'The new language is applied to supported content immediately.',
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.25,
@@ -204,18 +203,19 @@ class LanguageView extends GetView<LanguageController> {
           ),
         ),
       ],
+      ),
     );
   }
 }
 
 class _LanguageItem extends StatelessWidget {
-  final String languageIcon;
+  final String languageCode;
   final String title;
   final bool selected;
   final VoidCallback onTap;
 
   const _LanguageItem({
-    required this.languageIcon,
+    required this.languageCode,
     required this.title,
     required this.selected,
     required this.onTap,
@@ -225,30 +225,19 @@ class _LanguageItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
-      child: SizedBox(
-        height: 70,
+      borderRadius: BorderRadius.circular(17),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        height: 76,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF0FAF3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(17),
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13),
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFE5F5E8),
-                ),
-                child: Text(
-                  languageIcon,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF00A651),
-                  ),
-                ),
-              ),
+              LanguageFlag(languageCode: languageCode, size: 40),
 
               const SizedBox(width: 14),
 
@@ -256,8 +245,8 @@ class _LanguageItem extends StatelessWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF161616),
                   ),
                 ),

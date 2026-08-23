@@ -47,14 +47,21 @@ class RegisterForm extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.darkGreen,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
+          const Text(
+            'Start building healthier habits with NhamHealth.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+          ),
+          const SizedBox(height: 18),
           AuthTextField(
             controller: fullNameController,
             hintText: 'Full name',
+            prefixIcon: Icons.person_outline_rounded,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.name],
           ),
@@ -62,6 +69,7 @@ class RegisterForm extends StatelessWidget {
           AuthTextField(
             controller: emailController,
             hintText: 'Email address',
+            prefixIcon: Icons.mail_outline_rounded,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.email],
@@ -87,7 +95,14 @@ class RegisterForm extends StatelessWidget {
             loading: loading,
             onPressed: onRegister,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
+          PlatformGoogleSignInButton(
+            label: 'Continue with Google',
+            loading: loading,
+            onPressed: onGoogle,
+            onAuthenticated: onGoogleAuthenticated,
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
