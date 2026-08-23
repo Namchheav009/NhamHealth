@@ -7,7 +7,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/app_background.dart';
-import '../../../widgets/app_top_bar.dart';
+import '../../../widgets/nham_app_bar.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import '../home/widgets/home_bottom_navigation.dart';
@@ -89,35 +89,14 @@ class ProfileView extends GetView<ProfileController> {
 
   Widget _buildTopBar() {
     return Obx(
-      () => AppTopBar(
+      () => NhamAppBar(
         user: controller.authenticatedUser.value,
         unreadNotificationCount: controller.unreadNotificationCount.value,
         onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
         onNotifications: controller.openNotifications,
-        menuActions: [
-          AppTopBarAction(
-            label: 'Edit Profile',
-            icon: Icons.edit_outlined,
-            onTap: controller.editProfile,
-          ),
-          AppTopBarAction(
-            label: 'Notifications',
-            icon: Icons.notifications_none_rounded,
-            onTap: controller.openNotifications,
-          ),
-          AppTopBarAction(
-            label: 'Settings',
-            icon: Icons.settings_outlined,
-            onTap: controller.openSettings,
-          ),
-          AppTopBarAction(
-            label: 'Logout',
-            icon: Icons.logout_rounded,
-            color: const Color(0xFFD32F2F),
-            dividerBefore: true,
-            onTap: controller.requestLogout,
-          ),
-        ],
+        onProfile: controller.openProfile,
+        onSettings: controller.openSettings,
+        onLogout: controller.requestLogout,
       ),
     );
   }

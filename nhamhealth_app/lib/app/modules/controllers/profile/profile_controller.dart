@@ -245,6 +245,10 @@ class ProfileController extends GetxController {
     );
   }
 
+  void openProfile() {
+    Get.offNamed<void>(AppRoutes.profile, arguments: authenticatedUser.value);
+  }
+
   Future<void> openNotifications() async {
     await Get.toNamed<void>(AppRoutes.notifications);
     await loadUnreadNotificationCount();

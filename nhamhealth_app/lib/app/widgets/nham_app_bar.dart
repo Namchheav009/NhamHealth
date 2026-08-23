@@ -20,20 +20,25 @@ class AppTopBarAction {
   final bool dividerBefore;
 }
 
-class AppTopBar extends StatelessWidget {
-  const AppTopBar({
+class NhamAppBar extends StatelessWidget {
+  const NhamAppBar({
     super.key,
     required this.user,
     required this.unreadNotificationCount,
     required this.onFavorites,
     required this.onNotifications,
-    required this.menuActions,
+    required this.onProfile,
+    required this.onSettings,
+    required this.onLogout,
   });
+
   final AuthenticatedUser? user;
   final int unreadNotificationCount;
   final VoidCallback onFavorites;
   final VoidCallback onNotifications;
-  final List<AppTopBarAction> menuActions;
+  final VoidCallback onProfile;
+  final VoidCallback onSettings;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -89,7 +94,23 @@ class AppTopBar extends StatelessWidget {
             onTap: onNotifications,
           ),
           const SizedBox(width: 4),
-          _ProfileMenu(user: user, actions: menuActions),
+          _ProfileMenu(
+            user: user,
+            actions: [
+              AppTopBarAction(
+                label: 'Settings',
+                icon: Icons.settings_outlined,
+                onTap: onSettings,
+              ),
+              AppTopBarAction(
+                label: 'Logout',
+                icon: Icons.logout_rounded,
+                color: const Color(0xFFD32F2F),
+                dividerBefore: true,
+                onTap: onLogout,
+              ),
+            ],
+          ),
         ],
       ),
     ),
