@@ -136,10 +136,22 @@ class EditProfileView extends GetView<EditProfileController> {
                   shape: BoxShape.circle,
                 ),
                 child: Obx(
-                  () => CircleAvatar(
-                    radius: 39,
-                    backgroundImage: _editAvatarImage(),
-                  ),
+                  () {
+                    final image = _editAvatarImage();
+                    return CircleAvatar(
+                      radius: 39,
+                      backgroundColor: const Color(0xFFEAF7EE),
+                      backgroundImage: image,
+                      child:
+                          image == null
+                              ? const Icon(
+                                Icons.person_outline_rounded,
+                                size: 40,
+                                color: green,
+                              )
+                              : null,
+                    );
+                  },
                 ),
               ),
 
@@ -219,7 +231,7 @@ class EditProfileView extends GetView<EditProfileController> {
     );
   }
 
-  ImageProvider<Object> _editAvatarImage() {
+  ImageProvider<Object>? _editAvatarImage() {
     final localPath = controller.profileImagePath.value.trim();
     if (localPath.isNotEmpty) return FileImage(File(localPath));
 
@@ -236,7 +248,7 @@ class EditProfileView extends GetView<EditProfileController> {
           : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
       return NetworkImage(url);
     }
-    return const AssetImage('assets/images/profile/profile.jpg');
+    return null;
   }
 
   // -----------------------------------------
@@ -292,7 +304,10 @@ class EditProfileView extends GetView<EditProfileController> {
               iconColor: const Color(0xFF9C56FF),
               iconBackground: const Color(0xFFF2E5FF),
               label: 'Gender',
-              value: controller.gender.value,
+              value:
+                  controller.gender.value.isEmpty
+                      ? 'Not set'
+                      : controller.gender.value,
               showDivider: false,
               onTap: controller.selectGender,
             ),
@@ -352,7 +367,10 @@ class EditProfileView extends GetView<EditProfileController> {
                     iconColor: green,
                     iconBackground: const Color(0xFFE9F8EC),
                     label: 'Age',
-                    value: '${controller.age.value} years',
+                    value:
+                        controller.age.value > 0
+                            ? '${controller.age.value} years'
+                            : 'Not set',
                     onTap: controller.editAge,
                   ),
 
@@ -361,7 +379,10 @@ class EditProfileView extends GetView<EditProfileController> {
                     iconColor: const Color(0xFF5275F5),
                     iconBackground: const Color(0xFFEDF1FF),
                     label: 'Height',
-                    value: '${controller.height.value.toStringAsFixed(0)} cm',
+                    value:
+                        controller.height.value > 0
+                            ? '${controller.height.value.toStringAsFixed(0)} cm'
+                            : 'Not set',
                     onTap: controller.editHeight,
                   ),
 
@@ -370,7 +391,10 @@ class EditProfileView extends GetView<EditProfileController> {
                     iconColor: const Color(0xFF3D315B),
                     iconBackground: const Color(0xFFF0ECFF),
                     label: 'Weight',
-                    value: '${controller.weight.value.toStringAsFixed(0)} kg',
+                    value:
+                        controller.weight.value > 0
+                            ? '${controller.weight.value.toStringAsFixed(0)} kg'
+                            : 'Not set',
                     showDivider: false,
                     onTap: controller.editWeight,
                   ),
@@ -444,8 +468,10 @@ class EditProfileView extends GetView<EditProfileController> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    '${controller.bmi.toStringAsFixed(1)} '
-                    '${controller.bmiStatus}',
+                    controller.bmi > 0
+                        ? '${controller.bmi.toStringAsFixed(1)} '
+                            '${controller.bmiStatus}'
+                        : 'Not set',
                     maxLines: 1,
                     style: const TextStyle(
                       color: Color(0xFF008F42),

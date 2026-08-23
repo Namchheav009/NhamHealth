@@ -17,12 +17,15 @@ public interface AiRecommendationRepository extends JpaRepository<AiRecommendati
     @EntityGraph(attributePaths = "user")
     List<AiRecommendation> findTop5ByOrderByCreatedAtDesc();
 
+    @EntityGraph(attributePaths = "mood")
     Optional<AiRecommendation> findFirstByUserUserIdAndMoodMoodIdAndStatusOrderByCreatedAtDesc(
             Integer userId, Integer moodId, String status);
 
+    @EntityGraph(attributePaths = "mood")
     Optional<AiRecommendation> findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
             Integer userId, Integer moodId, String status, LocalDateTime createdAfter);
 
+    @EntityGraph(attributePaths = "mood")
     Optional<AiRecommendation> findFirstByUserUserIdAndStatusOrderByCreatedAtDesc(
             Integer userId, String status);
 }

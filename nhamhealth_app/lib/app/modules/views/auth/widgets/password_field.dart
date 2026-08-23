@@ -14,6 +14,7 @@ class AuthTextField extends StatelessWidget {
     this.onChanged,
     this.obscureText = false,
     this.suffixIcon,
+    this.prefixIcon,
     this.hasError = false,
   });
 
@@ -26,6 +27,7 @@ class AuthTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final bool obscureText;
   final Widget? suffixIcon;
+  final IconData? prefixIcon;
   final bool hasError;
 
   @override
@@ -54,6 +56,10 @@ class AuthTextField extends StatelessWidget {
           ),
           filled: true,
           fillColor: AppColors.field,
+          prefixIcon:
+              prefixIcon == null
+                  ? null
+                  : Icon(prefixIcon, size: 20, color: AppColors.mutedText),
           suffixIcon: suffixIcon,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
           enabledBorder: OutlineInputBorder(
@@ -86,6 +92,7 @@ class PasswordField extends StatefulWidget {
     this.onSubmitted,
     this.onChanged,
     this.hasError = false,
+    this.prefixIcon = Icons.lock_outline_rounded,
   });
 
   final TextEditingController controller;
@@ -95,6 +102,7 @@ class PasswordField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<String>? onChanged;
   final bool hasError;
+  final IconData prefixIcon;
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -114,6 +122,7 @@ class _PasswordFieldState extends State<PasswordField> {
       onSubmitted: widget.onSubmitted,
       onChanged: widget.onChanged,
       hasError: widget.hasError,
+      prefixIcon: widget.prefixIcon,
       suffixIcon: IconButton(
         tooltip: _obscure ? 'Show password' : 'Hide password',
         onPressed: () => setState(() => _obscure = !_obscure),

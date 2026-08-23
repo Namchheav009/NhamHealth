@@ -40,7 +40,10 @@ class AuthScaffold extends StatelessWidget {
                                 compact
                                     ? Alignment.center
                                     : Alignment.bottomCenter,
-                            child: AuthHeader(compact: compact),
+                            child: _EntranceMotion(
+                              offset: const Offset(0, -0.08),
+                              child: AuthHeader(compact: compact),
+                            ),
                           ),
                         ),
                       ),
@@ -73,7 +76,10 @@ class AuthScaffold extends StatelessWidget {
                                 AppSpacing.pageHorizontal,
                                 AppSpacing.pageBottom,
                               ),
-                              child: child,
+                              child: _EntranceMotion(
+                                delay: 0.12,
+                                child: child,
+                              ),
                             ),
                           ),
                         ),
@@ -86,6 +92,44 @@ class AuthScaffold extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EntranceMotion extends StatelessWidget {
+  const _EntranceMotion({
+    required this.child,
+    this.delay = 0,
+    this.offset = const Offset(0, 0.06),
+  });
+
+  final Widget child;
+  final double delay;
+  final Offset offset;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return child;
+
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0, end: 1),
+      child: child,
+      builder: (context, value, child) {
+        final progress =
+            ((value - delay) / (1 - delay)).clamp(0.0, 1.0).toDouble();
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: Offset(
+              offset.dx * (1 - progress) * 100,
+              offset.dy * (1 - progress) * 100,
+            ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:nhamhealth_flutter/app/modules/views/feed/feed_page.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/widgets/page_skeleton.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
+import 'package:nhamhealth_flutter/app/modules/bindings/feed/feed_binding.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
@@ -80,7 +81,11 @@ void main() {
       GetMaterialApp(
         initialRoute: '/feed',
         getPages: [
-          GetPage<void>(name: '/feed', page: () => const FeedPage()),
+          GetPage<void>(
+            name: '/feed',
+            page: () => const FeedPage(),
+            binding: FeedBinding(),
+          ),
           GetPage<void>(
             name: '/home',
             page: () => const Scaffold(body: Text('Home destination')),

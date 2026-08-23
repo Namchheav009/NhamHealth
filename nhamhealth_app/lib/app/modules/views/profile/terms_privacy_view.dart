@@ -12,10 +12,8 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
-    return MediaQuery(
-      data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: const Color(0xFFFDFBFB),
         body: Stack(
@@ -26,7 +24,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 390),
+                  constraints: const BoxConstraints(maxWidth: 520),
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: AppSpacing.pagePadding,
@@ -79,7 +77,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         Obx(
                           () => _PolicyCard(
                             icon: Icons.policy_outlined,
-                            title: 'Term of Service',
+                            title: 'Terms of Service',
                             subtitle: 'How to use the app',
                             expanded: controller.termsExpanded.value,
                             onTap: controller.toggleTerms,
@@ -177,7 +175,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
         const SizedBox(width: 7),
 
         const Text(
-          'Term & Privacy',
+          'Terms & Privacy',
           style: TextStyle(
             fontSize: 21,
             height: 1,
@@ -213,7 +211,11 @@ class _PolicyCard extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              expanded ? const Color(0xFFBFE4CB) : const Color(0xFFE3EBE6),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),

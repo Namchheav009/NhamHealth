@@ -16,17 +16,13 @@ class ProfileHeader extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x1231543F), blurRadius: 18, offset: Offset(0, 6)),
         ],
       ),
       child: Column(
@@ -47,51 +43,24 @@ class ProfileHeader extends GetView<ProfileController> {
                 ),
               ),
 
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Obx(
-                            () => Text(
-                              controller.name.value,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                    Obx(
+                      () => Text(
+                        controller.name.value,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF1D2922),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: controller.editProfile,
-                          icon: const Icon(
-                            Icons.edit_outlined,
-                            color: Colors.white,
-                            size: 17,
-                          ),
-                          label: const Text(
-                            'Edit Profile',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: green,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 9,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
 
                     const SizedBox(height: 4),
@@ -107,11 +76,15 @@ class ProfileHeader extends GetView<ProfileController> {
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
 
                     Row(
                       children: [
-                        const Icon(Icons.mail_outline_rounded, size: 18),
+                        const Icon(
+                          Icons.mail_outline_rounded,
+                          size: 17,
+                          color: Color(0xFF7E9488),
+                        ),
 
                         const SizedBox(width: 5),
 
@@ -120,7 +93,10 @@ class ProfileHeader extends GetView<ProfileController> {
                             () => Text(
                               controller.email.value,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(
+                                color: Color(0xFF65766C),
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
@@ -130,6 +106,28 @@ class ProfileHeader extends GetView<ProfileController> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: controller.editProfile,
+              icon: const Icon(Icons.edit_rounded, size: 15),
+              label: const Text('Edit profile'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: green,
+                minimumSize: const Size.fromHeight(42),
+                iconColor: green,
+                side: const BorderSide(color: Color(0xFFBFE6CC)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),

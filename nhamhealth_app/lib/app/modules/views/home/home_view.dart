@@ -18,6 +18,8 @@ import 'widgets/recommended_meal_card.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
+  static const double _maxContentWidth = AppSpacing.maxContentWidth;
+
   @override
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
@@ -29,50 +31,62 @@ class HomeView extends GetView<HomeController> {
           child: SafeArea(
             bottom: false,
             child: RefreshIndicator(
-              color: AppColors.primaryGreen,
-              onRefresh: controller.refreshMeals,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: AppSpacing.pagePaddingWithNavigation,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const HomeHeader(),
-                    const SizedBox(height: AppSpacing.topBarBottom),
-                    Obx(
-                      () => LoadingContentTransition(
-                        isLoading:
-                            controller.isLoading.value &&
-                            controller.dashboard.value == null,
-                        loading: const PageSkeleton.home(),
-                        content: const Column(
+                  color: AppColors.primaryGreen,
+                  onRefresh: controller.refreshMeals,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: AppSpacing.pagePaddingWithNavigation,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: _maxContentWidth,
+                        ),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            HomeSearchBar(),
-                            SizedBox(height: 14),
-                            GreetingSection(),
-                            SizedBox(height: 14),
-                            AiRecommendationCard(),
-                            SizedBox(height: 14),
-                            DailySummaryCard(),
-                            SizedBox(height: 12),
-                            _RecommendedMealsSection(),
+                            const HomeHeader(),
+                            const SizedBox(height: AppSpacing.topBarBottom),
+                            Obx(
+                              () => LoadingContentTransition(
+                                isLoading: controller.isLoading.value &&
+                                    controller.dashboard.value == null,
+                                loading: const PageSkeleton.home(),
+                                content: const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    HomeSearchBar(),
+                                    SizedBox(height: 16),
+                                    GreetingSection(),
+                                    SizedBox(height: 16),
+                                    AiRecommendationCard(),
+                                    SizedBox(height: 16),
+                                    DailySummaryCard(),
+                                    SizedBox(height: 18),
+                                    _RecommendedMealsSection(),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
             ),
           ),
         ),
-        bottomNavigationBar: const SafeArea(
+        bottomNavigationBar: SafeArea(
           top: false,
-          minimum: EdgeInsets.fromLTRB(25, 0, 25, 14),
-          child: HomeBottomNavigation(),
+          minimum: AppSpacing.navigationMargin,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+              child: const HomeBottomNavigation(),
+            ),
+          ),
         ),
       ),
     );
@@ -99,8 +113,8 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppColors.primaryText,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -114,7 +128,10 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('Refresh', style: TextStyle(fontSize: 10)),
+                  child: const Text(
+                    'Refresh',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
             ],
           ),
@@ -129,15 +146,21 @@ class _RecommendedMealsSection extends GetView<HomeController> {
             )
           else if (meals.isNotEmpty) ...[
             const SizedBox(height: 7),
-            SizedBox(
-              height: 148,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: meals.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 7),
-                itemBuilder:
-                    (_, index) => RecommendedMealCard(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.maxWidth >= 600
+                    ? (constraints.maxWidth - 28) / 5
+                    : 132.0;
+                return SizedBox(
+                  height: 176,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: meals.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 7),
+                    itemBuilder: (_, index) => SizedBox(
+                      width: cardWidth,
+                      child: RecommendedMealCard(
                       meal: meals[index],
                       onTap: () => controller.openMeals(),
                       isFavorite: controller.favoriteMealIds.contains(
@@ -145,8 +168,11 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                       ),
                       onFavorite:
                           () => controller.toggleMealFavorite(meals[index].id),
+                      ),
                     ),
-              ),
+                  ),
+                );
+              },
             ),
           ] else
             const Padding(

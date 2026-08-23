@@ -11,28 +11,31 @@ class InsightCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFCFF5E7),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE8F8EE), Color(0xFFF5FFF7)],
+        ),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFD3EDDB)),
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 48,
+            height: 48,
             decoration: const BoxDecoration(
-              color: Color(0xFF76E0AC),
-              shape: BoxShape.circle,
+              color: Color(0xFFBDEACD),
+              borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             child: const Icon(
               Icons.emoji_events_outlined,
-              color: Colors.white,
+              color: green,
               size: 25,
             ),
           ),
 
-          const SizedBox(width: 9),
+          const SizedBox(width: 12),
 
           Expanded(
             child: Column(
@@ -40,7 +43,7 @@ class InsightCard extends GetView<ProfileController> {
               children: [
                 const Text(
                   "You're doing amazing!",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Obx(
@@ -48,7 +51,8 @@ class InsightCard extends GetView<ProfileController> {
                     controller.insight.value,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF999999),
+                      color: Color(0xFF65766C),
+                      height: 1.35,
                     ),
                   ),
                 ),
@@ -56,27 +60,6 @@ class InsightCard extends GetView<ProfileController> {
             ),
           ),
 
-          const SizedBox(width: 5),
-
-          OutlinedButton(
-            onPressed: controller.openInsights,
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              side: BorderSide.none,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: const Text(
-              'View Insights',
-              style: TextStyle(
-                color: green,
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
-              ),
-            ),
-          ),
         ],
       ),
     );

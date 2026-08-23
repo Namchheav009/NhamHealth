@@ -63,9 +63,9 @@ class SettingsController extends GetxController {
     if (isLoggingOut.value || Get.isDialogOpen == true) return;
 
     Get.dialog<void>(
-      LogoutDialog(onLogout: confirmLogout),
+      LogoutDialog(onLogout: confirmLogout, isLoading: isLoggingOut),
       barrierColor: Colors.black.withValues(alpha: 0.32),
-      barrierDismissible: true,
+      barrierDismissible: false,
       transitionDuration: const Duration(milliseconds: 180),
       transitionCurve: Curves.easeOut,
     );
@@ -74,8 +74,6 @@ class SettingsController extends GetxController {
   Future<void> confirmLogout() async {
     if (isLoggingOut.value) return;
     isLoggingOut.value = true;
-
-    if (Get.isDialogOpen == true) Get.back<void>();
 
     try {
       await Get.find<AuthService>().logout();

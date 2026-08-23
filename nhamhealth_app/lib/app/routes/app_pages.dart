@@ -6,6 +6,8 @@ import '../modules/bindings/splash/splash_binding.dart';
 import '../modules/views/splash/splash_view.dart';
 import '../modules/views/auth/login_view.dart';
 import '../modules/views/auth/register_view.dart';
+import '../modules/bindings/auth/login_binding.dart';
+import '../modules/bindings/auth/register_binding.dart';
 import '../modules/controllers/auth/account_created_controller.dart';
 import '../modules/views/auth/account_created_view.dart';
 import '../modules/bindings/home/home_binding.dart';
@@ -24,6 +26,8 @@ import '../modules/bindings/profile/profile_binding.dart';
 import '../modules/bindings/profile/change_password_binding.dart';
 import '../modules/views/profile/change_password_view.dart';
 import '../modules/views/profile/profile_view.dart';
+import '../modules/bindings/profile/language_binding.dart';
+import '../modules/views/profile/language_view.dart';
 
 import '../modules/bindings/wellness/wellness_binding.dart';
 import '../modules/views/wellness/wellness_view.dart';
@@ -43,6 +47,7 @@ import '../modules/bindings/wellness/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
 import '../modules/views/feed/feed_page.dart';
+import '../modules/bindings/feed/feed_binding.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -66,11 +71,13 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.login,
       page: () => const LoginScreen(),
+      binding: LoginBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
       name: AppRoutes.register,
       page: () => const RegisterScreen(),
+      binding: RegisterBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
@@ -86,13 +93,13 @@ abstract class AppPages {
       name: AppRoutes.home,
       page: () => const HomeView(),
       binding: HomeBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.meals,
       page: () => const MealView(),
       binding: MealBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.foodDetail,
@@ -110,7 +117,7 @@ abstract class AppPages {
       name: AppRoutes.profile,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.changePassword,
@@ -128,6 +135,12 @@ abstract class AppPages {
       name: AppRoutes.favorites,
       page: () => const FavoritesView(),
       binding: FavoritesBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.language,
+      page: () => const LanguageView(),
+      binding: LanguageBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
@@ -196,7 +209,8 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.feed,
       page: () => const FeedPage(),
-      transition: Transition.fadeIn,
+      binding: FeedBinding(),
+      transition: Transition.noTransition,
     ),
   ];
 }
