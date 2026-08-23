@@ -2,7 +2,6 @@ package com.nhamhealth.nhamhealth_api.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +12,6 @@ import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @Component
-@Profile("!supabase")
 public class DevDataLoader implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
@@ -62,14 +60,19 @@ public class DevDataLoader implements CommandLineRunner {
     }
 
     private void seedUser(String email, String password, Role role) {
-        if (userRepository.findByEmailIgnoreCase(email).isEmpty()) {
-            User user = new User();
-            user.setEmail(email);
-            user.setRole(role);
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseGet(User::new);
+
+        user.setEmail(email.trim());
+        user.setRole(role);
+        user.setStatus("ACTIVE");
+        user.setIsVerified(true);
+
+        if (user.getPasswordHash() == null
+                || !passwordEncoder.matches(password, user.getPasswordHash())) {
             user.setPasswordHash(passwordEncoder.encode(password));
-            user.setStatus("ACTIVE");
-            user.setIsVerified(true);
-            userRepository.save(user);
         }
+
+        userRepository.save(user);
     }
 }

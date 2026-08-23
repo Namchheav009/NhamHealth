@@ -1,5 +1,8 @@
 package com.nhamhealth.nhamhealth_api.web;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,12 +17,23 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 class LoginPageTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private AiFoodAnalysisRepository aiFoodAnalysisRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Test
 	void loginPageIsPublicAndContainsTheLoginForm() throws Exception {
@@ -81,10 +95,26 @@ class LoginPageTests {
 
 	@Test
 	void authenticatedAdminCanRenderAiFoodAnalysesPage() throws Exception {
-		mockMvc.perform(get("/admin/ai-food-analyses")
-					.with(user("admin@nhamhealth.local").roles("ADMIN")))
-				.andExpect(status().isOk())
-				.andExpect(view().name("admin/ai-food-analysis"));
+		User admin = userRepository.findByEmailIgnoreCase("admin@nhamhealth.local").orElseThrow();
+		AiFoodAnalysis analysis = new AiFoodAnalysis();
+		analysis.setUser(admin);
+		analysis.setInputText("grilled chicken salad");
+		analysis.setDetectedFoodName("Chicken salad");
+		analysis.setDetectedServingText("1 bowl");
+		analysis.setConfidenceScore(new BigDecimal("0.85"));
+		analysis.setStatus("completed");
+		analysis.setCreatedAt(LocalDateTime.now());
+		analysis = aiFoodAnalysisRepository.saveAndFlush(analysis);
+
+		try {
+			mockMvc.perform(get("/admin/ai-food-analyses")
+						.with(user("admin@nhamhealth.local").roles("ADMIN")))
+					.andExpect(status().isOk())
+					.andExpect(view().name("admin/ai-food-analysis"))
+					.andExpect(content().string(containsString("Chicken salad")));
+		} finally {
+			aiFoodAnalysisRepository.deleteById(analysis.getAiFoodAnalysisId());
+		}
 	}
 
 	@Test
