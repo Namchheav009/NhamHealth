@@ -11,6 +11,8 @@ import '../home/home_controller.dart';
 import '../../models/meals/meal_model.dart';
 import '../../models/meals/meal_category_model.dart';
 import '../../repositories/meals/meal_repository.dart';
+import '../profile/setting_controller.dart';
+import '../../views/profile/setting_view.dart';
 
 class MealController extends GetxController {
   MealController({required this.repository});
@@ -180,6 +182,15 @@ class MealController extends GetxController {
 
   void openProfile() =>
       Get.offNamed<void>(AppRoutes.profile, arguments: authenticatedUser.value);
+
+  void openSettings() {
+    Get.to(
+      () => const SettingsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SettingsController>(() => SettingsController());
+      }),
+    );
+  }
 
   Future<void> logout() async {
     if (Get.isRegistered<AuthService>()) {

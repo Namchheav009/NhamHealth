@@ -3,8 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
+import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/recommended_meal_model.dart';
-import 'inner_shadow.dart';
 
 class RecommendedMealCard extends StatelessWidget {
   const RecommendedMealCard({
