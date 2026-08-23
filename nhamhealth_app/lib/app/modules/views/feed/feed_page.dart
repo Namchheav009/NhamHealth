@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
-import '../../../widgets/app_top_bar.dart';
+import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_spacing.dart';
@@ -11,6 +11,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../providers/home/home_provider.dart';
 import '../home/widgets/home_bottom_navigation.dart';
+import '../../controllers/profile/setting_controller.dart';
+import '../profile/setting_view.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -137,7 +139,7 @@ class _FeedPageState extends State<FeedPage> {
   Widget _header() {
     return Padding(
       padding: AppSpacing.topBarPagePadding,
-      child: AppTopBar(
+      child: NhamAppBar(
         user: _authenticatedUser,
         unreadNotificationCount: _unreadNotificationCount,
         onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
@@ -145,25 +147,23 @@ class _FeedPageState extends State<FeedPage> {
           await Get.toNamed<void>(AppRoutes.notifications);
           await _loadTopBar();
         },
-        menuActions: [
-          AppTopBarAction(
-            label: 'My Profile',
-            icon: Icons.person_outline_rounded,
-            onTap:
-                () => Get.offNamed<void>(
-                  AppRoutes.profile,
-                  arguments: _authenticatedUser,
-                ),
-          ),
-          AppTopBarAction(
-            label: 'Logout',
-            icon: Icons.logout_rounded,
-            color: const Color(0xFFD32F2F),
-            dividerBefore: true,
-            onTap: _logout,
-          ),
-        ],
+        onProfile:
+            () => Get.offNamed<void>(
+              AppRoutes.profile,
+              arguments: _authenticatedUser,
+            ),
+        onSettings: _openSettings,
+        onLogout: _logout,
       ),
+    );
+  }
+
+  void _openSettings() {
+    Get.to(
+      () => const SettingsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SettingsController>(() => SettingsController());
+      }),
     );
   }
 

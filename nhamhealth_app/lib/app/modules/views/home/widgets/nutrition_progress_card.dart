@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/nutrition_progress_model.dart';
-import 'inner_shadow.dart';
 
 class NutritionProgressCard extends StatelessWidget {
   const NutritionProgressCard({
