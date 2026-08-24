@@ -7,11 +7,7 @@ import 'inner_shadow.dart';
 
 /// Shared five-destination navigation used by the main app pages.
 ///
-<<<<<<< Updated upstream
 /// Indexes are Home (0), Meals (1), Community (2), Chat (3), and Settings (4).
-=======
-/// Indexes are Home (0), Meals (1), Post (2), Community (3), and Settings (4).
->>>>>>> Stashed changes
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -81,15 +77,9 @@ class AppBottomNavigation extends StatelessWidget {
                           const SizedBox(width: 48),
                           _NavSlot(
                             child: _NavItem(
-<<<<<<< Updated upstream
+                              id: 'chat',
                               icon: Icons.chat_bubble_rounded,
-                              label: 'Chat',
-=======
-                              id: 'community',
-                              icon: Icons.people_outline_rounded,
-                              selectedIcon: Icons.people_rounded,
-                              label: 'community'.tr,
->>>>>>> Stashed changes
+                              label: 'chat'.tr,
                               selected: selectedIndex == 3,
                               onTap: () => onSelect(3),
                               iconBuilder:
@@ -306,7 +296,6 @@ class _NavItem extends StatelessWidget {
                             ? AppShadows.innerSelectedNavigation
                             : const [],
                     child: Center(
-<<<<<<< Updated upstream
                       child:
                           iconBuilder?.call(
                             selected ? Colors.white : AppColors.inactiveText,
@@ -319,13 +308,6 @@ class _NavItem extends StatelessWidget {
                                     : AppColors.inactiveText,
                             size: 25,
                           ),
-=======
-                      child: Icon(
-                        selected ? selectedIcon ?? icon : icon,
-                        color: selected ? Colors.white : AppColors.inactiveText,
-                        size: 25,
-                      ),
->>>>>>> Stashed changes
                     ),
                   ),
                 ),
@@ -349,15 +331,9 @@ class _CommunityButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-<<<<<<< Updated upstream
-      label: 'Community',
+      label: 'community'.tr,
       child: Tooltip(
-        message: 'Community',
-=======
-      label: 'post'.tr,
-      child: Tooltip(
-        message: 'post'.tr,
->>>>>>> Stashed changes
+        message: 'community'.tr,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -390,36 +366,12 @@ class _CommunityButton extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const _PostPlusIcon(color: AppColors.primaryGreen),
+                    child: const Icon(
+                      Icons.people_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 27,
+                    ),
                   ),
-<<<<<<< Updated upstream
-                  child: const Icon(
-                    Icons.people_rounded,
-                    color: AppColors.primaryGreen,
-                    size: 27,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  style: TextStyle(
-                    color:
-                        selected
-                            ? AppColors.primaryGreen
-                            : AppColors.inactiveText,
-                    fontSize: 11,
-                    height: 1,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  child: const Text(
-                    'Community',
-                    maxLines: 1,
-                    textScaler: TextScaler.noScaling,
-                  ),
-                ),
-              ],
-            ),
-=======
                   const SizedBox(height: 8),
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 220),
@@ -433,14 +385,13 @@ class _CommunityButton extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                     child: Text(
-                      'post'.tr,
+                      'community'.tr,
                       maxLines: 1,
                       textScaler: TextScaler.noScaling,
                     ),
                   ),
                 ],
               ),
->>>>>>> Stashed changes
             ),
           ),
         ),
@@ -472,23 +423,25 @@ class _ChatIconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bubble = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(1, 1, size.width - 2, size.height - 7),
-          const Radius.circular(6),
-        ),
-      )
-      ..moveTo(7, size.height - 8)
-      ..lineTo(7, size.height - 1)
-      ..lineTo(14, size.height - 7)
-      ..close();
+    final bubble =
+        Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(1, 1, size.width - 2, size.height - 7),
+              const Radius.circular(6),
+            ),
+          )
+          ..moveTo(7, size.height - 8)
+          ..lineTo(7, size.height - 1)
+          ..lineTo(14, size.height - 7)
+          ..close();
     canvas.drawPath(bubble, Paint()..color = color);
 
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2.4
-      ..strokeCap = StrokeCap.round;
+    final linePaint =
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 2.4
+          ..strokeCap = StrokeCap.round;
     canvas.drawLine(const Offset(7, 9), const Offset(20, 9), linePaint);
     canvas.drawLine(const Offset(9, 14), const Offset(18, 14), linePaint);
   }
