@@ -105,6 +105,7 @@ class AiFoodView extends GetView<AiFoodController> {
                     controller.errorMessage.value!,
                     Colors.red.shade700,
                     Icons.error_outline_rounded,
+                    params: controller.errorMessageParams,
                   ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
@@ -821,7 +822,7 @@ class AiFoodView extends GetView<AiFoodController> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item.title.tr,
+                  item.title.trParams(item.titleParams),
                   style: TextStyle(
                     fontSize: 17,
                     color: color,
@@ -834,7 +835,7 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
           const SizedBox(height: 8),
           Text(
-            item.message.tr,
+            item.message.trParams(item.messageParams),
             style: const TextStyle(height: 1.45, fontSize: 14),
           ),
         ],
@@ -874,7 +875,7 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(height: 7),
           Text(
             food?.disclaimer.isNotEmpty == true
-                ? food!.disclaimer
+                ? food!.disclaimer.tr
                 : defaultDisclaimer.tr,
             style: const TextStyle(
               fontSize: 11.5,
@@ -885,7 +886,7 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(height: 5),
           Text(
             food?.privacyNotice.isNotEmpty == true
-                ? food!.privacyNotice
+                ? food!.privacyNotice.tr
                 : defaultPrivacy.tr,
             style: const TextStyle(
               fontSize: 11.5,
@@ -900,7 +901,12 @@ class AiFoodView extends GetView<AiFoodController> {
 
   // ---- Misc ----------------------------------------------------------
 
-  Widget _message(String text, Color color, IconData icon) => Padding(
+  Widget _message(
+    String text,
+    Color color,
+    IconData icon, {
+    Map<String, String> params = const {},
+  }) => Padding(
     padding: const EdgeInsets.only(top: 12),
     child: Container(
       padding: const EdgeInsets.all(12),
@@ -914,7 +920,7 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              text.tr,
+              text.trParams(params),
               style: TextStyle(color: color, fontSize: 13.5),
             ),
           ),
