@@ -109,8 +109,8 @@ class ProfileHeader extends GetView<ProfileController> {
               FilledButton.icon(
                 onPressed: controller.editProfile,
                 icon: const Icon(Icons.edit_outlined, size: 14),
-                label: const Text(
-                  'Edit Profile',
+                label: Text(
+                  'Edit Profile'.tr,
                   maxLines: 1,
                   textScaler: TextScaler.noScaling,
                 ),

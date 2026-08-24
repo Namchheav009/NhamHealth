@@ -249,10 +249,10 @@ class _SecurityViewState extends State<SecurityView> {
             color: const Color(0xFF006B38),
           ),
         const SizedBox(width: 4),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Password & Security',
-            style: TextStyle(
+            'Password & Security'.tr,
+            style: const TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.35,
@@ -306,8 +306,8 @@ class _SecurityViewState extends State<SecurityView> {
               children: [
                 Text(
                   protected
-                      ? 'Your privacy is protected'
-                      : 'Add extra protection',
+                      ? 'Your privacy is protected'.tr
+                      : 'Add extra protection'.tr,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
@@ -317,8 +317,12 @@ class _SecurityViewState extends State<SecurityView> {
                 const SizedBox(height: 6),
                 Text(
                   protected
-                      ? '${_biometrics ? 'Biometrics and PIN' : 'PIN'} required for private features'
-                      : 'Secure AI Food Check and profile changes with a PIN.',
+                      ? '@method required for private features'.trParams({
+                        'method':
+                            (_biometrics ? 'Biometrics and PIN' : 'PIN').tr,
+                      })
+                      : 'Secure AI Food Check and profile changes with a PIN.'
+                          .tr,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: .84),
                     fontSize: 12.5,
@@ -420,7 +424,7 @@ class _SecurityViewState extends State<SecurityView> {
   Widget _disableButton() => OutlinedButton.icon(
     onPressed: _disableLock,
     icon: const Icon(Icons.lock_open_rounded, size: 19),
-    label: const Text('Turn off app protection'),
+    label: Text('Turn off app protection'.tr),
     style: OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFFC84444),
       minimumSize: const Size.fromHeight(50),
@@ -443,7 +447,7 @@ class _SectionTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
+          title.tr,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -452,7 +456,7 @@ class _SectionTitle extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         Text(
-          subtitle,
+          subtitle.tr,
           style: const TextStyle(fontSize: 12, color: Color(0xFF7A827D)),
         ),
       ],
@@ -507,7 +511,7 @@ class _SecurityTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    title.tr,
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -519,7 +523,7 @@ class _SecurityTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    subtitle,
+                    subtitle.tr,
                     style: TextStyle(
                       fontSize: 11.5,
                       height: 1.25,

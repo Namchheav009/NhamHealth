@@ -57,25 +57,28 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
 
             const SizedBox(height: 18),
 
-            const Text(
-              'Add Food Source',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Text(
+              'Add Food Source'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 18),
 
             DropdownButtonFormField<String>(
               initialValue: mealType,
-              decoration: const InputDecoration(
-                labelText: 'Meal type',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Meal type'.tr,
+                border: const OutlineInputBorder(),
               ),
-              items: const [
-                DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
-                DropdownMenuItem(value: 'Lunch', child: Text('Lunch')),
-                DropdownMenuItem(value: 'Dinner', child: Text('Dinner')),
-                DropdownMenuItem(value: 'Drink', child: Text('Drink')),
-                DropdownMenuItem(value: 'Snack', child: Text('Snack')),
+              items: [
+                DropdownMenuItem(
+                  value: 'Breakfast',
+                  child: Text('Breakfast'.tr),
+                ),
+                DropdownMenuItem(value: 'Lunch', child: Text('Lunch'.tr)),
+                DropdownMenuItem(value: 'Dinner', child: Text('Dinner'.tr)),
+                DropdownMenuItem(value: 'Drink', child: Text('Drink'.tr)),
+                DropdownMenuItem(value: 'Snack', child: Text('Snack'.tr)),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -90,10 +93,10 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
 
             TextField(
               controller: foodController,
-              decoration: const InputDecoration(
-                labelText: 'Food name',
-                hintText: 'Example: Chicken rice',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Food name'.tr,
+                hintText: 'Example: Chicken rice'.tr,
+                border: const OutlineInputBorder(),
               ),
             ),
 
@@ -102,10 +105,10 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
             TextField(
               controller: caloriesController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Calories',
-                suffixText: 'kcal',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Calories'.tr,
+                suffixText: 'kcal'.tr,
+                border: const OutlineInputBorder(),
               ),
             ),
 
@@ -121,7 +124,10 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
                   final calories = int.tryParse(caloriesController.text.trim());
 
                   if (food.isEmpty || calories == null || calories <= 0) {
-                    AppAlert.error(title: 'Invalid information', message: 'Please enter food name and calories.');
+                    AppAlert.error(
+                      title: 'Invalid information',
+                      message: 'Please enter food name and calories.',
+                    );
 
                     return;
                   }
@@ -136,7 +142,7 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
                   backgroundColor: const Color(0xFF00A651),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Add Food'),
+                child: Text('Add Food'.tr),
               ),
             ),
           ],

@@ -12,9 +12,9 @@ class HomeChatbotButton extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Open AI Food Analyze',
+      label: 'Open AI Food Analyze'.tr,
       child: Tooltip(
-        message: 'Analyze food with AI',
+        message: 'Analyze food with AI'.tr,
         child: Material(
           color: Colors.transparent,
           child: InkWell(

@@ -29,10 +29,10 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                     padding: const EdgeInsets.fromLTRB(28, 42, 28, 34),
                     child: Column(
                       children: [
-                        const Text(
-                          'Account created!',
+                        Text(
+                          'Account created!'.tr,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.darkGreen,
                             fontSize: 24,
                             height: 1.15,
@@ -41,10 +41,10 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Welcome to NhamHealth',
+                        Text(
+                          'Welcome to NhamHealth'.tr,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.mutedText,
                             fontSize: 12,
                             height: 1.4,
@@ -55,7 +55,7 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                         Expanded(
                           child: Center(
                             child: Semantics(
-                              label: 'Account successfully created',
+                              label: 'Account successfully created'.tr,
                               image: true,
                               child: Image.asset(
                                 'assets/images/auth/account_create.png',
@@ -66,10 +66,10 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'Your account has been created',
+                        Text(
+                          'Your account has been created'.tr,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.darkGreen,
                             fontSize: 12,
                             height: 1.4,
@@ -77,10 +77,10 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Successfully!',
+                        Text(
+                          'Successfully!'.tr,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.darkGreen,
                             fontSize: 22,
                             height: 1.2,
@@ -102,8 +102,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                               ),
                               SizedBox(width: 10),
                               Text(
-                                'Preparing your home...',
-                                style: TextStyle(
+                                'Preparing your home...'.tr,
+                                style: const TextStyle(
                                   color: AppColors.mutedText,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,

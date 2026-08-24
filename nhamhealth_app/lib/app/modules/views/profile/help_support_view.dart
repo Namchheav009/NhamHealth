@@ -36,9 +36,9 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
                         const SizedBox(height: 25),
 
-                        const Text(
-                          'Need help? Contact us or find quick answers below.',
-                          style: TextStyle(
+                        Text(
+                          'Need help? Contact us or find quick answers below.'.tr,
+                          style: const TextStyle(
                             fontSize: 13,
                             height: 1.4,
                             fontWeight: FontWeight.w400,
@@ -48,11 +48,11 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
                         const SizedBox(height: 31),
 
-                        const Padding(
-                          padding: EdgeInsets.only(left: 15),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 15),
                           child: Text(
-                            'Contact Support',
-                            style: TextStyle(
+                            'Contact Support'.tr,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF151515),
@@ -66,11 +66,11 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
                         const SizedBox(height: 26),
 
-                        const Padding(
-                          padding: EdgeInsets.only(left: 15),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 15),
                           child: Text(
-                            'Frequently Asked Questions',
-                            style: TextStyle(
+                            'Frequently Asked Questions'.tr,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF151515),
@@ -224,7 +224,7 @@ class _ContactItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        title.tr,
                         style: const TextStyle(
                           fontSize: 14,
                           height: 1,
@@ -321,7 +321,7 @@ class _FaqItem extends StatelessWidget {
 
                     Expanded(
                       child: Text(
-                        question,
+                        question.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -373,7 +373,7 @@ class _FaqItem extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      answer,
+                      answer.tr,
                       style: const TextStyle(
                         fontSize: 11,
                         height: 1.45,

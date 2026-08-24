@@ -151,7 +151,11 @@ class VerificationController extends GetxController {
       hasError.value = false;
       _restartCountdowns(resetCodeLifetime: true);
       codeFocusNode.requestFocus();
-      AppAlert.success(title: 'New code sent', message: 'Check your email. The new code is valid for ${isRegistration.value ? 5 : 3} minutes.');
+      AppAlert.success(
+        title: 'New code sent',
+        message: 'Check your email. The new code is valid for @minutes minutes.'
+            .trParams({'minutes': '${isRegistration.value ? 5 : 3}'}),
+      );
     } on AuthException catch (error) {
       AppAlert.error(title: 'Could not resend code', message: error.message);
     } finally {
@@ -197,10 +201,10 @@ class VerificationView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'We sent a code to',
+          Text(
+            'We sent a code to'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.darkGreen,
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -244,7 +248,7 @@ class VerificationView extends StatelessWidget {
                         key: const ValueKey('verification-error'),
                         padding: const EdgeInsets.only(top: 9),
                         child: Text(
-                          controller.errorMessage.value,
+                          controller.errorMessage.value.tr,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.errorCoral,
@@ -270,9 +274,12 @@ class VerificationView extends StatelessWidget {
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const Text(
-                  "Didn't receive the code?",
-                  style: TextStyle(fontSize: 11, color: AppColors.darkGreen),
+                Text(
+                  "Didn't receive the code?".tr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.darkGreen,
+                  ),
                 ),
                 TextButton(
                   onPressed:
@@ -287,10 +294,12 @@ class VerificationView extends StatelessWidget {
                   ),
                   child: Text(
                     controller.isResending.value
-                        ? 'Sending...'
+                        ? 'Sending...'.tr
                         : controller.resendSeconds.value > 0
-                        ? 'Send again in ${controller.resendSeconds.value}s'
-                        : 'Send again',
+                        ? 'Send again in @seconds'.trParams({
+                          'seconds': '${controller.resendSeconds.value}s',
+                        })
+                        : 'Send again'.tr,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -330,7 +339,9 @@ class _ExpiryPill extends StatelessWidget {
               Icon(Icons.schedule_rounded, size: 15, color: color),
               const SizedBox(width: 5),
               Text(
-                expired ? 'Code expired' : 'Code expires in $time',
+                expired
+                    ? 'Code expired'.tr
+                    : 'Code expires in @time'.trParams({'time': time}),
                 style: TextStyle(
                   color: color,
                   fontSize: 11,
@@ -361,7 +372,7 @@ class _VerificationCodeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Four digit verification code',
+      label: 'Four digit verification code'.tr,
       textField: true,
       child: LayoutBuilder(
         builder: (context, constraints) {

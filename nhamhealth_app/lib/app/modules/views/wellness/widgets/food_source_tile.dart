@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../models/wellness/food_source_model.dart';
 
@@ -42,14 +43,14 @@ class FoodSourceTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      source.mealType,
+                      source.mealType.tr,
                       style: const TextStyle(
                         fontSize: 9,
                         color: Colors.black38,
                       ),
                     ),
                     Text(
-                      source.foodName,
+                      source.foodName.tr,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -70,9 +71,9 @@ class FoodSourceTile extends StatelessWidget {
 
               const SizedBox(width: 4),
 
-              const Text(
-                'kcal',
-                style: TextStyle(color: Colors.black38, fontSize: 9),
+              Text(
+                'kcal'.tr,
+                style: const TextStyle(color: Colors.black38, fontSize: 9),
               ),
 
               const SizedBox(width: 5),

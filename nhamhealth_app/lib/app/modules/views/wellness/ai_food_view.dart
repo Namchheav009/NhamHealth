@@ -197,9 +197,9 @@ class AiFoodView extends GetView<AiFoodController> {
         child: const Icon(Icons.arrow_back_rounded, color: green, size: 20),
       ),
     ),
-    title: const Text(
-      'AI Food Check',
-      style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.2),
+    title: Text(
+      'AI Food Check'.tr,
+      style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.2),
     ),
     centerTitle: true,
   );
@@ -238,23 +238,23 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Know what is on your plate',
-                style: TextStyle(
+                'Know what is on your plate'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
                 ),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               Text(
-                'Snap a clear photo for instant nutrition insights.',
-                style: TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
+                'Snap a clear photo for instant nutrition insights.'.tr,
+                style: const TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
               ),
             ],
           ),
@@ -317,14 +317,14 @@ class AiFoodView extends GetView<AiFoodController> {
         child: const Icon(Icons.add_a_photo_outlined, size: 32, color: green),
       ),
       const SizedBox(height: 12),
-      const Text(
-        'Add a meal photo',
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+      Text(
+        'Add a meal photo'.tr,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
       ),
       const SizedBox(height: 4),
-      const Text(
-        'Use camera or choose from gallery',
-        style: TextStyle(color: textMuted, fontSize: 13),
+      Text(
+        'Use camera or choose from gallery'.tr,
+        style: const TextStyle(color: textMuted, fontSize: 13),
       ),
     ],
   );
@@ -392,7 +392,7 @@ class AiFoodView extends GetView<AiFoodController> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(text),
+                Text(text.tr),
               ],
             )
             : null;
@@ -404,7 +404,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: FilledButton.icon(
             onPressed: action,
             icon: loading ? const SizedBox.shrink() : Icon(icon),
-            label: child ?? Text(text),
+            label: child ?? Text(text.tr),
             style: FilledButton.styleFrom(
               backgroundColor: green,
               disabledBackgroundColor: green.withValues(alpha: .5),
@@ -419,7 +419,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: FilledButton.icon(
             onPressed: action,
             icon: Icon(icon),
-            label: Text(text),
+            label: Text(text.tr),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFE8F7EA),
               foregroundColor: greenDark,
@@ -434,7 +434,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: OutlinedButton.icon(
             onPressed: action,
             icon: Icon(icon, size: 20),
-            label: Text(text),
+            label: Text(text.tr),
             style: OutlinedButton.styleFrom(
               foregroundColor: green,
               side: const BorderSide(color: green),
@@ -460,9 +460,9 @@ class AiFoodView extends GetView<AiFoodController> {
     return _card(
       Row(
         children: [
-          const Text(
-            'Confidence',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          Text(
+            'Confidence'.tr,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -500,10 +500,13 @@ class AiFoodView extends GetView<AiFoodController> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Nutrition estimate',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                'Nutrition estimate'.tr,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             Container(
@@ -515,7 +518,7 @@ class AiFoodView extends GetView<AiFoodController> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                food.nutritionSourceLabel,
+                food.nutritionSourceLabel.tr,
                 style: TextStyle(
                   color: food.isDatabaseCalculated ? greenDark : warn,
                   fontSize: 10,
@@ -604,8 +607,8 @@ class AiFoodView extends GetView<AiFoodController> {
               Expanded(
                 child: Text(
                   low
-                      ? 'Please confirm before logging'
-                      : 'Help improve this result',
+                      ? 'Please confirm before logging'.tr
+                      : 'Help improve this result'.tr,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -615,9 +618,10 @@ class AiFoodView extends GetView<AiFoodController> {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.',
-            style: TextStyle(color: textMuted, height: 1.4),
+          Text(
+            'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.'
+                .tr,
+            style: const TextStyle(color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 12),
           Row(
@@ -629,7 +633,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           ? null
                           : controller.confirmFood,
                   icon: const Icon(Icons.check_rounded),
-                  label: const Text('Looks right'),
+                  label: Text('Looks right'.tr),
                 ),
               ),
               const SizedBox(width: 8),
@@ -640,7 +644,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           ? null
                           : () => _showCorrectionDialog(context),
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Edit result'),
+                  label: Text('Edit result'.tr),
                 ),
               ),
             ],
@@ -662,7 +666,7 @@ class AiFoodView extends GetView<AiFoodController> {
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            title: const Text('Correct food result'),
+            title: Text('Correct food result'.tr),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -670,9 +674,9 @@ class AiFoodView extends GetView<AiFoodController> {
                   TextField(
                     controller: nameController,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Food name',
-                      prefixIcon: Icon(Icons.restaurant_outlined),
+                    decoration: InputDecoration(
+                      labelText: 'Food name'.tr,
+                      prefixIcon: const Icon(Icons.restaurant_outlined),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -684,18 +688,16 @@ class AiFoodView extends GetView<AiFoodController> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: const InputDecoration(
-                            labelText: 'Amount',
-                          ),
+                          decoration: InputDecoration(labelText: 'Amount'.tr),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: unitController,
-                          decoration: const InputDecoration(
-                            labelText: 'Unit',
-                            hintText: 'g, bowl, serving',
+                          decoration: InputDecoration(
+                            labelText: 'Unit'.tr,
+                            hintText: 'g, bowl, serving'.tr,
                           ),
                         ),
                       ),
@@ -707,11 +709,11 @@ class AiFoodView extends GetView<AiFoodController> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Cancel'),
+                child: Text('Cancel'.tr),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Save correction'),
+                child: Text('Save correction'.tr),
               ),
             ],
           ),
@@ -762,7 +764,7 @@ class AiFoodView extends GetView<AiFoodController> {
                       ),
                     ),
                     Text(
-                      label,
+                      label.tr,
                       style: const TextStyle(color: textMuted, fontSize: 11.5),
                     ),
                   ],
@@ -796,9 +798,9 @@ class AiFoodView extends GetView<AiFoodController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'AI Recommendation',
-            style: TextStyle(fontSize: 13, color: textMuted),
+          Text(
+            'AI Recommendation'.tr,
+            style: const TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 8),
           Row(
@@ -819,7 +821,7 @@ class AiFoodView extends GetView<AiFoodController> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item.title,
+                  item.title.tr,
                   style: TextStyle(
                     fontSize: 17,
                     color: color,
@@ -832,7 +834,7 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
           const SizedBox(height: 8),
           Text(
-            item.message,
+            item.message.tr,
             style: const TextStyle(height: 1.45, fontSize: 14),
           ),
         ],
@@ -855,13 +857,17 @@ class AiFoodView extends GetView<AiFoodController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info_outline, size: 17, color: Color(0xFF8A6500)),
-              SizedBox(width: 7),
+              const Icon(
+                Icons.info_outline,
+                size: 17,
+                color: Color(0xFF8A6500),
+              ),
+              const SizedBox(width: 7),
               Text(
-                'Important information',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                'Important information'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -869,7 +875,7 @@ class AiFoodView extends GetView<AiFoodController> {
           Text(
             food?.disclaimer.isNotEmpty == true
                 ? food!.disclaimer
-                : defaultDisclaimer,
+                : defaultDisclaimer.tr,
             style: const TextStyle(
               fontSize: 11.5,
               height: 1.4,
@@ -880,7 +886,7 @@ class AiFoodView extends GetView<AiFoodController> {
           Text(
             food?.privacyNotice.isNotEmpty == true
                 ? food!.privacyNotice
-                : defaultPrivacy,
+                : defaultPrivacy.tr,
             style: const TextStyle(
               fontSize: 11.5,
               height: 1.4,
@@ -907,7 +913,10 @@ class AiFoodView extends GetView<AiFoodController> {
           Icon(icon, size: 18, color: color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: TextStyle(color: color, fontSize: 13.5)),
+            child: Text(
+              text.tr,
+              style: TextStyle(color: color, fontSize: 13.5),
+            ),
           ),
         ],
       ),
