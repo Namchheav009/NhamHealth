@@ -34,19 +34,35 @@ class MoodCard extends StatelessWidget {
               SizedBox(
                 width: 36,
                 height: 36,
-                child: Center(
-                  child:
-                      emoji.isEmpty
-                          ? const Icon(
-                            Icons.mood_rounded,
-                            color: Color(0xFFFFB02E),
-                            size: 28,
-                          )
-                          : Text(
-                            emoji,
-                            textScaler: TextScaler.noScaling,
-                            style: const TextStyle(fontSize: 28, height: 1),
-                          ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutBack,
+                  transitionBuilder:
+                      (child, animation) => ScaleTransition(
+                        scale: animation,
+                        child: RotationTransition(
+                          turns: Tween<double>(
+                            begin: -0.04,
+                            end: 0,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      ),
+                  child: Center(
+                    key: ValueKey('$emoji-$selected'),
+                    child:
+                        emoji.isEmpty
+                            ? const Icon(
+                              Icons.mood_rounded,
+                              color: Color(0xFFFFB02E),
+                              size: 28,
+                            )
+                            : Text(
+                              emoji,
+                              textScaler: TextScaler.noScaling,
+                              style: const TextStyle(fontSize: 28, height: 1),
+                            ),
+                  ),
                 ),
               ),
               const SizedBox(height: 2),

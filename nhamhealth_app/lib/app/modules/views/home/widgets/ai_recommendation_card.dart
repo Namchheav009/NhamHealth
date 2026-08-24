@@ -5,6 +5,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
+import '../../../models/home/mood_model.dart';
 
 class AiRecommendationCard extends GetView<HomeController> {
   const AiRecommendationCard({super.key});
@@ -75,62 +76,106 @@ class AiRecommendationCard extends GetView<HomeController> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      const Expanded(
-                        child: Text(
-                          'Get personalized meal &\n'
-                          'activity suggestions based\n'
-                          'on your mood, and\n'
-                          'ingredients.',
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.08,
-                            color: AppColors.primaryText,
-                          ),
-                        ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Obx(() {
+                          final selectedMood = _selectedMood();
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 360),
+                            switchInCurve: Curves.easeOutBack,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder:
+                                (child, animation) => FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.18),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                            child:
+                                selectedMood == null
+                                    ? const Text(
+                                      'Get personalized meal &\n'
+                                      'activity suggestions based\n'
+                                      'on your mood and ingredients.',
+                                      key: ValueKey('no-mood'),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.08,
+                                        color: AppColors.primaryText,
+                                      ),
+                                    )
+                                    : _SelectedMoodDetail(mood: selectedMood),
+                          );
+                        }),
                       ),
                       SizedBox(
                         width: constraints.maxWidth * 0.55,
                         height: 36,
-                        child: Obx(
-                          () => FilledButton(
-                            onPressed:
-                                controller.isRecommendedMealsLoading.value
-                                    ? null
-                                    : controller.getRecommendation,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primaryGreen,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: AppColors.primaryGreen
-                                  .withValues(alpha: 0.55),
-                              elevation: 3,
-                              shadowColor: AppColors.primaryGreen.withValues(
-                                alpha: 0.2,
+                        child: Obx(() {
+                          final selectedMood = _selectedMood();
+                          final isLoading =
+                              controller.isRecommendedMealsLoading.value;
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 380),
+                            switchInCurve: Curves.elasticOut,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder:
+                                (child, animation) => FadeTransition(
+                                  opacity: animation,
+                                  child: ScaleTransition(
+                                    scale: Tween<double>(
+                                      begin: 0.72,
+                                      end: 1,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                            child: FilledButton(
+                              key: ValueKey(selectedMood?.id),
+                              onPressed:
+                                  isLoading
+                                      ? null
+                                      : controller.getRecommendation,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: AppColors.primaryGreen
+                                    .withValues(alpha: 0.55),
+                                elevation: selectedMood == null ? 3 : 6,
+                                shadowColor: AppColors.primaryGreen.withValues(
+                                  alpha: selectedMood == null ? 0.2 : 0.42,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                controller.isRecommendedMealsLoading.value
-                                    ? 'Generating…'
-                                    : 'Get Recommendation',
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  isLoading
+                                      ? 'Generating…'
+                                      : selectedMood == null
+                                      ? 'Get Recommendation'
+                                      : 'Recommend for ${selectedMood.name}',
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
                       ),
                     ],
                   ),
@@ -140,6 +185,58 @@ class AiRecommendationCard extends GetView<HomeController> {
           ),
         );
       },
+    );
+  }
+
+  MoodModel? _selectedMood() {
+    final selectedId = controller.selectedMoodId.value;
+    for (final mood in controller.moods) {
+      if (mood.id == selectedId) return mood;
+    }
+    return null;
+  }
+}
+
+class _SelectedMoodDetail extends StatelessWidget {
+  const _SelectedMoodDetail({required this.mood});
+
+  final MoodModel mood;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      key: ValueKey(mood.id),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          mood.emoji.isEmpty ? '✨' : mood.emoji,
+          textScaler: TextScaler.noScaling,
+          style: const TextStyle(fontSize: 28, height: 1),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: 'You feel ${mood.name}\n',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const TextSpan(
+                  text: 'AI will personalize meals for this mood.',
+                ),
+              ],
+            ),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12.5,
+              height: 1.2,
+              color: AppColors.primaryText,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
