@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
-import '../../../widgets/app_background.dart';
 import '../../controllers/home/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';

@@ -4,12 +4,12 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/meal_controller.dart';
-import '../home/widgets/home_bottom_navigation.dart';
 import 'widgets/meal_card.dart';
 import 'widgets/meal_category.dart';
 import 'widgets/meal_slideshow.dart';
@@ -50,11 +50,8 @@ class MealView extends GetView<MealController> {
                             user: controller.authenticatedUser.value,
                             unreadNotificationCount:
                                 controller.unreadNotificationCount.value,
-                            onFavorites: controller.openFavorites,
                             onNotifications: controller.openNotifications,
                             onProfile: controller.openProfile,
-                            onSettings: controller.openSettings,
-                            onLogout: controller.logout,
                           ),
                         ),
 

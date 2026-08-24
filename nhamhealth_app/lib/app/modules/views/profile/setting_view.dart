@@ -4,11 +4,13 @@ import 'package:get/get.dart';
 
 import '../../controllers/profile/setting_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_bottom_navigation.dart';
+import '../../../widgets/app_back_header.dart';
+import '../../../widgets/loading_content_transition.dart';
+import '../../../widgets/page_skeleton.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
-
-  static const Color _darkGreen = Color(0xFF006B38);
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,7 @@ class SettingsView extends GetView<SettingsController> {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
+        extendBody: true,
         backgroundColor: const Color(0xFFFFFDFD),
         body: SizedBox.expand(
           child: Stack(
@@ -116,44 +119,63 @@ class SettingsView extends GetView<SettingsController> {
                 bottom: false,
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: AppSpacing.pagePadding,
+                  padding: AppSpacing.pagePaddingWithNavigation,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(),
 
                       const SizedBox(height: 24),
-
-                      _buildSectionTitle('Account'),
-
-                      const SizedBox(height: 10),
-
-                      _buildAccountCard(),
-
-                      const SizedBox(height: 21),
-
-                      _buildSectionTitle('Preferences'),
-
-                      const SizedBox(height: 10),
-
-                      _buildPreferenceCard(),
-
-                      const SizedBox(height: 21),
-
-                      _buildSectionTitle('Support'),
-
-                      const SizedBox(height: 10),
-
-                      _buildSupportCard(),
-
-                      const SizedBox(height: 13),
-
-                      _buildLogoutCard(),
+                      Obx(
+                        () => AnimatedSize(
+                          duration: const Duration(milliseconds: 360),
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: LoadingContentTransition(
+                            isLoading: controller.isLoading.value,
+                            loading: const PageSkeleton.settings(),
+                            content: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                              _buildSectionTitle('Account'),
+                              const SizedBox(height: 10),
+                              _buildAccountCard(),
+                              const SizedBox(height: 21),
+                              _buildSectionTitle('Preferences'),
+                              const SizedBox(height: 10),
+                              _buildPreferenceCard(),
+                              const SizedBox(height: 21),
+                              _buildSectionTitle('Support'),
+                              const SizedBox(height: 10),
+                              _buildSupportCard(),
+                              const SizedBox(height: 13),
+                              _buildLogoutCard(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          minimum: AppSpacing.navigationMargin,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppSpacing.maxContentWidth,
+              ),
+              child: AppBottomNavigation(
+                selectedIndex: 4,
+                onSelect: controller.selectBottomMenu,
+              ),
+            ),
           ),
         ),
       ),
@@ -165,40 +187,10 @@ class SettingsView extends GetView<SettingsController> {
   // ============================================================
 
   Widget _buildHeader() {
-    return SizedBox(
-      height: 28,
-      child: Row(
-        children: [
-          InkWell(
-            onTap: controller.goBack,
-            borderRadius: BorderRadius.circular(30),
-            child: const SizedBox(
-              width: 30,
-              height: 28,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  size: 24,
-                  color: _darkGreen,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          const Text(
-            'Setting',
-            style: TextStyle(
-              fontSize: 18,
-              height: 1,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0B0B0B),
-            ),
-          ),
-        ],
-      ),
+    return AppBackHeader(
+      title: 'Settings',
+      backButtonKey: const ValueKey('settings-back-button'),
+      onBack: controller.goBack,
     );
   }
 
@@ -226,13 +218,22 @@ class SettingsView extends GetView<SettingsController> {
   // ============================================================
 
   Widget _buildAccountCard() {
-    return _singleCard(
-      child: _SettingsItem(
-        icon: Icons.lock_outline_rounded,
-        title: 'Password and Security',
-        subtitle: 'PIN, fingerprint, Face ID and password',
-        onTap: controller.openPasswordSecurity,
-      ),
+    return _groupCard(
+      children: [
+        _SettingsItem(
+          icon: Icons.lock_outline_rounded,
+          title: 'Password and Security',
+          subtitle: 'PIN, fingerprint, Face ID and password',
+          onTap: controller.openPasswordSecurity,
+        ),
+        _divider(),
+        _SettingsItem(
+          icon: Icons.favorite_border_rounded,
+          title: 'Favorites',
+          subtitle: 'View your saved meals and posts',
+          onTap: controller.openFavorites,
+        ),
+      ],
     );
   }
 
@@ -328,29 +329,6 @@ class SettingsView extends GetView<SettingsController> {
   // ============================================================
   // CARD
   // ============================================================
-
-  Widget _singleCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      height: 65,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Color(0xFFFFF9FA), Color(0xFFFFFFFF), Color(0xFFF5FFF2)],
-        ),
-        borderRadius: BorderRadius.circular(13),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
 
   Widget _groupCard({required List<Widget> children}) {
     return Container(

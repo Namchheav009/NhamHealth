@@ -14,8 +14,6 @@ import '../../models/home/daily_summary_model.dart';
 import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/mood_model.dart';
 import '../../repositories/home/home_repository.dart';
-import '../profile/setting_controller.dart';
-import '../../views/profile/setting_view.dart';
 
 class HomeController extends GetxController {
   HomeController({required this.repository});
@@ -251,6 +249,10 @@ class HomeController extends GetxController {
   }
 
   void selectBottomMenu(int index) {
+    if (index == 4) {
+      openSettings();
+      return;
+    }
     if (index == selectedBottomIndex.value) return;
     selectedBottomIndex.value = index;
 
@@ -267,10 +269,6 @@ class HomeController extends GetxController {
         Get.offNamed<void>(AppRoutes.feed);
         break;
       case 4:
-        Get.offNamed<void>(
-          AppRoutes.profile,
-          arguments: authenticatedUser.value,
-        );
         break;
     }
   }
@@ -293,16 +291,14 @@ class HomeController extends GetxController {
   }
 
   void openProfile() {
-    selectBottomMenu(4);
+    Get.toNamed<void>(
+      AppRoutes.profile,
+      arguments: authenticatedUser.value,
+    );
   }
 
   void openSettings() {
-    Get.to<void>(
-      () => const SettingsView(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<SettingsController>(() => SettingsController());
-      }),
-    );
+    Get.offNamed<void>(AppRoutes.settings);
   }
 
   void openWellnessDetails() {
