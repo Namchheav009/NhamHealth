@@ -25,10 +25,10 @@ class PasswordSuccessView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Your password has been reset successfully.',
+          Text(
+            'Your password has been reset successfully.'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.darkGreen,
               fontSize: 13,
               fontWeight: FontWeight.w700,

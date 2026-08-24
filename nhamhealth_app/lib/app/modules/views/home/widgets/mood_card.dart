@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
@@ -71,7 +72,7 @@ class MoodCard extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    label,
+                    label.tr,
                     maxLines: 1,
                     style: TextStyle(
                       fontSize: 10.5,
@@ -139,7 +140,7 @@ class MoodCard extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '$label mood',
+      label: '@mood mood'.trParams({'mood': label.tr}),
       child: AnimatedScale(
         scale: selected ? 1.02 : 1,
         duration: const Duration(milliseconds: 180),

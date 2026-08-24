@@ -36,17 +36,17 @@ class LanguageView extends GetView<LanguageController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             AppBackHeader(
-                              title: 'Language',
+                              title: 'language'.tr,
                               onBack: controller.goBack,
                             ),
 
                             const SizedBox(height: 26),
 
-                            const Padding(
-                              padding: EdgeInsets.only(left: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 6),
                               child: Text(
-                                'Choose App Language',
-                                style: TextStyle(
+                                'language_choose'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF151515),
@@ -56,11 +56,11 @@ class LanguageView extends GetView<LanguageController> {
 
                             const SizedBox(height: 12),
 
-                            const Padding(
-                              padding: EdgeInsets.only(left: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 6),
                               child: Text(
-                                'Select your preferred language for the app',
-                                style: TextStyle(
+                                'language_description'.tr,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
                                   color: Color(0xFF687185),
@@ -107,8 +107,8 @@ class LanguageView extends GetView<LanguageController> {
           children: [
             _LanguageItem(
               languageCode: 'km',
-              title: 'Khmer',
-              selected: controller.selectedLanguage.value == 'Khmer',
+              title: 'language_khmer'.tr,
+              selected: controller.selectedLanguage.value == 'km',
               onTap: controller.selectKhmer,
             ),
 
@@ -123,8 +123,8 @@ class LanguageView extends GetView<LanguageController> {
 
             _LanguageItem(
               languageCode: 'en',
-              title: 'English',
-              selected: controller.selectedLanguage.value == 'English',
+              title: 'language_english'.tr,
+              selected: controller.selectedLanguage.value == 'en',
               onTap: controller.selectEnglish,
             ),
           ],
@@ -141,43 +141,43 @@ class LanguageView extends GetView<LanguageController> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFCDE9D5)),
       ),
-      child: const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 1),
-          child: Icon(Icons.info_outline_rounded, color: green, size: 17),
-        ),
-
-        SizedBox(width: 9),
-
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Language will be applied immediately',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF294C81),
-                ),
-              ),
-
-              SizedBox(height: 9),
-
-              Text(
-                'The new language is applied to supported content immediately.',
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.25,
-                  color: Color(0xFF294C81),
-                ),
-              ),
-            ],
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline_rounded, color: green, size: 17),
           ),
-        ),
-      ],
+
+          const SizedBox(width: 9),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'language_applied'.tr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF294C81),
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                Text(
+                  'language_applied_description'.tr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    height: 1.25,
+                    color: Color(0xFF294C81),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

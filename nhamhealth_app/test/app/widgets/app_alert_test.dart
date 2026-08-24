@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/app/widgets/app_alert.dart';
 
 void main() {
@@ -17,7 +18,11 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
-      const GetMaterialApp(home: Scaffold(body: SizedBox.expand())),
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const Scaffold(body: SizedBox.expand()),
+      ),
     );
 
     await AppAlert.success(

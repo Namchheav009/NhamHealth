@@ -77,11 +77,14 @@ class CaloriesView extends GetView<CaloriesController> {
             ),
           ),
 
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Calories',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                'Calories'.tr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -108,7 +111,7 @@ class CaloriesView extends GetView<CaloriesController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text('Cancel'),
+              child: Text('Cancel'.tr),
             ),
           ),
 
@@ -127,7 +130,7 @@ class CaloriesView extends GetView<CaloriesController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: const Text('Save Changes'),
+              label: Text('Save Changes'.tr),
             ),
           ),
         ],

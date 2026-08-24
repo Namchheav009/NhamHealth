@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
@@ -96,7 +97,7 @@ class RecommendedMealCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            meal.name,
+                            meal.name.tr,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

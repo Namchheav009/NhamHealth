@@ -24,9 +24,9 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
       ),
       child: Column(
         children: [
-          const Row(
+          Row(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.white,
                 child: Icon(
@@ -35,10 +35,10 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
                   size: 21,
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Text(
-                'Your Daily Summary',
-                style: TextStyle(
+                'Your Daily Summary'.tr,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF666666),

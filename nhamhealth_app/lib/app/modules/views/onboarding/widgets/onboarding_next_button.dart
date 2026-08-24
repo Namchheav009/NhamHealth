@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -27,7 +28,7 @@ class OnboardingNextButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          text,
+          text.tr,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
       ),

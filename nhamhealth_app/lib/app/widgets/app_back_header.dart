@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 
@@ -24,7 +25,7 @@ class AppBackHeader extends StatelessWidget {
       child: Row(
         children: [
           Tooltip(
-            message: 'Back',
+            message: 'Back'.tr,
             child: Material(
               color: Colors.white.withValues(alpha: 0.82),
               shape: const CircleBorder(),
@@ -49,7 +50,7 @@ class AppBackHeader extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              title,
+              title.tr,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textScaler: TextScaler.noScaling,

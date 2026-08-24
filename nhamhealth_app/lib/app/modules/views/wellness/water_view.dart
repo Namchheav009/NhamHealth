@@ -12,9 +12,9 @@ class WaterView extends StatelessWidget {
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('Water'),
+        title: Text('Water'.tr),
       ),
-      body: const Center(child: Text('Water Detail Page')),
+      body: Center(child: Text('Water Detail Page'.tr)),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FoodFilterSheet extends StatefulWidget {
   const FoodFilterSheet({
@@ -78,17 +79,20 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Filter by category',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    'Filter by category'.tr,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: selectedCategories.isEmpty
                       ? null
                       : () => setState(selectedCategories.clear),
-                  child: const Text('Reset'),
+                  child: Text('Reset'.tr),
                 ),
               ],
             ),
@@ -138,9 +142,9 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                   backgroundColor: const Color(0xFF0AA653),
                   shape: const StadiumBorder(),
                 ),
-                child: const Text(
-                  'Apply Filter',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                child: Text(
+                  'Apply Filter'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -168,7 +172,7 @@ class _CategoryChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '$label category',
+      label: '@category category'.trParams({'category': label.tr}),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -212,7 +216,7 @@ class _CategoryChip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    label,
+                    label.tr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

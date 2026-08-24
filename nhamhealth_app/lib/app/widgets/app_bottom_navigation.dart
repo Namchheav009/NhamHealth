@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_shadows.dart';
@@ -6,7 +7,11 @@ import 'inner_shadow.dart';
 
 /// Shared five-destination navigation used by the main app pages.
 ///
+<<<<<<< Updated upstream
 /// Indexes are Home (0), Meals (1), Community (2), Chat (3), and Settings (4).
+=======
+/// Indexes are Home (0), Meals (1), Post (2), Community (3), and Settings (4).
+>>>>>>> Stashed changes
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -57,16 +62,18 @@ class AppBottomNavigation extends StatelessWidget {
                         children: [
                           _NavSlot(
                             child: _NavItem(
+                              id: 'home',
                               icon: Icons.home_rounded,
-                              label: 'Home',
+                              label: 'home'.tr,
                               selected: selectedIndex == 0,
                               onTap: () => onSelect(0),
                             ),
                           ),
                           _NavSlot(
                             child: _NavItem(
+                              id: 'meals',
                               icon: Icons.restaurant_menu_rounded,
-                              label: 'Meals',
+                              label: 'meals'.tr,
                               selected: selectedIndex == 1,
                               onTap: () => onSelect(1),
                             ),
@@ -74,8 +81,15 @@ class AppBottomNavigation extends StatelessWidget {
                           const SizedBox(width: 48),
                           _NavSlot(
                             child: _NavItem(
+<<<<<<< Updated upstream
                               icon: Icons.chat_bubble_rounded,
                               label: 'Chat',
+=======
+                              id: 'community',
+                              icon: Icons.people_outline_rounded,
+                              selectedIcon: Icons.people_rounded,
+                              label: 'community'.tr,
+>>>>>>> Stashed changes
                               selected: selectedIndex == 3,
                               onTap: () => onSelect(3),
                               iconBuilder:
@@ -90,9 +104,10 @@ class AppBottomNavigation extends StatelessWidget {
                           ),
                           _NavSlot(
                             child: _NavItem(
+                              id: 'settings',
                               icon: Icons.settings_outlined,
                               selectedIcon: Icons.settings_rounded,
-                              label: 'Settings',
+                              label: 'settings'.tr,
                               selected: selectedIndex == 4,
                               onTap: () => onSelect(4),
                             ),
@@ -235,6 +250,7 @@ class _NavigationInnerShadowPainter extends CustomPainter {
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
+    required this.id,
     required this.icon,
     required this.label,
     required this.selected,
@@ -243,6 +259,7 @@ class _NavItem extends StatelessWidget {
     this.iconBuilder,
   });
 
+  final String id;
   final IconData icon;
   final IconData? selectedIcon;
   final Widget Function(Color color)? iconBuilder;
@@ -261,7 +278,7 @@ class _NavItem extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            key: ValueKey<String>('nav-${label.toLowerCase()}'),
+            key: ValueKey<String>('nav-$id'),
             onTap: onTap,
             customBorder: const StadiumBorder(),
             child: SizedBox(
@@ -280,8 +297,7 @@ class _NavItem extends StatelessWidget {
                             ? AppColors.navigationGreen
                             : Colors.transparent,
                     borderRadius: BorderRadius.circular(25),
-                    boxShadow:
-                        selected ? AppShadows.selectedNavigation : null,
+                    boxShadow: selected ? AppShadows.selectedNavigation : null,
                   ),
                   child: InnerShadow(
                     borderRadius: BorderRadius.circular(25),
@@ -290,6 +306,7 @@ class _NavItem extends StatelessWidget {
                             ? AppShadows.innerSelectedNavigation
                             : const [],
                     child: Center(
+<<<<<<< Updated upstream
                       child:
                           iconBuilder?.call(
                             selected ? Colors.white : AppColors.inactiveText,
@@ -302,6 +319,13 @@ class _NavItem extends StatelessWidget {
                                     : AppColors.inactiveText,
                             size: 25,
                           ),
+=======
+                      child: Icon(
+                        selected ? selectedIcon ?? icon : icon,
+                        color: selected ? Colors.white : AppColors.inactiveText,
+                        size: 25,
+                      ),
+>>>>>>> Stashed changes
                     ),
                   ),
                 ),
@@ -325,9 +349,15 @@ class _CommunityButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
+<<<<<<< Updated upstream
       label: 'Community',
       child: Tooltip(
         message: 'Community',
+=======
+      label: 'post'.tr,
+      child: Tooltip(
+        message: 'post'.tr,
+>>>>>>> Stashed changes
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -335,31 +365,34 @@ class _CommunityButton extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(26),
             child: SizedBox(
-            width: 52,
-            height: 68,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: 43,
-                  height: 43,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4FFF6),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primaryGreen,
-                      width: 1.4,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.14),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+              width: 52,
+              height: 68,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    width: 43,
+                    height: 43,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4FFF6),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryGreen,
+                        width: 1.4,
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.14),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const _PostPlusIcon(color: AppColors.primaryGreen),
                   ),
+<<<<<<< Updated upstream
                   child: const Icon(
                     Icons.people_rounded,
                     color: AppColors.primaryGreen,
@@ -386,6 +419,28 @@ class _CommunityButton extends StatelessWidget {
                 ),
               ],
             ),
+=======
+                  const SizedBox(height: 8),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 220),
+                    style: TextStyle(
+                      color:
+                          selected
+                              ? AppColors.primaryGreen
+                              : AppColors.inactiveText,
+                      fontSize: 11,
+                      height: 1,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    child: Text(
+                      'post'.tr,
+                      maxLines: 1,
+                      textScaler: TextScaler.noScaling,
+                    ),
+                  ),
+                ],
+              ),
+>>>>>>> Stashed changes
             ),
           ),
         ),

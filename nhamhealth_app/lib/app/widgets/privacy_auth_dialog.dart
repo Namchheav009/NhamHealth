@@ -13,7 +13,7 @@ class PrivacyAuth {
   }) async {
     final security = Get.find<AppSecurityService>();
     if (!await security.hasPin) return true;
-    if (await security.authenticateBiometrically(reason)) return true;
+    if (await security.authenticateBiometrically(reason.tr)) return true;
     final biometricsEnabled = await security.biometricsEnabled;
     final canUseBiometrics =
         biometricsEnabled && await security.canUseBiometrics();
@@ -33,7 +33,7 @@ class PrivacyAuth {
       },
       biometricAuthenticator:
           canUseBiometrics
-              ? () => security.authenticateBiometrically(reason)
+              ? () => security.authenticateBiometrically(reason.tr)
               : null,
       biometricLabel: biometricLabel,
       biometricIcon:

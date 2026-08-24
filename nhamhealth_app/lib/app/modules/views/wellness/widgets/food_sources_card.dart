@@ -35,18 +35,18 @@ class FoodSourcesCard extends GetView<CaloriesController> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   children: [
                     Text(
-                      'Today\'s food sources',
-                      style: TextStyle(
+                      'Today\'s food sources'.tr,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(width: 5),
-                    Icon(
+                    const SizedBox(width: 5),
+                    const Icon(
                       Icons.auto_awesome,
                       color: Color(0xFF00A651),
                       size: 15,
@@ -67,9 +67,9 @@ class FoodSourcesCard extends GetView<CaloriesController> {
                     color: const Color(0xFF00A651),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Add more',
-                    style: TextStyle(
+                  child: Text(
+                    'Add more'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,

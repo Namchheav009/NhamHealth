@@ -57,10 +57,10 @@ class LogoutDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Log out of NhamHealth?',
+              Text(
+                'Log out of NhamHealth?'.tr,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color(0xFF1D2520),
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -68,10 +68,11 @@ class LogoutDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 9),
-              const Text(
-                "You'll need to sign in again to access your health data and saved meals.",
+              Text(
+                "You'll need to sign in again to access your health data and saved meals."
+                    .tr,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.mutedText,
                   fontSize: 13,
                   height: 1.45,
@@ -91,7 +92,9 @@ class LogoutDialog extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.logout_rounded, size: 19),
-                  label: Text(isLoading.value ? 'Logging out…' : 'Log out'),
+                  label: Text(
+                    (isLoading.value ? 'Logging out…' : 'Log out').tr,
+                  ),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: _danger,
@@ -123,7 +126,7 @@ class LogoutDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel'.tr),
                 ),
               ),
             ],

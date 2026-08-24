@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({super.key});
@@ -32,11 +33,11 @@ class ProfilePostCard extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Sophia Martinez',
                       style: TextStyle(
                         fontSize: 13,
@@ -44,16 +45,19 @@ class ProfilePostCard extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
 
                     Wrap(
                       spacing: 6,
                       runSpacing: 2,
                       children: [
-                        Text('2h ago', style: TextStyle(color: Colors.grey)),
                         Text(
-                          'Nutritionist',
-                          style: TextStyle(color: Colors.grey),
+                          '2h ago'.tr,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        Text(
+                          'Nutritionist'.tr,
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -61,9 +65,9 @@ class ProfilePostCard extends StatelessWidget {
                 ),
               ),
 
-              const Text(
-                'Following',
-                style: TextStyle(color: Colors.grey, fontSize: 11),
+              Text(
+                'Following'.tr,
+                style: const TextStyle(color: Colors.grey, fontSize: 11),
               ),
 
               IconButton(
@@ -75,17 +79,17 @@ class ProfilePostCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          const Text(
-            'Healthy breakfast idea!',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Text(
+            'Healthy breakfast idea!'.tr,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
 
           const SizedBox(height: 6),
 
-          const Text(
-            'Avocado toast with poached egg and fresh fruits.\n'
-            'Simple, quick and nutritious!',
-            style: TextStyle(
+          Text(
+            'Avocado toast with poached egg and fresh fruits.\nSimple, quick and nutritious!'
+                .tr,
+            style: const TextStyle(
               fontSize: 13,
               height: 1.35,
               color: Color(0xFF555555),

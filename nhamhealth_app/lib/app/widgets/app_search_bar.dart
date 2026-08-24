@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 
@@ -57,7 +58,7 @@ class AppSearchBar extends StatelessWidget {
                 fontSize: 14,
               ),
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: hintText.tr,
                 hintStyle: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,
@@ -74,7 +75,7 @@ class AppSearchBar extends StatelessWidget {
             child: showClear
                 ? IconButton(
                     key: const ValueKey('search-clear'),
-                    tooltip: 'Clear search',
+                    tooltip: 'Clear search'.tr,
                     onPressed: onClear,
                     icon: const Icon(
                       Icons.close_rounded,

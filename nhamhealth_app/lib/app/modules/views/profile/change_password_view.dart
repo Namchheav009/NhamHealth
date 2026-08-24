@@ -64,16 +64,16 @@ class _PageHeader extends StatelessWidget {
     child: Row(
       children: [
         IconButton(
-          tooltip: 'Back',
+          tooltip: 'Back'.tr,
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_rounded),
           color: AppColors.darkGreen,
         ),
         const SizedBox(width: 4),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Change password',
-            style: TextStyle(
+            'Change password'.tr,
+            style: const TextStyle(
               color: Color(0xFF17211B),
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -90,27 +90,27 @@ class _SecurityIntro extends StatelessWidget {
   const _SecurityIntro();
 
   @override
-  Widget build(BuildContext context) => const Row(
+  Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _IntroIcon(),
-      SizedBox(width: 15),
+      const _IntroIcon(),
+      const SizedBox(width: 15),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Secure your account',
-              style: TextStyle(
+              'Secure your account'.tr,
+              style: const TextStyle(
                 color: AppColors.primaryText,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
-              'Choose a strong password you have not used before.',
-              style: TextStyle(
+              'Choose a strong password you have not used before.'.tr,
+              style: const TextStyle(
                 color: AppColors.mutedText,
                 fontSize: 13,
                 height: 1.4,
@@ -180,9 +180,9 @@ class _PasswordForm extends StatelessWidget {
                 minimumSize: const Size(48, 44),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
               ),
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                'Forgot password?'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -254,7 +254,7 @@ class _PasswordField extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        label,
+        label.tr,
         style: const TextStyle(
           color: Color(0xFF29352E),
           fontSize: 13,
@@ -277,14 +277,14 @@ class _PasswordField extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: hint,
+          hintText: hint.tr,
           hintStyle: const TextStyle(
             color: AppColors.placeholder,
             fontSize: 14,
           ),
           prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
           suffixIcon: IconButton(
-            tooltip: obscureText ? 'Show password' : 'Hide password',
+            tooltip: (obscureText ? 'Show password' : 'Hide password').tr,
             onPressed: onVisibilityPressed,
             icon: Icon(
               obscureText
@@ -330,15 +330,20 @@ class _PasswordGuidance extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: const Color(0xFFDCEEE1)),
     ),
-    child: const Row(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.info_outline_rounded, color: AppColors.darkGreen, size: 19),
-        SizedBox(width: 10),
+        const Icon(
+          Icons.info_outline_rounded,
+          color: AppColors.darkGreen,
+          size: 19,
+        ),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'Use at least 8 characters. Your new password must be different from your current password.',
-            style: TextStyle(
+            'Use at least 8 characters. Your new password must be different from your current password.'
+                .tr,
+            style: const TextStyle(
               color: Color(0xFF577063),
               fontSize: 12,
               height: 1.4,
@@ -380,15 +385,18 @@ class _SubmitButton extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const Row(
-              key: ValueKey('label'),
+          : Row(
+              key: const ValueKey('label'),
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock_reset_rounded, size: 20),
-                SizedBox(width: 9),
+                const Icon(Icons.lock_reset_rounded, size: 20),
+                const SizedBox(width: 9),
                 Text(
-                  'Update password',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  'Update password'.tr,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),

@@ -15,14 +15,21 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 Text(
-                  'Nutrition estimate',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  'Nutrition estimate'.tr,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                SizedBox(width: 5),
-                Icon(Icons.auto_awesome, color: Color(0xFF00A651), size: 15),
+                const SizedBox(width: 5),
+                const Icon(
+                  Icons.auto_awesome,
+                  color: Color(0xFF00A651),
+                  size: 15,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -103,13 +110,13 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 4),
             Text(
-              title,
+              title.tr,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 9, color: Colors.black54),
             ),
             const SizedBox(height: 4),
             Text(
-              value,
+              value.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: small ? 9 : 13,
@@ -119,7 +126,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             ),
             if (unit.isNotEmpty)
               Text(
-                unit,
+                unit.tr,
                 style: const TextStyle(fontSize: 9, color: Colors.black45),
               ),
           ],

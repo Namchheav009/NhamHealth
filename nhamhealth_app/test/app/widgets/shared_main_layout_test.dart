@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/bindings/community/community_bind
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
 import 'package:nhamhealth_flutter/app/theme/app_spacing.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/app/widgets/app_bottom_navigation.dart';
 import 'package:nhamhealth_flutter/app/widgets/page_skeleton.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
@@ -22,7 +23,9 @@ void main() {
     var selected = -1;
 
     await tester.pumpWidget(
-      MaterialApp(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: Scaffold(
           bottomNavigationBar: SafeArea(
             top: false,
@@ -56,7 +59,9 @@ void main() {
 
     Future<void> pumpBar(int selectedIndex) async {
       await tester.pumpWidget(
-        MaterialApp(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
           home: Scaffold(
             bottomNavigationBar: SafeArea(
               top: false,
@@ -106,7 +111,9 @@ void main() {
       required int selectedIndex,
     }) async {
       await tester.pumpWidget(
-        MaterialApp(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
           home: MediaQuery(
             data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
             child: Scaffold(
@@ -175,7 +182,13 @@ void main() {
 
     await tester.pumpWidget(
       GetMaterialApp(
+<<<<<<< Updated upstream
         initialRoute: '/community',
+=======
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        initialRoute: '/feed',
+>>>>>>> Stashed changes
         getPages: [
           GetPage<void>(
             name: '/community',

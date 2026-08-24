@@ -1,28 +1,30 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 
-Future<void> showPinSetupPrompt(BuildContext context) => showGeneralDialog<void>(
-  context: context,
-  barrierDismissible: false,
-  barrierLabel: 'PIN setup required',
-  barrierColor: AppColors.darkGreen.withValues(alpha: .24),
-  transitionDuration: const Duration(milliseconds: 260),
-  pageBuilder:
-      (context, animation, secondaryAnimation) => const _PinSetupPrompt(),
-  transitionBuilder:
-      (context, animation, secondaryAnimation, child) => FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-        child: ScaleTransition(
-          scale: Tween<double>(begin: .92, end: 1).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+Future<void> showPinSetupPrompt(BuildContext context) =>
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'PIN setup required'.tr,
+      barrierColor: AppColors.darkGreen.withValues(alpha: .24),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder:
+          (context, animation, secondaryAnimation) => const _PinSetupPrompt(),
+      transitionBuilder:
+          (context, animation, secondaryAnimation, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: .92, end: 1).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+              ),
+              child: child,
+            ),
           ),
-          child: child,
-        ),
-      ),
-);
+    );
 
 class _PinSetupPrompt extends StatelessWidget {
   const _PinSetupPrompt();
@@ -61,10 +63,10 @@ class _PinSetupPrompt extends StatelessWidget {
                 children: [
                   _securityIcon(),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Protect your health data',
+                  Text(
+                    'Protect your health data'.tr,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.darkGreen,
                       fontSize: 23,
                       fontWeight: FontWeight.w800,
@@ -72,10 +74,10 @@ class _PinSetupPrompt extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 9),
-                  const Text(
-                    'Create a 6-digit PIN before continuing to NhamHealth.',
+                  Text(
+                    'Create a 6-digit PIN before continuing to NhamHealth.'.tr,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.secondaryText,
                       fontSize: 14,
                       height: 1.45,
@@ -98,7 +100,7 @@ class _PinSetupPrompt extends StatelessWidget {
                     key: const ValueKey('create-secure-pin-button'),
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.pin_rounded, size: 20),
-                    label: const Text('Create secure PIN'),
+                    label: Text('Create secure PIN'.tr),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
@@ -113,18 +115,18 @@ class _PinSetupPrompt extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.verified_user_outlined,
                         size: 14,
                         color: AppColors.mutedText,
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
-                        'Your PIN is securely hashed',
-                        style: TextStyle(
+                        'Your PIN is securely hashed'.tr,
+                        style: const TextStyle(
                           color: AppColors.mutedText,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
@@ -192,7 +194,7 @@ class _BenefitRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              title.tr,
               style: const TextStyle(
                 color: AppColors.primaryText,
                 fontSize: 13.5,
@@ -201,7 +203,7 @@ class _BenefitRow extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              subtitle,
+              subtitle.tr,
               style: const TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 11.5,

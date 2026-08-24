@@ -144,7 +144,7 @@ class MealView extends GetView<MealController> {
           child: Column(
             children: [
               Text(
-                error,
+                error.tr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.secondaryText,
@@ -153,20 +153,23 @@ class MealView extends GetView<MealController> {
               ),
               TextButton(
                 onPressed: controller.loadMeals,
-                child: const Text('Try again'),
+                child: Text('Try again'.tr),
               ),
             ],
           ),
         );
       }
       if (meals.isEmpty) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 42),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 42),
           child: Center(
             child: Text(
-              'No meals found. Try another search or category.',
+              'No meals found. Try another search or category.'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 13,
+              ),
             ),
           ),
         );

@@ -65,31 +65,31 @@ class NhamAppBar extends StatelessWidget {
             ),
             const Spacer(),
             Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFE4ECE7)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0D244C35),
-                  blurRadius: 10,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const _LanguageButton(),
-                _NotificationButton(
-                  count: unreadNotificationCount,
-                  onTap: onNotifications,
-                ),
-                _ProfileButton(user: user, onTap: onProfile),
-              ],
-            ),
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE4ECE7)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0D244C35),
+                    blurRadius: 10,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _LanguageButton(),
+                  _NotificationButton(
+                    count: unreadNotificationCount,
+                    onTap: onNotifications,
+                  ),
+                  _ProfileButton(user: user, onTap: onProfile),
+                ],
+              ),
             ),
           ],
         ),
@@ -108,7 +108,7 @@ class _NotificationButton extends StatelessWidget {
     children: [
       _Button(
         key: const ValueKey('notifications-button'),
-        tooltip: 'Notifications',
+        tooltip: 'notifications'.tr,
         onTap: onTap,
         child: Container(
           width: 36,
@@ -162,7 +162,7 @@ class _LanguageButton extends StatelessWidget {
 
     return Tooltip(
       key: const ValueKey('language-page-button'),
-      message: 'Change language',
+      message: 'change_language'.tr,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -198,8 +198,8 @@ class _ProfileButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message:
         user?.displayName == null
-            ? 'Open profile'
-            : '${user!.displayName} · Profile',
+            ? 'open_profile'.tr
+            : '${user!.displayName} · ${'profile'.tr}',
     child: InkResponse(
       key: const ValueKey('profile-button'),
       onTap: onTap,

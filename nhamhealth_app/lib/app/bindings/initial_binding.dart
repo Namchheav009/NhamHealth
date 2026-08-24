@@ -2,10 +2,17 @@ import 'package:get/get.dart';
 
 import '../../core/services/auth_service.dart';
 import '../../core/services/app_security_service.dart';
+import '../../core/services/app_locale_service.dart';
 import '../modules/services/auth/google_auth_service.dart';
 
 class InitialBinding extends Bindings {
-  static void ensureRegistered() {
+  static void ensureRegistered({AppLocaleService? localeService}) {
+    if (!Get.isRegistered<AppLocaleService>()) {
+      Get.put<AppLocaleService>(
+        localeService ?? AppLocaleService(),
+        permanent: true,
+      );
+    }
     if (!Get.isRegistered<AuthService>()) {
       Get.put<AuthService>(AuthService(), permanent: true);
     }

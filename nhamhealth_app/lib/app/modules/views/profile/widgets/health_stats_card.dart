@@ -119,7 +119,7 @@ class _Stat extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                title.tr,
                 maxLines: 1,
                 textScaler: TextScaler.noScaling,
                 style: const TextStyle(
@@ -140,7 +140,7 @@ class _Stat extends StatelessWidget {
                 ),
               ),
               Text(
-                unit,
+                unit.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textScaler: TextScaler.noScaling,

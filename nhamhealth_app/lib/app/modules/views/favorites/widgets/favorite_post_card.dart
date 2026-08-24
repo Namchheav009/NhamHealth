@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../models/favorites/favorite_post.dart';
 
@@ -23,9 +24,9 @@ class FavoritePostCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _authorHeader(),
-          Text(post.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(post.title.tr, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text(post.body, style: const TextStyle(fontSize: 11, color: Color(0xFF666666), height: 1.25)),
+          Text(post.body.tr, style: const TextStyle(fontSize: 11, color: Color(0xFF666666), height: 1.25)),
           const SizedBox(height: 7),
           const Wrap(spacing: 7, runSpacing: 4, children: [_Tag('#HealthyMeal'), _Tag('#HighProtein')]),
           const SizedBox(height: 9),
@@ -69,12 +70,12 @@ class FavoritePostCard extends StatelessWidget {
             children: [
               Text(post.author, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
               const SizedBox(height: 3),
-              Text('${post.timeAgo}  •  ${post.role}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text('${post.timeAgo.tr}  •  ${post.role.tr}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
         ),
         const SizedBox(width: 4),
-        const Text('Following', style: TextStyle(fontSize: 9, color: Colors.grey)),
+        Text('Following'.tr, style: const TextStyle(fontSize: 9, color: Colors.grey)),
         SizedBox(
           width: 32,
           height: 36,
@@ -83,7 +84,7 @@ class FavoritePostCard extends StatelessWidget {
             iconSize: 20,
             icon: const Icon(Icons.more_vert, color: Colors.grey),
             onSelected: (_) => onRemove(),
-            itemBuilder: (_) => const [PopupMenuItem(value: 'remove', child: Text('Remove from favorites'))],
+            itemBuilder: (_) => [PopupMenuItem(value: 'remove', child: Text('Remove from favorites'.tr))],
           ),
         ),
       ],

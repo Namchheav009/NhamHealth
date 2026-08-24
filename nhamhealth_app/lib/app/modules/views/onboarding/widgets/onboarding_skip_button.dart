@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -17,9 +18,9 @@ class OnboardingSkipButton extends StatelessWidget {
           foregroundColor: AppColors.primaryGreen,
           minimumSize: const Size(64, 48),
         ),
-        child: const Text(
-          'Skip',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+        child: Text(
+          'Skip'.tr,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CaloriesAiInsightCard extends StatelessWidget {
   const CaloriesAiInsightCard({super.key});
@@ -43,9 +44,9 @@ class CaloriesAiInsightCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'AI Insight',
-                          style: TextStyle(
+                        Text(
+                          'AI Insight'.tr,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -62,9 +63,9 @@ class CaloriesAiInsightCard extends StatelessWidget {
                             color: const Color(0xFFFFEEE6),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            '⚖️ Needs Balance',
-                            style: TextStyle(
+                          child: Text(
+                            '⚖️ Needs Balance'.tr,
+                            style: const TextStyle(
                               color: Color(0xFFFF641E),
                               fontSize: 8,
                             ),
@@ -75,11 +76,10 @@ class CaloriesAiInsightCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    const Text(
-                      'Most of your calories came from food and '
-                      'sweet drinks. Stay balanced by choosing '
-                      'a lighter next meal.',
-                      style: TextStyle(
+                    Text(
+                      'Most of your calories came from food and sweet drinks. Stay balanced by choosing a lighter next meal.'
+                          .tr,
+                      style: const TextStyle(
                         fontSize: 10,
                         height: 1.5,
                         color: Colors.black54,
@@ -122,7 +122,7 @@ class CaloriesAiInsightCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: foreground.withValues(alpha: 0.2)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 9, color: foreground)),
+      child: Text(text.tr, style: TextStyle(fontSize: 9, color: foreground)),
     );
   }
 }

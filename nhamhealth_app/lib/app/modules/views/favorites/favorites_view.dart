@@ -40,9 +40,9 @@ class FavoritesView extends GetView<FavoritesController> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                      const Text(
-                        'Favorites',
-                        style: TextStyle(
+                      Text(
+                        'favorites'.tr,
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                         ),
@@ -179,7 +179,7 @@ class FavoritesView extends GetView<FavoritesController> {
     children: [
       Expanded(
         child: Text(
-          title,
+          title.tr,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
@@ -235,7 +235,7 @@ class FavoritesView extends GetView<FavoritesController> {
           ),
           const SizedBox(width: 10),
           Text(
-            label,
+            label.tr,
             style: TextStyle(
               color: selected ? const Color(0xFF0AA653) : Colors.grey,
               fontWeight: FontWeight.w600,
@@ -256,9 +256,9 @@ class FavoritesView extends GetView<FavoritesController> {
       children: [
         Icon(icon, color: const Color(0xFF0AA653), size: 19),
         const SizedBox(width: 5),
-        const Text(
-          'Filter',
-          style: TextStyle(
+        Text(
+          'Filter'.tr,
+          style: const TextStyle(
             color: Color(0xFF0AA653),
             fontWeight: FontWeight.w600,
           ),
@@ -291,7 +291,7 @@ class _EmptyFavorites extends StatelessWidget {
       children: [
         const Icon(Icons.favorite_border_rounded, size: 48, color: Colors.grey),
         const SizedBox(height: 10),
-        Text(message, style: const TextStyle(color: Colors.grey)),
+        Text(message.tr, style: const TextStyle(color: Colors.grey)),
       ],
     ),
   );

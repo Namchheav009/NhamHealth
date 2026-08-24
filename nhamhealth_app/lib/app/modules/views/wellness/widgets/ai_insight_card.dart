@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AiInsightCard extends StatelessWidget {
   const AiInsightCard({super.key});
@@ -42,9 +43,9 @@ class AiInsightCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'AI Insight',
-                          style: TextStyle(
+                        Text(
+                          'AI Insight'.tr,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF555555),
@@ -63,7 +64,7 @@ class AiInsightCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: const Color(0xFFFFC7AA)),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Icon(
                                 Icons.balance_rounded,
@@ -72,8 +73,8 @@ class AiInsightCard extends StatelessWidget {
                               ),
                               SizedBox(width: 4),
                               Text(
-                                'Needs Balance',
-                                style: TextStyle(
+                                'Needs Balance'.tr,
+                                style: const TextStyle(
                                   color: Color(0xFFFF6A32),
                                   fontSize: 9,
                                 ),
@@ -86,11 +87,10 @@ class AiInsightCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    const Text(
-                      'Sugar is a bit high and fiber is still low. '
-                      'Drink 1 more glass of water and choose a '
-                      'light next meal.',
-                      style: TextStyle(
+                    Text(
+                      'Sugar is a bit high and fiber is still low. Drink 1 more glass of water and choose a light next meal.'
+                          .tr,
+                      style: const TextStyle(
                         fontSize: 10,
                         height: 1.5,
                         color: Colors.black54,
@@ -152,7 +152,7 @@ class AiInsightCard extends StatelessWidget {
         children: [
           Text(emoji),
           const SizedBox(width: 3),
-          Text(text, style: TextStyle(color: foreground, fontSize: 9)),
+          Text(text.tr, style: TextStyle(color: foreground, fontSize: 9)),
         ],
       ),
     );

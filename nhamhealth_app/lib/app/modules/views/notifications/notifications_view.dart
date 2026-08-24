@@ -63,7 +63,7 @@ class NotificationsView extends StatelessWidget {
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 100),
-                            const Center(child: Text('No notifications yet')),
+                            Center(child: Text('No notifications yet'.tr)),
                           ],
                         ),
                       );
@@ -121,7 +121,7 @@ class _NotificationsHeader extends StatelessWidget {
           children: [
             IconButton(
               key: const ValueKey<String>('notifications-back-button'),
-              tooltip: 'Back',
+              tooltip: 'Back'.tr,
               onPressed: Get.back,
               icon: const Icon(
                 Icons.arrow_back_rounded,
@@ -130,9 +130,9 @@ class _NotificationsHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            const Text(
-              'Notifications',
-              style: TextStyle(
+            Text(
+              'notifications'.tr,
+              style: const TextStyle(
                 color: Color(0xFF171717),
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -164,7 +164,7 @@ class _NotificationSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 1, bottom: 8),
           child: Text(
-            title,
+            title.tr,
             style: const TextStyle(
               color: AppColors.primaryText,
               fontSize: 13,
@@ -321,14 +321,14 @@ class _NotificationCopy extends StatelessWidget {
           TextSpan(
             children: [
               TextSpan(
-                text: notification.title,
+                text: notification.title.tr,
                 style: TextStyle(
                   color: titleColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               TextSpan(
-                text: ' ${notification.message}',
+                text: ' ${notification.message.tr}',
                 style: const TextStyle(
                   color: AppColors.primaryGreen,
                   fontWeight: FontWeight.w400,
@@ -342,7 +342,7 @@ class _NotificationCopy extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          notification.time,
+          notification.time.tr,
           style: const TextStyle(
             color: AppColors.secondaryText,
             fontSize: 8,

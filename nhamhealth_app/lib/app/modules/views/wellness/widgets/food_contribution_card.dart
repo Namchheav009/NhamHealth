@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FoodContributionCard extends StatelessWidget {
   const FoodContributionCard({super.key});
@@ -18,35 +19,41 @@ class FoodContributionCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Text(
-                'Contribution today',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                'Contribution today'.tr,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              SizedBox(width: 5),
-              Icon(Icons.auto_awesome, color: Color(0xFF00A651), size: 15),
+              const SizedBox(width: 5),
+              const Icon(
+                Icons.auto_awesome,
+                color: Color(0xFF00A651),
+                size: 15,
+              ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
+              const Icon(
                 Icons.track_changes_rounded,
                 color: Color(0xFFFF641E),
                 size: 20,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'This drink added a lot of sugar with little fiber or protein.\n'
-                  '• Main source of sugar today\n'
-                  '• Pairs better with water or fruit',
-                  style: TextStyle(
+                  'This drink added a lot of sugar with little fiber or protein.\n• Main source of sugar today\n• Pairs better with water or fruit'
+                      .tr,
+                  style: const TextStyle(
                     fontSize: 11,
                     color: Colors.black54,
                     height: 1.5,

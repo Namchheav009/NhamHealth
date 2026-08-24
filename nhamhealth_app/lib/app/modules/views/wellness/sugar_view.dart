@@ -12,9 +12,9 @@ class SugarView extends StatelessWidget {
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('Sugar'),
+        title: Text('Sugar'.tr),
       ),
-      body: const Center(child: Text('Sugar Detail Page')),
+      body: Center(child: Text('Sugar Detail Page'.tr)),
     );
   }
 }

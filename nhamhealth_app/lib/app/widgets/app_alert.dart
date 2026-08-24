@@ -138,6 +138,8 @@ class _AppAlertCard extends StatelessWidget {
         _isSuccess ? AppColors.darkGreen : const Color(0xFFB3261E);
     final tint = _isSuccess ? AppColors.softGreen : const Color(0xFFFFF1F1);
     final icon = _isSuccess ? Icons.check_rounded : Icons.priority_high_rounded;
+    final localizedTitle = title.tr;
+    final localizedMessage = message.tr;
 
     return Container(
       decoration: BoxDecoration(
@@ -188,13 +190,13 @@ class _AppAlertCard extends StatelessWidget {
                       excludeSemantics: true,
                       label:
                           '${_isSuccess ? 'Success' : 'Error'}: '
-                          '$title. $message',
+                          '$localizedTitle. $localizedMessage',
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            title,
+                            localizedTitle,
                             style: TextStyle(
                               color: titleColor,
                               fontSize: 15,
@@ -204,7 +206,7 @@ class _AppAlertCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            message,
+                            localizedMessage,
                             style: const TextStyle(
                               color: AppColors.primaryText,
                               fontSize: 12.5,
@@ -218,7 +220,7 @@ class _AppAlertCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    tooltip: 'Dismiss notification',
+                    tooltip: 'Dismiss notification'.tr,
                     visualDensity: VisualDensity.compact,
                     onPressed: () => unawaited(AppAlert.dismiss()),
                     icon: Icon(
