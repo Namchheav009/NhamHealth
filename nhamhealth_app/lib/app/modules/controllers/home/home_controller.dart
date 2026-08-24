@@ -263,10 +263,10 @@ class HomeController extends GetxController {
         Get.offNamed<void>(AppRoutes.meals);
         break;
       case 2:
-        // Get.toNamed(AppRoutes.createPost);
+        Get.offNamed<void>(AppRoutes.community);
         break;
       case 3:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.snackbar('Chat', 'Chat is coming soon.');
         break;
       case 4:
         break;
