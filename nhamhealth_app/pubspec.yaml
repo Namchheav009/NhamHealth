@@ -45,6 +45,7 @@ dependencies:
   image: ^4.5.4
   tflite_flutter: ^0.12.1
   cached_network_image: ^3.4.1
+  lottie: ^3.3.2
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +90,7 @@ flutter:
 
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png
+    - assets/animations/
     - assets/ai/
     - assets/images/profile/profile.jpg
 flutter_icons:
