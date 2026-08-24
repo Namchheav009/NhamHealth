@@ -40,15 +40,6 @@ class LoginForm extends StatelessWidget {
             onRegister: onRegister,
           ),
           const SizedBox(height: 22),
-          const Text(
-            'Welcome back',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.darkGreen,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
           const SizedBox(height: 5),
           const Text(
             'Sign in to continue your healthy journey.',

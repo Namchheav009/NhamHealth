@@ -42,15 +42,6 @@ class RegisterForm extends StatelessWidget {
             onRegister: () {},
           ),
           const SizedBox(height: 18),
-          const Text(
-            'Create your account',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.darkGreen,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
           const SizedBox(height: 5),
           const Text(
             'Start building healthier habits with NhamHealth.',

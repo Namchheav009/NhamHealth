@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:nhamhealth_flutter/app/modules/views/home/widgets/home_bottom_navigation.dart';
-import 'package:nhamhealth_flutter/app/modules/views/feed/feed_page.dart';
+import 'package:nhamhealth_flutter/app/modules/bindings/feed/feed_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
+import 'package:nhamhealth_flutter/app/modules/views/feed/feed_page.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/home_bottom_navigation.dart';
+import 'package:nhamhealth_flutter/app/theme/app_spacing.dart';
 import 'package:nhamhealth_flutter/app/widgets/page_skeleton.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
-import 'package:nhamhealth_flutter/app/modules/bindings/feed/feed_binding.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
@@ -38,6 +39,94 @@ void main() {
     expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
     await tester.tap(find.byKey(const ValueKey<String>('nav-home')));
     expect(selected, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('bottom navigation item positions stay fixed after selection', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(381, 856);
+    addTearDown(tester.view.reset);
+
+    Future<void> pumpBar(int selectedIndex) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: SafeArea(
+              top: false,
+              minimum: AppSpacing.navigationMargin,
+              child: AppBottomNavigation(
+                selectedIndex: selectedIndex,
+                onSelect: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    const keys = [
+      ValueKey<String>('nav-home'),
+      ValueKey<String>('nav-meals'),
+      ValueKey<String>('nav-community'),
+      ValueKey<String>('nav-profile'),
+    ];
+
+    await pumpBar(0);
+    final initialCenters = [
+      for (final key in keys) tester.getCenter(find.byKey(key)),
+    ];
+
+    await pumpBar(4);
+    final updatedCenters = [
+      for (final key in keys) tester.getCenter(find.byKey(key)),
+    ];
+
+    expect(updatedCenters, initialCenters);
+    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Post control keeps its size across page text scales', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(381, 856);
+    addTearDown(tester.view.reset);
+
+    Future<(Size, Size)> postSizes({
+      required double textScale,
+      required int selectedIndex,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+            child: Scaffold(
+              bottomNavigationBar: AppBottomNavigation(
+                selectedIndex: selectedIndex,
+                onSelect: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return (
+        tester.getSize(find.byKey(const ValueKey<String>('nav-post'))),
+        tester.getSize(find.text('Post')),
+      );
+    }
+
+    final homeSizes = await postSizes(textScale: 1.2, selectedIndex: 0);
+    final mealsSizes = await postSizes(textScale: 1, selectedIndex: 1);
+    final selectedPostSizes = await postSizes(textScale: 1.5, selectedIndex: 2);
+
+    expect(mealsSizes, homeSizes);
+    expect(selectedPostSizes, homeSizes);
+    expect(mealsSizes.$1, const Size(52, 68));
     expect(tester.takeException(), isNull);
   });
 
