@@ -15,6 +15,10 @@ public interface FollowRepository extends JpaRepository<Follow, Integer> {
 
     boolean existsByFollowerUserUserIdAndFollowingUserUserId(Integer followerId, Integer followingId);
 
+    List<Follow> findByFollowerUserUserId(Integer followerId);
+    List<Follow> findByFollowingUserUserId(Integer followingId);
+    java.util.Optional<Follow> findByFollowerUserUserIdAndFollowingUserUserId(Integer followerId, Integer followingId);
+
     long countByRequestedAtGreaterThanEqual(LocalDateTime since);
 
     @Query("select count(follow) from Follow follow where lower(follow.status) = 'active' and exists "
