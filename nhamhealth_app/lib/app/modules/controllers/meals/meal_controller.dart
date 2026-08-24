@@ -232,10 +232,10 @@ class MealController extends GetxController {
       case 1:
         break;
       case 2:
-        // Create post route is not available yet.
+        Get.offNamed<void>(AppRoutes.community);
         break;
       case 3:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.snackbar('Chat', 'Chat is coming soon.');
         break;
       case 4:
         break;
