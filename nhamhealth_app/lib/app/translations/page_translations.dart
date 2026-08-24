@@ -506,6 +506,49 @@ const Map<String, String> englishPageTranslations = {
       'AI nutrition results are estimates for general wellness only. They are not medical advice, a diagnosis, or an official nutrition label.',
   'Food photos are sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.':
       'Food photos are sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.',
+  'Confirm the Food First': 'Confirm the Food First',
+  'The result is uncertain. Confirm the food or retake a clear, well-lit photo before saving.':
+      'The result is uncertain. Confirm the food or retake a clear, well-lit photo before saving.',
+  'Consider a Smaller Portion': 'Consider a Smaller Portion',
+  'About @calories kcal exceeds your remaining @remaining kcal target. Reduce the portion or save it for tomorrow.':
+      'About @calories kcal exceeds your remaining @remaining kcal target. Reduce the portion or save it for tomorrow.',
+  'Balance the Sugar': 'Balance the Sugar',
+  'Estimated sugar is @sugar g. Pair it with protein or fiber and choose an unsweetened drink.':
+      'Estimated sugar is @sugar g. Pair it with protein or fiber and choose an unsweetened drink.',
+  'Add a Leaner Balance': 'Add a Leaner Balance',
+  'This looks fat-heavy for its protein. A smaller portion with vegetables or lean protein would improve balance.':
+      'This looks fat-heavy for its protein. A smaller portion with vegetables or lean protein would improve balance.',
+  'Strong Protein Choice': 'Strong Protein Choice',
+  'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.':
+      'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.',
+  'Fits Today’s Plan': 'Fits Today’s Plan',
+  'About @calories kcal fits your target. Keep the portion near @servingSize @servingUnit.':
+      'About @calories kcal fits your target. Keep the portion near @servingSize @servingUnit.',
+  'Use @unit for @food so nutrition can be scaled safely.':
+      'Use @unit for @food so nutrition can be scaled safely.',
+  'Nutrition is calculated from matched database foods when available; unmatched components may use a clearly labeled AI estimate. Results are for general wellness only, not medical advice or an official nutrition label.':
+      'Nutrition is calculated from matched database foods when available; unmatched components may use a clearly labeled AI estimate. Results are for general wellness only, not medical advice or an official nutrition label.',
+  'Your food image is sent to the configured AI provider for recognition. Do not include faces, documents, or other personal information.':
+      'Your food image is sent to the configured AI provider for recognition. Do not include faces, documents, or other personal information.',
+  'Try another photo': 'Try another photo',
+  'Use better lighting and show the entire food or drink clearly.':
+      'Use better lighting and show the entire food or drink clearly.',
+  'Review meal components': 'Review meal components',
+  'One or more components could not be calculated safely from the nutrition database.':
+      'One or more components could not be calculated safely from the nutrition database.',
+  'Please confirm this meal': 'Please confirm this meal',
+  'Review the meal identity and component portions before saving.':
+      'Review the meal identity and component portions before saving.',
+  'Database nutrition calculated': 'Database nutrition calculated',
+  'Nutrition was calculated from the matched components and visible portions.':
+      'Nutrition was calculated from the matched components and visible portions.',
+  'Database calculated': 'Database calculated',
+  'Database + AI estimate': 'Database + AI estimate',
+  'AI estimate': 'AI estimate',
+  'Partial nutrition': 'Partial nutrition',
+  'User entered': 'User entered',
+  'Nutrition unavailable': 'Nutrition unavailable',
+  'Database matched': 'Database matched',
   'AI Meal Auto-Fill': 'AI Meal Auto-Fill',
   'What did you eat?': 'What did you eat?',
   'Example: 150 g chicken breast, 1 cup rice, banana':
@@ -1114,6 +1157,49 @@ const Map<String, String> khmerPageTranslations = {
       'លទ្ធផលអាហារូបត្ថម្ភពី AI គ្រាន់តែជាការប៉ាន់ស្មានសម្រាប់សុខុមាលភាពទូទៅ។ វាមិនមែនជាដំបូន្មានវេជ្ជសាស្ត្រ ការធ្វើរោគវិនិច្ឆ័យ ឬស្លាកអាហារូបត្ថម្ភផ្លូវការទេ។',
   'Food photos are sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.':
       'រូបថតអាហារត្រូវបានផ្ញើទៅកាន់អ្នកផ្តល់សេវា AI សម្រាប់វិភាគ។ កុំបញ្ចូលមុខ ឯកសារ ឬព័ត៌មានផ្ទាល់ខ្លួនផ្សេងទៀត។',
+  'Confirm the Food First': 'បញ្ជាក់អាហារជាមុន',
+  'The result is uncertain. Confirm the food or retake a clear, well-lit photo before saving.':
+      'លទ្ធផលមិនទាន់ច្បាស់ទេ។ សូមបញ្ជាក់អាហារ ឬថតរូបថ្មីឱ្យច្បាស់ និងមានពន្លឺល្អ មុនពេលរក្សាទុក។',
+  'Consider a Smaller Portion': 'សូមពិចារណាកាត់បន្ថយបរិមាណ',
+  'About @calories kcal exceeds your remaining @remaining kcal target. Reduce the portion or save it for tomorrow.':
+      'ប្រហែល @calories kcal លើសគោលដៅដែលនៅសល់ @remaining kcal របស់អ្នក។ សូមកាត់បន្ថយបរិមាណ ឬទុកសម្រាប់ថ្ងៃស្អែក។',
+  'Balance the Sugar': 'រក្សាតុល្យភាពជាតិស្ករ',
+  'Estimated sugar is @sugar g. Pair it with protein or fiber and choose an unsweetened drink.':
+      'ជាតិស្ករប៉ាន់ស្មានមាន @sugar ក្រាម។ សូមញ៉ាំជាមួយប្រូតេអ៊ីន ឬជាតិសរសៃ ហើយជ្រើសភេសជ្ជៈគ្មានជាតិស្ករ។',
+  'Add a Leaner Balance': 'បន្ថែមអាហារខ្លាញ់តិចដើម្បីឱ្យមានតុល្យភាព',
+  'This looks fat-heavy for its protein. A smaller portion with vegetables or lean protein would improve balance.':
+      'អាហារនេះហាក់មានខ្លាញ់ច្រើនធៀបនឹងប្រូតេអ៊ីន។ បរិមាណតិចជាងនេះ រួមជាមួយបន្លែ ឬប្រូតេអ៊ីនខ្លាញ់តិច នឹងជួយឱ្យមានតុល្យភាពល្អ។',
+  'Strong Protein Choice': 'ជម្រើសប្រូតេអ៊ីនល្អ',
+  'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.':
+      'ផ្តល់ប្រូតេអ៊ីនប្រហែល @protein ក្រាម និងសមនឹងកាឡូរីដែលនៅសល់។ សូមបន្ថែមបន្លែសម្រាប់ជាតិសរសៃ។',
+  'Fits Today’s Plan': 'សមស្របនឹងផែនការថ្ងៃនេះ',
+  'About @calories kcal fits your target. Keep the portion near @servingSize @servingUnit.':
+      'ប្រហែល @calories kcal សមនឹងគោលដៅរបស់អ្នក។ សូមរក្សាបរិមាណប្រហែល @servingSize @servingUnit។',
+  'Use @unit for @food so nutrition can be scaled safely.':
+      'សូមប្រើឯកតា @unit សម្រាប់ @food ដើម្បីគណនាអាហារូបត្ថម្ភបានត្រឹមត្រូវ។',
+  'Nutrition is calculated from matched database foods when available; unmatched components may use a clearly labeled AI estimate. Results are for general wellness only, not medical advice or an official nutrition label.':
+      'អាហារូបត្ថម្ភត្រូវបានគណនាពីអាហារដែលផ្គូផ្គងក្នុងមូលដ្ឋានទិន្នន័យនៅពេលមាន។ សមាសធាតុដែលមិនផ្គូផ្គងអាចប្រើការប៉ាន់ស្មានពី AI ដែលមានស្លាកបញ្ជាក់ច្បាស់។ លទ្ធផលនេះសម្រាប់សុខុមាលភាពទូទៅប៉ុណ្ណោះ មិនមែនជាដំបូន្មានវេជ្ជសាស្ត្រ ឬស្លាកអាហារូបត្ថម្ភផ្លូវការទេ។',
+  'Your food image is sent to the configured AI provider for recognition. Do not include faces, documents, or other personal information.':
+      'រូបភាពអាហាររបស់អ្នកត្រូវបានផ្ញើទៅអ្នកផ្តល់សេវា AI ដែលបានកំណត់ ដើម្បីសម្គាល់អាហារ។ កុំបញ្ចូលមុខ ឯកសារ ឬព័ត៌មានផ្ទាល់ខ្លួនផ្សេងទៀត។',
+  'Try another photo': 'សាកល្បងរូបថតផ្សេង',
+  'Use better lighting and show the entire food or drink clearly.':
+      'សូមប្រើពន្លឺឱ្យបានល្អ និងបង្ហាញអាហារ ឬភេសជ្ជៈទាំងមូលឱ្យច្បាស់។',
+  'Review meal components': 'ពិនិត្យសមាសធាតុអាហារ',
+  'One or more components could not be calculated safely from the nutrition database.':
+      'សមាសធាតុមួយ ឬច្រើន មិនអាចគណនាបានត្រឹមត្រូវពីមូលដ្ឋានទិន្នន័យអាហារូបត្ថម្ភទេ។',
+  'Please confirm this meal': 'សូមបញ្ជាក់អាហារនេះ',
+  'Review the meal identity and component portions before saving.':
+      'សូមពិនិត្យឈ្មោះអាហារ និងបរិមាណសមាសធាតុ មុនពេលរក្សាទុក។',
+  'Database nutrition calculated': 'បានគណនាអាហារូបត្ថម្ភពីមូលដ្ឋានទិន្នន័យ',
+  'Nutrition was calculated from the matched components and visible portions.':
+      'អាហារូបត្ថម្ភត្រូវបានគណនាពីសមាសធាតុដែលផ្គូផ្គង និងបរិមាណដែលមើលឃើញ។',
+  'Database calculated': 'គណនាពីមូលដ្ឋានទិន្នន័យ',
+  'Database + AI estimate': 'មូលដ្ឋានទិន្នន័យ + ការប៉ាន់ស្មានពី AI',
+  'AI estimate': 'ការប៉ាន់ស្មានពី AI',
+  'Partial nutrition': 'អាហារូបត្ថម្ភមិនពេញលេញ',
+  'User entered': 'បញ្ចូលដោយអ្នកប្រើ',
+  'Nutrition unavailable': 'មិនមានព័ត៌មានអាហារូបត្ថម្ភ',
+  'Database matched': 'ផ្គូផ្គងនឹងមូលដ្ឋានទិន្នន័យ',
   'AI Meal Auto-Fill': 'បំពេញអាហារស្វ័យប្រវត្តិដោយ AI',
   'What did you eat?': 'អ្នកបានញ៉ាំអ្វី?',
   'Example: 150 g chicken breast, 1 cup rice, banana':

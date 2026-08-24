@@ -26,6 +26,11 @@ void main() {
 
     expect(result.type, FoodRecommendationType.good);
     expect(result.title, 'Strong Protein Choice');
+    expect(
+      result.message,
+      'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.',
+    );
+    expect(result.messageParams, {'protein': '32'});
   });
 }
 

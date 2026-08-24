@@ -182,13 +182,9 @@ void main() {
 
     await tester.pumpWidget(
       GetMaterialApp(
-<<<<<<< Updated upstream
-        initialRoute: '/community',
-=======
         translations: AppTranslations(),
         locale: const Locale('en', 'US'),
-        initialRoute: '/feed',
->>>>>>> Stashed changes
+        initialRoute: '/community',
         getPages: [
           GetPage<void>(
             name: '/community',
