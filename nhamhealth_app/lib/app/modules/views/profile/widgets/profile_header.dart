@@ -16,10 +16,10 @@ class ProfileHeader extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white),
         boxShadow: const [
           BoxShadow(color: Color(0x1231543F), blurRadius: 18, offset: Offset(0, 6)),
@@ -43,7 +43,7 @@ class ProfileHeader extends GetView<ProfileController> {
                 ),
               ),
 
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
 
               Expanded(
                 child: Column(
@@ -56,7 +56,7 @@ class ProfileHeader extends GetView<ProfileController> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF1D2922),
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
                         ),
@@ -69,7 +69,7 @@ class ProfileHeader extends GetView<ProfileController> {
                       () => Text(
                         controller.membership.value,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: green,
                           fontWeight: FontWeight.w500,
                         ),
@@ -82,7 +82,7 @@ class ProfileHeader extends GetView<ProfileController> {
                       children: [
                         const Icon(
                           Icons.mail_outline_rounded,
-                          size: 17,
+                          size: 14,
                           color: Color(0xFF7E9488),
                         ),
 
@@ -95,7 +95,7 @@ class ProfileHeader extends GetView<ProfileController> {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Color(0xFF65766C),
-                                fontSize: 12,
+                                fontSize: 9,
                               ),
                             ),
                           ),
@@ -117,7 +117,7 @@ class ProfileHeader extends GetView<ProfileController> {
                 style: FilledButton.styleFrom(
                   backgroundColor: green,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(88, 34),
+                  minimumSize: const Size(92, 34),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
@@ -149,7 +149,7 @@ class _ProfileAvatar extends StatelessWidget {
     final selectedPath = localPath.trim();
     if (selectedPath.isNotEmpty) {
       return CircleAvatar(
-        radius: 32,
+        radius: 36,
         backgroundImage: FileImage(File(selectedPath)),
       );
     }
@@ -161,7 +161,7 @@ class _ProfileAvatar extends StatelessWidget {
           ? remotePath
           : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
       return CircleAvatar(
-        radius: 32,
+        radius: 36,
         backgroundColor: const Color(0xFFE8F5E9),
         foregroundImage: CachedNetworkImageProvider(
           imageUrl,
@@ -173,7 +173,7 @@ class _ProfileAvatar extends StatelessWidget {
     }
 
     return CircleAvatar(
-      radius: 32,
+      radius: 36,
       backgroundColor: const Color(0xFFE8F5E9),
       child: _initials(user?.initials ?? '?'),
     );
