@@ -291,10 +291,7 @@ class HomeController extends GetxController {
   }
 
   void openProfile() {
-    Get.toNamed<void>(
-      AppRoutes.profile,
-      arguments: authenticatedUser.value,
-    );
+    Get.toNamed<void>(AppRoutes.profile, arguments: authenticatedUser.value);
   }
 
   void openSettings() {
@@ -303,6 +300,10 @@ class HomeController extends GetxController {
 
   void openWellnessDetails() {
     Get.toNamed(AppRoutes.wellness);
+  }
+
+  void openAiFoodAnalyzer() {
+    Get.toNamed<void>(AppRoutes.aiFood);
   }
 
   Future<void> logout() async {
