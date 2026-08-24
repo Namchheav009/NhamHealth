@@ -31,49 +31,49 @@ class HomeView extends GetView<HomeController> {
           child: SafeArea(
             bottom: false,
             child: RefreshIndicator(
-                  color: AppColors.primaryGreen,
-                  onRefresh: controller.refreshMeals,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
+              color: AppColors.primaryGreen,
+              onRefresh: controller.refreshMeals,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: AppSpacing.pagePaddingWithNavigation,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: _maxContentWidth,
                     ),
-                    padding: AppSpacing.pagePaddingWithNavigation,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: _maxContentWidth,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const HomeHeader(),
-                            const SizedBox(height: AppSpacing.topBarBottom),
-                            Obx(
-                              () => LoadingContentTransition(
-                                isLoading: controller.isLoading.value &&
-                                    controller.dashboard.value == null,
-                                loading: const PageSkeleton.home(),
-                                content: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    HomeSearchBar(),
-                                    SizedBox(height: 16),
-                                    GreetingSection(),
-                                    SizedBox(height: 16),
-                                    AiRecommendationCard(),
-                                    SizedBox(height: 16),
-                                    DailySummaryCard(),
-                                    SizedBox(height: 18),
-                                    _RecommendedMealsSection(),
-                                  ],
-                                ),
-                              ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const HomeHeader(),
+                        const SizedBox(height: AppSpacing.topBarBottom),
+                        Obx(
+                          () => LoadingContentTransition(
+                            isLoading:
+                                controller.isLoading.value &&
+                                controller.dashboard.value == null,
+                            loading: const PageSkeleton.home(),
+                            content: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                HomeSearchBar(),
+                                SizedBox(height: 14),
+                                GreetingSection(),
+                                SizedBox(height: 14),
+                                AiRecommendationCard(),
+                                SizedBox(height: 14),
+                                DailySummaryCard(),
+                                _RecommendedMealsSection(),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
+                ),
+              ),
             ),
           ),
         ),
@@ -101,88 +101,96 @@ class _RecommendedMealsSection extends GetView<HomeController> {
     return Obx(() {
       final meals = controller.dashboard.value?.recommendedMeals ?? const [];
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Recommended Meals',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.primaryText,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+      return Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Recommended Meals',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.primaryText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              if (meals.isNotEmpty)
-                TextButton(
-                  onPressed: controller.getRecommendation,
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primaryGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    minimumSize: const Size(0, 32),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'Refresh',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                ),
-            ],
-          ),
-          if (controller.isRecommendedMealsLoading.value && meals.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: LinearProgressIndicator(
-                minHeight: 3,
-                color: AppColors.primaryGreen,
-                backgroundColor: AppColors.softGreen,
-              ),
-            )
-          else if (meals.isNotEmpty) ...[
-            const SizedBox(height: 7),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cardWidth = constraints.maxWidth >= 600
-                    ? (constraints.maxWidth - 28) / 5
-                    : 132.0;
-                return SizedBox(
-                  height: 176,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: meals.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 7),
-                    itemBuilder: (_, index) => SizedBox(
-                      width: cardWidth,
-                      child: RecommendedMealCard(
-                      meal: meals[index],
-                      onTap: () => controller.openMeals(),
-                      isFavorite: controller.favoriteMealIds.contains(
-                        meals[index].id,
-                      ),
-                      onFavorite:
-                          () => controller.toggleMealFavorite(meals[index].id),
+                if (meals.isNotEmpty)
+                  TextButton(
+                    onPressed:
+                        controller.isRecommendedMealsLoading.value
+                            ? null
+                            : controller.getRecommendation,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primaryGreen,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      minimumSize: const Size(0, 28),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      controller.isRecommendedMealsLoading.value
+                          ? 'Refreshing…'
+                          : 'Refresh',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                );
-              },
+              ],
             ),
-          ] else
-            const Padding(
-              padding: EdgeInsets.only(top: 10, bottom: 8),
-              child: Text(
-                'Choose a mood, then tap Get Recommendation to see personalized meals.',
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+            if (meals.isNotEmpty) ...[
+              const SizedBox(height: 7),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth =
+                      constraints.maxWidth >= 600
+                          ? (constraints.maxWidth - 28) / 5
+                          : 100.0;
+                  return SizedBox(
+                    height: 148,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: meals.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 7),
+                      itemBuilder:
+                          (_, index) => SizedBox(
+                            width: cardWidth,
+                            child: RecommendedMealCard(
+                              meal: meals[index],
+                              onTap: () => controller.openMeals(),
+                              isFavorite: controller.favoriteMealIds.contains(
+                                meals[index].id,
+                              ),
+                              onFavorite:
+                                  () => controller.toggleMealFavorite(
+                                    meals[index].id,
+                                  ),
+                            ),
+                          ),
+                    ),
+                  );
+                },
               ),
-            ),
-        ],
+            ] else ...[
+              const SizedBox(height: 6),
+              const Text(
+                'Choose a mood, then tap Get Recommendation to see personalized meals.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ],
+        ),
       );
     });
   }

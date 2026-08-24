@@ -11,7 +11,7 @@ abstract final class AppSpacing {
       maxContentWidth + (pageHorizontal * 2);
   static const double topBarHeight = 60;
   static const double topBarBottom = 16;
-  static const double navigationHorizontal = 12;
+  static const double navigationHorizontal = 25;
   static const double navigationBottom = 14;
 
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(

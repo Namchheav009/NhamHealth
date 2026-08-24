@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_shadows.dart';
+import '../../../../widgets/inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
   final String emoji;
@@ -24,7 +26,7 @@ class MoodCard extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -40,12 +42,16 @@ class MoodCard extends StatelessWidget {
                             color: Color(0xFFFFB02E),
                             size: 28,
                           )
-                          : Text(emoji, style: const TextStyle(fontSize: 28)),
+                          : Text(
+                            emoji,
+                            textScaler: TextScaler.noScaling,
+                            style: const TextStyle(fontSize: 28, height: 1),
+                          ),
                 ),
               ),
               const SizedBox(height: 2),
               SizedBox(
-                height: 17,
+                height: 16,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -70,7 +76,7 @@ class MoodCard extends StatelessWidget {
 
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: 72,
+      width: 70,
       decoration: BoxDecoration(
         gradient:
             selected
@@ -81,20 +87,21 @@ class MoodCard extends StatelessWidget {
                 )
                 : null,
         color: selected ? null : AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: selected ? AppColors.primaryGreen : AppColors.border,
           width: selected ? 1.6 : 1,
         ),
-        boxShadow: selected
-            ? const [
-                BoxShadow(
-                  color: Color(0x1F00A651),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ]
-            : null,
+        boxShadow:
+            selected
+                ? const [
+                  BoxShadow(
+                    color: Color(0x1F00A651),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ]
+                : AppShadows.tile,
       ),
       child: Material(
         color: Colors.transparent,
@@ -103,8 +110,12 @@ class MoodCard extends StatelessWidget {
             HapticFeedback.selectionClick();
             onTap();
           },
-          borderRadius: BorderRadius.circular(14),
-          child: content,
+          borderRadius: BorderRadius.circular(12),
+          child: InnerShadow(
+            borderRadius: BorderRadius.circular(12),
+            shadows: AppShadows.innerSurface,
+            child: content,
+          ),
         ),
       ),
     );

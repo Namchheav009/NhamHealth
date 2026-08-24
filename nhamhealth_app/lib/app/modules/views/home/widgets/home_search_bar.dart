@@ -10,7 +10,7 @@ class HomeSearchBar extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return AppSearchBar(
-      hintText: 'Search meals and healthy ideas',
+      hintText: 'Search for meals, tips or healthy groceries',
       onSubmitted: (query) => controller.openMeals(query: query),
     );
   }
