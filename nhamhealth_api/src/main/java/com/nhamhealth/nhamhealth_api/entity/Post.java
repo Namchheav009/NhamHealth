@@ -37,6 +37,9 @@ public class Post {
     @Column(name = "caption")
     private String caption;
 
+    @Column(name = "title", length = 180)
+    private String title;
+
     @Column(name = "visibility", nullable = false, length = 20)
     private String visibility;
 
@@ -79,6 +82,10 @@ public class Post {
     public void setCaption(String caption) {
         this.caption = caption;
     }
+
+    public String getTitle() { return title; }
+
+    public void setTitle(String title) { this.title = title; }
 
     public String getVisibility() {
         return visibility;
