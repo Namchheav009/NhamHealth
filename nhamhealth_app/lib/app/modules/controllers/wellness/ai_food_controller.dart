@@ -47,6 +47,7 @@ class AiFoodController extends GetxController {
   final nutrition = Rxn<FoodNutritionModel>();
   final recommendation = Rxn<FoodRecommendationModel>();
   final errorMessage = RxnString();
+  final errorMessageParams = <String, String>{}.obs;
   final wasAdded = false.obs;
   int _scanGeneration = 0;
 
@@ -144,16 +145,16 @@ class AiFoodController extends GetxController {
         currentCalories: caloriesController.currentCalories.value,
         targetCalories: caloriesController.targetCalories.value,
       );
+      final useLocalTitle =
+          food.needsUserConfirmation || food.recommendationTitle.isEmpty;
+      final useLocalMessage =
+          food.needsUserConfirmation || food.recommendation.isEmpty;
       recommendation.value = FoodRecommendationModel(
-        title:
-            food.needsUserConfirmation || food.recommendationTitle.isEmpty
-                ? localGuidance.title
-                : food.recommendationTitle,
-        message:
-            food.needsUserConfirmation || food.recommendation.isEmpty
-                ? localGuidance.message
-                : food.recommendation,
+        title: useLocalTitle ? localGuidance.title : food.recommendationTitle,
+        message: useLocalMessage ? localGuidance.message : food.recommendation,
         type: localGuidance.type,
+        titleParams: useLocalTitle ? localGuidance.titleParams : const {},
+        messageParams: useLocalMessage ? localGuidance.messageParams : const {},
       );
       errorMessage.value = null;
     } on FoodNutritionException catch (cloudError) {
@@ -336,8 +337,12 @@ class AiFoodController extends GetxController {
       }
       if (cleanUnit.toLowerCase() !=
           databaseFood.servingUnit.trim().toLowerCase()) {
+        errorMessageParams.assignAll({
+          'unit': databaseFood.servingUnit,
+          'food': databaseFood.name,
+        });
         throw FoodNutritionException(
-          'Use ${databaseFood.servingUnit} for ${databaseFood.name} so nutrition can be scaled safely.',
+          'Use @unit for @food so nutrition can be scaled safely.',
         );
       }
       final corrected = databaseFood
@@ -394,6 +399,7 @@ class AiFoodController extends GetxController {
     nutrition.value = null;
     recommendation.value = null;
     errorMessage.value = null;
+    errorMessageParams.clear();
     wasAdded.value = false;
     isUserConfirmed.value = false;
   }

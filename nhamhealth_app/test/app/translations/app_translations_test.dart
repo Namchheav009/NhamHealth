@@ -49,6 +49,13 @@ void main() {
     expect(find.text('Recommended Meals'), findsOneWidget);
     expect(find.text('Daily Wellness'), findsOneWidget);
     expect(find.text('AI Food Check'), findsOneWidget);
+    expect(find.text('Confirm the Food First'), findsOneWidget);
+    expect(
+      find.text(
+        'Use cup for Coffee with Milk so nutrition can be scaled safely.',
+      ),
+      findsOneWidget,
+    );
 
     Get.updateLocale(const Locale('km', 'KH'));
     await tester.pump();
@@ -56,6 +63,13 @@ void main() {
     expect(find.text('អាហារដែលបានណែនាំ'), findsOneWidget);
     expect(find.text('សុខុមាលភាពប្រចាំថ្ងៃ'), findsOneWidget);
     expect(find.text('ពិនិត្យអាហារដោយ AI'), findsOneWidget);
+    expect(find.text('បញ្ជាក់អាហារជាមុន'), findsOneWidget);
+    expect(
+      find.text(
+        'សូមប្រើឯកតា cup សម្រាប់ Coffee with Milk ដើម្បីគណនាអាហារូបត្ថម្ភបានត្រឹមត្រូវ។',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Recommended Meals'), findsNothing);
   });
 }
@@ -70,6 +84,13 @@ class _LocalizedPageProbe extends StatelessWidget {
         Text('Recommended Meals'.tr),
         Text('Daily Wellness'.tr),
         Text('AI Food Check'.tr),
+        Text('Confirm the Food First'.tr),
+        Text(
+          'Use @unit for @food so nutrition can be scaled safely.'.trParams({
+            'unit': 'cup',
+            'food': 'Coffee with Milk',
+          }),
+        ),
       ],
     ),
   );

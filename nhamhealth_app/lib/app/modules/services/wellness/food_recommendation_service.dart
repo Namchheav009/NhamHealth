@@ -23,7 +23,11 @@ class FoodRecommendationService {
       return FoodRecommendationModel(
         title: 'Consider a Smaller Portion',
         message:
-            'About ${food.calories.round()} kcal exceeds your remaining $remaining kcal target. Reduce the portion or save it for tomorrow.',
+            'About @calories kcal exceeds your remaining @remaining kcal target. Reduce the portion or save it for tomorrow.',
+        messageParams: {
+          'calories': food.calories.round().toString(),
+          'remaining': remaining.toString(),
+        },
         type: FoodRecommendationType.warning,
       );
     }
@@ -33,7 +37,8 @@ class FoodRecommendationService {
       return FoodRecommendationModel(
         title: 'Balance the Sugar',
         message:
-            'Estimated sugar is ${food.sugar.toStringAsFixed(0)} g. Pair it with protein or fiber and choose an unsweetened drink.',
+            'Estimated sugar is @sugar g. Pair it with protein or fiber and choose an unsweetened drink.',
+        messageParams: {'sugar': food.sugar.toStringAsFixed(0)},
         type: FoodRecommendationType.warning,
       );
     }
@@ -49,14 +54,20 @@ class FoodRecommendationService {
       return FoodRecommendationModel(
         title: 'Strong Protein Choice',
         message:
-            'Provides about ${food.protein.toStringAsFixed(0)} g protein and fits your remaining calories. Add vegetables for fiber.',
+            'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.',
+        messageParams: {'protein': food.protein.toStringAsFixed(0)},
         type: FoodRecommendationType.good,
       );
     }
     return FoodRecommendationModel(
       title: 'Fits Today’s Plan',
       message:
-          'About ${food.calories.round()} kcal fits your target. Keep the portion near ${food.servingSize.toStringAsFixed(0)} ${food.servingUnit}.',
+          'About @calories kcal fits your target. Keep the portion near @servingSize @servingUnit.',
+      messageParams: {
+        'calories': food.calories.round().toString(),
+        'servingSize': food.servingSize.toStringAsFixed(0),
+        'servingUnit': food.servingUnit,
+      },
       type: FoodRecommendationType.good,
     );
   }
