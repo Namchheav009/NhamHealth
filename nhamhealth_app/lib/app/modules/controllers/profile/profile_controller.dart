@@ -226,7 +226,7 @@ class ProfileController extends GetxController {
         // Create post
         break;
       case 3:
-        Get.offNamed<void>(AppRoutes.feed);
+        Get.offNamed<void>(AppRoutes.community);
         break;
       case 4:
         break;

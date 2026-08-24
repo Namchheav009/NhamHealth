@@ -48,8 +48,8 @@ import '../modules/views/wellness/food_source_detail_view.dart';
 import '../modules/bindings/wellness/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
-import '../modules/views/feed/feed_page.dart';
-import '../modules/bindings/feed/feed_binding.dart';
+import '../modules/views/community/community_page.dart';
+import '../modules/bindings/community/community_binding.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -217,9 +217,9 @@ abstract class AppPages {
     ),
 
     GetPage<dynamic>(
-      name: AppRoutes.feed,
-      page: () => const FeedPage(),
-      binding: FeedBinding(),
+      name: AppRoutes.community,
+      page: () => const CommunityPage(),
+      binding: CommunityBinding(),
       transition: Transition.noTransition,
     ),
   ];
