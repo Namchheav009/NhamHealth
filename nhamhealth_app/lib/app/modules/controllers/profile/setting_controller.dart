@@ -18,13 +18,54 @@ import '../../views/profile/help_support_view.dart';
 
 class SettingsController extends GetxController {
   final selectedLanguage = 'English'.obs;
+  final isLoading = true.obs;
   final isLoggingOut = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initializePage();
+  }
+
+  Future<void> _initializePage() async {
+    final locale = Get.locale;
+    selectedLanguage.value = locale?.languageCode == 'km' ? 'Khmer' : 'English';
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (!isClosed) isLoading.value = false;
+  }
 
   void openPasswordSecurity() {
     Get.to<void>(
       () => const SecurityView(),
       transition: Transition.rightToLeft,
     );
+  }
+
+  void openFavorites() {
+    Get.toNamed<void>(AppRoutes.favorites);
+  }
+
+  void selectBottomMenu(int index) {
+    switch (index) {
+      case 0:
+        Get.offNamed<void>(AppRoutes.home);
+        return;
+      case 1:
+        Get.offNamed<void>(AppRoutes.meals);
+        return;
+      case 2:
+        Get.snackbar(
+          'Post',
+          'Create post',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      case 3:
+        Get.offNamed<void>(AppRoutes.feed);
+        return;
+      case 4:
+        return;
+    }
   }
 
   void openAppearance() {
@@ -95,6 +136,10 @@ class SettingsController extends GetxController {
   }
 
   void goBack() {
-    Get.back();
+    if (Get.key.currentState?.canPop() ?? false) {
+      Get.back<void>();
+    } else {
+      Get.offAllNamed<void>(AppRoutes.home);
+    }
   }
 }

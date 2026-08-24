@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../widgets/app_back_header.dart';
+
 import '../../controllers/profile/help_support_controller.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -8,7 +10,6 @@ class HelpSupportView extends GetView<HelpSupportController> {
   const HelpSupportView({super.key});
 
   static const Color green = Color(0xFF00A651);
-  static const Color darkGreen = Color(0xFF006B38);
 
   @override
   Widget build(BuildContext context) {
@@ -97,30 +98,9 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // ============================================================
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: controller.goBack,
-          behavior: HitTestBehavior.opaque,
-          child: const SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(Icons.arrow_back_rounded, size: 21, color: darkGreen),
-          ),
-        ),
-
-        const SizedBox(width: 7),
-
-        const Text(
-          'Help & Support',
-          style: TextStyle(
-            fontSize: 21,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-      ],
+    return AppBackHeader(
+      title: 'Help & Support',
+      onBack: controller.goBack,
     );
   }
 

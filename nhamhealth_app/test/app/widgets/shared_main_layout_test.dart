@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/bindings/feed/feed_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/views/feed/feed_page.dart';
-import 'package:nhamhealth_flutter/app/modules/views/home/widgets/home_bottom_navigation.dart';
 import 'package:nhamhealth_flutter/app/theme/app_spacing.dart';
+import 'package:nhamhealth_flutter/app/widgets/app_bottom_navigation.dart';
 import 'package:nhamhealth_flutter/app/widgets/page_skeleton.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
@@ -37,6 +37,11 @@ void main() {
     );
 
     expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
+    expect(find.text('Home'), findsNothing);
+    expect(find.text('Meals'), findsNothing);
+    expect(find.text('Post'), findsOneWidget);
+    expect(find.text('Community'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
     await tester.tap(find.byKey(const ValueKey<String>('nav-home')));
     expect(selected, 0);
     expect(tester.takeException(), isNull);
@@ -71,7 +76,7 @@ void main() {
       ValueKey<String>('nav-home'),
       ValueKey<String>('nav-meals'),
       ValueKey<String>('nav-community'),
-      ValueKey<String>('nav-profile'),
+      ValueKey<String>('nav-settings'),
     ];
 
     await pumpBar(0);
@@ -96,7 +101,7 @@ void main() {
     tester.view.physicalSize = const Size(381, 856);
     addTearDown(tester.view.reset);
 
-    Future<(Size, Size)> postSizes({
+    Future<Size> postSize({
       required double textScale,
       required int selectedIndex,
     }) async {
@@ -114,19 +119,16 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      return (
-        tester.getSize(find.byKey(const ValueKey<String>('nav-post'))),
-        tester.getSize(find.text('Post')),
-      );
+      return tester.getSize(find.byKey(const ValueKey<String>('nav-post')));
     }
 
-    final homeSizes = await postSizes(textScale: 1.2, selectedIndex: 0);
-    final mealsSizes = await postSizes(textScale: 1, selectedIndex: 1);
-    final selectedPostSizes = await postSizes(textScale: 1.5, selectedIndex: 2);
+    final homeSize = await postSize(textScale: 1.2, selectedIndex: 0);
+    final mealsSize = await postSize(textScale: 1, selectedIndex: 1);
+    final selectedPostSize = await postSize(textScale: 1.5, selectedIndex: 2);
 
-    expect(mealsSizes, homeSizes);
-    expect(selectedPostSizes, homeSizes);
-    expect(mealsSizes.$1, const Size(52, 68));
+    expect(mealsSize, homeSize);
+    expect(selectedPostSize, homeSize);
+    expect(mealsSize, const Size(52, 68));
     expect(tester.takeException(), isNull);
   });
 

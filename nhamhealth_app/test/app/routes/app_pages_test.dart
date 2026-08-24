@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/profile/setting_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/app/routes/app_routes.dart';
 
@@ -28,5 +29,13 @@ void main() {
     );
 
     expect(notificationsPage.page(), isA<NotificationsView>());
+  });
+
+  test('settings route builds SettingsView', () {
+    final settingsPage = AppPages.pages.singleWhere(
+      (page) => page.name == AppRoutes.settings,
+    );
+
+    expect(settingsPage.page(), isA<SettingsView>());
   });
 }

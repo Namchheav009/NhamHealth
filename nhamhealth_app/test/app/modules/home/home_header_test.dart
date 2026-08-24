@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
-import 'package:nhamhealth_flutter/app/modules/services/auth/google_auth_service.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
@@ -17,13 +16,11 @@ void main() {
 
   tearDown(Get.reset);
 
-  testWidgets('profile menu logs out and opens the login screen', (
+  testWidgets('profile button opens profile without a dropdown', (
     tester,
   ) async {
     final authService = _TrackingAuthService();
-    final googleAuthService = _TrackingGoogleAuthService();
     Get.put<AuthService>(authService);
-    Get.put<GoogleAuthService>(googleAuthService);
     Get.put<HomeController>(
       HomeController(repository: HomeRepository(provider: HomeProvider())),
     );
@@ -35,21 +32,14 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('profile-menu-button')));
+    await tester.tap(find.byKey(const ValueKey('profile-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile'), findsNothing);
-    expect(find.text('Logout'), findsOneWidget);
-
-    await tester.tap(find.text('Logout'));
-    await tester.pumpAndSettle();
-
-    expect(authService.didLogout, isTrue);
-    expect(googleAuthService.didSignOut, isTrue);
-    expect(Get.currentRoute, '/login');
+    expect(Get.currentRoute, '/profile');
+    expect(find.byType(PopupMenuItem<int>), findsNothing);
   });
 
-  testWidgets('profile menu shows the authenticated user identity', (
+  testWidgets('profile button keeps the authenticated user avatar', (
     tester,
   ) async {
     Get.put<AuthService>(_TrackingAuthService());
@@ -70,11 +60,7 @@ void main() {
 
     expect(find.text('AR'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('profile-menu-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Alex Rivera'), findsOneWidget);
-    expect(find.text('alex@example.com'), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-button')), findsOneWidget);
   });
 
   testWidgets('notification bell opens the notifications screen', (
@@ -112,14 +98,5 @@ class _TrackingAuthService extends AuthService {
   @override
   Future<void> logout() async {
     didLogout = true;
-  }
-}
-
-class _TrackingGoogleAuthService extends GoogleAuthService {
-  bool didSignOut = false;
-
-  @override
-  Future<void> signOut() async {
-    didSignOut = true;
   }
 }
