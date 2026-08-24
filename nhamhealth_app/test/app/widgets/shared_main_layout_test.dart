@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:nhamhealth_flutter/app/modules/bindings/feed/feed_binding.dart';
+import 'package:nhamhealth_flutter/app/modules/bindings/community/community_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
-import 'package:nhamhealth_flutter/app/modules/views/feed/feed_page.dart';
+import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
 import 'package:nhamhealth_flutter/app/theme/app_spacing.dart';
 import 'package:nhamhealth_flutter/app/widgets/app_bottom_navigation.dart';
 import 'package:nhamhealth_flutter/app/widgets/page_skeleton.dart';
@@ -170,12 +170,12 @@ void main() {
 
     await tester.pumpWidget(
       GetMaterialApp(
-        initialRoute: '/feed',
+        initialRoute: '/community',
         getPages: [
           GetPage<void>(
-            name: '/feed',
-            page: () => const FeedPage(),
-            binding: FeedBinding(),
+            name: '/community',
+            page: () => const CommunityPage(),
+            binding: CommunityBinding(),
           ),
           GetPage<void>(
             name: '/home',

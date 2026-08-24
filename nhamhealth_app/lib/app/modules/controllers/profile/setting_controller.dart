@@ -61,7 +61,7 @@ class SettingsController extends GetxController {
         );
         return;
       case 3:
-        Get.offNamed<void>(AppRoutes.feed);
+        Get.offNamed<void>(AppRoutes.community);
         return;
       case 4:
         return;
