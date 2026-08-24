@@ -59,7 +59,7 @@ class AuthFlowScaffold extends StatelessWidget {
                             child:
                                 showBackButton
                                     ? IconButton(
-                                      tooltip: 'Back',
+                                      tooltip: 'Back'.tr,
                                       onPressed: Get.back,
                                       icon: const Icon(
                                         Icons.arrow_back_rounded,
@@ -71,7 +71,7 @@ class AuthFlowScaffold extends StatelessWidget {
                         ),
                         SizedBox(height: compact ? 4 : 10),
                         Text(
-                          title,
+                          title.tr,
                           style: const TextStyle(
                             color: AppColors.darkGreen,
                             fontSize: 24,
@@ -81,7 +81,7 @@ class AuthFlowScaffold extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          subtitle,
+                          subtitle.tr,
                           style: const TextStyle(
                             color: AppColors.mutedText,
                             fontSize: 13,

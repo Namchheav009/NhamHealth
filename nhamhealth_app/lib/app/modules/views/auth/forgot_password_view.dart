@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
 
-import '../../../theme/app_colors.dart';
 import '../../../../core/services/auth_service.dart';
 import 'widgets/auth_flow_scaffold.dart';
 import 'widgets/password_field.dart';
@@ -22,14 +21,20 @@ class ForgotPasswordController extends GetxController {
     final value = emailOrPhoneController.text.trim();
 
     if (!GetUtils.isEmail(value)) {
-      AppAlert.error(title: 'Invalid email', message: 'Please enter a valid email address.');
+      AppAlert.error(
+        title: 'Invalid email',
+        message: 'Please enter a valid email address.',
+      );
       return;
     }
 
     try {
       isLoading.value = true;
       await _authService.requestPasswordReset(value);
-      AppAlert.success(title: 'Check your email', message: 'If an account exists for this email, the code is on its way.');
+      AppAlert.success(
+        title: 'Check your email',
+        message: 'If an account exists for this email, the code is on its way.',
+      );
       Get.to(
         () => const VerificationView(),
         arguments: {'email': value.trim().toLowerCase()},

@@ -35,14 +35,14 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        controller.source.mealType,
+                        controller.source.mealType.tr,
                         style: const TextStyle(
                           fontSize: 10,
                           color: Colors.black38,
                         ),
                       ),
                       Text(
-                        controller.source.foodName,
+                        controller.source.foodName.tr,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -71,14 +71,20 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
-                        '☕ Medium cup   ⏰ Added 10:30 AM',
-                        style: TextStyle(fontSize: 9, color: Colors.black38),
+                      Text(
+                        '☕ Medium cup   ⏰ Added 10:30 AM'.tr,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.black38,
+                        ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
-                        'Sweet drink, enjoy in balance.',
-                        style: TextStyle(fontSize: 9, color: Colors.black38),
+                      Text(
+                        'Sweet drink, enjoy in balance.'.tr,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.black38,
+                        ),
                       ),
                     ],
                   ),
@@ -94,10 +100,13 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      "of today's\ncalories",
+                    Text(
+                      "of today's\ncalories".tr,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 9, color: Colors.black38),
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.black38,
+                      ),
                     ),
                   ],
                 ),

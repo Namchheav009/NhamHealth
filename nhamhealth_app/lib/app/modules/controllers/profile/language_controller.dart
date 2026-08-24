@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/app_locale_service.dart';
+
 class LanguageController extends GetxController {
-  final selectedLanguage = 'English'.obs;
+  final selectedLanguage = AppLocaleService.englishLocale.languageCode.obs;
+
+  AppLocaleService get _localeService => Get.find<AppLocaleService>();
 
   @override
   void onInit() {
     super.onInit();
     selectedLanguage.value =
-        Get.locale?.languageCode == 'km' ? 'Khmer' : 'English';
+        (Get.locale ?? AppLocaleService.fallbackLocale).languageCode;
   }
 
-  void selectEnglish() {
-    selectedLanguage.value = 'English';
-
-    Get.updateLocale(
-      const Locale('en', 'US'),
-    );
+  Future<void> selectEnglish() {
+    return _selectLocale(AppLocaleService.englishLocale);
   }
 
-  void selectKhmer() {
-    selectedLanguage.value = 'Khmer';
+  Future<void> selectKhmer() {
+    return _selectLocale(AppLocaleService.khmerLocale);
+  }
 
-    Get.updateLocale(
-      const Locale('km', 'KH'),
-    );
+  Future<void> _selectLocale(Locale locale) async {
+    selectedLanguage.value = locale.languageCode;
+    Get.updateLocale(locale);
+    await _localeService.saveLocale(locale);
   }
 
   void goBack() {

@@ -12,9 +12,9 @@ class FiberView extends StatelessWidget {
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('Fiber'),
+        title: Text('Fiber'.tr),
       ),
-      body: const Center(child: Text('Fiber Detail Page')),
+      body: Center(child: Text('Fiber Detail Page'.tr)),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import 'auth_tab_switcher.dart';
@@ -43,8 +44,8 @@ class RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           const SizedBox(height: 5),
-          const Text(
-            'Start building healthier habits with NhamHealth.',
+          Text(
+            'Start building healthier habits with NhamHealth.'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.mutedText, fontSize: 12),
           ),
@@ -97,10 +98,10 @@ class RegisterForm extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Flexible(
+              Flexible(
                 child: Text(
-                  'Already have an account?',
-                  style: TextStyle(fontSize: 11),
+                  'Already have an account?'.tr,
+                  style: const TextStyle(fontSize: 11),
                 ),
               ),
               TextButton(
@@ -110,9 +111,9 @@ class RegisterForm extends StatelessWidget {
                   minimumSize: const Size(0, 36),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text(
-                  'Sign In',
-                  style: TextStyle(
+                child: Text(
+                  'Sign In'.tr,
+                  style: const TextStyle(
                     color: AppColors.accentOrange,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,

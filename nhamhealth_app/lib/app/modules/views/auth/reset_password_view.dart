@@ -131,12 +131,12 @@ class ResetPasswordView extends StatelessWidget {
               duration: const Duration(milliseconds: 180),
               child:
                   controller.confirmPasswordHasError.value
-                      ? const Padding(
-                        key: ValueKey('confirm-password-error'),
-                        padding: EdgeInsets.only(top: 6, left: 16),
+                      ? Padding(
+                        key: const ValueKey('confirm-password-error'),
+                        padding: const EdgeInsets.only(top: 6, left: 16),
                         child: Text(
-                          'Passwords do not match. Try again.',
-                          style: TextStyle(
+                          'Passwords do not match. Try again.'.tr,
+                          style: const TextStyle(
                             color: AppColors.errorCoral,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

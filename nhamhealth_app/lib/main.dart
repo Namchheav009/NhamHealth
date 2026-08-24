@@ -4,22 +4,34 @@ import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/theme/app_colors.dart';
+import 'app/translations/app_translations.dart';
+import 'core/services/app_locale_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  InitialBinding.ensureRegistered();
+  final localeService = AppLocaleService();
+  final initialLocale = await localeService.loadLocale();
+  InitialBinding.ensureRegistered(localeService: localeService);
 
-  runApp(const NhamHealthApp());
+  runApp(NhamHealthApp(initialLocale: initialLocale));
 }
 
 class NhamHealthApp extends StatelessWidget {
-  const NhamHealthApp({super.key});
+  const NhamHealthApp({
+    super.key,
+    this.initialLocale = AppLocaleService.fallbackLocale,
+  });
+
+  final Locale initialLocale;
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Nham Health',
       debugShowCheckedModeBanner: false,
+      translations: AppTranslations(),
+      locale: initialLocale,
+      fallbackLocale: AppLocaleService.fallbackLocale,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.homeBackground,

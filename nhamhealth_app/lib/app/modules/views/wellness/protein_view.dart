@@ -12,9 +12,9 @@ class ProteinView extends StatelessWidget {
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('Protein'),
+        title: Text('Protein'.tr),
       ),
-      body: const Center(child: Text('Protein Detail Page')),
+      body: Center(child: Text('Protein Detail Page'.tr)),
     );
   }
 }

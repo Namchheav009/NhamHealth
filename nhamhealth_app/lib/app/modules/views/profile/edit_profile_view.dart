@@ -76,9 +76,9 @@ class EditProfileView extends GetView<EditProfileController> {
                       color: green,
                     ),
                   )
-                : const Text(
-                    'Save',
-                    style: TextStyle(
+                : Text(
+                    'Save'.tr,
+                    style: const TextStyle(
                       color: green,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -181,7 +181,7 @@ class EditProfileView extends GetView<EditProfileController> {
                   const SizedBox(height: 3),
 
                   Text(
-                    controller.membership.value,
+                    controller.membership.value.tr,
                     style: const TextStyle(
                       color: green,
                       fontSize: 13,
@@ -323,16 +323,16 @@ class EditProfileView extends GetView<EditProfileController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Body and Health Information',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            'Body and Health Information'.tr,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
 
           const SizedBox(height: 2),
 
-          const Text(
-            'BMI is calculated automatically from your height and weight',
-            style: TextStyle(color: Color(0xFF888888), fontSize: 10),
+          Text(
+            'BMI is calculated automatically from your height and weight'.tr,
+            style: const TextStyle(color: Color(0xFF888888), fontSize: 10),
           ),
 
           const SizedBox(height: 7),
@@ -353,7 +353,9 @@ class EditProfileView extends GetView<EditProfileController> {
                     label: 'Age',
                     value:
                         controller.age.value > 0
-                            ? '${controller.age.value} years'
+                            ? '@value years'.trParams({
+                              'value': '${controller.age.value}',
+                            })
                             : 'Not set',
                     onTap: controller.editAge,
                   ),
@@ -416,24 +418,27 @@ class EditProfileView extends GetView<EditProfileController> {
 
             const SizedBox(width: 10),
 
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Your BMI',
-                    style: TextStyle(
+                    'Your BMI'.tr,
+                    style: const TextStyle(
                       color: green,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
 
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
 
                   Text(
-                    'Auto-calculate from height & weight',
-                    style: TextStyle(color: Color(0xFF777777), fontSize: 9),
+                    'Auto-calculate from height & weight'.tr,
+                    style: const TextStyle(
+                      color: Color(0xFF777777),
+                      fontSize: 9,
+                    ),
                   ),
                 ],
               ),
@@ -454,8 +459,8 @@ class EditProfileView extends GetView<EditProfileController> {
                   child: Text(
                     controller.bmi > 0
                         ? '${controller.bmi.toStringAsFixed(1)} '
-                            '${controller.bmiStatus}'
-                        : 'Not set',
+                            '${controller.bmiStatus.tr}'
+                        : 'Not set'.tr,
                     maxLines: 1,
                     style: const TextStyle(
                       color: Color(0xFF008F42),
@@ -497,7 +502,7 @@ class EditProfileView extends GetView<EditProfileController> {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 9),
             child: Text(
-              title,
+              title.tr,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),

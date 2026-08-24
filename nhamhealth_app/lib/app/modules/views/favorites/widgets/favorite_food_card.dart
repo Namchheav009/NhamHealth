@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/favorites/favorite_food.dart';
@@ -27,7 +28,7 @@ class FavoriteFoodCard extends StatelessWidget {
         ))),
       ])),
       Padding(padding: const EdgeInsets.fromLTRB(7, 7, 7, 8), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(height: 27, child: Text(food.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, height: 1.15, fontWeight: FontWeight.w600))),
+        SizedBox(height: 27, child: Text(food.name.tr, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, height: 1.15, fontWeight: FontWeight.w600))),
         const SizedBox(height: 5),
         Row(children: [Expanded(child: Text('${food.calories} kcal', style: const TextStyle(fontSize: 9, color: AppColors.secondaryText))), const Icon(Icons.star_rounded, color: Color(0xFFFFBE0B), size: 14), Text(food.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 9))]),
       ])),

@@ -54,20 +54,20 @@ class AiRecommendationCard extends GetView<HomeController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.auto_awesome_rounded,
                             size: 19,
                             color: Color(0xFFFFB800),
                           ),
-                          SizedBox(width: 7),
+                          const SizedBox(width: 7),
                           Expanded(
                             child: Text(
-                              'AI Recommendation',
+                              'AI Recommendation'.tr,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.primaryGreen,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -97,14 +97,13 @@ class AiRecommendationCard extends GetView<HomeController> {
                                 ),
                             child:
                                 selectedMood == null
-                                    ? const Text(
-                                      'Get personalized meal &\n'
-                                      'activity suggestions based\n'
-                                      'on your mood and ingredients.',
-                                      key: ValueKey('no-mood'),
+                                    ? Text(
+                                      'Get personalized meal &\nactivity suggestions based\non your mood and ingredients.'
+                                          .tr,
+                                      key: const ValueKey('no-mood'),
                                       maxLines: 4,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         height: 1.08,
                                         color: AppColors.primaryText,
@@ -162,10 +161,12 @@ class AiRecommendationCard extends GetView<HomeController> {
                                 fit: BoxFit.scaleDown,
                                 child: Text(
                                   isLoading
-                                      ? 'Generating…'
+                                      ? 'Generating…'.tr
                                       : selectedMood == null
-                                      ? 'Get Recommendation'
-                                      : 'Recommend for ${selectedMood.name}',
+                                      ? 'Get Recommendation'.tr
+                                      : 'Recommend for @mood'.trParams({
+                                        'mood': selectedMood.name.tr,
+                                      }),
                                   maxLines: 1,
                                   style: const TextStyle(
                                     fontSize: 11,
@@ -219,11 +220,11 @@ class _SelectedMoodDetail extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'You feel ${mood.name}\n',
+                  text: 'You feel @mood\n'.trParams({'mood': mood.name.tr}),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                const TextSpan(
-                  text: 'AI will personalize meals for this mood.',
+                TextSpan(
+                  text: 'AI will personalize meals for this mood.'.tr,
                 ),
               ],
             ),

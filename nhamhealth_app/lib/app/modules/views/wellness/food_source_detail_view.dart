@@ -73,11 +73,14 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               color: Color(0xFF00A651),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Food Detail',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                'Food Detail'.tr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -103,7 +106,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text('Cancel'),
+              child: Text('Cancel'.tr),
             ),
           ),
           const SizedBox(width: 8),
@@ -120,7 +123,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: const Text('Save Changes'),
+              label: Text('Save Changes'.tr),
             ),
           ),
         ],

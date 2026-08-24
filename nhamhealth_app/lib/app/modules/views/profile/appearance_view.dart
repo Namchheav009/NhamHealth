@@ -37,9 +37,9 @@ class AppearanceView extends GetView<AppearanceController> {
                         ),
 
                         const SizedBox(height: 24),
-                        const Text(
-                          'Choose how NhamHealth looks on this device.',
-                          style: TextStyle(
+                        Text(
+                          'Choose how NhamHealth looks on this device.'.tr,
+                          style: const TextStyle(
                             fontSize: 12,
                             height: 1.4,
                             color: Color(0xFF687185),
@@ -49,11 +49,11 @@ class AppearanceView extends GetView<AppearanceController> {
 
                         const SizedBox(height: 24),
 
-                        const Padding(
-                          padding: EdgeInsets.only(left: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
                           child: Text(
-                            'Theme',
-                            style: TextStyle(
+                            'Theme'.tr,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF101010),
@@ -182,7 +182,7 @@ class _ThemeItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      title.tr,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -191,7 +191,7 @@ class _ThemeItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      subtitle,
+                      subtitle.tr,
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF707788),

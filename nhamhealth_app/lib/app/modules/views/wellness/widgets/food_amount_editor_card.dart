@@ -15,9 +15,9 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Edit amount',
-              style: TextStyle(
+            Text(
+              'Edit amount'.tr,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF555555),
@@ -51,9 +51,9 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    label: const Text(
-                      'Re-analyze with AI',
-                      style: TextStyle(fontSize: 11),
+                    label: Text(
+                      'Re-analyze with AI'.tr,
+                      style: const TextStyle(fontSize: 11),
                     ),
                   ),
                 ),
@@ -71,8 +71,8 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                     ),
                     label: Text(
                       controller.showManualEditor.value
-                          ? 'Hide manual edit'
-                          : 'Edit manually',
+                          ? 'Hide manual edit'.tr
+                          : 'Edit manually'.tr,
                       style: const TextStyle(fontSize: 11),
                     ),
                   ),
@@ -109,7 +109,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label,
+              label.tr,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -144,9 +144,9 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Edit amount manually',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          Text(
+            'Edit amount manually'.tr,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
 
@@ -184,9 +184,9 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
               ),
 
               const SizedBox(width: 8),
-              const Text(
-                'ml',
-                style: TextStyle(fontSize: 11, color: Colors.black45),
+              Text(
+                'ml'.tr,
+                style: const TextStyle(fontSize: 11, color: Colors.black45),
               ),
               const SizedBox(width: 8),
 

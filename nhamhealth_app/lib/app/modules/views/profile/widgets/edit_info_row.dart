@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class EditInfoRow extends StatelessWidget {
   final IconData icon;
@@ -54,7 +55,7 @@ class EditInfoRow extends StatelessWidget {
                   SizedBox(
                     width: 90,
                     child: Text(
-                      label,
+                      label.tr,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF858585),
@@ -64,7 +65,7 @@ class EditInfoRow extends StatelessWidget {
 
                   Expanded(
                     child: Text(
-                      value,
+                      value.tr,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 13,

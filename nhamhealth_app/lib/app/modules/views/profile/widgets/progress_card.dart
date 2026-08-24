@@ -27,9 +27,9 @@ class ProgressCard extends GetView<ProfileController> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Today's Progress",
+                  "Today's Progress".tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
@@ -38,18 +38,22 @@ class ProgressCard extends GetView<ProfileController> {
 
               GestureDetector(
                 onTap: controller.openProgressDetails,
-                child: const Row(
+                child: Row(
                   children: [
                     Text(
-                      'View Details',
-                      style: TextStyle(
+                      'View Details'.tr,
+                      style: const TextStyle(
                         color: green,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(width: 3),
-                    Icon(Icons.chevron_right_rounded, color: green, size: 22),
+                    const SizedBox(width: 3),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: green,
+                      size: 22,
+                    ),
                   ],
                 ),
               ),
@@ -135,7 +139,7 @@ class ProgressCard extends GetView<ProfileController> {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                title,
+                title.tr,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
@@ -170,7 +174,10 @@ class ProgressCard extends GetView<ProfileController> {
 
         const SizedBox(height: 5),
 
-        Text(unit, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+        Text(
+          unit.tr,
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+        ),
 
         const SizedBox(height: 8),
 

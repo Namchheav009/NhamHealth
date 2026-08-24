@@ -32,7 +32,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
           leadingWidth: 58,
           leading: IconButton(
             onPressed: controller.goBack,
-            tooltip: 'Back',
+            tooltip: 'Back'.tr,
             icon: const Icon(
               Icons.arrow_back_rounded,
               size: 28,
@@ -40,9 +40,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
             ),
           ),
           titleSpacing: 0,
-          title: const Text(
-            'Food Detail',
-            style: TextStyle(
+          title: Text(
+            'Food Detail'.tr,
+            style: const TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w700,
               color: Colors.black,
@@ -136,9 +136,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'fresh & Healthy',
-                  style: TextStyle(
+                Text(
+                  'fresh & Healthy'.tr,
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF6DA645),
@@ -147,11 +147,11 @@ class FoodDetailView extends GetView<FoodDetailController> {
 
                 const SizedBox(height: 12),
 
-                const SizedBox(
+                SizedBox(
                   width: 195,
                   child: Text(
-                    'Mix salad\nVegetables',
-                    style: TextStyle(
+                    'Mix salad\nVegetables'.tr,
+                    style: const TextStyle(
                       fontSize: 30,
                       height: 1.08,
                       fontWeight: FontWeight.w700,
@@ -170,14 +170,14 @@ class FoodDetailView extends GetView<FoodDetailController> {
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(color: const Color(0xFFE4F0E8)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.eco_rounded, color: green, size: 17),
-                      SizedBox(width: 7),
+                      const Icon(Icons.eco_rounded, color: green, size: 17),
+                      const SizedBox(width: 7),
                       Text(
-                        'Light, crunchy & super tasty!',
-                        style: TextStyle(
+                        'Light, crunchy & super tasty!'.tr,
+                        style: const TextStyle(
                           color: Color(0xFF6B9E45),
                           fontSize: 9,
                           fontWeight: FontWeight.w500,
@@ -234,7 +234,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
         const SizedBox(width: 8),
 
         Text(
-          label,
+          label.tr,
           style: const TextStyle(
             color: lightText,
             fontSize: 17,
@@ -367,7 +367,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                title.tr,
                 style: const TextStyle(
                   fontSize: 20,
                   height: 1,
@@ -379,7 +379,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
               const SizedBox(height: 6),
 
               Text(
-                subtitle,
+                subtitle.tr,
                 style: const TextStyle(fontSize: 12, color: Color(0xFF76C48D)),
               ),
             ],
@@ -395,7 +395,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 4),
           ),
-          child: const Text('See more', style: TextStyle(fontSize: 12)),
+          child: Text('See more'.tr, style: const TextStyle(fontSize: 12)),
         ),
       ],
     );
@@ -447,7 +447,7 @@ class _FoodStatItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                title.tr,
                 maxLines: 1,
                 style: const TextStyle(color: Color(0xFF8D8D8D), fontSize: 10),
               ),
@@ -455,7 +455,7 @@ class _FoodStatItem extends StatelessWidget {
               const SizedBox(height: 5),
 
               Text(
-                value,
+                value.tr,
                 maxLines: 1,
                 style: TextStyle(
                   color: valueColor,

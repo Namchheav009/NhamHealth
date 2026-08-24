@@ -29,10 +29,10 @@ class GreetingSection extends GetView<HomeController> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'How are you feeling today?',
-                        style: TextStyle(
+                        'How are you feeling today?'.tr,
+                        style: const TextStyle(
                           color: AppColors.primaryGreen,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -54,12 +54,12 @@ class GreetingSection extends GetView<HomeController> {
                   );
                 }
                 if (moods.isEmpty) {
-                  return const SizedBox(
+                  return SizedBox(
                     height: 78,
                     child: Center(
                       child: Text(
-                        'No moods are available right now.',
-                        style: TextStyle(
+                        'No moods are available right now.'.tr,
+                        style: const TextStyle(
                           color: AppColors.primaryText,
                           fontSize: 12,
                         ),
