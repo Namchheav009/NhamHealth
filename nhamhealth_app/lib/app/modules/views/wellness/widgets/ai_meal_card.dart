@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../controllers/wellness/wellness_controller.dart';
 
@@ -25,13 +26,19 @@ class AiMealCard extends GetView<WellnessController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Transform.translate(
-            offset: const Offset(-10, 0),
+            offset: const Offset(-4, 0),
             child: SizedBox(
-              width: 120,
-              height: 120,
-              child: Image.asset(
-                'assets/images/wellness/ai_robot.png',
-                fit: BoxFit.cover,
+              width: 124,
+              height: 124,
+              child: ClipRect(
+                child: Transform.scale(
+                  scale: 1.25,
+                  child: Lottie.asset(
+                    'assets/animations/live_chatbot.json',
+                    fit: BoxFit.contain,
+                    repeat: true,
+                  ),
+                ),
               ),
             ),
           ),
