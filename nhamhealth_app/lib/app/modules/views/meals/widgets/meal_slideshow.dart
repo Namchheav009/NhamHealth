@@ -46,7 +46,7 @@ class MealSlideShow extends GetView<MealController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            slide.title,
+                            slide.title.tr,
                             style: const TextStyle(
                               fontSize: 18,
                               height: 1.1,
@@ -58,7 +58,7 @@ class MealSlideShow extends GetView<MealController> {
                           const SizedBox(height: 5),
 
                           Text(
-                            slide.highlight,
+                            slide.highlight.tr,
                             style: const TextStyle(
                               fontSize: 18,
                               height: 1,
@@ -70,7 +70,7 @@ class MealSlideShow extends GetView<MealController> {
                           const SizedBox(height: 11),
 
                           Text(
-                            slide.description,
+                            slide.description.tr,
                             style: const TextStyle(
                               fontSize: 13,
                               height: 1.3,

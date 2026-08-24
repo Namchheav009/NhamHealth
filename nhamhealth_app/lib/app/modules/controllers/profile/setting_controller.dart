@@ -17,7 +17,6 @@ import '../../views/profile/widgets/logout_dialog.dart';
 import '../../views/profile/help_support_view.dart';
 
 class SettingsController extends GetxController {
-  final selectedLanguage = 'English'.obs;
   final isLoading = true.obs;
   final isLoggingOut = false.obs;
 
@@ -28,8 +27,6 @@ class SettingsController extends GetxController {
   }
 
   Future<void> _initializePage() async {
-    final locale = Get.locale;
-    selectedLanguage.value = locale?.languageCode == 'km' ? 'Khmer' : 'English';
     await Future<void>.delayed(const Duration(milliseconds: 450));
     if (!isClosed) isLoading.value = false;
   }
@@ -125,7 +122,10 @@ class SettingsController extends GetxController {
 
       Get.offAllNamed<void>(AppRoutes.login);
     } on Object {
-      AppAlert.error(title: 'Logout failed', message: 'Unable to clear your session. Please try again.');
+      AppAlert.error(
+        title: 'Logout failed',
+        message: 'Unable to clear your session. Please try again.',
+      );
     } finally {
       isLoggingOut.value = false;
     }

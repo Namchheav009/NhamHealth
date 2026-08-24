@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FoodDetailAiInsightCard extends StatelessWidget {
   const FoodDetailAiInsightCard({super.key});
@@ -40,9 +41,9 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'AI Insight',
-                          style: TextStyle(
+                        Text(
+                          'AI Insight'.tr,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -57,9 +58,9 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                             color: const Color(0xFFFFEEE6),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            '⚖️ Watch sugar',
-                            style: TextStyle(
+                          child: Text(
+                            '⚖️ Watch sugar'.tr,
+                            style: const TextStyle(
                               color: Color(0xFFFF641E),
                               fontSize: 8,
                             ),
@@ -68,10 +69,10 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Milk tea is okay sometimes, but sugar is a bit high for one drink. '
-                      'Balance it with water and a lighter next choice.',
-                      style: TextStyle(
+                    Text(
+                      'Milk tea is okay sometimes, but sugar is a bit high for one drink. Balance it with water and a lighter next choice.'
+                          .tr,
+                      style: const TextStyle(
                         fontSize: 10,
                         height: 1.5,
                         color: Colors.black54,

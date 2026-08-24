@@ -73,9 +73,9 @@ class IngredientView extends GetView<IngredientController> {
 
         const SizedBox(width: 11),
 
-        const Text(
-          'Ingredient',
-          style: TextStyle(
+        Text(
+          'Ingredient'.tr,
+          style: const TextStyle(
             fontSize: 23,
             height: 1,
             fontWeight: FontWeight.w700,
@@ -125,14 +125,14 @@ class IngredientView extends GetView<IngredientController> {
 
               const SizedBox(width: 56),
 
-              const Expanded(
+              Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ingredients',
-                      style: TextStyle(
+                      'Ingredients'.tr,
+                      style: const TextStyle(
                         fontSize: 24,
                         height: 1,
                         fontWeight: FontWeight.w500,
@@ -140,11 +140,11 @@ class IngredientView extends GetView<IngredientController> {
                       ),
                     ),
 
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
                     Text(
-                      '6 healthy ingredients',
-                      style: TextStyle(
+                      '6 healthy ingredients'.tr,
+                      style: const TextStyle(
                         fontSize: 14.5,
                         height: 1,
                         fontWeight: FontWeight.w400,
@@ -252,7 +252,7 @@ class _IngredientCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  ingredient.name,
+                  ingredient.name.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
 
@@ -267,7 +267,7 @@ class _IngredientCard extends StatelessWidget {
                 const SizedBox(height: 7),
 
                 Text(
-                  ingredient.description,
+                  ingredient.description.tr,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
 

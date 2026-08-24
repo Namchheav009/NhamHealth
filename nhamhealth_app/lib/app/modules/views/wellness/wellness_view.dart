@@ -89,11 +89,11 @@ class WellnessView extends GetView<WellnessController> {
           ),
 
           // Page title
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Daily Wellness',
-                style: TextStyle(
+                'Daily Wellness'.tr,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                   color: Colors.black,
@@ -132,7 +132,7 @@ class WellnessView extends GetView<WellnessController> {
                       const SizedBox(width: 6),
 
                       Text(
-                        controller.selectedDateText,
+                        controller.selectedDateText.tr,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 
@@ -161,135 +162,140 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
     child: BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
       child: SafeArea(
-      child: Center(
-        child: Material(
-          color: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360, maxHeight: 680),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
-              decoration: BoxDecoration(
-                color: AppColors.cardSurface.withValues(alpha: .88),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withValues(alpha: .8)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.darkGreen.withValues(alpha: .16),
-                    blurRadius: 32,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        const SizedBox(width: 40),
-                        Expanded(
-                          child: Text(
-                            _confirming ? 'Confirm PIN' : widget.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.darkGreen,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w700,
+        child: Center(
+          child: Material(
+            color: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360, maxHeight: 680),
+              child: Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+                decoration: BoxDecoration(
+                  color: AppColors.cardSurface.withValues(alpha: .88),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: Colors.white.withValues(alpha: .8)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.darkGreen.withValues(alpha: .16),
+                      blurRadius: 32,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 40),
+                          Expanded(
+                            child: Text(
+                              _confirming ? 'Confirm PIN'.tr : widget.title.tr,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppColors.darkGreen,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                        if (widget.allowCancel)
-                          IconButton(
-                            tooltip: 'Cancel',
-                            onPressed:
-                                _busy ? null : () => Navigator.pop(context),
-                            icon: const Icon(Icons.close_rounded),
-                            color: AppColors.secondaryText,
-                          )
-                        else
-                          const SizedBox(width: 40),
-                      ],
-                    ),
-                    if (widget.subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        _confirming
-                            ? 'Enter the same 6 digits again'
-                            : widget.subtitle!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 13,
-                          height: 1.35,
-                        ),
+                          if (widget.allowCancel)
+                            IconButton(
+                              tooltip: 'Cancel'.tr,
+                              onPressed:
+                                  _busy ? null : () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded),
+                              color: AppColors.secondaryText,
+                            )
+                          else
+                            const SizedBox(width: 40),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: 22),
-                    Semantics(
-                      label: '${_pin.length} of 6 PIN digits entered',
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _pinLength,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
-                            width: 13,
-                            height: 13,
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  index < _pin.length
-                                      ? AppColors.primaryGreen
-                                      : Colors.transparent,
-                              border: Border.all(
+                      if (widget.subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _confirming
+                              ? 'Enter the same 6 digits again'.tr
+                              : widget.subtitle!.tr,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 13,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      Semantics(
+                        label: '@count of 6 PIN digits entered'.trParams({
+                          'count': '${_pin.length}',
+                        }),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            _pinLength,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              width: 13,
+                              height: 13,
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
                                 color:
                                     index < _pin.length
                                         ? AppColors.primaryGreen
-                                        : AppColors.navigationGreen,
-                                width: 1.5,
+                                        : Colors.transparent,
+                                border: Border.all(
+                                  color:
+                                      index < _pin.length
+                                          ? AppColors.primaryGreen
+                                          : AppColors.navigationGreen,
+                                  width: 1.5,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 32,
-                      child:
-                          _error == null
-                              ? null
-                              : Center(
-                                child: Text(
-                                  _error!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppColors.errorCoral,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                      SizedBox(
+                        height: 32,
+                        child:
+                            _error == null
+                                ? null
+                                : Center(
+                                  child: Text(
+                                    _error!.tr,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: AppColors.errorCoral,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                    ),
-                    if (_busy)
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 8),
-                        child: LinearProgressIndicator(
-                          minHeight: 2,
-                          color: AppColors.primaryGreen,
-                          backgroundColor: AppColors.softGreen,
-                        ),
                       ),
-                    _keypad(),
-                  ],
+                      if (_busy)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: LinearProgressIndicator(
+                            minHeight: 2,
+                            color: AppColors.primaryGreen,
+                            backgroundColor: AppColors.softGreen,
+                          ),
+                        ),
+                      _keypad(),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
     ),
   );
 
@@ -318,7 +324,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                   widget.biometricAuthenticator == null
                       ? null
                       : IconButton(
-                        tooltip: widget.biometricLabel,
+                        tooltip: widget.biometricLabel.tr,
                         onPressed: _busy ? null : _authenticateBiometrically,
                         icon: Icon(widget.biometricIcon, size: 32),
                         color: AppColors.primaryGreen,
@@ -329,7 +335,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
               width: 70,
               height: 70,
               child: IconButton(
-                tooltip: 'Delete digit',
+                tooltip: 'Delete digit'.tr,
                 onPressed: _pin.isEmpty ? null : _removeDigit,
                 icon: const Icon(Icons.backspace_outlined),
                 color: AppColors.darkGreen,

@@ -137,19 +137,19 @@ class SettingsView extends GetView<SettingsController> {
                             content: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                              _buildSectionTitle('Account'),
-                              const SizedBox(height: 10),
-                              _buildAccountCard(),
-                              const SizedBox(height: 21),
-                              _buildSectionTitle('Preferences'),
-                              const SizedBox(height: 10),
-                              _buildPreferenceCard(),
-                              const SizedBox(height: 21),
-                              _buildSectionTitle('Support'),
-                              const SizedBox(height: 10),
-                              _buildSupportCard(),
-                              const SizedBox(height: 13),
-                              _buildLogoutCard(),
+                                _buildSectionTitle('settings_account'.tr),
+                                const SizedBox(height: 10),
+                                _buildAccountCard(),
+                                const SizedBox(height: 21),
+                                _buildSectionTitle('settings_preferences'.tr),
+                                const SizedBox(height: 10),
+                                _buildPreferenceCard(),
+                                const SizedBox(height: 21),
+                                _buildSectionTitle('settings_support'.tr),
+                                const SizedBox(height: 10),
+                                _buildSupportCard(),
+                                const SizedBox(height: 13),
+                                _buildLogoutCard(),
                               ],
                             ),
                           ),
@@ -188,7 +188,7 @@ class SettingsView extends GetView<SettingsController> {
 
   Widget _buildHeader() {
     return AppBackHeader(
-      title: 'Settings',
+      title: 'settings'.tr,
       backButtonKey: const ValueKey('settings-back-button'),
       onBack: controller.goBack,
     );
@@ -222,15 +222,15 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.lock_outline_rounded,
-          title: 'Password and Security',
-          subtitle: 'PIN, fingerprint, Face ID and password',
+          title: 'password_security'.tr,
+          subtitle: 'password_security_description'.tr,
           onTap: controller.openPasswordSecurity,
         ),
         _divider(),
         _SettingsItem(
           icon: Icons.favorite_border_rounded,
-          title: 'Favorites',
-          subtitle: 'View your saved meals and posts',
+          title: 'favorites'.tr,
+          subtitle: 'favorites_description'.tr,
           onTap: controller.openFavorites,
         ),
       ],
@@ -246,21 +246,22 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.dark_mode_outlined,
-          title: 'Appearance',
-          subtitle: 'Choose app theme (Light / Dark)',
+          title: 'appearance'.tr,
+          subtitle: 'appearance_description'.tr,
           onTap: controller.openAppearance,
         ),
 
         _divider(),
 
-        Obx(
-          () => _SettingsItem(
-            icon: Icons.language_rounded,
-            title: 'Language',
-            subtitle: 'Choose your app language',
-            trailingText: controller.selectedLanguage.value,
-            onTap: controller.openLanguage,
-          ),
+        _SettingsItem(
+          icon: Icons.language_rounded,
+          title: 'language'.tr,
+          subtitle: 'language_setting_description'.tr,
+          trailingText:
+              Get.locale?.languageCode == 'km'
+                  ? 'language_khmer'.tr
+                  : 'language_english'.tr,
+          onTap: controller.openLanguage,
         ),
       ],
     );
@@ -275,8 +276,8 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.help_outline_rounded,
-          title: 'Help & Support',
-          subtitle: 'Get help and find answers',
+          title: 'help_support'.tr,
+          subtitle: 'help_support_description'.tr,
           onTap: controller.openHelpSupport,
         ),
 
@@ -284,8 +285,8 @@ class SettingsView extends GetView<SettingsController> {
 
         _SettingsItem(
           icon: Icons.description_outlined,
-          title: 'Terms & Privacy',
-          subtitle: 'Terms of use and privacy policy',
+          title: 'terms_privacy'.tr,
+          subtitle: 'terms_privacy_description'.tr,
           onTap: controller.openTermsPrivacy,
         ),
       ],
@@ -318,8 +319,8 @@ class SettingsView extends GetView<SettingsController> {
       ),
       child: _SettingsItem(
         icon: Icons.logout_rounded,
-        title: 'Log Out',
-        subtitle: 'Log out from your account',
+        title: 'log_out'.tr,
+        subtitle: 'log_out_description'.tr,
         isLogout: true,
         onTap: controller.logout,
       ),

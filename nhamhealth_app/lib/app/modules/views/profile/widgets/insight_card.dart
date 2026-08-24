@@ -41,14 +41,17 @@ class InsightCard extends GetView<ProfileController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "You're doing amazing!",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                Text(
+                  "You're doing amazing!".tr,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Obx(
                   () => Text(
-                    controller.insight.value,
+                    controller.insight.value.tr,
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF65766C),

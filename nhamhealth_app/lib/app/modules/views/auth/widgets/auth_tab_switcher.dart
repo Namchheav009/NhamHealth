@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -81,7 +82,7 @@ class _Tab extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Center(
             child: Text(
-              label,
+              label.tr,
               style: TextStyle(
                 color: selected ? Colors.white : const Color(0xFF5D625D),
                 fontSize: 13,

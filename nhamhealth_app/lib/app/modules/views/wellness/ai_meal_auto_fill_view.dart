@@ -15,7 +15,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
     appBar: AppBar(
       backgroundColor: background,
       surfaceTintColor: background,
-      title: const Text('AI Meal Auto-Fill'),
+      title: Text('AI Meal Auto-Fill'.tr),
     ),
     body: SafeArea(
       child: Center(
@@ -33,9 +33,9 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    labelText: 'What did you eat?',
+                    labelText: 'What did you eat?'.tr,
                     hintText:
-                        'Example: 150 g chicken breast, 1 cup rice, banana',
+                        'Example: 150 g chicken breast, 1 cup rice, banana'.tr,
                     alignLabelWithHint: true,
                     filled: true,
                     fillColor: Colors.white,
@@ -64,8 +64,8 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                             : const Icon(Icons.auto_awesome_rounded),
                     label: Text(
                       controller.isAnalyzing.value
-                          ? 'Matching foods...'
-                          : 'Create meal draft',
+                          ? 'Matching foods...'.tr
+                          : 'Create meal draft'.tr,
                     ),
                     style: FilledButton.styleFrom(backgroundColor: green),
                   ),
@@ -78,9 +78,12 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 ],
                 if (controller.foods.isNotEmpty) ...[
                   const SizedBox(height: 22),
-                  const Text(
-                    'Review before logging',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  Text(
+                    'Review before logging'.tr,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ...List.generate(controller.foods.length, (index) {
@@ -94,14 +97,14 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                           child: Icon(Icons.restaurant, color: green),
                         ),
                         title: Text(
-                          food.name,
+                          food.name.tr,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
                           '${_amount(food.servingSize)} ${food.servingUnit} • ${food.calories.round()} kcal • ${food.protein.toStringAsFixed(1)} g protein',
                         ),
                         trailing: IconButton(
-                          tooltip: 'Remove',
+                          tooltip: 'Remove'.tr,
                           onPressed: () => controller.removeAt(index),
                           icon: const Icon(Icons.close_rounded),
                         ),
@@ -121,8 +124,8 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                       icon: const Icon(Icons.add_circle_outline),
                       label: Text(
                         controller.isSaving.value
-                            ? 'Adding meal...'
-                            : 'Add all to today',
+                            ? 'Adding meal...'.tr
+                            : 'Add all to today'.tr,
                       ),
                       style: FilledButton.styleFrom(backgroundColor: green),
                     ),
@@ -130,7 +133,8 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 ],
                 const SizedBox(height: 16),
                 _notice(
-                  'Food names are matched to NhamHealth’s nutrition catalog. Review quantities before saving; results are for general wellness only.',
+                  'Food names are matched to NhamHealth’s nutrition catalog. Review quantities before saving; results are for general wellness only.'
+                      .tr,
                 ),
               ],
             ),
@@ -146,23 +150,24 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
       gradient: const LinearGradient(colors: [Color(0xFF087A48), green]),
       borderRadius: BorderRadius.circular(24),
     ),
-    child: const Column(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.edit_note_rounded, color: Colors.white, size: 30),
-        SizedBox(height: 10),
+        const Icon(Icons.edit_note_rounded, color: Colors.white, size: 30),
+        const SizedBox(height: 10),
         Text(
-          'Log a whole meal in one step',
-          style: TextStyle(
+          'Log a whole meal in one step'.tr,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Text(
-          'Separate foods with commas or write one per line. Include amounts when you know them.',
-          style: TextStyle(color: Color(0xDDFFFFFF), height: 1.4),
+          'Separate foods with commas or write one per line. Include amounts when you know them.'
+              .tr,
+          style: const TextStyle(color: Color(0xDDFFFFFF), height: 1.4),
         ),
       ],
     ),
@@ -191,7 +196,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
       ),
       Text(
-        label,
+        label.tr,
         style: const TextStyle(fontSize: 12, color: Color(0xFF587064)),
       ),
     ],
@@ -204,7 +209,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
       borderRadius: BorderRadius.circular(13),
       border: Border.all(color: const Color(0xFFF3E4A7)),
     ),
-    child: Text(text, style: const TextStyle(fontSize: 12.5, height: 1.4)),
+    child: Text(text.tr, style: const TextStyle(fontSize: 12.5, height: 1.4)),
   );
 
   static String _amount(double value) =>

@@ -24,7 +24,9 @@ class MealCategory extends GetView<MealController> {
             return Semantics(
               button: true,
               selected: selected,
-              label: 'Show ${category.name} meals',
+              label: 'Show @category meals'.trParams({
+                'category': category.name.tr,
+              }),
               child: InkWell(
                 key: ValueKey<int>(category.id),
                 onTap: () => controller.selectCategory(index),
@@ -45,7 +47,7 @@ class MealCategory extends GetView<MealController> {
                     ),
                   ),
                   child: Text(
-                    category.name,
+                    category.name.tr,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,

@@ -55,27 +55,27 @@ class ProfileView extends GetView<ProfileController> {
                           controller.isLoading.value &&
                           controller.dashboard.value == null,
                       loading: const PageSkeleton.profile(),
-                      content: const Column(
+                      content: Column(
                         children: [
-                          ProfileHeader(),
-                          SizedBox(height: 14),
-                          HealthStatsCard(),
-                          SizedBox(height: 14),
-                          InsightCard(),
-                          SizedBox(height: 22),
+                          const ProfileHeader(),
+                          const SizedBox(height: 14),
+                          const HealthStatsCard(),
+                          const SizedBox(height: 14),
+                          const InsightCard(),
+                          const SizedBox(height: 22),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Recent activity',
-                              style: TextStyle(
+                              'Recent activity'.tr,
+                              style: const TextStyle(
                                 color: Color(0xFF26322B),
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
-                          SizedBox(height: 10),
-                          ProfilePostCard(),
+                          const SizedBox(height: 10),
+                          const ProfilePostCard(),
                         ],
                       ),
                     ),
@@ -119,8 +119,10 @@ class _ProfileErrorBanner extends StatelessWidget {
         children: [
           const Icon(Icons.info_outline, color: Color(0xFFD84A4A), size: 20),
           const SizedBox(width: 8),
-          Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          Expanded(
+            child: Text(message.tr, style: const TextStyle(fontSize: 12)),
+          ),
+          TextButton(onPressed: onRetry, child: Text('Retry'.tr)),
         ],
       ),
     );

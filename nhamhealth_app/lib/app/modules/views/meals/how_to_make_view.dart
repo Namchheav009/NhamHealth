@@ -86,7 +86,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
           SizedBox(width: 11 * scale),
 
           Text(
-            'How to make',
+            'How to make'.tr,
             style: TextStyle(
               fontSize: 23 * scale,
               height: 1,
@@ -142,7 +142,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'How to make',
+                  'How to make'.tr,
                   style: TextStyle(
                     fontSize: 24 * scale,
                     height: 1,
@@ -154,7 +154,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
                 SizedBox(height: 8 * scale),
 
                 Text(
-                  'Fresh & Healthy Mixed salad',
+                  'Fresh & Healthy Mixed salad'.tr,
                   style: TextStyle(
                     fontSize: 14.5 * scale,
                     height: 1,
@@ -234,7 +234,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Healthy Tip',
+                  'Healthy Tip'.tr,
                   style: TextStyle(
                     fontSize: 14.5 * scale,
                     height: 1,
@@ -246,8 +246,8 @@ class HowToMakeView extends GetView<HowToMakeController> {
                 SizedBox(height: 5 * scale),
 
                 Text(
-                  'Eat immediately to keep the vegetables fresh and crunchy.\n'
-                  'You can add grilled chicken or shrimp for extra protein!',
+                  'Eat immediately to keep the vegetables fresh and crunchy.\nYou can add grilled chicken or shrimp for extra protein!'
+                      .tr,
                   style: TextStyle(
                     fontSize: 10.5 * scale,
                     height: 1.3,
@@ -363,7 +363,7 @@ class _CookingStepCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  step.title,
+                  step.title.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -377,7 +377,7 @@ class _CookingStepCard extends StatelessWidget {
                 SizedBox(height: 7 * scale),
 
                 Text(
-                  step.description,
+                  step.description.tr,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/home/nutrition_progress_model.dart';
@@ -27,7 +28,7 @@ class NutritionProgressCard extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  data.title,
+                  data.title.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -51,7 +52,7 @@ class NutritionProgressCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            data.unit,
+            data.unit.tr,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 10, color: AppColors.inactiveText),

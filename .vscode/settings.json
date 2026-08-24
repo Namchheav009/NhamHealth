@@ -15,5 +15,19 @@
     "**/build/**"
   ],
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.import.maven.enabled": true
+  "java.import.maven.enabled": true,
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/target": true,
+    ".m2": true,
+    ".dart_appdata": true
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/target": true,
+    ".m2": true,
+    ".dart_appdata": true
+  }
 }

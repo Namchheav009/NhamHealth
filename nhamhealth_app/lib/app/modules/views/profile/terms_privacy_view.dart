@@ -36,9 +36,9 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
                         const SizedBox(height: 27),
 
-                        const Text(
-                          'Read the main policies that protect',
-                          style: TextStyle(
+                        Text(
+                          'Read the main policies that protect'.tr,
+                          style: const TextStyle(
                             fontSize: 13,
                             height: 1.3,
                             fontWeight: FontWeight.w400,
@@ -48,9 +48,9 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
                         const SizedBox(height: 3),
 
-                        const Text(
-                          'your account and data.',
-                          style: TextStyle(
+                        Text(
+                          'your account and data.'.tr,
+                          style: const TextStyle(
                             fontSize: 13,
                             height: 1.3,
                             fontWeight: FontWeight.w400,
@@ -60,11 +60,11 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
                         const SizedBox(height: 23),
 
-                        const Padding(
-                          padding: EdgeInsets.only(left: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 2),
                           child: Text(
-                            'Main Policies',
-                            style: TextStyle(
+                            'Main Policies'.tr,
+                            style: const TextStyle(
                               fontSize: 16,
                               height: 1,
                               fontWeight: FontWeight.w600,
@@ -228,7 +228,7 @@ class _PolicyCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          title.tr,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -236,7 +236,7 @@ class _PolicyCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          subtitle,
+                          subtitle.tr,
                           style: const TextStyle(
                             color: Color(0xFF7C8589),
                             fontSize: 11,
@@ -292,7 +292,7 @@ class _PolicyDetail extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  title.tr,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -300,7 +300,7 @@ class _PolicyDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  subtitle.tr,
                   style: const TextStyle(
                     fontSize: 11,
                     height: 1.35,

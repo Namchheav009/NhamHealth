@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import 'auth_tab_switcher.dart';
@@ -41,8 +42,8 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           const SizedBox(height: 5),
-          const Text(
-            'Sign in to continue your healthy journey.',
+          Text(
+            'Sign in to continue your healthy journey.'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.mutedText, fontSize: 12),
           ),
@@ -67,9 +68,9 @@ class LoginForm extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: loading ? null : onForgotPassword,
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(
+              child: Text(
+                'Forgot password?'.tr,
+                style: const TextStyle(
                   color: AppColors.darkGreen,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -94,10 +95,10 @@ class LoginForm extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Flexible(
+              Flexible(
                 child: Text(
-                  "Don't have an account?",
-                  style: TextStyle(fontSize: 11),
+                  "Don't have an account?".tr,
+                  style: const TextStyle(fontSize: 11),
                 ),
               ),
               TextButton(
@@ -107,9 +108,9 @@ class LoginForm extends StatelessWidget {
                   minimumSize: const Size(0, 36),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(
+                child: Text(
+                  'Sign Up'.tr,
+                  style: const TextStyle(
                     color: AppColors.accentOrange,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,

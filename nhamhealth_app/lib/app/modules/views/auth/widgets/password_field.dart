@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -48,7 +49,7 @@ class AuthTextField extends StatelessWidget {
           color: AppColors.darkGreen,
         ),
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: hintText.tr,
           hintStyle: const TextStyle(
             color: AppColors.placeholder,
             fontSize: 13,
@@ -124,7 +125,7 @@ class _PasswordFieldState extends State<PasswordField> {
       hasError: widget.hasError,
       prefixIcon: widget.prefixIcon,
       suffixIcon: IconButton(
-        tooltip: _obscure ? 'Show password' : 'Hide password',
+        tooltip: (_obscure ? 'Show password' : 'Hide password').tr,
         onPressed: () => setState(() => _obscure = !_obscure),
         icon: Icon(
           _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,

@@ -14,9 +14,9 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Edit intake',
-            style: TextStyle(
+          Text(
+            'Edit intake'.tr,
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: Color(0xFF555555),
@@ -61,9 +61,9 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
 
               const SizedBox(width: 6),
 
-              const Text(
-                'kcal',
-                style: TextStyle(color: Colors.black38, fontSize: 10),
+              Text(
+                'kcal'.tr,
+                style: const TextStyle(color: Colors.black38, fontSize: 10),
               ),
 
               const SizedBox(width: 6),

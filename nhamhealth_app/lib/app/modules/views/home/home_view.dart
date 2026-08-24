@@ -111,9 +111,9 @@ class _RecommendedMealsSection extends GetView<HomeController> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Recommended Meals',
+                    'Recommended Meals'.tr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -137,8 +137,8 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     ),
                     child: Text(
                       controller.isRecommendedMealsLoading.value
-                          ? 'Refreshing…'
-                          : 'Refresh',
+                          ? 'Refreshing…'.tr
+                          : 'Refresh'.tr,
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -183,9 +183,10 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               ),
             ] else ...[
               const SizedBox(height: 6),
-              const Text(
-                'Choose a mood, then tap Get Recommendation to see personalized meals.',
-                style: TextStyle(
+              Text(
+                'Choose a mood, then tap Get Recommendation to see personalized meals.'
+                    .tr,
+                style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 11,
                   height: 1.35,

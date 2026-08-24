@@ -48,9 +48,9 @@ class AiMealCard extends GetView<WellnessController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Log food with AI',
-                  style: TextStyle(
+                Text(
+                  'Log food with AI'.tr,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF555555),
@@ -59,10 +59,10 @@ class AiMealCard extends GetView<WellnessController> {
 
                 const SizedBox(height: 7),
 
-                const Text(
-                  'Tell AI what you ate and choose the amount '
-                  'for a better estimate.',
-                  style: TextStyle(
+                Text(
+                  'Tell AI what you ate and choose the amount for a better estimate.'
+                      .tr,
+                  style: const TextStyle(
                     fontSize: 11,
                     height: 1.4,
                     color: Colors.black54,
@@ -80,9 +80,9 @@ class AiMealCard extends GetView<WellnessController> {
 
                     icon: const Icon(Icons.auto_awesome_rounded, size: 17),
 
-                    label: const Text(
-                      'Open AI Meal Auto-Fill',
-                      style: TextStyle(
+                    label: Text(
+                      'Open AI Meal Auto-Fill'.tr,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),

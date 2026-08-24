@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../models/meals/meal_model.dart';
 
@@ -38,7 +39,7 @@ class MealCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    meal.name,
+                    meal.name.tr,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -65,8 +66,8 @@ class MealCard extends StatelessWidget {
                       Tooltip(
                         message:
                             meal.isFavorite
-                                ? 'Remove from favorites'
-                                : 'Add to favorites',
+                                ? 'Remove from favorites'.tr
+                                : 'Add to favorites'.tr,
                         child: InkResponse(
                           onTap: onFavorite,
                           radius: 18,

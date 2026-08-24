@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
@@ -152,7 +153,7 @@ class _BrandHeader extends StatelessWidget {
           const Spacer(),
           if (showBackButton)
             IconButton(
-              tooltip: 'Back',
+              tooltip: 'Back'.tr,
               onPressed: onBack,
               icon: const Icon(
                 Icons.arrow_back_rounded,
@@ -180,7 +181,7 @@ class _TitleBlock extends StatelessWidget {
             centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           Text(
-            item.title,
+            item.title.tr,
             textAlign: centered ? TextAlign.center : TextAlign.left,
             style: TextStyle(
               color: AppColors.darkGreen,
@@ -191,7 +192,7 @@ class _TitleBlock extends StatelessWidget {
           ),
           if (item.accentTitle != null)
             Text(
-              item.accentTitle!,
+              item.accentTitle!.tr,
               style: const TextStyle(
                 color: AppColors.accentOrange,
                 fontSize: 34,
@@ -201,7 +202,7 @@ class _TitleBlock extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           Text(
-            item.description,
+            item.description.tr,
             textAlign: centered ? TextAlign.center : TextAlign.left,
             style: const TextStyle(
               color: AppColors.mutedText,

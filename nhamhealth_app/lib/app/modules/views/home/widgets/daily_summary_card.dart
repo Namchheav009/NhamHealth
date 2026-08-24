@@ -45,9 +45,9 @@ class DailySummaryCard extends GetView<HomeController> {
                       size: 20,
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Your Daily Wellness',
+                        'Your Daily Wellness'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -61,19 +61,19 @@ class DailySummaryCard extends GetView<HomeController> {
                     InkWell(
                       onTap: controller.openWellnessDetails,
                       borderRadius: BorderRadius.circular(16),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 3),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
                         child: Row(
                           children: [
                             Text(
-                              'View Details',
-                              style: TextStyle(
+                              'View Details'.tr,
+                              style: const TextStyle(
                                 fontSize: 9,
                                 color: AppColors.primaryGreen,
                               ),
                             ),
-                            SizedBox(width: 2),
-                            Icon(
+                            const SizedBox(width: 2),
+                            const Icon(
                               Icons.chevron_right_rounded,
                               size: 17,
                               color: AppColors.primaryGreen,
@@ -124,7 +124,7 @@ class DailySummaryCard extends GetView<HomeController> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                names[day.weekday - 1],
+                                names[day.weekday - 1].tr,
                                 style: TextStyle(
                                   fontSize: 9,
                                   color:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -41,7 +42,7 @@ class AuthPrimaryButton extends StatelessWidget {
                     ),
                   )
                   : Text(
-                    label,
+                    label.tr,
                     key: const ValueKey('auth-label'),
                     style: const TextStyle(
                       fontSize: 14,
@@ -81,7 +82,7 @@ class AuthSecondaryButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          label,
+          label.tr,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),
@@ -118,7 +119,7 @@ class SocialLoginButton extends StatelessWidget {
         ),
         icon: Image.asset('assets/icons/google.png', width: 18, height: 18),
         label: Text(
-          label,
+          label.tr,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),

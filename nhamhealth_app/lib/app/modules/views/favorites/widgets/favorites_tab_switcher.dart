@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../controllers/favorites/favorites_controller.dart';
 
@@ -33,7 +34,7 @@ class _Tab extends StatelessWidget {
     child: Material(color: active ? const Color(0xFF0AA653) : Colors.transparent, borderRadius: BorderRadius.circular(20), child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Center(child: Text(label, style: TextStyle(color: active ? Colors.white : const Color(0xFF333333), fontWeight: FontWeight.w600))),
+      child: Center(child: Text(label.tr, style: TextStyle(color: active ? Colors.white : const Color(0xFF333333), fontWeight: FontWeight.w600))),
     )),
   );
 }
