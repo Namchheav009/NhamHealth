@@ -6,6 +6,7 @@ import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/mood_card.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -84,7 +85,38 @@ void main() {
     expect(controller.dashboard.value!.dailySummary.calories.value, '0');
   });
 
+  testWidgets('mood card fits its old UI row at maximum home text scale', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 800);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(1.2)),
+          child: Scaffold(
+            body: SizedBox(
+              height: 78,
+              child: MoodCard(
+                emoji: '😊',
+                label: 'Happy',
+                selected: false,
+                onTap: _noop,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Happy'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
+
+void _noop() {}
 
 class _SessionAuthService extends AuthService {
   _SessionAuthService([this.user]);

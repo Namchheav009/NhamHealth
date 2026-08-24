@@ -15,14 +15,13 @@ class GreetingSection extends GetView<HomeController> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: AppShadows.surface,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -40,43 +39,6 @@ class GreetingSection extends GetView<HomeController> {
                         ),
                       ),
                     ),
-                    Obx(() {
-                      final selected = controller.moods.firstWhereOrNull(
-                        (mood) => mood.id == controller.selectedMoodId.value,
-                      );
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child:
-                            selected == null
-                                ? const Text(
-                                  'Select one',
-                                  key: ValueKey('empty-mood'),
-                                  style: TextStyle(
-                                    color: AppColors.secondaryText,
-                                    fontSize: 10,
-                                  ),
-                                )
-                                : Container(
-                                  key: ValueKey(selected.id),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.softGreen,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '${selected.emoji} ${selected.name}',
-                                    style: const TextStyle(
-                                      color: AppColors.darkGreen,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                      );
-                    }),
                   ],
                 ),
               ),
