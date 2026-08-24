@@ -26,6 +26,8 @@ import '../modules/bindings/profile/profile_binding.dart';
 import '../modules/bindings/profile/change_password_binding.dart';
 import '../modules/views/profile/change_password_view.dart';
 import '../modules/views/profile/profile_view.dart';
+import '../modules/views/profile/setting_view.dart';
+import '../modules/controllers/profile/setting_controller.dart';
 import '../modules/bindings/profile/language_binding.dart';
 import '../modules/views/profile/language_view.dart';
 
@@ -136,6 +138,14 @@ abstract class AppPages {
       page: () => const FavoritesView(),
       binding: FavoritesBinding(),
       transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.settings,
+      page: () => const SettingsView(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut<SettingsController>(() => SettingsController()),
+      ),
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.language,

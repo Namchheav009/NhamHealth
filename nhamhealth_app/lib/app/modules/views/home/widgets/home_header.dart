@@ -11,10 +11,7 @@ class HomeHeader extends GetView<HomeController> {
   Widget build(BuildContext context) => Obx(() => NhamAppBar(
     user: controller.authenticatedUser.value,
     unreadNotificationCount: controller.unreadNotificationCount.value,
-    onFavorites: controller.openFavorites,
     onNotifications: controller.openNotifications,
     onProfile: controller.openProfile,
-    onSettings: controller.openSettings,
-    onLogout: controller.logout,
   ));
 }

@@ -5,13 +5,11 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/feed/feed_controller.dart';
-import '../home/widgets/home_bottom_navigation.dart';
-import '../../controllers/profile/setting_controller.dart';
-import '../profile/setting_view.dart';
 
 class FeedPage extends GetView<FeedController> {
   const FeedPage({super.key});
@@ -92,18 +90,15 @@ class FeedPage extends GetView<FeedController> {
             user: controller.authenticatedUser.value,
             unreadNotificationCount:
                 controller.unreadNotificationCount.value,
-            onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
             onNotifications: () async {
               await Get.toNamed<void>(AppRoutes.notifications);
               await controller.loadTopBar();
             },
             onProfile:
-                () => Get.offNamed<void>(
+                () => Get.toNamed<void>(
                   AppRoutes.profile,
                   arguments: controller.authenticatedUser.value,
                 ),
-            onSettings: _openSettings,
-            onLogout: _logout,
           ),
         ),
       ),
@@ -111,17 +106,7 @@ class FeedPage extends GetView<FeedController> {
   }
 
   void _openSettings() {
-    Get.to(
-      () => const SettingsView(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<SettingsController>(() => SettingsController());
-      }),
-    );
-  }
-
-  Future<void> _logout() async {
-    await controller.logout();
-    Get.offAllNamed<void>(AppRoutes.login);
+    Get.offNamed<void>(AppRoutes.settings);
   }
 
   // ============================================================
@@ -725,10 +710,7 @@ class FeedPage extends GetView<FeedController> {
       case 3:
         break;
       case 4:
-        Get.offNamed<void>(
-          AppRoutes.profile,
-          arguments: controller.authenticatedUser.value,
-        );
+        _openSettings();
         return;
     }
   }
