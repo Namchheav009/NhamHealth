@@ -39,8 +39,8 @@ void main() {
     expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
     expect(find.text('Home'), findsNothing);
     expect(find.text('Meals'), findsNothing);
-    expect(find.text('Post'), findsOneWidget);
-    expect(find.text('Community'), findsNothing);
+    expect(find.text('Community'), findsOneWidget);
+    expect(find.text('Chat'), findsNothing);
     expect(find.text('Settings'), findsNothing);
     await tester.tap(find.byKey(const ValueKey<String>('nav-home')));
     expect(selected, 0);
@@ -94,14 +94,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Post control keeps its size across page text scales', (
+  testWidgets('Community control keeps its size across page text scales', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(381, 856);
     addTearDown(tester.view.reset);
 
-    Future<Size> postSize({
+    Future<Size> communitySize({
       required double textScale,
       required int selectedIndex,
     }) async {
@@ -119,15 +119,20 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      return tester.getSize(find.byKey(const ValueKey<String>('nav-post')));
+      return tester.getSize(
+        find.byKey(const ValueKey<String>('nav-community')),
+      );
     }
 
-    final homeSize = await postSize(textScale: 1.2, selectedIndex: 0);
-    final mealsSize = await postSize(textScale: 1, selectedIndex: 1);
-    final selectedPostSize = await postSize(textScale: 1.5, selectedIndex: 2);
+    final homeSize = await communitySize(textScale: 1.2, selectedIndex: 0);
+    final mealsSize = await communitySize(textScale: 1, selectedIndex: 1);
+    final selectedCommunitySize = await communitySize(
+      textScale: 1.5,
+      selectedIndex: 2,
+    );
 
     expect(mealsSize, homeSize);
-    expect(selectedPostSize, homeSize);
+    expect(selectedCommunitySize, homeSize);
     expect(mealsSize, const Size(52, 68));
     expect(tester.takeException(), isNull);
   });

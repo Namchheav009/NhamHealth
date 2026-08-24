@@ -54,14 +54,10 @@ class SettingsController extends GetxController {
         Get.offNamed<void>(AppRoutes.meals);
         return;
       case 2:
-        Get.snackbar(
-          'Post',
-          'Create post',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        Get.offNamed<void>(AppRoutes.community);
         return;
       case 3:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.snackbar('Chat', 'Chat is coming soon.');
         return;
       case 4:
         return;

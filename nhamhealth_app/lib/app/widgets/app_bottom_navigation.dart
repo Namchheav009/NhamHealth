@@ -6,7 +6,7 @@ import 'inner_shadow.dart';
 
 /// Shared five-destination navigation used by the main app pages.
 ///
-  /// Indexes are Home (0), Meals (1), Post (2), Community (3), and Settings (4).
+/// Indexes are Home (0), Meals (1), Community (2), Chat (3), and Settings (4).
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -74,11 +74,18 @@ class AppBottomNavigation extends StatelessWidget {
                           const SizedBox(width: 48),
                           _NavSlot(
                             child: _NavItem(
-                              icon: Icons.people_outline_rounded,
-                              selectedIcon: Icons.people_rounded,
-                              label: 'Community',
+                              icon: Icons.chat_bubble_rounded,
+                              label: 'Chat',
                               selected: selectedIndex == 3,
                               onTap: () => onSelect(3),
+                              iconBuilder:
+                                  (color) => _ChatIcon(
+                                    color: color,
+                                    lineColor:
+                                        selectedIndex == 3
+                                            ? AppColors.navigationGreen
+                                            : Colors.white,
+                                  ),
                             ),
                           ),
                           _NavSlot(
@@ -102,7 +109,7 @@ class AppBottomNavigation extends StatelessWidget {
               right: 0,
               top: 0,
               child: Center(
-                child: _PostButton(
+                child: _CommunityButton(
                   selected: selectedIndex == 2,
                   onTap: () => onSelect(2),
                 ),
@@ -233,10 +240,12 @@ class _NavItem extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.selectedIcon,
+    this.iconBuilder,
   });
 
   final IconData icon;
   final IconData? selectedIcon;
+  final Widget Function(Color color)? iconBuilder;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -281,12 +290,18 @@ class _NavItem extends StatelessWidget {
                             ? AppShadows.innerSelectedNavigation
                             : const [],
                     child: Center(
-                      child: Icon(
-                        selected ? selectedIcon ?? icon : icon,
-                        color:
+                      child:
+                          iconBuilder?.call(
                             selected ? Colors.white : AppColors.inactiveText,
-                        size: 25,
-                      ),
+                          ) ??
+                          Icon(
+                            selected ? selectedIcon ?? icon : icon,
+                            color:
+                                selected
+                                    ? Colors.white
+                                    : AppColors.inactiveText,
+                            size: 25,
+                          ),
                     ),
                   ),
                 ),
@@ -299,8 +314,8 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _PostButton extends StatelessWidget {
-  const _PostButton({required this.selected, required this.onTap});
+class _CommunityButton extends StatelessWidget {
+  const _CommunityButton({required this.selected, required this.onTap});
 
   final bool selected;
   final VoidCallback onTap;
@@ -310,13 +325,13 @@ class _PostButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Post',
+      label: 'Community',
       child: Tooltip(
-        message: 'Post',
+        message: 'Community',
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            key: const ValueKey<String>('nav-post'),
+            key: const ValueKey<String>('nav-community'),
             onTap: onTap,
             borderRadius: BorderRadius.circular(26),
             child: SizedBox(
@@ -345,7 +360,11 @@ class _PostButton extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const _PostPlusIcon(color: AppColors.primaryGreen),
+                  child: const Icon(
+                    Icons.people_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 27,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 AnimatedDefaultTextStyle(
@@ -360,7 +379,7 @@ class _PostButton extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                   child: const Text(
-                    'Post',
+                    'Community',
                     maxLines: 1,
                     textScaler: TextScaler.noScaling,
                   ),
@@ -375,37 +394,51 @@ class _PostButton extends StatelessWidget {
   }
 }
 
-class _PostPlusIcon extends StatelessWidget {
-  const _PostPlusIcon({required this.color});
+class _ChatIcon extends StatelessWidget {
+  const _ChatIcon({required this.color, required this.lineColor});
 
   final Color color;
+  final Color lineColor;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 30,
-      height: 30,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 28,
-            height: 5,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          Container(
-            width: 5,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-        ],
-      ),
+    return CustomPaint(
+      size: const Size.square(27),
+      painter: _ChatIconPainter(color, lineColor),
     );
   }
+}
+
+class _ChatIconPainter extends CustomPainter {
+  const _ChatIconPainter(this.color, this.lineColor);
+
+  final Color color;
+  final Color lineColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bubble = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(1, 1, size.width - 2, size.height - 7),
+          const Radius.circular(6),
+        ),
+      )
+      ..moveTo(7, size.height - 8)
+      ..lineTo(7, size.height - 1)
+      ..lineTo(14, size.height - 7)
+      ..close();
+    canvas.drawPath(bubble, Paint()..color = color);
+
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(7, 9), const Offset(20, 9), linePaint);
+    canvas.drawLine(const Offset(9, 14), const Offset(18, 14), linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChatIconPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.lineColor != lineColor;
 }
