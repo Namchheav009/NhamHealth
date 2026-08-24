@@ -954,10 +954,10 @@ class CommunityPage extends GetView<CommunityController> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
         child: AppBottomNavigation(
-          selectedIndex: 3,
+          selectedIndex: 2,
           onSelect: (index) {
-            if (index == 2) {
-              _showCreatePost();
+            if (index == 3) {
+              Get.snackbar('Chat', 'Chat is coming soon.');
               return;
             }
             if (index == 0) Get.offNamed<void>(AppRoutes.home);
