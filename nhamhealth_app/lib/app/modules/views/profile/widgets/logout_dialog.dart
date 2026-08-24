@@ -42,17 +42,6 @@ class LogoutDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Obx(
-                () => Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: 'Close',
-                    onPressed: isLoading.value ? null : Get.back,
-                    icon: const Icon(Icons.close_rounded),
-                    color: AppColors.mutedText,
-                  ),
-                ),
-              ),
               Container(
                 width: 64,
                 height: 64,
@@ -134,7 +123,7 @@ class LogoutDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text('Keep me signed in'),
+                  child: const Text('Cancel'),
                 ),
               ),
             ],
