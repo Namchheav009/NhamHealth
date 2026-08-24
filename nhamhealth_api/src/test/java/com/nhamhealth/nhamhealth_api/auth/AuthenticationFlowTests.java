@@ -44,6 +44,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.jayway.jsonpath.JsonPath;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.Ingredient;
 import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -511,6 +512,11 @@ class AuthenticationFlowTests {
         category.setIsActive(true);
         category = mealCategoryRepository.save(category);
 
+        Ingredient ingredient = new Ingredient();
+        ingredient.setIngredientName("Test ingredient " + UUID.randomUUID());
+        ingredient.setDefaultUnit("g");
+        ingredient = ingredientRepository.save(ingredient);
+
         MockMultipartFile mealImage = new MockMultipartFile(
                 "file", "portal-meal.png", MediaType.IMAGE_PNG_VALUE, pngBytes());
         MvcResult imageResult = mockMvc.perform(multipart("/admin/meal-images")
@@ -541,8 +547,8 @@ class AuthenticationFlowTests {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mealName":"Portal Meal","categoryId":%d,"calories":420,"servings":2,"description":"Created from the admin portal","difficulty":"Easy","cookingTimeMinutes":20,"published":true,"mainImageUrl":"%s","recipeSteps":[{"title":"Prepare","instruction":"Wash and prepare the ingredients.","imageUrl":"%s"},{"title":"Cook","instruction":"Cook until ready to serve.","imageUrl":"%s"}]}
-                                """.formatted(category.getCategoryId(), mealImageUrl, stepImageUrl, stepImageUrl)))
+                                {"mealName":"Portal Meal","categoryId":%d,"calories":420,"servings":2,"description":"Created from the admin portal","difficulty":"Easy","cookingTimeMinutes":20,"published":true,"mainImageUrl":"%s","ingredients":[{"ingredientId":%d,"quantity":100,"unit":"g","preparationNote":"Washed"}],"recipeSteps":[{"title":"Prepare","instruction":"Wash and prepare the ingredients.","imageUrl":"%s"},{"title":"Cook","instruction":"Cook until ready to serve.","imageUrl":"%s"}]}
+                                """.formatted(category.getCategoryId(), mealImageUrl, ingredient.getIngredientId(), stepImageUrl, stepImageUrl)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mealName").value("Portal Meal"))
                 .andExpect(jsonPath("$.category").value(category.getCategoryName()))
@@ -569,8 +575,8 @@ class AuthenticationFlowTests {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mealName":"Updated Portal Meal","categoryId":%d,"calories":510,"servings":3,"description":"Updated through the admin portal","difficulty":"Medium","cookingTimeMinutes":35,"published":false,"mainImageUrl":"%s","recipeSteps":[]}
-                                """.formatted(category.getCategoryId(), mealImageUrl)))
+                                {"mealName":"Updated Portal Meal","categoryId":%d,"calories":510,"servings":3,"description":"Updated through the admin portal","difficulty":"Medium","cookingTimeMinutes":35,"published":false,"mainImageUrl":"%s","ingredients":[{"ingredientId":%d,"quantity":150,"unit":"g","preparationNote":"Diced"}],"recipeSteps":[]}
+                                """.formatted(category.getCategoryId(), mealImageUrl, ingredient.getIngredientId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mealName").value("Updated Portal Meal"))
                 .andExpect(jsonPath("$.status").value("Draft"));

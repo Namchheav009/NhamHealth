@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.web;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.containsString;
@@ -18,8 +19,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
+import com.nhamhealth.nhamhealth_api.entity.DailyWellnessSummary;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
+import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @SpringBootTest
@@ -34,6 +37,9 @@ class LoginPageTests {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private DailyWellnessSummaryRepository dailyWellnessSummaryRepository;
 
 	@Test
 	void loginPageIsPublicAndContainsTheLoginForm() throws Exception {
@@ -91,6 +97,29 @@ class LoginPageTests {
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
 				.andExpect(status().isOk())
 				.andExpect(view().name("admin/daily-wellness"));
+	}
+
+	@Test
+	void authenticatedAdminCanRenderDailyWellnessPageWithSummaryRelations() throws Exception {
+		User admin = userRepository.findByEmailIgnoreCase("admin@nhamhealth.local").orElseThrow();
+		DailyWellnessSummary summary = new DailyWellnessSummary();
+		summary.setUser(admin);
+		summary.setSummaryDate(LocalDate.of(2099, 1, 1));
+		summary.setBalanceStatus("Balanced");
+		summary.setAiInsightText("Wellness template verification");
+		summary.setCreatedAt(LocalDateTime.now());
+		summary.setUpdatedAt(LocalDateTime.now());
+		summary = dailyWellnessSummaryRepository.saveAndFlush(summary);
+
+		try {
+			mockMvc.perform(get("/admin/daily-wellness")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+					.andExpect(status().isOk())
+					.andExpect(view().name("admin/daily-wellness"))
+					.andExpect(content().string(containsString("Wellness template verification")));
+		} finally {
+			dailyWellnessSummaryRepository.deleteById(summary.getDailySummaryId());
+		}
 	}
 
 	@Test

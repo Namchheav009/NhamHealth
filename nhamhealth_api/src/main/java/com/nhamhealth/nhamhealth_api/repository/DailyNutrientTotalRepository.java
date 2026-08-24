@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.repository;
 import java.util.List;
 import java.time.LocalDate;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,7 @@ public interface DailyNutrientTotalRepository extends JpaRepository<DailyNutrien
 
     void deleteByNutrientNutrientId(Integer nutrientId);
 
+    @EntityGraph(attributePaths = "nutrient")
     List<DailyNutrientTotal> findByDailyWellnessSummaryDailySummaryId(Integer summaryId);
 
     @Query("""
