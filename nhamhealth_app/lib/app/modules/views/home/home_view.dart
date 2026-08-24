@@ -11,6 +11,7 @@ import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
 import 'widgets/greeting_section.dart';
 import 'widgets/home_bottom_navigation.dart';
+import 'widgets/home_chatbot_button.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_search_bar.dart';
 import 'widgets/recommended_meal_card.dart';
@@ -88,6 +89,8 @@ class HomeView extends GetView<HomeController> {
             ),
           ),
         ),
+        floatingActionButton: const HomeChatbotButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
