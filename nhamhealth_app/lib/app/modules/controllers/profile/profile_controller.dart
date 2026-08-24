@@ -7,7 +7,6 @@ import '../../models/auth/authenticated_user_model.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../views/profile/edit_profile_view.dart';
-import '../../views/profile/setting_view.dart';
 import 'edit_profile_controller.dart';
 import 'setting_controller.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
@@ -209,6 +208,10 @@ class ProfileController extends GetxController {
   }
 
   void changeNavigation(int index) {
+    if (index == 4) {
+      openSettings();
+      return;
+    }
     if (index == selectedNavIndex.value) return;
     selectedNavIndex.value = index;
 
@@ -226,7 +229,6 @@ class ProfileController extends GetxController {
         Get.offNamed<void>(AppRoutes.feed);
         break;
       case 4:
-        // Already profile
         break;
     }
   }
@@ -258,12 +260,7 @@ class ProfileController extends GetxController {
   }
 
   void openSettings() {
-    Get.to(
-      () => const SettingsView(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<SettingsController>(() => SettingsController());
-      }),
-    );
+    Get.offNamed<void>(AppRoutes.settings);
   }
 
   void requestLogout() {
@@ -280,6 +277,14 @@ class ProfileController extends GetxController {
 
   void openInsights() {
     // Get.toNamed(AppRoutes.insights);
+  }
+
+  void goBack() {
+    if (Get.key.currentState?.canPop() ?? false) {
+      Get.back<void>();
+    } else {
+      Get.offAllNamed<void>(AppRoutes.home);
+    }
   }
 
   @override

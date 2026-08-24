@@ -3,12 +3,12 @@ import 'package:get/get.dart';
 
 import '../../controllers/profile/appearance_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
 
 class AppearanceView extends GetView<AppearanceController> {
   const AppearanceView({super.key});
 
   static const green = Color(0xFF00A651);
-  static const darkGreen = Color(0xFF006B38);
 
   @override
   Widget build(BuildContext context) {
@@ -31,34 +31,9 @@ class AppearanceView extends GetView<AppearanceController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: controller.goBack,
-                              behavior: HitTestBehavior.opaque,
-                              child: const SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: Icon(
-                                  Icons.arrow_back_rounded,
-                                  size: 23,
-                                  color: darkGreen,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 5),
-
-                            const Text(
-                              'Appearance',
-                              style: TextStyle(
-                                fontSize: 21,
-                                height: 1,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
+                        AppBackHeader(
+                          title: 'Appearance',
+                          onBack: controller.goBack,
                         ),
 
                         const SizedBox(height: 24),

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../widgets/app_back_header.dart';
+
 import '../../../../config/api_config.dart';
 import '../../../theme/app_spacing.dart';
 import '../../controllers/profile/edit_profile_controller.dart';
@@ -57,27 +59,10 @@ class EditProfileView extends GetView<EditProfileController> {
   // -----------------------------------------
 
   Widget _buildAppBar() {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: controller.goBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Color(0xFF006C3B),
-            size: 25,
-          ),
-        ),
-
-        const SizedBox(width: 5),
-
-        const Text(
-          'Edit Profile',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
-        ),
-
-        const Spacer(),
-
-        Obx(
+    return AppBackHeader(
+      title: 'Edit Profile',
+      onBack: controller.goBack,
+      trailing: Obx(
           () => TextButton(
             onPressed: controller.isSaving.value
                 ? null
@@ -101,7 +86,6 @@ class EditProfileView extends GetView<EditProfileController> {
                   ),
           ),
         ),
-      ],
     );
   }
 

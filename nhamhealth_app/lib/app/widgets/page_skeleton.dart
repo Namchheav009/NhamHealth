@@ -10,6 +10,7 @@ enum PageSkeletonType {
   notifications,
   favorites,
   community,
+  settings,
 }
 
 class PageSkeleton extends StatefulWidget {
@@ -53,6 +54,11 @@ class PageSkeleton extends StatefulWidget {
     super.key,
     this.duration = const Duration(milliseconds: 1600),
   }) : type = PageSkeletonType.community;
+
+  const PageSkeleton.settings({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.settings;
 
   final PageSkeletonType type;
   final Duration duration;
@@ -154,7 +160,30 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.notifications => const _NotificationsPlaceholder(),
     PageSkeletonType.favorites => const _FavoritesPlaceholder(),
     PageSkeletonType.community => const _CommunityPlaceholder(),
+    PageSkeletonType.settings => const _SettingsPlaceholder(),
   };
+}
+
+class _SettingsPlaceholder extends StatelessWidget {
+  const _SettingsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonBox(width: 72, height: 13, radius: 7),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 145),
+      SizedBox(height: 21),
+      _SkeletonBox(width: 92, height: 13, radius: 7),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 145),
+      SizedBox(height: 21),
+      _SkeletonBox(width: 64, height: 13, radius: 7),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 145),
+    ],
+  );
 }
 
 class _SkeletonBox extends StatelessWidget {

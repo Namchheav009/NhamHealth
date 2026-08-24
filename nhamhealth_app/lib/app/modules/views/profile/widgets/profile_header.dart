@@ -105,29 +105,32 @@ class ProfileHeader extends GetView<ProfileController> {
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: controller.editProfile,
-              icon: const Icon(Icons.edit_rounded, size: 15),
-              label: const Text('Edit profile'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: green,
-                minimumSize: const Size.fromHeight(42),
-                iconColor: green,
-                side: const BorderSide(color: Color(0xFFBFE6CC)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: controller.editProfile,
+                icon: const Icon(Icons.edit_outlined, size: 14),
+                label: const Text(
+                  'Edit Profile',
+                  maxLines: 1,
+                  textScaler: TextScaler.noScaling,
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                style: FilledButton.styleFrom(
+                  backgroundColor: green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(88, 34),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

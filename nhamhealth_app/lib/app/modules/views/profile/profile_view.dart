@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../routes/app_routes.dart';
 
 import '../../controllers/profile/profile_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
-import '../../../widgets/app_background.dart';
-import '../../../widgets/nham_app_bar.dart';
 import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
-import '../home/widgets/home_bottom_navigation.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
 
@@ -32,7 +30,7 @@ class ProfileView extends GetView<ProfileController> {
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: AppSpacing.pagePaddingWithNavigation,
+              padding: AppSpacing.pagePadding,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
@@ -90,38 +88,14 @@ class ProfileView extends GetView<ProfileController> {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: AppSpacing.navigationMargin,
-        child: Center(
-          heightFactor: 1,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSpacing.maxContentWidth,
-            ),
-            child: Obx(
-              () => AppBottomNavigation(
-                selectedIndex: controller.selectedNavIndex.value,
-                onSelect: controller.changeNavigation,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildTopBar() {
-    return Obx(
-      () => NhamAppBar(
-        user: controller.authenticatedUser.value,
-        unreadNotificationCount: controller.unreadNotificationCount.value,
-        onFavorites: () => Get.toNamed<void>(AppRoutes.favorites),
-        onNotifications: controller.openNotifications,
-        onProfile: controller.openProfile,
-        onSettings: controller.openSettings,
-        onLogout: controller.requestLogout,
-      ),
+    return AppBackHeader(
+      title: 'Profile',
+      backButtonKey: const ValueKey('profile-back-button'),
+      onBack: controller.goBack,
     );
   }
 }
