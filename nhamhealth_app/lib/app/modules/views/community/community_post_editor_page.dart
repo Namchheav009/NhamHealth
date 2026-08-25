@@ -114,15 +114,17 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Get.snackbar('Image limit reached', 'A post can include up to 6 images.');
         return;
       }
-      final files = source == ImageSource.gallery
-          ? await _picker.pickMultiImage(imageQuality: 82, maxWidth: 1600)
-          : [
-              ?await _picker.pickImage(
-                source: source,
-                imageQuality: 82,
-                maxWidth: 1600,
-              ),
-            ];
+      final List<XFile> files;
+      if (source == ImageSource.gallery) {
+        files = await _picker.pickMultiImage(imageQuality: 82, maxWidth: 1600);
+      } else {
+        final image = await _picker.pickImage(
+          source: source,
+          imageQuality: 82,
+          maxWidth: 1600,
+        );
+        files = image == null ? <XFile>[] : <XFile>[image];
+      }
       if (files.isEmpty) return;
       final selected = files.take(remaining).toList(growable: false);
       final bytes = await Future.wait(selected.map((image) => image.readAsBytes()));
@@ -659,8 +661,18 @@ class _AudiencePageState extends State<_AudiencePage> {
                   style: TextStyle(color: Color(0xFF626A7A), fontSize: 15, height: 1.4),
                 ),
                 const SizedBox(height: 28),
-                for (final audience in CommunityPostVisibility.values)
-                  _option(audience, _subtitle(audience)),
+                RadioGroup<CommunityPostVisibility>(
+                  groupValue: _selected,
+                  onChanged: (value) {
+                    if (value != null) setState(() => _selected = value);
+                  },
+                  child: Column(
+                    children: [
+                      for (final audience in CommunityPostVisibility.values)
+                        _option(audience, _subtitle(audience)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -710,9 +722,7 @@ class _AudiencePageState extends State<_AudiencePage> {
           ),
           Radio<CommunityPostVisibility>(
             value: audience,
-            groupValue: _selected,
             activeColor: _green,
-            onChanged: (value) => setState(() => _selected = value!),
           ),
         ],
       ),
