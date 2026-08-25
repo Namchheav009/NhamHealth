@@ -15,6 +15,10 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findAllByOrderByUpdatedAtDescCreatedAtDesc();
 
     @EntityGraph(attributePaths = "user")
+    List<Post> findByUser_UserIdAndStatusIgnoreCaseOrderByUpdatedAtDescCreatedAtDesc(
+            Integer userId, String status);
+
+    @EntityGraph(attributePaths = "user")
     Page<Post> findAllByOrderByUpdatedAtDescCreatedAtDesc(Pageable pageable);
 
     @Query("select count(distinct post.user.userId) from Post post")

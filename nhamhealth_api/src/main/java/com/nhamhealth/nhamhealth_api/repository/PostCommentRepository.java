@@ -11,6 +11,11 @@ import com.nhamhealth.nhamhealth_api.entity.PostComment;
 public interface PostCommentRepository extends JpaRepository<PostComment, Integer> {
     long countByPostPostId(Integer postId);
 
+    long countByPostPostIdAndStatusIgnoreCase(Integer postId, String status);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "user")
+    List<PostComment> findByPostPostIdAndStatusIgnoreCaseOrderByCreatedAtAsc(Integer postId, String status);
+
     @Query("""
             select comment.post.postId as postId, count(comment) as total
             from PostComment comment

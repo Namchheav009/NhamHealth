@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../models/community/community_person.dart';
+import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
+import '../../models/community/community_tag.dart';
 import '../../models/community/community_types.dart';
 
 class CommunityRepository {
@@ -34,22 +36,38 @@ class CommunityRepository {
     };
   }
 
+  Future<List<CommunityTag>> getTags() async {
+    final payload = await _getList('/api/v1/community/tags');
+    return payload
+        .map((item) => CommunityTag.fromJson(Map<String, dynamic>.from(item as Map)))
+        .where((tag) => tag.id > 0 && tag.name.isNotEmpty)
+        .toList(growable: false);
+  }
+
   Future<CommunityPost> createPost({
     required String title,
     required String description,
-    Uint8List? imageBytes,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    List<int> tagIds = const [],
   }) async {
     final request =
         http.MultipartRequest('POST', _uri('/api/v1/community/posts'))
           ..headers.addAll(await _headers(includeContentType: false))
           ..fields['title'] = title.trim()
-          ..fields['description'] = description.trim();
-    if (imageBytes != null) {
+          ..fields['description'] = description.trim()
+          ..fields['visibility'] = visibility.apiValue
+          ..fields['allowComments'] = '$allowComments'
+          ..fields['allowReplies'] = '$allowReplies';
+    if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
+    for (var index = 0; index < imageBytes.length; index++) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          'image',
-          imageBytes,
-          filename: 'community-post.jpg',
+          'images',
+          imageBytes[index],
+          filename: 'community-post-${index + 1}.jpg',
         ),
       );
     }
@@ -57,6 +75,47 @@ class CommunityRepository {
       await _client.send(request),
     );
     return _post(_decodeMap(response), justNow: true);
+  }
+
+  Future<CommunityPost> updatePost({
+    required String postId,
+    required String title,
+    required String description,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    bool removeImage = false,
+    List<int> tagIds = const [],
+  }) async {
+    final request = http.MultipartRequest('PUT', _uri('/api/v1/community/posts/$postId'))
+      ..headers.addAll(await _headers(includeContentType: false))
+      ..fields['title'] = title.trim()
+      ..fields['description'] = description.trim()
+      ..fields['visibility'] = visibility.apiValue
+      ..fields['allowComments'] = '$allowComments'
+      ..fields['allowReplies'] = '$allowReplies'
+      ..fields['removeImage'] = '$removeImage';
+    if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
+    for (var index = 0; index < imageBytes.length; index++) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'images',
+          imageBytes[index],
+          filename: 'community-post-${index + 1}.jpg',
+        ),
+      );
+    }
+    final response = await http.Response.fromStream(await _client.send(request));
+    return _post(_decodeMap(response));
+  }
+
+  Future<void> deletePost(String postId) async {
+    final response = await _client.delete(
+      _uri('/api/v1/community/posts/$postId'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
   }
 
   Future<CommunityPost> toggleLike(String postId) async {
@@ -67,12 +126,64 @@ class CommunityRepository {
     return _post(_decodeMap(response));
   }
 
-  Future<void> sharePost(String postId) async {
+  Future<void> sharePost(
+    String postId, {
+    List<String> recipientIds = const [],
+  }) async {
     final response = await _client.post(
       _uri('/api/v1/community/posts/$postId/share'),
       headers: await _headers(),
+      body: jsonEncode({
+        'recipientIds': recipientIds.map(int.parse).toList(growable: false),
+      }),
     );
     _ensureSuccess(response);
+  }
+
+  Future<List<CommunityComment>> getComments(String postId) async {
+    final payload = await _getList('/api/v1/community/posts/$postId/comments');
+    return payload.map((item) {
+      final comment = Map<String, dynamic>.from(item as Map);
+      comment['authorAvatarUrl'] = _absoluteUrl(
+        '${comment['authorAvatarUrl'] ?? ''}',
+      );
+      return CommunityComment.fromJson(comment);
+    }).toList(growable: false);
+  }
+
+  Future<CommunityComment> addComment(
+    String postId,
+    String text, {
+    String? parentCommentId,
+  }) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/posts/$postId/comments'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'text': text.trim(),
+        if (parentCommentId != null) 'parentCommentId': int.parse(parentCommentId),
+      }),
+    );
+    final comment = _decodeMap(response);
+    comment['authorAvatarUrl'] = _absoluteUrl(
+      '${comment['authorAvatarUrl'] ?? ''}',
+    );
+    return CommunityComment.fromJson(comment);
+  }
+
+  Future<CommunityComment> toggleCommentLike(
+    String postId,
+    String commentId,
+  ) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/posts/$postId/comments/$commentId/like'),
+      headers: await _headers(),
+    );
+    final comment = _decodeMap(response);
+    comment['authorAvatarUrl'] = _absoluteUrl(
+      '${comment['authorAvatarUrl'] ?? ''}',
+    );
+    return CommunityComment.fromJson(comment);
   }
 
   Future<String> toggleFollow(String userId) async {
@@ -85,6 +196,9 @@ class CommunityRepository {
 
   CommunityPost _post(Map<String, dynamic> json, {bool justNow = false}) {
     json['imageUrl'] = _absoluteUrl('${json['imageUrl'] ?? ''}');
+    json['imageUrls'] = (json['imageUrls'] as List<dynamic>? ?? const [])
+        .map((url) => _absoluteUrl('$url'))
+        .toList(growable: false);
     json['authorAvatarUrl'] = _absoluteUrl('${json['authorAvatarUrl'] ?? ''}');
     json['ageLabel'] =
         justNow ? 'Just now' : _ageLabel('${json['createdAt'] ?? ''}');
