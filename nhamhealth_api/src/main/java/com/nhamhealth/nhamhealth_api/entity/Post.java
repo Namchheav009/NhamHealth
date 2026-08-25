@@ -43,6 +43,12 @@ public class Post {
     @Column(name = "visibility", nullable = false, length = 20)
     private String visibility;
 
+    @Column(name = "allow_comments", nullable = false)
+    private boolean allowComments = true;
+
+    @Column(name = "allow_replies", nullable = false)
+    private boolean allowReplies = true;
+
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
@@ -94,6 +100,14 @@ public class Post {
     public void setVisibility(String visibility) {
         this.visibility = visibility;
     }
+
+    public boolean isAllowComments() { return allowComments; }
+
+    public void setAllowComments(boolean allowComments) { this.allowComments = allowComments; }
+
+    public boolean isAllowReplies() { return allowReplies; }
+
+    public void setAllowReplies(boolean allowReplies) { this.allowReplies = allowReplies; }
 
     public String getStatus() {
         return status;

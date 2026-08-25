@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../models/auth/authenticated_user_model.dart';
+import '../../models/community/community_post.dart';
+import '../../models/community/community_comment.dart';
+import '../../models/community/community_person.dart';
+import '../../models/community/community_types.dart';
 import '../../models/profile/profile_dashboard_model.dart';
+import '../../repositories/community/community_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../views/profile/edit_profile_view.dart';
 import 'edit_profile_controller.dart';
@@ -12,16 +18,23 @@ import 'setting_controller.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
 
 class ProfileController extends GetxController {
-  ProfileController({required ProfileRepository repository})
-    : _repository = repository;
+  ProfileController({
+    required ProfileRepository repository,
+    required CommunityRepository communityRepository,
+  }) : _repository = repository,
+       _communityRepository = communityRepository;
 
   final ProfileRepository _repository;
+  final CommunityRepository _communityRepository;
   String? _uploadedProfileImagePath;
   final selectedNavIndex = 4.obs;
   final isLoading = false.obs;
   final errorMessage = RxnString();
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
+  final posts = <CommunityPost>[].obs;
+  final commentsByPost = <String, List<CommunityComment>>{}.obs;
+  final friends = <CommunityPerson>[].obs;
   final unreadNotificationCount = 0.obs;
   Timer? _notificationCountTimer;
 
@@ -97,7 +110,12 @@ class ProfileController extends GetxController {
     errorMessage.value = null;
 
     try {
-      _applyDashboard(await _repository.getDashboard());
+      final results = await Future.wait<dynamic>([
+        _repository.getDashboard(),
+        _repository.getMyPosts(),
+      ]);
+      _applyDashboard(results[0] as ProfileDashboardModel);
+      posts.assignAll(results[1] as List<CommunityPost>);
     } on ProfileException catch (error) {
       errorMessage.value = error.message;
     } on Object {
@@ -108,6 +126,83 @@ class ProfileController extends GetxController {
   }
 
   Future<void> refreshProfile() => loadProfile();
+
+  Future<void> updatePost({
+    required CommunityPost post,
+    required String title,
+    required String description,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    bool removeImage = false,
+    List<int> tagIds = const [],
+  }) async {
+    final updated = await _repository.updatePost(
+      postId: post.id,
+      title: title,
+      description: description,
+      imageBytes: imageBytes,
+      visibility: visibility,
+      allowComments: allowComments,
+      allowReplies: allowReplies,
+      removeImage: removeImage,
+      tagIds: tagIds,
+    );
+    final index = posts.indexWhere((item) => item.id == post.id);
+    if (index >= 0) posts[index] = updated;
+  }
+
+  Future<void> deletePost(CommunityPost post) async {
+    await _repository.deletePost(post.id);
+    posts.removeWhere((item) => item.id == post.id);
+  }
+
+  Future<void> togglePostLike(CommunityPost post) async {
+    final updated = await _communityRepository.toggleLike(post.id);
+    _replacePost(updated);
+  }
+
+  List<CommunityComment> commentsFor(String postId) =>
+      commentsByPost[postId] ?? const [];
+
+  Future<void> loadComments(CommunityPost post) async {
+    commentsByPost[post.id] = await _communityRepository.getComments(post.id);
+  }
+
+  Future<void> addComment(
+    CommunityPost post,
+    String text, {
+    String? parentCommentId,
+  }) async {
+    final comment = await _communityRepository.addComment(
+      post.id,
+      text,
+      parentCommentId: parentCommentId,
+    );
+    commentsByPost[post.id] = [...commentsFor(post.id), comment];
+    post.comments += 1;
+    posts.refresh();
+  }
+
+  Future<void> loadFriends() async {
+    final people = await _communityRepository.getPeople();
+    friends.assignAll(people[FriendsView.friends] ?? const []);
+  }
+
+  Future<void> sharePost(
+    CommunityPost post, {
+    List<String> recipientIds = const [],
+  }) async {
+    await _communityRepository.sharePost(post.id, recipientIds: recipientIds);
+    post.shares += recipientIds.isEmpty ? 1 : recipientIds.length;
+    posts.refresh();
+  }
+
+  void _replacePost(CommunityPost updated) {
+    final index = posts.indexWhere((item) => item.id == updated.id);
+    if (index >= 0) posts[index] = updated;
+  }
 
   void _applyUser(AuthenticatedUser user) {
     authenticatedUser.value = user;
