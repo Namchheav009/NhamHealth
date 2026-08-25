@@ -14,7 +14,7 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('shared bottom navigation keeps the Home dimensions', (
+  testWidgets('shared bottom navigation keeps its dimensions and labels', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -31,7 +31,7 @@ void main() {
             top: false,
             minimum: const EdgeInsets.fromLTRB(25, 0, 25, 14),
             child: AppBottomNavigation(
-              selectedIndex: 3,
+              selectedIndex: 0,
               onSelect: (index) => selected = index,
             ),
           ),
@@ -40,11 +40,13 @@ void main() {
     );
 
     expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
-    expect(find.text('Home'), findsNothing);
-    expect(find.text('Meals'), findsNothing);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Meals'), findsOneWidget);
     expect(find.text('Community'), findsOneWidget);
+    expect(find.text('Favorites'), findsNothing);
     expect(find.text('Chat'), findsNothing);
-    expect(find.text('Settings'), findsNothing);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('nav-chatbot')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey<String>('nav-home')));
     expect(selected, 0);
     expect(tester.takeException(), isNull);
@@ -74,7 +76,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
     }
 
     const keys = [
@@ -125,7 +127,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       return tester.getSize(
         find.byKey(const ValueKey<String>('nav-community')),
       );
@@ -140,7 +142,39 @@ void main() {
 
     expect(mealsSize, homeSize);
     expect(selectedCommunitySize, homeSize);
-    expect(mealsSize, const Size(52, 68));
+    expect(mealsSize.height, 72);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('chatbot stays separate on the right of the four-item bar', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(381, 856);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          bottomNavigationBar: SafeArea(
+            top: false,
+            minimum: AppSpacing.navigationMargin,
+            child: AppBottomNavigation(selectedIndex: 0, onSelect: (_) {}),
+          ),
+        ),
+      ),
+    );
+
+    final chatbot = find.byKey(const ValueKey<String>('nav-chatbot'));
+    final settings = find.byKey(const ValueKey<String>('nav-settings'));
+
+    expect(tester.getSize(chatbot), const Size(72, 72));
+    expect(
+      tester.getCenter(chatbot).dx,
+      greaterThan(tester.getCenter(settings).dx),
+    );
     expect(tester.takeException(), isNull);
   });
 
