@@ -99,7 +99,6 @@ void main() {
         jsonEncode([
           {
             'id': 24,
-            'title': 'My breakfast',
             'description': 'Oatmeal with fruit',
             'imageUrl': '/uploads/post.jpg',
             'author': 'Test User',
@@ -124,7 +123,7 @@ void main() {
     expect(capturedRequest.url.path, '/api/v1/community/posts/mine');
     expect(capturedRequest.headers['authorization'], 'Bearer test-token');
     expect(posts, hasLength(1));
-    expect(posts.single.title, 'My breakfast');
+    expect(posts.single.description, 'Oatmeal with fruit');
     expect(posts.single.imageUrl, contains('/uploads/post.jpg'));
     expect(posts.single.isLiked, isTrue);
   });

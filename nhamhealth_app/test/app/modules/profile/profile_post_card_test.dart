@@ -20,7 +20,6 @@ void main() {
               child: ProfilePostCard(
                 post: CommunityPost(
                   id: '1',
-                  title: 'Profile update',
                   description: 'A profile post with multiple images.',
                   imageUrl: 'https://example.invalid/profile-1.jpg',
                   imageUrls: const [

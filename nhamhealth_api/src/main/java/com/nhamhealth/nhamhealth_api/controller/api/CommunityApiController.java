@@ -47,7 +47,6 @@ public class CommunityApiController {
     @PostMapping(value = "/posts", consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
     public CommunityPostResponse create(@AuthenticationPrincipal Jwt jwt,
-            @RequestParam(required = false) String title,
             @RequestParam String description,
             @RequestParam(defaultValue = "PUBLIC") String visibility,
             @RequestParam(defaultValue = "true") boolean allowComments,
@@ -55,13 +54,12 @@ public class CommunityApiController {
             @RequestParam(required = false) List<Integer> tagIds,
             @RequestPart(name = "images", required = false) List<MultipartFile> images,
             @RequestPart(name = "image", required = false) MultipartFile image) {
-        return service.create(userId(jwt), title, description, visibility, allowComments, allowReplies, tagIds,
+        return service.create(userId(jwt), description, visibility, allowComments, allowReplies, tagIds,
                 mergeImages(images, image));
     }
 
     @PutMapping(value = "/posts/{postId}", consumes = "multipart/form-data")
     public CommunityPostResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
-            @RequestParam(required = false) String title,
             @RequestParam String description,
             @RequestParam(defaultValue = "PUBLIC") String visibility,
             @RequestParam(defaultValue = "true") boolean allowComments,
@@ -70,7 +68,7 @@ public class CommunityApiController {
             @RequestParam(required = false) List<Integer> tagIds,
             @RequestPart(name = "images", required = false) List<MultipartFile> images,
             @RequestPart(name = "image", required = false) MultipartFile image) {
-        return service.update(userId(jwt), postId, title, description, visibility, allowComments, allowReplies,
+        return service.update(userId(jwt), postId, description, visibility, allowComments, allowReplies,
                 removeImage, tagIds, mergeImages(images, image), image != null && !image.isEmpty());
     }
 

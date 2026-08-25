@@ -129,7 +129,6 @@ class ProfileController extends GetxController {
 
   Future<void> updatePost({
     required CommunityPost post,
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -140,7 +139,6 @@ class ProfileController extends GetxController {
   }) async {
     final updated = await _repository.updatePost(
       postId: post.id,
-      title: title,
       description: description,
       imageBytes: imageBytes,
       visibility: visibility,
