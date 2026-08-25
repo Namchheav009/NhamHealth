@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_shadows.dart';
@@ -27,21 +28,16 @@ class AiRecommendationCard extends GetView<HomeController> {
             child: Stack(
               children: [
                 Positioned(
-                  right: -40,
-                  top: 27,
-                  child: Container(
-                    width: 148,
-                    height: 148,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                      boxShadow: AppShadows.image,
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/meals/healthy_salad.jpg',
-                        fit: BoxFit.cover,
+                  right: 2,
+                  top: 24,
+                  child: SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: RepaintBoundary(
+                      child: Lottie.asset(
+                        'assets/animations/Anima Bot.json',
+                        fit: BoxFit.contain,
+                        repeat: true,
                       ),
                     ),
                   ),
@@ -223,9 +219,7 @@ class _SelectedMoodDetail extends StatelessWidget {
                   text: 'You feel @mood\n'.trParams({'mood': mood.name.tr}),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                TextSpan(
-                  text: 'AI will personalize meals for this mood.'.tr,
-                ),
+                TextSpan(text: 'AI will personalize meals for this mood.'.tr),
               ],
             ),
             maxLines: 4,

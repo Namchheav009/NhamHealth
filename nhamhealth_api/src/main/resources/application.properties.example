@@ -38,7 +38,7 @@ app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
 app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
 app.ai.nvidia.text-max-tokens=4096
 app.ai.nvidia.reasoning-effort=low
-app.ai.prompt-version=food-vision-components-v1
+app.ai.prompt-version=food-drink-vision-v3
 app.ai.food.confirmation-threshold=0.75
 app.ai.food.candidate-margin-threshold=0.15
 app.ai.food.portion-confirmation-threshold=0.70
@@ -73,7 +73,7 @@ spring.flyway.baseline-on-migrate=true
 spring.flyway.baseline-version=0
 spring.jpa.open-in-view=false
 spring.cache.type=caffeine
-spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients
+spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches
 spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=60s
 
 # Gmail SMTP (set GMAIL_USERNAME and GMAIL_APP_PASSWORD in your environment)
