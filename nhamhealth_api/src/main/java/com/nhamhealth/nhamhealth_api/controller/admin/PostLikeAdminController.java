@@ -26,7 +26,7 @@ public class PostLikeAdminController {
         this.posts = posts;
     }
 
-    @GetMapping("/admin/post-likes")
+    @GetMapping({"/admin/post-likes", "/admin/post_likes"})
     public String list(Model model) {
         var all = likes.findAllByOrderByCreatedAtDesc();
         model.addAttribute("pageTitle", "Post Likes");
@@ -39,7 +39,7 @@ public class PostLikeAdminController {
         return "admin/post-likes";
     }
 
-    @PostMapping("/admin/post-likes")
+    @PostMapping({"/admin/post-likes", "/admin/post_likes"})
     @ResponseBody
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
         try {
@@ -61,7 +61,7 @@ public class PostLikeAdminController {
         }
     }
 
-    @DeleteMapping("/admin/post-likes/{id}")
+    @DeleteMapping({"/admin/post-likes/{id}", "/admin/post_likes/{id}"})
     @ResponseBody
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         if (!likes.existsById(id)) return ResponseEntity.notFound().build();
