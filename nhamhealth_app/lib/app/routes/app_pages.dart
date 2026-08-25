@@ -49,7 +49,9 @@ import '../modules/bindings/wellness/food_source_detail_binding.dart';
 
 import 'app_routes.dart';
 import '../modules/views/community/community_page.dart';
+import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/bindings/community/community_binding.dart';
+import '../modules/bindings/community/community_post_detail_binding.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -221,6 +223,12 @@ abstract class AppPages {
       page: () => const CommunityPage(),
       binding: CommunityBinding(),
       transition: Transition.noTransition,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.communityPost,
+      page: () => const CommunityPostDetailPage(),
+      binding: CommunityPostDetailBinding(),
+      transition: Transition.rightToLeft,
     ),
   ];
 }

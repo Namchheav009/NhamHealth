@@ -20,14 +20,21 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.dto.response.NotificationResponse;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
+import com.nhamhealth.nhamhealth_api.repository.PostCommentRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationApiController {
     private final NotificationRepository repository;
+    private final PostCommentRepository comments;
+    private final UserProfileRepository profiles;
 
-    public NotificationApiController(NotificationRepository repository) {
+    public NotificationApiController(NotificationRepository repository, PostCommentRepository comments,
+            UserProfileRepository profiles) {
         this.repository = repository;
+        this.comments = comments;
+        this.profiles = profiles;
     }
 
     @GetMapping
@@ -58,8 +65,27 @@ public class NotificationApiController {
     }
 
     private NotificationResponse response(Notification notification) {
+        Integer actorUserId = notification.getActorUser() == null
+                ? null
+                : notification.getActorUser().getUserId();
+        String actorAvatarUrl = actorUserId == null
+                ? ""
+                : profiles.findByUser_UserId(actorUserId)
+                        .map(profile -> profile.getProfileImageUrl() == null ? "" : profile.getProfileImageUrl())
+                        .orElse("");
+        String referenceType = notification.getReferenceType();
+        Integer referenceId = notification.getReferenceId();
+        if ("COMMENT".equalsIgnoreCase(referenceType) && referenceId != null) {
+            var comment = comments.findById(referenceId);
+            if (comment.isPresent()) {
+                referenceType = "POST";
+                referenceId = comment.get().getPost().getPostId();
+            }
+        }
         return new NotificationResponse(notification.getNotificationId(), notification.getNotificationType(),
-                notification.getTitle(), notification.getMessage(), Boolean.TRUE.equals(notification.getIsRead()),
+                notification.getTitle(), notification.getMessage(), actorUserId, actorAvatarUrl,
+                referenceType, referenceId,
+                Boolean.TRUE.equals(notification.getIsRead()),
                 notification.getCreatedAt());
     }
 

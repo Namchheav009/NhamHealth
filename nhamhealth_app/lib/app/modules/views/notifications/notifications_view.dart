@@ -80,19 +80,19 @@ class NotificationsView extends StatelessWidget {
                           _NotificationSection(
                             title: 'New',
                             notifications: controller.unread,
-                            onTap: controller.markRead,
+                            onTap: controller.open,
                           ),
                           const SizedBox(height: 13),
                           _NotificationSection(
                             title: 'Today',
                             notifications: controller.today,
-                            onTap: controller.markRead,
+                            onTap: controller.open,
                           ),
                           const SizedBox(height: 13),
                           _NotificationSection(
                             title: 'Earlier',
                             notifications: controller.earlier,
-                            onTap: controller.markRead,
+                            onTap: controller.open,
                           ),
                         ],
                       ),
@@ -263,9 +263,8 @@ class _NotificationLeading extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child:
               isSocial
-                  ? Image.asset(
-                    'assets/images/homepage/profile.jpg',
-                    fit: BoxFit.cover,
+                  ? _SocialNotificationAvatar(
+                    imageUrl: notification.actorAvatarUrl,
                   )
                   : Icon(
                     notification.icon,
@@ -296,6 +295,27 @@ class _NotificationLeading extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _SocialNotificationAvatar extends StatelessWidget {
+  const _SocialNotificationAvatar({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Icon(
+      Icons.person_rounded,
+      size: 25,
+      color: AppColors.primaryGreen,
+    );
+    if (imageUrl.isEmpty) return fallback;
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }

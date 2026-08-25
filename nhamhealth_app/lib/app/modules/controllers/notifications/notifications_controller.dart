@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_alert.dart';
+import '../../../routes/app_routes.dart';
 import '../../models/notifications/notification_item.dart';
 import '../../repositories/notifications/notifications_repository.dart';
 
@@ -78,6 +79,15 @@ class NotificationsController extends GetxController {
     } on Object catch (error) {
       notifications[index] = item;
       AppAlert.error(title: 'Notification not updated', message: error.toString());
+    }
+  }
+
+  Future<void> open(NotificationItem item) async {
+    await markRead(item);
+    if (item.referenceType == 'POST' && item.referenceId != null) {
+      await Get.toNamed<void>(
+        AppRoutes.communityPostPath(item.referenceId!),
+      );
     }
   }
 

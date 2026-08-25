@@ -34,7 +34,7 @@ class AiMealCard extends GetView<WellnessController> {
                 child: Transform.scale(
                   scale: 1.25,
                   child: Lottie.asset(
-                    'assets/animations/live_chatbot.json',
+                    'assets/animations/chatbot.json',
                     fit: BoxFit.contain,
                     repeat: true,
                   ),
