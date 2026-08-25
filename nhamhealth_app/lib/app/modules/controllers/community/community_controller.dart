@@ -198,6 +198,22 @@ class CommunityController extends GetxController {
     posts.refresh();
   }
 
+  Future<CommunityPost> sharePostToFeed(
+    CommunityPost post, {
+    String message = '',
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+  }) async {
+    final shared = await _repository.sharePostToFeed(
+      post.id,
+      message: message,
+      visibility: visibility,
+    );
+    post.shares += 1;
+    posts.insert(0, shared);
+    section.value = CommunitySection.feed;
+    return shared;
+  }
+
   List<CommunityComment> commentsFor(String postId) =>
       commentsByPost[postId] ?? const [];
 

@@ -106,6 +106,17 @@ void main() {
             'authorAvatarUrl': '/uploads/avatar.jpg',
             'createdAt': DateTime.now().toUtc().toIso8601String(),
             'liked': true,
+            'sharedPost': {
+              'id': 12,
+              'authorId': 7,
+              'author': 'Original Member',
+              'role': 'Member',
+              'authorAvatarUrl': '/uploads/original-avatar.jpg',
+              'description': 'Original healthy idea',
+              'imageUrl': '/uploads/original-post.jpg',
+              'imageUrls': ['/uploads/original-post.jpg'],
+              'createdAt': DateTime.now().toUtc().toIso8601String(),
+            },
           },
         ]),
         200,
@@ -126,6 +137,15 @@ void main() {
     expect(posts.single.description, 'Oatmeal with fruit');
     expect(posts.single.imageUrl, contains('/uploads/post.jpg'));
     expect(posts.single.isLiked, isTrue);
+    expect(posts.single.sharedPost?.author, 'Original Member');
+    expect(
+      posts.single.sharedPost?.imageUrl,
+      contains('/uploads/original-post.jpg'),
+    );
+    expect(
+      posts.single.sharedPost?.authorAvatarUrl,
+      contains('/uploads/original-avatar.jpg'),
+    );
   });
 }
 

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
+import 'widgets/animated_reveal_text.dart';
 
 /// -----------------------------------------------------------------------
 /// AiFoodView — restyled
@@ -243,8 +244,9 @@ class AiFoodView extends GetView<AiFoodController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Know what is on your plate'.tr,
+              AnimatedRevealText(
+                text: 'Know what is on your plate'.tr,
+                duration: const Duration(milliseconds: 700),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -253,8 +255,11 @@ class AiFoodView extends GetView<AiFoodController> {
                 ),
               ),
               const SizedBox(height: 5),
-              Text(
-                'Snap a clear photo for instant nutrition insights.'.tr,
+              AnimatedRevealText(
+                text:
+                    'Snap a clear photo for instant nutrition insights.'.tr,
+                delay: const Duration(milliseconds: 220),
+                duration: const Duration(milliseconds: 900),
                 style: const TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
               ),
             ],
@@ -821,8 +826,12 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  item.title.trParams(item.titleParams),
+                child: AnimatedRevealText(
+                  key: ValueKey<String>(
+                    'ai-recommendation-title-${item.title}-${item.titleParams}',
+                  ),
+                  text: item.title.trParams(item.titleParams),
+                  duration: const Duration(milliseconds: 800),
                   style: TextStyle(
                     fontSize: 17,
                     color: color,
@@ -834,8 +843,13 @@ class AiFoodView extends GetView<AiFoodController> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            item.message.trParams(item.messageParams),
+          AnimatedRevealText(
+            key: ValueKey<String>(
+              'ai-recommendation-message-${item.message}-${item.messageParams}',
+            ),
+            text: item.message.trParams(item.messageParams),
+            delay: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 1500),
             style: const TextStyle(height: 1.45, fontSize: 14),
           ),
         ],

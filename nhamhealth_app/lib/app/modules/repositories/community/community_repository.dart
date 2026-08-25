@@ -47,7 +47,10 @@ class CommunityRepository {
   Future<List<CommunityTag>> getTags() async {
     final payload = await _getList('/api/v1/community/tags');
     return payload
-        .map((item) => CommunityTag.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) =>
+              CommunityTag.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
         .where((tag) => tag.id > 0 && tag.name.isNotEmpty)
         .toList(growable: false);
   }
@@ -93,13 +96,14 @@ class CommunityRepository {
     bool removeImage = false,
     List<int> tagIds = const [],
   }) async {
-    final request = http.MultipartRequest('PUT', _uri('/api/v1/community/posts/$postId'))
-      ..headers.addAll(await _headers(includeContentType: false))
-      ..fields['description'] = description.trim()
-      ..fields['visibility'] = visibility.apiValue
-      ..fields['allowComments'] = '$allowComments'
-      ..fields['allowReplies'] = '$allowReplies'
-      ..fields['removeImage'] = '$removeImage';
+    final request =
+        http.MultipartRequest('PUT', _uri('/api/v1/community/posts/$postId'))
+          ..headers.addAll(await _headers(includeContentType: false))
+          ..fields['description'] = description.trim()
+          ..fields['visibility'] = visibility.apiValue
+          ..fields['allowComments'] = '$allowComments'
+          ..fields['allowReplies'] = '$allowReplies'
+          ..fields['removeImage'] = '$removeImage';
     if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
     for (var index = 0; index < imageBytes.length; index++) {
       request.files.add(
@@ -110,7 +114,9 @@ class CommunityRepository {
         ),
       );
     }
-    final response = await http.Response.fromStream(await _client.send(request));
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
     return _post(_decodeMap(response));
   }
 
@@ -144,15 +150,33 @@ class CommunityRepository {
     _ensureSuccess(response);
   }
 
+  Future<CommunityPost> sharePostToFeed(
+    String postId, {
+    String message = '',
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+  }) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/posts/$postId/share-to-feed'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'message': message.trim(),
+        'visibility': visibility.apiValue,
+      }),
+    );
+    return _post(_decodeMap(response), justNow: true);
+  }
+
   Future<List<CommunityComment>> getComments(String postId) async {
     final payload = await _getList('/api/v1/community/posts/$postId/comments');
-    return payload.map((item) {
-      final comment = Map<String, dynamic>.from(item as Map);
-      comment['authorAvatarUrl'] = _absoluteUrl(
-        '${comment['authorAvatarUrl'] ?? ''}',
-      );
-      return CommunityComment.fromJson(comment);
-    }).toList(growable: false);
+    return payload
+        .map((item) {
+          final comment = Map<String, dynamic>.from(item as Map);
+          comment['authorAvatarUrl'] = _absoluteUrl(
+            '${comment['authorAvatarUrl'] ?? ''}',
+          );
+          return CommunityComment.fromJson(comment);
+        })
+        .toList(growable: false);
   }
 
   Future<CommunityComment> addComment(
@@ -165,7 +189,8 @@ class CommunityRepository {
       headers: await _headers(),
       body: jsonEncode({
         'text': text.trim(),
-        if (parentCommentId != null) 'parentCommentId': int.parse(parentCommentId),
+        if (parentCommentId != null)
+          'parentCommentId': int.parse(parentCommentId),
       }),
     );
     final comment = _decodeMap(response);
@@ -204,6 +229,19 @@ class CommunityRepository {
         .map((url) => _absoluteUrl('$url'))
         .toList(growable: false);
     json['authorAvatarUrl'] = _absoluteUrl('${json['authorAvatarUrl'] ?? ''}');
+    final sharedPayload = json['sharedPost'];
+    if (sharedPayload is Map) {
+      final shared = Map<String, dynamic>.from(sharedPayload);
+      shared['imageUrl'] = _absoluteUrl('${shared['imageUrl'] ?? ''}');
+      shared['imageUrls'] = (shared['imageUrls'] as List<dynamic>? ?? const [])
+          .map((url) => _absoluteUrl('$url'))
+          .toList(growable: false);
+      shared['authorAvatarUrl'] = _absoluteUrl(
+        '${shared['authorAvatarUrl'] ?? ''}',
+      );
+      shared['ageLabel'] = _ageLabel('${shared['createdAt'] ?? ''}');
+      json['sharedPost'] = shared;
+    }
     json['ageLabel'] =
         justNow ? 'Just now' : _ageLabel('${json['createdAt'] ?? ''}');
     json['isLiked'] = json['liked'] == true;
