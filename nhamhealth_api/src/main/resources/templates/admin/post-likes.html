@@ -94,8 +94,8 @@
                                     <small th:text="${l.user.email}">email</small>
                                 </td>
                                 <td>
-                                    <strong th:text="${l.post.title != null && !l.post.title.isBlank() ? l.post.title : 'Post #' + l.post.postId}">Post</strong>
-                                    <small th:text="${#strings.abbreviate(l.post.caption, 70)}">Caption</small>
+                                    <strong th:text="${'Post #' + l.post.postId}">Post</strong>
+                                    <small th:text="${l.post.caption != null ? #strings.abbreviate(l.post.caption, 70) : ''}">Caption</small>
                                 </td>
                                 <td th:text="${#temporals.format(l.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
                                 <td>
@@ -132,7 +132,7 @@
                                 <label for="postId">Post</label>
                                 <select id="postId" required>
                                     <option value="">Select post</option>
-                                    <option th:each="p:${posts}" th:value="${p.postId}" th:text="${p.title != null && !p.title.isBlank() ? p.title : 'Post #' + p.postId}"></option>
+                                    <option th:each="p:${posts}" th:value="${p.postId}" th:text="${'Post #' + p.postId}"></option>
                                 </select>
                             </div>
                         </div>
