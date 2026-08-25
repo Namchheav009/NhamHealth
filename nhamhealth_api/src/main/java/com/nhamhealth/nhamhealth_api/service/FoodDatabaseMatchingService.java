@@ -1,16 +1,13 @@
 package com.nhamhealth.nhamhealth_api.service;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,28 +18,27 @@ import com.nhamhealth.nhamhealth_api.repository.FoodNutritionRepository;
 @Service
 public class FoodDatabaseMatchingService {
     private static final int DEFAULT_CANDIDATE_LIMIT = 20;
-    private static final Map<String, String> KNOWN_ALIASES = Map.ofEntries(
-            Map.entry("white rice", "cooked rice"),
-            Map.entry("steamed white rice", "cooked rice"),
-            Map.entry("jasmine rice cooked", "cooked jasmine rice"),
-            Map.entry("pork rice", "bai sach chrouk"),
-            Map.entry("rice with pork", "bai sach chrouk"),
-            Map.entry("khmer noodle", "num banh chok"),
-            Map.entry("khmer noodles", "num banh chok"),
-            Map.entry("rice noodle soup", "kuy teav"),
-            Map.entry("beef lok lak", "lok lak"),
-            Map.entry("rice porridge", "borbor"),
-            Map.entry("fried noodle", "mee cha"),
-            Map.entry("fried noodles", "mee cha"));
 
     private final FoodNutritionRepository repository;
+    private final FoodCorrectionSuggestionService correctionSuggestionService;
+    private final FoodNameNormalizer nameNormalizer;
     private final double reliableMatchThreshold;
 
+    @Autowired
     public FoodDatabaseMatchingService(
             FoodNutritionRepository repository,
+            FoodCorrectionSuggestionService correctionSuggestionService,
+            FoodNameNormalizer nameNormalizer,
             @Value("${app.ai.food.database-match-threshold:0.78}") double reliableMatchThreshold) {
         this.repository = repository;
+        this.correctionSuggestionService = correctionSuggestionService;
+        this.nameNormalizer = nameNormalizer;
         this.reliableMatchThreshold = reliableMatchThreshold;
+    }
+
+    FoodDatabaseMatchingService(
+            FoodNutritionRepository repository, double reliableMatchThreshold) {
+        this(repository, null, new FoodNameNormalizer(), reliableMatchThreshold);
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +69,12 @@ public class FoodDatabaseMatchingService {
         if (normalizedDetected.isBlank() || "unknown food".equals(normalizedDetected)) {
             return List.of();
         }
+        if (correctionSuggestionService != null) {
+            normalizedDetected = correctionSuggestionService
+                    .findLearnedCorrection(normalizedDetected)
+                    .map(this::normalize)
+                    .orElse(normalizedDetected);
+        }
         List<MatchCandidate> candidates = new ArrayList<>();
         for (FoodNutrition food : catalog) {
             double bestScore = similarity(normalizedDetected, normalize(food.getName()));
@@ -98,36 +100,7 @@ public class FoodDatabaseMatchingService {
     }
 
     public String normalize(String value) {
-        if (value == null || value.isBlank()) return "";
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFKD)
-                .replaceAll("\\p{M}+", "")
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9\\p{L}]+", " ")
-                .trim()
-                .replaceAll("\\s+", " ");
-        String known = KNOWN_ALIASES.get(normalized);
-        if (known != null) return known;
-        List<String> tokens = Arrays.stream(normalized.split(" "))
-                .filter(token -> !token.isBlank())
-                .map(this::singularize)
-                .toList();
-        String result = String.join(" ", tokens);
-        return KNOWN_ALIASES.getOrDefault(result, result);
-    }
-
-    private String singularize(String token) {
-        if (!token.matches("[a-z]+") || token.length() <= 3) return token;
-        if (token.endsWith("ies") && token.length() > 4) {
-            return token.substring(0, token.length() - 3) + "y";
-        }
-        if (token.endsWith("ches") || token.endsWith("shes") || token.endsWith("xes")) {
-            return token.substring(0, token.length() - 2);
-        }
-        if (token.endsWith("s") && !token.endsWith("ss")
-                && !token.endsWith("us") && !token.endsWith("is")) {
-            return token.substring(0, token.length() - 1);
-        }
-        return token;
+        return nameNormalizer.normalize(value);
     }
 
     private double similarity(String left, String right) {

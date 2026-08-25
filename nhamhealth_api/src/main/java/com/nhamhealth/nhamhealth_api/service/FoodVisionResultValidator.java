@@ -40,7 +40,7 @@ public class FoodVisionResultValidator {
         double portionConfidence = confidence(value.portionConfidence(), "portionConfidence");
         double preparationConfidence = confidence(
                 value.preparationConfidence(), "preparationConfidence");
-        String type = "drink".equalsIgnoreCase(value.type()) ? "drink" : "food";
+        String type = normalizeType(value.type());
         String cuisine = textOrDefault(value.cuisine(), "Unknown", 80);
 
         List<FoodVisionComponent> rawComponents = value.components();
@@ -51,14 +51,19 @@ public class FoodVisionResultValidator {
             throw invalid("The vision response contains too many components.");
         }
         List<FoodVisionComponent> components = new ArrayList<>(rawComponents.size());
+        Set<String> componentNames = new HashSet<>();
         for (FoodVisionComponent component : rawComponents) {
             if (component == null) throw invalid("A vision component was null.");
             double amount = component.estimatedAmount();
             if (!Double.isFinite(amount) || amount <= 0 || amount > MAX_PORTION_AMOUNT) {
                 throw invalid("A component amount was outside the supported range.");
             }
+            String componentName = requiredText(component.name(), "component.name", 150);
+            if (!componentNames.add(componentName.toLowerCase(Locale.ROOT))) {
+                throw invalid("Duplicate component name: " + componentName);
+            }
             components.add(new FoodVisionComponent(
-                    requiredText(component.name(), "component.name", 150),
+                    componentName,
                     amount,
                     normalizeUnit(component.unit()),
                     confidence(component.confidence(), "component.confidence"),
@@ -67,10 +72,19 @@ public class FoodVisionResultValidator {
                     requiredText(component.visibleEvidence(), "component.visibleEvidence", 300)));
         }
 
-        List<FoodCandidate> candidates = normalizeCandidates(value.candidates());
+        List<FoodCandidate> candidates = normalizeCandidates(
+                value.candidates(), mealName, mealConfidence);
         if (candidates.isEmpty()) {
             candidates = List.of(new FoodCandidate(mealName, mealConfidence));
         }
+        if (!candidates.getFirst().name().equalsIgnoreCase(mealName)) {
+            throw invalid("mealName must match the highest-confidence candidate.");
+        }
+        double candidateConfidence = candidates.getFirst().confidence();
+        if (Math.abs(candidateConfidence - mealConfidence) > 0.05) {
+            throw invalid("mealConfidence must match the highest-confidence candidate.");
+        }
+        mealConfidence = candidateConfidence;
         return new FoodVisionResult(
                 true,
                 textOrDefault(value.reason(), "", 300),
@@ -84,17 +98,22 @@ public class FoodVisionResultValidator {
                 candidates);
     }
 
-    private List<FoodCandidate> normalizeCandidates(List<FoodCandidate> values) {
-        if (values == null || values.isEmpty()) return List.of();
+    private List<FoodCandidate> normalizeCandidates(
+            List<FoodCandidate> values, String mealName, double mealConfidence) {
         List<FoodCandidate> normalized = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        for (FoodCandidate value : values) {
-            if (value == null) continue;
-            String name = requiredText(value.name(), "candidate.name", 150);
-            double score = confidence(value.confidence(), "candidate.confidence");
-            if (seen.add(name.toLowerCase(Locale.ROOT))) {
-                normalized.add(new FoodCandidate(name, score));
+        if (values != null) {
+            for (FoodCandidate value : values) {
+                if (value == null) continue;
+                String name = requiredText(value.name(), "candidate.name", 150);
+                double score = confidence(value.confidence(), "candidate.confidence");
+                if (seen.add(name.toLowerCase(Locale.ROOT))) {
+                    normalized.add(new FoodCandidate(name, score));
+                }
             }
+        }
+        if (seen.add(mealName.toLowerCase(Locale.ROOT))) {
+            normalized.add(new FoodCandidate(mealName, mealConfidence));
         }
         normalized.sort(Comparator.comparingDouble(FoodCandidate::confidence).reversed());
         return List.copyOf(normalized.subList(0, Math.min(MAX_CANDIDATES, normalized.size())));
@@ -125,6 +144,15 @@ public class FoodVisionResultValidator {
             throw invalid("Unsupported component unit: " + unit);
         }
         return unit;
+    }
+
+    private String normalizeType(String value) {
+        if (value == null) return "food";
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
+            case "drink", "beverage" -> "drink";
+            case "mixed", "food and drink", "food+drink" -> "mixed";
+            default -> "food";
+        };
     }
 
     private double confidence(double value, String field) {

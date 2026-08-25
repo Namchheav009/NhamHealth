@@ -53,9 +53,6 @@ class SettingsController extends GetxController {
       case 2:
         Get.offNamed<void>(AppRoutes.community);
         return;
-      case 3:
-        Get.snackbar('Chat', 'Chat is coming soon.');
-        return;
       case 4:
         return;
     }

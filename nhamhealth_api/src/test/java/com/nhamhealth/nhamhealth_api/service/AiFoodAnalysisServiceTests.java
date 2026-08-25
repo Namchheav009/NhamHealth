@@ -18,7 +18,9 @@ import com.nhamhealth.nhamhealth_api.dto.ai.FoodCandidate;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodComponentNutritionEstimate;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
+import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.NutritionSource;
+import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.FoodNutrition;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -67,6 +69,7 @@ class AiFoodAnalysisServiceTests {
                 new FoodNutritionCalculationService(),
                 estimationProvider,
                 new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                mock(FoodCorrectionSuggestionService.class),
                 userRepository,
                 analysisRepository,
                 analysisNutrientRepository,
@@ -124,6 +127,7 @@ class AiFoodAnalysisServiceTests {
                 new FoodNutritionCalculationService(),
                 estimationProvider,
                 new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                mock(FoodCorrectionSuggestionService.class),
                 userRepository,
                 analysisRepository,
                 analysisNutrientRepository,
@@ -139,6 +143,40 @@ class AiFoodAnalysisServiceTests {
         assertTrue(result.needsUserConfirmation());
         assertFalse(result.databaseMatched());
         verify(estimationProvider).estimate(List.of(drink));
+    }
+
+    @Test
+    void routesAnEditedResultToTheCorrectionSuggestionStore() {
+        AiFoodAnalysisRepository analysisRepository = mock(AiFoodAnalysisRepository.class);
+        FoodCorrectionSuggestionService correctionService =
+                mock(FoodCorrectionSuggestionService.class);
+        AiFoodAnalysis analysis = new AiFoodAnalysis();
+        analysis.setDetectedFoodName("Unknown tea");
+        analysis.setDetectedServingText("1 serving");
+        when(analysisRepository.findByAiFoodAnalysisIdAndUserUserId(42, 7))
+                .thenReturn(Optional.of(analysis));
+        AiFoodFeedbackRequest correction = new AiFoodFeedbackRequest(
+                false, "Thai Iced Tea", BigDecimal.valueOf(350), "ml");
+        when(correctionService.recordCorrection(analysis, correction)).thenReturn(true);
+        AiFoodAnalysisService service = new AiFoodAnalysisService(
+                mock(FoodVisionProvider.class),
+                mock(FoodDatabaseMatchingService.class),
+                new FoodNutritionCalculationService(),
+                mock(FoodNutritionEstimationProvider.class),
+                new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                correctionService,
+                mock(UserRepository.class),
+                analysisRepository,
+                mock(AiFoodAnalysisNutrientRepository.class),
+                mock(NutrientRepository.class));
+
+        service.saveFeedback(7, 42, correction);
+
+        assertEquals("CORRECTED", analysis.getStatus());
+        assertEquals("Thai Iced Tea", analysis.getCorrectedFoodName());
+        assertFalse(Boolean.TRUE.equals(analysis.getUserConfirmed()));
+        verify(correctionService).recordCorrection(analysis, correction);
+        verify(analysisRepository).save(analysis);
     }
 
     private FoodNutrition food() {
