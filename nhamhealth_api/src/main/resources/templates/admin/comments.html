@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Comments | Nham Health Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-community-activity.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('comments')}"></div>
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+
+            <!-- Page Heading -->
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Comments</h1>
+                        <span>Community discussion management</span>
+                    </div>
+                    <p>Dashboard &gt; Community &gt; Comments</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" id="exportRows"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openModal"><i class="bi bi-plus-lg"></i> New Comment</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-chat-left-text"></i></div>
+                    <div class="stat-content">
+                        <span>Total Comments</span>
+                        <strong th:text="${totalComments}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                    <div class="stat-content">
+                        <span>Active</span>
+                        <strong th:text="${activeComments}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-eye-slash"></i></div>
+                    <div class="stat-content">
+                        <span>Hidden / Deleted</span>
+                        <strong th:text="${hiddenComments}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Filters -->
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="searchRows">Search</label>
+                    <input id="searchRows" type="search" placeholder="Comment, user or post">
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter">
+                        <option value="">All</option>
+                        <option>active</option>
+                        <option>hidden</option>
+                        <option>deleted</option>
+                    </select>
+                </div>
+                <button class="btn" id="clearFilters">Clear</button>
+            </section>
+
+            <!-- Comments Table -->
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>All Comments</h2>
+                    <button class="action-button" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Comment</th>
+                                <th>Author</th>
+                                <th>Post</th>
+                                <th>Likes</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityRows">
+                            <tr th:each="c,s:${comments}" th:data-id="${c.commentId}" th:data-status="${c.status}" th:data-text="${c.commentText}">
+                                <td th:text="${s.count}">1</td>
+                                <td class="comment-copy">
+                                    <strong th:text="${c.commentText}">Comment</strong>
+                                    <small th:if="${c.parentComment != null}" th:text="${'Reply to #' + c.parentComment.commentId}">Reply</small>
+                                </td>
+                                <td>
+                                    <strong th:text="${c.user.name}">User</strong>
+                                    <small th:text="${c.user.email}">email</small>
+                                </td>
+                                <td>
+                                    <strong th:text="${c.post.title != null && !c.post.title.isBlank() ? c.post.title : 'Post #' + c.post.postId}">Post</strong>
+                                    <small th:text="${#strings.abbreviate(c.post.caption, 55)}">Caption</small>
+                                </td>
+                                <td th:text="${commentLikeCounts[c.commentId]}">0</td>
+                                <td>
+                                    <span class="status-pill" th:classappend="${' status-' + c.status}" th:text="${c.status}">active</span>
+                                </td>
+                                <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="icon-button edit-row" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="icon-button danger delete-row" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${comments.empty}">
+                                <td colspan="8" class="empty-state">No comments found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <!-- Comment Modal -->
+            <div class="modal" id="activityModal">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <h2 id="modalTitle">New Comment</h2>
+                        <button class="icon-button" id="closeModal"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <form id="activityForm">
+                        <div class="modal-body">
+                            <div class="field-group create-only">
+                                <label for="userId">User</label>
+                                <select id="userId">
+                                    <option value="">Select user</option>
+                                    <option th:each="u:${users}" th:value="${u.userId}" th:text="${u.name + ' · ' + u.email}"></option>
+                                </select>
+                            </div>
+                            <div class="field-group create-only">
+                                <label for="postId">Post</label>
+                                <select id="postId">
+                                    <option value="">Select post</option>
+                                    <option th:each="p:${posts}" th:value="${p.postId}" th:text="${p.title != null && !p.title.isBlank() ? p.title : 'Post #' + p.postId}"></option>
+                                </select>
+                            </div>
+                            <div class="field-group wide">
+                                <label for="commentText">Comment</label>
+                                <textarea id="commentText" required></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="editStatus">Status</label>
+                                <select id="editStatus">
+                                    <option>active</option>
+                                    <option>hidden</option>
+                                    <option>deleted</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" type="button" id="cancelModal">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Comment</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+        </section>
+        <footer class="page-footer">
+            <span>© 2026 Nham Health.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-comments.js}"></script>
+
+</body>
+</html>

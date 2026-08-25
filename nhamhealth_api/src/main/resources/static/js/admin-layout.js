@@ -55,8 +55,43 @@
     const desktopBreakpoint = 850;
     const sidebarPreferenceKey = 'nhamHealthAdminSidebarCollapsed';
     const sidebarScrollKey = 'nhamHealthAdminSidebarScrollTop';
+    const sidebarGroupsKey = 'nhamHealthAdminSidebarGroups';
 
     const isMobile = () => window.innerWidth <= desktopBreakpoint;
+    const sectionToggles = [...(sidebar?.querySelectorAll('.nav-section[aria-controls]') ?? [])];
+    const setSectionOpen = (toggle, isOpen) => {
+        const group = document.getElementById(toggle.getAttribute('aria-controls'));
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        group?.classList.toggle('is-open', isOpen);
+    };
+    const saveSectionStates = () => {
+        try {
+            const states = Object.fromEntries(sectionToggles.map(toggle => [
+                toggle.getAttribute('aria-controls'),
+                toggle.getAttribute('aria-expanded') === 'true'
+            ]));
+            window.sessionStorage.setItem(sidebarGroupsKey, JSON.stringify(states));
+        } catch (_) {
+            // Categories still expand when browser storage is unavailable.
+        }
+    };
+    const initializeSectionStates = () => {
+        let savedStates = {};
+        try {
+            savedStates = JSON.parse(window.sessionStorage.getItem(sidebarGroupsKey) || '{}');
+        } catch (_) {
+            savedStates = {};
+        }
+        sectionToggles.forEach(toggle => {
+            const group = document.getElementById(toggle.getAttribute('aria-controls'));
+            const containsActivePage = Boolean(group?.querySelector('.nav-link.active'));
+            setSectionOpen(toggle, containsActivePage || savedStates[group?.id] === true);
+            toggle.addEventListener('click', () => {
+                setSectionOpen(toggle, toggle.getAttribute('aria-expanded') !== 'true');
+                saveSectionStates();
+            });
+        });
+    };
     const saveDesktopPreference = (isCollapsed) => {
         try {
             window.localStorage.setItem(sidebarPreferenceKey, String(isCollapsed));
@@ -168,6 +203,7 @@
     } else {
         setDesktopSidebarCollapsed(getDesktopPreference(), false);
     }
+    initializeSectionStates();
     restoreSidebarScrollPosition();
 
     const pageWindow = (totalPages, currentPage) => {
