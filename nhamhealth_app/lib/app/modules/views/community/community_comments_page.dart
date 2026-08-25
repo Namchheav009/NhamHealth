@@ -381,8 +381,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         ],
       ),
       const SizedBox(height: 15),
-      Text(widget.post.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF202921))),
-      const SizedBox(height: 5),
       Text(widget.post.description, style: const TextStyle(fontSize: 14, height: 1.35, color: Color(0xFF505951))),
       if (widget.post.imageUrls.isNotEmpty || widget.post.imageUrl.isNotEmpty) ...[
         const SizedBox(height: 13),

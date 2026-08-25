@@ -10,7 +10,6 @@ import '../../repositories/community/community_repository.dart';
 
 class CommunityPostDraft {
   const CommunityPostDraft({
-    required this.title,
     required this.description,
     required this.imageBytes,
     required this.removeImage,
@@ -20,7 +19,6 @@ class CommunityPostDraft {
     required this.tagIds,
   });
 
-  final String title;
   final String description;
   final List<Uint8List> imageBytes;
   final bool removeImage;
@@ -153,7 +151,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     try {
       await widget.onSubmit(
         CommunityPostDraft(
-          title: widget.post?.title ?? '',
           description: description,
           imageBytes: List.unmodifiable(_imageBytes),
           removeImage: _removeExistingImage,

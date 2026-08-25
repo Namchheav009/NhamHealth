@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class CommunityPost {
   CommunityPost({
     required this.id,
-    required this.title,
     required this.description,
     required this.imageUrl,
     this.imageUrls = const [],
@@ -29,7 +28,6 @@ class CommunityPost {
   });
 
   final String id;
-  final String title;
   final String description;
   final String imageUrl;
   final List<String> imageUrls;
@@ -53,7 +51,6 @@ class CommunityPost {
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) => CommunityPost(
     id: '${json['id'] ?? ''}',
-    title: (json['title'] as String? ?? '').trim(),
     description: (json['description'] as String? ?? '').trim(),
     imageUrl: (json['imageUrl'] as String? ?? '').trim(),
     imageUrls: _imageUrls(json),

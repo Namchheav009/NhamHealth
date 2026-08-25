@@ -45,7 +45,6 @@ class CommunityRepository {
   }
 
   Future<CommunityPost> createPost({
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -56,7 +55,6 @@ class CommunityRepository {
     final request =
         http.MultipartRequest('POST', _uri('/api/v1/community/posts'))
           ..headers.addAll(await _headers(includeContentType: false))
-          ..fields['title'] = title.trim()
           ..fields['description'] = description.trim()
           ..fields['visibility'] = visibility.apiValue
           ..fields['allowComments'] = '$allowComments'
@@ -79,7 +77,6 @@ class CommunityRepository {
 
   Future<CommunityPost> updatePost({
     required String postId,
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -90,7 +87,6 @@ class CommunityRepository {
   }) async {
     final request = http.MultipartRequest('PUT', _uri('/api/v1/community/posts/$postId'))
       ..headers.addAll(await _headers(includeContentType: false))
-      ..fields['title'] = title.trim()
       ..fields['description'] = description.trim()
       ..fields['visibility'] = visibility.apiValue
       ..fields['allowComments'] = '$allowComments'

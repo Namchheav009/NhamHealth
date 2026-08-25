@@ -22,6 +22,8 @@ import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.WellnessProfile;
+import com.nhamhealth.nhamhealth_api.dto.ai.AiUserHealthProfile;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
@@ -30,7 +32,6 @@ import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
 
 class AiMealRecommendationServiceTests {
 
@@ -44,7 +45,7 @@ class AiMealRecommendationServiceTests {
         MealFavoriteRepository favoriteRepository = mock(MealFavoriteRepository.class);
         DailyWellnessSummaryRepository dailySummaryRepository = mock(DailyWellnessSummaryRepository.class);
         DailyNutrientTotalRepository dailyNutrientRepository = mock(DailyNutrientTotalRepository.class);
-        WellnessProfileRepository wellnessProfileRepository = mock(WellnessProfileRepository.class);
+        AiUserHealthProfileService userHealthProfileService = mock(AiUserHealthProfileService.class);
 
         User user = new User();
         Mood mood = new Mood();
@@ -55,7 +56,13 @@ class AiMealRecommendationServiceTests {
         when(moodRepository.findById(3)).thenReturn(Optional.of(mood));
         when(mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc()).thenReturn(catalog);
         when(favoriteRepository.findAllByUserUserIdOrderBySavedAtDesc(7)).thenReturn(List.of());
-        when(wellnessProfileRepository.findByUser_UserId(7)).thenReturn(Optional.empty());
+        WellnessProfile wellnessProfile = new WellnessProfile();
+        wellnessProfile.setAgeCached((short) 29);
+        wellnessProfile.setHeightCm(BigDecimal.valueOf(172));
+        wellnessProfile.setWeightKg(BigDecimal.valueOf(68));
+        wellnessProfile.setActivityLevel("moderate");
+        when(userHealthProfileService.load(7))
+                .thenReturn(AiUserHealthProfile.from(7, wellnessProfile));
         when(dailySummaryRepository.findByUser_UserIdAndSummaryDate(any(), any()))
                 .thenReturn(Optional.empty());
 
@@ -68,7 +75,7 @@ class AiMealRecommendationServiceTests {
                 favoriteRepository,
                 dailySummaryRepository,
                 dailyNutrientRepository,
-                wellnessProfileRepository,
+                userHealthProfileService,
                 "https://integrate.api.nvidia.com/v1",
                 "",
                 "openai/gpt-oss-20b",
@@ -87,6 +94,9 @@ class AiMealRecommendationServiceTests {
                 items.getAllValues().stream().map(AiRecommendationItem::getRankOrder).toList());
         assertTrue(items.getAllValues().stream()
                 .allMatch(item -> item.getReasonText() != null && !item.getReasonText().isBlank()));
+        assertTrue(items.getAllValues().stream()
+                .allMatch(item -> item.getReasonText().contains("saved age, height, weight")));
+        verify(userHealthProfileService).load(7);
     }
 
     private List<Meal> meals(int count) {
