@@ -631,7 +631,10 @@ class CommunityPage extends GetView<CommunityController> {
             IconButton(
               tooltip: 'Post options',
               onPressed: () => _showPostOptions(post),
-              icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF768178)),
+              icon: const Icon(
+                Icons.more_horiz_rounded,
+                color: Color(0xFF768178),
+              ),
             ),
           ],
         ),
@@ -674,7 +677,9 @@ class CommunityPage extends GetView<CommunityController> {
                     .toList(),
           ),
         ],
-        if (post.imageBytes != null || post.imageUrls.isNotEmpty || post.imageUrl.isNotEmpty) ...[
+        if (post.imageBytes != null ||
+            post.imageUrls.isNotEmpty ||
+            post.imageUrl.isNotEmpty) ...[
           const SizedBox(height: 15),
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -697,15 +702,16 @@ class CommunityPage extends GetView<CommunityController> {
                                 url,
                                 fit: BoxFit.cover,
                                 filterQuality: FilterQuality.medium,
-                                errorBuilder: (_, _, _) => Container(
-                                  color: const Color(0xFFF3F7F4),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.image_outlined,
-                                      color: Color(0xFF8D9990),
+                                errorBuilder:
+                                    (_, _, _) => Container(
+                                      color: const Color(0xFFF3F7F4),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          color: Color(0xFF8D9990),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
                               ),
                             )
                             .toList(growable: false),
@@ -723,13 +729,15 @@ class CommunityPage extends GetView<CommunityController> {
             children: [
               Expanded(
                 child: _PostMetricButton(
-                  icon: post.isLiked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
+                  icon:
+                      post.isLiked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
                   value: _compactCount(post.likes),
-                  color: post.isLiked
-                      ? const Color(0xFFE64657)
-                      : const Color(0xFF69756D),
+                  color:
+                      post.isLiked
+                          ? const Color(0xFFE64657)
+                          : const Color(0xFF69756D),
                   tooltip: 'Like post',
                   onTap: () => controller.togglePostLike(post),
                 ),
@@ -769,18 +777,37 @@ class CommunityPage extends GetView<CommunityController> {
 
   Future<void> _showPostOptions(CommunityPost post) async {
     final isOwner = post.authorId == controller.authenticatedUser.value?.id;
-    final action = await Get.bottomSheet<String>(
+    final action = await Get.bottomSheet<_CommunityPostAction>(
       _CommunityOptionsSheet(
         title: isOwner ? 'Post options' : 'More options',
-        actions: isOwner
-            ? const [
-                _CommunityOption('edit', 'Edit post', Icons.edit_outlined),
-                _CommunityOption('delete', 'Delete post', Icons.delete_outline_rounded, isDestructive: true),
-              ]
-            : const [
-                _CommunityOption('about', 'About this post', Icons.info_outline_rounded),
-                _CommunityOption('report', 'Report post', Icons.flag_outlined, isDestructive: true),
-              ],
+        actions:
+            isOwner
+                ? const [
+                  _CommunityOption(
+                    _CommunityPostAction.edit,
+                    'Edit post',
+                    Icons.edit_outlined,
+                  ),
+                  _CommunityOption(
+                    _CommunityPostAction.delete,
+                    'Delete post',
+                    Icons.delete_outline_rounded,
+                    isDestructive: true,
+                  ),
+                ]
+                : const [
+                  _CommunityOption(
+                    _CommunityPostAction.about,
+                    'About this post',
+                    Icons.info_outline_rounded,
+                  ),
+                  _CommunityOption(
+                    _CommunityPostAction.report,
+                    'Report post',
+                    Icons.flag_outlined,
+                    isDestructive: true,
+                  ),
+                ],
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -788,20 +815,19 @@ class CommunityPage extends GetView<CommunityController> {
     if (action != null) await _handlePostOption(action, post);
   }
 
-  Future<void> _handlePostOption(String action, CommunityPost post) async {
+  Future<void> _handlePostOption(
+    _CommunityPostAction action,
+    CommunityPost post,
+  ) async {
     switch (action) {
-      case 'edit':
+      case _CommunityPostAction.edit:
         await _showEditPost(post);
-        return;
-      case 'delete':
+      case _CommunityPostAction.delete:
         await _confirmDeletePost(post);
-        return;
-      case 'report':
+      case _CommunityPostAction.report:
         await Get.to<void>(() => const CommunityReportPage(subject: 'post'));
-        return;
-      case 'about':
+      case _CommunityPostAction.about:
         await _showComments(post);
-        return;
     }
   }
 
@@ -812,16 +838,17 @@ class CommunityPage extends GetView<CommunityController> {
         post: post,
         authorName: user?.displayName ?? post.author,
         authorAvatarUrl: user?.profileImageUrl ?? post.authorAvatarUrl,
-        onSubmit: (draft) => controller.updatePost(
-          post: post,
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          removeImage: draft.removeImage,
-          tagIds: draft.tagIds,
-        ),
+        onSubmit:
+            (draft) => controller.updatePost(
+              post: post,
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              removeImage: draft.removeImage,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -843,7 +870,10 @@ class CommunityPage extends GetView<CommunityController> {
                 children: [
                   Icon(Icons.edit_rounded, color: green),
                   SizedBox(width: 10),
-                  Text('Edit post', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  Text(
+                    'Edit post',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -851,7 +881,10 @@ class CommunityPage extends GetView<CommunityController> {
                 controller: description,
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: _postInput('What would you like to share?', alignLabelWithHint: true),
+                decoration: _postInput(
+                  'What would you like to share?',
+                  alignLabelWithHint: true,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -862,7 +895,10 @@ class CommunityPage extends GetView<CommunityController> {
                   FilledButton(
                     onPressed: () async {
                       if (description.text.trim().isEmpty) {
-                        Get.snackbar('Add your message', 'A post needs a message.');
+                        Get.snackbar(
+                          'Add your message',
+                          'A post needs a message.',
+                        );
                         return;
                       }
                       try {
@@ -871,7 +907,10 @@ class CommunityPage extends GetView<CommunityController> {
                           description: description.text,
                         );
                         Get.back<void>();
-                        Get.snackbar('Post updated', 'Your changes have been saved.');
+                        Get.snackbar(
+                          'Post updated',
+                          'Your changes have been saved.',
+                        );
                       } on Object catch (error) {
                         Get.snackbar('Could not update post', error.toString());
                       }
@@ -893,12 +932,19 @@ class CommunityPage extends GetView<CommunityController> {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Delete this post?'),
-        content: const Text('This will remove the post from Community. You cannot undo this action.'),
+        content: const Text(
+          'This will remove the post from Community. You cannot undo this action.',
+        ),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFD94545)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD94545),
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -917,97 +963,110 @@ class CommunityPage extends GetView<CommunityController> {
     final selectedIds = <String>{};
     await Get.bottomSheet<void>(
       StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Share with friends',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+        builder:
+            (context, setSheetState) => SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                const SizedBox(height: 4),
-                const Text('Choose friends to send this post to.'),
-                const SizedBox(height: 10),
-                if (controller.friends.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Text('Add friends before sharing posts privately.'),
-                  )
-                else
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 280),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.friends.length,
-                      itemBuilder: (context, index) {
-                        final friend = controller.friends[index];
-                        final selected = selectedIds.contains(friend.id);
-                        return CheckboxListTile(
-                          value: selected,
-                          onChanged: (_) => setSheetState(() {
-                            selected
-                                ? selectedIds.remove(friend.id)
-                                : selectedIds.add(friend.id);
-                          }),
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.trailing,
-                          activeColor: green,
-                          title: Text(friend.name),
-                          secondary: CircleAvatar(
-                            backgroundColor: const Color(0xFFEAF7EE),
-                            backgroundImage: friend.avatarUrl.isEmpty
-                                ? null
-                                : NetworkImage(friend.avatarUrl),
-                            child: friend.avatarUrl.isEmpty
-                                ? const Icon(Icons.person_outline, color: green)
-                                : null,
-                          ),
-                        );
-                      },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Share with friends',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: selectedIds.isEmpty
-                        ? null
-                        : () async {
-                            try {
-                              await controller.sharePost(
-                                post,
-                                recipientIds: selectedIds.toList(),
-                              );
-                              Get.back<void>();
-                              Get.snackbar(
-                                'Post shared',
-                                'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                            } on Object catch (error) {
-                              Get.snackbar(
-                                'Could not share post',
-                                error.toString(),
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                            }
+                    const SizedBox(height: 4),
+                    const Text('Choose friends to send this post to.'),
+                    const SizedBox(height: 10),
+                    if (controller.friends.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'Add friends before sharing posts privately.',
+                        ),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 280),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: controller.friends.length,
+                          itemBuilder: (context, index) {
+                            final friend = controller.friends[index];
+                            final selected = selectedIds.contains(friend.id);
+                            return CheckboxListTile(
+                              value: selected,
+                              onChanged:
+                                  (_) => setSheetState(() {
+                                    selected
+                                        ? selectedIds.remove(friend.id)
+                                        : selectedIds.add(friend.id);
+                                  }),
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.trailing,
+                              activeColor: green,
+                              title: Text(friend.name),
+                              secondary: CircleAvatar(
+                                backgroundColor: const Color(0xFFEAF7EE),
+                                backgroundImage:
+                                    friend.avatarUrl.isEmpty
+                                        ? null
+                                        : NetworkImage(friend.avatarUrl),
+                                child:
+                                    friend.avatarUrl.isEmpty
+                                        ? const Icon(
+                                          Icons.person_outline,
+                                          color: green,
+                                        )
+                                        : null,
+                              ),
+                            );
                           },
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Send'),
-                    style: FilledButton.styleFrom(backgroundColor: green),
-                  ),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed:
+                            selectedIds.isEmpty
+                                ? null
+                                : () async {
+                                  try {
+                                    await controller.sharePost(
+                                      post,
+                                      recipientIds: selectedIds.toList(),
+                                    );
+                                    Get.back<void>();
+                                    Get.snackbar(
+                                      'Post shared',
+                                      'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                  } on Object catch (error) {
+                                    Get.snackbar(
+                                      'Could not share post',
+                                      error.toString(),
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                  }
+                                },
+                        icon: const Icon(Icons.send_rounded),
+                        label: const Text('Send'),
+                        style: FilledButton.styleFrom(backgroundColor: green),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -1020,16 +1079,17 @@ class CommunityPage extends GetView<CommunityController> {
         post: post,
         onPostChanged: controller.posts.refresh,
         canEdit: post.authorId == controller.authenticatedUser.value?.id,
-        onEditPost: (draft) => controller.updatePost(
-          post: post,
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          removeImage: draft.removeImage,
-          tagIds: draft.tagIds,
-        ),
+        onEditPost:
+            (draft) => controller.updatePost(
+              post: post,
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              removeImage: draft.removeImage,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -1041,14 +1101,15 @@ class CommunityPage extends GetView<CommunityController> {
       () => CommunityPostEditorPage(
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
-        onSubmit: (draft) => controller.addPost(
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          tagIds: draft.tagIds,
-        ),
+        onSubmit:
+            (draft) => controller.addPost(
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -1215,7 +1276,10 @@ class CommunityPage extends GetView<CommunityController> {
                               try {
                                 await controller.addPost(
                                   description: description.text,
-                                  imageBytes: selectedImage == null ? const [] : [selectedImage!],
+                                  imageBytes:
+                                      selectedImage == null
+                                          ? const []
+                                          : [selectedImage!],
                                 );
                                 Get.back<void>();
                               } on Object catch (error) {
@@ -1351,6 +1415,8 @@ class _MetricDivider extends StatelessWidget {
   );
 }
 
+enum _CommunityPostAction { edit, delete, about, report }
+
 class _CommunityOption {
   const _CommunityOption(
     this.value,
@@ -1359,7 +1425,7 @@ class _CommunityOption {
     this.isDestructive = false,
   });
 
-  final String value;
+  final _CommunityPostAction value;
   final String label;
   final IconData icon;
   final bool isDestructive;
@@ -1397,7 +1463,10 @@ class _CommunityOptionsSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -1410,7 +1479,11 @@ class _CommunityOptionsSheet extends StatelessWidget {
                 for (var index = 0; index < actions.length; index++) ...[
                   _OptionTile(option: actions[index]),
                   if (index < actions.length - 1)
-                    const Divider(height: 1, indent: 64, color: Color(0xFFE0E5E1)),
+                    const Divider(
+                      height: 1,
+                      indent: 64,
+                      color: Color(0xFFE0E5E1),
+                    ),
                 ],
               ],
             ),
@@ -1428,12 +1501,22 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = option.isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
+    final color =
+        option.isDestructive
+            ? const Color(0xFFD94545)
+            : const Color(0xFF18231C);
     return ListTile(
       onTap: () => Get.back(result: option.value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
       leading: Icon(option.icon, color: color, size: 27),
-      title: Text(option.label, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w700)),
+      title: Text(
+        option.label,
+        style: TextStyle(
+          color: color,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

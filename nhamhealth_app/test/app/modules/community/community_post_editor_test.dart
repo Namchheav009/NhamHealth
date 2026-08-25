@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/models/community/community_post.d
 import 'package:nhamhealth_flutter/app/modules/models/community/community_tag.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_post_editor_page.dart';
+import 'package:nhamhealth_flutter/app/modules/models/community/community_post_draft.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -79,7 +80,8 @@ void main() {
 }
 
 class _ComposerRepository extends CommunityRepository {
-  _ComposerRepository(AuthService authService) : super(authService: authService);
+  _ComposerRepository(AuthService authService)
+    : super(authService: authService);
 
   @override
   Future<List<CommunityTag>> getTags() async => const [];

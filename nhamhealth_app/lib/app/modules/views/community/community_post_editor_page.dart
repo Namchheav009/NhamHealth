@@ -5,28 +5,9 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/community/community_post.dart';
+import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
 import '../../repositories/community/community_repository.dart';
-
-class CommunityPostDraft {
-  const CommunityPostDraft({
-    required this.description,
-    required this.imageBytes,
-    required this.removeImage,
-    required this.visibility,
-    required this.allowComments,
-    required this.allowReplies,
-    required this.tagIds,
-  });
-
-  final String description;
-  final List<Uint8List> imageBytes;
-  final bool removeImage;
-  final CommunityPostVisibility visibility;
-  final bool allowComments;
-  final bool allowReplies;
-  final List<int> tagIds;
-}
 
 /// A shared, full-screen composer for both new and existing community posts.
 class CommunityPostEditorPage extends StatefulWidget {
@@ -44,7 +25,8 @@ class CommunityPostEditorPage extends StatefulWidget {
   final Future<void> Function(CommunityPostDraft draft) onSubmit;
 
   @override
-  State<CommunityPostEditorPage> createState() => _CommunityPostEditorPageState();
+  State<CommunityPostEditorPage> createState() =>
+      _CommunityPostEditorPageState();
 }
 
 class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
@@ -106,7 +88,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     try {
       final remaining = 6 - _imageCount;
       if (remaining <= 0) {
-        Get.snackbar('Image limit reached', 'A post can include up to 6 images.');
+        Get.snackbar(
+          'Image limit reached',
+          'A post can include up to 6 images.',
+        );
         return;
       }
       final List<XFile> files;
@@ -122,13 +107,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       }
       if (files.isEmpty) return;
       final selected = files.take(remaining).toList(growable: false);
-      final bytes = await Future.wait(selected.map((image) => image.readAsBytes()));
+      final bytes = await Future.wait(
+        selected.map((image) => image.readAsBytes()),
+      );
       if (!mounted) return;
       setState(() {
         _imageBytes.addAll(bytes);
       });
       if (files.length > remaining) {
-        Get.snackbar('Only 6 images allowed', 'The first $remaining selected images were added.');
+        Get.snackbar(
+          'Only 6 images allowed',
+          'The first $remaining selected images were added.',
+        );
       }
     } on Object catch (error) {
       if (mounted) Get.snackbar('Could not add image', error.toString());
@@ -200,7 +190,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ),
       title: Text(
         _editing ? 'Edit Post' : 'Create Post',
-        style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
       ),
       actions: [
         Padding(
@@ -213,9 +207,23 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               shape: const StadiumBorder(),
             ),
-            child: _submitting
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text(_editing ? 'Save' : 'Publish', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            child:
+                _submitting
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                    : Text(
+                      _editing ? 'Save' : 'Publish',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
           ),
         ),
       ],
@@ -245,13 +253,21 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       CircleAvatar(
         radius: 31,
         backgroundColor: const Color(0xFFEAF7EE),
-        backgroundImage: widget.authorAvatarUrl.isEmpty ? null : NetworkImage(widget.authorAvatarUrl),
-        child: widget.authorAvatarUrl.isEmpty
-            ? Text(
-                _initials(widget.authorName),
-                style: const TextStyle(color: _green, fontSize: 18, fontWeight: FontWeight.w800),
-              )
-            : null,
+        backgroundImage:
+            widget.authorAvatarUrl.isEmpty
+                ? null
+                : NetworkImage(widget.authorAvatarUrl),
+        child:
+            widget.authorAvatarUrl.isEmpty
+                ? Text(
+                  _initials(widget.authorName),
+                  style: const TextStyle(
+                    color: _green,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+                : null,
       ),
       const SizedBox(width: 15),
       Expanded(
@@ -273,7 +289,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               onTap: _submitting ? null : _openAudience,
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAF9EF),
                   borderRadius: BorderRadius.circular(20),
@@ -337,8 +356,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           textCapitalization: TextCapitalization.sentences,
           style: const TextStyle(color: _ink, fontSize: 16, height: 1.45),
           decoration: InputDecoration(
-            hintText: 'What would you like to share?\n\nA healthy win, question, meal, or helpful idea...',
-            hintStyle: const TextStyle(color: Color(0xFF8A928C), fontSize: 16, height: 1.45),
+            hintText:
+                'What would you like to share?\n\nA healthy win, question, meal, or helpful idea...',
+            hintStyle: const TextStyle(
+              color: Color(0xFF8A928C),
+              fontSize: 16,
+              height: 1.45,
+            ),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -358,9 +382,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       for (final tag in _tags.where((tag) => _selectedTagIds.contains(tag.id)))
         InputChip(
           label: Text('#${tag.name}', style: const TextStyle(fontSize: 13)),
-          onDeleted: _submitting
-              ? null
-              : () => setState(() => _selectedTagIds.remove(tag.id)),
+          onDeleted:
+              _submitting
+                  ? null
+                  : () => setState(() => _selectedTagIds.remove(tag.id)),
           deleteIcon: const Icon(Icons.close_rounded, size: 17),
           backgroundColor: const Color(0xFFEAF9EF),
           side: BorderSide.none,
@@ -371,63 +396,96 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Future<void> _selectTags() async {
     if (_tags.isEmpty) {
-      Get.snackbar('No tags available', 'Tags can be added by an administrator.');
+      Get.snackbar(
+        'No tags available',
+        'Tags can be added by an administrator.',
+      );
       return;
     }
     final selected = {..._selectedTagIds};
     final saved = await Get.bottomSheet<Set<int>>(
       StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          top: false,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(child: SizedBox(width: 42, child: Divider(thickness: 4))),
-                const SizedBox(height: 10),
-                const Text('Add tags', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                const Text('Choose tags that describe your post.', style: TextStyle(color: _muted, fontSize: 14)),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 320),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _tags.length,
-                    itemBuilder: (context, index) {
-                      final tag = _tags[index];
-                      return CheckboxListTile(
-                        value: selected.contains(tag.id),
-                        onChanged: (checked) => setSheetState(() {
-                          checked == true ? selected.add(tag.id) : selected.remove(tag.id);
-                        }),
-                        activeColor: _green,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(tag.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                        subtitle: tag.description.isEmpty ? Text(tag.scope, style: const TextStyle(fontSize: 12)) : Text(tag.description, style: const TextStyle(fontSize: 12)),
-                      );
-                    },
-                  ),
+        builder:
+            (context, setSheetState) => SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Get.back(result: selected),
-                    style: FilledButton.styleFrom(backgroundColor: _green),
-                    child: const Text('Done'),
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: SizedBox(width: 42, child: Divider(thickness: 4)),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Add tags',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Choose tags that describe your post.',
+                      style: TextStyle(color: _muted, fontSize: 14),
+                    ),
+                    const SizedBox(height: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _tags.length,
+                        itemBuilder: (context, index) {
+                          final tag = _tags[index];
+                          return CheckboxListTile(
+                            value: selected.contains(tag.id),
+                            onChanged:
+                                (checked) => setSheetState(() {
+                                  checked == true
+                                      ? selected.add(tag.id)
+                                      : selected.remove(tag.id);
+                                }),
+                            activeColor: _green,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              tag.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle:
+                                tag.description.isEmpty
+                                    ? Text(
+                                      tag.scope,
+                                      style: const TextStyle(fontSize: 12),
+                                    )
+                                    : Text(
+                                      tag.description,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Get.back(result: selected),
+                        style: FilledButton.styleFrom(backgroundColor: _green),
+                        child: const Text('Done'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -475,11 +533,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _mediaButton(
-                Icons.sell_outlined,
-                'Tags',
-                _selectTags,
-              ),
+              child: _mediaButton(Icons.sell_outlined, 'Tags', _selectTags),
             ),
           ],
         ),
@@ -504,17 +558,27 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
   );
 
-  Widget _mediaButton(IconData icon, String label, VoidCallback onPressed) => FilledButton.tonalIcon(
-    onPressed: _submitting ? null : onPressed,
-    icon: Icon(icon, color: _green, size: 22),
-    label: Text(label, style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w700)),
-    style: FilledButton.styleFrom(
-      backgroundColor: const Color(0xFFF3F7F4),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      textStyle: const TextStyle(fontSize: 12),
-    ),
-  );
+  Widget _mediaButton(IconData icon, String label, VoidCallback onPressed) =>
+      FilledButton.tonalIcon(
+        onPressed: _submitting ? null : onPressed,
+        icon: Icon(icon, color: _green, size: 22),
+        label: Text(
+          label,
+          style: const TextStyle(
+            color: _ink,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFFF3F7F4),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(fontSize: 12),
+        ),
+      );
 
   Widget _mediaPreview() {
     final images = [
@@ -527,11 +591,21 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       children: [
         Row(
           children: [
-            Text('$_imageCount of 6 images', style: const TextStyle(color: _muted, fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(
+              '$_imageCount of 6 images',
+              style: const TextStyle(
+                color: _muted,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const Spacer(),
             if (existingCount > 0)
               TextButton(
-                onPressed: _submitting ? null : () => setState(() => _removeExistingImage = true),
+                onPressed:
+                    _submitting
+                        ? null
+                        : () => setState(() => _removeExistingImage = true),
                 child: const Text('Clear existing'),
               ),
           ],
@@ -541,32 +615,47 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8,
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: images.length,
-          itemBuilder: (context, index) => Stack(
-            fit: StackFit.expand,
-            children: [
-              ClipRRect(borderRadius: BorderRadius.circular(14), child: images[index]),
-              if (index >= existingCount)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Material(
-                    color: Colors.black54,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: _submitting ? null : () => setState(
-                        () => _imageBytes.removeAt(index - existingCount),
-                      ),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
-                      tooltip: 'Remove image',
-                    ),
+          itemBuilder:
+              (context, index) => Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: images[index],
                   ),
-                ),
-            ],
-          ),
+                  if (index >= existingCount)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Material(
+                        color: Colors.black54,
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed:
+                              _submitting
+                                  ? null
+                                  : () => setState(
+                                    () => _imageBytes.removeAt(
+                                      index - existingCount,
+                                    ),
+                                  ),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          tooltip: 'Remove image',
+                        ),
+                      ),
+                    ),
+                ],
+              ),
         ),
       ],
     );
@@ -592,12 +681,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             value: _allowComments,
             activeThumbColor: Colors.white,
             activeTrackColor: _green,
-            onChanged: _submitting
-                ? null
-                : (value) => setState(() {
-                    _allowComments = value;
-                    if (!value) _allowReplies = false;
-                  }),
+            onChanged:
+                _submitting
+                    ? null
+                    : (value) => setState(() {
+                      _allowComments = value;
+                      if (!value) _allowReplies = false;
+                    }),
           ),
         ),
         if (_allowComments) ...[
@@ -610,9 +700,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               value: _allowReplies,
               activeThumbColor: Colors.white,
               activeTrackColor: _green,
-              onChanged: _submitting
-                  ? null
-                  : (value) => setState(() => _allowReplies = value),
+              onChanged:
+                  _submitting
+                      ? null
+                      : (value) => setState(() => _allowReplies = value),
             ),
           ),
         ],
@@ -648,7 +739,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(color: Color(0xFFEAF9EF), shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF9EF),
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, color: _green, size: 23),
           ),
           const SizedBox(width: 13),
@@ -656,9 +750,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w800)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: _muted, fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: _muted, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -671,7 +775,14 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Widget _audienceValue() => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text(_visibility.label, style: const TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w700)),
+      Text(
+        _visibility.label,
+        style: const TextStyle(
+          color: _ink,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       const SizedBox(width: 2),
       const Icon(Icons.chevron_right_rounded, color: _ink, size: 23),
     ],
@@ -688,13 +799,22 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     color: Colors.white,
     borderRadius: BorderRadius.circular(26),
     border: Border.all(color: const Color(0xFFE1E6E2)),
-    boxShadow: const [BoxShadow(color: Color(0x09173D25), blurRadius: 14, offset: Offset(0, 4))],
+    boxShadow: const [
+      BoxShadow(color: Color(0x09173D25), blurRadius: 14, offset: Offset(0, 4)),
+    ],
   );
 
   String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    final parts =
+        name
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((part) => part.isNotEmpty)
+            .toList();
     if (parts.isEmpty) return '?';
-    return parts.length == 1 ? parts.first[0].toUpperCase() : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    return parts.length == 1
+        ? parts.first[0].toUpperCase()
+        : '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }
 
@@ -726,11 +846,18 @@ class _AudiencePageState extends State<_AudiencePage> {
       elevation: 0,
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 23),
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: Colors.black,
+          size: 23,
+        ),
         tooltip: 'Back',
       ),
       centerTitle: true,
-      title: const Text('Audience', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+      title: const Text(
+        'Audience',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+      ),
     ),
     body: SafeArea(
       top: false,
@@ -740,11 +867,18 @@ class _AudiencePageState extends State<_AudiencePage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 30, 24, 20),
               children: [
-                const Text('Who can see your post?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                const Text(
+                  'Who can see your post?',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 7),
                 const Text(
                   'Your post will show in Feed, on your profile, and in search results according to the audience you choose.',
-                  style: TextStyle(color: Color(0xFF626A7A), fontSize: 15, height: 1.4),
+                  style: TextStyle(
+                    color: Color(0xFF626A7A),
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 28),
                 RadioGroup<CommunityPostVisibility>(
@@ -771,9 +905,14 @@ class _AudiencePageState extends State<_AudiencePage> {
                 style: FilledButton.styleFrom(
                   backgroundColor: _green,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
                 ),
-                child: const Text('Done', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
               ),
             ),
           ),
@@ -792,7 +931,10 @@ class _AudiencePageState extends State<_AudiencePage> {
           Container(
             width: 50,
             height: 50,
-            decoration: const BoxDecoration(color: Color(0xFFEAF9EF), shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF9EF),
+              shape: BoxShape.circle,
+            ),
             child: Icon(audience.icon, color: _green, size: 25),
           ),
           const SizedBox(width: 15),
@@ -800,16 +942,25 @@ class _AudiencePageState extends State<_AudiencePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(audience.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                Text(
+                  audience.label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF626A7A), fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF626A7A),
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),
-          Radio<CommunityPostVisibility>(
-            value: audience,
-            activeColor: _green,
-          ),
+          Radio<CommunityPostVisibility>(value: audience, activeColor: _green),
         ],
       ),
     ),

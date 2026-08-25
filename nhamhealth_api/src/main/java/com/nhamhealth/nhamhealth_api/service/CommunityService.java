@@ -78,6 +78,13 @@ public class CommunityService {
     }
 
     @Transactional(readOnly = true)
+    public CommunityPostResponse postDetails(Integer viewerId, Integer postId) {
+        Post selected = visiblePost(viewerId, postId);
+        Set<Integer> followed = followedIds(viewerId);
+        return response(selected, viewerId, followed);
+    }
+
+    @Transactional(readOnly = true)
     public List<CommunityTagResponse> tags() {
         return tagTypes.findAllByOrderByTagNameAsc().stream()
                 .filter(tag -> Boolean.TRUE.equals(tag.getIsActive()))
@@ -159,7 +166,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostResponse toggleLike(Integer userId, Integer postId) {
-        Post post = post(postId);
+        Post post = visiblePost(userId, postId);
         Optional<PostLike> existing = likes.findByUserUserIdAndPostPostId(userId, postId);
         if (existing.isPresent()) {
             likes.delete(existing.get());
@@ -177,7 +184,7 @@ public class CommunityService {
 
     @Transactional
     public void share(Integer userId, Integer postId, List<Integer> recipientIds) {
-        Post post = post(postId);
+        Post post = visiblePost(userId, postId);
         User actor = user(userId);
         Set<Integer> recipients = recipientIds == null ? Set.of() : new LinkedHashSet<>(recipientIds);
         if (!recipients.isEmpty()) {
@@ -185,6 +192,10 @@ public class CommunityService {
             friends.retainAll(followerIds(userId));
             if (!friends.containsAll(recipients)) {
                 throw new IllegalArgumentException("Posts can only be shared with your friends.");
+            }
+            if (recipients.stream().anyMatch(recipientId -> !canView(post, recipientId,
+                    followedIds(recipientId), followerIds(recipientId)))) {
+                throw new IllegalArgumentException("One or more recipients cannot view this post.");
             }
         }
         if (recipients.isEmpty()) {
@@ -211,7 +222,7 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public List<CommunityCommentResponse> comments(Integer userId, Integer postId) {
-        post(postId);
+        visiblePost(userId, postId);
         return comments.findByPostPostIdAndStatusIgnoreCaseOrderByCreatedAtAsc(postId, "ACTIVE")
                 .stream().map(comment -> commentResponse(comment, userId)).toList();
     }
@@ -221,7 +232,7 @@ public class CommunityService {
         if (text == null || text.trim().isEmpty()) {
             throw new IllegalArgumentException("Comment text is required");
         }
-        Post post = post(postId);
+        Post post = visiblePost(userId, postId);
         if (!post.isAllowComments()) {
             throw new IllegalArgumentException("Comments are disabled for this post");
         }
@@ -259,6 +270,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityCommentResponse toggleCommentLike(Integer userId, Integer postId, Integer commentId) {
+        visiblePost(userId, postId);
         PostComment comment = comments.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Comment not found"));
         if (!comment.getPost().getPostId().equals(postId) || !"ACTIVE".equalsIgnoreCase(comment.getStatus())) {
@@ -420,10 +432,21 @@ public class CommunityService {
     private Post post(Integer id) { return posts.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post not found")); }
     private Post ownedPost(Integer userId, Integer postId) {
         Post post = post(postId);
+        if (!"ACTIVE".equalsIgnoreCase(post.getStatus())) {
+            throw new ResponseStatusException(NOT_FOUND, "Post not found");
+        }
         if (!post.getUser().getUserId().equals(userId)) {
             throw new ResponseStatusException(FORBIDDEN, "You can only edit or delete your own posts.");
         }
         return post;
+    }
+    private Post visiblePost(Integer viewerId, Integer postId) {
+        Post selected = post(postId);
+        if (!"ACTIVE".equalsIgnoreCase(selected.getStatus())
+                || !canView(selected, viewerId, followedIds(viewerId), followerIds(viewerId))) {
+            throw new ResponseStatusException(NOT_FOUND, "Post not found");
+        }
+        return selected;
     }
     private String value(String value, String fallback) { return value == null || value.isBlank() ? fallback : value; }
 }

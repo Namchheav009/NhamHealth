@@ -17,7 +17,14 @@ class NotificationsProvider {
   Future<List<NotificationItem>> getNotifications() async {
     final response = await _request('GET');
     final payload = jsonDecode(response.body) as List<dynamic>;
-    return payload.map((item) => NotificationItem.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+    return payload.map((item) {
+      final json = Map<String, dynamic>.from(item as Map);
+      final avatarUrl = (json['actorAvatarUrl'] as String? ?? '').trim();
+      if (avatarUrl.startsWith('/')) {
+        json['actorAvatarUrl'] = '${ApiConfig.baseUrl}$avatarUrl';
+      }
+      return NotificationItem.fromJson(json);
+    }).toList();
   }
 
   Future<void> markRead(int id) async => _request('PATCH', id: id);
