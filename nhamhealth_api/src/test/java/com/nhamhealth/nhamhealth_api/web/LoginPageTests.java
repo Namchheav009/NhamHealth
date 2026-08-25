@@ -151,6 +151,9 @@ class LoginPageTests {
 		mockMvc.perform(get("/admin/ai-food-suggestions")
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
 				.andExpect(status().isOk())
-				.andExpect(view().name("admin/ai-food-suggestion"));
+				.andExpect(view().name("admin/ai-food-suggestion"))
+				.andExpect(content().string(containsString("Learned corrections")))
+				.andExpect(content().string(containsString("suggestionDetailsModal")))
+				.andExpect(content().string(containsString("Original AI result")));
 	}
 }

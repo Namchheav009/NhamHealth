@@ -69,6 +69,46 @@ void main() {
     });
   }
 
+  testWidgets('home content scrolls above the bottom navigation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 560);
+    addTearDown(tester.view.reset);
+
+    Get.put<AuthService>(_SessionAuthService());
+    final controller = HomeController(
+      repository: HomeRepository(provider: HomeProvider()),
+    );
+    Get.put<HomeController>(controller);
+
+    await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
+    await tester.pump(const Duration(milliseconds: 900));
+
+    final homeScroll = find.byType(SingleChildScrollView);
+    final scrollWidget = tester.widget<SingleChildScrollView>(homeScroll);
+    final padding = scrollWidget.padding! as EdgeInsets;
+    expect(padding.bottom, greaterThanOrEqualTo(114));
+    expect(
+      scrollWidget.keyboardDismissBehavior,
+      ScrollViewKeyboardDismissBehavior.onDrag,
+    );
+
+    final verticalScrollable =
+        find
+            .descendant(of: homeScroll, matching: find.byType(Scrollable))
+            .first;
+    final position = tester.state<ScrollableState>(verticalScrollable).position;
+    final initialOffset = position.pixels;
+
+    await tester.drag(homeScroll, const Offset(0, -260));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(position.pixels, greaterThan(initialOffset));
+    expect(tester.takeException(), isNull);
+    controller.onClose();
+  });
+
   test('AI nutrition is kept per day on the dashboard', () async {
     final controller = HomeController(
       repository: HomeRepository(provider: HomeProvider()),

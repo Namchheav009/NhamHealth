@@ -8,6 +8,7 @@
     const prev = byId('pagePrev');
     const next = byId('pageNext');
     const modal = byId('suggestionModal');
+    const detailsModal = byId('suggestionDetailsModal');
     const form = byId('suggestionForm');
     const saveButton = form?.querySelector('button[type="submit"]');
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
@@ -20,6 +21,7 @@
     const pageSize = 10;
     let page = 1;
     let filtered = [];
+    let detailsTrigger = null;
 
     const rows = () => [...(rowsBox?.querySelectorAll('tr[data-id]') || [])];
     const setText = (id, value) => { const node = byId(id); if (node) node.textContent = String(value); };
@@ -76,11 +78,10 @@
     function updateSummary() {
         const allRows = rows();
         const priorities = allRows.map((row) => Number(row.dataset.priorityValue));
-        const average = priorities.length ? priorities.reduce((sum, value) => sum + value, 0) / priorities.length : 0;
         setText('totalSuggestionCount', allRows.length);
         setText('sourceAnalysisCount', new Set(allRows.map((row) => row.dataset.analysisId).filter(Boolean)).size);
+        setText('learnedCorrectionCount', allRows.filter((row) => row.dataset.learnedCorrection === 'true').length);
         setText('highPrioritySuggestionCount', priorities.filter((value) => value >= 8).length);
-        setText('averageSuggestionPriority', average.toFixed(1));
     }
 
     function createRow(item) {
@@ -89,17 +90,26 @@
         Object.assign(row.dataset, {
             id: String(item.id), analysisId: String(item.analysisId), priorityValue: String(priority),
             type: item.suggestionType.toLowerCase(), priority: priorityGroup(priority),
-            search: `${item.title} ${item.suggestionType} ${item.description} ${item.reason} ${item.sourceName}`.toLowerCase()
+            search: `${item.title} ${item.suggestionType} ${item.description} ${item.reason} ${item.sourceName}`.toLowerCase(),
+            title: item.title, description: item.description, reason: item.reason || 'No reason provided',
+            learnedCorrection: String(Boolean(item.learnedCorrection)),
+            detectedName: item.detectedName || item.sourceName,
+            correctedName: item.correctedName || item.title,
+            correctedServing: item.correctedServing || 'Not recorded',
+            analysisStatus: item.analysisStatus || 'Unknown', feedbackAt: item.feedbackAt || '',
+            modelName: item.modelName || 'Not recorded', promptVersion: item.promptVersion || 'Not recorded'
         });
         const sourceCell = document.createElement('td'); const source = document.createElement('div'); source.className = 'source-cell';
         const sourceIcon = document.createElement('span'); sourceIcon.className = 'source-icon'; sourceIcon.innerHTML = '<i class="bi bi-robot"></i>';
         const sourceText = document.createElement('span'); const sourceName = document.createElement('strong'); sourceName.textContent = item.sourceName; const sourceId = document.createElement('small'); sourceId.textContent = `Analysis #${item.analysisId}`; sourceText.append(sourceName, sourceId); source.append(sourceIcon, sourceText); sourceCell.appendChild(source);
-        const typeCell = document.createElement('td'); const type = document.createElement('span'); type.className = 'type-badge'; type.textContent = item.suggestionType; typeCell.appendChild(type);
+        const typeCell = document.createElement('td'); const type = document.createElement('span'); type.className = `type-badge${item.learnedCorrection ? ' learned' : ''}`; type.textContent = item.suggestionType; typeCell.appendChild(type);
         const titleCell = document.createElement('td'); const title = document.createElement('strong'); title.className = 'suggestion-title'; title.textContent = item.title; titleCell.appendChild(title);
         const descriptionCell = document.createElement('td'); const description = document.createElement('p'); description.className = 'copy'; description.textContent = item.description; descriptionCell.appendChild(description);
         const reasonCell = document.createElement('td'); const reason = document.createElement('p'); reason.className = 'copy muted'; reason.textContent = item.reason || 'No reason provided'; reasonCell.appendChild(reason);
         const priorityCell = document.createElement('td'); const badge = document.createElement('span'); badge.className = `priority-badge ${priorityGroup(priority)}`; const value = document.createElement('b'); value.textContent = String(priority); const scale = document.createElement('small'); scale.textContent = '/10'; badge.append(value, scale); priorityCell.appendChild(badge);
-        const actionCell = document.createElement('td'); const action = document.createElement('button'); action.type = 'button'; action.className = 'icon-button danger delete-suggestion'; action.title = 'Delete suggestion'; action.setAttribute('aria-label', 'Delete suggestion'); action.innerHTML = '<i class="bi bi-trash3"></i>'; actionCell.appendChild(action);
+        const actionCell = document.createElement('td'); actionCell.className = 'row-actions';
+        const view = document.createElement('button'); view.type = 'button'; view.className = 'icon-button view-suggestion'; view.title = 'View suggestion details'; view.setAttribute('aria-label', 'View suggestion details'); view.innerHTML = '<i class="bi bi-eye"></i>';
+        const action = document.createElement('button'); action.type = 'button'; action.className = 'icon-button danger delete-suggestion'; action.title = 'Delete suggestion'; action.setAttribute('aria-label', 'Delete suggestion'); action.innerHTML = '<i class="bi bi-trash3"></i>'; actionCell.append(view, action);
         row.append(sourceCell, typeCell, titleCell, descriptionCell, reasonCell, priorityCell, actionCell);
         return row;
     }
@@ -117,6 +127,56 @@
 
     function showModal() { modal.classList.add('show'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open'); form.elements.analysisId.focus(); }
     function hideModal() { modal.classList.remove('show'); modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-open'); form.reset(); }
+
+    function formatTimestamp(value) {
+        if (!value) return 'Not recorded';
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return value;
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium', timeStyle: 'short'
+        }).format(parsed);
+    }
+
+    function showDetails(button) {
+        const row = button.closest('tr[data-id]'); if (!row || !detailsModal) return;
+        detailsTrigger = button;
+        const learned = row.dataset.learnedCorrection === 'true';
+        const type = row.querySelector('.type-badge')?.textContent.trim() || 'Suggestion';
+        const typeBadge = byId('detailType');
+        typeBadge.textContent = type;
+        typeBadge.className = `type-badge${learned ? ' learned' : ''}`;
+        setText('detailTitle', row.dataset.title || 'Suggestion details');
+        setText('detailAnalysisReference', row.dataset.analysisId ? `Analysis #${row.dataset.analysisId}` : 'Analysis unavailable');
+        setText('detailDetectedName', row.dataset.detectedName || 'Not recorded');
+        setText('detailCorrectedName', row.dataset.correctedName || row.dataset.title || 'Not recorded');
+        setText('detailServing', row.dataset.correctedServing || 'Not recorded');
+        setText('detailStatus', (row.dataset.analysisStatus || 'Unknown').replaceAll('_', ' '));
+        setText('detailPriority', `${row.dataset.priorityValue || '0'}/10`);
+        setText('detailFeedbackAt', formatTimestamp(row.dataset.feedbackAt));
+        setText('detailModel', row.dataset.modelName || 'Not recorded');
+        setText('detailPromptVersion', row.dataset.promptVersion || 'Not recorded');
+        setText('detailDescription', row.dataset.description || 'No description provided.');
+        setText('detailReason', row.dataset.reason || 'No reason provided.');
+        const journeyLabels = byId('correctionJourney')?.querySelectorAll('article span');
+        if (journeyLabels?.length === 2) {
+            journeyLabels[0].textContent = learned ? 'Original AI result' : 'Source food';
+            journeyLabels[1].textContent = learned ? 'Corrected result' : 'Suggestion';
+        }
+        byId('detailLearningNote').hidden = !learned;
+        detailsModal.classList.add('show');
+        detailsModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        byId('closeSuggestionDetails')?.focus();
+    }
+
+    function hideDetails() {
+        if (!detailsModal) return;
+        detailsModal.classList.remove('show');
+        detailsModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        detailsTrigger?.focus();
+        detailsTrigger = null;
+    }
 
     async function saveSuggestion(event) {
         event.preventDefault();
@@ -141,8 +201,9 @@
     byId('clearFilters')?.addEventListener('click', () => { search.value = ''; typeFilter.value = 'all'; priorityFilter.value = 'all'; page = 1; render(); search.focus(); });
     prev.addEventListener('click', () => { if (page > 1) { page -= 1; render(); } }); next.addEventListener('click', () => { if (page * pageSize < filtered.length) { page += 1; render(); } });
     byId('refreshSuggestions')?.addEventListener('click', () => window.location.reload()); byId('openSuggestionModal')?.addEventListener('click', showModal); byId('closeSuggestionModal')?.addEventListener('click', hideModal); byId('cancelSuggestionModal')?.addEventListener('click', hideModal);
-    modal.addEventListener('click', (event) => { if (event.target === modal) hideModal(); }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal.classList.contains('show')) hideModal(); }); form.addEventListener('submit', saveSuggestion);
-    document.addEventListener('click', (event) => { const button = event.target.closest('.delete-suggestion'); if (button) deleteSuggestion(button); });
+    byId('closeSuggestionDetails')?.addEventListener('click', hideDetails); byId('closeSuggestionDetailsFooter')?.addEventListener('click', hideDetails);
+    modal.addEventListener('click', (event) => { if (event.target === modal) hideModal(); }); detailsModal?.addEventListener('click', (event) => { if (event.target === detailsModal) hideDetails(); }); document.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; if (detailsModal?.classList.contains('show')) hideDetails(); else if (modal.classList.contains('show')) hideModal(); }); form.addEventListener('submit', saveSuggestion);
+    document.addEventListener('click', (event) => { const view = event.target.closest('.view-suggestion'); if (view) { showDetails(view); return; } const button = event.target.closest('.delete-suggestion'); if (button) deleteSuggestion(button); });
     byId('exportSuggestions')?.addEventListener('click', () => { filterRows(); const headings = ['Source analysis', 'Type', 'Suggestion', 'Description', 'Reason', 'Priority']; const data = filtered.map((row) => [...row.cells].slice(0, 6).map((cell) => cell.innerText.trim())); const quote = (value) => `"${String(value).replaceAll('"', '""')}"`; const csv = [headings, ...data].map((line) => line.map(quote).join(',')).join('\r\n'); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); link.download = 'nham-health-ai-food-suggestions.csv'; link.click(); URL.revokeObjectURL(link.href); });
 
     updateSummary(); render();
