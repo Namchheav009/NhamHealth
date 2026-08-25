@@ -20,10 +20,15 @@ class ProfileRepository {
 
   Future<int> getUnreadNotificationCount() async {
     final token = await _accessToken();
-    final response = await _client.get(
-      Uri.parse('${ApiConfig.baseUrl}/api/v1/notifications/unread-count'),
-      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
-    ).timeout(const Duration(seconds: 15));
+    final response = await _client
+        .get(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/notifications/unread-count'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) return 0;
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return (payload['count'] as num?)?.toInt() ?? 0;
@@ -84,19 +89,9 @@ class ProfileRepository {
     try {
       final payload = jsonDecode(response.body);
       if (payload is! List) throw const FormatException();
-      return payload.map((item) {
-        final post = Map<String, dynamic>.from(item as Map);
-        post['imageUrl'] = _absoluteUrl('${post['imageUrl'] ?? ''}');
-        post['imageUrls'] = (post['imageUrls'] as List<dynamic>? ?? const [])
-            .map((url) => _absoluteUrl('$url'))
-            .toList(growable: false);
-        post['authorAvatarUrl'] = _absoluteUrl(
-          '${post['authorAvatarUrl'] ?? ''}',
-        );
-        post['ageLabel'] = _ageLabel('${post['createdAt'] ?? ''}');
-        post['isLiked'] = post['liked'] == true;
-        return CommunityPost.fromJson(post);
-      }).toList(growable: false);
+      return payload
+          .map((item) => _communityPost(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false);
     } on Object {
       throw const ProfileException('The posts response is incomplete.');
     }
@@ -118,7 +113,10 @@ class ProfileRepository {
             'PUT',
             Uri.parse('${ApiConfig.baseUrl}/api/v1/community/posts/$postId'),
           )
-          ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $token'})
+          ..headers.addAll({
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          })
           ..fields['description'] = description.trim()
           ..fields['visibility'] = visibility.apiValue
           ..fields['allowComments'] = '$allowComments'
@@ -134,22 +132,15 @@ class ProfileRepository {
         ),
       );
     }
-    final response = await http.Response.fromStream(await _client.send(request));
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ProfileException(_errorMessage(response));
     }
     try {
       final post = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-      post['imageUrl'] = _absoluteUrl('${post['imageUrl'] ?? ''}');
-      post['imageUrls'] = (post['imageUrls'] as List<dynamic>? ?? const [])
-          .map((url) => _absoluteUrl('$url'))
-          .toList(growable: false);
-      post['authorAvatarUrl'] = _absoluteUrl(
-        '${post['authorAvatarUrl'] ?? ''}',
-      );
-      post['ageLabel'] = _ageLabel('${post['createdAt'] ?? ''}');
-      post['isLiked'] = post['liked'] == true;
-      return CommunityPost.fromJson(post);
+      return _communityPost(post);
     } on Object {
       throw const ProfileException('The updated post response is incomplete.');
     }
@@ -388,6 +379,30 @@ class ProfileRepository {
 
   String _absoluteUrl(String value) =>
       value.startsWith('/') ? '${ApiConfig.baseUrl}$value' : value;
+
+  CommunityPost _communityPost(Map<String, dynamic> post) {
+    post['imageUrl'] = _absoluteUrl('${post['imageUrl'] ?? ''}');
+    post['imageUrls'] = (post['imageUrls'] as List<dynamic>? ?? const [])
+        .map((url) => _absoluteUrl('$url'))
+        .toList(growable: false);
+    post['authorAvatarUrl'] = _absoluteUrl('${post['authorAvatarUrl'] ?? ''}');
+    final sharedPayload = post['sharedPost'];
+    if (sharedPayload is Map) {
+      final shared = Map<String, dynamic>.from(sharedPayload);
+      shared['imageUrl'] = _absoluteUrl('${shared['imageUrl'] ?? ''}');
+      shared['imageUrls'] = (shared['imageUrls'] as List<dynamic>? ?? const [])
+          .map((url) => _absoluteUrl('$url'))
+          .toList(growable: false);
+      shared['authorAvatarUrl'] = _absoluteUrl(
+        '${shared['authorAvatarUrl'] ?? ''}',
+      );
+      shared['ageLabel'] = _ageLabel('${shared['createdAt'] ?? ''}');
+      post['sharedPost'] = shared;
+    }
+    post['ageLabel'] = _ageLabel('${post['createdAt'] ?? ''}');
+    post['isLiked'] = post['liked'] == true;
+    return CommunityPost.fromJson(post);
+  }
 
   String _ageLabel(String value) {
     final date = DateTime.tryParse(value)?.toLocal();

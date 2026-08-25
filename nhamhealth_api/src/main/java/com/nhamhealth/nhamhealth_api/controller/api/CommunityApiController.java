@@ -18,6 +18,7 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.SharePostRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.SharePostToFeedRequest;
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
 
 @RestController
@@ -111,6 +112,15 @@ public class CommunityApiController {
     public void share(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
             @RequestBody(required = false) SharePostRequest request) {
         service.share(userId(jwt), postId, request == null ? List.of() : request.recipientIds());
+    }
+
+    @PostMapping("/posts/{postId}/share-to-feed")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommunityPostResponse shareToFeed(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
+            @RequestBody(required = false) SharePostToFeedRequest request) {
+        String message = request == null ? "" : request.message();
+        String visibility = request == null ? "PUBLIC" : request.visibility();
+        return service.shareToFeed(userId(jwt), postId, message, visibility);
     }
 
     @GetMapping("/people")

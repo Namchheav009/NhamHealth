@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunitySharedPostResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.*;
@@ -184,7 +185,8 @@ public class CommunityService {
 
     @Transactional
     public void share(Integer userId, Integer postId, List<Integer> recipientIds) {
-        Post post = visiblePost(userId, postId);
+        Post selected = visiblePost(userId, postId);
+        Post post = selected.getSharedPost() == null ? selected : selected.getSharedPost();
         User actor = user(userId);
         Set<Integer> recipients = recipientIds == null ? Set.of() : new LinkedHashSet<>(recipientIds);
         if (!recipients.isEmpty()) {
@@ -207,14 +209,46 @@ public class CommunityService {
         }
     }
 
+    @Transactional
+    public CommunityPostResponse shareToFeed(Integer userId, Integer postId, String message, String visibility) {
+        Post selected = visiblePost(userId, postId);
+        Post original = selected.getSharedPost() == null ? selected : selected.getSharedPost();
+        if (!"ACTIVE".equalsIgnoreCase(original.getStatus())
+                || !"PUBLIC".equalsIgnoreCase(value(original.getVisibility(), "PUBLIC"))) {
+            throw new IllegalArgumentException("Only public posts can be shared to your feed.");
+        }
+
+        User actor = user(userId);
+        LocalDateTime now = LocalDateTime.now();
+        Post sharedPost = new Post();
+        sharedPost.setUser(actor);
+        sharedPost.setSharedPost(original);
+        sharedPost.setCaption(value(message, "").trim());
+        sharedPost.setVisibility(cleanVisibility(visibility));
+        sharedPost.setAllowComments(true);
+        sharedPost.setAllowReplies(true);
+        sharedPost.setStatus("ACTIVE");
+        sharedPost.setCreatedAt(now);
+        sharedPost.setUpdatedAt(now);
+        sharedPost = posts.save(sharedPost);
+
+        saveShare(actor, original, null, "COMMUNITY_FEED");
+        communityNotifications.postSharedToFeed(actor, original.getUser(), sharedPost);
+        return response(sharedPost, userId, followedIds(userId));
+    }
+
     private void saveShare(User actor, Post post, Integer recipientId) {
+        saveShare(actor, post, recipientId, "COMMUNITY");
+    }
+
+    private void saveShare(User actor, Post post, Integer recipientId, String sharedVia) {
         Share share = new Share();
         share.setSenderUser(actor);
         User recipient = recipientId == null ? null : user(recipientId);
         if (recipient != null) share.setReceiverUser(recipient);
         share.setReferenceType("POST");
         share.setReferenceId(post.getPostId());
-        share.setSharedVia("COMMUNITY");
+        share.setSharedVia(sharedVia);
         share.setCreatedAt(LocalDateTime.now());
         shares.save(share);
         if (recipient != null) communityNotifications.postShared(actor, recipient, post);
@@ -330,6 +364,9 @@ public class CommunityService {
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {
         UserProfile profile = profiles.findByUser_UserId(post.getUser().getUserId()).orElse(null);
+        Integer sharedReferenceId = post.getSharedPost() == null
+                ? post.getPostId()
+                : post.getSharedPost().getPostId();
         List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
                 .map(PostMedia::getMediaUrl).toList();
         String imageUrl = imageUrls.isEmpty() ? "" : imageUrls.getFirst();
@@ -340,11 +377,32 @@ public class CommunityService {
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 assignedTags.stream().map(item -> item.getTag().getTagName()).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
-                shares.countByReferenceTypeIgnoreCaseAndReferenceId("POST", post.getPostId()),
+                shares.countByReferenceTypeIgnoreCaseAndReferenceId("POST", sharedReferenceId),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
                 followed.contains(post.getUser().getUserId()), post.getVisibility(),
                 post.isAllowComments(), post.isAllowReplies(),
-                assignedTags.stream().map(item -> item.getTag().getTagId()).toList());
+                assignedTags.stream().map(item -> item.getTag().getTagId()).toList(),
+                sharedPostResponse(post.getSharedPost()));
+    }
+
+    private CommunitySharedPostResponse sharedPostResponse(Post original) {
+        if (original == null || !"ACTIVE".equalsIgnoreCase(original.getStatus())
+                || !"PUBLIC".equalsIgnoreCase(value(original.getVisibility(), "PUBLIC"))) {
+            return null;
+        }
+        UserProfile profile = profiles.findByUser_UserId(original.getUser().getUserId()).orElse(null);
+        List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(original.getPostId()).stream()
+                .map(PostMedia::getMediaUrl).toList();
+        return new CommunitySharedPostResponse(
+                original.getPostId(),
+                original.getUser().getUserId(),
+                profile == null ? original.getUser().getName() : profile.getFullName(),
+                original.getUser().getRoleLabel(),
+                profile == null ? "" : value(profile.getProfileImageUrl(), ""),
+                value(original.getCaption(), ""),
+                imageUrls.isEmpty() ? "" : imageUrls.getFirst(),
+                imageUrls,
+                original.getCreatedAt());
     }
 
     private CommunityCommentResponse commentResponse(PostComment comment) {

@@ -9,16 +9,14 @@ import 'package:nhamhealth_flutter/app/modules/models/community/community_types.
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
+import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_composer_card.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  for (final size in <Size>[
-    const Size(320, 700),
-    const Size(381, 856),
-  ]) {
+  for (final size in <Size>[const Size(320, 700), const Size(381, 856)]) {
     testWidgets(
       'community image carousel is constrained at ${size.width.toInt()} px',
       (tester) async {
@@ -36,14 +34,20 @@ void main() {
           ),
         );
 
-        await tester.pumpWidget(
-          const GetMaterialApp(home: CommunityPage()),
-        );
+        await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
         await tester.pump(const Duration(milliseconds: 500));
 
         final carousel = find.byType(PageView);
         expect(carousel, findsOneWidget);
         expect(tester.getSize(carousel).height, 218);
+        expect(find.byType(CommunityComposerCard), findsOneWidget);
+        expect(find.text('Like'), findsOneWidget);
+        expect(find.text('Comment'), findsOneWidget);
+        expect(find.text('Share'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('community-feed-filter-forYou')),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
       },
     );
@@ -85,13 +89,12 @@ class _CommunityHomeProvider extends HomeProvider {
 
 class _CommunityAuthService extends AuthService {
   @override
-  Future<AuthenticatedUser?> restoreSession() async =>
-      const AuthenticatedUser(
-        id: 1,
-        email: 'member@example.com',
-        role: 'USER',
-        fullName: 'Community Member',
-      );
+  Future<AuthenticatedUser?> restoreSession() async => const AuthenticatedUser(
+    id: 1,
+    email: 'member@example.com',
+    role: 'USER',
+    fullName: 'Community Member',
+  );
 
   @override
   Future<String?> readAccessToken() async => null;
