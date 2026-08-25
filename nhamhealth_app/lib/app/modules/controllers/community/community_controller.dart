@@ -1,15 +1,20 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_person.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
+import '../../models/notifications/notification_item.dart';
 import '../../providers/home/home_provider.dart';
 import '../../repositories/community/community_repository.dart';
+import '../../repositories/notifications/notifications_repository.dart';
 
 export '../../models/community/community_person.dart';
 export '../../models/community/community_post.dart';
@@ -20,8 +25,10 @@ class CommunityController extends GetxController {
     required CommunityRepository repository,
     AuthService? authService,
     HomeProvider? homeProvider,
+    NotificationsRepository? notificationsRepository,
   }) : _repository = repository,
        _authService = authService ?? Get.find<AuthService>(),
+       _notificationsRepository = notificationsRepository,
        _homeProvider =
            homeProvider ??
            HomeProvider(authService: authService ?? Get.find<AuthService>());
@@ -29,6 +36,12 @@ class CommunityController extends GetxController {
   final CommunityRepository _repository;
   final AuthService _authService;
   final HomeProvider _homeProvider;
+  final NotificationsRepository? _notificationsRepository;
+  Timer? _notificationTimer;
+  Set<int> _knownCommunityNotificationIds = const {};
+  bool _notificationsInitialized = false;
+  bool _notificationRequestInFlight = false;
+  static const notificationRefreshInterval = Duration(seconds: 5);
   final section = CommunitySection.feed.obs;
   final feedFilter = CommunityFeedFilter.forYou.obs;
   final friendsView = FriendsView.friends.obs;
@@ -76,7 +89,54 @@ class CommunityController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    reload();
+    unawaited(reload());
+    if (_notificationsRepository != null) {
+      unawaited(_refreshCommunityNotifications(showAlert: false));
+      _notificationTimer = Timer.periodic(notificationRefreshInterval, (_) {
+        if (Get.currentRoute == AppRoutes.community) {
+          unawaited(_refreshCommunityNotifications(showAlert: true));
+        }
+      });
+    }
+  }
+
+  Future<void> _refreshCommunityNotifications({required bool showAlert}) async {
+    final repository = _notificationsRepository;
+    if (repository == null || _notificationRequestInFlight) return;
+    _notificationRequestInFlight = true;
+    try {
+      final notifications = await repository.getNotifications();
+      final communityNotifications = notifications
+          .where((item) => item.kind == NotificationKind.social)
+          .toList(growable: false);
+      final newNotifications = _notificationsInitialized
+          ? communityNotifications
+              .where(
+                (item) =>
+                    item.isUnread &&
+                    !_knownCommunityNotificationIds.contains(item.id),
+              )
+              .toList(growable: false)
+          : const <NotificationItem>[];
+
+      _knownCommunityNotificationIds = communityNotifications
+          .map((item) => item.id)
+          .toSet();
+      _notificationsInitialized = true;
+      if (newNotifications.isNotEmpty) {
+        unreadNotificationCount.value += newNotifications.length;
+        if (showAlert) {
+          final newest = newNotifications.first;
+          unawaited(
+            AppAlert.success(title: newest.title, message: newest.message),
+          );
+        }
+      }
+    } on Object {
+      /* Keep Community available if notification polling is offline. */
+    } finally {
+      _notificationRequestInFlight = false;
+    }
   }
 
   Future<void> reload() async {
@@ -228,4 +288,10 @@ class CommunityController extends GetxController {
 
   void declineFollower(CommunityPerson person) =>
       connectionStatuses[person.id] = 'Declined';
+
+  @override
+  void onClose() {
+    _notificationTimer?.cancel();
+    super.onClose();
+  }
 }
