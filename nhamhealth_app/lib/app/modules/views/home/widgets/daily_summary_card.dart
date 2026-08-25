@@ -89,7 +89,6 @@ class DailySummaryCard extends GetView<HomeController> {
                   height: 52,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
                     itemCount: controller.recentDays.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 7),
                     itemBuilder: (_, index) {

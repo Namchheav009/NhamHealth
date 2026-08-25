@@ -44,6 +44,7 @@ public class AiFoodAnalysisService {
     private final FoodNutritionCalculationService calculationService;
     private final FoodNutritionEstimationProvider nutritionEstimationProvider;
     private final FoodAnalysisConfidencePolicy confidencePolicy;
+    private final FoodCorrectionSuggestionService correctionSuggestionService;
     private final UserRepository userRepository;
     private final AiFoodAnalysisRepository analysisRepository;
     private final AiFoodAnalysisNutrientRepository analysisNutrientRepository;
@@ -55,6 +56,7 @@ public class AiFoodAnalysisService {
             FoodNutritionCalculationService calculationService,
             FoodNutritionEstimationProvider nutritionEstimationProvider,
             FoodAnalysisConfidencePolicy confidencePolicy,
+            FoodCorrectionSuggestionService correctionSuggestionService,
             UserRepository userRepository,
             AiFoodAnalysisRepository analysisRepository,
             AiFoodAnalysisNutrientRepository analysisNutrientRepository,
@@ -64,6 +66,7 @@ public class AiFoodAnalysisService {
         this.calculationService = calculationService;
         this.nutritionEstimationProvider = nutritionEstimationProvider;
         this.confidencePolicy = confidencePolicy;
+        this.correctionSuggestionService = correctionSuggestionService;
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.analysisNutrientRepository = analysisNutrientRepository;
@@ -223,7 +226,7 @@ public class AiFoodAnalysisService {
                 mealName,
                 vision.cuisine(),
                 vision.type(),
-                "drink".equals(vision.type()),
+                "drink".equals(vision.type()) || "mixed".equals(vision.type()),
                 vision.mealConfidence(),
                 vision.portionConfidence(),
                 vision.preparationConfidence(),
@@ -265,12 +268,14 @@ public class AiFoodAnalysisService {
         AiFoodAnalysis analysis = analysisRepository
                 .findByAiFoodAnalysisIdAndUserUserId(analysisId, userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "AI analysis not found."));
-        analysis.setUserConfirmed(request.confirmed());
         analysis.setCorrectedFoodName(request.foodName().trim());
         analysis.setCorrectedServingSize(request.servingSize());
         analysis.setCorrectedServingUnit(request.servingUnit().trim());
         analysis.setFeedbackAt(LocalDateTime.now());
-        analysis.setStatus(Boolean.TRUE.equals(request.confirmed()) ? "CONFIRMED" : "CORRECTED");
+        boolean correctionRecorded = correctionSuggestionService.recordCorrection(
+                analysis, request);
+        analysis.setUserConfirmed(!correctionRecorded && Boolean.TRUE.equals(request.confirmed()));
+        analysis.setStatus(correctionRecorded ? "CORRECTED" : "CONFIRMED");
         analysisRepository.save(analysis);
     }
 
