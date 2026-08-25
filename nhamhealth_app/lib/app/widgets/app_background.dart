@@ -19,10 +19,12 @@ class AppBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: Image.asset(
-            'assets/images/background/bg.png',
-            fit: BoxFit.cover,
-            alignment: alignment,
+          child: RepaintBoundary(
+            child: Image.asset(
+              'assets/images/background/bg.png',
+              fit: BoxFit.cover,
+              alignment: alignment,
+            ),
           ),
         ),
         child,

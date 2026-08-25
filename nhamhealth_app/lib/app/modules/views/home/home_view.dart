@@ -11,7 +11,6 @@ import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
 import 'widgets/greeting_section.dart';
 import 'widgets/home_bottom_navigation.dart';
-import 'widgets/home_chatbot_button.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_search_bar.dart';
 import 'widgets/recommended_meal_card.dart';
@@ -35,10 +34,11 @@ class HomeView extends GetView<HomeController> {
               color: AppColors.primaryGreen,
               onRefresh: controller.refreshMeals,
               child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: AppSpacing.pagePaddingWithNavigation,
+                primary: true,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: AppSpacing.pagePaddingWithNavigationFor(context),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
@@ -47,7 +47,7 @@ class HomeView extends GetView<HomeController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const HomeHeader(),
+                        const RepaintBoundary(child: HomeHeader()),
                         const SizedBox(height: AppSpacing.topBarBottom),
                         Obx(
                           () => LoadingContentTransition(
@@ -58,14 +58,16 @@ class HomeView extends GetView<HomeController> {
                             content: const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                HomeSearchBar(),
+                                RepaintBoundary(child: HomeSearchBar()),
                                 SizedBox(height: 14),
-                                GreetingSection(),
+                                RepaintBoundary(child: GreetingSection()),
                                 SizedBox(height: 14),
-                                AiRecommendationCard(),
+                                RepaintBoundary(child: AiRecommendationCard()),
                                 SizedBox(height: 14),
-                                DailySummaryCard(),
-                                _RecommendedMealsSection(),
+                                RepaintBoundary(child: DailySummaryCard()),
+                                RepaintBoundary(
+                                  child: _RecommendedMealsSection(),
+                                ),
                               ],
                             ),
                           ),
@@ -89,8 +91,6 @@ class HomeView extends GetView<HomeController> {
             ),
           ),
         ),
-        floatingActionButton: const HomeChatbotButton(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
@@ -159,7 +159,6 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     height: 148,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
                       itemCount: meals.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 7),
                       itemBuilder:
