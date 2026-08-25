@@ -33,13 +33,15 @@ public class CommunityService {
     private final PostTagRepository postTags;
     private final TagTypeRepository tagTypes;
     private final ProfileImageStorageService imageStorage;
+    private final CommunityNotificationService communityNotifications;
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
             ShareRepository shares,
             UserRepository users, UserProfileRepository profiles, FollowRepository follows,
             PostTagRepository postTags, TagTypeRepository tagTypes,
-            ProfileImageStorageService imageStorage) {
+            ProfileImageStorageService imageStorage,
+            CommunityNotificationService communityNotifications) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -52,6 +54,7 @@ public class CommunityService {
         this.postTags = postTags;
         this.tagTypes = tagTypes;
         this.imageStorage = imageStorage;
+        this.communityNotifications = communityNotifications;
     }
 
     @Transactional(readOnly = true)
@@ -159,21 +162,25 @@ public class CommunityService {
     @Transactional
     public CommunityPostResponse toggleLike(Integer userId, Integer postId) {
         Post post = post(postId);
-        likes.findByUserUserIdAndPostPostId(userId, postId).ifPresentOrElse(
-                likes::delete,
-                () -> {
-                    PostLike like = new PostLike();
-                    like.setUser(user(userId));
-                    like.setPost(post);
-                    like.setCreatedAt(LocalDateTime.now());
-                    likes.save(like);
-                });
+        Optional<PostLike> existing = likes.findByUserUserIdAndPostPostId(userId, postId);
+        if (existing.isPresent()) {
+            likes.delete(existing.get());
+        } else {
+            User actor = user(userId);
+            PostLike like = new PostLike();
+            like.setUser(actor);
+            like.setPost(post);
+            like.setCreatedAt(LocalDateTime.now());
+            likes.save(like);
+            communityNotifications.postLiked(actor, post);
+        }
         return response(post, userId, followedIds(userId));
     }
 
     @Transactional
     public void share(Integer userId, Integer postId, List<Integer> recipientIds) {
-        post(postId);
+        Post post = post(postId);
+        User actor = user(userId);
         Set<Integer> recipients = recipientIds == null ? Set.of() : new LinkedHashSet<>(recipientIds);
         if (!recipients.isEmpty()) {
             Set<Integer> friends = followedIds(userId);
@@ -183,23 +190,25 @@ public class CommunityService {
             }
         }
         if (recipients.isEmpty()) {
-            saveShare(userId, postId, null);
+            saveShare(actor, post, null);
             return;
         }
         for (Integer recipientId : recipients) {
-            saveShare(userId, postId, recipientId);
+            saveShare(actor, post, recipientId);
         }
     }
 
-    private void saveShare(Integer userId, Integer postId, Integer recipientId) {
+    private void saveShare(User actor, Post post, Integer recipientId) {
         Share share = new Share();
-        share.setSenderUser(user(userId));
-        if (recipientId != null) share.setReceiverUser(user(recipientId));
+        share.setSenderUser(actor);
+        User recipient = recipientId == null ? null : user(recipientId);
+        if (recipient != null) share.setReceiverUser(recipient);
         share.setReferenceType("POST");
-        share.setReferenceId(postId);
+        share.setReferenceId(post.getPostId());
         share.setSharedVia("COMMUNITY");
         share.setCreatedAt(LocalDateTime.now());
         shares.save(share);
+        if (recipient != null) communityNotifications.postShared(actor, recipient, post);
     }
 
     @Transactional(readOnly = true)
@@ -218,14 +227,16 @@ public class CommunityService {
         if (!post.isAllowComments()) {
             throw new IllegalArgumentException("Comments are disabled for this post");
         }
+        User actor = user(userId);
         PostComment comment = new PostComment();
         comment.setPost(post);
-        comment.setUser(user(userId));
+        comment.setUser(actor);
+        PostComment parent = null;
         if (parentCommentId != null) {
             if (!post.isAllowReplies()) {
                 throw new IllegalArgumentException("Replies are disabled for this post");
             }
-            PostComment parent = comments.findById(parentCommentId)
+            parent = comments.findById(parentCommentId)
                     .orElseThrow(() -> new IllegalArgumentException("The comment you are replying to was not found"));
             if (!parent.getPost().getPostId().equals(postId) || !"ACTIVE".equalsIgnoreCase(parent.getStatus())) {
                 throw new IllegalArgumentException("Replies must belong to an active comment on this post");
@@ -236,7 +247,16 @@ public class CommunityService {
         comment.setStatus("ACTIVE");
         comment.setCreatedAt(LocalDateTime.now());
         comment.setUpdatedAt(comment.getCreatedAt());
-        return commentResponse(comments.save(comment));
+        PostComment saved = comments.save(comment);
+        if (parent == null) {
+            communityNotifications.postCommented(actor, post);
+        } else {
+            communityNotifications.commentReplied(actor, parent);
+            if (!post.getUser().getUserId().equals(parent.getUser().getUserId())) {
+                communityNotifications.postReplyAdded(actor, post);
+            }
+        }
+        return commentResponse(saved);
     }
 
     @Transactional
@@ -246,15 +266,18 @@ public class CommunityService {
         if (!comment.getPost().getPostId().equals(postId) || !"ACTIVE".equalsIgnoreCase(comment.getStatus())) {
             throw new ResponseStatusException(NOT_FOUND, "Comment not found");
         }
-        commentLikes.findByUserUserIdAndPostCommentCommentId(userId, commentId).ifPresentOrElse(
-                commentLikes::delete,
-                () -> {
-                    CommentLike like = new CommentLike();
-                    like.setUser(user(userId));
-                    like.setPostComment(comment);
-                    like.setCreatedAt(LocalDateTime.now());
-                    commentLikes.save(like);
-                });
+        Optional<CommentLike> existing = commentLikes.findByUserUserIdAndPostCommentCommentId(userId, commentId);
+        if (existing.isPresent()) {
+            commentLikes.delete(existing.get());
+        } else {
+            User actor = user(userId);
+            CommentLike like = new CommentLike();
+            like.setUser(actor);
+            like.setPostComment(comment);
+            like.setCreatedAt(LocalDateTime.now());
+            commentLikes.save(like);
+            communityNotifications.commentLiked(actor, comment);
+        }
         return commentResponse(comment, userId);
     }
 
@@ -291,6 +314,7 @@ public class CommunityService {
         follow.setRequestedAt(LocalDateTime.now());
         follow.setRespondedAt(LocalDateTime.now());
         follows.save(follow);
+        communityNotifications.followed(follow.getFollowerUser(), follow.getFollowingUser());
         return "FOLLOWING";
     }
 
