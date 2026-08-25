@@ -146,32 +146,36 @@ class ProfilePostCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: post.imageBytes != null
-                      ? Image.memory(
-                          post.imageBytes!,
-                          width: double.infinity,
-                          height: 218,
-                          fit: BoxFit.cover,
-                          filterQuality: FilterQuality.medium,
-                        )
-                      : PageView(
-                          children: _imageUrls
-                              .map(
-                                (url) => Image.network(
-                                  url,
-                                  width: double.infinity,
-                                  height: 218,
-                                  fit: BoxFit.cover,
-                                  filterQuality: FilterQuality.medium,
-                                  errorBuilder: (_, _, _) => Container(
-                                    height: 218,
-                                    color: const Color(0xFFF3F7F4),
-                                    child: const Center(child: Icon(Icons.image_outlined, color: Color(0xFF8D9990))),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 218,
+                    child: post.imageBytes != null
+                        ? Image.memory(
+                            post.imageBytes!,
+                            fit: BoxFit.cover,
+                            filterQuality: FilterQuality.medium,
+                          )
+                        : PageView(
+                            children: _imageUrls
+                                .map(
+                                  (url) => Image.network(
+                                    url,
+                                    fit: BoxFit.cover,
+                                    filterQuality: FilterQuality.medium,
+                                    errorBuilder: (_, _, _) => Container(
+                                      color: const Color(0xFFF3F7F4),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          color: Color(0xFF8D9990),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(growable: false),
-                        ),
+                                )
+                                .toList(growable: false),
+                          ),
+                  ),
                 ),
               ),
             ),
