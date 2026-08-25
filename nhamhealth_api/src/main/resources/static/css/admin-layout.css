@@ -73,13 +73,30 @@ textarea:focus-visible {
 .brand small { display: block; margin-top: 3px; font-size: 10px; color: #8fa7b6; }
 .sidebar-nav { padding: 14px 12px 28px; }
 .nav-section {
-    margin: 24px 10px 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 14px 0 0;
+    padding: 12px 10px;
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    background: transparent;
     color: #7890a2;
     font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .1em;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease;
 }
+.nav-section:hover { color: #d8e7ef; background: rgba(255,255,255,.025); }
+.nav-section:focus { outline: none; }
+.nav-section:focus-visible { outline: 2px solid rgba(147,247,181,.55); outline-offset: -2px; }
+.nav-section i { font-size: 11px; transition: transform .22s ease; }
+.nav-section[aria-expanded="true"] i { transform: rotate(90deg); }
+.nav-group { display: none; }
+.nav-group.is-open { display: block; padding-top: 7px; }
 .nav-link {
     display: flex;
     align-items: center;

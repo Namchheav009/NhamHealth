@@ -16,7 +16,6 @@ import '../../controllers/community/community_controller.dart';
 import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
-import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
 import 'widgets/community_tab_switcher.dart';
 
@@ -526,7 +525,6 @@ class CommunityPage extends GetView<CommunityController> {
       _contentWidth(
         Column(
           children: [
-            _createPost(),
             _feedFilters(),
             const SizedBox(height: 14),
             if (controller.visiblePosts.isEmpty)
@@ -541,8 +539,6 @@ class CommunityPage extends GetView<CommunityController> {
       ),
     ],
   );
-
-  Widget _createPost() => CommunityComposerCard(onTap: _showCreatePost);
 
   Widget _feedFilters() {
     const labels = ['For You', 'Following', 'Latest'];

@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 import com.nhamhealth.nhamhealth_api.entity.PostComment;
 
 public interface PostCommentRepository extends JpaRepository<PostComment, Integer> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "post", "parentComment"})
+    List<PostComment> findAllByOrderByCreatedAtDesc();
+
     long countByPostPostId(Integer postId);
 
     long countByPostPostIdAndStatusIgnoreCase(Integer postId, String status);
