@@ -104,7 +104,6 @@ class ProfileRepository {
 
   Future<CommunityPost> updatePost({
     required String postId,
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -120,7 +119,6 @@ class ProfileRepository {
             Uri.parse('${ApiConfig.baseUrl}/api/v1/community/posts/$postId'),
           )
           ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $token'})
-          ..fields['title'] = title.trim()
           ..fields['description'] = description.trim()
           ..fields['visibility'] = visibility.apiValue
           ..fields['allowComments'] = '$allowComments'

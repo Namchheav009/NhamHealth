@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
+import com.nhamhealth.nhamhealth_api.dto.ai.AiUserHealthProfile;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.DetectedFoodComponent;
@@ -45,6 +46,7 @@ public class AiFoodAnalysisService {
     private final FoodNutritionEstimationProvider nutritionEstimationProvider;
     private final FoodAnalysisConfidencePolicy confidencePolicy;
     private final FoodCorrectionSuggestionService correctionSuggestionService;
+    private final AiUserHealthProfileService userHealthProfileService;
     private final UserRepository userRepository;
     private final AiFoodAnalysisRepository analysisRepository;
     private final AiFoodAnalysisNutrientRepository analysisNutrientRepository;
@@ -57,6 +59,7 @@ public class AiFoodAnalysisService {
             FoodNutritionEstimationProvider nutritionEstimationProvider,
             FoodAnalysisConfidencePolicy confidencePolicy,
             FoodCorrectionSuggestionService correctionSuggestionService,
+            AiUserHealthProfileService userHealthProfileService,
             UserRepository userRepository,
             AiFoodAnalysisRepository analysisRepository,
             AiFoodAnalysisNutrientRepository analysisNutrientRepository,
@@ -67,6 +70,7 @@ public class AiFoodAnalysisService {
         this.nutritionEstimationProvider = nutritionEstimationProvider;
         this.confidencePolicy = confidencePolicy;
         this.correctionSuggestionService = correctionSuggestionService;
+        this.userHealthProfileService = userHealthProfileService;
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.analysisNutrientRepository = analysisNutrientRepository;
@@ -78,6 +82,7 @@ public class AiFoodAnalysisService {
             Integer userId, String fileName, byte[] image, String contentType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        AiUserHealthProfile healthProfile = userHealthProfileService.load(userId);
         AiFoodModelResult modelResult = visionProvider.analyze(image, contentType);
         FoodVisionResult vision = modelResult.response();
 
@@ -87,7 +92,7 @@ public class AiFoodAnalysisService {
         NutritionSummaryResponse nutrition = calculationService.aggregate(components);
         boolean needsConfirmation = confidencePolicy.requiresConfirmation(vision, components);
         AiFoodAnalysisResponse result = buildResponse(
-                vision, components, nutrition, needsConfirmation);
+                vision, components, nutrition, needsConfirmation, healthProfile);
 
         AiFoodAnalysis analysis = new AiFoodAnalysis();
         analysis.setUser(user);
@@ -177,7 +182,8 @@ public class AiFoodAnalysisService {
             FoodVisionResult vision,
             List<DetectedFoodComponent> components,
             NutritionSummaryResponse nutrition,
-            boolean needsConfirmation) {
+            boolean needsConfirmation,
+            AiUserHealthProfile healthProfile) {
         boolean databaseMatched = nutrition.complete()
                 && !components.isEmpty()
                 && components.stream().allMatch(DetectedFoodComponent::databaseMatched);
@@ -197,6 +203,12 @@ public class AiFoodAnalysisService {
         } else if (needsConfirmation) {
             recommendationTitle = "Please confirm this meal";
             recommendation = "Review the meal identity and component portions before saving.";
+        } else if (healthProfile.hasAgeHeightAndWeight()) {
+            recommendationTitle = "Personalized nutrition check";
+            recommendation = "Using your saved age, height, and weight, compare this meal's "
+                    + wholeNumber(nutrition.calories()) + " kcal and "
+                    + wholeNumber(nutrition.protein())
+                    + " g protein with your daily wellness goals.";
         } else {
             recommendationTitle = "Database nutrition calculated";
             recommendation = "Nutrition was calculated from the matched components and visible portions.";
@@ -303,6 +315,10 @@ public class AiFoodAnalysisService {
     private String formatServing(double size, String unit) {
         String formattedSize = BigDecimal.valueOf(size).stripTrailingZeros().toPlainString();
         return unit == null || unit.isBlank() ? formattedSize : formattedSize + " " + unit.trim();
+    }
+
+    private String wholeNumber(double value) {
+        return BigDecimal.valueOf(value).setScale(0, java.math.RoundingMode.HALF_UP).toPlainString();
     }
 
     private String limit(String value, int maximum) {

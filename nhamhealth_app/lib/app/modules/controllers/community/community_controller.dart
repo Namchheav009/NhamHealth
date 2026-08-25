@@ -221,7 +221,6 @@ class CommunityController extends GetxController {
   }
 
   Future<void> addPost({
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -230,7 +229,6 @@ class CommunityController extends GetxController {
     List<int> tagIds = const [],
   }) async {
     final post = await _repository.createPost(
-      title: title,
       description: description,
       imageBytes: imageBytes,
       visibility: visibility,
@@ -244,7 +242,6 @@ class CommunityController extends GetxController {
 
   Future<void> updatePost({
     required CommunityPost post,
-    required String title,
     required String description,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
@@ -255,7 +252,6 @@ class CommunityController extends GetxController {
   }) async {
     final updated = await _repository.updatePost(
       postId: post.id,
-      title: title,
       description: description,
       imageBytes: imageBytes,
       visibility: visibility,

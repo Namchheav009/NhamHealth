@@ -150,7 +150,6 @@ class ProfileView extends GetView<ProfileController> {
         authorAvatarUrl: user?.profileImageUrl ?? post.authorAvatarUrl,
         onSubmit: (draft) => controller.updatePost(
           post: post,
-          title: draft.title,
           description: draft.description,
           imageBytes: draft.imageBytes,
           visibility: draft.visibility,
@@ -166,7 +165,6 @@ class ProfileView extends GetView<ProfileController> {
 
   // ignore: unused_element
   Future<void> _showLegacyEditPost(CommunityPost post) async {
-    final title = TextEditingController(text: post.title);
     final description = TextEditingController(text: post.description);
     await Get.dialog<void>(
       Dialog(
@@ -185,12 +183,6 @@ class ProfileView extends GetView<ProfileController> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: title,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: _postInput('Title (optional)'),
-              ),
-              const SizedBox(height: 12),
               TextField(
                 controller: description,
                 maxLines: 5,
@@ -212,7 +204,6 @@ class ProfileView extends GetView<ProfileController> {
                       try {
                         await controller.updatePost(
                           post: post,
-                          title: title.text,
                           description: description.text,
                         );
                         Get.back<void>();
@@ -231,7 +222,6 @@ class ProfileView extends GetView<ProfileController> {
         ),
       ),
     );
-    title.dispose();
     description.dispose();
   }
 
@@ -267,7 +257,6 @@ class ProfileView extends GetView<ProfileController> {
         canEdit: true,
         onEditPost: (draft) => controller.updatePost(
           post: post,
-          title: draft.title,
           description: draft.description,
           imageBytes: draft.imageBytes,
           visibility: draft.visibility,
