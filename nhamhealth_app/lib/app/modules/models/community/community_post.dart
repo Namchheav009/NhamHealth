@@ -25,6 +25,7 @@ class CommunityPost {
     this.visibility = CommunityPostVisibility.public,
     this.allowComments = true,
     this.allowReplies = true,
+    this.sharedPost,
   });
 
   final String id;
@@ -35,6 +36,7 @@ class CommunityPost {
   final CommunityPostVisibility visibility;
   final bool allowComments;
   final bool allowReplies;
+  final CommunitySharedPost? sharedPost;
   final String author;
   final String role;
   final int authorId;
@@ -77,6 +79,12 @@ class CommunityPost {
     ),
     allowComments: json['allowComments'] as bool? ?? true,
     allowReplies: json['allowReplies'] as bool? ?? true,
+    sharedPost:
+        json['sharedPost'] is Map
+            ? CommunitySharedPost.fromJson(
+              Map<String, dynamic>.from(json['sharedPost'] as Map),
+            )
+            : null,
   );
 
   CommunityPost copyWith({
@@ -100,6 +108,7 @@ class CommunityPost {
     bool? isFollowingAuthor,
     bool? isLiked,
     bool? isSaved,
+    CommunitySharedPost? sharedPost,
   }) => CommunityPost(
     id: id,
     description: description ?? this.description,
@@ -122,6 +131,7 @@ class CommunityPost {
     isFollowingAuthor: isFollowingAuthor ?? this.isFollowingAuthor,
     isLiked: isLiked ?? this.isLiked,
     isSaved: isSaved ?? this.isSaved,
+    sharedPost: sharedPost ?? this.sharedPost,
   );
 
   static List<String> _imageUrls(Map<String, dynamic> json) {
@@ -133,6 +143,68 @@ class CommunityPost {
     final imageUrl = (json['imageUrl'] as String? ?? '').trim();
     return imageUrl.isEmpty ? const [] : [imageUrl];
   }
+}
+
+class CommunitySharedPost {
+  const CommunitySharedPost({
+    required this.id,
+    required this.authorId,
+    required this.author,
+    required this.role,
+    required this.authorAvatarUrl,
+    required this.description,
+    required this.imageUrl,
+    this.imageUrls = const [],
+    this.ageLabel = 'Recently',
+  });
+
+  final String id;
+  final int authorId;
+  final String author;
+  final String role;
+  final String authorAvatarUrl;
+  final String description;
+  final String imageUrl;
+  final List<String> imageUrls;
+  final String ageLabel;
+
+  factory CommunitySharedPost.fromJson(Map<String, dynamic> json) {
+    final imageUrls = (json['imageUrls'] as List<dynamic>? ?? const [])
+        .map((url) => '$url'.trim())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    final imageUrl = (json['imageUrl'] as String? ?? '').trim();
+    return CommunitySharedPost(
+      id: '${json['id'] ?? ''}',
+      authorId: (json['authorId'] as num?)?.toInt() ?? 0,
+      author: (json['author'] as String? ?? 'Community member').trim(),
+      role: (json['role'] as String? ?? 'Community member').trim(),
+      authorAvatarUrl: (json['authorAvatarUrl'] as String? ?? '').trim(),
+      description: (json['description'] as String? ?? '').trim(),
+      imageUrl: imageUrl,
+      imageUrls:
+          imageUrls.isNotEmpty
+              ? imageUrls
+              : imageUrl.isEmpty
+              ? const []
+              : [imageUrl],
+      ageLabel: (json['ageLabel'] as String? ?? 'Recently').trim(),
+    );
+  }
+
+  factory CommunitySharedPost.fromPost(CommunityPost post) =>
+      CommunitySharedPost(
+        id: post.sharedPost?.id ?? post.id,
+        authorId: post.sharedPost?.authorId ?? post.authorId,
+        author: post.sharedPost?.author ?? post.author,
+        role: post.sharedPost?.role ?? post.role,
+        authorAvatarUrl:
+            post.sharedPost?.authorAvatarUrl ?? post.authorAvatarUrl,
+        description: post.sharedPost?.description ?? post.description,
+        imageUrl: post.sharedPost?.imageUrl ?? post.imageUrl,
+        imageUrls: post.sharedPost?.imageUrls ?? post.imageUrls,
+        ageLabel: post.sharedPost?.ageLabel ?? post.ageLabel,
+      );
 }
 
 enum CommunityPostVisibility {

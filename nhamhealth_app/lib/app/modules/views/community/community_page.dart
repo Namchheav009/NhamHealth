@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/loading_content_transition.dart';
@@ -16,7 +18,11 @@ import '../../controllers/community/community_controller.dart';
 import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
+import 'community_share_actions.dart';
+import 'community_share_post_page.dart';
+import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
+import 'widgets/community_shared_post_card.dart';
 import 'widgets/community_tab_switcher.dart';
 
 class CommunityPage extends GetView<CommunityController> {
@@ -100,44 +106,6 @@ class CommunityPage extends GetView<CommunityController> {
     Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.pageHorizontal,
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Community',
-                  style: TextStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.w800,
-                    color: navy,
-                    letterSpacing: -.4,
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Grow healthier, together.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF718078)),
-                ),
-              ],
-            ),
-          ),
-          FilledButton.icon(
-            onPressed: _showCreatePost,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Post'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ],
       ),
     ),
   );
@@ -524,7 +492,17 @@ class CommunityPage extends GetView<CommunityController> {
     children: [
       _contentWidth(
         Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (controller.errorMessage.value != null) ...[
+              _feedErrorBanner(controller.errorMessage.value!),
+              const SizedBox(height: 12),
+            ],
+            CommunityComposerCard(
+              onTap: _showCreatePost,
+              authorAvatarUrl:
+                  controller.authenticatedUser.value?.profileImageUrl ?? '',
+            ),
             _feedFilters(),
             const SizedBox(height: 14),
             if (controller.visiblePosts.isEmpty)
@@ -542,39 +520,108 @@ class CommunityPage extends GetView<CommunityController> {
 
   Widget _feedFilters() {
     const labels = ['For You', 'Following', 'Latest'];
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: CommunityFeedFilter.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
+    const icons = [
+      Icons.auto_awesome_rounded,
+      Icons.people_outline_rounded,
+      Icons.schedule_rounded,
+    ];
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F4F1),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE1E8E3)),
+      ),
+      child: Row(
+        children: List.generate(CommunityFeedFilter.values.length, (index) {
           final filter = CommunityFeedFilter.values[index];
           final selected = controller.feedFilter.value == filter;
-          return ChoiceChip(
-            label: Text(labels[index]),
-            selected: selected,
-            onSelected: (_) => controller.selectFeedFilter(filter),
-            showCheckmark: false,
-            selectedColor: const Color(0xFFE3F6E8),
-            backgroundColor: Colors.white,
-            side: BorderSide(
-              color:
-                  selected ? const Color(0xFFB8E4C5) : const Color(0xFFE3E7E5),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            labelStyle: TextStyle(
-              color: selected ? const Color(0xFF087B3A) : Colors.black54,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          return Expanded(
+            child: InkWell(
+              key: ValueKey<String>('community-feed-filter-${filter.name}'),
+              onTap: () => controller.selectFeedFilter(filter),
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow:
+                      selected
+                          ? const [
+                            BoxShadow(
+                              color: Color(0x10173D25),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ]
+                          : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icons[index],
+                      size: 16,
+                      color:
+                          selected ? const Color(0xFF087B3A) : Colors.black45,
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        labels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color:
+                              selected
+                                  ? const Color(0xFF087B3A)
+                                  : Colors.black54,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
-        },
+        }),
       ),
     );
   }
+
+  Widget _feedErrorBanner(String message) => Container(
+    padding: const EdgeInsets.fromLTRB(13, 11, 8, 11),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF4F2),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFFFD8D2)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.cloud_off_rounded, color: Color(0xFFD85245), size: 21),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            message,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF78453F),
+              fontSize: 12,
+              height: 1.3,
+            ),
+          ),
+        ),
+        TextButton(onPressed: controller.reload, child: const Text('Retry')),
+      ],
+    ),
+  );
 
   Widget _postCard(CommunityPost post) => Container(
     padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
@@ -616,14 +663,26 @@ class CommunityPage extends GetView<CommunityController> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '${post.ageLabel}  |  ${post.role}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF7A857D),
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        post.visibility.icon,
+                        size: 13,
+                        color: const Color(0xFF7A857D),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '${post.ageLabel}  ·  ${post.role}${post.sharedPost == null ? '' : '  ·  Shared'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF7A857D),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -638,15 +697,17 @@ class CommunityPage extends GetView<CommunityController> {
             ),
           ],
         ),
-        const SizedBox(height: 15),
-        Text(
-          post.description,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 1.42,
-            color: Color(0xFF5E6961),
+        if (post.description.isNotEmpty) ...[
+          const SizedBox(height: 15),
+          Text(
+            post.description,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.42,
+              color: Color(0xFF5E6961),
+            ),
           ),
-        ),
+        ],
         if (post.tags.isNotEmpty) ...[
           const SizedBox(height: 12),
           Wrap(
@@ -676,6 +737,10 @@ class CommunityPage extends GetView<CommunityController> {
                     )
                     .toList(),
           ),
+        ],
+        if (post.sharedPost != null) ...[
+          const SizedBox(height: 14),
+          CommunitySharedPostCard(post: post.sharedPost!),
         ],
         if (post.imageBytes != null ||
             post.imageUrls.isNotEmpty ||
@@ -719,9 +784,13 @@ class CommunityPage extends GetView<CommunityController> {
             ),
           ),
         ],
-        const SizedBox(height: 11),
+        if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
+          const SizedBox(height: 11),
+          _engagementSummary(post),
+        ],
         Container(
-          padding: const EdgeInsets.only(top: 7),
+          margin: const EdgeInsets.only(top: 7),
+          padding: const EdgeInsets.only(top: 4),
           decoration: const BoxDecoration(
             border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
           ),
@@ -733,7 +802,7 @@ class CommunityPage extends GetView<CommunityController> {
                       post.isLiked
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                  value: _compactCount(post.likes),
+                  label: post.isLiked ? 'Liked' : 'Like',
                   color:
                       post.isLiked
                           ? const Color(0xFFE64657)
@@ -746,7 +815,7 @@ class CommunityPage extends GetView<CommunityController> {
               Expanded(
                 child: _PostMetricButton(
                   icon: Icons.chat_bubble_outline_rounded,
-                  value: _compactCount(post.comments),
+                  label: 'Comment',
                   color: const Color(0xFF69756D),
                   tooltip: 'Comments',
                   onTap: () => _showComments(post),
@@ -756,15 +825,56 @@ class CommunityPage extends GetView<CommunityController> {
               Expanded(
                 child: _PostMetricButton(
                   icon: Icons.reply_rounded,
-                  value: _compactCount(post.shares),
+                  label: 'Share',
                   color: const Color(0xFF69756D),
-                  tooltip: 'Share with friends',
-                  onTap: () => _showShareToFriends(post),
+                  tooltip: 'Share post',
+                  onTap: () => _showShareOptions(post),
                 ),
               ),
             ],
           ),
         ),
+      ],
+    ),
+  );
+
+  Widget _engagementSummary(CommunityPost post) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 2),
+    child: Row(
+      children: [
+        if (post.likes > 0) ...[
+          Container(
+            width: 20,
+            height: 20,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE64657),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 12,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            _compactCount(post.likes),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
+        ],
+        const Spacer(),
+        if (post.comments > 0)
+          Text(
+            '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
+        if (post.comments > 0 && post.shares > 0)
+          const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
+        if (post.shares > 0)
+          Text(
+            '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
       ],
     ),
   );
@@ -959,6 +1069,53 @@ class CommunityPage extends GetView<CommunityController> {
     }
   }
 
+  Future<void> _showShareOptions(CommunityPost post) async {
+    final action = await showCommunityShareActions(
+      canShareToFeed:
+          post.sharedPost != null ||
+          post.visibility == CommunityPostVisibility.public,
+    );
+    if (action == null) return;
+    switch (action) {
+      case CommunityShareAction.shareNow:
+        try {
+          await controller.sharePostToFeed(post);
+          unawaited(
+            AppAlert.success(
+              title: 'Post shared',
+              message: 'The post is now on your Community feed.',
+            ),
+          );
+        } on Object catch (error) {
+          unawaited(
+            AppAlert.error(
+              title: 'Could not share post',
+              message: error.toString(),
+            ),
+          );
+        }
+      case CommunityShareAction.writePost:
+        final user = controller.authenticatedUser.value;
+        await Get.to<void>(
+          () => CommunitySharePostPage(
+            post: post,
+            authorName: user?.displayName ?? 'Community member',
+            authorAvatarUrl: user?.profileImageUrl ?? '',
+            onShare: (message, visibility) async {
+              await controller.sharePostToFeed(
+                post,
+                message: message,
+                visibility: visibility,
+              );
+            },
+          ),
+          transition: Transition.rightToLeft,
+        );
+      case CommunityShareAction.sendToFriends:
+        await _showShareToFriends(post);
+    }
+  }
+
   Future<void> _showShareToFriends(CommunityPost post) async {
     final selectedIds = <String>{};
     await Get.bottomSheet<void>(
@@ -1045,16 +1202,19 @@ class CommunityPage extends GetView<CommunityController> {
                                       recipientIds: selectedIds.toList(),
                                     );
                                     Get.back<void>();
-                                    Get.snackbar(
-                                      'Post shared',
-                                      'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
-                                      snackPosition: SnackPosition.BOTTOM,
+                                    unawaited(
+                                      AppAlert.success(
+                                        title: 'Post sent',
+                                        message:
+                                            'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                      ),
                                     );
                                   } on Object catch (error) {
-                                    Get.snackbar(
-                                      'Could not share post',
-                                      error.toString(),
-                                      snackPosition: SnackPosition.BOTTOM,
+                                    unawaited(
+                                      AppAlert.error(
+                                        title: 'Could not share post',
+                                        message: error.toString(),
+                                      ),
                                     );
                                   }
                                 },
@@ -1078,6 +1238,13 @@ class CommunityPage extends GetView<CommunityController> {
       () => CommunityCommentsPage(
         post: post,
         onPostChanged: controller.posts.refresh,
+        onShareToFeed: (message, visibility) async {
+          await controller.sharePostToFeed(
+            post,
+            message: message,
+            visibility: visibility,
+          );
+        },
         canEdit: post.authorId == controller.authenticatedUser.value?.id,
         onEditPost:
             (draft) => controller.updatePost(
@@ -1365,14 +1532,14 @@ class CommunityPage extends GetView<CommunityController> {
 class _PostMetricButton extends StatelessWidget {
   const _PostMetricButton({
     required this.icon,
-    required this.value,
+    required this.label,
     required this.color,
     required this.tooltip,
     required this.onTap,
   });
 
   final IconData icon;
-  final String value;
+  final String label;
   final Color color;
   final String tooltip;
   final VoidCallback onTap;
@@ -1390,12 +1557,16 @@ class _PostMetricButton extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 7),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

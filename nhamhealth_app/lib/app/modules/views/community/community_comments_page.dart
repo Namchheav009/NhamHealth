@@ -1,14 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../widgets/app_alert.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_person.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
+import '../../models/community/community_reply_address.dart';
 import '../../models/community/community_types.dart';
 import '../../repositories/community/community_repository.dart';
+import '../../../../core/services/auth_service.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
+import 'community_share_actions.dart';
+import 'community_share_post_page.dart';
+import 'widgets/community_shared_post_card.dart';
 
 /// A full post discussion screen. Replies are displayed below their parent and
 /// the composer switches context when a user chooses Reply.
@@ -18,6 +26,7 @@ class CommunityCommentsPage extends StatefulWidget {
     this.onPostChanged,
     this.canEdit = false,
     this.onEditPost,
+    this.onShareToFeed,
     super.key,
   });
 
@@ -25,6 +34,11 @@ class CommunityCommentsPage extends StatefulWidget {
   final VoidCallback? onPostChanged;
   final bool canEdit;
   final Future<CommunityPost> Function(CommunityPostDraft draft)? onEditPost;
+  final Future<void> Function(
+    String message,
+    CommunityPostVisibility visibility,
+  )?
+  onShareToFeed;
 
   @override
   State<CommunityCommentsPage> createState() => _CommunityCommentsPageState();
@@ -80,8 +94,14 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _submit() async {
+    final replyAddress =
+        _replyingTo == null
+            ? null
+            : CommunityReplyAddress.fromComment(_replyingTo!);
+    final replyBody =
+        replyAddress?.removeFrom(_message.text).trim() ?? _message.text.trim();
     final text = _message.text.trim();
-    if (text.isEmpty || _sending || !_post.allowComments) return;
+    if (replyBody.isEmpty || _sending || !_post.allowComments) return;
     setState(() => _sending = true);
     try {
       final comment = await _repository.addComment(
@@ -230,15 +250,20 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                       });
                                       widget.onPostChanged?.call();
                                       Get.back<void>();
-                                      Get.snackbar(
-                                        'Post sent',
-                                        'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                      unawaited(
+                                        AppAlert.success(
+                                          title: 'Post sent',
+                                          message:
+                                              'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                        ),
                                       );
                                     } on Object catch (error) {
                                       setSheetState(() => isSending = false);
-                                      Get.snackbar(
-                                        'Could not send post',
-                                        error.toString(),
+                                      unawaited(
+                                        AppAlert.error(
+                                          title: 'Could not send post',
+                                          message: error.toString(),
+                                        ),
                                       );
                                     }
                                   },
@@ -268,7 +293,79 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         isScrollControlled: true,
       );
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not share post', error.toString());
+      if (mounted) {
+        unawaited(
+          AppAlert.error(
+            title: 'Could not share post',
+            message: error.toString(),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareToFeed(
+    String message,
+    CommunityPostVisibility visibility,
+  ) async {
+    final share = widget.onShareToFeed;
+    if (share == null) {
+      await _repository.sharePostToFeed(
+        _post.id,
+        message: message,
+        visibility: visibility,
+      );
+    } else {
+      await share(message, visibility);
+    }
+    if (!mounted) return;
+    setState(() => _post = _post.copyWith(shares: _post.shares + 1));
+    widget.onPostChanged?.call();
+  }
+
+  Future<void> _showShareOptions() async {
+    if (_updatingPost) return;
+    final action = await showCommunityShareActions(
+      canShareToFeed:
+          _post.sharedPost != null ||
+          _post.visibility == CommunityPostVisibility.public,
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case CommunityShareAction.shareNow:
+        setState(() => _updatingPost = true);
+        try {
+          await _shareToFeed('', CommunityPostVisibility.public);
+          unawaited(
+            AppAlert.success(
+              title: 'Post shared',
+              message: 'The post is now on your Community feed.',
+            ),
+          );
+        } on Object catch (error) {
+          unawaited(
+            AppAlert.error(
+              title: 'Could not share post',
+              message: error.toString(),
+            ),
+          );
+        } finally {
+          if (mounted) setState(() => _updatingPost = false);
+        }
+      case CommunityShareAction.writePost:
+        final user = await Get.find<AuthService>().restoreSession();
+        if (!mounted) return;
+        await Get.to<void>(
+          () => CommunitySharePostPage(
+            post: _post,
+            authorName: user?.displayName ?? 'Community member',
+            authorAvatarUrl: user?.profileImageUrl ?? '',
+            onShare: _shareToFeed,
+          ),
+          transition: Transition.rightToLeft,
+        );
+      case CommunityShareAction.sendToFriends:
+        await _showShareToFriends();
     }
   }
 
@@ -313,8 +410,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     );
     if (!mounted || action == null) return;
     if (action == _DiscussionAction.reply) {
-      setState(() => _replyingTo = comment);
-      _focusComposer();
+      _beginReply(comment);
       return;
     }
     await Get.to<void>(() => const CommunityReportPage(subject: 'comment'));
@@ -333,8 +429,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             ),
           const _CommentOption(
             _DiscussionAction.share,
-            'Share with friends',
-            Icons.send_outlined,
+            'Share post',
+            Icons.reply_rounded,
           ),
           const _CommentOption(
             _DiscussionAction.report,
@@ -353,7 +449,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       return;
     }
     if (action == _DiscussionAction.share) {
-      await _showShareToFriends();
+      await _showShareOptions();
       return;
     }
     await Get.to<void>(() => const CommunityReportPage(subject: 'post'));
@@ -385,6 +481,36 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       curve: Curves.easeOut,
     );
     _composerFocus.requestFocus();
+  }
+
+  void _beginReply(CommunityComment comment) {
+    if (!_post.allowReplies) return;
+    final previousAddress =
+        _replyingTo == null
+            ? null
+            : CommunityReplyAddress.fromComment(_replyingTo!);
+    final address = CommunityReplyAddress.fromComment(comment);
+    final text = address.applyTo(_message.text, replacing: previousAddress);
+    setState(() => _replyingTo = comment);
+    _setComposerText(text);
+    _focusComposer();
+  }
+
+  void _cancelReply() {
+    final target = _replyingTo;
+    if (target == null) return;
+    final text = CommunityReplyAddress.fromComment(
+      target,
+    ).removeFrom(_message.text);
+    setState(() => _replyingTo = null);
+    _setComposerText(text);
+  }
+
+  void _setComposerText(String text) {
+    _message.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   @override
@@ -503,15 +629,21 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           ),
         ],
       ),
-      const SizedBox(height: 15),
-      Text(
-        _post.description,
-        style: const TextStyle(
-          fontSize: 14,
-          height: 1.35,
-          color: Color(0xFF505951),
+      if (_post.description.isNotEmpty) ...[
+        const SizedBox(height: 15),
+        Text(
+          _post.description,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.35,
+            color: Color(0xFF505951),
+          ),
         ),
-      ),
+      ],
+      if (_post.sharedPost != null) ...[
+        const SizedBox(height: 13),
+        CommunitySharedPostCard(post: _post.sharedPost!),
+      ],
       if (_post.imageUrls.isNotEmpty || _post.imageUrl.isNotEmpty) ...[
         const SizedBox(height: 13),
         ClipRRect(
@@ -559,7 +691,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           _postMetric(
             Icons.reply_rounded,
             '${_post.shares}',
-            onTap: _showShareToFriends,
+            onTap: _showShareOptions,
           ),
         ],
       ),
@@ -664,10 +796,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   const SizedBox(width: 18),
                   if (_post.allowReplies)
                     InkWell(
-                      onTap: () {
-                        setState(() => _replyingTo = comment);
-                        _focusComposer();
-                      },
+                      onTap: () => _beginReply(comment),
                       borderRadius: BorderRadius.circular(6),
                       child: const Text(
                         'Reply',
@@ -774,7 +903,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => setState(() => _replyingTo = null),
+                        onPressed: _cancelReply,
                         icon: const Icon(Icons.close_rounded, size: 18),
                         tooltip: 'Cancel reply',
                       ),

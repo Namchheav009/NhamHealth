@@ -8,4 +8,5 @@ public record CommunityPostResponse(
         Integer authorId, String author, String role, String authorAvatarUrl, List<String> tags,
         LocalDateTime createdAt, long likes, long comments, long shares,
         boolean liked, boolean followingAuthor, String visibility,
-        boolean allowComments, boolean allowReplies, List<Integer> tagIds) { }
+        boolean allowComments, boolean allowReplies, List<Integer> tagIds,
+        CommunitySharedPostResponse sharedPost) { }
