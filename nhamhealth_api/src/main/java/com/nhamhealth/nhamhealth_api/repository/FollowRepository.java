@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import com.nhamhealth.nhamhealth_api.entity.Follow;
 
 @Repository
 public interface FollowRepository extends JpaRepository<Follow, Integer> {
+    @EntityGraph(attributePaths = { "followerUser", "followingUser" })
     List<Follow> findAllByOrderByRequestedAtDesc();
 
     boolean existsByFollowerUserUserIdAndFollowingUserUserId(Integer followerId, Integer followingId);

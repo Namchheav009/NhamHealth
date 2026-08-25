@@ -12,11 +12,18 @@
             <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
         </a>
 
-        <p class="nav-section">Account Management</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="account-menu">
+            <span>Account Management</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="account-menu">
         <a class="nav-link" th:classappend="${activePage == 'users'} ? ' active' : ''" th:href="@{/admin/users}"><i class="bi bi-people"></i><span>Users</span></a>
         <a class="nav-link" th:classappend="${activePage == 'wellness-profiles'} ? ' active' : ''" th:href="@{/admin/wellness-profiles}"><i class="bi bi-person-vcard"></i><span>Wellness Profiles</span></a>
+        </div>
 
-        <p class="nav-section">Meal Management</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="meal-menu">
+            <span>Meal Management</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="meal-menu">
         <a class="nav-link" th:classappend="${activePage == 'meals'} ? ' active' : ''" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
         <a class="nav-link" th:classappend="${activePage == 'meal-categories'} ? ' active' : ''" th:href="@{/admin/meal-categories}"><i class="bi bi-tags-fill"></i><span>Meal Categories</span></a>
         <a class="nav-link" th:classappend="${activePage == 'ingredients'} ? ' active' : ''" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
@@ -26,27 +33,50 @@
         <a class="nav-link" th:classappend="${activePage == 'moods'} ? ' active' : ''" th:href="@{/admin/moods}"><i class="bi bi-emoji-smile"></i><span>Moods</span></a>
         <a class="nav-link" th:classappend="${activePage == 'favorites'} ? ' active' : ''" th:href="@{/admin/favorites}"><i class="bi bi-heart-fill"></i><span>Favorites</span></a>
         <a class="nav-link" th:classappend="${activePage == 'reviews'} ? ' active' : ''" th:href="@{/admin/reviews}"><i class="bi bi-star-fill"></i><span>Reviews</span></a>
+        </div>
 
-        <p class="nav-section">Health Tracking</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="health-menu">
+            <span>Health Tracking</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="health-menu">
         <a class="nav-link" th:classappend="${activePage == 'meal-logs'} ? ' active' : ''" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>
         <a class="nav-link" th:classappend="${activePage == 'nutrient-goals'} ? ' active' : ''" th:href="@{/admin/nutrient-goals}"><i class="bi bi-bullseye"></i><span>Nutrient Goals</span></a>
         <a class="nav-link" th:classappend="${activePage == 'daily-wellness'} ? ' active' : ''" th:href="@{/admin/daily-wellness}"><i class="bi bi-calendar2-check"></i><span>Daily Wellness</span></a>
+        </div>
 
-        <p class="nav-section">AI Features</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="ai-menu">
+            <span>AI Features</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="ai-menu">
         <a class="nav-link" th:classappend="${activePage == 'ai-food-analyses'} ? ' active' : ''" th:href="@{/admin/ai-food-analyses}"><i class="bi bi-stars"></i><span>AI Food Analyses</span></a>
         <a class="nav-link" th:classappend="${activePage == 'ai-food-suggestions'} ? ' active' : ''" th:href="@{/admin/ai-food-suggestions}"><i class="bi bi-lightbulb"></i><span>AI Food Suggestions</span></a>
         <a class="nav-link" th:classappend="${activePage == 'ai-recommendations'} ? ' active' : ''" th:href="@{/admin/ai-recommendations}"><i class="bi bi-magic"></i><span>AI Recommendations</span></a>
+        </div>
 
-        <p class="nav-section">Community</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="community-menu">
+            <span>Community</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="community-menu">
         <a class="nav-link" th:classappend="${activePage == 'posts'} ? ' active' : ''" th:href="@{/admin/posts}"><i class="bi bi-file-post"></i><span>Posts</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'comments'} ? ' active' : ''" th:href="@{/admin/comments}"><i class="bi bi-chat-left-text"></i><span>Comments</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'post-likes'} ? ' active' : ''" th:href="@{/admin/post-likes}"><i class="bi bi-heart"></i><span>Post Likes</span></a>
         <a class="nav-link" th:classappend="${activePage == 'reports'} ? ' active' : ''" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
         <a class="nav-link" th:classappend="${activePage == 'follows'} ? ' active' : ''" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
         <a class="nav-link" th:classappend="${activePage == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
+        </div>
 
-        <p class="nav-section">Messaging</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="messaging-menu">
+            <span>Messaging</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="messaging-menu">
         <a class="nav-link" th:classappend="${activePage == 'chats'} ? ' active' : ''" th:href="@{/admin/chats}"><i class="bi bi-chat-dots"></i><span>Chats</span></a>
+        </div>
 
-        <p class="nav-section">System</p>
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="system-menu">
+            <span>System</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="system-menu">
         <a class="nav-link" th:classappend="${activePage == 'settings'} ? ' active' : ''" th:href="@{/admin/settings}"><i class="bi bi-gear"></i><span>Settings</span></a>
+        </div>
     </nav>
 </aside>
