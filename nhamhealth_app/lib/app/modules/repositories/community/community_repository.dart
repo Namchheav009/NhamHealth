@@ -28,6 +28,14 @@ class CommunityRepository {
         .toList();
   }
 
+  Future<CommunityPost> getPost(String postId) async {
+    final response = await _client.get(
+      _uri('/api/v1/community/posts/$postId'),
+      headers: await _headers(),
+    );
+    return _post(_decodeMap(response));
+  }
+
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {
     final results = await Future.wait(FriendsView.values.map(_getPeople));
     return {

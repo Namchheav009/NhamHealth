@@ -79,6 +79,51 @@ class CommunityPost {
     allowReplies: json['allowReplies'] as bool? ?? true,
   );
 
+  CommunityPost copyWith({
+    String? description,
+    String? imageUrl,
+    List<String>? imageUrls,
+    Uint8List? imageBytes,
+    CommunityPostVisibility? visibility,
+    bool? allowComments,
+    bool? allowReplies,
+    String? author,
+    String? role,
+    int? authorId,
+    String? authorAvatarUrl,
+    List<String>? tags,
+    List<int>? tagIds,
+    String? ageLabel,
+    int? likes,
+    int? comments,
+    int? shares,
+    bool? isFollowingAuthor,
+    bool? isLiked,
+    bool? isSaved,
+  }) => CommunityPost(
+    id: id,
+    description: description ?? this.description,
+    imageUrl: imageUrl ?? this.imageUrl,
+    imageUrls: imageUrls ?? this.imageUrls,
+    imageBytes: imageBytes ?? this.imageBytes,
+    visibility: visibility ?? this.visibility,
+    allowComments: allowComments ?? this.allowComments,
+    allowReplies: allowReplies ?? this.allowReplies,
+    author: author ?? this.author,
+    role: role ?? this.role,
+    authorId: authorId ?? this.authorId,
+    authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
+    tags: tags ?? this.tags,
+    tagIds: tagIds ?? this.tagIds,
+    ageLabel: ageLabel ?? this.ageLabel,
+    likes: likes ?? this.likes,
+    comments: comments ?? this.comments,
+    shares: shares ?? this.shares,
+    isFollowingAuthor: isFollowingAuthor ?? this.isFollowingAuthor,
+    isLiked: isLiked ?? this.isLiked,
+    isSaved: isSaved ?? this.isSaved,
+  );
+
   static List<String> _imageUrls(Map<String, dynamic> json) {
     final urls = (json['imageUrls'] as List<dynamic>? ?? const [])
         .map((url) => '$url'.trim())

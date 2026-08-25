@@ -7,6 +7,10 @@ public record NotificationResponse(
         String type,
         String title,
         String message,
+        Integer actorUserId,
+        String actorAvatarUrl,
+        String referenceType,
+        Integer referenceId,
         boolean read,
         LocalDateTime createdAt) {
 }

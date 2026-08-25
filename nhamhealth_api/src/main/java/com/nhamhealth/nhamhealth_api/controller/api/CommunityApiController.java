@@ -33,6 +33,11 @@ public class CommunityApiController {
         return service.posts(userId(jwt), following);
     }
 
+    @GetMapping("/posts/{postId}")
+    public CommunityPostResponse post(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
+        return service.postDetails(userId(jwt), postId);
+    }
+
     @GetMapping("/posts/mine")
     public List<CommunityPostResponse> myPosts(@AuthenticationPrincipal Jwt jwt) {
         return service.myPosts(userId(jwt));

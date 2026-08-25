@@ -11,6 +11,10 @@ class NotificationItem {
     required this.kind,
     this.isUnread = false,
     this.hasMessageBadge = false,
+    this.actorUserId,
+    this.actorAvatarUrl = '',
+    this.referenceType,
+    this.referenceId,
     required this.createdAt,
   });
 
@@ -21,6 +25,10 @@ class NotificationItem {
   final NotificationKind kind;
   final bool isUnread;
   final bool hasMessageBadge;
+  final int? actorUserId;
+  final String actorAvatarUrl;
+  final String? referenceType;
+  final int? referenceId;
   final DateTime createdAt;
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
@@ -37,6 +45,10 @@ class NotificationItem {
       },
       isUnread: json['read'] != true,
       hasMessageBadge: type == 'COMMUNITY',
+      actorUserId: (json['actorUserId'] as num?)?.toInt(),
+      actorAvatarUrl: (json['actorAvatarUrl'] as String? ?? '').trim(),
+      referenceType: (json['referenceType'] as String?)?.trim().toUpperCase(),
+      referenceId: (json['referenceId'] as num?)?.toInt(),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ?? DateTime.now(),
     );
   }
@@ -49,6 +61,10 @@ class NotificationItem {
     kind: kind,
     isUnread: isUnread ?? this.isUnread,
     hasMessageBadge: hasMessageBadge,
+    actorUserId: actorUserId,
+    actorAvatarUrl: actorAvatarUrl,
+    referenceType: referenceType,
+    referenceId: referenceId,
     createdAt: createdAt,
   );
 

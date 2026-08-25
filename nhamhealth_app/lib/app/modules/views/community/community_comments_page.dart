@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_person.dart';
 import '../../models/community/community_post.dart';
+import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_types.dart';
 import '../../repositories/community/community_repository.dart';
 import 'community_post_editor_page.dart';
@@ -23,7 +24,7 @@ class CommunityCommentsPage extends StatefulWidget {
   final CommunityPost post;
   final VoidCallback? onPostChanged;
   final bool canEdit;
-  final Future<void> Function(CommunityPostDraft draft)? onEditPost;
+  final Future<CommunityPost> Function(CommunityPostDraft draft)? onEditPost;
 
   @override
   State<CommunityCommentsPage> createState() => _CommunityCommentsPageState();
@@ -41,12 +42,22 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   bool _sending = false;
   String? _likingCommentId;
   bool _updatingPost = false;
+  late CommunityPost _post;
 
   @override
   void initState() {
     super.initState();
+    _post = widget.post.copyWith();
     _repository = Get.find<CommunityRepository>();
     _loadComments();
+  }
+
+  @override
+  void didUpdateWidget(covariant CommunityCommentsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.post, widget.post)) {
+      _post = widget.post.copyWith();
+    }
   }
 
   @override
@@ -59,7 +70,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Future<void> _loadComments() async {
     try {
-      final comments = await _repository.getComments(widget.post.id);
+      final comments = await _repository.getComments(_post.id);
       if (mounted) setState(() => _comments = comments);
     } on Object catch (error) {
       if (mounted) Get.snackbar('Could not load comments', error.toString());
@@ -70,11 +81,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Future<void> _submit() async {
     final text = _message.text.trim();
-    if (text.isEmpty || _sending || !widget.post.allowComments) return;
+    if (text.isEmpty || _sending || !_post.allowComments) return;
     setState(() => _sending = true);
     try {
       final comment = await _repository.addComment(
-        widget.post.id,
+        _post.id,
         text,
         parentCommentId: _replyingTo?.id,
       );
@@ -82,7 +93,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       setState(() {
         _comments = [..._comments, comment];
         _replyingTo = null;
-        widget.post.comments += 1;
+        _post = _post.copyWith(comments: _post.comments + 1);
       });
       _message.clear();
       widget.onPostChanged?.call();
@@ -97,11 +108,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (_updatingPost) return;
     setState(() => _updatingPost = true);
     try {
-      final updated = await _repository.toggleLike(widget.post.id);
+      final updated = await _repository.toggleLike(_post.id);
       if (!mounted) return;
       setState(() {
-        widget.post.likes = updated.likes;
-        widget.post.isLiked = updated.isLiked;
+        _post = _post.copyWith(likes: updated.likes, isLiked: updated.isLiked);
       });
       widget.onPostChanged?.call();
     } on Object catch (error) {
@@ -120,84 +130,139 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       var isSending = false;
       await Get.bottomSheet<void>(
         StatefulBuilder(
-          builder: (context, setSheetState) => SafeArea(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Share with friends', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 4),
-                  const Text('Choose friends to send this post to.', style: TextStyle(color: Color(0xFF667069))),
-                  const SizedBox(height: 12),
-                  if (friends.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Text('Add friends before sharing posts privately.'),
-                    )
-                  else
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 280),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        itemCount: friends.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final friend = friends[index];
-                          final selected = selectedIds.contains(friend.id);
-                          return CheckboxListTile(
-                            value: selected,
-                            onChanged: isSending
-                                ? null
-                                : (_) => setSheetState(() {
-                                    selected ? selectedIds.remove(friend.id) : selectedIds.add(friend.id);
-                                  }),
-                            contentPadding: EdgeInsets.zero,
-                            controlAffinity: ListTileControlAffinity.trailing,
-                            activeColor: _green,
-                            title: Text(friend.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: friend.detail == null ? null : Text(friend.detail!),
-                            secondary: _avatar(friend.avatarUrl, radius: 20),
-                          );
-                        },
-                      ),
-                    ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: selectedIds.isEmpty || isSending
-                          ? null
-                          : () async {
-                              setSheetState(() => isSending = true);
-                              try {
-                                await _repository.sharePost(widget.post.id, recipientIds: selectedIds.toList());
-                                if (!mounted) return;
-                                setState(() => widget.post.shares += selectedIds.length);
-                                widget.onPostChanged?.call();
-                                Get.back<void>();
-                                Get.snackbar('Post sent', 'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.');
-                              } on Object catch (error) {
-                                setSheetState(() => isSending = false);
-                                Get.snackbar('Could not send post', error.toString());
-                              }
-                            },
-                      icon: isSending
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.send_rounded),
-                      label: Text(isSending ? 'Sending...' : 'Send'),
-                      style: FilledButton.styleFrom(backgroundColor: _green),
+          builder:
+              (context, setSheetState) => SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
                     ),
                   ),
-                ],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Share with friends',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Choose friends to send this post to.',
+                        style: TextStyle(color: Color(0xFF667069)),
+                      ),
+                      const SizedBox(height: 12),
+                      if (friends.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            'Add friends before sharing posts privately.',
+                          ),
+                        )
+                      else
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 280),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: friends.length,
+                            separatorBuilder:
+                                (_, _) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final friend = friends[index];
+                              final selected = selectedIds.contains(friend.id);
+                              return CheckboxListTile(
+                                value: selected,
+                                onChanged:
+                                    isSending
+                                        ? null
+                                        : (_) => setSheetState(() {
+                                          selected
+                                              ? selectedIds.remove(friend.id)
+                                              : selectedIds.add(friend.id);
+                                        }),
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity:
+                                    ListTileControlAffinity.trailing,
+                                activeColor: _green,
+                                title: Text(
+                                  friend.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle:
+                                    friend.detail == null
+                                        ? null
+                                        : Text(friend.detail!),
+                                secondary: _avatar(
+                                  friend.avatarUrl,
+                                  radius: 20,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed:
+                              selectedIds.isEmpty || isSending
+                                  ? null
+                                  : () async {
+                                    setSheetState(() => isSending = true);
+                                    try {
+                                      await _repository.sharePost(
+                                        _post.id,
+                                        recipientIds: selectedIds.toList(),
+                                      );
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _post = _post.copyWith(
+                                          shares:
+                                              _post.shares + selectedIds.length,
+                                        );
+                                      });
+                                      widget.onPostChanged?.call();
+                                      Get.back<void>();
+                                      Get.snackbar(
+                                        'Post sent',
+                                        'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                      );
+                                    } on Object catch (error) {
+                                      setSheetState(() => isSending = false);
+                                      Get.snackbar(
+                                        'Could not send post',
+                                        error.toString(),
+                                      );
+                                    }
+                                  },
+                          icon:
+                              isSending
+                                  ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : const Icon(Icons.send_rounded),
+                          label: Text(isSending ? 'Sending...' : 'Send'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _green,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
         ),
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
@@ -211,10 +276,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (_likingCommentId != null) return;
     setState(() => _likingCommentId = comment.id);
     try {
-      final updated = await _repository.toggleCommentLike(
-        widget.post.id,
-        comment.id,
-      );
+      final updated = await _repository.toggleCommentLike(_post.id, comment.id);
       if (!mounted) return;
       setState(() {
         _comments = _comments
@@ -229,19 +291,28 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _showCommentOptions(CommunityComment comment) async {
-    final action = await Get.bottomSheet<String>(
+    final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
         actions: [
-          if (widget.post.allowReplies)
-            const _CommentOption('reply', 'Reply', Icons.reply_rounded),
-          _CommentOption('report', 'Report comment', Icons.flag_outlined, isDestructive: true),
+          if (_post.allowReplies)
+            const _CommentOption(
+              _DiscussionAction.reply,
+              'Reply',
+              Icons.reply_rounded,
+            ),
+          const _CommentOption(
+            _DiscussionAction.report,
+            'Report comment',
+            Icons.flag_outlined,
+            isDestructive: true,
+          ),
         ],
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
     );
     if (!mounted || action == null) return;
-    if (action == 'reply') {
+    if (action == _DiscussionAction.reply) {
       setState(() => _replyingTo = comment);
       _focusComposer();
       return;
@@ -250,25 +321,38 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _showPostOptions() async {
-    final action = await Get.bottomSheet<String>(
+    final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
         title: 'Post options',
         actions: [
           if (widget.canEdit && widget.onEditPost != null)
-            const _CommentOption('edit', 'Edit post', Icons.edit_outlined),
-          _CommentOption('share', 'Share with friends', Icons.send_outlined),
-          _CommentOption('report', 'Report post', Icons.flag_outlined, isDestructive: true),
+            const _CommentOption(
+              _DiscussionAction.edit,
+              'Edit post',
+              Icons.edit_outlined,
+            ),
+          const _CommentOption(
+            _DiscussionAction.share,
+            'Share with friends',
+            Icons.send_outlined,
+          ),
+          const _CommentOption(
+            _DiscussionAction.report,
+            'Report post',
+            Icons.flag_outlined,
+            isDestructive: true,
+          ),
         ],
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
     );
     if (!mounted || action == null) return;
-    if (action == 'edit') {
+    if (action == _DiscussionAction.edit) {
       await _editPost();
       return;
     }
-    if (action == 'share') {
+    if (action == _DiscussionAction.share) {
       await _showShareToFriends();
       return;
     }
@@ -280,18 +364,21 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (submit == null) return;
     final saved = await Get.to<bool>(
       () => CommunityPostEditorPage(
-        post: widget.post,
-        authorName: widget.post.author,
-        authorAvatarUrl: widget.post.authorAvatarUrl,
-        onSubmit: submit,
+        post: _post,
+        authorName: _post.author,
+        authorAvatarUrl: _post.authorAvatarUrl,
+        onSubmit: (draft) async {
+          final updated = await submit(draft);
+          if (mounted) setState(() => _post = updated.copyWith());
+        },
       ),
       transition: Transition.rightToLeft,
     );
-    if (saved == true && mounted) Get.back<void>();
+    if (saved == true && mounted) widget.onPostChanged?.call();
   }
 
   void _focusComposer() {
-    if (!widget.post.allowComments) return;
+    if (!_post.allowComments) return;
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
       duration: const Duration(milliseconds: 250),
@@ -307,7 +394,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       backgroundColor: const Color(0xFFFFFBFC),
       surfaceTintColor: const Color.fromARGB(0, 81, 202, 10),
       elevation: 0,
-      title: const Text('Comments', style: TextStyle(fontWeight: FontWeight.w800)),
+      title: const Text(
+        'Comments',
+        style: TextStyle(fontWeight: FontWeight.w800),
+      ),
       centerTitle: true,
     ),
     body: SafeArea(
@@ -318,34 +408,49 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             child: RefreshIndicator(
               color: _green,
               onRefresh: _loadComments,
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: _green))
-                  : ListView(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                      children: [
-                        _postSummary(),
-                        const Divider(height: 34),
-                        Row(
-                          children: [
-                            Text(
-                              '${widget.post.comments} ${widget.post.comments == 1 ? 'Comment' : 'Comments'}',
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                            ),
-                            const Spacer(),
-                            const Text('Discussion', style: TextStyle(color: _green, fontSize: 12, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        if (_comments.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 38),
-                            child: Center(child: Text('Be the first to comment.')),
-                          )
-                        else
-                          ..._threadWidgets(),
-                      ],
-                    ),
+              child:
+                  _loading
+                      ? const Center(
+                        child: CircularProgressIndicator(color: _green),
+                      )
+                      : ListView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                        children: [
+                          _postSummary(),
+                          const Divider(height: 34),
+                          Row(
+                            children: [
+                              Text(
+                                '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const Spacer(),
+                              const Text(
+                                'Discussion',
+                                style: TextStyle(
+                                  color: _green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          if (_comments.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 38),
+                              child: Center(
+                                child: Text('Be the first to comment.'),
+                              ),
+                            )
+                          else
+                            ..._threadWidgets(),
+                        ],
+                      ),
             ),
           ),
           _composer(),
@@ -359,42 +464,73 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     children: [
       Row(
         children: [
-          _avatar(widget.post.authorAvatarUrl, radius: 23),
+          _avatar(_post.authorAvatarUrl, radius: 23),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.post.author, style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(
+                  _post.author,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 2),
-                Text(widget.post.role, style: const TextStyle(fontSize: 12, color: Color(0xFF778078))),
+                Text(
+                  _post.role,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF778078),
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(widget.post.ageLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF778078))),
+                Text(
+                  _post.ageLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF778078),
+                  ),
+                ),
               ],
             ),
           ),
           IconButton(
             onPressed: _showPostOptions,
-            icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF768178)),
+            icon: const Icon(
+              Icons.more_horiz_rounded,
+              color: Color(0xFF768178),
+            ),
             tooltip: 'Post options',
           ),
         ],
       ),
       const SizedBox(height: 15),
-      Text(widget.post.description, style: const TextStyle(fontSize: 14, height: 1.35, color: Color(0xFF505951))),
-      if (widget.post.imageUrls.isNotEmpty || widget.post.imageUrl.isNotEmpty) ...[
+      Text(
+        _post.description,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.35,
+          color: Color(0xFF505951),
+        ),
+      ),
+      if (_post.imageUrls.isNotEmpty || _post.imageUrl.isNotEmpty) ...[
         const SizedBox(height: 13),
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: AspectRatio(
             aspectRatio: 1.55,
             child: PageView(
-              children: (widget.post.imageUrls.isNotEmpty ? widget.post.imageUrls : [widget.post.imageUrl])
-                  .map((url) => Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFFEAF7EE)),
-                      ))
+              children: (_post.imageUrls.isNotEmpty
+                      ? _post.imageUrls
+                      : [_post.imageUrl])
+                  .map(
+                    (url) => Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) =>
+                              const ColoredBox(color: Color(0xFFEAF7EE)),
+                    ),
+                  )
                   .toList(growable: false),
             ),
           ),
@@ -405,13 +541,26 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _postMetric(
-            widget.post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            '${widget.post.likes}',
-            color: widget.post.isLiked ? const Color(0xFFE2344A) : const Color(0xFF778078),
+            _post.isLiked
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
+            '${_post.likes}',
+            color:
+                _post.isLiked
+                    ? const Color(0xFFE2344A)
+                    : const Color(0xFF778078),
             onTap: _togglePostLike,
           ),
-          _postMetric(Icons.chat_bubble_outline_rounded, '${widget.post.comments}', onTap: _focusComposer),
-          _postMetric(Icons.reply_rounded, '${widget.post.shares}', onTap: _showShareToFriends),
+          _postMetric(
+            Icons.chat_bubble_outline_rounded,
+            '${_post.comments}',
+            onTap: _focusComposer,
+          ),
+          _postMetric(
+            Icons.reply_rounded,
+            '${_post.shares}',
+            onTap: _showShareToFriends,
+          ),
         ],
       ),
     ],
@@ -432,7 +581,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(width: 7),
-          Text(value, style: const TextStyle(fontSize: 12, color: Color(0xFF778078))),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF778078)),
+          ),
         ],
       ),
     ),
@@ -470,7 +622,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Widget _commentTile(CommunityComment comment, int depth) => Padding(
-    padding: EdgeInsets.only(left: (depth.clamp(0, 2) * 18).toDouble(), bottom: 16),
+    padding: EdgeInsets.only(
+      left: (depth.clamp(0, 2) * 18).toDouble(),
+      bottom: 16,
+    ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -480,22 +635,48 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(comment.author, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              Text(
+                comment.author,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 3),
-              Text(comment.text, style: const TextStyle(fontSize: 13, height: 1.35, color: Color(0xFF626B64))),
+              Text(
+                comment.text,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.35,
+                  color: Color(0xFF626B64),
+                ),
+              ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Text(_commentAge(comment.createdAt), style: const TextStyle(fontSize: 11, color: Color(0xFF8B938D))),
+                  Text(
+                    _commentAge(comment.createdAt),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF8B938D),
+                    ),
+                  ),
                   const SizedBox(width: 18),
-                  if (widget.post.allowReplies)
+                  if (_post.allowReplies)
                     InkWell(
                       onTap: () {
                         setState(() => _replyingTo = comment);
                         _focusComposer();
                       },
                       borderRadius: BorderRadius.circular(6),
-                      child: const Text('Reply', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _green)),
+                      child: const Text(
+                        'Reply',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: _green,
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -506,10 +687,18 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              onPressed: _likingCommentId == null ? () => _toggleCommentLike(comment) : null,
+              onPressed:
+                  _likingCommentId == null
+                      ? () => _toggleCommentLike(comment)
+                      : null,
               icon: Icon(
-                comment.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: comment.isLiked ? const Color(0xFFE2344A) : const Color(0xFF758078),
+                comment.isLiked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color:
+                    comment.isLiked
+                        ? const Color(0xFFE2344A)
+                        : const Color(0xFF758078),
               ),
               tooltip: comment.isLiked ? 'Unlike comment' : 'Like comment',
             ),
@@ -525,7 +714,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 onPressed: () => _showCommentOptions(comment),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(Icons.more_horiz_rounded, size: 20, color: Color(0xFF758078)),
+                icon: const Icon(
+                  Icons.more_horiz_rounded,
+                  size: 20,
+                  color: Color(0xFF758078),
+                ),
                 tooltip: 'Comment options',
               ),
             ),
@@ -536,7 +729,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   );
 
   Widget _composer() {
-    if (!widget.post.allowComments) {
+    if (!_post.allowComments) {
       return const Material(
         color: Colors.white,
         elevation: 9,
@@ -545,62 +738,87 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           child: Padding(
             padding: EdgeInsets.all(18),
             child: Center(
-              child: Text('Comments are turned off for this post.', style: TextStyle(color: Color(0xFF5E6961))),
+              child: Text(
+                'Comments are turned off for this post.',
+                style: TextStyle(color: Color(0xFF5E6961)),
+              ),
             ),
           ),
         ),
       );
     }
     return Material(
-    color: Colors.white,
-    elevation: 9,
-    shadowColor: Colors.black12,
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_replyingTo != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 5, bottom: 5),
-                child: Row(
-                  children: [
-                    Expanded(child: Text('Replying to ${_replyingTo!.author}', style: const TextStyle(fontSize: 12, color: Color(0xFF5E6961)))),
-                    IconButton(
-                      onPressed: () => setState(() => _replyingTo = null),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      tooltip: 'Cancel reply',
-                    ),
-                  ],
+      color: Colors.white,
+      elevation: 9,
+      shadowColor: Colors.black12,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_replyingTo != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 5, bottom: 5),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Replying to ${_replyingTo!.author}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF5E6961),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => setState(() => _replyingTo = null),
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        tooltip: 'Cancel reply',
+                      ),
+                    ],
+                  ),
+                ),
+              TextField(
+                controller: _message,
+                focusNode: _composerFocus,
+                textCapitalization: TextCapitalization.sentences,
+                minLines: 1,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText:
+                      _replyingTo == null
+                          ? 'Write a comment...'
+                          : 'Write a reply...',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F7F4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: _sending ? null : _submit,
+                    icon:
+                        _sending
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _green,
+                              ),
+                            )
+                            : const Icon(Icons.send_rounded, color: _green),
+                    tooltip: 'Send',
+                  ),
                 ),
               ),
-            TextField(
-              controller: _message,
-              focusNode: _composerFocus,
-              textCapitalization: TextCapitalization.sentences,
-              minLines: 1,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: _replyingTo == null ? 'Write a comment...' : 'Write a reply...',
-                filled: true,
-                fillColor: const Color(0xFFF3F7F4),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
-                suffixIcon: IconButton(
-                  onPressed: _sending ? null : _submit,
-                  icon: _sending
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _green))
-                      : const Icon(Icons.send_rounded, color: _green),
-                  tooltip: 'Send',
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -608,7 +826,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     radius: radius,
     backgroundColor: const Color(0xFFEAF7EE),
     backgroundImage: url.isEmpty ? null : NetworkImage(url),
-    child: url.isEmpty ? const Icon(Icons.person_outline_rounded, color: _green) : null,
+    child:
+        url.isEmpty
+            ? const Icon(Icons.person_outline_rounded, color: _green)
+            : null,
   );
 
   String _commentAge(String value) {
@@ -622,6 +843,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 }
 
+enum _DiscussionAction { reply, report, edit, share }
+
 class _CommentOption {
   const _CommentOption(
     this.value,
@@ -630,7 +853,7 @@ class _CommentOption {
     this.isDestructive = false,
   });
 
-  final String value;
+  final _DiscussionAction value;
   final String label;
   final IconData icon;
   final bool isDestructive;
@@ -670,7 +893,13 @@ class _CommentOptionsSheet extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(title!, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                child: Text(
+                  title!,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -685,23 +914,36 @@ class _CommentOptionsSheet extends StatelessWidget {
                 for (var index = 0; index < actions.length; index++) ...[
                   ListTile(
                     onTap: () => Get.back(result: actions[index].value),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 3,
+                    ),
                     leading: Icon(
                       actions[index].icon,
-                      color: actions[index].isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C),
+                      color:
+                          actions[index].isDestructive
+                              ? const Color(0xFFD94545)
+                              : const Color(0xFF18231C),
                       size: 27,
                     ),
                     title: Text(
                       actions[index].label,
                       style: TextStyle(
-                        color: actions[index].isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C),
+                        color:
+                            actions[index].isDestructive
+                                ? const Color(0xFFD94545)
+                                : const Color(0xFF18231C),
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   if (index < actions.length - 1)
-                    const Divider(height: 1, indent: 64, color: Color(0xFFE0E5E1)),
+                    const Divider(
+                      height: 1,
+                      indent: 64,
+                      color: Color(0xFFE0E5E1),
+                    ),
                 ],
               ],
             ),
