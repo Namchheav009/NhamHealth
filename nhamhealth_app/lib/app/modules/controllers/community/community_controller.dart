@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_person.dart';
+import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
 import '../../providers/home/home_provider.dart';
@@ -41,6 +42,7 @@ class CommunityController extends GetxController {
   final errorMessage = RxnString();
 
   final posts = <CommunityPost>[].obs;
+  final commentsByPost = <String, List<CommunityComment>>{}.obs;
   Map<FriendsView, List<CommunityPerson>> _people = const {};
 
   List<CommunityPost> get visiblePosts {
@@ -55,6 +57,7 @@ class CommunityController extends GetxController {
   }
 
   List<CommunityPerson> get people => _people[friendsView.value] ?? const [];
+  List<CommunityPerson> get friends => _people[FriendsView.friends] ?? const [];
   List<CommunityPerson> get filteredPeople {
     final query = searchQuery.value.trim().toLowerCase();
     return people.where((person) {
@@ -126,24 +129,89 @@ class CommunityController extends GetxController {
     posts.refresh();
   }
 
-  Future<void> sharePost(CommunityPost post) async {
-    await _repository.sharePost(post.id);
-    post.shares += 1;
+  Future<void> sharePost(
+    CommunityPost post, {
+    List<String> recipientIds = const [],
+  }) async {
+    await _repository.sharePost(post.id, recipientIds: recipientIds);
+    post.shares += recipientIds.isEmpty ? 1 : recipientIds.length;
+    posts.refresh();
+  }
+
+  List<CommunityComment> commentsFor(String postId) =>
+      commentsByPost[postId] ?? const [];
+
+  Future<void> loadComments(CommunityPost post) async {
+    commentsByPost[post.id] = await _repository.getComments(post.id);
+  }
+
+  Future<void> addComment(
+    CommunityPost post,
+    String text, {
+    String? parentCommentId,
+  }) async {
+    final comment = await _repository.addComment(
+      post.id,
+      text,
+      parentCommentId: parentCommentId,
+    );
+    commentsByPost[post.id] = [...commentsFor(post.id), comment];
+    post.comments += 1;
     posts.refresh();
   }
 
   Future<void> addPost({
     required String title,
     required String description,
-    Uint8List? imageBytes,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    List<int> tagIds = const [],
   }) async {
     final post = await _repository.createPost(
       title: title,
       description: description,
       imageBytes: imageBytes,
+      visibility: visibility,
+      allowComments: allowComments,
+      allowReplies: allowReplies,
+      tagIds: tagIds,
     );
     posts.insert(0, post);
     section.value = CommunitySection.feed;
+  }
+
+  Future<void> updatePost({
+    required CommunityPost post,
+    required String title,
+    required String description,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    bool removeImage = false,
+    List<int> tagIds = const [],
+  }) async {
+    final updated = await _repository.updatePost(
+      postId: post.id,
+      title: title,
+      description: description,
+      imageBytes: imageBytes,
+      visibility: visibility,
+      allowComments: allowComments,
+      allowReplies: allowReplies,
+      removeImage: removeImage,
+      tagIds: tagIds,
+    );
+    final index = posts.indexWhere((item) => item.id == post.id);
+    if (index >= 0) posts[index] = updated;
+  }
+
+  Future<void> deletePost(CommunityPost post) async {
+    await _repository.deletePost(post.id);
+    posts.removeWhere((item) => item.id == post.id);
+    commentsByPost.remove(post.id);
   }
 
   Future<void> updateConnection(

@@ -90,6 +90,44 @@ void main() {
     );
     expect(requestCount, 0);
   });
+
+  test('loads only the authenticated user\'s community posts', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode([
+          {
+            'id': 24,
+            'title': 'My breakfast',
+            'description': 'Oatmeal with fruit',
+            'imageUrl': '/uploads/post.jpg',
+            'author': 'Test User',
+            'role': 'Member',
+            'authorAvatarUrl': '/uploads/avatar.jpg',
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+            'liked': true,
+          },
+        ]),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final repository = ProfileRepository(
+      authService: _AuthenticatedAuthService(),
+      client: client,
+    );
+
+    final posts = await repository.getMyPosts();
+
+    expect(capturedRequest.method, 'GET');
+    expect(capturedRequest.url.path, '/api/v1/community/posts/mine');
+    expect(capturedRequest.headers['authorization'], 'Bearer test-token');
+    expect(posts, hasLength(1));
+    expect(posts.single.title, 'My breakfast');
+    expect(posts.single.imageUrl, contains('/uploads/post.jpg'));
+    expect(posts.single.isLiked, isTrue);
+  });
 }
 
 class _AuthenticatedAuthService extends AuthService {
