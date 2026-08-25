@@ -34,6 +34,10 @@ public class Post {
     @JoinColumn(name = "tagged_meal_id")
     private Meal taggedMeal;
 
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "shared_post_id")
+    private Post sharedPost;
+
     @Column(name = "caption")
     private String caption;
 
@@ -76,6 +80,14 @@ public class Post {
 
     public void setTaggedMeal(Meal taggedMeal) {
         this.taggedMeal = taggedMeal;
+    }
+
+    public Post getSharedPost() {
+        return sharedPost;
+    }
+
+    public void setSharedPost(Post sharedPost) {
+        this.sharedPost = sharedPost;
     }
 
     public String getCaption() {

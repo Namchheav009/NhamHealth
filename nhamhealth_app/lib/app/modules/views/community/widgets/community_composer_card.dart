@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 
 class CommunityComposerCard extends StatelessWidget {
-  const CommunityComposerCard({required this.onTap, super.key});
+  const CommunityComposerCard({
+    required this.onTap,
+    this.authorAvatarUrl = '',
+    super.key,
+  });
 
   final VoidCallback onTap;
+  final String authorAvatarUrl;
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -26,42 +31,110 @@ class CommunityComposerCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 21,
-            backgroundColor: Color(0xFFE4F6EA),
-            child: Icon(
-              Icons.person_outline_rounded,
-              color: AppColors.primaryGreen,
-            ),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 21,
+                backgroundColor: const Color(0xFFE4F6EA),
+                backgroundImage:
+                    authorAvatarUrl.isEmpty
+                        ? null
+                        : NetworkImage(authorAvatarUrl),
+                child:
+                    authorAvatarUrl.isEmpty
+                        ? const Icon(
+                          Icons.person_outline_rounded,
+                          color: AppColors.primaryGreen,
+                        )
+                        : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F8F6),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE3EAE5)),
+                  ),
+                  child: const Text(
+                    'Share a win, question, or healthy idea...',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: Color(0xFF718078)),
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Share a win, question, or healthy idea...',
-              style: TextStyle(fontSize: 13, color: Color(0xFF718078)),
-            ),
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: Color(0xFFE8EEE9)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _ComposerShortcut(
+                  icon: Icons.image_outlined,
+                  label: 'Photo',
+                  color: Color(0xFF168B4A),
+                ),
+              ),
+              SizedBox(
+                height: 22,
+                child: VerticalDivider(width: 1, color: Color(0xFFE1E8E3)),
+              ),
+              Expanded(
+                child: _ComposerShortcut(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Ask community',
+                  color: Color(0xFF596C9B),
+                ),
+              ),
+            ],
           ),
-          _EditIcon(),
         ],
       ),
     ),
   );
 }
 
-class _EditIcon extends StatelessWidget {
-  const _EditIcon();
+class _ComposerShortcut extends StatelessWidget {
+  const _ComposerShortcut({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      color: Color(0xFFE9F8EE),
-      shape: BoxShape.circle,
-    ),
-    child: SizedBox.square(
-      dimension: 36,
-      child: Icon(Icons.edit_outlined, size: 19, color: AppColors.primaryGreen),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 19, color: color),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF4E5B52),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

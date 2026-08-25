@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../config/api_config.dart';
 import '../../../models/community/community_post.dart';
+import '../../community/widgets/community_shared_post_card.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -98,22 +99,26 @@ class ProfilePostCard extends StatelessWidget {
 
               IconButton(
                 tooltip: 'Post options',
-                icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF768178)),
+                icon: const Icon(
+                  Icons.more_horiz_rounded,
+                  color: Color(0xFF768178),
+                ),
                 onPressed: () => _showPostOptions(context),
               ),
             ],
           ),
 
-          const SizedBox(height: 15),
-
-          Text(
-            post.description,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.42,
-              color: Color(0xFF5E6961),
+          if (post.description.isNotEmpty) ...[
+            const SizedBox(height: 15),
+            Text(
+              post.description,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.42,
+                color: Color(0xFF5E6961),
+              ),
             ),
-          ),
+          ],
 
           if (post.tags.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -124,7 +129,14 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-          if (post.imageBytes != null || post.imageUrls.isNotEmpty || post.imageUrl.isNotEmpty) ...[
+          if (post.sharedPost != null) ...[
+            const SizedBox(height: 14),
+            CommunitySharedPostCard(post: post.sharedPost!),
+          ],
+
+          if (post.imageBytes != null ||
+              post.imageUrls.isNotEmpty ||
+              post.imageUrl.isNotEmpty) ...[
             const SizedBox(height: 15),
             Semantics(
               button: true,
@@ -137,32 +149,34 @@ class ProfilePostCard extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     height: 218,
-                    child: post.imageBytes != null
-                        ? Image.memory(
-                            post.imageBytes!,
-                            fit: BoxFit.cover,
-                            filterQuality: FilterQuality.medium,
-                          )
-                        : PageView(
-                            children: _imageUrls
-                                .map(
-                                  (url) => Image.network(
-                                    url,
-                                    fit: BoxFit.cover,
-                                    filterQuality: FilterQuality.medium,
-                                    errorBuilder: (_, _, _) => Container(
-                                      color: const Color(0xFFF3F7F4),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.image_outlined,
-                                          color: Color(0xFF8D9990),
-                                        ),
-                                      ),
+                    child:
+                        post.imageBytes != null
+                            ? Image.memory(
+                              post.imageBytes!,
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.medium,
+                            )
+                            : PageView(
+                              children: _imageUrls
+                                  .map(
+                                    (url) => Image.network(
+                                      url,
+                                      fit: BoxFit.cover,
+                                      filterQuality: FilterQuality.medium,
+                                      errorBuilder:
+                                          (_, _, _) => Container(
+                                            color: const Color(0xFFF3F7F4),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.image_outlined,
+                                                color: Color(0xFF8D9990),
+                                              ),
+                                            ),
+                                          ),
                                     ),
-                                  ),
-                                )
-                                .toList(growable: false),
-                          ),
+                                  )
+                                  .toList(growable: false),
+                            ),
                   ),
                 ),
               ),
@@ -178,9 +192,15 @@ class ProfilePostCard extends StatelessWidget {
             child: Row(
               children: [
                 _ProfilePostMetric(
-                  icon: post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  icon:
+                      post.isLiked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
                   value: _compactCount(post.likes),
-                  color: post.isLiked ? const Color(0xFFE64657) : const Color(0xFF69756D),
+                  color:
+                      post.isLiked
+                          ? const Color(0xFFE64657)
+                          : const Color(0xFF69756D),
                   onTap: onLike,
                 ),
                 const _ProfileMetricDivider(),
@@ -208,14 +228,17 @@ class ProfilePostCard extends StatelessWidget {
   ImageProvider<Object>? get _avatarImage {
     final value = authorAvatarUrl.trim();
     if (value.isEmpty) return null;
-    final imageUrl = value.startsWith('http://') || value.startsWith('https://')
-        ? value
-        : '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
+    final imageUrl =
+        value.startsWith('http://') || value.startsWith('https://')
+            ? value
+            : '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
     return NetworkImage(imageUrl);
   }
 
   List<String> get _imageUrls =>
-      post.imageUrls.isNotEmpty ? post.imageUrls : (post.imageUrl.isEmpty ? const [] : [post.imageUrl]);
+      post.imageUrls.isNotEmpty
+          ? post.imageUrls
+          : (post.imageUrl.isEmpty ? const [] : [post.imageUrl]);
 
   Future<void> _showPostOptions(BuildContext context) async {
     final action = await showModalBottomSheet<String>(
@@ -238,51 +261,57 @@ class ProfilePostCard extends StatelessWidget {
   Future<void> _openImageViewer(BuildContext context) => showDialog<void>(
     context: context,
     barrierColor: Colors.black,
-    builder: (dialogContext) => Dialog.fullscreen(
-      backgroundColor: Colors.black,
-      child: Stack(
-        children: [
-          Center(
-            child: InteractiveViewer(
-              minScale: 0.8,
-              maxScale: 4,
-              child: post.imageBytes != null
-                  ? Image.memory(post.imageBytes!, fit: BoxFit.contain)
-                  : PageView(
-                      children: _imageUrls
-                          .map(
-                            (url) => Image.network(
-                              url,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, _, _) => const Icon(
-                                Icons.image_outlined,
-                                size: 42,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-            ),
-          ),
-          Positioned(
-            top: 18,
-            right: 18,
-            child: SafeArea(
-              child: Material(
-                color: Colors.black54,
-                shape: const CircleBorder(),
-                child: IconButton(
-                  tooltip: 'Close image',
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+    builder:
+        (dialogContext) => Dialog.fullscreen(
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4,
+                  child:
+                      post.imageBytes != null
+                          ? Image.memory(post.imageBytes!, fit: BoxFit.contain)
+                          : PageView(
+                            children: _imageUrls
+                                .map(
+                                  (url) => Image.network(
+                                    url,
+                                    fit: BoxFit.contain,
+                                    errorBuilder:
+                                        (_, _, _) => const Icon(
+                                          Icons.image_outlined,
+                                          size: 42,
+                                          color: Colors.white70,
+                                        ),
+                                  ),
+                                )
+                                .toList(growable: false),
+                          ),
                 ),
               ),
-            ),
+              Positioned(
+                top: 18,
+                right: 18,
+                child: SafeArea(
+                  child: Material(
+                    color: Colors.black54,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Close image',
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
+        ),
   );
 }
 
@@ -317,7 +346,14 @@ class _ProfilePostMetric extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 7),
-            Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),
@@ -402,12 +438,20 @@ class _ProfilePostOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
+    final color =
+        isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
     return ListTile(
       onTap: () => Navigator.of(context).pop(value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
       leading: Icon(icon, color: color, size: 27),
-      title: Text(label, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w700)),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
