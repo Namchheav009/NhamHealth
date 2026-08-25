@@ -107,18 +107,6 @@ class ProfilePostCard extends StatelessWidget {
           const SizedBox(height: 15),
 
           Text(
-            post.title,
-            style: const TextStyle(
-              fontSize: 18,
-              height: 1.2,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1C2720),
-            ),
-          ),
-
-          const SizedBox(height: 7),
-
-          Text(
             post.description,
             style: const TextStyle(
               fontSize: 14,

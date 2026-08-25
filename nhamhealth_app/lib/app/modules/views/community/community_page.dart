@@ -641,16 +641,6 @@ class CommunityPage extends GetView<CommunityController> {
         ),
         const SizedBox(height: 15),
         Text(
-          post.title,
-          style: const TextStyle(
-            fontSize: 18,
-            height: 1.2,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1C2720),
-          ),
-        ),
-        const SizedBox(height: 7),
-        Text(
           post.description,
           style: const TextStyle(
             fontSize: 14,
@@ -828,7 +818,6 @@ class CommunityPage extends GetView<CommunityController> {
         authorAvatarUrl: user?.profileImageUrl ?? post.authorAvatarUrl,
         onSubmit: (draft) => controller.updatePost(
           post: post,
-          title: draft.title,
           description: draft.description,
           imageBytes: draft.imageBytes,
           visibility: draft.visibility,
@@ -844,7 +833,6 @@ class CommunityPage extends GetView<CommunityController> {
 
   // ignore: unused_element
   Future<void> _showLegacyEditPost(CommunityPost post) async {
-    final title = TextEditingController(text: post.title);
     final description = TextEditingController(text: post.description);
     await Get.dialog<void>(
       Dialog(
@@ -863,12 +851,6 @@ class CommunityPage extends GetView<CommunityController> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: title,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: _postInput('Title (optional)'),
-              ),
-              const SizedBox(height: 12),
               TextField(
                 controller: description,
                 maxLines: 5,
@@ -890,7 +872,6 @@ class CommunityPage extends GetView<CommunityController> {
                       try {
                         await controller.updatePost(
                           post: post,
-                          title: title.text,
                           description: description.text,
                         );
                         Get.back<void>();
@@ -909,7 +890,6 @@ class CommunityPage extends GetView<CommunityController> {
         ),
       ),
     );
-    title.dispose();
     description.dispose();
   }
 
@@ -1046,7 +1026,6 @@ class CommunityPage extends GetView<CommunityController> {
         canEdit: post.authorId == controller.authenticatedUser.value?.id,
         onEditPost: (draft) => controller.updatePost(
           post: post,
-          title: draft.title,
           description: draft.description,
           imageBytes: draft.imageBytes,
           visibility: draft.visibility,
@@ -1067,7 +1046,6 @@ class CommunityPage extends GetView<CommunityController> {
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
         onSubmit: (draft) => controller.addPost(
-          title: draft.title,
           description: draft.description,
           imageBytes: draft.imageBytes,
           visibility: draft.visibility,
@@ -1082,7 +1060,6 @@ class CommunityPage extends GetView<CommunityController> {
 
   // ignore: unused_element
   Future<void> _showLegacyCreatePost() async {
-    final title = TextEditingController();
     final description = TextEditingController();
     final imagePicker = ImagePicker();
     Uint8List? selectedImage;
@@ -1125,15 +1102,8 @@ class CommunityPage extends GetView<CommunityController> {
                           child: Column(
                             children: [
                               TextField(
-                                controller: title,
-                                autofocus: true,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                decoration: _postInput('Title (optional)'),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
                                 controller: description,
+                                autofocus: true,
                                 maxLines: 4,
                                 textCapitalization:
                                     TextCapitalization.sentences,
@@ -1248,7 +1218,6 @@ class CommunityPage extends GetView<CommunityController> {
                               }
                               try {
                                 await controller.addPost(
-                                  title: title.text,
                                   description: description.text,
                                   imageBytes: selectedImage == null ? const [] : [selectedImage!],
                                 );
@@ -1276,7 +1245,6 @@ class CommunityPage extends GetView<CommunityController> {
         ),
       ),
     );
-    title.dispose();
     description.dispose();
   }
 

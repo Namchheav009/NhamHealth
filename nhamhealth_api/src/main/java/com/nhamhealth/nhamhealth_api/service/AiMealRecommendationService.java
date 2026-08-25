@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhamhealth.nhamhealth_api.dto.ai.AiUserHealthProfile;
 import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
 import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
@@ -33,7 +34,6 @@ import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.WellnessProfileRepository;
 
 @Service
 public class AiMealRecommendationService {
@@ -47,10 +47,12 @@ public class AiMealRecommendationService {
             facts, ingredients, nutrition, allergies, or medical needs.
 
             Select exactly targetCount distinct meals, or every meal when the catalog is smaller.
-            Rank for mood, remaining calories and protein, activity level, cooking effort, and prior
-            favorites. Maximize category diversity and avoid near-duplicates. Favorites are useful
-            preference signals, not mandatory choices. Each reason must cite a concrete catalog or
-            user-context fact in 18 words or less. Keep the summary under 20 words.
+            Rank for mood, remaining calories and protein, saved age, height, weight, BMI, activity
+            level, cooking effort, and prior favorites. Body measurements are general wellness
+            context only: never diagnose a condition or claim a medical requirement. Maximize
+            category diversity and avoid near-duplicates. Favorites are useful preference signals,
+            not mandatory choices. Each reason must cite a concrete catalog or user-context fact in
+            18 words or less. Keep the summary under 20 words.
 
             Return one compact JSON object only in this exact shape:
             {"summary":"short explanation","meals":[{"id":1,"reason":"short reason"}]}
@@ -63,7 +65,7 @@ public class AiMealRecommendationService {
     private final MealFavoriteRepository favoriteRepository;
     private final DailyWellnessSummaryRepository dailySummaryRepository;
     private final DailyNutrientTotalRepository dailyNutrientRepository;
-    private final WellnessProfileRepository wellnessProfileRepository;
+    private final AiUserHealthProfileService userHealthProfileService;
     private final RestClient client;
     private final ObjectMapper mapper;
     private final String apiKey;
@@ -80,7 +82,7 @@ public class AiMealRecommendationService {
             MealFavoriteRepository favoriteRepository,
             DailyWellnessSummaryRepository dailySummaryRepository,
             DailyNutrientTotalRepository dailyNutrientRepository,
-            WellnessProfileRepository wellnessProfileRepository,
+            AiUserHealthProfileService userHealthProfileService,
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
             @Value("${app.ai.nvidia.recommendation-model:openai/gpt-oss-20b}") String model,
@@ -94,7 +96,7 @@ public class AiMealRecommendationService {
         this.favoriteRepository = favoriteRepository;
         this.dailySummaryRepository = dailySummaryRepository;
         this.dailyNutrientRepository = dailyNutrientRepository;
-        this.wellnessProfileRepository = wellnessProfileRepository;
+        this.userHealthProfileService = userHealthProfileService;
         this.client = RestClient.builder().baseUrl(baseUrl).build();
         this.mapper = new ObjectMapper();
         this.apiKey = apiKey;
@@ -288,9 +290,7 @@ public class AiMealRecommendationService {
     private RecommendationContext recommendationContext(Integer userId) {
         var favoriteIds = favoriteRepository.findAllByUserUserIdOrderBySavedAtDesc(userId)
                 .stream().map(value -> value.getMeal().getMealId()).distinct().limit(20).toList();
-        String activityLevel = wellnessProfileRepository.findByUser_UserId(userId)
-                .map(value -> value.getActivityLevel() == null ? "unknown" : value.getActivityLevel())
-                .orElse("unknown");
+        AiUserHealthProfile healthProfile = userHealthProfileService.load(userId);
         double remainingCalories = 0;
         double remainingProtein = 0;
         var summary = dailySummaryRepository.findByUser_UserIdAndSummaryDate(userId, LocalDate.now());
@@ -304,7 +304,7 @@ public class AiMealRecommendationService {
                 if (nutrient.contains("protein")) remainingProtein = remaining;
             }
         }
-        return new RecommendationContext(activityLevel, remainingCalories, remainingProtein, favoriteIds);
+        return new RecommendationContext(healthProfile, remainingCalories, remainingProtein, favoriteIds);
     }
 
     private double fallbackScore(Meal meal, RecommendationContext context, boolean lowEnergy) {
@@ -331,6 +331,10 @@ public class AiMealRecommendationService {
                     + " g protein toward today's remaining goal.";
         }
         if (lowEnergy) return "Provides practical energy for a " + mood.getMoodName() + " day.";
+        if (context.healthProfile().hasAgeHeightAndWeight()) {
+            return "Selected using your saved age, height, weight, and "
+                    + context.healthProfile().activityLevel() + " activity level.";
+        }
         return "A balanced, varied option for your " + mood.getMoodName() + " mood.";
     }
 
@@ -355,7 +359,7 @@ public class AiMealRecommendationService {
     private record MealChoice(Integer id, String reason) {}
     private record ModelDecision(String summary, List<MealChoice> mealIds) {}
     private record RecommendationContext(
-            String activityLevel,
+            AiUserHealthProfile healthProfile,
             double remainingCalories,
             double remainingProteinGrams,
             List<Integer> favoriteMealIds) {}

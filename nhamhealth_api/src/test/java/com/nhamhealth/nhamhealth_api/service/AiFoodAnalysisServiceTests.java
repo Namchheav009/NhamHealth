@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodCandidate;
+import com.nhamhealth.nhamhealth_api.dto.ai.AiUserHealthProfile;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodComponentNutritionEstimate;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
@@ -42,8 +43,10 @@ class AiFoodAnalysisServiceTests {
         AiFoodAnalysisNutrientRepository analysisNutrientRepository =
                 mock(AiFoodAnalysisNutrientRepository.class);
         NutrientRepository nutrientRepository = mock(NutrientRepository.class);
+        AiUserHealthProfileService userHealthProfileService = mock(AiUserHealthProfileService.class);
         User user = new User();
         when(userRepository.findById(7)).thenReturn(Optional.of(user));
+        when(userHealthProfileService.load(7)).thenReturn(completeHealthProfile());
         when(nutrientRepository.findByNutrientNameIgnoreCase(any()))
                 .thenReturn(Optional.of(new Nutrient()));
 
@@ -70,6 +73,7 @@ class AiFoodAnalysisServiceTests {
                 estimationProvider,
                 new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
                 mock(FoodCorrectionSuggestionService.class),
+                userHealthProfileService,
                 userRepository,
                 analysisRepository,
                 analysisNutrientRepository,
@@ -84,7 +88,10 @@ class AiFoodAnalysisServiceTests {
         assertEquals(NutritionSource.DATABASE_CALCULATED, result.nutrition().source());
         assertTrue(result.databaseMatched());
         assertFalse(result.needsUserConfirmation());
+        assertEquals("Personalized nutrition check", result.recommendationTitle());
+        assertTrue(result.recommendation().contains("saved age, height, and weight"));
         verify(visionProvider).analyze(any(), any());
+        verify(userHealthProfileService).load(7);
     }
 
     @Test
@@ -98,8 +105,10 @@ class AiFoodAnalysisServiceTests {
         AiFoodAnalysisNutrientRepository analysisNutrientRepository =
                 mock(AiFoodAnalysisNutrientRepository.class);
         NutrientRepository nutrientRepository = mock(NutrientRepository.class);
+        AiUserHealthProfileService userHealthProfileService = mock(AiUserHealthProfileService.class);
         User user = new User();
         when(userRepository.findById(7)).thenReturn(Optional.of(user));
+        when(userHealthProfileService.load(7)).thenReturn(AiUserHealthProfile.empty(7));
         when(nutrientRepository.findByNutrientNameIgnoreCase(any()))
                 .thenReturn(Optional.of(new Nutrient()));
 
@@ -128,6 +137,7 @@ class AiFoodAnalysisServiceTests {
                 estimationProvider,
                 new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
                 mock(FoodCorrectionSuggestionService.class),
+                userHealthProfileService,
                 userRepository,
                 analysisRepository,
                 analysisNutrientRepository,
@@ -165,6 +175,7 @@ class AiFoodAnalysisServiceTests {
                 mock(FoodNutritionEstimationProvider.class),
                 new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
                 correctionService,
+                mock(AiUserHealthProfileService.class),
                 mock(UserRepository.class),
                 analysisRepository,
                 mock(AiFoodAnalysisNutrientRepository.class),
@@ -193,5 +204,15 @@ class AiFoodAnalysisServiceTests {
         food.setServingUnit("g");
         food.setActive(true);
         return food;
+    }
+
+    private AiUserHealthProfile completeHealthProfile() {
+        return new AiUserHealthProfile(
+                7,
+                (short) 29,
+                BigDecimal.valueOf(172),
+                BigDecimal.valueOf(68),
+                BigDecimal.valueOf(23.0),
+                "moderate");
     }
 }

@@ -58,7 +58,6 @@ class _ImagePostRepository extends CommunityRepository {
   Future<List<CommunityPost>> getPosts({bool following = false}) async => [
     CommunityPost(
       id: '1',
-      title: 'A healthy community update',
       description: 'Testing a post with multiple network images.',
       imageUrl: 'https://example.invalid/community-1.jpg',
       imageUrls: const [

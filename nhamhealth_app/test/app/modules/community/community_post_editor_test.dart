@@ -44,19 +44,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
-    expect(submitted!.title, isEmpty);
     expect(submitted!.description, 'Today I prepared a healthy lunch.');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('editing preserves the existing title', (tester) async {
+  testWidgets('editing submits the existing message', (tester) async {
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
         home: CommunityPostEditorPage(
           post: CommunityPost(
             id: '7',
-            title: 'Original title',
             description: 'Original message',
             imageUrl: '',
             author: 'Nham Member',
@@ -75,7 +73,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
-    expect(submitted!.title, 'Original title');
     expect(submitted!.description, 'Original message');
     expect(tester.takeException(), isNull);
   });

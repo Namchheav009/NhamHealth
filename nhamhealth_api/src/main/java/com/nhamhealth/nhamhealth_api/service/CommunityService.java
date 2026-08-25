@@ -87,7 +87,7 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityPostResponse create(Integer userId, String title, String description, String visibility,
+    public CommunityPostResponse create(Integer userId, String description, String visibility,
             boolean allowComments, boolean allowReplies, List<Integer> tagIds, List<MultipartFile> images) {
         if (description == null || description.trim().isEmpty()) {
             throw new IllegalArgumentException("Post message is required");
@@ -96,7 +96,6 @@ public class CommunityService {
         LocalDateTime now = LocalDateTime.now();
         Post post = new Post();
         post.setUser(user);
-        post.setTitle(title == null || title.isBlank() ? "Community update" : title.trim());
         post.setCaption(description.trim());
         post.setVisibility(cleanVisibility(visibility));
         post.setAllowComments(allowComments);
@@ -120,14 +119,13 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityPostResponse update(Integer userId, Integer postId, String title, String description,
+    public CommunityPostResponse update(Integer userId, Integer postId, String description,
             String visibility, boolean allowComments, boolean allowReplies, boolean removeImage,
             List<Integer> tagIds, List<MultipartFile> images, boolean replaceWithLegacyImage) {
         if (description == null || description.trim().isEmpty()) {
             throw new IllegalArgumentException("Post message is required");
         }
         Post post = ownedPost(userId, postId);
-        post.setTitle(title == null || title.isBlank() ? "Community update" : title.trim());
         post.setCaption(description.trim());
         post.setVisibility(cleanVisibility(visibility));
         post.setAllowComments(allowComments);
@@ -324,8 +322,8 @@ public class CommunityService {
                 .map(PostMedia::getMediaUrl).toList();
         String imageUrl = imageUrls.isEmpty() ? "" : imageUrls.getFirst();
         List<PostTag> assignedTags = postTags.findByPostPostIdOrderByPostTagId(post.getPostId());
-        return new CommunityPostResponse(post.getPostId(), value(post.getTitle(), "Community update"),
-                value(post.getCaption(), ""), imageUrl, imageUrls, post.getUser().getUserId(),
+        return new CommunityPostResponse(post.getPostId(), value(post.getCaption(), ""), imageUrl, imageUrls,
+                post.getUser().getUserId(),
                 profile == null ? post.getUser().getName() : profile.getFullName(),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 assignedTags.stream().map(item -> item.getTag().getTagName()).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
