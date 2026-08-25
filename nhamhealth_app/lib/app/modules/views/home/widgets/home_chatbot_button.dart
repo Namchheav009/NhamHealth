@@ -28,16 +28,14 @@ class HomeChatbotButton extends GetView<HomeController> {
                 clipBehavior: Clip.none,
                 children: [
                   Positioned.fill(
-                    child: ClipOval(
-                      child: Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: Transform.scale(
-                          scale: 1.4,
-                          child: Lottie.asset(
-                            'assets/animations/live_chatbot.json',
-                            fit: BoxFit.contain,
-                            repeat: true,
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Transform.scale(
+                        scale: 1.25,
+                        child: Lottie.asset(
+                          'assets/animations/live_chatbot.json',
+                          fit: BoxFit.contain,
+                          repeat: true,
                         ),
                       ),
                     ),

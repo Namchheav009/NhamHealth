@@ -72,7 +72,6 @@ class GreetingSection extends GetView<HomeController> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    physics: const BouncingScrollPhysics(),
                     itemCount: moods.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {

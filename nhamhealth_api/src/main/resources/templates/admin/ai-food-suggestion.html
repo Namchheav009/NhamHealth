@@ -1,12 +1,489 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title th:text="${pageTitle + ' | Nham Health Admin'}">AI Food Suggestions | Nham Health Admin</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><link rel="stylesheet" th:href="@{/css/admin-layout.css}"><link rel="stylesheet" th:href="@{/css/admin-dashboard.css}"><link rel="stylesheet" th:href="@{/css/admin-ai-food-suggestion.css}"></head><body>
-<div class="app-shell"><div th:replace="~{layouts/sidebar :: sidebar('ai-food-suggestions')}"></div><main class="main-area"><div th:replace="~{layouts/topbar :: topbar}"></div><section class="page-content">
-<div class="page-heading"><div><div class="title-line"><h1>AI Food Suggestions</h1><span>Guidance generated from food analyses</span></div><p>Review suggestion content, reasoning, source analyses, and priority.</p></div><div class="heading-actions"><button class="btn" id="exportSuggestions" type="button"><i class="bi bi-download"></i> Export CSV</button><button class="btn btn-secondary" id="refreshSuggestions" type="button"><i class="bi bi-arrow-clockwise"></i> Refresh</button><button class="btn btn-primary" id="openSuggestionModal" type="button"><i class="bi bi-plus-lg"></i> Add suggestion</button></div></div>
-<div class="message success" th:if="${successMessage}" th:text="${successMessage}">Saved</div><div class="message error" th:if="${errorMessage}" th:text="${errorMessage}">Error</div>
-<div class="stats-grid"><article class="stat-card"><div class="stat-icon green"><i class="bi bi-lightbulb-fill"></i></div><div class="stat-content"><span>Total suggestions</span><strong id="totalSuggestionCount" th:text="${#numbers.formatInteger(totalSuggestions,1,'COMMA')}">0</strong><small>All generated guidance</small></div></article><article class="stat-card"><div class="stat-icon blue"><i class="bi bi-cpu-fill"></i></div><div class="stat-content"><span>Source analyses</span><strong id="sourceAnalysisCount" th:text="${#numbers.formatInteger(uniqueRequests,1,'COMMA')}">0</strong><small>Distinct linked requests</small></div></article><article class="stat-card"><div class="stat-icon orange"><i class="bi bi-flag-fill"></i></div><div class="stat-content"><span>High priority</span><strong id="highPrioritySuggestionCount" th:text="${#numbers.formatInteger(highPrioritySuggestions,1,'COMMA')}">0</strong><small>Priority 8–10</small></div></article><article class="stat-card"><div class="stat-icon purple"><i class="bi bi-bar-chart-fill"></i></div><div class="stat-content"><span>Average priority</span><strong id="averageSuggestionPriority" th:text="${averagePriority}">0.0</strong><small>On a 1–10 scale</small></div></article></div>
-<article class="panel table-panel"><div class="panel-header"><div><h2>Suggestion feed</h2><p>Showing <span id="pageStart">0</span>–<span id="pageEnd">0</span> of <span id="visibleSuggestionCount" th:text="${totalSuggestions}">0</span></p></div><div class="panel-tools"><select class="table-filter" id="typeFilter"><option value="all">All suggestion types</option><option th:each="type:${suggestionTypes}" th:value="${#strings.toLowerCase(type)}" th:text="${type}">Healthy Swap</option></select><select class="table-filter" id="priorityFilter"><option value="all">All priorities</option><option value="high">High (8–10)</option><option value="medium">Medium (4–7)</option><option value="low">Low (1–3)</option></select><input class="table-search" id="suggestionSearch" type="search" placeholder="Search title, food, or reason…"><button class="btn btn-secondary" id="clearFilters" type="button">Clear</button></div></div>
-<div class="table-responsive"><table><thead><tr><th>Source analysis</th><th>Type</th><th>Suggestion</th><th>Description</th><th>Reason</th><th>Priority</th><th>Actions</th></tr></thead><tbody id="suggestionRows">
-<tr th:each="suggestion:${aiSuggestions}" th:data-id="${suggestion.aiFoodSuggestionId}" th:data-type="${#strings.toLowerCase(suggestion.suggestionType)}" th:data-priority="${suggestion.priority >= 8 ? 'high' : (suggestion.priority >= 4 ? 'medium':'low')}" th:data-search="${#strings.toLowerCase(suggestion.title + ' ' + suggestion.suggestionType + ' ' + suggestion.description + ' ' + (suggestion.reason ?: '') + ' ' + (suggestion.aiFoodAnalysis != null ? suggestion.aiFoodAnalysis.detectedFoodName ?: suggestion.aiFoodAnalysis.inputText:''))}"><td><div class="source-cell" th:if="${suggestion.aiFoodAnalysis != null}"><span class="source-icon"><i class="bi bi-robot"></i></span><span><strong th:text="${suggestion.aiFoodAnalysis.detectedFoodName ?: suggestion.aiFoodAnalysis.inputText}">Food analysis</strong><small th:text="${'Analysis #' + suggestion.aiFoodAnalysis.aiFoodAnalysisId}">#1</small></span></div><span th:unless="${suggestion.aiFoodAnalysis != null}">Unavailable</span></td><td><span class="type-badge" th:text="${suggestion.suggestionType}">Healthy Swap</span></td><td><strong class="suggestion-title" th:text="${suggestion.title}">Title</strong></td><td><p class="copy" th:text="${suggestion.description}">Description</p></td><td><p class="copy muted" th:text="${suggestion.reason ?: 'No reason provided'}">Reason</p></td><td><span class="priority-badge" th:classappend="${suggestion.priority >= 8 ? ' high' : (suggestion.priority >= 4 ? ' medium':' low')}"><b th:text="${suggestion.priority}">8</b><small>/10</small></span></td><td><button class="icon-button danger delete-suggestion" type="button" title="Delete suggestion"><i class="bi bi-trash3"></i></button></td></tr>
-<tr th:if="${#lists.isEmpty(aiSuggestions)}"><td class="empty-state" colspan="7"><i class="bi bi-lightbulb"></i><strong>No AI food suggestions yet</strong><span>Suggestions linked to food analyses will appear here.</span></td></tr></tbody></table></div><div class="pagination-row"><span><span id="filteredSuggestionTotal" th:text="${totalSuggestions}">0</span> matching suggestions</span><nav class="pagination-controls"><button class="page-btn" id="pagePrev" type="button"><i class="bi bi-chevron-left"></i></button><div class="page-numbers" id="pageNumbers"></div><button class="page-btn" id="pageNext" type="button"><i class="bi bi-chevron-right"></i></button></nav></div></article>
-</section><footer class="page-footer"><span>© 2026 Nham Health. All rights reserved.</span><span>Suggestions are connected to AI food analyses.</span></footer></main></div><div class="sidebar-overlay" id="sidebarOverlay"></div>
-<div class="modal" id="suggestionModal" aria-hidden="true"><section class="modal-card"><div class="modal-header"><div><h2>Add food suggestion</h2><p>Attach practical guidance to an existing AI food analysis.</p></div><button class="icon-button" id="closeSuggestionModal" type="button"><i class="bi bi-x-lg"></i></button></div><form th:action="@{/admin/ai-food-suggestions}" method="post" id="suggestionForm"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><div class="modal-body"><div class="form-grid"><label class="field-group full"><span>Source analysis</span><select name="analysisId" required><option value="">Select an analysis</option><option th:each="analysis:${aiAnalyses}" th:value="${analysis.aiFoodAnalysisId}" th:text="${'#' + analysis.aiFoodAnalysisId + ' · ' + (analysis.detectedFoodName ?: analysis.inputText)}">Analysis</option></select></label><label class="field-group"><span>Suggestion type</span><input name="suggestionType" maxlength="50" list="typeOptions" placeholder="Healthy Swap" required><datalist id="typeOptions"><option th:each="type:${suggestionTypes}" th:value="${type}"></datalist></label><label class="field-group"><span>Priority <small>(1–10)</small></span><input name="priority" type="number" min="1" max="10" value="5" required></label><label class="field-group full"><span>Title</span><input name="title" maxlength="150" placeholder="Choose a leaner protein" required></label><label class="field-group full"><span>Description</span><textarea name="description" rows="3" placeholder="Explain the recommended action…" required></textarea></label><label class="field-group full"><span>Reason <small>(optional)</small></span><textarea name="reason" rows="3" placeholder="Explain why this suggestion helps…"></textarea></label></div></div><div class="modal-actions"><button class="btn" id="cancelSuggestionModal" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Save suggestion</button></div></form></section></div>
-<script th:src="@{/js/admin-layout.js}"></script><script th:src="@{/js/admin-ai-food-suggestion.js(v=20260815-1)}"></script></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">
+      AI Food Suggestions | Nham Health Admin
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-ai-food-suggestion.css}" />
+    <link
+      rel="stylesheet"
+      th:href="@{/css/admin-ai-food-suggestion-details.css(v=20260825-1)}"
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div
+        th:replace="~{layouts/sidebar :: sidebar('ai-food-suggestions')}"
+      ></div>
+      <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+          <div class="page-heading">
+            <div>
+              <div class="title-line">
+                <h1>AI Food Suggestions</h1>
+                <span>Guidance and learned user corrections</span>
+              </div>
+              <p>
+                Review suggestions and corrections saved from the AI Food Check
+                edit-result screen.
+              </p>
+            </div>
+            <div class="heading-actions">
+              <button class="btn" id="exportSuggestions" type="button">
+                <i class="bi bi-download"></i> Export CSV</button
+              ><button
+                class="btn btn-secondary"
+                id="refreshSuggestions"
+                type="button"
+              >
+                <i class="bi bi-arrow-clockwise"></i> Refresh</button
+              ><button
+                class="btn btn-primary"
+                id="openSuggestionModal"
+                type="button"
+              >
+                <i class="bi bi-plus-lg"></i> Add suggestion
+              </button>
+            </div>
+          </div>
+          <div
+            class="message success"
+            th:if="${successMessage}"
+            th:text="${successMessage}"
+          >
+            Saved
+          </div>
+          <div
+            class="message error"
+            th:if="${errorMessage}"
+            th:text="${errorMessage}"
+          >
+            Error
+          </div>
+          <div class="stats-grid">
+            <article class="stat-card">
+              <div class="stat-icon green">
+                <i class="bi bi-lightbulb-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Total suggestions</span
+                ><strong
+                  id="totalSuggestionCount"
+                  th:text="${#numbers.formatInteger(totalSuggestions,1,'COMMA')}"
+                  >0</strong
+                ><small>All generated guidance</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon blue"><i class="bi bi-cpu-fill"></i></div>
+              <div class="stat-content">
+                <span>Learned corrections</span
+                ><strong
+                  id="learnedCorrectionCount"
+                  th:text="${#numbers.formatInteger(learnedCorrections,1,'COMMA')}"
+                  >0</strong
+                ><small>Available for future matching</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon orange">
+                <i class="bi bi-diagram-3-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Source analyses</span
+                ><strong
+                  id="sourceAnalysisCount"
+                  th:text="${#numbers.formatInteger(uniqueRequests,1,'COMMA')}"
+                  >0</strong
+                ><small>Distinct linked requests</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon purple">
+                <i class="bi bi-flag-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>High priority</span
+                ><strong
+                  id="highPrioritySuggestionCount"
+                  th:text="${#numbers.formatInteger(highPrioritySuggestions,1,'COMMA')}"
+                  >0</strong
+                ><small>Priority 8–10</small>
+              </div>
+            </article>
+          </div>
+          <article class="panel table-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Suggestion feed</h2>
+                <p>
+                  Showing <span id="pageStart">0</span>–<span id="pageEnd"
+                    >0</span
+                  >
+                  of
+                  <span
+                    id="visibleSuggestionCount"
+                    th:text="${totalSuggestions}"
+                    >0</span
+                  >
+                </p>
+              </div>
+              <div class="panel-tools">
+                <select class="table-filter" id="typeFilter">
+                  <option value="all">All suggestion types</option>
+                  <option
+                    th:each="type:${suggestionTypes}"
+                    th:value="${#strings.toLowerCase(type)}"
+                    th:text="${type}"
+                  >
+                    Healthy Swap
+                  </option></select
+                ><select class="table-filter" id="priorityFilter">
+                  <option value="all">All priorities</option>
+                  <option value="high">High (8–10)</option>
+                  <option value="medium">Medium (4–7)</option>
+                  <option value="low">Low (1–3)</option></select
+                ><input
+                  class="table-search"
+                  id="suggestionSearch"
+                  type="search"
+                  placeholder="Search title, food, or reason…"
+                /><button
+                  class="btn btn-secondary"
+                  id="clearFilters"
+                  type="button"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Source analysis</th>
+                    <th>Type</th>
+                    <th>Suggestion</th>
+                    <th>Description</th>
+                    <th>Reason</th>
+                    <th>Priority</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="suggestionRows">
+                  <tr
+                    th:each="suggestion:${aiSuggestions}"
+                    th:data-id="${suggestion.aiFoodSuggestionId}"
+                    th:data-type="${#strings.toLowerCase(suggestion.suggestionType)}"
+                    th:data-priority="${suggestion.priority >= 8 ? 'high' : (suggestion.priority >= 4 ? 'medium':'low')}"
+                    th:data-search="${#strings.toLowerCase(suggestion.title + ' ' + suggestion.suggestionType + ' ' + suggestion.description + ' ' + (suggestion.reason ?: '') + ' ' + (suggestion.aiFoodAnalysis != null ? suggestion.aiFoodAnalysis.detectedFoodName ?: suggestion.aiFoodAnalysis.inputText:''))}"
+                    th:data-title="${suggestion.title}"
+                    th:data-description="${suggestion.description}"
+                    th:data-reason="${suggestion.reason ?: 'No reason provided'}"
+                    th:data-learned-correction="${#strings.equalsIgnoreCase(suggestion.suggestionType, 'User Correction')}"
+                    th:data-detected-name="${suggestion.aiFoodAnalysis != null ? (suggestion.aiFoodAnalysis.detectedFoodName ?: suggestion.aiFoodAnalysis.inputText) : 'Unavailable'}"
+                    th:data-corrected-name="${suggestion.aiFoodAnalysis != null && suggestion.aiFoodAnalysis.correctedFoodName != null ? suggestion.aiFoodAnalysis.correctedFoodName : suggestion.title}"
+                    th:data-corrected-serving="${suggestion.aiFoodAnalysis != null && suggestion.aiFoodAnalysis.correctedServingSize != null ? suggestion.aiFoodAnalysis.correctedServingSize.toString() + ' ' + (suggestion.aiFoodAnalysis.correctedServingUnit ?: 'serving') : 'Not recorded'}"
+                    th:data-analysis-status="${suggestion.aiFoodAnalysis != null ? (suggestion.aiFoodAnalysis.status ?: 'Unknown') : 'Unavailable'}"
+                    th:data-feedback-at="${suggestion.aiFoodAnalysis != null && suggestion.aiFoodAnalysis.feedbackAt != null ? suggestion.aiFoodAnalysis.feedbackAt.toString() : ''}"
+                    th:data-model-name="${suggestion.aiFoodAnalysis != null ? (suggestion.aiFoodAnalysis.modelName ?: 'Not recorded') : 'Not recorded'}"
+                    th:data-prompt-version="${suggestion.aiFoodAnalysis != null ? (suggestion.aiFoodAnalysis.promptVersion ?: 'Not recorded') : 'Not recorded'}"
+                  >
+                    <td>
+                      <div
+                        class="source-cell"
+                        th:if="${suggestion.aiFoodAnalysis != null}"
+                      >
+                        <span class="source-icon"
+                          ><i class="bi bi-robot"></i></span
+                        ><span
+                          ><strong
+                            th:text="${suggestion.aiFoodAnalysis.detectedFoodName ?: suggestion.aiFoodAnalysis.inputText}"
+                            >Food analysis</strong
+                          ><small
+                            th:text="${'Analysis #' + suggestion.aiFoodAnalysis.aiFoodAnalysisId}"
+                            >#1</small
+                          ></span
+                        >
+                      </div>
+                      <span th:unless="${suggestion.aiFoodAnalysis != null}"
+                        >Unavailable</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="type-badge"
+                        th:classappend="${#strings.equalsIgnoreCase(suggestion.suggestionType, 'User Correction')} ? ' learned' : ''"
+                        th:text="${suggestion.suggestionType}"
+                        >Healthy Swap</span
+                      >
+                    </td>
+                    <td>
+                      <strong
+                        class="suggestion-title"
+                        th:text="${suggestion.title}"
+                        >Title</strong
+                      >
+                    </td>
+                    <td>
+                      <p class="copy" th:text="${suggestion.description}">
+                        Description
+                      </p>
+                    </td>
+                    <td>
+                      <p
+                        class="copy muted"
+                        th:text="${suggestion.reason ?: 'No reason provided'}"
+                      >
+                        Reason
+                      </p>
+                    </td>
+                    <td>
+                      <span
+                        class="priority-badge"
+                        th:classappend="${suggestion.priority >= 8 ? ' high' : (suggestion.priority >= 4 ? ' medium':' low')}"
+                        ><b th:text="${suggestion.priority}">8</b
+                        ><small>/10</small></span
+                      >
+                    </td>
+                    <td class="row-actions">
+                      <button
+                        class="icon-button view-suggestion"
+                        type="button"
+                        title="View suggestion details"
+                        aria-label="View suggestion details"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button
+                        class="icon-button danger delete-suggestion"
+                        type="button"
+                        title="Delete suggestion"
+                      >
+                        <i class="bi bi-trash3"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(aiSuggestions)}">
+                    <td class="empty-state" colspan="7">
+                      <i class="bi bi-lightbulb"></i
+                      ><strong>No AI food suggestions yet</strong
+                      ><span
+                        >Suggestions linked to food analyses will appear
+                        here.</span
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <span
+                ><span
+                  id="filteredSuggestionTotal"
+                  th:text="${totalSuggestions}"
+                  >0</span
+                >
+                matching suggestions</span
+              >
+              <nav class="pagination-controls">
+                <button class="page-btn" id="pagePrev" type="button">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="page-numbers" id="pageNumbers"></div>
+                <button class="page-btn" id="pageNext" type="button">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </nav>
+            </div>
+          </article>
+        </section>
+        <footer class="page-footer">
+          <span>© 2026 Nham Health. All rights reserved.</span
+          ><span>Suggestions are connected to AI food analyses.</span>
+        </footer>
+      </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="modal" id="suggestionModal" aria-hidden="true">
+      <section class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2>Add food suggestion</h2>
+            <p>Attach practical guidance to an existing AI food analysis.</p>
+          </div>
+          <button class="icon-button" id="closeSuggestionModal" type="button">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <form
+          th:action="@{/admin/ai-food-suggestions}"
+          method="post"
+          id="suggestionForm"
+        >
+          <input
+            type="hidden"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+          />
+          <div class="modal-body">
+            <div class="form-grid">
+              <label class="field-group full"
+                ><span>Source analysis</span
+                ><select name="analysisId" required>
+                  <option value="">Select an analysis</option>
+                  <option
+                    th:each="analysis:${aiAnalyses}"
+                    th:value="${analysis.aiFoodAnalysisId}"
+                    th:text="${'#' + analysis.aiFoodAnalysisId + ' · ' + (analysis.detectedFoodName ?: analysis.inputText)}"
+                  >
+                    Analysis
+                  </option>
+                </select></label
+              ><label class="field-group"
+                ><span>Suggestion type</span
+                ><input
+                  name="suggestionType"
+                  maxlength="50"
+                  list="typeOptions"
+                  placeholder="Healthy Swap"
+                  required /><datalist id="typeOptions">
+                  <option
+                    th:each="type:${suggestionTypes}"
+                    th:value="${type}"
+                  ></option></datalist></label
+              ><label class="field-group"
+                ><span>Priority <small>(1–10)</small></span
+                ><input
+                  name="priority"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value="5"
+                  required /></label
+              ><label class="field-group full"
+                ><span>Title</span
+                ><input
+                  name="title"
+                  maxlength="150"
+                  placeholder="Choose a leaner protein"
+                  required /></label
+              ><label class="field-group full"
+                ><span>Description</span
+                ><textarea
+                  name="description"
+                  maxlength="255"
+                  rows="3"
+                  placeholder="Explain the recommended action…"
+                  required
+                ></textarea></label
+              ><label class="field-group full"
+                ><span>Reason <small>(optional)</small></span
+                ><textarea
+                  name="reason"
+                  maxlength="255"
+                  rows="3"
+                  placeholder="Explain why this suggestion helps…"
+                ></textarea>
+              </label>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="cancelSuggestionModal" type="button">
+              Cancel</button
+            ><button class="btn btn-primary" type="submit">
+              <i class="bi bi-check-lg"></i> Save suggestion
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+    <div
+      class="modal"
+      id="suggestionDetailsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="detailTitle"
+    >
+      <section class="modal-card details-modal-card">
+        <div class="modal-header details-header">
+          <div>
+            <span class="type-badge" id="detailType">Suggestion</span>
+            <h2 id="detailTitle">Suggestion details</h2>
+            <p id="detailAnalysisReference">Analysis not selected</p>
+          </div>
+          <button
+            class="icon-button"
+            id="closeSuggestionDetails"
+            type="button"
+            aria-label="Close suggestion details"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body details-body">
+          <section class="correction-journey" id="correctionJourney">
+            <article>
+              <span>Original AI result</span>
+              <strong id="detailDetectedName">Not recorded</strong>
+            </article>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            <article class="corrected">
+              <span>Corrected result</span>
+              <strong id="detailCorrectedName">Not recorded</strong>
+            </article>
+          </section>
+          <dl class="detail-metadata">
+            <div><dt>Serving</dt><dd id="detailServing">Not recorded</dd></div>
+            <div><dt>Analysis status</dt><dd id="detailStatus">Unknown</dd></div>
+            <div><dt>Priority</dt><dd id="detailPriority">0/10</dd></div>
+            <div><dt>Feedback saved</dt><dd id="detailFeedbackAt">Not recorded</dd></div>
+            <div><dt>Vision model</dt><dd id="detailModel">Not recorded</dd></div>
+            <div><dt>Prompt version</dt><dd id="detailPromptVersion">Not recorded</dd></div>
+          </dl>
+          <section class="detail-copy-section">
+            <h3>Description</h3>
+            <p id="detailDescription">No description provided.</p>
+          </section>
+          <section class="detail-copy-section">
+            <h3>Reason and learning use</h3>
+            <p id="detailReason">No reason provided.</p>
+          </section>
+          <aside class="learning-note" id="detailLearningNote" hidden>
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>This correction is active as a learned alias for future nutrition-database matching.</span>
+          </aside>
+        </div>
+        <div class="modal-actions">
+          <button
+            class="btn btn-primary"
+            id="closeSuggestionDetailsFooter"
+            type="button"
+          >
+            Done
+          </button>
+        </div>
+      </section>
+    </div>
+    <script th:src="@{/js/admin-layout.js}"></script>
+    <script th:src="@{/js/admin-ai-food-suggestion.js(v=20260825-2)}"></script>
+  </body>
+</html>

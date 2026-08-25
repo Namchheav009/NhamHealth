@@ -3,10 +3,12 @@ package com.nhamhealth.nhamhealth_api.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +42,25 @@ class FoodDatabaseMatchingServiceTests {
 
         assertTrue(match.isPresent());
         assertEquals("Cooked Jasmine Rice", match.get().food().getName());
+    }
+
+    @Test
+    void appliesALearnedUserCorrectionBeforeCatalogMatching() {
+        FoodNutritionRepository repository = mock(FoodNutritionRepository.class);
+        FoodCorrectionSuggestionService corrections = mock(FoodCorrectionSuggestionService.class);
+        when(repository.findAllByActiveTrue()).thenReturn(List.of(
+                food("Thai Iced Tea", "Thai Tea")));
+        when(corrections.findLearnedCorrection("mystery tea"))
+                .thenReturn(Optional.of("Thai Iced Tea"));
+        FoodDatabaseMatchingService service = new FoodDatabaseMatchingService(
+                repository, corrections, new FoodNameNormalizer(), 0.78);
+
+        var match = service.findReliableMatch("Mystery Tea");
+
+        assertTrue(match.isPresent());
+        assertEquals("Thai Iced Tea", match.get().food().getName());
+        assertEquals(1, match.get().score());
+        verify(corrections).findLearnedCorrection("mystery tea");
     }
 
     private FoodNutrition food(String name, String aliases) {

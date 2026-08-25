@@ -265,9 +265,6 @@ class HomeController extends GetxController {
       case 2:
         Get.offNamed<void>(AppRoutes.community);
         break;
-      case 3:
-        Get.snackbar('Chat', 'Chat is coming soon.');
-        break;
       case 4:
         break;
     }

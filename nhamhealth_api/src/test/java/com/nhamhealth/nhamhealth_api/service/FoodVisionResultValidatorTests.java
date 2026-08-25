@@ -45,6 +45,59 @@ class FoodVisionResultValidatorTests {
     }
 
     @Test
+    void rejectsDuplicateComponentsThatCouldDoubleCountNutrition() {
+        FoodVisionResult invalid = new FoodVisionResult(
+                true, "", "Rice bowl", "Unknown", "food",
+                0.8, 0.8, 0.8,
+                List.of(component("Rice", 150, "g"), component("rice", 100, "g")),
+                List.of(new FoodCandidate("Rice bowl", 0.8)));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validateAndNormalize(invalid));
+    }
+
+    @Test
+    void rejectsMealNameThatDisagreesWithTopCandidate() {
+        FoodVisionResult invalid = new FoodVisionResult(
+                true, "", "Milk Tea", "Unknown", "drink",
+                0.55, 0.8, 0.8,
+                List.of(component("Milk Tea", 350, "ml")),
+                List.of(
+                        new FoodCandidate("Iced Latte", 0.8),
+                        new FoodCandidate("Milk Tea", 0.55)));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validateAndNormalize(invalid));
+    }
+
+    @Test
+    void acceptsMixedFoodAndDrinkAndUsesTheCandidateConfidence() {
+        FoodVisionResult normalized = validator.validateAndNormalize(new FoodVisionResult(
+                true, "", "Chicken rice with iced tea", "Unknown", "food and drink",
+                0.81, 0.72, 0.76,
+                List.of(
+                        component("Chicken rice", 320, "g"),
+                        component("Iced tea", 300, "ml")),
+                List.of(new FoodCandidate("Chicken rice with iced tea", 0.83))));
+
+        assertEquals("mixed", normalized.type());
+        assertEquals(0.83, normalized.mealConfidence());
+        assertEquals("ml", normalized.components().get(1).unit());
+    }
+
+    @Test
+    void rejectsMealConfidenceThatDisagreesWithTopCandidate() {
+        FoodVisionResult invalid = new FoodVisionResult(
+                true, "", "Milk Tea", "Unknown", "drink",
+                0.45, 0.8, 0.8,
+                List.of(component("Milk Tea", 350, "ml")),
+                List.of(new FoodCandidate("Milk Tea", 0.85)));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validateAndNormalize(invalid));
+    }
+
+    @Test
     void normalizesNonFoodWithoutInventingNutritionComponents() {
         FoodVisionResult normalized = validator.validateAndNormalize(new FoodVisionResult(
                 false, "Photo is too dark", null, null, null,
