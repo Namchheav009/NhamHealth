@@ -110,8 +110,8 @@
                                     <small th:text="${c.user.email}">email</small>
                                 </td>
                                 <td>
-                                    <strong th:text="${c.post.title != null && !c.post.title.isBlank() ? c.post.title : 'Post #' + c.post.postId}">Post</strong>
-                                    <small th:text="${#strings.abbreviate(c.post.caption, 55)}">Caption</small>
+                                    <strong th:text="${'Post #' + c.post.postId}">Post</strong>
+                                    <small th:text="${c.post.caption != null ? #strings.abbreviate(c.post.caption, 55) : ''}">Caption</small>
                                 </td>
                                 <td th:text="${commentLikeCounts[c.commentId]}">0</td>
                                 <td>
@@ -157,7 +157,7 @@
                                 <label for="postId">Post</label>
                                 <select id="postId">
                                     <option value="">Select post</option>
-                                    <option th:each="p:${posts}" th:value="${p.postId}" th:text="${p.title != null && !p.title.isBlank() ? p.title : 'Post #' + p.postId}"></option>
+                                    <option th:each="p:${posts}" th:value="${p.postId}" th:text="${'Post #' + p.postId}"></option>
                                 </select>
                             </div>
                             <div class="field-group wide">
