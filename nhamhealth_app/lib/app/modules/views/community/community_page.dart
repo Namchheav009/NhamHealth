@@ -1316,10 +1316,6 @@ class CommunityPage extends GetView<CommunityController> {
         child: AppBottomNavigation(
           selectedIndex: 2,
           onSelect: (index) {
-            if (index == 3) {
-              Get.snackbar('Chat', 'Chat is coming soon.');
-              return;
-            }
             if (index == 0) Get.offNamed<void>(AppRoutes.home);
             if (index == 1) Get.offNamed<void>(AppRoutes.meals);
             if (index == 4) Get.offNamed<void>(AppRoutes.settings);

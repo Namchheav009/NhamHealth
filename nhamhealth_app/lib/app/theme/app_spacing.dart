@@ -13,6 +13,8 @@ abstract final class AppSpacing {
   static const double topBarBottom = 16;
   static const double navigationHorizontal = 25;
   static const double navigationBottom = 14;
+  static const double navigationBarHeight = 84;
+  static const double navigationContentGap = 16;
 
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
     pageHorizontal,
@@ -25,8 +27,20 @@ abstract final class AppSpacing {
     pageHorizontal,
     pageTop,
     pageHorizontal,
-    100,
+    navigationBarHeight + navigationBottom + navigationContentGap,
   );
+
+  static EdgeInsets pagePaddingWithNavigationFor(BuildContext context) {
+    final deviceBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final safeBottom =
+        deviceBottom > navigationBottom ? deviceBottom : navigationBottom;
+    return EdgeInsets.fromLTRB(
+      pageHorizontal,
+      pageTop,
+      pageHorizontal,
+      navigationBarHeight + safeBottom + navigationContentGap,
+    );
+  }
 
   static const EdgeInsets topBarPagePadding = EdgeInsets.fromLTRB(
     pageHorizontal,

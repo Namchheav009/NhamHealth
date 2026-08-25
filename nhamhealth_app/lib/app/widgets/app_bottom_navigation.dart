@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
+import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_shadows.dart';
-import 'inner_shadow.dart';
+import '../theme/app_spacing.dart';
 
-/// Shared five-destination navigation used by the main app pages.
+/// Shared four-destination navigation used by the main app pages.
 ///
-/// Indexes are Home (0), Meals (1), Community (2), Chat (3), and Settings (4).
+/// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
+/// chatbot is a separate action positioned to the right of the navigation bar.
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -23,15 +25,15 @@ class AppBottomNavigation extends StatelessWidget {
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: SizedBox(
-        height: 84,
+        height: AppSpacing.navigationBarHeight,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Positioned(
               left: 0,
-              right: 0,
+              right: 80,
               bottom: 0,
-              height: 64,
+              height: 72,
               child: PhysicalShape(
                 clipper: const _NavigationBarClipper(),
                 clipBehavior: Clip.antiAlias,
@@ -53,7 +55,7 @@ class AppBottomNavigation extends StatelessWidget {
                   child: CustomPaint(
                     foregroundPainter: const _NavigationInnerShadowPainter(),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Row(
                         children: [
                           _NavSlot(
@@ -74,22 +76,14 @@ class AppBottomNavigation extends StatelessWidget {
                               onTap: () => onSelect(1),
                             ),
                           ),
-                          const SizedBox(width: 48),
                           _NavSlot(
                             child: _NavItem(
-                              id: 'chat',
-                              icon: Icons.chat_bubble_rounded,
-                              label: 'chat'.tr,
-                              selected: selectedIndex == 3,
-                              onTap: () => onSelect(3),
-                              iconBuilder:
-                                  (color) => _ChatIcon(
-                                    color: color,
-                                    lineColor:
-                                        selectedIndex == 3
-                                            ? AppColors.navigationGreen
-                                            : Colors.white,
-                                  ),
+                              id: 'community',
+                              icon: Icons.people_outline_rounded,
+                              selectedIcon: Icons.people_rounded,
+                              label: 'community'.tr,
+                              selected: selectedIndex == 2,
+                              onTap: () => onSelect(2),
                             ),
                           ),
                           _NavSlot(
@@ -109,17 +103,7 @@ class AppBottomNavigation extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: Center(
-                child: _CommunityButton(
-                  selected: selectedIndex == 2,
-                  onTap: () => onSelect(2),
-                ),
-              ),
-            ),
+            Positioned(right: 0, bottom: 0, child: const _ChatbotButton()),
           ],
         ),
       ),
@@ -139,37 +123,13 @@ class _NavSlot extends StatelessWidget {
 }
 
 Path _navigationBarPath(Size size) {
-  const cornerRadius = 32.0;
-  const notchHalfWidth = 35.0;
-  const notchDepth = 29.0;
-  final center = size.width / 2;
-
-  return Path()
-    ..moveTo(cornerRadius, 0)
-    ..lineTo(center - notchHalfWidth, 0)
-    ..cubicTo(center - 27, 0, center - 29, notchDepth, center, notchDepth)
-    ..cubicTo(
-      center + 29,
-      notchDepth,
-      center + 27,
-      0,
-      center + notchHalfWidth,
-      0,
-    )
-    ..lineTo(size.width - cornerRadius, 0)
-    ..quadraticBezierTo(size.width, 0, size.width, cornerRadius)
-    ..lineTo(size.width, size.height - cornerRadius)
-    ..quadraticBezierTo(
-      size.width,
-      size.height,
-      size.width - cornerRadius,
-      size.height,
-    )
-    ..lineTo(cornerRadius, size.height)
-    ..quadraticBezierTo(0, size.height, 0, size.height - cornerRadius)
-    ..lineTo(0, cornerRadius)
-    ..quadraticBezierTo(0, 0, cornerRadius, 0)
-    ..close();
+  const cornerRadius = 36.0;
+  return Path()..addRRect(
+    RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(cornerRadius),
+    ),
+  );
 }
 
 class _NavigationBarClipper extends CustomClipper<Path> {
@@ -246,13 +206,11 @@ class _NavItem extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.selectedIcon,
-    this.iconBuilder,
   });
 
   final String id;
   final IconData icon;
   final IconData? selectedIcon;
-  final Widget Function(Color color)? iconBuilder;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -273,43 +231,49 @@ class _NavItem extends StatelessWidget {
             customBorder: const StadiumBorder(),
             child: SizedBox(
               width: double.infinity,
-              height: 64,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: selected ? 68 : 43,
-                  height: selected ? 48 : 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color:
-                        selected
-                            ? AppColors.navigationGreen
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: selected ? AppShadows.selectedNavigation : null,
-                  ),
-                  child: InnerShadow(
-                    borderRadius: BorderRadius.circular(25),
-                    shadows:
-                        selected
-                            ? AppShadows.innerSelectedNavigation
-                            : const [],
-                    child: Center(
-                      child:
-                          iconBuilder?.call(
-                            selected ? Colors.white : AppColors.inactiveText,
-                          ) ??
-                          Icon(
-                            selected ? selectedIcon ?? icon : icon,
-                            color:
-                                selected
-                                    ? Colors.white
-                                    : AppColors.inactiveText,
-                            size: 25,
-                          ),
+              height: 72,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.softGreen : Colors.transparent,
+                  borderRadius: BorderRadius.circular(31),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox.square(
+                      dimension: 27,
+                      child: Center(
+                        child: Icon(
+                          selected ? selectedIcon ?? icon : icon,
+                          color:
+                              selected
+                                  ? AppColors.navigationGreen
+                                  : AppColors.inactiveText,
+                          size: 27,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      textScaler: TextScaler.noScaling,
+                      style: TextStyle(
+                        color: AppColors.inactiveText,
+                        fontSize: 11,
+                        height: 1,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w500,
+                        letterSpacing: 0.05,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -320,133 +284,88 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _CommunityButton extends StatelessWidget {
-  const _CommunityButton({required this.selected, required this.onTap});
-
-  final bool selected;
-  final VoidCallback onTap;
+class _ChatbotButton extends StatelessWidget {
+  const _ChatbotButton();
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: 'community'.tr,
-      child: Tooltip(
-        message: 'community'.tr,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const ValueKey<String>('nav-community'),
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(26),
-            child: SizedBox(
-              width: 52,
-              height: 68,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    width: 43,
-                    height: 43,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4FFF6),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryGreen,
-                        width: 1.4,
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Open AI Food Analyze'.tr,
+    child: Tooltip(
+      message: 'Analyze food with AI'.tr,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey<String>('nav-chatbot'),
+          onTap: () => Get.toNamed<void>(AppRoutes.aiFood),
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 72,
+            height: 72,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Transform.scale(
+                      scale: 1.25,
+                      child: RepaintBoundary(
+                        child: Lottie.asset(
+                          'assets/animations/live_chatbot.json',
+                          fit: BoxFit.contain,
+                          repeat: true,
+                        ),
                       ),
-                      boxShadow: [
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 7,
+                  right: 8,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF39D879),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x4439D879), blurRadius: 5),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Container(
+                    width: 25,
+                    height: 25,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [
                         BoxShadow(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.14),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                          color: Color(0x33075E2D),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.people_rounded,
-                      color: AppColors.primaryGreen,
-                      size: 27,
+                      Icons.document_scanner_rounded,
+                      color: Colors.white,
+                      size: 13,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 220),
-                    style: TextStyle(
-                      color:
-                          selected
-                              ? AppColors.primaryGreen
-                              : AppColors.inactiveText,
-                      fontSize: 11,
-                      height: 1,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    child: Text(
-                      'community'.tr,
-                      maxLines: 1,
-                      textScaler: TextScaler.noScaling,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ChatIcon extends StatelessWidget {
-  const _ChatIcon({required this.color, required this.lineColor});
-
-  final Color color;
-  final Color lineColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size.square(27),
-      painter: _ChatIconPainter(color, lineColor),
-    );
-  }
-}
-
-class _ChatIconPainter extends CustomPainter {
-  const _ChatIconPainter(this.color, this.lineColor);
-
-  final Color color;
-  final Color lineColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bubble =
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromLTWH(1, 1, size.width - 2, size.height - 7),
-              const Radius.circular(6),
-            ),
-          )
-          ..moveTo(7, size.height - 8)
-          ..lineTo(7, size.height - 1)
-          ..lineTo(14, size.height - 7)
-          ..close();
-    canvas.drawPath(bubble, Paint()..color = color);
-
-    final linePaint =
-        Paint()
-          ..color = lineColor
-          ..strokeWidth = 2.4
-          ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(7, 9), const Offset(20, 9), linePaint);
-    canvas.drawLine(const Offset(9, 14), const Offset(18, 14), linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ChatIconPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.lineColor != lineColor;
+    ),
+  );
 }
