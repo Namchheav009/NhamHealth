@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record CommunityPostResponse(
-        Integer id, String title, String description, String imageUrl,
-        String author, String role, String authorAvatarUrl, List<String> tags,
+        Integer id, String title, String description, String imageUrl, List<String> imageUrls,
+        Integer authorId, String author, String role, String authorAvatarUrl, List<String> tags,
         LocalDateTime createdAt, long likes, long comments, long shares,
-        boolean liked, boolean followingAuthor) { }
+        boolean liked, boolean followingAuthor, String visibility,
+        boolean allowComments, boolean allowReplies, List<Integer> tagIds) { }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'package:image/image.dart' as image;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../models/community/community_post.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 
 class ProfileRepository {
@@ -59,6 +61,110 @@ class ProfileRepository {
       );
     } on Object {
       throw const ProfileException('The profile response is incomplete.');
+    }
+  }
+
+  /// Returns only posts created by the currently authenticated user.
+  Future<List<CommunityPost>> getMyPosts() async {
+    final token = await _accessToken();
+    final response = await _client
+        .get(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/community/posts/mine'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ProfileException(_errorMessage(response));
+    }
+
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is! List) throw const FormatException();
+      return payload.map((item) {
+        final post = Map<String, dynamic>.from(item as Map);
+        post['imageUrl'] = _absoluteUrl('${post['imageUrl'] ?? ''}');
+        post['imageUrls'] = (post['imageUrls'] as List<dynamic>? ?? const [])
+            .map((url) => _absoluteUrl('$url'))
+            .toList(growable: false);
+        post['authorAvatarUrl'] = _absoluteUrl(
+          '${post['authorAvatarUrl'] ?? ''}',
+        );
+        post['ageLabel'] = _ageLabel('${post['createdAt'] ?? ''}');
+        post['isLiked'] = post['liked'] == true;
+        return CommunityPost.fromJson(post);
+      }).toList(growable: false);
+    } on Object {
+      throw const ProfileException('The posts response is incomplete.');
+    }
+  }
+
+  Future<CommunityPost> updatePost({
+    required String postId,
+    required String title,
+    required String description,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    bool removeImage = false,
+    List<int> tagIds = const [],
+  }) async {
+    final token = await _accessToken();
+    final request =
+        http.MultipartRequest(
+            'PUT',
+            Uri.parse('${ApiConfig.baseUrl}/api/v1/community/posts/$postId'),
+          )
+          ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $token'})
+          ..fields['title'] = title.trim()
+          ..fields['description'] = description.trim()
+          ..fields['visibility'] = visibility.apiValue
+          ..fields['allowComments'] = '$allowComments'
+          ..fields['allowReplies'] = '$allowReplies'
+          ..fields['removeImage'] = '$removeImage';
+    if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
+    for (var index = 0; index < imageBytes.length; index++) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'images',
+          imageBytes[index],
+          filename: 'community-post-${index + 1}.jpg',
+        ),
+      );
+    }
+    final response = await http.Response.fromStream(await _client.send(request));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ProfileException(_errorMessage(response));
+    }
+    try {
+      final post = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+      post['imageUrl'] = _absoluteUrl('${post['imageUrl'] ?? ''}');
+      post['imageUrls'] = (post['imageUrls'] as List<dynamic>? ?? const [])
+          .map((url) => _absoluteUrl('$url'))
+          .toList(growable: false);
+      post['authorAvatarUrl'] = _absoluteUrl(
+        '${post['authorAvatarUrl'] ?? ''}',
+      );
+      post['ageLabel'] = _ageLabel('${post['createdAt'] ?? ''}');
+      post['isLiked'] = post['liked'] == true;
+      return CommunityPost.fromJson(post);
+    } on Object {
+      throw const ProfileException('The updated post response is incomplete.');
+    }
+  }
+
+  Future<void> deletePost(String postId) async {
+    final token = await _accessToken();
+    final response = await _client.delete(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/community/posts/$postId'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ProfileException(_errorMessage(response));
     }
   }
 
@@ -281,6 +387,20 @@ class ProfileRepository {
       '${value.year.toString().padLeft(4, '0')}-'
       '${value.month.toString().padLeft(2, '0')}-'
       '${value.day.toString().padLeft(2, '0')}';
+
+  String _absoluteUrl(String value) =>
+      value.startsWith('/') ? '${ApiConfig.baseUrl}$value' : value;
+
+  String _ageLabel(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return 'Recently';
+    final difference = DateTime.now().difference(date);
+    if (difference.inMinutes < 1) return 'Just now';
+    if (difference.inHours < 1) return '${difference.inMinutes}m ago';
+    if (difference.inDays < 1) return '${difference.inHours}h ago';
+    if (difference.inDays == 1) return 'Yesterday';
+    return '${difference.inDays}d ago';
+  }
 }
 
 const int _maxProfileImageBytes = 5 * 1024 * 1024;
