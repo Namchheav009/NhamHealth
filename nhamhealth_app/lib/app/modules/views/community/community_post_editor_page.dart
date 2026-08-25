@@ -54,7 +54,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   static const _ink = Color(0xFF151A16);
   static const _muted = Color(0xFF626A7A);
 
-  late final TextEditingController _title;
   late final TextEditingController _description;
   final _picker = ImagePicker();
   final List<Uint8List> _imageBytes = [];
@@ -75,7 +74,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: widget.post?.title ?? '');
     _description = TextEditingController(text: widget.post?.description ?? '');
     _visibility = widget.post?.visibility ?? CommunityPostVisibility.public;
     _allowComments = widget.post?.allowComments ?? true;
@@ -90,7 +88,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _description
       ..removeListener(_refresh)
       ..dispose();
-    _title.dispose();
     super.dispose();
   }
 
@@ -156,7 +153,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     try {
       await widget.onSubmit(
         CommunityPostDraft(
-          title: _title.text,
+          title: widget.post?.title ?? '',
           description: description,
           imageBytes: List.unmodifiable(_imageBytes),
           removeImage: _removeExistingImage,
@@ -230,30 +227,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       top: false,
       child: ListView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 36),
         children: [
           _author(),
-          const SizedBox(height: 30),
-          _input(
-            controller: _title,
-            hint: 'Title (optional)',
-            minLines: 1,
-            maxLines: 2,
-          ),
           const SizedBox(height: 16),
-          _input(
-            controller: _description,
-            hint: 'Share a win, question, healthy meal, or idea...',
-            minLines: 6,
-            maxLines: 9,
-            maxLength: 2000,
-            isDescription: true,
-          ),
-          const SizedBox(height: 12),
-          _tagsSection(),
-          const SizedBox(height: 24),
+          _messageComposer(),
+          const SizedBox(height: 18),
           _mediaCard(),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
+          _sectionLabel('Post settings'),
+          const SizedBox(height: 8),
           _settingsCard(),
         ],
       ),
@@ -275,45 +258,105 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ),
       const SizedBox(width: 15),
       Expanded(
-        child: Text(widget.authorName, style: const TextStyle(color: _ink, fontSize: 18, fontWeight: FontWeight.w800)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.authorName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 5),
+            InkWell(
+              onTap: _submitting ? null : _openAudience,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF9EF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_visibility.icon, color: _green, size: 15),
+                    const SizedBox(width: 5),
+                    Text(
+                      _visibility.label,
+                      style: const TextStyle(
+                        color: Color(0xFF087B3A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: Color(0xFF087B3A),
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ],
   );
 
-  Widget _input({
-    required TextEditingController controller,
-    required String hint,
-    required int minLines,
-    required int maxLines,
-    int? maxLength,
-    bool isDescription = false,
-  }) => TextField(
-    controller: controller,
-    minLines: minLines,
-    maxLines: maxLines,
-    maxLength: maxLength,
-    textCapitalization: TextCapitalization.sentences,
-    style: const TextStyle(color: _ink, fontSize: 16),
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: _muted, fontSize: 16),
-      filled: true,
-      fillColor: const Color(0xFFFFFEFF),
-      contentPadding: const EdgeInsets.fromLTRB(20, 17, 20, 12),
-      enabledBorder: _inputBorder(),
-      focusedBorder: _inputBorder(color: _green, width: 1.5),
-      counterText: isDescription ? '${_description.text.length}/2000' : '',
-      counterStyle: const TextStyle(color: _muted, fontSize: 12),
+  Widget _messageComposer() => Container(
+    padding: const EdgeInsets.fromLTRB(16, 15, 16, 10),
+    decoration: _cardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.edit_note_rounded, color: _green, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Share with the community',
+              style: TextStyle(
+                color: _ink,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          key: const ValueKey<String>('community-post-message'),
+          controller: _description,
+          minLines: 7,
+          maxLines: 12,
+          maxLength: 2000,
+          autofocus: !_editing,
+          textCapitalization: TextCapitalization.sentences,
+          style: const TextStyle(color: _ink, fontSize: 16, height: 1.45),
+          decoration: InputDecoration(
+            hintText: 'What would you like to share?\n\nA healthy win, question, meal, or helpful idea...',
+            hintStyle: const TextStyle(color: Color(0xFF8A928C), fontSize: 16, height: 1.45),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            counterText: '${_description.text.length}/2000',
+            counterStyle: const TextStyle(color: _muted, fontSize: 11),
+          ),
+        ),
+      ],
     ),
   );
 
-  OutlineInputBorder _inputBorder({Color color = const Color(0xFFD0D4DC), double width = 1}) =>
-      OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide(color: color, width: width));
-
-  Widget _tagsSection() => Wrap(
+  Widget _selectedTags() => Wrap(
     spacing: 8,
     runSpacing: 8,
-    crossAxisAlignment: WrapCrossAlignment.center,
     children: [
       for (final tag in _tags.where((tag) => _selectedTagIds.contains(tag.id)))
         InputChip(
@@ -326,17 +369,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           side: BorderSide.none,
           visualDensity: VisualDensity.compact,
         ),
-      OutlinedButton.icon(
-        onPressed: _submitting ? null : _selectTags,
-        icon: const Icon(Icons.sell_outlined, size: 19),
-        label: Text(_selectedTagIds.isEmpty ? 'Add tags' : 'Edit tags'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _green,
-          side: const BorderSide(color: Color(0xFFB8ECCA)),
-          shape: const StadiumBorder(),
-          visualDensity: VisualDensity.compact,
-        ),
-      ),
     ],
   );
 
@@ -416,16 +448,61 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     padding: const EdgeInsets.all(16),
     decoration: _cardDecoration(),
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'Add to your post',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _mediaButton(Icons.image_outlined, 'Add images', () => _pick(ImageSource.gallery))),
-            const SizedBox(width: 12),
-            Expanded(child: _mediaButton(Icons.camera_alt_outlined, 'Take photo', () => _pick(ImageSource.camera))),
+            Expanded(
+              child: _mediaButton(
+                Icons.photo_library_outlined,
+                'Photos',
+                () => _pick(ImageSource.gallery),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _mediaButton(
+                Icons.camera_alt_outlined,
+                'Camera',
+                () => _pick(ImageSource.camera),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _mediaButton(
+                Icons.sell_outlined,
+                'Tags',
+                _selectTags,
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 18),
-        _mediaPreview(),
+        if (_selectedTagIds.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _selectedTags(),
+        ],
+        if (_hasMedia) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: Color(0xFFE7ECE8)),
+          ),
+          _mediaPreview(),
+        ] else ...[
+          const SizedBox(height: 12),
+          const Text(
+            'You can add up to 6 photos.',
+            style: TextStyle(color: _muted, fontSize: 12),
+          ),
+        ],
       ],
     ),
   );
@@ -436,32 +513,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     label: Text(label, style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w700)),
     style: FilledButton.styleFrom(
       backgroundColor: const Color(0xFFF3F7F4),
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      shape: const StadiumBorder(),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      textStyle: const TextStyle(fontSize: 12),
     ),
   );
 
   Widget _mediaPreview() {
-    if (!_hasMedia) {
-      return Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFB8ECCA), style: BorderStyle.solid),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.image_outlined, size: 44, color: Color(0xFF737985)),
-            SizedBox(height: 12),
-            Text('No media added yet', style: TextStyle(color: _muted, fontSize: 16, fontWeight: FontWeight.w800)),
-            SizedBox(height: 5),
-            Text('Add up to 6 photos to bring your post to life', style: TextStyle(color: _muted, fontSize: 14)),
-          ],
-        ),
-      );
-    }
     final images = [
       ..._existingImageUrls.map((url) => Image.network(url, fit: BoxFit.cover)),
       ..._imageBytes.map((bytes) => Image.memory(bytes, fit: BoxFit.cover)),
@@ -539,10 +597,41 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             activeTrackColor: _green,
             onChanged: _submitting
                 ? null
-                : (value) => setState(() => _allowComments = value),
+                : (value) => setState(() {
+                    _allowComments = value;
+                    if (!value) _allowReplies = false;
+                  }),
           ),
         ),
+        if (_allowComments) ...[
+          const Divider(height: 1, color: Color(0xFFE7ECE8)),
+          _settingRow(
+            icon: Icons.reply_rounded,
+            title: 'Allow replies',
+            subtitle: 'Others can reply to comments',
+            trailing: Switch(
+              value: _allowReplies,
+              activeThumbColor: Colors.white,
+              activeTrackColor: _green,
+              onChanged: _submitting
+                  ? null
+                  : (value) => setState(() => _allowReplies = value),
+            ),
+          ),
+        ],
       ],
+    ),
+  );
+
+  Widget _sectionLabel(String label) => Padding(
+    padding: const EdgeInsets.only(left: 4),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF59645D),
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+      ),
     ),
   );
 
