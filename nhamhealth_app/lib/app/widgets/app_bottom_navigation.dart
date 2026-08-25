@@ -306,6 +306,29 @@ class _ChatbotButton extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const RadialGradient(
+                        center: Alignment(-0.25, -0.35),
+                        radius: 0.9,
+                        colors: [Color(0xFFF5FFF7), Color(0xFFDDF7E7)],
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFFAEE4C2),
+                        width: 1.5,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x26075E2D),
+                          blurRadius: 14,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned.fill(
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: Transform.scale(

@@ -692,31 +692,39 @@ class CommunityPage extends GetView<CommunityController> {
           const SizedBox(height: 15),
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child:
-                post.imageBytes != null
-                    ? Image.memory(
-                      post.imageBytes!,
-                      height: 218,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.medium,
-                    )
-                    : PageView(
-                      children: (post.imageUrls.isNotEmpty ? post.imageUrls : [post.imageUrl])
-                          .map((url) => Image.network(
+            child: SizedBox(
+              height: 218,
+              width: double.infinity,
+              child:
+                  post.imageBytes != null
+                      ? Image.memory(
+                        post.imageBytes!,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.medium,
+                      )
+                      : PageView(
+                        children: (post.imageUrls.isNotEmpty
+                                ? post.imageUrls
+                                : [post.imageUrl])
+                            .map(
+                              (url) => Image.network(
                                 url,
-                                height: 218,
-                                width: double.infinity,
                                 fit: BoxFit.cover,
                                 filterQuality: FilterQuality.medium,
                                 errorBuilder: (_, _, _) => Container(
-                                  height: 218,
                                   color: const Color(0xFFF3F7F4),
-                                  child: const Center(child: Icon(Icons.image_outlined, color: Color(0xFF8D9990))),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.image_outlined,
+                                      color: Color(0xFF8D9990),
+                                    ),
+                                  ),
                                 ),
-                              ))
-                          .toList(growable: false),
-                    ),
+                              ),
+                            )
+                            .toList(growable: false),
+                      ),
+            ),
           ),
         ],
         const SizedBox(height: 11),
