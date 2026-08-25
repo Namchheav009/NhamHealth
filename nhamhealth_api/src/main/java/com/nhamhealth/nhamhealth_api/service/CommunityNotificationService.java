@@ -37,11 +37,12 @@ public class CommunityNotificationService {
     }
 
     public void commentReplied(User actor, PostComment parentComment) {
-        send(actor, parentComment.getUser(), "COMMENT", parentComment.getCommentId(), "replied to your comment.");
+        send(actor, parentComment.getUser(), "POST", parentComment.getPost().getPostId(),
+                "replied to your comment.");
     }
 
     public void commentLiked(User actor, PostComment comment) {
-        send(actor, comment.getUser(), "COMMENT", comment.getCommentId(), "liked your comment.");
+        send(actor, comment.getUser(), "POST", comment.getPost().getPostId(), "liked your comment.");
     }
 
     public void postShared(User actor, User recipient, Post post) {

@@ -127,7 +127,7 @@ class ProfileController extends GetxController {
 
   Future<void> refreshProfile() => loadProfile();
 
-  Future<void> updatePost({
+  Future<CommunityPost> updatePost({
     required CommunityPost post,
     required String description,
     List<Uint8List> imageBytes = const [],
@@ -149,6 +149,7 @@ class ProfileController extends GetxController {
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
+    return updated;
   }
 
   Future<void> deletePost(CommunityPost post) async {

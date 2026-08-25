@@ -109,19 +109,19 @@ class CommunityController extends GetxController {
       final communityNotifications = notifications
           .where((item) => item.kind == NotificationKind.social)
           .toList(growable: false);
-      final newNotifications = _notificationsInitialized
-          ? communityNotifications
-              .where(
-                (item) =>
-                    item.isUnread &&
-                    !_knownCommunityNotificationIds.contains(item.id),
-              )
-              .toList(growable: false)
-          : const <NotificationItem>[];
+      final newNotifications =
+          _notificationsInitialized
+              ? communityNotifications
+                  .where(
+                    (item) =>
+                        item.isUnread &&
+                        !_knownCommunityNotificationIds.contains(item.id),
+                  )
+                  .toList(growable: false)
+              : const <NotificationItem>[];
 
-      _knownCommunityNotificationIds = communityNotifications
-          .map((item) => item.id)
-          .toSet();
+      _knownCommunityNotificationIds =
+          communityNotifications.map((item) => item.id).toSet();
       _notificationsInitialized = true;
       if (newNotifications.isNotEmpty) {
         unreadNotificationCount.value += newNotifications.length;
@@ -240,7 +240,7 @@ class CommunityController extends GetxController {
     section.value = CommunitySection.feed;
   }
 
-  Future<void> updatePost({
+  Future<CommunityPost> updatePost({
     required CommunityPost post,
     required String description,
     List<Uint8List> imageBytes = const [],
@@ -262,6 +262,7 @@ class CommunityController extends GetxController {
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
+    return updated;
   }
 
   Future<void> deletePost(CommunityPost post) async {
