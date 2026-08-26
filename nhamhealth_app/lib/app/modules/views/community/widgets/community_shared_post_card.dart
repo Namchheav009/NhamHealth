@@ -93,29 +93,35 @@ class CommunitySharedPostCard extends StatelessWidget {
               ),
             ),
           if (post.imageUrls.isNotEmpty || post.imageUrl.isNotEmpty)
-            AspectRatio(
-              aspectRatio: compact ? 2 : 1.7,
-              child: PageView(
-                children: (post.imageUrls.isNotEmpty
-                        ? post.imageUrls
-                        : [post.imageUrl])
-                    .map(
-                      (url) => Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, _, _) => const ColoredBox(
-                              color: Color(0xFFEAF7EE),
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_outlined,
-                                  color: Color(0xFF8D9990),
+            SizedBox(
+              width: double.infinity,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 360),
+                child: AspectRatio(
+                  aspectRatio: 5 / 4,
+                  child: PageView(
+                    children: (post.imageUrls.isNotEmpty
+                            ? post.imageUrls
+                            : [post.imageUrl])
+                        .map(
+                          (url) => Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, _, _) => const ColoredBox(
+                                  color: Color(0xFFEAF7EE),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.image_outlined,
+                                      color: Color(0xFF8D9990),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                      ),
-                    )
-                    .toList(growable: false),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
               ),
             ),
         ],
