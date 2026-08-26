@@ -43,6 +43,13 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
             type as food for food-only images, drink for drink-only images, or mixed when both a
             food and a drink are visible and intended for consumption.
 
+            Before choosing a name, silently inspect the full image for distinct foods, drinks,
+            preparation cues, portion boundaries, and scale references. Base every returned item
+            on visible evidence from that inspection, but do not output the inspection or any
+            reasoning. Prefer a broad, database-searchable food name over a more specific dish name
+            when the defining ingredients or preparation are not visible. Candidate names must be
+            meaningfully different food identities, not spelling variants or synonyms.
+
             Partition all consumable content into non-overlapping nutrition components. Never
             return a whole dish and also return ingredients already included in that dish. Use one
             whole-dish component when its ingredients cannot be visually portioned; otherwise use
@@ -54,7 +61,9 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
             fill level, and scale cues. Estimate liquid volume excluding ice, foam, and empty
             container space. Prefer grams for solid portions and millilitres for drinks when scale
             is defensible; otherwise use piece, slice, bowl, cup, plate, serving, tablespoon, or
-            teaspoon. Use conservative rounded amounts rather than false precision.
+            teaspoon. Use conservative rounded amounts rather than false precision. When no useful
+            scale reference is visible, use a household serving unit and keep portionConfidence at
+            or below 0.55 instead of inventing an exact gram or millilitre amount.
 
             Include preparation method only from visible evidence. A culturally specific or
             Cambodian/Khmer name is allowed only when visible evidence supports it. Similar Khmer
@@ -127,10 +136,10 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
     public NvidiaFoodVisionService(
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.model:nvidia/llama-3.1-nemotron-nano-vl-8b-v1}") String model,
+            @Value("${app.ai.nvidia.model:nvidia/nemotron-nano-12b-v2-vl}") String model,
             @Value("${app.ai.nvidia.fallback-vision-model:meta/llama-3.2-90b-vision-instruct}") String fallbackVisionModel,
-            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-20b}") String unusedNutritionModel,
-            @Value("${app.ai.prompt-version:food-drink-vision-v3}") String promptVersion,
+            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-120b}") String unusedNutritionModel,
+            @Value("${app.ai.prompt-version:food-drink-vision-v4}") String promptVersion,
             @Value("${app.ai.nvidia.text-max-tokens:4096}") int textMaxTokens,
             @Value("${app.ai.nvidia.reasoning-effort:low}") String unusedReasoningEffort) {
         this(baseUrl, apiKey, model, fallbackVisionModel, promptVersion, textMaxTokens,

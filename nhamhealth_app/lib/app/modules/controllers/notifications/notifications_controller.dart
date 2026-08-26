@@ -82,6 +82,28 @@ class NotificationsController extends GetxController {
     }
   }
 
+  Future<void> markAllRead() async {
+    final repository = this.repository;
+    final unreadItems = unread;
+    if (repository == null || unreadItems.isEmpty) return;
+
+    final previous = List<NotificationItem>.from(notifications);
+    notifications.assignAll(
+      notifications.map((item) => item.copyWith(isUnread: false)),
+    );
+    try {
+      for (final item in unreadItems) {
+        await repository.markRead(item.id);
+      }
+    } on Object catch (error) {
+      notifications.assignAll(previous);
+      AppAlert.error(
+        title: 'Notifications not updated',
+        message: error.toString(),
+      );
+    }
+  }
+
   Future<void> open(NotificationItem item) async {
     await markRead(item);
     if (item.referenceType == 'POST' && item.referenceId != null) {

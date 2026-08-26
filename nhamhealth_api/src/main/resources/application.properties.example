@@ -32,13 +32,14 @@ app.storage.supabase.bucket=nhamhealth-images
 # NVIDIA AI (meal generation falls back to local ranking when the key is empty)
 app.ai.nvidia.api-key=${NVIDIA_API_KEY:}
 app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
-app.ai.nvidia.model=nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+app.ai.nvidia.model=nvidia/nemotron-nano-12b-v2-vl
 app.ai.nvidia.fallback-vision-model=meta/llama-3.2-90b-vision-instruct
-app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
+app.ai.nvidia.nutrition-model=openai/gpt-oss-120b
 app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
 app.ai.nvidia.text-max-tokens=4096
 app.ai.nvidia.reasoning-effort=low
-app.ai.prompt-version=food-drink-vision-v3
+app.ai.nvidia.nutrition-reasoning-effort=medium
+app.ai.prompt-version=food-drink-vision-v4
 app.ai.food.confirmation-threshold=0.75
 app.ai.food.candidate-margin-threshold=0.15
 app.ai.food.portion-confirmation-threshold=0.70
@@ -89,3 +90,6 @@ spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
 spring.mail.default-encoding=UTF-8
 app.mail.from=${GMAIL_USERNAME:}
+# Firebase Cloud Messaging. Point GOOGLE_APPLICATION_CREDENTIALS to the
+# downloaded service-account JSON file; never commit that private file.
+nhamhealth.push.enabled=${NHAMHEALTH_PUSH_ENABLED:false}
