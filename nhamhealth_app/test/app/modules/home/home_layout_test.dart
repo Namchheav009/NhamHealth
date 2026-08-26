@@ -41,7 +41,22 @@ void main() {
     expect(find.text('AI Recommendation'), findsOneWidget);
     expect(find.text('Your Daily Wellness'), findsOneWidget);
     expect(find.text('Recommended Meals'), findsOneWidget);
+
+    final wellnessScroll = find.byKey(
+      const ValueKey<String>('home-wellness-scroll'),
+    );
+    expect(
+      tester.widget<ListView>(wellnessScroll).scrollDirection,
+      Axis.horizontal,
+    );
+    await tester.drag(wellnessScroll, const Offset(-500, 0));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.byKey(const ValueKey<String>('home-wellness-sugar')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
+    controller.onClose();
   });
 
   for (final size in <Size>[
