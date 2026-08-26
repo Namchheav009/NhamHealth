@@ -622,101 +622,102 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     backgroundColor: AppColors.homeBackground,
     body: AppBackground(
       child: SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxPaddedContentWidth,
-              ),
-              child: Padding(
-                padding: AppSpacing.topBarPagePadding,
-                child: AppBackHeader(
-                  title: 'Comments',
-                  onBack: Get.back,
-                  backButtonKey: const ValueKey<String>(
-                    'comments-back-button',
+        bottom: false,
+        child: Column(
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSpacing.maxPaddedContentWidth,
+                ),
+                child: Padding(
+                  padding: AppSpacing.topBarPagePadding,
+                  child: AppBackHeader(
+                    title: 'Comments',
+                    onBack: Get.back,
+                    backButtonKey: const ValueKey<String>(
+                      'comments-back-button',
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: RefreshIndicator(
-              color: _green,
-              onRefresh: _loadComments,
-              child:
-                  _loading
-                      ? const Center(
-                        child: CircularProgressIndicator(color: _green),
-                      )
-                      : ListView(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.pageHorizontal,
-                          4,
-                          AppSpacing.pageHorizontal,
-                          24,
-                        ),
-                        children: [
-                          Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: AppSpacing.maxContentWidth,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _postSummary(),
-                                  const SizedBox(height: 24),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
+            const SizedBox(height: 8),
+            Expanded(
+              child: RefreshIndicator(
+                color: _green,
+                onRefresh: _loadComments,
+                child:
+                    _loading
+                        ? const Center(
+                          child: CircularProgressIndicator(color: _green),
+                        )
+                        : ListView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.pageHorizontal,
+                            4,
+                            AppSpacing.pageHorizontal,
+                            24,
+                          ),
+                          children: [
+                            Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: AppSpacing.maxContentWidth,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _postSummary(),
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                         ),
-                                      ),
-                                      const Spacer(),
-                                      const Text(
-                                        'Discussion',
-                                        style: TextStyle(
-                                          color: _green,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                        const Spacer(),
+                                        const Text(
+                                          'Discussion',
+                                          style: TextStyle(
+                                            color: _green,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 14),
-                                  if (_comments.isEmpty)
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 38,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'Be the first to comment.',
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    if (_comments.isEmpty)
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 38,
                                         ),
-                                      ),
-                                    )
-                                  else
-                                    ..._threadWidgets(),
-                                ],
+                                        child: Center(
+                                          child: Text(
+                                            'Be the first to comment.',
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      ..._threadWidgets(),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+              ),
             ),
-          ),
-          _composer(),
-        ],
+            _composer(),
+          ],
+        ),
       ),
-    ),
     ),
   );
 
@@ -735,133 +736,118 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       ],
     ),
     child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          _avatar(_post.authorAvatarUrl, radius: 23),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _post.author,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _post.role,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF778078),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  _post.ageLabel,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF778078),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: _showPostOptions,
-            icon: const Icon(
-              Icons.more_horiz_rounded,
-              color: Color(0xFF768178),
-            ),
-            tooltip: 'Post options',
-          ),
-        ],
-      ),
-      if (_post.description.isNotEmpty) ...[
-        const SizedBox(height: 15),
-        Text(
-          _post.description,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 1.35,
-            color: Color(0xFF505951),
-          ),
-        ),
-      ],
-      if (_post.sharedPost != null) ...[
-        const SizedBox(height: 13),
-        CommunitySharedPostCard(post: _post.sharedPost!),
-      ],
-      if (_post.imageUrls.isNotEmpty || _post.imageUrl.isNotEmpty) ...[
-        const SizedBox(height: 13),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: AspectRatio(
-            aspectRatio: 1.55,
-            child: PageView(
-              children: (_post.imageUrls.isNotEmpty
-                      ? _post.imageUrls
-                      : [_post.imageUrl])
-                  .map(
-                    (url) => Image.network(
-                      url,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (_, _, _) =>
-                              const ColoredBox(color: Color(0xFFEAF7EE)),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
-        ),
-      ],
-      if (_post.likes > 0 || _post.comments > 0 || _post.shares > 0) ...[
-        const SizedBox(height: 12),
-        _engagementSummary(),
-      ],
-      Container(
-        margin: const EdgeInsets.only(top: 7),
-        padding: const EdgeInsets.only(top: 4),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
-        ),
-        child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
+            _avatar(_post.authorAvatarUrl, radius: 23),
+            const SizedBox(width: 11),
             Expanded(
-              child: _postMetric(
-                _post.isLiked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                _post.isLiked ? 'Liked' : 'Like',
-                color:
-                    _post.isLiked
-                        ? const Color(0xFFE64657)
-                        : const Color(0xFF69756D),
-                onTap: _togglePostLike,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _post.author,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _post.role,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF778078),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _post.ageLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF778078),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const _DiscussionMetricDivider(),
-            Expanded(
-              child: _postMetric(
-                Icons.chat_bubble_outline_rounded,
-                'Comment',
-                onTap: _focusComposer,
+            IconButton(
+              onPressed: _showPostOptions,
+              icon: const Icon(
+                Icons.more_horiz_rounded,
+                color: Color(0xFF768178),
               ),
-            ),
-            const _DiscussionMetricDivider(),
-            Expanded(
-              child: _postMetric(
-                Icons.reply_rounded,
-                'Share',
-                onTap: _showShareOptions,
-              ),
+              tooltip: 'Post options',
             ),
           ],
         ),
-      ),
-    ],
+        if (_post.description.isNotEmpty) ...[
+          const SizedBox(height: 15),
+          Text(
+            _post.description,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.35,
+              color: Color(0xFF505951),
+            ),
+          ),
+        ],
+        if (_post.sharedPost != null) ...[
+          const SizedBox(height: 13),
+          CommunitySharedPostCard(post: _post.sharedPost!),
+        ],
+        if (_post.imageUrls.isNotEmpty || _post.imageUrl.isNotEmpty) ...[
+          const SizedBox(height: 13),
+          _ImageCarousel(
+            imageUrls:
+                _post.imageUrls.isNotEmpty
+                    ? _post.imageUrls
+                    : [_post.imageUrl],
+          ),
+        ],
+        if (_post.likes > 0 || _post.comments > 0 || _post.shares > 0) ...[
+          const SizedBox(height: 12),
+          _engagementSummary(),
+        ],
+        Container(
+          margin: const EdgeInsets.only(top: 7),
+          padding: const EdgeInsets.only(top: 4),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _postMetric(
+                  _post.isLiked
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  _post.isLiked ? 'Liked' : 'Like',
+                  color:
+                      _post.isLiked
+                          ? const Color(0xFFE64657)
+                          : const Color(0xFF69756D),
+                  onTap: _togglePostLike,
+                ),
+              ),
+              const _DiscussionMetricDivider(),
+              Expanded(
+                child: _postMetric(
+                  Icons.chat_bubble_outline_rounded,
+                  'Comment',
+                  onTap: _focusComposer,
+                ),
+              ),
+              const _DiscussionMetricDivider(),
+              Expanded(
+                child: _postMetric(
+                  Icons.reply_rounded,
+                  'Share',
+                  onTap: _showShareOptions,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 
@@ -905,10 +891,17 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             color: Color(0xFFE64657),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.favorite_rounded, size: 12, color: Colors.white),
+          child: const Icon(
+            Icons.favorite_rounded,
+            size: 12,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(width: 5),
-        Text('${_post.likes}', style: const TextStyle(fontSize: 12, color: Color(0xFF69756D))),
+        Text(
+          '${_post.likes}',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+        ),
       ],
       const Spacer(),
       if (_post.comments > 0)
@@ -1124,61 +1117,61 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              if (_replyingTo != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 5, bottom: 5),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Replying to ${_replyingTo!.author}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF5E6961),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _cancelReply,
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        tooltip: 'Cancel reply',
-                      ),
-                    ],
-                  ),
-                ),
-                  TextField(
-                controller: _message,
-                focusNode: _composerFocus,
-                textCapitalization: TextCapitalization.sentences,
-                minLines: 1,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText:
-                      _replyingTo == null
-                          ? 'Write a comment...'
-                          : 'Write a reply...',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F7F4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: BorderSide.none,
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: _sending ? null : _submit,
-                    icon:
-                        _sending
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _green,
+                  if (_replyingTo != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 5, bottom: 5),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Replying to ${_replyingTo!.author}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF5E6961),
                               ),
-                            )
-                            : const Icon(Icons.send_rounded, color: _green),
-                    tooltip: 'Send',
-                  ),
-                ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _cancelReply,
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            tooltip: 'Cancel reply',
+                          ),
+                        ],
+                      ),
+                    ),
+                  TextField(
+                    controller: _message,
+                    focusNode: _composerFocus,
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: 1,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText:
+                          _replyingTo == null
+                              ? 'Write a comment...'
+                              : 'Write a reply...',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F7F4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: _sending ? null : _submit,
+                        icon:
+                            _sending
+                                ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: _green,
+                                  ),
+                                )
+                                : const Icon(Icons.send_rounded, color: _green),
+                        tooltip: 'Send',
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1207,6 +1200,135 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (difference.inHours < 1) return '${difference.inMinutes}m ago';
     if (difference.inDays < 1) return '${difference.inHours}h ago';
     return '${difference.inDays}d ago';
+  }
+}
+
+class _ImageCarousel extends StatefulWidget {
+  const _ImageCarousel({required this.imageUrls});
+
+  final List<String> imageUrls;
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page?.toInt() ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageCount = widget.imageUrls.length;
+    final showCarousel = imageCount > 1;
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 360),
+                  child: AspectRatio(
+                    aspectRatio: 5 / 4,
+                    child: PageView(
+                      controller: _pageController,
+                      children: widget.imageUrls
+                          .map(
+                            (url) => Image.network(
+                              url,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, _, _) => const ColoredBox(
+                                    color: Color(0xFFEAF7EE),
+                                  ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ),
+                ),
+              ),
+              // Carousel Counter
+              if (showCarousel)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_currentPage + 1}/$imageCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // Pagination Dots
+        if (showCarousel) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              imageCount,
+              (index) => GestureDetector(
+                onTap: () {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentPage == index ? 8 : 6,
+                  height: _currentPage == index ? 8 : 6,
+                  decoration: BoxDecoration(
+                    color:
+                        _currentPage == index
+                            ? const Color(0xFF1F2937)
+                            : const Color(0xFFD1D5DB),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }
 
