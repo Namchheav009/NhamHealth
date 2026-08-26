@@ -31,7 +31,9 @@ class HomeProvider {
 
     final token = await authService.readAccessToken();
     if (token == null || token.isEmpty) {
-      throw const HomeProviderException('Your session has expired. Please sign in again.');
+      throw const HomeProviderException(
+        'Your session has expired. Please sign in again.',
+      );
     }
 
     final response = await _client
@@ -68,15 +70,23 @@ class HomeProvider {
     if (authService == null) return const [];
     final token = await authService.readAccessToken();
     if (token == null || token.isEmpty) {
-      throw const HomeProviderException('Your session has expired. Please sign in again.');
+      throw const HomeProviderException(
+        'Your session has expired. Please sign in again.',
+      );
     }
 
-    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals')
-        .replace(queryParameters: moodId == null ? null : {'moodId': '$moodId'});
-    final response = await _client.get(uri, headers: {
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
-    }).timeout(const Duration(seconds: 15));
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals',
+    ).replace(queryParameters: moodId == null ? null : {'moodId': '$moodId'});
+    final response = await _client
+        .get(
+          uri,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw HomeProviderException(
@@ -97,16 +107,26 @@ class HomeProvider {
     if (authService == null) return const [];
     final token = await authService.readAccessToken();
     if (token == null || token.isEmpty) {
-      throw const HomeProviderException('Your session has expired. Please sign in again.');
+      throw const HomeProviderException(
+        'Your session has expired. Please sign in again.',
+      );
     }
-    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals/generate')
-        .replace(queryParameters: {'moodId': '$moodId', 'refresh': '$refresh'});
-    final response = await _client.post(uri, headers: {
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
-    }).timeout(const Duration(seconds: 45));
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals/generate',
+    ).replace(queryParameters: {'moodId': '$moodId', 'refresh': '$refresh'});
+    final response = await _client
+        .post(
+          uri,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 45));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HomeProviderException('Unable to generate meal recommendations (HTTP ${response.statusCode}).');
+      throw HomeProviderException(
+        'Unable to generate meal recommendations (HTTP ${response.statusCode}).',
+      );
     }
     return _parseRecommendedMeals(response);
   }
@@ -139,19 +159,27 @@ class HomeProvider {
 
   Future<http.Response> _favoriteRequest(String method, {int? mealId}) async {
     final authService = _authService;
-    if (authService == null) throw const HomeProviderException('Authentication is required.');
+    if (authService == null)
+      throw const HomeProviderException('Authentication is required.');
     final token = await authService.readAccessToken();
-    if (token == null || token.isEmpty) throw const HomeProviderException('Your session has expired.');
+    if (token == null || token.isEmpty)
+      throw const HomeProviderException('Your session has expired.');
     final suffix = mealId == null ? '' : '/$mealId';
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals$suffix');
-    final headers = {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
-    final response = method == 'POST'
-        ? await _client.post(uri, headers: headers)
-        : method == 'DELETE'
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    final response =
+        method == 'POST'
+            ? await _client.post(uri, headers: headers)
+            : method == 'DELETE'
             ? await _client.delete(uri, headers: headers)
             : await _client.get(uri, headers: headers);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HomeProviderException('Unable to update favorite (HTTP ${response.statusCode}).');
+      throw HomeProviderException(
+        'Unable to update favorite (HTTP ${response.statusCode}).',
+      );
     }
     return response;
   }
@@ -160,14 +188,19 @@ class HomeProvider {
     try {
       final payload = jsonDecode(response.body);
       if (payload is! List) throw const FormatException();
-      return payload.map((item) {
-        final data = Map<String, dynamic>.from(item as Map);
-        final image = data['imageUrl'] as String?;
-        if (image != null && image.startsWith('/')) data['imageUrl'] = '${ApiConfig.baseUrl}$image';
-        return RecommendedMealModel.fromJson(data);
-      }).toList(growable: false);
+      return payload
+          .map((item) {
+            final data = Map<String, dynamic>.from(item as Map);
+            final image = data['imageUrl'] as String?;
+            if (image != null && image.startsWith('/'))
+              data['imageUrl'] = '${ApiConfig.baseUrl}$image';
+            return RecommendedMealModel.fromJson(data);
+          })
+          .toList(growable: false);
     } on Object {
-      throw const HomeProviderException('The recommended meals response is incomplete.');
+      throw const HomeProviderException(
+        'The recommended meals response is incomplete.',
+      );
     }
   }
 
@@ -177,12 +210,15 @@ class HomeProvider {
     final calories = profile?.calories;
     final protein = profile?.protein;
     final water = profile?.water;
+    final fiber = profile?.fiber;
+    final sugar = profile?.sugar;
     final displayName = profile?.fullName?.trim();
 
     return HomeDashboardModel(
-      userName: displayName?.isNotEmpty == true
-          ? displayName!.split(RegExp(r'\s+')).first
-          : profile?.email.split('@').first ?? 'Friend',
+      userName:
+          displayName?.isNotEmpty == true
+              ? displayName!.split(RegExp(r'\s+')).first
+              : profile?.email.split('@').first ?? 'Friend',
       dailySummary: DailySummaryModel(
         calories: NutritionProgressModel(
           title: 'Calories',
@@ -204,6 +240,20 @@ class HomeProvider {
           target: _number(water?.goal ?? 8),
           progress: _progress(water?.current, water?.goal),
           unit: 'glasses',
+        ),
+        fiber: NutritionProgressModel(
+          title: 'Fiber',
+          value: _number(fiber?.current ?? 0),
+          target: _number(fiber?.goal ?? 25),
+          progress: _progress(fiber?.current, fiber?.goal),
+          unit: 'g',
+        ),
+        sugar: NutritionProgressModel(
+          title: 'Sugar',
+          value: _number(sugar?.current ?? 0),
+          target: _number(sugar?.goal ?? 50),
+          progress: _progress(sugar?.current, sugar?.goal),
+          unit: 'g',
         ),
       ),
       recommendedMeals: const [],

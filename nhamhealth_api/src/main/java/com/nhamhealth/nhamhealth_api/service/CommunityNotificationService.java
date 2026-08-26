@@ -18,10 +18,13 @@ public class CommunityNotificationService {
 
     private final NotificationRepository notifications;
     private final UserProfileRepository profiles;
+    private final PushNotificationService pushNotifications;
 
-    public CommunityNotificationService(NotificationRepository notifications, UserProfileRepository profiles) {
+    public CommunityNotificationService(NotificationRepository notifications, UserProfileRepository profiles,
+            PushNotificationService pushNotifications) {
         this.notifications = notifications;
         this.profiles = profiles;
+        this.pushNotifications = pushNotifications;
     }
 
     public void postLiked(User actor, Post post) {
@@ -70,7 +73,7 @@ public class CommunityNotificationService {
         notification.setMessage(message);
         notification.setIsRead(false);
         notification.setCreatedAt(LocalDateTime.now());
-        notifications.save(notification);
+        pushNotifications.send(notifications.saveAndFlush(notification));
     }
 
     private String actorName(User actor) {
