@@ -26,6 +26,17 @@ public class PostReport {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    /**
+     * Present when this report targets a comment. The post relationship remains
+     * populated as context for both post and comment reports.
+     */
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private PostComment comment;
+
+    @Column(name = "target_type", nullable = false, length = 20)
+    private String targetType = "POST";
+
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "reported_by_user_id", nullable = false)
     private User reportedByUser;
@@ -36,6 +47,12 @@ public class PostReport {
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
+
+    @Column(name = "moderation_action", length = 20)
+    private String moderationAction;
+
+    @Column(name = "admin_note", length = 1000)
+    private String adminNote;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_user_id")
@@ -62,6 +79,22 @@ public class PostReport {
         this.post = post;
     }
 
+    public PostComment getComment() {
+        return comment;
+    }
+
+    public void setComment(PostComment comment) {
+        this.comment = comment;
+    }
+
+    public String getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(String targetType) {
+        this.targetType = targetType;
+    }
+
     public User getReportedByUser() {
         return reportedByUser;
     }
@@ -84,6 +117,22 @@ public class PostReport {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getModerationAction() {
+        return moderationAction;
+    }
+
+    public void setModerationAction(String moderationAction) {
+        this.moderationAction = moderationAction;
+    }
+
+    public String getAdminNote() {
+        return adminNote;
+    }
+
+    public void setAdminNote(String adminNote) {
+        this.adminNote = adminNote;
     }
 
     public User getReviewedByUser() {

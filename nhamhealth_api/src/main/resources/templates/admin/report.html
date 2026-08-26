@@ -69,6 +69,7 @@
                     <select id="reportStatus">
                         <option value="">All</option>
                         <option value="pending">Pending</option>
+                        <option value="under_review">Under review</option>
                         <option value="resolved">Resolved</option>
                         <option value="dismissed">Dismissed</option>
                     </select>
@@ -98,15 +99,15 @@
                         </tr>
                         </thead>
                         <tbody id="reportRows">
-                        <tr th:each="r, s : ${reports}" th:data-id="${r.reportId}" th:data-reporter-id="${r.reportedByUser.userId}" th:data-reporter="${r.reportedByUser.email}" th:data-status="${r.status}">
+                        <tr th:each="r, s : ${reports}" th:data-id="${r.reportId}" th:data-reporter-id="${r.reportedByUser.userId}" th:data-reporter="${r.reportedByUser.email}" th:data-status="${r.status}" th:data-action="${r.moderationAction}">
                             <td th:text="${s.count}">1</td>
                             <td><strong th:text="${r.reportedByUser.name}">User</strong><small th:text="${r.reportedByUser.email}">email</small></td>
-                            <td class="target-cell" th:text="${r.post.caption}">Post caption</td>
+                            <td class="target-cell"><button class="target-link view-report-target" type="button"><strong th:text="${r.targetType == 'COMMENT' ? 'Comment' : 'Post'}">Post</strong><span th:text="${r.targetType == 'COMMENT' and r.comment != null ? r.comment.commentText : r.post.caption}">Post caption</span></button></td>
                             <td th:text="${r.reportReason.reasonName}">Spam</td>
                             <td><span class="status-pill" th:classappend="${' status-' + r.status}" th:text="${r.status}">pending</span></td>
                             <td th:text="${r.reviewedByUser != null ? r.reviewedByUser.name : 'Not reviewed'}">Not reviewed</td>
                             <td th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
-                            <td><button class="btn-small review-report" type="button"><i class="fa-solid fa-gavel"></i> Review</button></td>
+                            <td class="report-actions"><button class="btn-small view-report-target" type="button"><i class="fa-solid fa-eye"></i> View</button><button class="btn-small review-report" type="button"><i class="fa-solid fa-gavel"></i> Review</button></td>
                         </tr>
                         <tr th:if="${reports.empty}">
                             <td class="empty-state" colspan="8">No reports found.</td>

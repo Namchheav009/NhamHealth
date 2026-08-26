@@ -16,17 +16,23 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.SharePostRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.SharePostToFeedRequest;
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
+import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
 
 @RestController
 @RequestMapping("/api/v1/community")
 public class CommunityApiController {
     private final CommunityService service;
+    private final CommunityReportService reportService;
 
-    public CommunityApiController(CommunityService service) { this.service = service; }
+    public CommunityApiController(CommunityService service, CommunityReportService reportService) {
+        this.service = service;
+        this.reportService = reportService;
+    }
 
     @GetMapping("/posts")
     public List<CommunityPostResponse> posts(@AuthenticationPrincipal Jwt jwt,
@@ -48,6 +54,30 @@ public class CommunityApiController {
     public List<CommunityTagResponse> tags(@AuthenticationPrincipal Jwt jwt) {
         userId(jwt);
         return service.tags();
+    }
+
+    @GetMapping("/report-reasons")
+    public List<CommunityReportReasonResponse> reportReasons(@AuthenticationPrincipal Jwt jwt) {
+        userId(jwt);
+        return reportService.reasons();
+    }
+
+    @PostMapping("/posts/{postId}/reports")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reportPost(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
+            @RequestParam Integer reasonId) {
+        Integer reporterId = userId(jwt);
+        service.assertPostVisible(reporterId, postId);
+        reportService.reportPost(reporterId, postId, reasonId);
+    }
+
+    @PostMapping("/posts/{postId}/comments/{commentId}/reports")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reportComment(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
+            @PathVariable Integer commentId, @RequestParam Integer reasonId) {
+        Integer reporterId = userId(jwt);
+        service.assertPostVisible(reporterId, postId);
+        reportService.reportComment(reporterId, postId, commentId, reasonId);
     }
 
     @PostMapping(value = "/posts", consumes = "multipart/form-data")
@@ -99,6 +129,13 @@ public class CommunityApiController {
     public CommunityCommentResponse comment(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
             @RequestBody CommunityCommentRequest request) {
         return service.comment(userId(jwt), postId, request.text(), request.parentCommentId());
+    }
+
+    @DeleteMapping("/posts/{postId}/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
+            @PathVariable Integer commentId) {
+        service.deleteComment(userId(jwt), postId, commentId);
     }
 
     @PostMapping("/posts/{postId}/comments/{commentId}/like")

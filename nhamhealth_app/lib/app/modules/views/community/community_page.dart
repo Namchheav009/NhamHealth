@@ -935,7 +935,9 @@ class CommunityPage extends GetView<CommunityController> {
       case _CommunityPostAction.delete:
         await _confirmDeletePost(post);
       case _CommunityPostAction.report:
-        await Get.to<void>(() => const CommunityReportPage(subject: 'post'));
+        await Get.to<void>(
+          () => CommunityReportPage(postId: post.id, subject: 'post'),
+        );
       case _CommunityPostAction.about:
         await _showComments(post);
     }

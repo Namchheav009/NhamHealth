@@ -25,7 +25,7 @@ public record AdminUpdateUserRequest(
         String role,
 
         @NotBlank(message = "Status is required")
-        @Pattern(regexp = "(?i)ACTIVE|PENDING|SUSPENDED", message = "Status must be ACTIVE, PENDING, or SUSPENDED")
+        @Pattern(regexp = "(?i)ACTIVE|PENDING|SUSPENDED|BANNED", message = "Status must be ACTIVE, PENDING, SUSPENDED, or BANNED")
         String status,
 
         boolean verified) {

@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.ReportReasonRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @SpringBootTest
@@ -33,6 +34,9 @@ class DevDataLoaderTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ReportReasonRepository reportReasonRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -59,6 +63,11 @@ class DevDataLoaderTest {
         assertTrue(passwordEncoder.matches("SeedAdmin123!", adminUser.getPasswordHash()));
         assertTrue(adminUser.getIsVerified());
         assertEquals("ACTIVE", adminUser.getStatus());
+        assertEquals(
+                java.util.List.of("Spam", "Harassment", "False information", "Inappropriate content"),
+                reportReasonRepository.findAllByIsActiveTrueOrderByReportReasonIdAsc().stream()
+                        .map(reason -> reason.getReasonName())
+                        .toList());
 
         var authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(
