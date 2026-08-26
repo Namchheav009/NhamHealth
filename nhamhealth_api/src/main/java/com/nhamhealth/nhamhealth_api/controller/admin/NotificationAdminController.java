@@ -19,6 +19,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.AdminCreateNotificationRequest;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.PushNotificationService;
 
 import jakarta.validation.Valid;
 
@@ -28,10 +29,13 @@ public class NotificationAdminController {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final PushNotificationService pushNotifications;
 
-    public NotificationAdminController(NotificationRepository notificationRepository, UserRepository userRepository) {
+    public NotificationAdminController(NotificationRepository notificationRepository, UserRepository userRepository,
+            PushNotificationService pushNotifications) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.pushNotifications = pushNotifications;
     }
 
     @GetMapping("/admin/notifications")
@@ -68,6 +72,7 @@ public class NotificationAdminController {
                     notification.setIsRead(false);
                     notification.setCreatedAt(LocalDateTime.now());
                     Notification saved = notificationRepository.saveAndFlush(notification);
+                    pushNotifications.send(saved);
                     String name = user.getName() == null || user.getName().isBlank() ? "Unknown user" : user.getName();
                     String email = user.getEmail() == null ? "" : user.getEmail();
                     return ResponseEntity.ok(Map.ofEntries(

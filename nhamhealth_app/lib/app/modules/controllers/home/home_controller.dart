@@ -186,6 +186,8 @@ class HomeController extends GetxController {
       calories: _increment(current.calories, calories.toDouble()),
       protein: _increment(current.protein, protein),
       water: current.water,
+      fiber: current.fiber,
+      sugar: current.sugar,
     );
     if (_dayKey(selectedDay.value) == key) _showSelectedDay();
   }
@@ -240,6 +242,20 @@ class HomeController extends GetxController {
       target: '8',
       progress: 0,
       unit: 'glasses',
+    ),
+    fiber: NutritionProgressModel(
+      title: 'Fiber',
+      value: '0',
+      target: '25',
+      progress: 0,
+      unit: 'g',
+    ),
+    sugar: NutritionProgressModel(
+      title: 'Sugar',
+      value: '0',
+      target: '50',
+      progress: 0,
+      unit: 'g',
     ),
   );
 
