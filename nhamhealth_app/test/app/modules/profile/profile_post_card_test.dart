@@ -47,7 +47,9 @@ void main() {
 
         final carousel = find.byType(PageView);
         expect(carousel, findsOneWidget);
-        expect(tester.getSize(carousel).height, 218);
+        final carouselSize = tester.getSize(carousel);
+        expect(carouselSize.height, carouselSize.width / (5 / 4));
+        expect(carouselSize.height, lessThanOrEqualTo(360));
         expect(tester.takeException(), isNull);
       },
     );
