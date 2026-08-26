@@ -15,6 +15,21 @@ class DailySummaryCard extends GetView<HomeController> {
     return Obx(() {
       final summary = controller.dashboard.value?.dailySummary;
       if (summary == null) return const SizedBox.shrink();
+      final nutrients = [
+        (
+          summary.calories,
+          Icons.local_fire_department_rounded,
+          const Color(0xFFFF6A24),
+        ),
+        (
+          summary.protein,
+          Icons.energy_savings_leaf_rounded,
+          const Color(0xFF00B85C),
+        ),
+        (summary.water, Icons.water_drop_rounded, const Color(0xFF69AFFF)),
+        (summary.fiber, Icons.grass_rounded, const Color(0xFF9747FF)),
+        (summary.sugar, Icons.hexagon_rounded, const Color(0xFFFF5CB8)),
+      ];
 
       return Container(
         constraints: const BoxConstraints(minHeight: 160),
@@ -152,26 +167,30 @@ class DailySummaryCard extends GetView<HomeController> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    NutritionProgressCard(
-                      data: summary.calories,
-                      icon: Icons.local_fire_department_rounded,
-                      iconColor: const Color(0xFFFF6A24),
-                    ),
-                    const _WellnessDivider(),
-                    NutritionProgressCard(
-                      data: summary.protein,
-                      icon: Icons.energy_savings_leaf_rounded,
-                      iconColor: const Color(0xFF00B85C),
-                    ),
-                    const _WellnessDivider(),
-                    NutritionProgressCard(
-                      data: summary.water,
-                      icon: Icons.water_drop_rounded,
-                      iconColor: const Color(0xFF69AFFF),
-                    ),
-                  ],
+                SizedBox(
+                  height: 112,
+                  child: ListView.separated(
+                    key: const ValueKey<String>('home-wellness-scroll'),
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    clipBehavior: Clip.none,
+                    itemCount: nutrients.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final nutrient = nutrients[index];
+                      return SizedBox(
+                        key: ValueKey<String>(
+                          'home-wellness-${nutrient.$1.title.toLowerCase()}',
+                        ),
+                        width: 132,
+                        child: NutritionProgressCard(
+                          data: nutrient.$1,
+                          icon: nutrient.$2,
+                          iconColor: nutrient.$3,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -180,16 +199,4 @@ class DailySummaryCard extends GetView<HomeController> {
       );
     });
   }
-}
-
-class _WellnessDivider extends StatelessWidget {
-  const _WellnessDivider();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1,
-    height: 58,
-    margin: const EdgeInsets.symmetric(horizontal: 8),
-    color: const Color(0xFFB9BDBB),
-  );
 }
