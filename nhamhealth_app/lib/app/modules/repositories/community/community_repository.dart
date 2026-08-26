@@ -10,6 +10,7 @@ import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_tag.dart';
 import '../../models/community/community_types.dart';
+import '../../models/community/community_report_reason.dart';
 
 class CommunityRepository {
   CommunityRepository({required AuthService authService, http.Client? client})
@@ -53,6 +54,43 @@ class CommunityRepository {
         )
         .where((tag) => tag.id > 0 && tag.name.isNotEmpty)
         .toList(growable: false);
+  }
+
+  Future<List<CommunityReportReason>> getReportReasons() async {
+    final payload = await _getList('/api/v1/community/report-reasons');
+    return payload
+        .map(
+          (item) => CommunityReportReason.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .where((reason) => reason.id > 0 && reason.name.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> reportPost({
+    required String postId,
+    required int reasonId,
+  }) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/posts/$postId/reports?reasonId=$reasonId'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
+  }
+
+  Future<void> reportComment({
+    required String postId,
+    required String commentId,
+    required int reasonId,
+  }) async {
+    final response = await _client.post(
+      _uri(
+        '/api/v1/community/posts/$postId/comments/$commentId/reports?reasonId=$reasonId',
+      ),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
   }
 
   Future<CommunityPost> createPost({
@@ -213,6 +251,14 @@ class CommunityRepository {
       '${comment['authorAvatarUrl'] ?? ''}',
     );
     return CommunityComment.fromJson(comment);
+  }
+
+  Future<void> deleteComment(String postId, String commentId) async {
+    final response = await _client.delete(
+      _uri('/api/v1/community/posts/$postId/comments/$commentId'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
   }
 
   Future<String> toggleFollow(String userId) async {

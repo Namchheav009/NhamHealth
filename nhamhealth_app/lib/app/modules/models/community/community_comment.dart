@@ -8,6 +8,7 @@ class CommunityComment {
     this.parentCommentId,
     this.likes = 0,
     this.isLiked = false,
+    this.canDelete = false,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class CommunityComment {
   final String? parentCommentId;
   final int likes;
   final bool isLiked;
+  final bool canDelete;
 
   factory CommunityComment.fromJson(Map<String, dynamic> json) =>
       CommunityComment(
@@ -30,5 +32,6 @@ class CommunityComment {
             json['parentCommentId'] == null ? null : '${json['parentCommentId']}',
         likes: (json['likes'] as num?)?.toInt() ?? 0,
         isLiked: json['liked'] as bool? ?? false,
+        canDelete: json['canDelete'] as bool? ?? false,
       );
 }

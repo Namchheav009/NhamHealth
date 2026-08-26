@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_post.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/loading_content_transition.dart';
@@ -14,6 +15,9 @@ import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
 import '../community/community_comments_page.dart';
 import '../community/community_post_editor_page.dart';
+import '../community/community_share_actions.dart';
+import '../community/community_share_post_page.dart';
+import '../community/widgets/community_composer_card.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -66,6 +70,12 @@ class ProfileView extends GetView<ProfileController> {
                           const SizedBox(height: 14),
                           const InsightCard(),
                           const SizedBox(height: 22),
+                          CommunityComposerCard(
+                            onTap: _showCreatePost,
+                            authorAvatarUrl:
+                                controller.authenticatedUser.value?.profileImageUrl ??
+                                '',
+                          ),
                           Row(
                             children: [
                               const Text(
@@ -113,6 +123,8 @@ class ProfileView extends GetView<ProfileController> {
                                   onEdit: () => _showEditPost(post),
                                   onDelete: () => _confirmDeletePost(post),
                                   onLike: () => controller.togglePostLike(post),
+                                  isLiking:
+                                      controller.likingPostIds.contains(post.id),
                                   onComment: () => _showComments(post),
                                   onShare: () => _showShare(post),
                                 ),
@@ -254,6 +266,11 @@ class ProfileView extends GetView<ProfileController> {
       () => CommunityCommentsPage(
         post: post,
         onPostChanged: controller.posts.refresh,
+        onShareToFeed: (message, visibility) => controller.sharePostToFeed(
+          post,
+          message: message,
+          visibility: visibility,
+        ),
         canEdit: true,
         onEditPost: (draft) => controller.updatePost(
           post: post,
@@ -271,6 +288,53 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Future<void> _showShare(CommunityPost post) async {
+    final action = await showCommunityShareActions(
+      canShareToFeed:
+          post.sharedPost != null ||
+          post.visibility == CommunityPostVisibility.public,
+    );
+    if (action == null) return;
+
+    switch (action) {
+      case CommunityShareAction.shareNow:
+        await _sharePostToFeed(post);
+      case CommunityShareAction.writePost:
+        await _writeSharedPost(post);
+      case CommunityShareAction.sendToFriends:
+        await _showShareToFriends(post);
+    }
+  }
+
+  Future<void> _sharePostToFeed(CommunityPost post) async {
+    try {
+      await controller.sharePostToFeed(post);
+      AppAlert.success(
+        title: 'Post shared',
+        message: 'The post is now on your profile and Community feed.',
+      );
+    } on Object catch (error) {
+      AppAlert.error(title: 'Could not share post', message: error.toString());
+    }
+  }
+
+  Future<void> _writeSharedPost(CommunityPost post) async {
+    final user = controller.authenticatedUser.value;
+    await Get.to<void>(
+      () => CommunitySharePostPage(
+        post: post,
+        authorName: user?.displayName ?? 'Community member',
+        authorAvatarUrl: user?.profileImageUrl ?? '',
+        onShare: (message, visibility) => controller.sharePostToFeed(
+          post,
+          message: message,
+          visibility: visibility,
+        ),
+      ),
+      transition: Transition.rightToLeft,
+    );
+  }
+
+  Future<void> _showShareToFriends(CommunityPost post) async {
     try {
       await controller.loadFriends();
     } on Object catch (error) {
@@ -343,6 +407,25 @@ class ProfileView extends GetView<ProfileController> {
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+    );
+  }
+
+  Future<void> _showCreatePost() async {
+    final user = controller.authenticatedUser.value;
+    await Get.to<void>(
+      () => CommunityPostEditorPage(
+        authorName: user?.displayName ?? 'Community member',
+        authorAvatarUrl: user?.profileImageUrl ?? '',
+        onSubmit: (draft) => controller.addPost(
+          description: draft.description,
+          imageBytes: draft.imageBytes,
+          visibility: draft.visibility,
+          allowComments: draft.allowComments,
+          allowReplies: draft.allowReplies,
+          tagIds: draft.tagIds,
+        ),
+      ),
+      transition: Transition.rightToLeft,
     );
   }
 

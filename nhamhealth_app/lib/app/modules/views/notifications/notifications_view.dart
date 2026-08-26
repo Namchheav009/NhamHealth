@@ -242,6 +242,7 @@ class _NotificationLeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSocial = notification.kind == NotificationKind.social;
+    final isNhamHealth = notification.kind == NotificationKind.system;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -266,6 +267,8 @@ class _NotificationLeading extends StatelessWidget {
                   ? _SocialNotificationAvatar(
                     imageUrl: notification.actorAvatarUrl,
                   )
+                  : isNhamHealth
+                  ? const _NhamHealthNotificationAvatar()
                   : Icon(
                     notification.icon,
                     size: 25,
@@ -320,6 +323,22 @@ class _SocialNotificationAvatar extends StatelessWidget {
   }
 }
 
+class _NhamHealthNotificationAvatar extends StatelessWidget {
+  const _NhamHealthNotificationAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(5),
+      child: Image.asset(
+        'assets/icons/logo.png',
+        fit: BoxFit.contain,
+        semanticLabel: 'Nham Health',
+      ),
+    );
+  }
+}
+
 class _NotificationCopy extends StatelessWidget {
   const _NotificationCopy({required this.notification});
 
@@ -331,6 +350,7 @@ class _NotificationCopy extends StatelessWidget {
       NotificationKind.social => AppColors.primaryGreen,
       NotificationKind.recommendation => const Color(0xFFFF3838),
       NotificationKind.wellness => const Color(0xFFFF3838),
+      NotificationKind.system => AppColors.primaryGreen,
     };
 
     return Column(
@@ -341,14 +361,14 @@ class _NotificationCopy extends StatelessWidget {
           TextSpan(
             children: [
               TextSpan(
-                text: notification.title.tr,
+                text: notification.displayTitle.tr,
                 style: TextStyle(
                   color: titleColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               TextSpan(
-                text: ' ${notification.message.tr}',
+                text: ' ${notification.displayMessage.tr}',
                 style: const TextStyle(
                   color: AppColors.primaryGreen,
                   fontWeight: FontWeight.w400,

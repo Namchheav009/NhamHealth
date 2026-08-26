@@ -55,6 +55,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   bool _loading = true;
   bool _sending = false;
   String? _likingCommentId;
+  String? _deletingCommentId;
   bool _updatingPost = false;
   late CommunityPost _post;
 
@@ -397,12 +398,20 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               'Reply',
               Icons.reply_rounded,
             ),
-          const _CommentOption(
-            _DiscussionAction.report,
-            'Report comment',
-            Icons.flag_outlined,
-            isDestructive: true,
-          ),
+          if (comment.canDelete)
+            const _CommentOption(
+              _DiscussionAction.delete,
+              'Delete comment',
+              Icons.delete_outline_rounded,
+              isDestructive: true,
+            )
+          else
+            const _CommentOption(
+              _DiscussionAction.report,
+              'Report comment',
+              Icons.flag_outlined,
+              isDestructive: true,
+            ),
         ],
       ),
       backgroundColor: Colors.transparent,
@@ -413,7 +422,96 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       _beginReply(comment);
       return;
     }
-    await Get.to<void>(() => const CommunityReportPage(subject: 'comment'));
+    if (action == _DiscussionAction.delete) {
+      await _confirmAndDeleteComment(comment);
+      return;
+    }
+    await Get.to<void>(
+      () => CommunityReportPage(
+        postId: _post.id,
+        commentId: comment.id,
+        subject: 'comment',
+      ),
+    );
+  }
+
+  Future<void> _confirmAndDeleteComment(CommunityComment comment) async {
+    if (_deletingCommentId != null) return;
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Delete comment?'),
+        content: const Text(
+          'This will permanently remove this comment and any replies to it.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD94545),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingCommentId = comment.id);
+    try {
+      await _repository.deleteComment(_post.id, comment.id);
+      if (!mounted) return;
+      final deletedIds = _commentAndDescendantIds(comment.id);
+      var remainingCount = _post.comments - deletedIds.length;
+      if (remainingCount < 0) remainingCount = 0;
+      setState(() {
+        _comments = _comments
+            .where((item) => !deletedIds.contains(item.id))
+            .toList(growable: false);
+        if (_replyingTo != null && deletedIds.contains(_replyingTo!.id)) {
+          _replyingTo = null;
+          _message.clear();
+        }
+        _post = _post.copyWith(comments: remainingCount);
+      });
+      widget.onPostChanged?.call();
+      unawaited(
+        AppAlert.success(
+          title: 'Comment deleted',
+          message: 'The comment has been removed.',
+        ),
+      );
+    } on Object catch (error) {
+      if (mounted) {
+        unawaited(
+          AppAlert.error(
+            title: 'Could not delete comment',
+            message: error.toString(),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _deletingCommentId = null);
+    }
+  }
+
+  Set<String> _commentAndDescendantIds(String commentId) {
+    final deletedIds = <String>{commentId};
+    var foundDescendant = true;
+    while (foundDescendant) {
+      foundDescendant = false;
+      for (final candidate in _comments) {
+        if (candidate.parentCommentId != null &&
+            deletedIds.contains(candidate.parentCommentId) &&
+            deletedIds.add(candidate.id)) {
+          foundDescendant = true;
+        }
+      }
+    }
+    return deletedIds;
   }
 
   Future<void> _showPostOptions() async {
@@ -452,7 +550,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       await _showShareOptions();
       return;
     }
-    await Get.to<void>(() => const CommunityReportPage(subject: 'post'));
+    await Get.to<void>(
+      () => CommunityReportPage(postId: _post.id, subject: 'post'),
+    );
   }
 
   Future<void> _editPost() async {
@@ -972,7 +1072,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 }
 
-enum _DiscussionAction { reply, report, edit, share }
+enum _DiscussionAction { reply, report, delete, edit, share }
 
 class _CommentOption {
   const _CommentOption(

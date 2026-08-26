@@ -68,9 +68,9 @@
                     <label for="postStatus">Status</label>
                     <select id="postStatus">
                         <option value="">All</option>
-                        <option value="published">Published</option>
-                        <option value="draft">Draft</option>
-                        <option value="flagged">Flagged</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="HIDDEN">Hidden</option>
+                        <option value="DELETED">Deleted</option>
                     </select>
                 </div>
                 <div class="field-group" style="align-self: end;">
@@ -93,6 +93,7 @@
                             <th>Visibility</th>
                             <th>Status</th>
                             <th>Comments</th>
+                            <th>Likes</th>
                             <th>Favorites</th>
                             <th>Reports</th>
                             <th>Updated</th>
@@ -100,20 +101,21 @@
                         </tr>
                         </thead>
                         <tbody id="postRows">
-                        <tr th:each="p, s : ${posts}" th:data-id="${p.postId}" th:data-user-id="${p.user.userId}" th:data-author="${p.user.name}" th:data-status="${p.status}" th:data-reports="${reportCounts[p.postId]}">
+                        <tr th:each="p, s : ${posts}" th:data-id="${p.postId}" th:data-user-id="${p.user.userId}" th:data-author="${p.user.name}" th:data-caption="${p.caption}" th:data-visibility="${p.visibility}" th:data-status="${p.status}" th:data-reports="${reportCounts[p.postId]}">
                             <td th:text="${s.count}">1</td>
                             <td><strong th:text="${p.user.name}">Author</strong><small th:text="${p.user.email}">email</small></td>
                             <td class="caption-cell" th:text="${p.caption}">Hello world</td>
                             <td><span class="visibility-pill" th:text="${p.visibility}">public</span></td>
                             <td><span class="status-pill" th:classappend="${' status-' + p.status}" th:text="${p.status}">published</span></td>
                             <td th:text="${commentCounts[p.postId]}">0</td>
+                            <td th:text="${likeCounts[p.postId]}">0</td>
                             <td th:text="${favoriteCounts[p.postId]}">0</td>
                             <td th:text="${reportCounts[p.postId]}">0</td>
                             <td th:text="${#temporals.format(p.updatedAt != null ? p.updatedAt : p.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
-                            <td><button class="btn-small moderate-post" type="button"><i class="fa-solid fa-shield-halved"></i> Status</button></td>
+                            <td><button class="btn-small edit-post" type="button"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-small delete-post" type="button"><i class="fa-solid fa-trash"></i> Delete</button></td>
                         </tr>
                         <tr th:if="${posts.empty}">
-                            <td class="empty-state" colspan="10">No posts found.</td>
+                            <td class="empty-state" colspan="11">No posts found.</td>
                         </tr>
                         </tbody>
                     </table>
@@ -137,8 +139,9 @@
                         </div>
                         <button class="icon-button small" id="closePostModal" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <form id="postForm" th:action="@{/admin/posts}" method="post">
+                    <form id="postForm" th:action="@{/admin/posts}" method="post" enctype="multipart/form-data">
                         <div class="modal-body">
+                            <input id="editingPostId" type="hidden">
                             <div class="field-group">
                                 <label for="postAuthor">Author</label>
                                 <select id="postAuthor" name="userId" required>
@@ -149,23 +152,32 @@
                             <div class="field-group">
                                 <label for="postVisibility">Visibility</label>
                                 <select id="postVisibility" name="visibility" required>
-                                    <option value="public">Public</option><option value="followers">Followers</option><option value="private">Private</option>
+                                    <option value="PUBLIC">Public</option><option value="FRIENDS">Friends</option><option value="ONLY_ME">Only me</option>
                                 </select>
                             </div>
                             <div class="field-group">
                                 <label for="postStatusField">Status</label>
                                 <select id="postStatusField" name="status" required>
-                                    <option value="published">Published</option><option value="draft">Draft</option><option value="flagged">Flagged</option>
+                                    <option value="ACTIVE">Active</option><option value="HIDDEN">Hidden</option><option value="DELETED">Deleted</option>
                                 </select>
                             </div>
                             <div class="field-group full-width">
                                 <label for="postCaption">Caption</label>
                                 <textarea id="postCaption" name="caption" rows="6" maxlength="5000" placeholder="Write the post..." required></textarea>
                             </div>
+                            <div class="field-group full-width">
+                                <label for="postImages">Images (up to 6)</label>
+                                <input id="postImages" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+                                <small>JPG, PNG, or WebP; maximum 5 MB each.</small>
+                            </div>
+                            <label class="field-group full-width" id="removeImagesField" hidden>
+                                <span>Existing images</span>
+                                <span><input id="removePostImages" name="removeImages" type="checkbox"> Remove all existing images</span>
+                            </label>
                         </div>
                         <div class="modal-actions">
                             <button class="btn" id="cancelPostModal" type="button">Cancel</button>
-                            <button class="btn btn-primary" type="submit">Create Post</button>
+                            <button class="btn btn-primary" id="postSubmit" type="submit">Create Post</button>
                         </div>
                     </form>
                 </section>

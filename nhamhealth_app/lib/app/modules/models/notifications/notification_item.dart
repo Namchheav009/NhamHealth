@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum NotificationKind { social, recommendation, wellness }
+enum NotificationKind { social, recommendation, wellness, system }
 
 class NotificationItem {
   const NotificationItem({
@@ -41,6 +41,7 @@ class NotificationItem {
       kind: switch (type) {
         'COMMUNITY' => NotificationKind.social,
         'HEALTH' || 'REMINDER' => NotificationKind.wellness,
+        'MODERATION' => NotificationKind.system,
         _ => NotificationKind.recommendation,
       },
       isUnread: json['read'] != true,
@@ -68,6 +69,18 @@ class NotificationItem {
     createdAt: createdAt,
   );
 
+  /// Moderation updates are sent by the Nham Health service, rather than the
+  /// individual administrator who performed the audit action.
+  String get displayTitle =>
+      kind == NotificationKind.system ? 'Nham Health' : title;
+
+  String get displayMessage {
+    if (kind != NotificationKind.system || title.trim().toLowerCase() == 'nham health') {
+      return message;
+    }
+    return '$title — $message';
+  }
+
   static String _relativeTime(DateTime? value) {
     if (value == null) return '';
     final difference = DateTime.now().difference(value.toLocal());
@@ -82,5 +95,6 @@ class NotificationItem {
     NotificationKind.social => Icons.person_rounded,
     NotificationKind.recommendation => Icons.auto_awesome_rounded,
     NotificationKind.wellness => Icons.water_drop_rounded,
+    NotificationKind.system => Icons.verified_rounded,
   };
 }
