@@ -13,6 +13,7 @@ class ProfilePostCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onLike,
+    this.isLiking = false,
     required this.onComment,
     required this.onShare,
     super.key,
@@ -25,6 +26,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onLike;
+  final bool isLiking;
   final VoidCallback onComment;
   final VoidCallback onShare;
 
@@ -183,7 +185,10 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 11),
+          if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
+            const SizedBox(height: 11),
+            _EngagementSummary(post: post),
+          ],
           Container(
             padding: const EdgeInsets.only(top: 7),
             decoration: const BoxDecoration(
@@ -196,24 +201,24 @@ class ProfilePostCard extends StatelessWidget {
                       post.isLiked
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                  value: _compactCount(post.likes),
+                  value: post.isLiked ? 'Liked' : 'Like',
                   color:
                       post.isLiked
                           ? const Color(0xFFE64657)
                           : const Color(0xFF69756D),
-                  onTap: onLike,
+                  onTap: isLiking ? null : onLike,
                 ),
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
                   icon: Icons.chat_bubble_outline_rounded,
-                  value: _compactCount(post.comments),
+                  value: 'Comment',
                   color: const Color(0xFF69756D),
                   onTap: onComment,
                 ),
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
                   icon: Icons.reply_rounded,
-                  value: _compactCount(post.shares),
+                  value: 'Share',
                   color: const Color(0xFF69756D),
                   onTap: onShare,
                 ),
@@ -332,7 +337,7 @@ class _ProfilePostMetric extends StatelessWidget {
   final IconData icon;
   final String value;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -368,6 +373,54 @@ class _ProfileMetricDivider extends StatelessWidget {
   Widget build(BuildContext context) => const SizedBox(
     height: 18,
     child: VerticalDivider(width: 1, color: Color(0xFFDCE6DF)),
+  );
+}
+
+class _EngagementSummary extends StatelessWidget {
+  const _EngagementSummary({required this.post});
+
+  final CommunityPost post;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 2),
+    child: Row(
+      children: [
+        if (post.likes > 0) ...[
+          Container(
+            width: 20,
+            height: 20,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE64657),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 12,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            _compactCount(post.likes),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
+        ],
+        const Spacer(),
+        if (post.comments > 0)
+          Text(
+            '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
+        if (post.comments > 0 && post.shares > 0)
+          const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
+        if (post.shares > 0)
+          Text(
+            '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          ),
+      ],
+    ),
   );
 }
 

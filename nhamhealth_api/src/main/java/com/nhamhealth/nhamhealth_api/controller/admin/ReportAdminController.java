@@ -1,6 +1,5 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,31 +14,48 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.entity.Post;
+import com.nhamhealth.nhamhealth_api.entity.PostComment;
+import com.nhamhealth.nhamhealth_api.entity.PostMedia;
 import com.nhamhealth.nhamhealth_api.entity.PostReport;
 import com.nhamhealth.nhamhealth_api.entity.ReportReason;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
+import com.nhamhealth.nhamhealth_api.repository.PostMediaRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.ReportReasonRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
 
 @Controller
 public class ReportAdminController {
-    private static final List<String> VALID_STATUSES = List.of("pending", "resolved", "dismissed");
-
     private final PostReportRepository reportRepository;
     private final PostRepository postRepository;
+    private final PostMediaRepository mediaRepository;
     private final UserRepository userRepository;
     private final ReportReasonRepository reasonRepository;
+    private final CommunityReportService reportService;
 
     public ReportAdminController(PostReportRepository reportRepository, PostRepository postRepository,
-            UserRepository userRepository, ReportReasonRepository reasonRepository) {
+            PostMediaRepository mediaRepository,
+            UserRepository userRepository, ReportReasonRepository reasonRepository,
+            CommunityReportService reportService) {
         this.reportRepository = reportRepository;
         this.postRepository = postRepository;
+        this.mediaRepository = mediaRepository;
         this.userRepository = userRepository;
         this.reasonRepository = reasonRepository;
+        this.reportService = reportService;
+    }
+
+    @GetMapping("/admin/reports/{reportId}/target")
+    @ResponseBody
+    public ResponseEntity<?> reportedTarget(@PathVariable Integer reportId) {
+        return reportRepository.findByReportId(reportId)
+                .map(report -> ResponseEntity.ok(toTargetResponse(report)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/admin/reports")
@@ -60,52 +76,52 @@ public class ReportAdminController {
         return "admin/report";
     }
 
+    /** Manual creation remains available for moderation testing and historical imports. */
     @PostMapping("/admin/reports")
     @ResponseBody
     public ResponseEntity<?> createReport(@RequestParam Integer postId, @RequestParam Integer reporterId,
             @RequestParam Integer reasonId) {
         Post post = postRepository.findById(postId).orElse(null);
         User reporter = userRepository.findById(reporterId).orElse(null);
-        ReportReason reason = reasonRepository.findById(reasonId).filter(r -> Boolean.TRUE.equals(r.getIsActive())).orElse(null);
+        ReportReason reason = reasonRepository.findById(reasonId)
+                .filter(item -> Boolean.TRUE.equals(item.getIsActive())).orElse(null);
         if (post == null || reporter == null || reason == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Select a valid post, reporter, and active reason."));
         }
         PostReport report = new PostReport();
         report.setPost(post);
+        report.setTargetType("POST");
         report.setReportedByUser(reporter);
         report.setReportReason(reason);
         report.setStatus("pending");
-        report.setCreatedAt(LocalDateTime.now());
+        report.setCreatedAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(toResponse(reportRepository.saveAndFlush(report)));
     }
 
     @PatchMapping("/admin/reports/{reportId}/status")
     @ResponseBody
-    public ResponseEntity<?> updateStatus(@PathVariable Integer reportId, @RequestParam String status,
-            Authentication authentication) {
-        String cleanStatus = status == null ? "" : status.trim().toLowerCase();
-        if (!VALID_STATUSES.contains(cleanStatus)) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Select a valid report status."));
+    public ResponseEntity<?> reviewReport(@PathVariable Integer reportId, @RequestParam String status,
+            @RequestParam(defaultValue = "none") String action,
+            @RequestParam(required = false) String adminNote, Authentication authentication) {
+        User reviewer = authentication == null ? null
+                : userRepository.findByEmailIgnoreCase(authentication.getName()).orElse(null);
+        if (reviewer == null) return ResponseEntity.status(401).body(Map.of("message", "Admin account not found."));
+        try {
+            return ResponseEntity.ok(toResponse(reportService.review(reportId, status, action, adminNote, reviewer)));
+        } catch (ResponseStatusException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(Map.of("message", exception.getReason()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        PostReport report = reportRepository.findById(reportId).orElse(null);
-        if (report == null) return ResponseEntity.notFound().build();
-        report.setStatus(cleanStatus);
-        if (cleanStatus.equals("pending")) {
-            report.setReviewedByUser(null);
-            report.setReviewedAt(null);
-        } else {
-            if (authentication != null) userRepository.findByEmailIgnoreCase(authentication.getName())
-                    .ifPresent(report::setReviewedByUser);
-            report.setReviewedAt(LocalDateTime.now());
-        }
-        return ResponseEntity.ok(toResponse(reportRepository.saveAndFlush(report)));
     }
 
     private Map<String, Object> toResponse(PostReport report) {
         User reporter = report.getReportedByUser();
         Post post = report.getPost();
-        String caption = post.getCaption() == null ? "" : post.getCaption();
-        String summary = caption.length() > 80 ? caption.substring(0, 80) + "…" : caption;
+        PostComment comment = report.getComment();
+        boolean commentReport = "COMMENT".equalsIgnoreCase(report.getTargetType()) && comment != null;
+        String content = commentReport ? comment.getCommentText() : displayPostContent(post);
+        String summary = content == null ? "" : content.length() > 80 ? content.substring(0, 80) + "..." : content;
         String reviewer = report.getReviewedByUser() == null || report.getReviewedByUser().getName() == null
                 ? "" : report.getReviewedByUser().getName();
         return Map.ofEntries(
@@ -113,8 +129,52 @@ public class ReportAdminController {
                 Map.entry("reporterName", reporter.getName() == null ? "Unknown user" : reporter.getName()),
                 Map.entry("reporterEmail", reporter.getEmail() == null ? "" : reporter.getEmail()),
                 Map.entry("postId", post.getPostId()), Map.entry("targetSummary", summary),
+                Map.entry("targetType", commentReport ? "comment" : "post"),
                 Map.entry("reason", report.getReportReason().getReasonName()), Map.entry("status", report.getStatus()),
+                Map.entry("action", report.getModerationAction() == null ? "" : report.getModerationAction()),
                 Map.entry("reviewer", reviewer),
                 Map.entry("createdAt", report.getCreatedAt().toString()));
+    }
+
+    private Map<String, Object> toTargetResponse(PostReport report) {
+        Post post = report.getPost();
+        PostComment comment = report.getComment();
+        boolean commentReport = "COMMENT".equalsIgnoreCase(report.getTargetType()) && comment != null;
+        User author = commentReport ? comment.getUser() : post.getUser();
+        String content = commentReport ? comment.getCommentText() : displayPostContent(post);
+        List<String> imageUrls = imageUrlsFor(post);
+        return Map.ofEntries(
+                Map.entry("reportId", report.getReportId()),
+                Map.entry("targetType", commentReport ? "Comment" : "Post"),
+                Map.entry("targetId", commentReport ? comment.getCommentId() : post.getPostId()),
+                Map.entry("content", content == null ? "" : content),
+                Map.entry("postId", post.getPostId()),
+                Map.entry("postContent", displayPostContent(post)),
+                Map.entry("author", author.getName() == null ? "Unknown user" : author.getName()),
+                Map.entry("authorEmail", author.getEmail() == null ? "" : author.getEmail()),
+                Map.entry("contentStatus", commentReport ? comment.getStatus() : post.getStatus()),
+                Map.entry("createdAt", commentReport ? comment.getCreatedAt().toString() : post.getCreatedAt().toString()),
+                Map.entry("imageUrls", imageUrls));
+    }
+
+    private String displayPostContent(Post post) {
+        if (post.getCaption() != null && !post.getCaption().isBlank()) {
+            return post.getCaption();
+        }
+        Post sharedPost = post.getSharedPost();
+        if (sharedPost != null && sharedPost.getCaption() != null && !sharedPost.getCaption().isBlank()) {
+            return "Shared post: " + sharedPost.getCaption();
+        }
+        return "This post has no written caption. Review any attached images before taking action.";
+    }
+
+    private List<String> imageUrlsFor(Post post) {
+        List<String> imageUrls = mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
+                .map(PostMedia::getMediaUrl).toList();
+        if (!imageUrls.isEmpty() || post.getSharedPost() == null) {
+            return imageUrls;
+        }
+        return mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getSharedPost().getPostId()).stream()
+                .map(PostMedia::getMediaUrl).toList();
     }
 }

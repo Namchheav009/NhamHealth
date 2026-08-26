@@ -85,6 +85,12 @@ public class CommunityService {
         return response(selected, viewerId, followed);
     }
 
+    /** Verifies visibility before another Community operation targets a post. */
+    @Transactional(readOnly = true)
+    public void assertPostVisible(Integer viewerId, Integer postId) {
+        visiblePost(viewerId, postId);
+    }
+
     @Transactional(readOnly = true)
     public List<CommunityTagResponse> tags() {
         return tagTypes.findAllByOrderByTagNameAsc().stream()
@@ -299,7 +305,26 @@ public class CommunityService {
                 communityNotifications.postReplyAdded(actor, post);
             }
         }
-        return commentResponse(saved);
+        return commentResponse(saved, userId);
+    }
+
+    /** A comment can be removed by its author or by the owner of its post. */
+    @Transactional
+    public void deleteComment(Integer userId, Integer postId, Integer commentId) {
+        Post post = visiblePost(userId, postId);
+        PostComment comment = comments.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Comment not found"));
+        if (!comment.getPost().getPostId().equals(post.getPostId())
+                || !"ACTIVE".equalsIgnoreCase(comment.getStatus())) {
+            throw new ResponseStatusException(NOT_FOUND, "Comment not found");
+        }
+        boolean isCommentAuthor = comment.getUser().getUserId().equals(userId);
+        boolean isPostOwner = post.getUser().getUserId().equals(userId);
+        if (!isCommentAuthor && !isPostOwner) {
+            throw new ResponseStatusException(FORBIDDEN,
+                    "You can only delete your own comments or comments on your posts.");
+        }
+        comments.delete(comment);
     }
 
     @Transactional
@@ -417,7 +442,9 @@ public class CommunityService {
                 comment.getCommentText(), comment.getCreatedAt(),
                 comment.getParentComment() == null ? null : comment.getParentComment().getCommentId(),
                 commentLikes.countByPostCommentCommentId(comment.getCommentId()),
-                viewerId != null && commentLikes.existsByUserUserIdAndPostCommentCommentId(viewerId, comment.getCommentId()));
+                viewerId != null && commentLikes.existsByUserUserIdAndPostCommentCommentId(viewerId, comment.getCommentId()),
+                viewerId != null && (comment.getUser().getUserId().equals(viewerId)
+                        || comment.getPost().getUser().getUserId().equals(viewerId)));
     }
 
     private CommunityPersonResponse person(User user, UserProfile profile, Set<Integer> following, Set<Integer> followers) {

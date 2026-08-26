@@ -38,7 +38,7 @@
                     <input id="userSearch" type="search" placeholder="Search by name or email">
                 </label>
                 <label class="filter-field"><span>Status</span>
-                    <select id="statusFilter"><option value="all">All statuses</option><option value="ACTIVE">Active</option><option value="PENDING">Pending</option><option value="SUSPENDED">Suspended</option></select>
+                    <select id="statusFilter"><option value="all">All statuses</option><option value="ACTIVE">Active</option><option value="PENDING">Pending</option><option value="SUSPENDED">Suspended</option><option value="BANNED">Banned</option></select>
                 </label>
                 <label class="filter-field"><span>Verification</span>
                     <select id="verificationFilter"><option value="all">All verification</option><option value="verified">Verified</option><option value="unverified">Unverified</option></select>
@@ -111,7 +111,7 @@
             <input name="profileImageUrl" type="hidden">
             <label id="passwordLabel">Temporary password<input required type="password" name="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="At least 8 characters"></label>
             <label>Role<select name="role"><option value="USER">User</option><option value="ADMIN">Admin</option></select></label>
-            <label>Status<select name="status"><option value="ACTIVE">Active</option><option value="PENDING">Pending</option><option value="SUSPENDED">Suspended</option></select></label>
+            <label>Status<select name="status"><option value="ACTIVE">Active</option><option value="PENDING">Pending</option><option value="SUSPENDED">Suspended</option><option value="BANNED">Banned</option></select></label>
             <label class="checkbox-field"><input name="verified" type="checkbox" checked> Verified account</label>
             <p class="form-error" id="formError" role="alert" hidden></p>
             <div class="modal-actions"><button type="button" class="button button-secondary" id="cancelModal">Cancel</button><button type="submit" class="button button-primary" id="createUserButton">Create user</button></div>

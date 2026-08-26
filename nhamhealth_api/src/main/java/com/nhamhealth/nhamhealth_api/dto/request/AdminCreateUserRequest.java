@@ -25,7 +25,7 @@ public record AdminCreateUserRequest(
         @Pattern(regexp = "(?i)USER|ADMIN", message = "Role must be USER or ADMIN")
         String role,
 
-        @Pattern(regexp = "(?i)ACTIVE|PENDING|SUSPENDED", message = "Status must be ACTIVE, PENDING, or SUSPENDED")
+        @Pattern(regexp = "(?i)ACTIVE|PENDING|SUSPENDED|BANNED", message = "Status must be ACTIVE, PENDING, SUSPENDED, or BANNED")
         String status,
 
         Boolean verified) {
