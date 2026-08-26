@@ -33,7 +33,7 @@ class NotificationsView extends StatelessWidget {
                         controller.notifications.isEmpty) {
                       return const SingleChildScrollView(
                         physics: NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
                         child: PageSkeleton.notifications(),
                       );
                     }
@@ -344,12 +344,6 @@ class _NotificationCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = switch (notification.kind) {
-      NotificationKind.social => AppColors.primaryGreen,
-      NotificationKind.recommendation => const Color(0xFFFF3838),
-      NotificationKind.wellness => const Color(0xFFFF3838),
-    };
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
