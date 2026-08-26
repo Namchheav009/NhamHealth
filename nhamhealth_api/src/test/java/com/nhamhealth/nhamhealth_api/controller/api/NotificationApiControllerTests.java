@@ -17,6 +17,8 @@ import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostCommentRepository;
+import com.nhamhealth.nhamhealth_api.repository.PushNotificationDeviceRepository;
+import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 
 class NotificationApiControllerTests {
@@ -26,6 +28,8 @@ class NotificationApiControllerTests {
         NotificationRepository notifications = mock(NotificationRepository.class);
         PostCommentRepository comments = mock(PostCommentRepository.class);
         UserProfileRepository profiles = mock(UserProfileRepository.class);
+        PushNotificationDeviceRepository devices = mock(PushNotificationDeviceRepository.class);
+        UserRepository users = mock(UserRepository.class);
         Notification notification = mock(Notification.class);
         User actor = mock(User.class);
         UserProfile profile = mock(UserProfile.class);
@@ -49,7 +53,7 @@ class NotificationApiControllerTests {
         when(notification.getCreatedAt()).thenReturn(createdAt);
 
         NotificationApiController controller = new NotificationApiController(
-                notifications, comments, profiles);
+            notifications, comments, profiles, devices, users);
         NotificationResponse response = controller.list(jwt).getFirst();
 
         assertEquals(7, response.actorUserId());
