@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
 import '../../../../../config/api_config.dart';
 import '../../../models/community/community_post.dart';
@@ -140,48 +141,10 @@ class ProfilePostCard extends StatelessWidget {
               post.imageUrls.isNotEmpty ||
               post.imageUrl.isNotEmpty) ...[
             const SizedBox(height: 15),
-            Semantics(
-              button: true,
-              label: 'View post image full screen',
-              child: InkWell(
-                onTap: () => _openImageViewer(context),
-                borderRadius: BorderRadius.circular(16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 218,
-                    child:
-                        post.imageBytes != null
-                            ? Image.memory(
-                              post.imageBytes!,
-                              fit: BoxFit.cover,
-                              filterQuality: FilterQuality.medium,
-                            )
-                            : PageView(
-                              children: _imageUrls
-                                  .map(
-                                    (url) => Image.network(
-                                      url,
-                                      fit: BoxFit.cover,
-                                      filterQuality: FilterQuality.medium,
-                                      errorBuilder:
-                                          (_, _, _) => Container(
-                                            color: const Color(0xFFF3F7F4),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.image_outlined,
-                                                color: Color(0xFF8D9990),
-                                              ),
-                                            ),
-                                          ),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                            ),
-                  ),
-                ),
-              ),
+            _ProfileImageCarousel(
+              imageBytes: post.imageBytes,
+              imageUrls: _imageUrls,
+              onTap: () => _openImageViewer(context),
             ),
           ],
 
@@ -272,29 +235,16 @@ class ProfilePostCard extends StatelessWidget {
           child: Stack(
             children: [
               Center(
-                child: InteractiveViewer(
-                  minScale: 0.8,
-                  maxScale: 4,
-                  child:
-                      post.imageBytes != null
-                          ? Image.memory(post.imageBytes!, fit: BoxFit.contain)
-                          : PageView(
-                            children: _imageUrls
-                                .map(
-                                  (url) => Image.network(
-                                    url,
-                                    fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (_, _, _) => const Icon(
-                                          Icons.image_outlined,
-                                          size: 42,
-                                          color: Colors.white70,
-                                        ),
-                                  ),
-                                )
-                                .toList(growable: false),
-                          ),
-                ),
+                child:
+                    post.imageBytes != null
+                        ? InteractiveViewer(
+                          minScale: 0.8,
+                          maxScale: 4,
+                          child: Image.memory(post.imageBytes!, fit: BoxFit.contain),
+                        )
+                        : _ProfileFullscreenCarousel(
+                          imageUrls: _imageUrls,
+                        ),
               ),
               Positioned(
                 top: 18,
@@ -351,12 +301,16 @@ class _ProfilePostMetric extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 7),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -496,15 +450,292 @@ class _ProfilePostOption extends StatelessWidget {
     return ListTile(
       onTap: () => Navigator.of(context).pop(value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-      leading: Icon(icon, color: color, size: 27),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
+      title: Text(label, style: TextStyle(color: color, fontSize: 15)),
+      leading: Icon(icon, color: color, size: 24),
+    );
+  }
+}
+
+class _ProfileImageCarousel extends StatefulWidget {
+  const _ProfileImageCarousel({
+    required this.imageBytes,
+    required this.imageUrls,
+    required this.onTap,
+  });
+
+  final Uint8List? imageBytes;
+  final List<String> imageUrls;
+  final VoidCallback onTap;
+
+  @override
+  State<_ProfileImageCarousel> createState() => _ProfileImageCarouselState();
+}
+
+class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page?.toInt() ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageCount = widget.imageUrls.length;
+    final showCarousel = imageCount > 1;
+
+    return Semantics(
+      button: true,
+      label: 'View post image full screen',
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                fit: StackFit.passthrough,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 360),
+                      child: AspectRatio(
+                        aspectRatio: 5 / 4,
+                        child:
+                            widget.imageBytes != null
+                                ? Image.memory(
+                                  widget.imageBytes!,
+                                  fit: BoxFit.cover,
+                                  filterQuality: FilterQuality.medium,
+                                )
+                                : PageView(
+                                  controller: _pageController,
+                                  children: widget.imageUrls
+                                      .map(
+                                        (url) => Image.network(
+                                          url,
+                                          fit: BoxFit.cover,
+                                          filterQuality: FilterQuality.medium,
+                                          errorBuilder:
+                                              (_, _, _) => Container(
+                                                color: const Color(0xFFF3F7F4),
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.image_outlined,
+                                                    color: Color(0xFF8D9990),
+                                                  ),
+                                                ),
+                                              ),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                ),
+                      ),
+                    ),
+                  ),
+                  // Carousel Counter
+                  if (showCarousel)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${_currentPage + 1}/$imageCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Pagination Dots
+            if (showCarousel) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  imageCount,
+                  (index) => GestureDetector(
+                    onTap: () {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 8 : 6,
+                      height: _currentPage == index ? 8 : 6,
+                      decoration: BoxDecoration(
+                        color:
+                            _currentPage == index
+                                ? const Color(0xFF1F2937)
+                                : const Color(0xFFD1D5DB),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _ProfileFullscreenCarousel extends StatefulWidget {
+  const _ProfileFullscreenCarousel({required this.imageUrls});
+
+  final List<String> imageUrls;
+
+  @override
+  State<_ProfileFullscreenCarousel> createState() =>
+      _ProfileFullscreenCarouselState();
+}
+
+class _ProfileFullscreenCarouselState extends State<_ProfileFullscreenCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page?.toInt() ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageCount = widget.imageUrls.length;
+    final showCarousel = imageCount > 1;
+
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              PageView(
+                controller: _pageController,
+                children: widget.imageUrls
+                    .map(
+                      (url) => InteractiveViewer(
+                        minScale: 0.8,
+                        maxScale: 4,
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.contain,
+                          errorBuilder:
+                              (_, _, _) => const Icon(
+                                Icons.image_outlined,
+                                size: 42,
+                                color: Colors.white70,
+                              ),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              // Carousel Counter
+              if (showCarousel)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_currentPage + 1}/$imageCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // Pagination Dots
+        if (showCarousel) ...[
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              imageCount,
+              (index) => GestureDetector(
+                onTap: () {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentPage == index ? 8 : 6,
+                  height: _currentPage == index ? 8 : 6,
+                  decoration: BoxDecoration(
+                    color:
+                        _currentPage == index
+                            ? Colors.white
+                            : Colors.white54,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ],
     );
   }
 }
