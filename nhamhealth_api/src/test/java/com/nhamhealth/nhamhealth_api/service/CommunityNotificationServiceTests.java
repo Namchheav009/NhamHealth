@@ -27,7 +27,9 @@ class CommunityNotificationServiceTests {
     void createsUnreadCommunityNotificationForPostLike() {
         NotificationRepository notifications = mock(NotificationRepository.class);
         UserProfileRepository profiles = mock(UserProfileRepository.class);
-        CommunityNotificationService service = new CommunityNotificationService(notifications, profiles);
+        PushNotificationService pushNotifications = mock(PushNotificationService.class);
+        CommunityNotificationService service = new CommunityNotificationService(
+            notifications, profiles, pushNotifications);
         User actor = user(7);
         User recipient = user(11);
         Post post = mock(Post.class);
@@ -41,7 +43,7 @@ class CommunityNotificationServiceTests {
         service.postLiked(actor, post);
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
-        verify(notifications).save(captor.capture());
+        verify(notifications).saveAndFlush(captor.capture());
         Notification saved = captor.getValue();
         assertSame(recipient, saved.getUser());
         assertSame(actor, saved.getActorUser());
@@ -58,7 +60,9 @@ class CommunityNotificationServiceTests {
     void doesNotCreateNotificationForSelfActivity() {
         NotificationRepository notifications = mock(NotificationRepository.class);
         UserProfileRepository profiles = mock(UserProfileRepository.class);
-        CommunityNotificationService service = new CommunityNotificationService(notifications, profiles);
+        PushNotificationService pushNotifications = mock(PushNotificationService.class);
+        CommunityNotificationService service = new CommunityNotificationService(
+            notifications, profiles, pushNotifications);
         User actor = user(7);
         Post post = mock(Post.class);
 
