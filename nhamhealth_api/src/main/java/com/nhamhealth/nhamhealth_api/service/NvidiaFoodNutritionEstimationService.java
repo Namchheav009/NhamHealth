@@ -42,6 +42,13 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
             9*fat, sugar no greater than carbohydrates, sodium in milligrams, and all other
             nutrients in grams.
 
+            Use the component name, preparationMethod, visibleEvidence, estimatedAmount, and unit
+            together. Convert household units using a typical serving for that specific food, and
+            distinguish cooked portions from raw ingredient weights when the preparation evidence
+            supports it. Keep confidence at or below 0.60 when a household unit, recipe composition,
+            or hidden ingredients require assumptions. Round estimates to practical nutrition-label
+            precision rather than returning false decimal precision.
+
             Return one JSON object only with this shape:
             {"components":[{"index":0,"calories":0,"protein":0,
             "carbohydrates":0,"fat":0,"sugar":0,"fiber":0,"sodium":0,
@@ -67,9 +74,9 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
     public NvidiaFoodNutritionEstimationService(
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-20b}") String model,
+            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-120b}") String model,
             @Value("${app.ai.nvidia.text-max-tokens:4096}") int maxTokens,
-            @Value("${app.ai.nvidia.reasoning-effort:low}") String reasoningEffort) {
+            @Value("${app.ai.nvidia.nutrition-reasoning-effort:${app.ai.nvidia.reasoning-effort:medium}}") String reasoningEffort) {
         this(baseUrl, apiKey, model, maxTokens, reasoningEffort, new ObjectMapper());
     }
 

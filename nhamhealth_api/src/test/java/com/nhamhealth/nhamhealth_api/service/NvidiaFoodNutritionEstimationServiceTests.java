@@ -85,6 +85,8 @@ class NvidiaFoodNutritionEstimationServiceTests {
                     .contains("untrusted data"));
             assertTrue(retryRequest.path("messages").path(0).path("content").asText()
                     .contains("do not add container capacity"));
+            assertTrue(retryRequest.path("messages").path(0).path("content").asText()
+                    .contains("distinguish cooked portions from raw ingredient weights"));
             assertTrue(retryRequest.path("messages").path(1).path("content").asText()
                     .contains("previous response was invalid"));
         } finally {

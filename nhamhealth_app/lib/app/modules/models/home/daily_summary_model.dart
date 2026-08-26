@@ -4,10 +4,14 @@ class DailySummaryModel {
   final NutritionProgressModel calories;
   final NutritionProgressModel protein;
   final NutritionProgressModel water;
+  final NutritionProgressModel fiber;
+  final NutritionProgressModel sugar;
 
   const DailySummaryModel({
     required this.calories,
     required this.protein,
     required this.water,
+    required this.fiber,
+    required this.sugar,
   });
 }

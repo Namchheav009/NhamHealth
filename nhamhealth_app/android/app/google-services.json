@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "280488574348",
+    "project_id": "nhamhealth-744a3",
+    "storage_bucket": "nhamhealth-744a3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280488574348:android:a39d03eb3bb7e517bd6aa9",
+        "android_client_info": {
+          "package_name": "com.example.nhamhealth_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC378cY_QNGeON9ITh9GvEgNdUjyl7ym3s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
