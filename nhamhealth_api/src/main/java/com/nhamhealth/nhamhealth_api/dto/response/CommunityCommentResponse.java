@@ -4,4 +4,4 @@ import java.time.LocalDateTime;
 
 public record CommunityCommentResponse(
         Integer id, String author, String authorAvatarUrl, String text, LocalDateTime createdAt,
-        Integer parentCommentId, long likes, boolean liked) { }
+        Integer parentCommentId, long likes, boolean liked, boolean canDelete) { }

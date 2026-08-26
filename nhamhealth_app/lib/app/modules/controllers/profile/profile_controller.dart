@@ -33,6 +33,7 @@ class ProfileController extends GetxController {
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
   final posts = <CommunityPost>[].obs;
+  final likingPostIds = <String>{}.obs;
   final commentsByPost = <String, List<CommunityComment>>{}.obs;
   final friends = <CommunityPerson>[].obs;
   final unreadNotificationCount = 0.obs;
@@ -158,8 +159,18 @@ class ProfileController extends GetxController {
   }
 
   Future<void> togglePostLike(CommunityPost post) async {
-    final updated = await _communityRepository.toggleLike(post.id);
-    _replacePost(updated);
+    if (!likingPostIds.add(post.id)) return;
+    try {
+      // Profile posts and Community feed posts share this endpoint, so their
+      // like totals and current-user state always come from one source.
+      final updated = await _communityRepository.toggleLike(post.id);
+      _replacePost(updated);
+      posts.refresh();
+    } on Object catch (error) {
+      Get.snackbar('Could not update like', error.toString());
+    } finally {
+      likingPostIds.remove(post.id);
+    }
   }
 
   List<CommunityComment> commentsFor(String postId) =>
@@ -196,6 +207,42 @@ class ProfileController extends GetxController {
     await _communityRepository.sharePost(post.id, recipientIds: recipientIds);
     post.shares += recipientIds.isEmpty ? 1 : recipientIds.length;
     posts.refresh();
+  }
+
+  /// Creates a shared post for the signed-in user. It belongs in the profile
+  /// list immediately, just as it does in the Community feed.
+  Future<CommunityPost> sharePostToFeed(
+    CommunityPost post, {
+    String message = '',
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+  }) async {
+    final shared = await _communityRepository.sharePostToFeed(
+      post.id,
+      message: message,
+      visibility: visibility,
+    );
+    post.shares += 1;
+    posts.insert(0, shared);
+    return shared;
+  }
+
+  Future<void> addPost({
+    required String description,
+    List<Uint8List> imageBytes = const [],
+    CommunityPostVisibility visibility = CommunityPostVisibility.public,
+    bool allowComments = true,
+    bool allowReplies = true,
+    List<int> tagIds = const [],
+  }) async {
+    final post = await _communityRepository.createPost(
+      description: description,
+      imageBytes: imageBytes,
+      visibility: visibility,
+      allowComments: allowComments,
+      allowReplies: allowReplies,
+      tagIds: tagIds,
+    );
+    posts.insert(0, post);
   }
 
   void _replacePost(CommunityPost updated) {
