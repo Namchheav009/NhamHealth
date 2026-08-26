@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/theme/app_colors.dart';
 import 'app/translations/app_translations.dart';
 import 'core/services/app_locale_service.dart';
+import 'core/services/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (PushNotificationService.isSupported) {
+    await Firebase.initializeApp();
+  }
   final localeService = AppLocaleService();
   final initialLocale = await localeService.loadLocale();
   InitialBinding.ensureRegistered(localeService: localeService);
+  if (PushNotificationService.isSupported) {
+    await PushNotificationService(authService: Get.find()).initialize();
+  }
 
   runApp(NhamHealthApp(initialLocale: initialLocale));
 }

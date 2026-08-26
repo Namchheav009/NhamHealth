@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_person.dart';
@@ -615,21 +619,30 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFFFBFC),
-    appBar: AppBar(
-      backgroundColor: const Color(0xFFFFFBFC),
-      surfaceTintColor: const Color.fromARGB(0, 81, 202, 10),
-      elevation: 0,
-      title: const Text(
-        'Comments',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      centerTitle: true,
-    ),
-    body: SafeArea(
-      top: false,
+    backgroundColor: AppColors.homeBackground,
+    body: AppBackground(
+      child: SafeArea(
+      bottom: false,
       child: Column(
         children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppSpacing.maxPaddedContentWidth,
+              ),
+              child: Padding(
+                padding: AppSpacing.topBarPagePadding,
+                child: AppBackHeader(
+                  title: 'Comments',
+                  onBack: Get.back,
+                  backButtonKey: const ValueKey<String>(
+                    'comments-back-button',
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: RefreshIndicator(
               color: _green,
@@ -641,40 +654,61 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                       )
                       : ListView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontal,
+                          4,
+                          AppSpacing.pageHorizontal,
+                          24,
+                        ),
                         children: [
-                          _postSummary(),
-                          const Divider(height: 34),
-                          Row(
-                            children: [
-                              Text(
-                                '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: AppSpacing.maxContentWidth,
                               ),
-                              const Spacer(),
-                              const Text(
-                                'Discussion',
-                                style: TextStyle(
-                                  color: _green,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _postSummary(),
+                                  const SizedBox(height: 24),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      const Text(
+                                        'Discussion',
+                                        style: TextStyle(
+                                          color: _green,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  if (_comments.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 38,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'Be the first to comment.',
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    ..._threadWidgets(),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                          const SizedBox(height: 14),
-                          if (_comments.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 38),
-                              child: Center(
-                                child: Text('Be the first to comment.'),
-                              ),
-                            )
-                          else
-                            ..._threadWidgets(),
                         ],
                       ),
             ),
@@ -683,9 +717,24 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         ],
       ),
     ),
+    ),
   );
 
-  Widget _postSummary() => Column(
+  Widget _postSummary() => Container(
+    padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .97),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: const Color(0xFFE3EBE5)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x0A173D25),
+          blurRadius: 18,
+          offset: Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(
@@ -768,58 +817,113 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           ),
         ),
       ],
-      const SizedBox(height: 12),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _postMetric(
-            _post.isLiked
-                ? Icons.favorite_rounded
-                : Icons.favorite_border_rounded,
-            '${_post.likes}',
-            color:
+      if (_post.likes > 0 || _post.comments > 0 || _post.shares > 0) ...[
+        const SizedBox(height: 12),
+        _engagementSummary(),
+      ],
+      Container(
+        margin: const EdgeInsets.only(top: 7),
+        padding: const EdgeInsets.only(top: 4),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _postMetric(
                 _post.isLiked
-                    ? const Color(0xFFE2344A)
-                    : const Color(0xFF778078),
-            onTap: _togglePostLike,
-          ),
-          _postMetric(
-            Icons.chat_bubble_outline_rounded,
-            '${_post.comments}',
-            onTap: _focusComposer,
-          ),
-          _postMetric(
-            Icons.reply_rounded,
-            '${_post.shares}',
-            onTap: _showShareOptions,
-          ),
-        ],
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                _post.isLiked ? 'Liked' : 'Like',
+                color:
+                    _post.isLiked
+                        ? const Color(0xFFE64657)
+                        : const Color(0xFF69756D),
+                onTap: _togglePostLike,
+              ),
+            ),
+            const _DiscussionMetricDivider(),
+            Expanded(
+              child: _postMetric(
+                Icons.chat_bubble_outline_rounded,
+                'Comment',
+                onTap: _focusComposer,
+              ),
+            ),
+            const _DiscussionMetricDivider(),
+            Expanded(
+              child: _postMetric(
+                Icons.reply_rounded,
+                'Share',
+                onTap: _showShareOptions,
+              ),
+            ),
+          ],
+        ),
       ),
     ],
+    ),
   );
 
   Widget _postMetric(
     IconData icon,
-    String value, {
-    Color color = const Color(0xFF7B847D),
+    String label, {
+    Color color = const Color(0xFF69756D),
     required VoidCallback onTap,
   }) => InkWell(
     onTap: _updatingPost ? null : onTap,
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(12),
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 22),
+          Icon(icon, color: color, size: 20),
           const SizedBox(width: 7),
           Text(
-            value,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF778078)),
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
     ),
+  );
+
+  Widget _engagementSummary() => Row(
+    children: [
+      if (_post.likes > 0) ...[
+        Container(
+          width: 20,
+          height: 20,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE64657),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.favorite_rounded, size: 12, color: Colors.white),
+        ),
+        const SizedBox(width: 5),
+        Text('${_post.likes}', style: const TextStyle(fontSize: 12, color: Color(0xFF69756D))),
+      ],
+      const Spacer(),
+      if (_post.comments > 0)
+        Text(
+          '${_post.comments} ${_post.comments == 1 ? 'comment' : 'comments'}',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+        ),
+      if (_post.comments > 0 && _post.shares > 0)
+        const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
+      if (_post.shares > 0)
+        Text(
+          '${_post.shares} ${_post.shares == 1 ? 'share' : 'shares'}',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+        ),
+    ],
   );
 
   List<Widget> _threadWidgets() {
@@ -855,35 +959,54 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Widget _commentTile(CommunityComment comment, int depth) => Padding(
     padding: EdgeInsets.only(
-      left: (depth.clamp(0, 2) * 18).toDouble(),
-      bottom: 16,
+      left: (depth.clamp(0, 2) * 16).toDouble(),
+      bottom: 14,
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _avatar(comment.authorAvatarUrl, radius: 19),
-        const SizedBox(width: 10),
+        const SizedBox(width: 9),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                comment.author,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              Container(
+                padding: const EdgeInsets.fromLTRB(13, 9, 13, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .94),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(5),
+                    topRight: Radius.circular(17),
+                    bottomLeft: Radius.circular(17),
+                    bottomRight: Radius.circular(17),
+                  ),
+                  border: Border.all(color: const Color(0xFFE4ECE6)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      comment.author,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1D2922),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      comment.text,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Color(0xFF505951),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                comment.text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.35,
-                  color: Color(0xFF626B64),
-                ),
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 7),
               Row(
                 children: [
                   Text(
@@ -929,6 +1052,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         ? const Color(0xFFE2344A)
                         : const Color(0xFF758078),
               ),
+              iconSize: 20,
+              visualDensity: VisualDensity.compact,
               tooltip: comment.isLiked ? 'Unlike comment' : 'Like comment',
             ),
             if (comment.likes > 0)
@@ -982,12 +1107,23 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       shadowColor: Colors.black12,
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxPaddedContentWidth,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontal,
+                10,
+                AppSpacing.pageHorizontal,
+                12,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               if (_replyingTo != null)
                 Padding(
                   padding: const EdgeInsets.only(left: 5, bottom: 5),
@@ -1010,7 +1146,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     ],
                   ),
                 ),
-              TextField(
+                  TextField(
                 controller: _message,
                 focusNode: _composerFocus,
                 textCapitalization: TextCapitalization.sentences,
@@ -1043,8 +1179,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     tooltip: 'Send',
                   ),
                 ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1073,6 +1211,16 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 }
 
 enum _DiscussionAction { reply, report, delete, edit, share }
+
+class _DiscussionMetricDivider extends StatelessWidget {
+  const _DiscussionMetricDivider();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    height: 18,
+    child: VerticalDivider(width: 1, color: Color(0xFFDCE6DF)),
+  );
+}
 
 class _CommentOption {
   const _CommentOption(
