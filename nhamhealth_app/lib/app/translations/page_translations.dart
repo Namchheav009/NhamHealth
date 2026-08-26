@@ -489,7 +489,6 @@ const Map<String, String> englishPageTranslations = {
   'Carbs': 'Carbs',
   'Fat': 'Fat',
   'Serving': 'Serving',
-  'Help improve this result': 'Help improve this result',
   'Please confirm before logging': 'Please confirm before logging',
   'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.':
       'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.',
@@ -1140,7 +1139,6 @@ const Map<String, String> khmerPageTranslations = {
   'Carbs': 'កាបូអ៊ីដ្រាត',
   'Fat': 'ខ្លាញ់',
   'Serving': 'បរិមាណបម្រើ',
-  'Help improve this result': 'ជួយកែលម្អលទ្ធផលនេះ',
   'Please confirm before logging': 'សូមបញ្ជាក់មុនពេលកត់ត្រា',
   'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.':
       'ពិនិត្យបរិមាណ និងការប៉ាន់ស្មានអាហារូបត្ថម្ភ។ ការកែតម្រូវនឹងត្រូវរក្សាទុកសម្រាប់កែលម្អគុណភាព។',

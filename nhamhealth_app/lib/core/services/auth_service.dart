@@ -10,6 +10,7 @@ import '../../app/modules/models/auth/login_response.dart';
 import '../../app/modules/models/auth/register_request.dart';
 import '../../config/api_config.dart';
 import '../storage/token_storage.dart';
+import 'push_notification_service.dart';
 
 class AuthService {
   AuthService({http.Client? client, TokenStorage? tokenStorage})
@@ -115,7 +116,9 @@ class AuthService {
   ) async {
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {
-      throw const AuthException('Your session has expired. Please sign in again.');
+      throw const AuthException(
+        'Your session has expired. Please sign in again.',
+      );
     }
     return _postJson(path, body, accessToken: token);
   }
@@ -153,7 +156,14 @@ class AuthService {
     }
   }
 
-  Future<void> logout() => _tokenStorage.clear();
+  Future<void> logout() async {
+    try {
+      await PushNotificationService.instance?.unregister();
+    } on Object {
+      // Logout must still succeed if the notification service is unavailable.
+    }
+    await _tokenStorage.clear();
+  }
 
   Future<LoginResponse> _authenticate(
     String path,
@@ -180,6 +190,8 @@ class AuthService {
         );
       }
     }
+
+    unawaited(PushNotificationService.instance?.syncToken());
 
     return result;
   }

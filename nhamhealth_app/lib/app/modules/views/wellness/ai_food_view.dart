@@ -119,7 +119,11 @@ class AiFoodView extends GetView<AiFoodController> {
                               children: [
                                 _confidenceLine(),
                                 const SizedBox(height: 14),
-                                if (!controller.isUserConfirmed.value) ...[
+                                if (!controller.isUserConfirmed.value &&
+                                    (controller.prediction.value?.confidence ??
+                                            0) <
+                                        AiFoodController
+                                            .lowConfidenceThreshold) ...[
                                   _feedbackCard(context),
                                   const SizedBox(height: 14),
                                 ],
@@ -256,8 +260,7 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
               const SizedBox(height: 5),
               AnimatedRevealText(
-                text:
-                    'Snap a clear photo for instant nutrition insights.'.tr,
+                text: 'Snap a clear photo for instant nutrition insights.'.tr,
                 delay: const Duration(milliseconds: 220),
                 duration: const Duration(milliseconds: 900),
                 style: const TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
@@ -596,25 +599,17 @@ class AiFoodView extends GetView<AiFoodController> {
   );
 
   Widget _feedbackCard(BuildContext context) {
-    final low =
-        (controller.prediction.value?.confidence ?? 0) <
-        AiFoodController.lowConfidenceThreshold;
     return _card(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                low ? Icons.fact_check_outlined : Icons.rate_review_outlined,
-                color: low ? warn : greenDark,
-              ),
+              const Icon(Icons.fact_check_outlined, color: warn),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  low
-                      ? 'Please confirm before logging'.tr
-                      : 'Help improve this result'.tr,
+                  'Please confirm before logging'.tr,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
