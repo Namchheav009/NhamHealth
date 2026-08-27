@@ -25,7 +25,7 @@ class FoodSourceModel {
       mealType: mealType ?? this.mealType,
       foodName: foodName ?? this.foodName,
       calories: calories ?? this.calories,
-      emoji: imagePath ?? this.emoji,
+      emoji: imagePath ?? emoji,
     );
   }
 }

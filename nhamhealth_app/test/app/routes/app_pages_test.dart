@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/setting_view.dart';
@@ -13,6 +14,14 @@ void main() {
     );
 
     expect(homePage.page(), isA<HomeView>());
+  });
+
+  test('assistant route builds AssistantView', () {
+    final assistantPage = AppPages.pages.singleWhere(
+      (page) => page.name == AppRoutes.assistant,
+    );
+
+    expect(assistantPage.page(), isA<AssistantView>());
   });
 
   test('account-created route builds AccountCreatedView', () {

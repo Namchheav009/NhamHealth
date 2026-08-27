@@ -80,7 +80,7 @@ class NhamAppBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const _ChatButton(),
+                  // const _ChatButton(),
                   _NotificationButton(
                     count: unreadNotificationCount,
                     onTap: onNotifications,
@@ -150,30 +150,30 @@ class _NotificationButton extends StatelessWidget {
   );
 }
 
-class _ChatButton extends StatelessWidget {
-  const _ChatButton();
+// class _ChatButton extends StatelessWidget {
+//   const _ChatButton();
 
-  @override
-  Widget build(BuildContext context) => _Button(
-    key: const ValueKey('chat-button'),
-    tooltip: 'chat'.tr,
-    onTap: () => Get.snackbar('chat'.tr, 'Chat is coming soon.'.tr),
-    child: Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF2F7F3),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.chat_bubble_outline_rounded,
-        size: 22,
-        color: Color(0xFF333333),
-      ),
-    ),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => _Button(
+//     key: const ValueKey('chat-button'),
+//     tooltip: 'chat'.tr,
+//     onTap: () => Get.snackbar('chat'.tr, 'Chat is coming soon.'.tr),
+//     child: Container(
+//       width: 36,
+//       height: 36,
+//       alignment: Alignment.center,
+//       decoration: const BoxDecoration(
+//         color: Color(0xFFF2F7F3),
+//         shape: BoxShape.circle,
+//       ),
+//       child: const Icon(
+//         Icons.chat_bubble_outline_rounded,
+//         size: 22,
+//         color: Color(0xFF333333),
+//       ),
+//     ),
+//   );
+// }
 
 class _ProfileButton extends StatelessWidget {
   const _ProfileButton({required this.user, required this.onTap});

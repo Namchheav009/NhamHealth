@@ -173,33 +173,31 @@ class DailySummaryCard extends GetView<HomeController> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    const spacing = 8.0;
-                    const columns = 3;
-                    final cardWidth =
-                        (constraints.maxWidth - spacing * (columns - 1)) /
-                        columns;
-                    return Wrap(
-                      spacing: spacing,
-                      runSpacing: spacing,
-                      children:
-                          nutrients.map((nutrient) {
-                            return SizedBox(
-                              key: ValueKey<String>(
-                                'home-wellness-${nutrient.$1.title.toLowerCase()}',
-                              ),
-                              width: cardWidth,
-                              height: 112,
-                              child: NutritionProgressCard(
-                                data: nutrient.$1,
-                                icon: nutrient.$2,
-                                iconColor: nutrient.$3,
-                              ),
-                            );
-                          }).toList(),
-                    );
-                  },
+                SizedBox(
+                  key: const ValueKey<String>('home-wellness-cards'),
+                  height: 112,
+                  child: Row(
+                    children: [
+                      for (
+                        var index = 0;
+                        index < nutrients.length;
+                        index++
+                      ) ...[
+                        if (index > 0) const SizedBox(width: 8),
+                        Expanded(
+                          child: NutritionProgressCard(
+                            key: ValueKey<String>(
+                              'home-wellness-${nutrients[index].$1.title.toLowerCase()}',
+                            ),
+                            data: nutrients[index].$1,
+                            icon: nutrients[index].$2,
+                            iconColor: nutrients[index].$3,
+                            onTap: controller.openWellnessDetails,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),

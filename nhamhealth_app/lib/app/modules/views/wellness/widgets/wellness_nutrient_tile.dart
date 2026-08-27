@@ -19,7 +19,6 @@ class WellnessNutrientTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon
           Container(
             width: 38,
             height: 38,
@@ -29,10 +28,7 @@ class WellnessNutrientTile extends StatelessWidget {
             ),
             child: Icon(item.icon, color: item.color, size: 22),
           ),
-
           const SizedBox(width: 10),
-
-          // Name + value
           SizedBox(
             width: 90,
             child: Column(
@@ -68,8 +64,6 @@ class WellnessNutrientTile extends StatelessWidget {
               ],
             ),
           ),
-
-          // Progress
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -81,9 +75,7 @@ class WellnessNutrientTile extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(width: 10),
-
           Text(
             '${item.percentage}%',
             style: TextStyle(
