@@ -159,11 +159,13 @@ class HomeProvider {
 
   Future<http.Response> _favoriteRequest(String method, {int? mealId}) async {
     final authService = _authService;
-    if (authService == null)
+    if (authService == null) {
       throw const HomeProviderException('Authentication is required.');
+    }
     final token = await authService.readAccessToken();
-    if (token == null || token.isEmpty)
+    if (token == null || token.isEmpty) {
       throw const HomeProviderException('Your session has expired.');
+    }
     final suffix = mealId == null ? '' : '/$mealId';
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals$suffix');
     final headers = {
@@ -192,8 +194,9 @@ class HomeProvider {
           .map((item) {
             final data = Map<String, dynamic>.from(item as Map);
             final image = data['imageUrl'] as String?;
-            if (image != null && image.startsWith('/'))
+            if (image != null && image.startsWith('/')) {
               data['imageUrl'] = '${ApiConfig.baseUrl}$image';
+            }
             return RecommendedMealModel.fromJson(data);
           })
           .toList(growable: false);

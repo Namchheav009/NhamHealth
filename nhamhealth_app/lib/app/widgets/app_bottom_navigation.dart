@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
-import '../routes/app_routes.dart';
+import '../modules/bindings/assistant/assistant_binding.dart';
+import '../modules/views/assistant/assistant_view.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
 /// Shared four-destination navigation used by the main app pages.
 ///
 /// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
-/// chatbot is a separate action positioned to the right of the navigation bar.
+/// AI assistant is a separate action positioned to the right of the bar.
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -290,14 +291,19 @@ class _ChatbotButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    label: 'Open AI Food Analyze'.tr,
+    label: 'Open AI Assistant'.tr,
     child: Tooltip(
-      message: 'Analyze food with AI'.tr,
+      message: 'Chat with AI Assistant'.tr,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: const ValueKey<String>('nav-chatbot'),
-          onTap: () => Get.toNamed<void>(AppRoutes.aiFood),
+          onTap:
+              () => Get.to<void>(
+                () => const AssistantView(),
+                binding: AssistantBinding(),
+                transition: Transition.rightToLeft,
+              ),
           customBorder: const CircleBorder(),
           child: SizedBox(
             width: 72,
@@ -355,7 +361,7 @@ class _ChatbotButton extends StatelessWidget {
                       ],
                     ),
                     child: const Icon(
-                      Icons.document_scanner_rounded,
+                      Icons.chat_bubble_rounded,
                       color: Colors.white,
                       size: 13,
                     ),

@@ -76,18 +76,36 @@ class WellnessController extends GetxController {
     isLoading.value = true;
     try {
       final dashboard = await repository.getDashboard(date: selectedDate.value);
-      _setNutrient('Calories', dashboard.calories?.current ?? 0,
-          dashboard.calories?.goal ?? 2000);
-      _setNutrient('Protein', dashboard.protein?.current ?? 0,
-          dashboard.protein?.goal ?? 120);
-      _setNutrient('Water', dashboard.water?.current ?? 0,
-          dashboard.water?.goal ?? 8);
-      _setNutrient('Fiber', dashboard.fiber?.current ?? 0,
-          dashboard.fiber?.goal ?? 25);
-      _setNutrient('Sugar', dashboard.sugar?.current ?? 0,
-          dashboard.sugar?.goal ?? 50);
+      _setNutrient(
+        'Calories',
+        dashboard.calories?.current ?? 0,
+        dashboard.calories?.goal ?? 2000,
+      );
+      _setNutrient(
+        'Protein',
+        dashboard.protein?.current ?? 0,
+        dashboard.protein?.goal ?? 120,
+      );
+      _setNutrient(
+        'Water',
+        dashboard.water?.current ?? 0,
+        dashboard.water?.goal ?? 8,
+      );
+      _setNutrient(
+        'Fiber',
+        dashboard.fiber?.current ?? 0,
+        dashboard.fiber?.goal ?? 25,
+      );
+      _setNutrient(
+        'Sugar',
+        dashboard.sugar?.current ?? 0,
+        dashboard.sugar?.goal ?? 50,
+      );
     } on Object {
-      AppAlert.error(title: 'Wellness unavailable', message: 'Unable to load your daily wellness data.');
+      AppAlert.error(
+        title: 'Wellness unavailable',
+        message: 'Unable to load your daily wellness data.',
+      );
     } finally {
       isLoading.value = false;
     }
