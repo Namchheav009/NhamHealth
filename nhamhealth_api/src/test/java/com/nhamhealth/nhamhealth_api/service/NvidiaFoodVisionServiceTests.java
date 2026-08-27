@@ -269,6 +269,12 @@ class NvidiaFoodVisionServiceTests {
                     .contains("database-searchable food name"));
             assertTrue(request.path("messages").path(0).path("content").asText()
                     .contains("portionConfidence at"));
+            assertTrue(request.path("messages").path(0).path("content").asText()
+                    .contains("liquidVolumeMl"));
+            assertTrue(request.path("messages").path(0).path("content").asText()
+                    .contains("plain_water"));
+            assertTrue(request.path("messages").path(0).path("content").asText()
+                    .contains("transparency alone"));
             assertEquals("user", request.path("messages").path(1).path("role").asText());
         } finally {
             server.stop(0);

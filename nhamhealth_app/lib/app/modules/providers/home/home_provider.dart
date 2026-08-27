@@ -212,6 +212,7 @@ class HomeProvider {
 
     final calories = profile?.calories;
     final protein = profile?.protein;
+    final fat = profile?.fat;
     final water = profile?.water;
     final fiber = profile?.fiber;
     final sugar = profile?.sugar;
@@ -235,6 +236,13 @@ class HomeProvider {
           value: _number(protein?.current ?? 0),
           target: _number(protein?.goal ?? 120),
           progress: _progress(protein?.current, protein?.goal),
+          unit: 'g',
+        ),
+        fat: NutritionProgressModel(
+          title: 'Fat',
+          value: _number(fat?.current ?? 0),
+          target: _number(fat?.goal ?? 78),
+          progress: _progress(fat?.current, fat?.goal),
           unit: 'g',
         ),
         water: NutritionProgressModel(

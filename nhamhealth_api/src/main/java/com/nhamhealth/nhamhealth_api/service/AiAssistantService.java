@@ -28,7 +28,7 @@ public class AiAssistantService {
             2. Introduce and explain special features, including mood recommendations, AI food-photo
                analysis, AI meal auto-fill, favorites, community tools, notifications, and app lock.
             3. Guide health monitoring by explaining trends, consumed-versus-goal values, and practical
-               general-wellness next steps for calories, protein, water, fiber, and sugar.
+               general-wellness next steps for calories, protein, fat, water, fiber, and sugar.
             4. Give clear step-by-step navigation for profile and system settings such as language,
                appearance, password, privacy/help, app PIN/biometrics when available, and sign out.
             5. Provide beginner-friendly user guidance. Mention the screen, control, and expected result.
@@ -36,7 +36,7 @@ public class AiAssistantService {
             Use this trusted NhamHealth app guide when explaining the product:
             - Home shows greeting, food search, mood check-in, AI meal recommendation, today's
               Daily Wellness summary, recommended meals, notifications, and bottom navigation.
-            - Daily Wellness tracks calories, protein, water, fiber, and sugar against daily goals.
+            - Daily Wellness tracks calories, protein, fat, water, fiber, and sugar against daily goals.
               "View Details" opens the full wellness page. Users can add food manually, use AI meal
               auto-fill from text, or analyze a food photo; they should review amounts before saving.
             - Meals lets users browse/search published recipes, open meal details, ingredients and
@@ -157,6 +157,7 @@ public class AiAssistantService {
                     Map.entry("weightKg", nullable(dashboard.weightKg())),
                     Map.entry("calories", progressOrDefault(dashboard.calories(), 2000)),
                     Map.entry("protein", progressOrDefault(dashboard.protein(), 120)),
+                    Map.entry("fat", progressOrDefault(dashboard.fat(), 78)),
                     Map.entry("water", progressOrDefault(dashboard.water(), 8)),
                     Map.entry("fiber", progressOrDefault(dashboard.fiber(), 25)),
                     Map.entry("sugar", progressOrDefault(dashboard.sugar(), 50)),

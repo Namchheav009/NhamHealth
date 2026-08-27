@@ -181,16 +181,24 @@ class HomeController extends GetxController {
     }
   }
 
-  void addNutritionToToday({required int calories, required double protein}) {
+  void addNutritionToToday({
+    required int calories,
+    required double protein,
+    double fat = 0,
+    double water = 0,
+    double fiber = 0,
+    double sugar = 0,
+  }) {
     final today = DateTime.now();
     final key = _dayKey(today);
     final current = _summariesByDay[key] ?? _emptySummary;
     _summariesByDay[key] = DailySummaryModel(
       calories: _increment(current.calories, calories.toDouble()),
       protein: _increment(current.protein, protein),
-      water: current.water,
-      fiber: current.fiber,
-      sugar: current.sugar,
+      fat: _increment(current.fat, fat),
+      water: _increment(current.water, water),
+      fiber: _increment(current.fiber, fiber),
+      sugar: _increment(current.sugar, sugar),
     );
     if (_dayKey(selectedDay.value) == key) _showSelectedDay();
   }
@@ -236,6 +244,13 @@ class HomeController extends GetxController {
       title: 'Protein',
       value: '0',
       target: '120',
+      progress: 0,
+      unit: 'g',
+    ),
+    fat: NutritionProgressModel(
+      title: 'Fat',
+      value: '0',
+      target: '78',
       progress: 0,
       unit: 'g',
     ),

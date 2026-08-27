@@ -316,6 +316,20 @@ class FoodNutritionModel {
 
   bool get hasNutritionEstimate => dataSource != 'UNAVAILABLE';
 
+  bool get hasDrink => components.any((item) => item.componentType == 'drink');
+
+  double get drinkVolumeMl => components
+      .where((item) => item.componentType == 'drink')
+      .fold(0, (total, item) => total + item.liquidVolumeMl);
+
+  double get plainWaterVolumeMl => components
+      .where((item) => item.beverageType == 'plain_water')
+      .fold(0, (total, item) => total + item.liquidVolumeMl);
+
+  bool get isPlainWaterOnly =>
+      components.isNotEmpty &&
+      components.every((item) => item.beverageType == 'plain_water');
+
   bool get isDatabaseCalculated => dataSource == 'DATABASE_CALCULATED';
 
   String get nutritionSourceLabel => switch (dataSource) {

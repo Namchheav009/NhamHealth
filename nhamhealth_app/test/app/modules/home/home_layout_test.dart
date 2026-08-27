@@ -134,9 +134,10 @@ void main() {
     Get.put<HomeController>(controller);
     await controller.loadDashboard();
 
-    controller.addNutritionToToday(calories: 400, protein: 15);
+    controller.addNutritionToToday(calories: 400, protein: 15, fat: 12);
     expect(controller.dashboard.value!.dailySummary.calories.value, '400');
     expect(controller.dashboard.value!.dailySummary.protein.value, '15');
+    expect(controller.dashboard.value!.dailySummary.fat.value, '12');
 
     controller.selectDay(DateTime.now().subtract(const Duration(days: 1)));
     expect(controller.dashboard.value!.dailySummary.calories.value, '0');
@@ -240,6 +241,7 @@ DailySummaryModel _summary(String calories) => DailySummaryModel(
     unit: 'kcal',
   ),
   protein: _emptyProgress('Protein', '120', 'g'),
+  fat: _emptyProgress('Fat', '78', 'g'),
   water: _emptyProgress('Water', '8', 'glasses'),
   fiber: _emptyProgress('Fiber', '25', 'g'),
   sugar: _emptyProgress('Sugar', '50', 'g'),
