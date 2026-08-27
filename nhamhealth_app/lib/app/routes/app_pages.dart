@@ -12,6 +12,8 @@ import '../modules/controllers/auth/account_created_controller.dart';
 import '../modules/views/auth/account_created_view.dart';
 import '../modules/bindings/home/home_binding.dart';
 import '../modules/views/home/home_view.dart';
+import '../modules/bindings/assistant/assistant_binding.dart';
+import '../modules/views/assistant/assistant_view.dart';
 import '../modules/bindings/meals/meal_binding.dart';
 import '../modules/bindings/meals/food_detail_binding.dart';
 import '../modules/bindings/meals/ingredient_binding.dart';
@@ -98,6 +100,12 @@ abstract class AppPages {
       page: () => const HomeView(),
       binding: HomeBinding(),
       transition: Transition.noTransition,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.assistant,
+      page: () => const AssistantView(),
+      binding: AssistantBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.meals,

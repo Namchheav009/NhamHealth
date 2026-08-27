@@ -43,11 +43,74 @@ class NhamHealthApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.homeBackground,
+        fontFamilyFallback: const ['Arial', 'sans-serif'],
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primaryGreen,
           primary: AppColors.primaryGreen,
           secondary: AppColors.primaryPink,
           surface: AppColors.cardSurface,
+        ),
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: AppColors.primaryText,
+          displayColor: AppColors.primaryText,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.primaryText,
+          surfaceTintColor: Colors.transparent,
+          centerTitle: false,
+          elevation: 0,
+        ),
+        cardTheme: CardThemeData(
+          color: AppColors.cardSurface,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.border),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.field,
+          hintStyle: const TextStyle(color: AppColors.placeholder),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: AppColors.primaryGreen,
+              width: 1.5,
+            ),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.darkGreen,
+          contentTextStyle: const TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: AppColors.primaryGreen,
