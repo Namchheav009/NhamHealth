@@ -133,7 +133,7 @@ public class AdminDashboardService {
 
     private List<NutrientMetric> buildNutrientMetrics(LocalDate today) {
         List<Object[]> todayTotals = dailyNutrientTotalRepository.summarizeBySummaryDate(today);
-        return List.of("Calories", "Protein", "Water", "Fiber", "Sugar").stream()
+        return List.of("Calories", "Protein", "Fat", "Water", "Fiber", "Sugar").stream()
                 .map(name -> {
                     List<Object[]> matching = todayTotals.stream()
                             .filter(total -> String.valueOf(total[0]).toLowerCase()
