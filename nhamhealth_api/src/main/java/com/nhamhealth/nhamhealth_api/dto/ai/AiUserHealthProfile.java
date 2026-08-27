@@ -39,6 +39,10 @@ public record AiUserHealthProfile(
         return age != null && heightCm != null && weightKg != null;
     }
 
+    public boolean hasHeightAndWeight() {
+        return heightCm != null && weightKg != null;
+    }
+
     private static BigDecimal calculateBmi(BigDecimal heightCm, BigDecimal weightKg) {
         if (heightCm == null || weightKg == null) return null;
         BigDecimal heightMeters = heightCm.movePointLeft(2);

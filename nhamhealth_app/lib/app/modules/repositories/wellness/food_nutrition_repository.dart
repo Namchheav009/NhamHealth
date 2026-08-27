@@ -170,7 +170,7 @@ class FoodNutritionRepository {
     }
     final oriented = image.bakeOrientation(decoded);
     Uint8List? smallest;
-    for (final maxDimension in const [896, 768, 640, 512]) {
+    for (final maxDimension in const [640, 512]) {
       final image.Image resized;
       if (oriented.width <= maxDimension && oriented.height <= maxDimension) {
         resized = oriented;
@@ -187,7 +187,7 @@ class FoodNutritionRepository {
           interpolation: image.Interpolation.average,
         );
       }
-      for (final quality in const [82, 72, 60, 48]) {
+      for (final quality in const [76, 64, 52]) {
         final encoded = Uint8List.fromList(
           image.encodeJpg(resized, quality: quality),
         );
