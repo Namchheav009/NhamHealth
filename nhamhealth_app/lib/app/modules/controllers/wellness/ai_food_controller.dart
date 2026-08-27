@@ -145,16 +145,35 @@ class AiFoodController extends GetxController {
         currentCalories: caloriesController.currentCalories.value,
         targetCalories: caloriesController.targetCalories.value,
       );
-      final useLocalTitle =
-          food.needsUserConfirmation || food.recommendationTitle.isEmpty;
-      final useLocalMessage =
-          food.needsUserConfirmation || food.recommendation.isEmpty;
+      final useReviewGuidance = food.needsUserConfirmation;
+      final useLocalTitle = food.recommendationTitle.isEmpty;
+      final useLocalMessage = food.recommendation.isEmpty;
       recommendation.value = FoodRecommendationModel(
-        title: useLocalTitle ? localGuidance.title : food.recommendationTitle,
-        message: useLocalMessage ? localGuidance.message : food.recommendation,
+        title:
+            useReviewGuidance
+                ? 'Review this estimate'
+                : useLocalTitle
+                ? localGuidance.title
+                : food.recommendationTitle,
+        message:
+            useReviewGuidance
+                ? 'AI nutrition and portions are estimates. Check the details before adding.'
+                : useLocalMessage
+                ? localGuidance.message
+                : food.recommendation,
         type: localGuidance.type,
-        titleParams: useLocalTitle ? localGuidance.titleParams : const {},
-        messageParams: useLocalMessage ? localGuidance.messageParams : const {},
+        titleParams:
+            useReviewGuidance
+                ? const {}
+                : useLocalTitle
+                ? localGuidance.titleParams
+                : const {},
+        messageParams:
+            useReviewGuidance
+                ? const {}
+                : useLocalMessage
+                ? localGuidance.messageParams
+                : const {},
       );
       errorMessage.value = null;
     } on FoodNutritionException catch (cloudError) {
@@ -232,36 +251,49 @@ class AiFoodController extends GetxController {
     }
     isSaving.value = true;
     try {
+      final waterGlasses = food.plainWaterVolumeMl / 250;
       await profileRepository.addDailyNutrition(
         calories: food.calories,
         protein: food.protein,
+        fat: food.fat,
+        water: waterGlasses > 0 ? waterGlasses : null,
+        fiber: food.fiber,
         sugar: food.sugar,
         aiRecommendation:
             recommendation.value == null
                 ? null
                 : '${recommendation.value!.title}: ${recommendation.value!.message}',
       );
-      caloriesController.addFoodSource(
-        mealType: _mealTypeNow(),
-        foodName: food.name,
-        calories: food.calories.round(),
-        closeSheet: false,
-        showMessage: false,
-      );
+      if (!food.isPlainWaterOnly) {
+        caloriesController.addFoodSource(
+          mealType: _mealTypeNow(),
+          foodName: food.name,
+          calories: food.calories.round(),
+          closeSheet: false,
+          showMessage: false,
+        );
+      }
       wellnessController.addNutrition(
         calories: food.calories.round(),
         protein: food.protein,
+        fat: food.fat,
         sugar: food.sugar,
+        water: waterGlasses,
+        fiber: food.fiber,
       );
       if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().addNutritionToToday(
           calories: food.calories.round(),
           protein: food.protein,
+          fat: food.fat,
+          water: waterGlasses,
+          fiber: food.fiber,
+          sugar: food.sugar,
         );
       }
       wasAdded.value = true;
       AppAlert.success(
-        title: 'Food added',
+        title: food.isPlainWaterOnly ? 'Water added' : 'Food added',
         message: '${food.name} added successfully.',
       );
     } on Object {
@@ -276,10 +308,7 @@ class AiFoodController extends GetxController {
   }
 
   bool get canAddFood =>
-      nutrition.value != null &&
-      nutrition.value!.hasCompleteNutrition &&
-      (isUserConfirmed.value ||
-          (prediction.value?.confidence ?? 0) >= lowConfidenceThreshold);
+      nutrition.value != null && nutrition.value!.hasCompleteNutrition;
 
   bool get hasCompleteResult =>
       prediction.value != null &&
@@ -411,7 +440,7 @@ class AiFoodController extends GetxController {
       confidence: food.confidence.clamp(0, 1),
       classIndex: -1,
     );
-    isUserConfirmed.value = !food.needsUserConfirmation;
+    isUserConfirmed.value = true;
   }
 
   @override

@@ -46,9 +46,10 @@ public class DailyNutritionService {
                 .findByDailyWellnessSummaryDailySummaryId(summary.getDailySummaryId());
         addAmount(summary, totals, "Calories", "kcal", 1, request.calories(), new BigDecimal("2000"));
         addAmount(summary, totals, "Protein", "g", 2, request.protein(), new BigDecimal("120"));
-        addAmount(summary, totals, "Water", "glasses", 3, request.water(), new BigDecimal("8"));
-        addAmount(summary, totals, "Fiber", "g", 4, request.fiber(), new BigDecimal("25"));
-        addAmount(summary, totals, "Sugar", "g", 5, request.sugar(), new BigDecimal("50"));
+        addAmount(summary, totals, "Fat", "g", 3, request.fat(), new BigDecimal("78"));
+        addAmount(summary, totals, "Water", "glasses", 4, request.water(), new BigDecimal("8"));
+        addAmount(summary, totals, "Fiber", "g", 5, request.fiber(), new BigDecimal("25"));
+        addAmount(summary, totals, "Sugar", "g", 6, request.sugar(), new BigDecimal("50"));
         if (request.aiRecommendation() != null && !request.aiRecommendation().isBlank()) {
             String insight = request.aiRecommendation().trim();
             summary.setAiInsightText(insight);

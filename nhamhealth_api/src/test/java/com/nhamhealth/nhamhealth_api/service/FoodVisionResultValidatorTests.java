@@ -30,6 +30,9 @@ class FoodVisionResultValidatorTests {
         assertEquals(3, normalized.candidates().size());
         assertEquals("Milk Tea", normalized.candidates().getFirst().name());
         assertEquals("ml", normalized.components().getFirst().unit());
+        assertEquals("drink", normalized.components().getFirst().componentType());
+        assertEquals(450, normalized.components().getFirst().liquidVolumeMl());
+        assertEquals("other", normalized.components().getFirst().beverageType());
     }
 
     @Test
@@ -83,6 +86,25 @@ class FoodVisionResultValidatorTests {
         assertEquals("mixed", normalized.type());
         assertEquals(0.83, normalized.mealConfidence());
         assertEquals("ml", normalized.components().get(1).unit());
+        assertEquals("food", normalized.components().get(0).componentType());
+        assertEquals("drink", normalized.components().get(1).componentType());
+        assertEquals(300, normalized.components().get(1).liquidVolumeMl());
+    }
+
+    @Test
+    void preservesStructuredPlainWaterDetails() {
+        FoodVisionComponent water = new FoodVisionComponent(
+                "Mineral water", 0.5, "l", 0.94, 0.82,
+                "unknown", "label identifies mineral water",
+                "drink", 470, "plain_water");
+        FoodVisionResult normalized = validator.validateAndNormalize(new FoodVisionResult(
+                true, "", "Mineral water", "Unknown", "drink",
+                0.94, 0.82, 0.2, List.of(water),
+                List.of(new FoodCandidate("Mineral water", 0.94))));
+
+        assertEquals("drink", normalized.components().getFirst().componentType());
+        assertEquals(470, normalized.components().getFirst().liquidVolumeMl());
+        assertEquals("plain_water", normalized.components().getFirst().beverageType());
     }
 
     @Test

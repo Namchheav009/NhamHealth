@@ -21,6 +21,9 @@ public class FoodVisionResultValidator {
     private static final Set<String> SUPPORTED_UNITS = Set.of(
             "g", "kg", "mg", "ml", "l", "piece", "slice", "bowl", "cup",
             "plate", "serving", "tablespoon", "teaspoon");
+    private static final Set<String> BEVERAGE_TYPES = Set.of(
+            "plain_water", "coffee_tea", "juice_smoothie", "dairy",
+            "soft_drink", "alcohol", "other", "none");
 
     public FoodVisionResult validateAndNormalize(FoodVisionResult value) {
         if (value == null) throw invalid("The vision response was empty.");
@@ -62,14 +65,24 @@ public class FoodVisionResultValidator {
             if (!componentNames.add(componentName.toLowerCase(Locale.ROOT))) {
                 throw invalid("Duplicate component name: " + componentName);
             }
+            String unit = normalizeUnit(component.unit());
+            String componentType = normalizeComponentType(
+                    component.componentType(), type, componentName, unit);
+            double liquidVolumeMl = normalizeLiquidVolume(
+                    component.liquidVolumeMl(), component.estimatedAmount(), unit, componentType);
+            String beverageType = normalizeBeverageType(
+                    component.beverageType(), componentType, componentName);
             components.add(new FoodVisionComponent(
                     componentName,
                     amount,
-                    normalizeUnit(component.unit()),
+                    unit,
                     confidence(component.confidence(), "component.confidence"),
                     confidence(component.portionConfidence(), "component.portionConfidence"),
                     textOrDefault(component.preparationMethod(), "unknown", 80),
-                    requiredText(component.visibleEvidence(), "component.visibleEvidence", 300)));
+                    requiredText(component.visibleEvidence(), "component.visibleEvidence", 300),
+                    componentType,
+                    liquidVolumeMl,
+                    beverageType));
         }
 
         List<FoodCandidate> candidates = normalizeCandidates(
@@ -153,6 +166,56 @@ public class FoodVisionResultValidator {
             case "mixed", "food and drink", "food+drink" -> "mixed";
             default -> "food";
         };
+    }
+
+    private String normalizeComponentType(
+            String value, String mealType, String name, String unit) {
+        if (value != null) {
+            String normalized = value.trim().toLowerCase(Locale.ROOT);
+            if ("drink".equals(normalized) || "beverage".equals(normalized)) return "drink";
+            if ("food".equals(normalized)) return "food";
+        }
+        if ("drink".equals(mealType)) return "drink";
+        if ("food".equals(mealType)) return "food";
+        if (Set.of("ml", "l", "cup").contains(unit)) return "drink";
+        String normalizedName = name.toLowerCase(Locale.ROOT);
+        return normalizedName.matches(".*\\b(water|drink|beverage|juice|smoothie|shake|coffee|tea|soda)\\b.*")
+                ? "drink" : "food";
+    }
+
+    private double normalizeLiquidVolume(
+            double supplied, double amount, String unit, String componentType) {
+        if (!"drink".equals(componentType)) return 0;
+        if (Double.isFinite(supplied) && supplied > 0 && supplied <= MAX_PORTION_AMOUNT) {
+            return Math.round(supplied);
+        }
+        double converted = switch (unit) {
+            case "ml" -> amount;
+            case "l" -> amount * 1_000;
+            case "cup" -> amount * 240;
+            case "tablespoon" -> amount * 15;
+            case "teaspoon" -> amount * 5;
+            default -> 0;
+        };
+        if (!Double.isFinite(converted) || converted < 0 || converted > MAX_PORTION_AMOUNT) {
+            throw invalid("A drink liquid volume was outside the supported range.");
+        }
+        return Math.round(converted);
+    }
+
+    private String normalizeBeverageType(
+            String value, String componentType, String componentName) {
+        if (!"drink".equals(componentType)) return "none";
+        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        if (BEVERAGE_TYPES.contains(normalized) && !"none".equals(normalized)) {
+            if (!"plain_water".equals(normalized) || isWaterName(componentName)) return normalized;
+        }
+        return isWaterName(componentName) ? "plain_water" : "other";
+    }
+
+    private boolean isWaterName(String value) {
+        String name = value.toLowerCase(Locale.ROOT).replace('-', ' ').trim();
+        return name.matches("(plain |drinking |still |sparkling |mineral |bottled )*water");
     }
 
     private double confidence(double value, String field) {

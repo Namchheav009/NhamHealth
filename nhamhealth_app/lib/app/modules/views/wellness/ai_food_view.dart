@@ -119,15 +119,13 @@ class AiFoodView extends GetView<AiFoodController> {
                               children: [
                                 _confidenceLine(),
                                 const SizedBox(height: 14),
-                                if (!controller.isUserConfirmed.value &&
-                                    (controller.prediction.value?.confidence ??
-                                            0) <
-                                        AiFoodController
-                                            .lowConfidenceThreshold) ...[
-                                  _feedbackCard(context),
-                                  const SizedBox(height: 14),
-                                ],
+                                _analysisCard(controller.nutrition.value!),
+                                const SizedBox(height: 14),
                                 _nutritionCard(controller.nutrition.value!),
+                                if (controller.nutrition.value!.hasDrink) ...[
+                                  const SizedBox(height: 14),
+                                  _hydrationCard(controller.nutrition.value!),
+                                ],
                               ],
                             ),
                           )
@@ -153,9 +151,19 @@ class AiFoodView extends GetView<AiFoodController> {
                                           : Icons.add_circle_outline,
                                   text:
                                       controller.wasAdded.value
-                                          ? 'Added to Today'
+                                          ? controller
+                                                  .nutrition
+                                                  .value!
+                                                  .isPlainWaterOnly
+                                              ? 'Water Added Today'
+                                              : 'Added to Today'
                                           : controller.isSaving.value
                                           ? 'Adding...'
+                                          : controller
+                                              .nutrition
+                                              .value!
+                                              .isPlainWaterOnly
+                                          ? "Add to Today's Water"
                                           : "Add to Today's Food",
                                   action:
                                       controller.isSaving.value ||
@@ -457,6 +465,163 @@ class AiFoodView extends GetView<AiFoodController> {
 
   // ---- Nutrition ---------------------------------------------------------
 
+  Widget _analysisCard(FoodNutritionModel food) => _card(
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: green.withValues(alpha: .1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                food.mealType == 'drink'
+                    ? Icons.local_drink_outlined
+                    : food.mealType == 'mixed'
+                    ? Icons.brunch_dining_outlined
+                    : Icons.restaurant_outlined,
+                color: greenDark,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    food.mealName,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      food.mealType == 'mixed'
+                          ? 'Food + drink'.tr
+                          : food.mealType == 'drink'
+                          ? 'Drink'
+                          : 'Food'.tr,
+                      if (food.cuisine != 'Unknown') food.cuisine,
+                    ].join(' • '),
+                    style: const TextStyle(color: textMuted, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (food.components.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 6),
+          ...food.components.map(
+            (component) => Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    component.componentType == 'drink'
+                        ? Icons.water_drop_outlined
+                        : Icons.check_circle_outline,
+                    color: green,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          component.name,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_amount(component.estimatedAmount)} ${component.unit}'
+                          '${component.preparationMethod == 'unknown' ? '' : ' • ${component.preparationMethod}'}'
+                          ' • ${(component.confidence * 100).round()}%',
+                          style: const TextStyle(
+                            color: textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (component.visibleEvidence.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            component.visibleEvidence,
+                            style: const TextStyle(
+                              color: textMuted,
+                              fontSize: 11.5,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _hydrationCard(FoodNutritionModel food) {
+    final total = food.drinkVolumeMl.round();
+    final water = food.plainWaterVolumeMl.round();
+    final glasses = water / 250;
+    return _card(
+      Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: const BoxDecoration(
+              color: Color(0xFFE7F7FF),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.water_drop_rounded,
+              color: Color(0xFF1689C9),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  water > 0 ? 'Plain water detected'.tr : 'Drink volume'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  water > 0
+                      ? '$water ml • ${glasses.toStringAsFixed(glasses % 1 == 0 ? 0 : 1)} × 250 ml glasses'
+                      : total > 0
+                      ? 'About $total ml, excluding visible ice and foam'
+                      : 'Volume could not be estimated reliably',
+                  style: const TextStyle(color: textMuted, fontSize: 12.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _amount(double value) =>
+      value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
+
   Widget _confidenceLine() {
     final confidence = (controller.prediction.value?.confidence ?? 0).clamp(
       0.0,
@@ -587,6 +752,14 @@ class AiFoodView extends GetView<AiFoodController> {
               'Sugar',
             ),
             _metric(
+              Icons.water_drop_rounded,
+              const Color(0xFF1689C9),
+              food.plainWaterVolumeMl > 0
+                  ? '${food.plainWaterVolumeMl.round()} ml'
+                  : '--',
+              'Water',
+            ),
+            _metric(
               Icons.restaurant_menu_rounded,
               green,
               '${food.servingSize.toStringAsFixed(food.servingSize % 1 == 0 ? 0 : 1)} ${food.servingUnit}',
@@ -597,139 +770,6 @@ class AiFoodView extends GetView<AiFoodController> {
       ],
     ),
   );
-
-  Widget _feedbackCard(BuildContext context) {
-    return _card(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.fact_check_outlined, color: warn),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Please confirm before logging'.tr,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Check the serving amount and nutrition estimate. Corrections are saved as quality feedback.'
-                .tr,
-            style: const TextStyle(color: textMuted, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed:
-                      controller.isFeedbackSaving.value
-                          ? null
-                          : controller.confirmFood,
-                  icon: const Icon(Icons.check_rounded),
-                  label: Text('Looks right'.tr),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed:
-                      controller.isFeedbackSaving.value
-                          ? null
-                          : () => _showCorrectionDialog(context),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: Text('Edit result'.tr),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showCorrectionDialog(BuildContext context) async {
-    final food = controller.nutrition.value;
-    if (food == null) return;
-    final nameController = TextEditingController(text: food.name);
-    final sizeController = TextEditingController(
-      text: food.servingSize.toString(),
-    );
-    final unitController = TextEditingController(text: food.servingUnit);
-    final submit = await showDialog<bool>(
-      context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: Text('Correct food result'.tr),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: 'Food name'.tr,
-                      prefixIcon: const Icon(Icons.restaurant_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: sizeController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(labelText: 'Amount'.tr),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: unitController,
-                          decoration: InputDecoration(
-                            labelText: 'Unit'.tr,
-                            hintText: 'g, bowl, serving'.tr,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text('Cancel'.tr),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: Text('Save correction'.tr),
-              ),
-            ],
-          ),
-    );
-    if (submit == true) {
-      await controller.correctFood(
-        foodName: nameController.text,
-        servingSize: double.tryParse(sizeController.text) ?? 0,
-        servingUnit: unitController.text,
-      );
-    }
-    nameController.dispose();
-    sizeController.dispose();
-    unitController.dispose();
-  }
 
   Widget _metric(IconData icon, Color color, String value, String label) =>
       DecoratedBox(

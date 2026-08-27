@@ -10,5 +10,22 @@ public record FoodVisionComponent(
         double confidence,
         double portionConfidence,
         String preparationMethod,
-        String visibleEvidence) {
+        String visibleEvidence,
+        String componentType,
+        double liquidVolumeMl,
+        String beverageType) {
+
+    /** Compatibility constructor for callers using the original recognition schema. */
+    public FoodVisionComponent(
+            String name,
+            double estimatedAmount,
+            String unit,
+            double confidence,
+            double portionConfidence,
+            String preparationMethod,
+            String visibleEvidence) {
+        this(
+                name, estimatedAmount, unit, confidence, portionConfidence,
+                preparationMethod, visibleEvidence, null, 0, null);
+    }
 }

@@ -33,6 +33,7 @@ public class FoodNutritionCalculationService {
                     detected.name(), detected.estimatedAmount(), detected.unit(),
                     detected.confidence(), detected.portionConfidence(),
                     detected.preparationMethod(), detected.visibleEvidence(),
+                    detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
                     true, food.getId(), food.getName(), match.score(),
                     0, 0, 0, 0, 0, 0, 0,
                     NutritionSource.UNAVAILABLE, true);
@@ -42,6 +43,7 @@ public class FoodNutritionCalculationService {
                 detected.name(), detected.estimatedAmount(), detected.unit(),
                 detected.confidence(), detected.portionConfidence(),
                 detected.preparationMethod(), detected.visibleEvidence(),
+                detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
                 true, food.getId(), food.getName(), match.score(),
                 scaled(food.getCalories(), multiplier),
                 scaled(food.getProtein(), multiplier),
@@ -105,6 +107,7 @@ public class FoodNutritionCalculationService {
                 component.name(), component.estimatedAmount(), component.unit(),
                 component.confidence(), component.portionConfidence(),
                 component.preparationMethod(), component.visibleEvidence(),
+                component.componentType(), component.liquidVolumeMl(), component.beverageType(),
                 component.databaseMatched(), component.matchedFoodId(),
                 component.matchedFoodName(), component.databaseMatchConfidence(),
                 round(estimate.calories()),
@@ -138,6 +141,7 @@ public class FoodNutritionCalculationService {
                 detected.name(), detected.estimatedAmount(), detected.unit(),
                 detected.confidence(), detected.portionConfidence(),
                 detected.preparationMethod(), detected.visibleEvidence(),
+                detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
                 false, null, null, 0,
                 0, 0, 0, 0, 0, 0, 0,
                 NutritionSource.UNAVAILABLE, true);

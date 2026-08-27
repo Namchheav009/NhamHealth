@@ -13,6 +13,7 @@ class ProfileDashboardModel {
     this.weightKg,
     this.calories,
     this.protein,
+    this.fat,
     this.water,
     this.fiber,
     this.sugar,
@@ -32,6 +33,7 @@ class ProfileDashboardModel {
   final double? weightKg;
   final ProfileProgressModel? calories;
   final ProfileProgressModel? protein;
+  final ProfileProgressModel? fat;
   final ProfileProgressModel? water;
   final ProfileProgressModel? fiber;
   final ProfileProgressModel? sugar;
@@ -52,6 +54,7 @@ class ProfileDashboardModel {
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       calories: _progress(json['calories']),
       protein: _progress(json['protein']),
+      fat: _progress(json['fat']),
       water: _progress(json['water']),
       fiber: _progress(json['fiber']),
       sugar: _progress(json['sugar']),
