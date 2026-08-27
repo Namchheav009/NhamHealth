@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -27,6 +28,9 @@ class PushNotificationService {
        _client = client ?? http.Client();
 
   static PushNotificationService? instance;
+  static const _androidNotifications = MethodChannel(
+    'com.example.nhamhealth_flutter/notifications',
+  );
 
   final AuthService _authService;
   final http.Client _client;
@@ -45,13 +49,19 @@ class PushNotificationService {
     final messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(alert: true, badge: true, sound: true);
     _tokenSubscription = messaging.onTokenRefresh.listen(_registerToken);
-    _messageSubscription = FirebaseMessaging.onMessage.listen((message) {
+    _messageSubscription = FirebaseMessaging.onMessage.listen((message) async {
       final notification = message.notification;
       if (notification == null) return;
-      AppAlert.success(
-        title: notification.title ?? 'NhamHealth',
-        message: notification.body ?? '',
-      );
+      final title = notification.title ?? 'NhamHealth';
+      final body = notification.body ?? '';
+      try {
+        await _androidNotifications.invokeMethod<void>('showNotification', {
+          'title': title,
+          'body': body,
+        });
+      } on Object {
+        AppAlert.success(title: title, message: body);
+      }
     });
     _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen(_open);
     _token = await messaging.getToken();

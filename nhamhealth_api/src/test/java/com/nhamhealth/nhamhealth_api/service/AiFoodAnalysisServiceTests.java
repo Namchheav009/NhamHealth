@@ -89,7 +89,7 @@ class AiFoodAnalysisServiceTests {
         assertTrue(result.databaseMatched());
         assertFalse(result.needsUserConfirmation());
         assertEquals("Personalized nutrition check", result.recommendationTitle());
-        assertTrue(result.recommendation().contains("saved age, height, and weight"));
+        assertTrue(result.recommendation().contains("height 172 cm and weight 68 kg"));
         verify(visionProvider).analyze(any(), any());
         verify(userHealthProfileService).load(7);
     }

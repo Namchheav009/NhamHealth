@@ -57,7 +57,6 @@ class AiMealRecommendationServiceTests {
         when(mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc()).thenReturn(catalog);
         when(favoriteRepository.findAllByUserUserIdOrderBySavedAtDesc(7)).thenReturn(List.of());
         WellnessProfile wellnessProfile = new WellnessProfile();
-        wellnessProfile.setAgeCached((short) 29);
         wellnessProfile.setHeightCm(BigDecimal.valueOf(172));
         wellnessProfile.setWeightKg(BigDecimal.valueOf(68));
         wellnessProfile.setActivityLevel("moderate");
@@ -95,7 +94,7 @@ class AiMealRecommendationServiceTests {
         assertTrue(items.getAllValues().stream()
                 .allMatch(item -> item.getReasonText() != null && !item.getReasonText().isBlank()));
         assertTrue(items.getAllValues().stream()
-                .allMatch(item -> item.getReasonText().contains("saved age, height, weight")));
+                .allMatch(item -> item.getReasonText().contains("height 172 cm, weight 68 kg")));
         verify(userHealthProfileService).load(7);
     }
 

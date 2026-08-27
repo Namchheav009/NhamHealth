@@ -174,7 +174,7 @@ void main() {
 void _noop() {}
 
 class _SessionAuthService extends AuthService {
-  _SessionAuthService([this.user]);
+  _SessionAuthService() : user = null;
 
   final AuthenticatedUser? user;
 

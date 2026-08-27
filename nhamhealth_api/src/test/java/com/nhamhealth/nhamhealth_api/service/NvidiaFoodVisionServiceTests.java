@@ -63,7 +63,7 @@ class NvidiaFoodVisionServiceTests {
             assertEquals(2, requests.get());
             assertEquals("Egg fried rice", result.response().mealName());
             assertEquals(1, result.response().components().size());
-            assertTrue(result.modelName().contains("fallback-vision-model"));
+            assertEquals("vision-model", result.modelName());
             assertFalse(result.nutritionFallbackUsed());
         } finally {
             server.stop(0);
@@ -95,7 +95,50 @@ class NvidiaFoodVisionServiceTests {
     }
 
     @Test
-    void retriesWhenStructuredJsonContainsAnInvalidPortion() throws Exception {
+    void recoversPrimaryFoodIdentityWithoutWaitingForFallbackModel() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = server(List.of(completion(
+                mapper,
+                "{\"type\":\"food\",\"mealName\":\"Beef salad\" broken response}",
+                "stop")), requests);
+
+        try {
+            AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
+
+            assertEquals(1, requests.get());
+            assertEquals("Beef salad", result.response().mealName());
+            assertEquals(0.25, result.response().mealConfidence());
+            assertEquals("vision-model", result.modelName());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void recoversSnakeCaseSingleQuotedDrinkResponse() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = server(List.of(completion(
+                mapper,
+                "{'food_detected': true, 'food_type': 'beverage', "
+                        + "'dish_name': 'Strawberry milkshake', broken}",
+                "stop")), requests);
+
+        try {
+            AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
+
+            assertEquals(1, requests.get());
+            assertTrue(result.response().foodDetected());
+            assertEquals("Strawberry milkshake", result.response().mealName());
+            assertEquals("drink", result.response().type());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void safelyRecoversIdentityWhenStructuredJsonContainsAnInvalidPortion() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String invalid = VALID_VISION_JSON.replace("\"estimatedAmount\":1", "\"estimatedAmount\":0");
         List<String> responses = List.of(
@@ -107,8 +150,9 @@ class NvidiaFoodVisionServiceTests {
         try {
             AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
 
-            assertEquals(2, requests.get());
+            assertEquals(1, requests.get());
             assertEquals(1, result.response().components().getFirst().estimatedAmount());
+            assertEquals(0.25, result.response().mealConfidence());
         } finally {
             server.stop(0);
         }
@@ -124,14 +168,52 @@ class NvidiaFoodVisionServiceTests {
                 "components":[],"candidates":[]}
                 """.replaceAll("\\s+", " ");
         AtomicInteger requests = new AtomicInteger();
-        HttpServer server = server(List.of(completion(mapper, nonFood, "stop")), requests);
+        HttpServer server = server(List.of(
+                completion(mapper, nonFood, "stop"),
+                completion(mapper, nonFood, "stop")), requests);
 
         try {
             AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
 
             assertFalse(result.response().foodDetected());
             assertTrue(result.response().components().isEmpty());
-            assertEquals(1, requests.get());
+            assertEquals(2, requests.get());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void confirmsAProductStyleDrinkAfterPrimaryModelMissesIt() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String nonFood = """
+                {"foodDetected":false,"reason":"No food or drink was clearly visible.",
+                "mealName":"Unknown food","cuisine":"Unknown","type":"food",
+                "mealConfidence":0,"portionConfidence":0,"preparationConfidence":0,
+                "components":[],"candidates":[]}
+                """.replaceAll("\\s+", " ");
+        String drink = VALID_VISION_JSON
+                .replace("Egg fried rice", "Strawberry milkshake")
+                .replace("Chicken fried rice", "Strawberry smoothie")
+                .replace("\"type\":\"food\"", "\"type\":\"drink\"")
+                .replace("\"unit\":\"bowl\"", "\"unit\":\"ml\"")
+                .replace("\"estimatedAmount\":1", "\"estimatedAmount\":350");
+        AtomicInteger requests = new AtomicInteger();
+        List<String> requestBodies = new ArrayList<>();
+        HttpServer server = server(List.of(
+                completion(mapper, nonFood, "stop"),
+                completion(mapper, drink, "stop")), requests, requestBodies);
+
+        try {
+            AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
+
+            assertEquals(2, requests.get());
+            assertTrue(result.response().foodDetected());
+            assertEquals("Strawberry milkshake", result.response().mealName());
+            assertEquals("drink", result.response().type());
+            assertEquals("vision-model", result.modelName());
+            JsonNode retryRequest = mapper.readTree(requestBodies.get(1));
+            assertTrue(retryRequest.toString().contains("single centered cup or glass"));
         } finally {
             server.stop(0);
         }
