@@ -21,6 +21,7 @@ import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'community_share_post_page.dart';
 import 'widgets/community_shared_post_card.dart';
+import '../profile/widgets/profile_post_card.dart';
 
 /// A full post discussion screen. Replies are displayed below their parent and
 /// the composer switches context when a user chooses Reply.
@@ -721,7 +722,18 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     ),
   );
 
-  Widget _postSummary() => Container(
+  Widget _postSummary() => ProfilePostCard(
+    post: _post,
+    onLike: _togglePostLike,
+    onComment: _focusComposer,
+    onShare: _showShareOptions,
+    onOptions: _showPostOptions,
+    isLiking: _updatingPost,
+  );
+
+  // Kept temporarily as a reference while all post surfaces use the shared card.
+  // ignore: unused_element
+  Widget _legacyPostSummary() => Container(
     padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
     decoration: BoxDecoration(
       color: Colors.white.withValues(alpha: .97),

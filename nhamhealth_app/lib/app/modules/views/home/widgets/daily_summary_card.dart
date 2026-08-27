@@ -26,8 +26,6 @@ class DailySummaryCard extends GetView<HomeController> {
           Icons.energy_savings_leaf_rounded,
           const Color(0xFF00B85C),
         ),
-        (summary.water, Icons.water_drop_rounded, const Color(0xFF69AFFF)),
-        (summary.fiber, Icons.grass_rounded, const Color(0xFF9747FF)),
         (summary.sugar, Icons.hexagon_rounded, const Color(0xFFFF5CB8)),
       ];
 
@@ -102,11 +100,10 @@ class DailySummaryCard extends GetView<HomeController> {
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 52,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: controller.recentDays.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 7),
-                    itemBuilder: (_, index) {
+                  child: Row(
+                    children: List.generate(controller.recentDays.length, (
+                      index,
+                    ) {
                       final day = controller.recentDays[index];
                       final selected =
                           day.year == controller.selectedDay.value.year &&
@@ -121,76 +118,88 @@ class DailySummaryCard extends GetView<HomeController> {
                         'Sat',
                         'Sun',
                       ];
-                      return InkWell(
-                        onTap: () => controller.selectDay(day),
-                        borderRadius: BorderRadius.circular(12),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: 42,
-                          decoration: BoxDecoration(
-                            color:
-                                selected
-                                    ? AppColors.primaryGreen
-                                    : Colors.white.withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(12),
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right:
+                                index == controller.recentDays.length - 1
+                                    ? 0
+                                    : 4,
                           ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                names[day.weekday - 1].tr,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color:
-                                      selected
-                                          ? Colors.white70
-                                          : AppColors.primaryText,
-                                ),
+                          child: InkWell(
+                            onTap: () => controller.selectDay(day),
+                            borderRadius: BorderRadius.circular(12),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              decoration: BoxDecoration(
+                                color:
+                                    selected
+                                        ? AppColors.primaryGreen
+                                        : Colors.white.withValues(alpha: 0.72),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${day.day}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color:
-                                      selected
-                                          ? Colors.white
-                                          : AppColors.primaryText,
-                                ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    names[day.weekday - 1].tr,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color:
+                                          selected
+                                              ? Colors.white70
+                                              : AppColors.primaryText,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${day.day}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color:
+                                          selected
+                                              ? Colors.white
+                                              : AppColors.primaryText,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
                 ),
                 const SizedBox(height: 14),
-                SizedBox(
-                  height: 112,
-                  child: ListView.separated(
-                    key: const ValueKey<String>('home-wellness-scroll'),
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    clipBehavior: Clip.none,
-                    itemCount: nutrients.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final nutrient = nutrients[index];
-                      return SizedBox(
-                        key: ValueKey<String>(
-                          'home-wellness-${nutrient.$1.title.toLowerCase()}',
-                        ),
-                        width: 132,
-                        child: NutritionProgressCard(
-                          data: nutrient.$1,
-                          icon: nutrient.$2,
-                          iconColor: nutrient.$3,
-                        ),
-                      );
-                    },
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 8.0;
+                    const columns = 3;
+                    final cardWidth =
+                        (constraints.maxWidth - spacing * (columns - 1)) /
+                        columns;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children:
+                          nutrients.map((nutrient) {
+                            return SizedBox(
+                              key: ValueKey<String>(
+                                'home-wellness-${nutrient.$1.title.toLowerCase()}',
+                              ),
+                              width: cardWidth,
+                              height: 112,
+                              child: NutritionProgressCard(
+                                data: nutrient.$1,
+                                icon: nutrient.$2,
+                                iconColor: nutrient.$3,
+                              ),
+                            );
+                          }).toList(),
+                    );
+                  },
                 ),
               ],
             ),

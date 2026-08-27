@@ -203,9 +203,11 @@ public class AiFoodAnalysisService {
         } else if (needsConfirmation) {
             recommendationTitle = "Please confirm this meal";
             recommendation = "Review the meal identity and component portions before saving.";
-        } else if (healthProfile.hasAgeHeightAndWeight()) {
+        } else if (healthProfile.hasHeightAndWeight()) {
             recommendationTitle = "Personalized nutrition check";
-            recommendation = "Using your saved age, height, and weight, compare this meal's "
+            recommendation = "Using your saved height "
+                    + decimal(healthProfile.heightCm()) + " cm and weight "
+                    + decimal(healthProfile.weightKg()) + " kg, compare this meal's "
                     + wholeNumber(nutrition.calories()) + " kcal and "
                     + wholeNumber(nutrition.protein())
                     + " g protein with your daily wellness goals.";
@@ -245,6 +247,10 @@ public class AiFoodAnalysisService {
                 components,
                 vision.candidates(),
                 nutrition);
+    }
+
+    private String decimal(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 
     private String buildAnalysis(

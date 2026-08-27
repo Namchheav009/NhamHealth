@@ -24,6 +24,7 @@ import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
 import 'widgets/community_shared_post_card.dart';
 import 'widgets/community_tab_switcher.dart';
+import '../profile/widgets/profile_post_card.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
@@ -623,7 +624,20 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
-  Widget _postCard(CommunityPost post) => Container(
+  Widget _postCard(CommunityPost post) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: ProfilePostCard(
+      post: post,
+      onLike: () => controller.togglePostLike(post),
+      onComment: () => _showComments(post),
+      onShare: () => _showShareOptions(post),
+      onOptions: () => _showPostOptions(post),
+    ),
+  );
+
+  // Kept temporarily as a reference while all post surfaces use the shared card.
+  // ignore: unused_element
+  Widget _legacyPostCard(CommunityPost post) => Container(
     padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
     margin: const EdgeInsets.only(bottom: 14),
     decoration: _cardDecoration().copyWith(

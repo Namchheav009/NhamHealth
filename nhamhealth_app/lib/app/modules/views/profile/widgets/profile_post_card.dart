@@ -8,11 +8,12 @@ import '../../community/widgets/community_shared_post_card.dart';
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
     required this.post,
-    required this.authorName,
-    required this.authorAvatarUrl,
-    required this.membership,
-    required this.onEdit,
-    required this.onDelete,
+    this.authorName,
+    this.authorAvatarUrl,
+    this.membership,
+    this.onEdit,
+    this.onDelete,
+    this.onOptions,
     required this.onLike,
     this.isLiking = false,
     required this.onComment,
@@ -21,11 +22,12 @@ class ProfilePostCard extends StatelessWidget {
   });
 
   final CommunityPost post;
-  final String authorName;
-  final String authorAvatarUrl;
-  final String membership;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final String? authorName;
+  final String? authorAvatarUrl;
+  final String? membership;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onOptions;
   final VoidCallback onLike;
   final bool isLiking;
   final VoidCallback onComment;
@@ -75,7 +77,7 @@ class ProfilePostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      authorName,
+                      _displayAuthorName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -88,7 +90,7 @@ class ProfilePostCard extends StatelessWidget {
                     const SizedBox(height: 2),
 
                     Text(
-                      '${post.ageLabel}  •  $membership',
+                      '${post.ageLabel}  •  ${membership ?? post.role}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -100,14 +102,15 @@ class ProfilePostCard extends StatelessWidget {
                 ),
               ),
 
-              IconButton(
-                tooltip: 'Post options',
-                icon: const Icon(
-                  Icons.more_horiz_rounded,
-                  color: Color(0xFF768178),
+              if (onOptions != null || onEdit != null || onDelete != null)
+                IconButton(
+                  tooltip: 'Post options',
+                  icon: const Icon(
+                    Icons.more_horiz_rounded,
+                    color: Color(0xFF768178),
+                  ),
+                  onPressed: onOptions ?? () => _showPostOptions(context),
                 ),
-                onPressed: () => _showPostOptions(context),
-              ),
             ],
           ),
 
@@ -194,7 +197,7 @@ class ProfilePostCard extends StatelessWidget {
   }
 
   ImageProvider<Object>? get _avatarImage {
-    final value = authorAvatarUrl.trim();
+    final value = (authorAvatarUrl ?? post.authorAvatarUrl).trim();
     if (value.isEmpty) return null;
     final imageUrl =
         value.startsWith('http://') || value.startsWith('https://')
@@ -215,12 +218,17 @@ class ProfilePostCard extends StatelessWidget {
       builder: (_) => const _ProfilePostOptionsSheet(),
     );
     if (!context.mounted) return;
-    if (action == 'edit') onEdit();
-    if (action == 'delete') onDelete();
+    if (action == 'edit') onEdit?.call();
+    if (action == 'delete') onDelete?.call();
+  }
+
+  String get _displayAuthorName {
+    final value = authorName?.trim() ?? '';
+    return value.isEmpty ? post.author : value;
   }
 
   String get _initials {
-    final words = authorName.trim().split(RegExp(r'\s+'));
+    final words = _displayAuthorName.trim().split(RegExp(r'\s+'));
     if (words.isEmpty || words.first.isEmpty) return '?';
     if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
     return '${words.first[0]}${words.last[0]}'.toUpperCase();
