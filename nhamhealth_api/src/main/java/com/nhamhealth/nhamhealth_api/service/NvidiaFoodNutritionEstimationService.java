@@ -1,6 +1,8 @@
 package com.nhamhealth.nhamhealth_api.service;
 
 import java.util.ArrayList;
+import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -74,8 +78,8 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
     public NvidiaFoodNutritionEstimationService(
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-120b}") String model,
-            @Value("${app.ai.nvidia.text-max-tokens:4096}") int maxTokens,
+            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-20b}") String model,
+            @Value("${app.ai.nvidia.nutrition-max-tokens:1000}") int maxTokens,
             @Value("${app.ai.nvidia.nutrition-reasoning-effort:${app.ai.nvidia.reasoning-effort:medium}}") String reasoningEffort) {
         this(baseUrl, apiKey, model, maxTokens, reasoningEffort, new ObjectMapper());
     }
@@ -87,7 +91,10 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
             int maxTokens,
             String reasoningEffort,
             ObjectMapper mapper) {
-        this.client = RestClient.builder().baseUrl(baseUrl).build();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(10));
+        requestFactory.setReadTimeout(Duration.ofSeconds(45));
+        this.client = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
         this.apiKey = apiKey;
         this.model = model;
         this.maxTokens = Math.max(800, Math.min(maxTokens, 4_096));
@@ -216,7 +223,8 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
 
     private String requestWithRetry(Map<String, Object> body) {
         RestClientResponseException lastError = null;
-        for (int attempt = 1; attempt <= 2; attempt++) {
+        ResourceAccessException lastNetworkError = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 return client.post()
                         .uri("/chat/completions")
@@ -229,13 +237,38 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
             } catch (RestClientResponseException error) {
                 lastError = error;
                 int status = error.getStatusCode().value();
-                if (attempt == 2 || (status != 502 && status != 503 && status != 504)) {
+                if (attempt == 3 || (status != 502 && status != 503 && status != 504)) {
                     throw error;
                 }
-                log.warn("Nutrition estimation returned HTTP {}; retrying once", status);
+                log.warn("Nutrition estimation returned HTTP {}; retrying request ({}/3)", status, attempt);
+                pauseBeforeRetry(attempt, error);
+            } catch (ResourceAccessException error) {
+                lastNetworkError = error;
+                if (attempt == 3 || isTimeout(error)) throw error;
+                log.warn("Nutrition estimation connection failed; retrying request ({}/3)", attempt);
+                pauseBeforeRetry(attempt, error);
             }
         }
+        if (lastNetworkError != null) throw lastNetworkError;
         throw lastError;
+    }
+
+    private boolean isTimeout(Throwable error) {
+        Throwable cause = error;
+        while (cause != null) {
+            if (cause instanceof SocketTimeoutException) return true;
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private void pauseBeforeRetry(int attempt, RuntimeException originalError) {
+        try {
+            Thread.sleep(400L * attempt);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw originalError;
+        }
     }
 
     private String safeMessage(Throwable error) {

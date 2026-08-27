@@ -89,8 +89,8 @@ class AiFoodView extends GetView<AiFoodController> {
                               icon: Icons.auto_awesome,
                               text:
                                   controller.isAnalyzing.value
-                                      ? 'Analyzing your food...'
-                                      : 'Analyze Food',
+                                      ? 'Analyzing food or drink...'
+                                      : 'Analyze Food or Drink',
                               action:
                                   controller.isAnalyzing.value
                                       ? null
@@ -249,7 +249,7 @@ class AiFoodView extends GetView<AiFoodController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AnimatedRevealText(
-                text: 'Know what is on your plate'.tr,
+                text: 'Know what you eat or drink'.tr,
                 duration: const Duration(milliseconds: 700),
                 style: const TextStyle(
                   color: Colors.white,

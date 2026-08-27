@@ -331,8 +331,12 @@ public class AiMealRecommendationService {
                     + " g protein toward today's remaining goal.";
         }
         if (lowEnergy) return "Provides practical energy for a " + mood.getMoodName() + " day.";
-        if (context.healthProfile().hasAgeHeightAndWeight()) {
-            return "Selected using your saved age, height, weight, and "
+        if (context.healthProfile().hasHeightAndWeight()) {
+            return "Selected using your saved height "
+                    + context.healthProfile().heightCm().stripTrailingZeros().toPlainString()
+                    + " cm, weight "
+                    + context.healthProfile().weightKg().stripTrailingZeros().toPlainString()
+                    + " kg, and "
                     + context.healthProfile().activityLevel() + " activity level.";
         }
         return "A balanced, varied option for your " + mood.getMoodName() + " mood.";
