@@ -147,6 +147,35 @@ void main() {
       contains('/uploads/original-avatar.jpg'),
     );
   });
+
+  test('sends fat and water when daily nutrition is added', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'userId': 7,
+          'email': 'user@example.com',
+          'fat': {'current': 14, 'goal': 78},
+          'water': {'current': 2, 'goal': 8},
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final repository = ProfileRepository(
+      authService: _AuthenticatedAuthService(),
+      client: client,
+    );
+
+    final dashboard = await repository.addDailyNutrition(fat: 14, water: 1.2);
+    final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
+
+    expect(body['fat'], 14);
+    expect(body['water'], 1.2);
+    expect(dashboard.fat?.current, 14);
+    expect(dashboard.water?.current, 2);
+  });
 }
 
 class _AuthenticatedAuthService extends AuthService {

@@ -16,6 +16,7 @@ public record ProfileDashboardResponse(
         BigDecimal weightKg,
         Progress calories,
         Progress protein,
+        Progress fat,
         Progress water,
         Progress fiber,
         Progress sugar,

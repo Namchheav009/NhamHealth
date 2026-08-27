@@ -36,6 +36,15 @@ class WellnessController extends GetxController {
           color: Color(0xFF00A651),
         ),
         const WellnessSummaryModel(
+          name: 'Fat',
+          current: '0',
+          target: '78',
+          unit: 'g',
+          percentage: 0,
+          icon: Icons.opacity_rounded,
+          color: Color(0xFFF43F5E),
+        ),
+        const WellnessSummaryModel(
           name: 'Water',
           current: '0',
           target: '8',
@@ -85,6 +94,11 @@ class WellnessController extends GetxController {
         'Protein',
         dashboard.protein?.current ?? 0,
         dashboard.protein?.goal ?? 120,
+      );
+      _setNutrient(
+        'Fat',
+        dashboard.fat?.current ?? 0,
+        dashboard.fat?.goal ?? 78,
       );
       _setNutrient(
         'Water',
@@ -195,11 +209,17 @@ class WellnessController extends GetxController {
   void addNutrition({
     required int calories,
     required double protein,
+    required double fat,
     required double sugar,
+    double water = 0,
+    double fiber = 0,
   }) {
     _incrementNutrient('Calories', calories.toDouble());
     _incrementNutrient('Protein', protein);
+    _incrementNutrient('Fat', fat);
     _incrementNutrient('Sugar', sugar);
+    _incrementNutrient('Water', water);
+    _incrementNutrient('Fiber', fiber);
   }
 
   void _incrementNutrient(String name, double amount) {

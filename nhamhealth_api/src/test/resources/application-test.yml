@@ -53,7 +53,7 @@ app:
       service-key: ""
       bucket: nhamhealth-images
   ai:
-    prompt-version: food-drink-vision-v4
+    prompt-version: food-drink-vision-v5
     food:
       confirmation-threshold: 0.75
       candidate-margin-threshold: 0.15

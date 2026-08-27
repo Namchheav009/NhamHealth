@@ -22,6 +22,9 @@ class DetectedFoodComponentModel {
     required this.portionConfidence,
     required this.preparationMethod,
     required this.visibleEvidence,
+    required this.componentType,
+    required this.liquidVolumeMl,
+    required this.beverageType,
     required this.databaseMatched,
     this.matchedFoodId,
     this.matchedFoodName,
@@ -44,6 +47,9 @@ class DetectedFoodComponentModel {
   final double portionConfidence;
   final String preparationMethod;
   final String visibleEvidence;
+  final String componentType;
+  final double liquidVolumeMl;
+  final String beverageType;
   final bool databaseMatched;
   final int? matchedFoodId;
   final String? matchedFoodName;
@@ -67,6 +73,9 @@ class DetectedFoodComponentModel {
         portionConfidence: _number(json['portionConfidence']),
         preparationMethod: json['preparationMethod']?.toString() ?? 'unknown',
         visibleEvidence: json['visibleEvidence']?.toString() ?? '',
+        componentType: json['componentType']?.toString() ?? 'food',
+        liquidVolumeMl: _number(json['liquidVolumeMl']),
+        beverageType: json['beverageType']?.toString() ?? 'none',
         databaseMatched: json['databaseMatched'] == true,
         matchedFoodId: _integer(json['matchedFoodId']),
         matchedFoodName: json['matchedFoodName']?.toString(),
@@ -90,6 +99,9 @@ class DetectedFoodComponentModel {
     'portionConfidence': portionConfidence,
     'preparationMethod': preparationMethod,
     'visibleEvidence': visibleEvidence,
+    'componentType': componentType,
+    'liquidVolumeMl': liquidVolumeMl,
+    'beverageType': beverageType,
     'databaseMatched': databaseMatched,
     'matchedFoodId': matchedFoodId,
     'matchedFoodName': matchedFoodName,

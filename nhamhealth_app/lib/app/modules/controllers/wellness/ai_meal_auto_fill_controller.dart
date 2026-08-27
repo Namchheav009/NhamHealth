@@ -32,6 +32,7 @@ class AiMealAutoFillController extends GetxController {
 
   double get totalCalories => foods.fold(0, (sum, item) => sum + item.calories);
   double get totalProtein => foods.fold(0, (sum, item) => sum + item.protein);
+  double get totalFat => foods.fold(0, (sum, item) => sum + item.fat);
   double get totalSugar => foods.fold(0, (sum, item) => sum + item.sugar);
 
   Future<void> analyzeText() async {
@@ -90,6 +91,7 @@ class AiMealAutoFillController extends GetxController {
       await profileRepository.addDailyNutrition(
         calories: totalCalories,
         protein: totalProtein,
+        fat: totalFat,
         sugar: totalSugar,
         aiRecommendation:
             'Meal auto-fill: ${foods.map((food) => food.name).join(', ')}',
@@ -106,12 +108,14 @@ class AiMealAutoFillController extends GetxController {
       wellnessController.addNutrition(
         calories: totalCalories.round(),
         protein: totalProtein,
+        fat: totalFat,
         sugar: totalSugar,
       );
       if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().addNutritionToToday(
           calories: totalCalories.round(),
           protein: totalProtein,
+          fat: totalFat,
         );
       }
       AppAlert.success(

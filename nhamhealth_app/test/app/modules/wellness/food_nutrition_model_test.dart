@@ -71,6 +71,9 @@ void main() {
           'portionConfidence': 0.66,
           'preparationMethod': 'steamed',
           'visibleEvidence': 'white rice covering half the plate',
+          'componentType': 'food',
+          'liquidVolumeMl': 0,
+          'beverageType': 'none',
           'databaseMatched': true,
           'matchedFoodId': 45,
           'matchedFoodName': 'Cooked Jasmine Rice',
@@ -111,6 +114,36 @@ void main() {
     expect(food.components.single.matchedFoodId, 45);
     expect(food.candidates.length, 2);
     expect(food.hasCompleteNutrition, isTrue);
+  });
+
+  test('parses drink classification and calculates plain-water volume', () {
+    final food = FoodNutritionModel.fromJson({
+      'name': 'Water and iced tea',
+      'type': 'drink',
+      'components': [
+        {
+          'name': 'Mineral water',
+          'estimatedAmount': 330,
+          'unit': 'ml',
+          'componentType': 'drink',
+          'liquidVolumeMl': 300,
+          'beverageType': 'plain_water',
+        },
+        {
+          'name': 'Iced tea',
+          'estimatedAmount': 250,
+          'unit': 'ml',
+          'componentType': 'drink',
+          'liquidVolumeMl': 210,
+          'beverageType': 'coffee_tea',
+        },
+      ],
+    });
+
+    expect(food.hasDrink, isTrue);
+    expect(food.drinkVolumeMl, 510);
+    expect(food.plainWaterVolumeMl, 300);
+    expect(food.isPlainWaterOnly, isFalse);
   });
 
   test('treats hybrid AI fallback nutrition as complete but estimated', () {
