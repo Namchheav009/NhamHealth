@@ -63,11 +63,12 @@ class HomeController extends GetxController {
       const Duration(seconds: 5),
       (_) => loadUnreadNotificationCount(),
     );
-    if (dashboard.value == null) {
-      loadDashboard();
-    } else {
+    if (dashboard.value != null) {
       _clearRecommendedMeals();
     }
+    // An initial dashboard is only a fast first-paint snapshot. Always refresh
+    // it so Home reflects nutrition saved before or during this session.
+    loadDashboard();
   }
 
   Future<void> loadUnreadNotificationCount() async {
@@ -142,13 +143,15 @@ class HomeController extends GetxController {
   Future<void> loadDashboard() async {
     try {
       isLoading.value = true;
-      dashboard.value = await repository.getHomeDashboard();
+      final requestedDate = DateTime(
+        selectedDay.value.year,
+        selectedDay.value.month,
+        selectedDay.value.day,
+      );
+      dashboard.value = await repository.getHomeDashboard(date: requestedDate);
       final value = dashboard.value;
       if (value != null) {
-        _summariesByDay.putIfAbsent(
-          _dayKey(DateTime.now()),
-          () => value.dailySummary,
-        );
+        _summariesByDay[_dayKey(requestedDate)] = value.dailySummary;
         _showSelectedDay();
       }
     } catch (_) {
@@ -311,8 +314,9 @@ class HomeController extends GetxController {
     Get.offNamed<void>(AppRoutes.settings);
   }
 
-  void openWellnessDetails() {
-    Get.toNamed(AppRoutes.wellness);
+  Future<void> openWellnessDetails() async {
+    await Get.toNamed<void>(AppRoutes.wellness);
+    await loadDashboard();
   }
 
   void openAiFoodAnalyzer() {

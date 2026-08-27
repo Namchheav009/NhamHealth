@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
+import 'package:nhamhealth_flutter/app/modules/controllers/assistant/assistant_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/models/assistant/assistant_message.dart';
+import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/app/modules/bindings/community/community_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
@@ -174,6 +178,43 @@ void main() {
     expect(
       tester.getCenter(chatbot).dx,
       greaterThan(tester.getCenter(settings).dx),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('chatbot opens the AI assistant page', (tester) async {
+    Get.put<AuthService>(AuthService());
+    addTearDown(Get.reset);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        getPages: AppPages.pages,
+        home: Scaffold(
+          bottomNavigationBar: SafeArea(
+            child: AppBottomNavigation(selectedIndex: 0, onSelect: (_) {}),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey<String>('nav-chatbot')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(AssistantView), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('assistant-suggested-questions')),
+      findsOneWidget,
+    );
+
+    Get.find<AssistantController>().messages.add(
+      const AssistantMessage(role: 'user', content: 'Another question'),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('assistant-suggested-questions')),
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });

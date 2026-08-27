@@ -46,9 +46,7 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           Obx(
             () => Column(
               children: List.generate(controller.nutrients.length, (index) {

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/home/daily_summary_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/home/home_dashboard_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/home/nutrition_progress_model.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
@@ -42,15 +45,14 @@ void main() {
     expect(find.text('Your Daily Wellness'), findsOneWidget);
     expect(find.text('Recommended Meals'), findsOneWidget);
 
-    final wellnessScroll = find.byKey(
-      const ValueKey<String>('home-wellness-scroll'),
+    expect(
+      find.byKey(const ValueKey<String>('home-wellness-scroll')),
+      findsNothing,
     );
     expect(
-      tester.widget<ListView>(wellnessScroll).scrollDirection,
-      Axis.horizontal,
+      find.byKey(const ValueKey<String>('home-wellness-cards')),
+      findsOneWidget,
     );
-    await tester.drag(wellnessScroll, const Offset(-500, 0));
-    await tester.pump(const Duration(milliseconds: 400));
     expect(
       find.byKey(const ValueKey<String>('home-wellness-sugar')),
       findsOneWidget,
@@ -140,6 +142,35 @@ void main() {
     expect(controller.dashboard.value!.dailySummary.calories.value, '0');
   });
 
+  test('dashboard refresh replaces stale wellness values', () async {
+    final repository = _RefreshingHomeRepository();
+    final controller = HomeController(repository: repository);
+
+    await controller.loadDashboard();
+    expect(controller.dashboard.value!.dailySummary.calories.value, '100');
+
+    await controller.loadDashboard();
+    expect(controller.dashboard.value!.dailySummary.calories.value, '250');
+    expect(repository.lastRequestedDate, isNotNull);
+    expect(repository.lastRequestedDate!.day, controller.selectedDay.value.day);
+  });
+
+  test('home startup refreshes a stale initial wellness snapshot', () async {
+    Get.put<AuthService>(_SessionAuthService());
+    final controller = HomeController(repository: _RefreshingHomeRepository());
+    controller.dashboard.value = HomeDashboardModel(
+      userName: 'User',
+      dailySummary: _summary('0'),
+      recommendedMeals: const [],
+    );
+
+    controller.onInit();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(controller.dashboard.value!.dailySummary.calories.value, '100');
+    controller.onClose();
+  });
+
   testWidgets('mood card fits its old UI row at maximum home text scale', (
     tester,
   ) async {
@@ -181,3 +212,47 @@ class _SessionAuthService extends AuthService {
   @override
   Future<AuthenticatedUser?> restoreSession() async => user;
 }
+
+class _RefreshingHomeRepository extends HomeRepository {
+  _RefreshingHomeRepository() : super(provider: HomeProvider());
+
+  var _requestCount = 0;
+  DateTime? lastRequestedDate;
+
+  @override
+  Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) async {
+    _requestCount++;
+    lastRequestedDate = date;
+    return HomeDashboardModel(
+      userName: 'User',
+      dailySummary: _summary(_requestCount == 1 ? '100' : '250'),
+      recommendedMeals: const [],
+    );
+  }
+}
+
+DailySummaryModel _summary(String calories) => DailySummaryModel(
+  calories: NutritionProgressModel(
+    title: 'Calories',
+    value: calories,
+    target: '2000',
+    progress: double.parse(calories) / 2000,
+    unit: 'kcal',
+  ),
+  protein: _emptyProgress('Protein', '120', 'g'),
+  water: _emptyProgress('Water', '8', 'glasses'),
+  fiber: _emptyProgress('Fiber', '25', 'g'),
+  sugar: _emptyProgress('Sugar', '50', 'g'),
+);
+
+NutritionProgressModel _emptyProgress(
+  String title,
+  String target,
+  String unit,
+) => NutritionProgressModel(
+  title: title,
+  value: '0',
+  target: target,
+  progress: 0,
+  unit: unit,
+);

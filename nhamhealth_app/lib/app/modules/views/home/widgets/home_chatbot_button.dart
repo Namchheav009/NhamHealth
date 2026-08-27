@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../bindings/assistant/assistant_binding.dart';
 import '../../../controllers/home/home_controller.dart';
+import '../../assistant/assistant_view.dart';
 
 class HomeChatbotButton extends GetView<HomeController> {
   const HomeChatbotButton({super.key});
@@ -12,14 +14,19 @@ class HomeChatbotButton extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Open AI Food Analyze'.tr,
+      label: 'Open AI Assistant'.tr,
       child: Tooltip(
-        message: 'Analyze food with AI'.tr,
+        message: 'Chat with AI Assistant'.tr,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             key: const ValueKey<String>('home-ai-food-analyze'),
-            onTap: controller.openAiFoodAnalyzer,
+            onTap:
+                () => Get.to<void>(
+                  () => const AssistantView(),
+                  binding: AssistantBinding(),
+                  transition: Transition.rightToLeft,
+                ),
             customBorder: const CircleBorder(),
             child: SizedBox(
               width: 72,
@@ -75,7 +82,7 @@ class HomeChatbotButton extends GetView<HomeController> {
                         ],
                       ),
                       child: const Icon(
-                        Icons.document_scanner_rounded,
+                        Icons.chat_bubble_rounded,
                         color: Colors.white,
                         size: 13,
                       ),
