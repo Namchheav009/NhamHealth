@@ -6,13 +6,9 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-<<<<<<< HEAD
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-=======
-import java.util.Objects;
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,10 +29,7 @@ import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
 @RestController
@@ -46,7 +39,6 @@ public class MealFavoriteApiController {
     private final MealFavoriteRepository favoriteRepository;
     private final MealRepository mealRepository;
     private final UserRepository userRepository;
-<<<<<<< HEAD
     private final ReviewRepository reviewRepository;
 
     public MealFavoriteApiController(MealFavoriteRepository favoriteRepository,
@@ -56,14 +48,6 @@ public class MealFavoriteApiController {
         this.mealRepository = mealRepository;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
-=======
-
-    public MealFavoriteApiController(MealFavoriteRepository favoriteRepository,
-            MealRepository mealRepository, UserRepository userRepository) {
-        this.favoriteRepository = favoriteRepository;
-        this.mealRepository = mealRepository;
-        this.userRepository = userRepository;
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     }
 
     @GetMapping
@@ -73,7 +57,6 @@ public class MealFavoriteApiController {
                 .findAllByUserUserIdOrderBySavedAtDesc(userId(jwt));
         if (favorites.isEmpty()) return List.of();
 
-<<<<<<< HEAD
         List<Integer> mealIds = favorites.stream()
                 .map(favorite -> favorite.getMeal().getMealId())
                 .toList();
@@ -88,10 +71,6 @@ public class MealFavoriteApiController {
                 .map(favorite -> toResponse(
                         favorite,
                         ratings.getOrDefault(favorite.getMeal().getMealId(), 0.0)))
-=======
-        return favorites.stream()
-                .map(this::toResponse)
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                 .toList();
     }
 
@@ -156,14 +135,10 @@ public class MealFavoriteApiController {
 
     private FavoriteMealResponse toResponse(MealFavorite favorite) {
         Meal meal = favorite.getMeal();
-<<<<<<< HEAD
         double rating = reviewRepository.findByMealMealId(meal.getMealId()).stream()
                 .mapToInt(review -> review.getRating() == null ? 0 : review.getRating())
                 .average().orElse(0);
         return toResponse(favorite, rating);
-=======
-        return toResponse(favorite, 0.0);
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     }
 
     private FavoriteMealResponse toResponse(MealFavorite favorite, double rating) {

@@ -54,10 +54,7 @@ import '../modules/views/community/community_page.dart';
 import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/bindings/community/community_binding.dart';
 import '../modules/bindings/community/community_post_detail_binding.dart';
-<<<<<<< HEAD
-=======
 import '../modules/views/recipes/my_recipes_view.dart';
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
 abstract class AppPages {
   AppPages._();
@@ -242,13 +239,10 @@ abstract class AppPages {
       binding: CommunityPostDetailBinding(),
       transition: Transition.rightToLeft,
     ),
-<<<<<<< HEAD
-=======
     GetPage<dynamic>(
       name: AppRoutes.myRecipes,
       page: () => const MyRecipesView(),
       transition: Transition.rightToLeft,
     ),
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
   ];
 }

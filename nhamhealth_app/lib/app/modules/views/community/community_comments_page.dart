@@ -531,14 +531,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               Icons.edit_outlined,
             ),
           const _CommentOption(
-<<<<<<< HEAD
             _DiscussionAction.share,
             'Share post',
             Icons.reply_rounded,
           ),
           const _CommentOption(
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             _DiscussionAction.report,
             'Report post',
             Icons.flag_outlined,
@@ -554,13 +551,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       await _editPost();
       return;
     }
-<<<<<<< HEAD
     if (action == _DiscussionAction.share) {
       await _showShareOptions();
       return;
     }
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     await Get.to<void>(
       () => CommunityReportPage(postId: _post.id, subject: 'post'),
     );
@@ -732,10 +726,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     post: _post,
     onLike: _togglePostLike,
     onComment: _focusComposer,
-<<<<<<< HEAD
     onShare: _showShareOptions,
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     onOptions: _showPostOptions,
     isLiking: _updatingPost,
   );
@@ -819,9 +810,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           const SizedBox(height: 13),
           _ImageCarousel(
             imageUrls:
-                _post.imageUrls.isNotEmpty
-                    ? _post.imageUrls
-                    : [_post.imageUrl],
+                _post.imageUrls.isNotEmpty ? _post.imageUrls : [_post.imageUrl],
           ),
         ],
         if (_post.likes > 0 || _post.comments > 0 || _post.shares > 0) ...[
@@ -1353,11 +1342,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   }
 }
 
-<<<<<<< HEAD
 enum _DiscussionAction { reply, report, delete, edit, share }
-=======
-enum _DiscussionAction { reply, report, delete, edit }
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
 class _DiscussionMetricDivider extends StatelessWidget {
   const _DiscussionMetricDivider();

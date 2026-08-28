@@ -103,7 +103,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: _recipes.length,
-                        separatorBuilder: (_, __) =>
+                        separatorBuilder: (_, _) =>
                             const SizedBox(height: 12),
                         itemBuilder: (_, index) {
                           final recipe = _recipes[index];

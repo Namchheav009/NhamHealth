@@ -23,10 +23,7 @@ import com.nhamhealth.nhamhealth_api.repository.PostLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostMediaRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostTagRepository;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.repository.ShareRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
@@ -68,10 +65,7 @@ class CommunityServiceCommentDeletionTests {
         private final PostLikeRepository likes = mock(PostLikeRepository.class);
         private final PostCommentRepository comments = mock(PostCommentRepository.class);
         private final CommentLikeRepository commentLikes = mock(CommentLikeRepository.class);
-<<<<<<< HEAD
         private final ShareRepository shares = mock(ShareRepository.class);
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         private final UserRepository users = mock(UserRepository.class);
         private final UserProfileRepository profiles = mock(UserProfileRepository.class);
         private final FollowRepository follows = mock(FollowRepository.class);
@@ -80,11 +74,7 @@ class CommunityServiceCommentDeletionTests {
         private final ProfileImageStorageService imageStorage = mock(ProfileImageStorageService.class);
         private final CommunityNotificationService notifications = mock(CommunityNotificationService.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
-<<<<<<< HEAD
                 commentLikes, shares, users, profiles, follows, postTags, tagTypes, imageStorage, notifications);
-=======
-                commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications);
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         private final PostComment comment = mock(PostComment.class);
 
         private Dependencies(int postOwnerId, int commentAuthorId) {

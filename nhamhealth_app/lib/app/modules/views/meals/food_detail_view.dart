@@ -122,15 +122,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             child: SizedBox(
               width: 260,
               height: 260,
-<<<<<<< HEAD
-              child: Image.asset(
-                'assets/images/food_detail/salad.png',
-                fit: BoxFit.contain,
-                alignment: Alignment.center,
-              ),
-=======
               child: _MealHeroImage(imageUrl: controller.meal?.image ?? ''),
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             ),
           ),
 
@@ -141,11 +133,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-<<<<<<< HEAD
-                  'fresh & Healthy'.tr,
-=======
                   controller.meal?.category ?? 'fresh & Healthy'.tr,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
@@ -158,13 +146,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
                 SizedBox(
                   width: 195,
                   child: Text(
-<<<<<<< HEAD
-                    'Mix salad\nVegetables'.tr,
-=======
                     controller.meal?.name ?? 'Mix salad\nVegetables'.tr,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                     style: const TextStyle(
                       fontSize: 30,
                       height: 1.08,
@@ -205,11 +189,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
 
                 _nutritionValue(
                   barColor: Color(0xFFB4FFD0),
-<<<<<<< HEAD
-                  value: '240',
-=======
                   value: '${controller.meal?.calories ?? 240}',
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                   label: 'Calories',
                 ),
 
@@ -268,13 +248,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
   // ============================================================
 
   Widget _buildQuickStats() {
-<<<<<<< HEAD
-    return const Row(
-=======
     final meal = controller.meal;
     final difficulty = meal?.difficulty;
     return Row(
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
       children: [
         Expanded(
           child: _FoodStatItem(
@@ -283,11 +259,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFE7F5EB),
             borderColor: Color(0xFFA8DDB9),
             title: 'Cooking time',
-<<<<<<< HEAD
-            value: '30 mins',
-=======
             value: '${meal?.cookingTimeMinutes ?? 30} mins',
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             valueColor: green,
           ),
         ),
@@ -301,13 +273,10 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFFFF9E8),
             borderColor: Color(0xFFFFC94A),
             title: 'Difficulty',
-<<<<<<< HEAD
-            value: 'Medium',
-=======
-            value: difficulty == null || difficulty.isEmpty
-                ? 'Medium'
-                : difficulty,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
+            value:
+                difficulty == null || difficulty.isEmpty
+                    ? 'Medium'
+                    : difficulty,
             valueColor: Color(0xFFFFB51B),
           ),
         ),
@@ -321,11 +290,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFE7F5EB),
             borderColor: Color(0xFFA8DDB9),
             title: 'Servings',
-<<<<<<< HEAD
-            value: '4 people',
-=======
             value: '${meal?.servings ?? 4} people',
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             valueColor: green,
           ),
         ),
@@ -526,8 +491,6 @@ class _FoodBackground extends StatelessWidget {
     );
   }
 }
-<<<<<<< HEAD
-=======
 
 class _MealHeroImage extends StatelessWidget {
   const _MealHeroImage({required this.imageUrl});
@@ -565,4 +528,3 @@ class _MealHeroImage extends StatelessWidget {
     alignment: Alignment.center,
   );
 }
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0

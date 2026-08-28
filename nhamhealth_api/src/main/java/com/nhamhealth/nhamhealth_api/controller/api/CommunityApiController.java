@@ -18,11 +18,8 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.dto.request.SharePostRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.SharePostToFeedRequest;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
 import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
 
@@ -147,7 +144,6 @@ public class CommunityApiController {
         return service.toggleCommentLike(userId(jwt), postId, commentId);
     }
 
-<<<<<<< HEAD
     @PostMapping("/posts/{postId}/share")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void share(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
@@ -164,8 +160,6 @@ public class CommunityApiController {
         return service.shareToFeed(userId(jwt), postId, message, visibility);
     }
 
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     @GetMapping("/people")
     public List<CommunityPersonResponse> people(@AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "discover") String view) {
