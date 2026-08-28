@@ -126,7 +126,10 @@ class ProfileView extends GetView<ProfileController> {
                                   isLiking:
                                       controller.likingPostIds.contains(post.id),
                                   onComment: () => _showComments(post),
+<<<<<<< HEAD
                                   onShare: () => _showShare(post),
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                                 ),
                               ),
                             ),
