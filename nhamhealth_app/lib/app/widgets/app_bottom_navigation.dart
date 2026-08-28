@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+<<<<<<< HEAD
 import 'package:lottie/lottie.dart';
 
 import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/views/assistant/assistant_view.dart';
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
 /// Shared four-destination navigation used by the main app pages.
 ///
+<<<<<<< HEAD
 /// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
 /// AI assistant is a separate action positioned to the right of the bar.
+=======
+/// Indexes are Home (0), Meals (1), Community (2), and Settings (4).
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     super.key,
@@ -32,7 +39,11 @@ class AppBottomNavigation extends StatelessWidget {
           children: [
             Positioned(
               left: 0,
+<<<<<<< HEAD
               right: 80,
+=======
+              right: 0,
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
               bottom: 0,
               height: 72,
               child: PhysicalShape(
@@ -104,7 +115,10 @@ class AppBottomNavigation extends StatelessWidget {
                 ),
               ),
             ),
+<<<<<<< HEAD
             Positioned(right: 0, bottom: 0, child: const _ChatbotButton()),
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
           ],
         ),
       ),
@@ -284,6 +298,7 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+<<<<<<< HEAD
 
 class _ChatbotButton extends StatelessWidget {
   const _ChatbotButton();
@@ -375,3 +390,5 @@ class _ChatbotButton extends StatelessWidget {
     ),
   );
 }
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0

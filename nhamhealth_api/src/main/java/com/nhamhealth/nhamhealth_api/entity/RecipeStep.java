@@ -10,7 +10,14 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
+<<<<<<< HEAD
 @Table(name = "recipe_steps")
+=======
+@Table(name = "recipe_steps", indexes = {
+    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_id", columnList = "recipe_id"),
+    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_order", columnList = "recipe_id, step_number")
+})
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 public class RecipeStep {
 
     @Id
@@ -19,9 +26,23 @@ public class RecipeStep {
     private Integer stepId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+<<<<<<< HEAD
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 
+=======
+    @JoinColumn(name = "meal_id")
+    private Meal meal;
+
+    /**
+     * Community recipe owner. {@code meal} remains only for existing admin
+     * meal instructions; a step belongs to exactly one of meal or recipe.
+     */
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
+
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     @Column(name = "step_number", nullable = false)
     private Integer stepNumber;
 
@@ -49,6 +70,17 @@ public class RecipeStep {
         this.meal = meal;
     }
 
+<<<<<<< HEAD
+=======
+    public Recipe getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
+    }
+
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     public Integer getStepNumber() {
         return stepNumber;
     }

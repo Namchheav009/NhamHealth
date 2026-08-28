@@ -64,12 +64,21 @@
                     <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
                 </a>
 
+<<<<<<< HEAD
                 <a class="stat-card stat-link" th:href="@{/admin/reviews}">
                     <div class="stat-icon teal"><i class="bi bi-star-fill"></i></div>
                     <div class="stat-content">
                         <span>Meal reviews</span>
                         <strong th:text="${#numbers.formatInteger(dashboard.totalReviews(), 1, 'COMMA')}">0</strong>
                         <small><b th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}">0</b> unread notifications</small>
+=======
+                <a class="stat-card stat-link" th:href="@{/admin/notifications}">
+                    <div class="stat-icon teal"><i class="bi bi-bell-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Unread notifications</span>
+                        <strong th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}">0</strong>
+                        <small>Community and account updates</small>
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                     </div>
                     <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
                 </a>
