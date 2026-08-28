@@ -89,6 +89,7 @@ flutter:
     - assets/images/meals/slideshow1.png
     - assets/images/meals/slideshow2.png
     - assets/images/meals/slideshow3.png
+    - assets/images/food_detail/
 
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png

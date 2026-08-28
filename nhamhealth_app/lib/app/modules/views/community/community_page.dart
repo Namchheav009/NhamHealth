@@ -504,6 +504,12 @@ class CommunityPage extends GetView<CommunityController> {
               authorAvatarUrl:
                   controller.authenticatedUser.value?.profileImageUrl ?? '',
             ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Get.toNamed<void>(AppRoutes.myRecipes),
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text('Share a recipe'),
+            ),
             _feedFilters(),
             const SizedBox(height: 14),
             if (controller.visiblePosts.isEmpty)
@@ -630,7 +636,6 @@ class CommunityPage extends GetView<CommunityController> {
       post: post,
       onLike: () => controller.togglePostLike(post),
       onComment: () => _showComments(post),
-      onShare: () => _showShareOptions(post),
       onOptions: () => _showPostOptions(post),
     ),
   );

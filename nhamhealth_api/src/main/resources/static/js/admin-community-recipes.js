@@ -1,0 +1,9 @@
+(() => {
+  const modal = document.getElementById('promoteModal'), form = document.getElementById('promoteForm'); let recipeId = null;
+  const csrf = document.querySelector('meta[name="_csrf"]')?.content, csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+  const close = () => { modal.classList.remove('show'); modal.setAttribute('aria-hidden', 'true'); recipeId = null; form.reset(); };
+  document.getElementById('recipeSearch').addEventListener('input', event => { const term = event.target.value.trim().toLowerCase(); document.querySelectorAll('#recipeRows tr[data-search]').forEach(row => row.hidden = term && !row.dataset.search.includes(term)); });
+  document.querySelectorAll('.promote-button').forEach(button => button.addEventListener('click', () => { recipeId = button.dataset.recipeId; document.getElementById('promoteText').textContent = `Add “${button.dataset.recipeName}” to the Meal catalog.`; modal.classList.add('show'); modal.setAttribute('aria-hidden', 'false'); }));
+  document.getElementById('closePromote').onclick = close; document.getElementById('cancelPromote').onclick = close;
+  form.addEventListener('submit', async event => { event.preventDefault(); const categoryId = document.getElementById('promoteCategory').value; if (!categoryId) return; const response = await fetch(`/admin/community-recipes/${recipeId}/promote?categoryId=${encodeURIComponent(categoryId)}`, { method: 'POST', headers: csrf && csrfHeader ? { [csrfHeader]: csrf } : {} }); const body = await response.json().catch(() => ({})); if (!response.ok) return window.adminAlerts?.error(body.message || 'Promotion failed.') ?? window.alert(body.message || 'Promotion failed.'); await (window.adminAlerts?.success('Recipe promoted', 'The recipe is now available in Meals.') ?? Promise.resolve()); window.location.reload(); });
+})();

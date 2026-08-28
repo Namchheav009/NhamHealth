@@ -531,11 +531,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               Icons.edit_outlined,
             ),
           const _CommentOption(
-            _DiscussionAction.share,
-            'Share post',
-            Icons.reply_rounded,
-          ),
-          const _CommentOption(
             _DiscussionAction.report,
             'Report post',
             Icons.flag_outlined,
@@ -549,10 +544,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (!mounted || action == null) return;
     if (action == _DiscussionAction.edit) {
       await _editPost();
-      return;
-    }
-    if (action == _DiscussionAction.share) {
-      await _showShareOptions();
       return;
     }
     await Get.to<void>(
@@ -726,7 +717,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     post: _post,
     onLike: _togglePostLike,
     onComment: _focusComposer,
-    onShare: _showShareOptions,
     onOptions: _showPostOptions,
     isLiking: _updatingPost,
   );
@@ -1344,7 +1334,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   }
 }
 
-enum _DiscussionAction { reply, report, delete, edit, share }
+enum _DiscussionAction { reply, report, delete, edit }
 
 class _DiscussionMetricDivider extends StatelessWidget {
   const _DiscussionMetricDivider();

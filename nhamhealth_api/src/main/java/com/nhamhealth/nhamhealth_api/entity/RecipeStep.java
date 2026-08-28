@@ -10,7 +10,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "recipe_steps")
+@Table(name = "recipe_steps", indexes = {
+    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_id", columnList = "recipe_id"),
+    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_order", columnList = "recipe_id, step_number")
+})
 public class RecipeStep {
 
     @Id
@@ -19,8 +22,16 @@ public class RecipeStep {
     private Integer stepId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "meal_id", nullable = false)
+    @JoinColumn(name = "meal_id")
     private Meal meal;
+
+    /**
+     * Community recipe owner. {@code meal} remains only for existing admin
+     * meal instructions; a step belongs to exactly one of meal or recipe.
+     */
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
 
     @Column(name = "step_number", nullable = false)
     private Integer stepNumber;
@@ -47,6 +58,14 @@ public class RecipeStep {
 
     public void setMeal(Meal meal) {
         this.meal = meal;
+    }
+
+    public Recipe getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
     }
 
     public Integer getStepNumber() {

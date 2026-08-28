@@ -122,11 +122,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             child: SizedBox(
               width: 260,
               height: 260,
-              child: Image.asset(
-                'assets/images/food_detail/salad.png',
-                fit: BoxFit.contain,
-                alignment: Alignment.center,
-              ),
+              child: _MealHeroImage(imageUrl: controller.meal?.image ?? ''),
             ),
           ),
 
@@ -137,7 +133,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'fresh & Healthy'.tr,
+                  controller.meal?.category ?? 'fresh & Healthy'.tr,
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
@@ -150,7 +146,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
                 SizedBox(
                   width: 195,
                   child: Text(
-                    'Mix salad\nVegetables'.tr,
+                    controller.meal?.name ?? 'Mix salad\nVegetables'.tr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 30,
                       height: 1.08,
@@ -191,7 +189,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
 
                 _nutritionValue(
                   barColor: Color(0xFFB4FFD0),
-                  value: '240',
+                  value: '${controller.meal?.calories ?? 240}',
                   label: 'Calories',
                 ),
 
@@ -250,7 +248,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
   // ============================================================
 
   Widget _buildQuickStats() {
-    return const Row(
+    final meal = controller.meal;
+    final difficulty = meal?.difficulty;
+    return Row(
       children: [
         Expanded(
           child: _FoodStatItem(
@@ -259,7 +259,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFE7F5EB),
             borderColor: Color(0xFFA8DDB9),
             title: 'Cooking time',
-            value: '30 mins',
+            value: '${meal?.cookingTimeMinutes ?? 30} mins',
             valueColor: green,
           ),
         ),
@@ -273,7 +273,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFFFF9E8),
             borderColor: Color(0xFFFFC94A),
             title: 'Difficulty',
-            value: 'Medium',
+            value: difficulty == null || difficulty.isEmpty
+                ? 'Medium'
+                : difficulty,
             valueColor: Color(0xFFFFB51B),
           ),
         ),
@@ -287,7 +289,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             iconBackground: Color(0xFFE7F5EB),
             borderColor: Color(0xFFA8DDB9),
             title: 'Servings',
-            value: '4 people',
+            value: '${meal?.servings ?? 4} people',
             valueColor: green,
           ),
         ),
@@ -487,4 +489,41 @@ class _FoodBackground extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MealHeroImage extends StatelessWidget {
+  const _MealHeroImage({required this.imageUrl});
+
+  final String imageUrl;
+
+  static const _fallbackImage = 'assets/images/food_detail/salad.png';
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        errorBuilder: (_, _, _) => _fallback(),
+      );
+    }
+
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        errorBuilder: (_, _, _) => _fallback(),
+      );
+    }
+
+    return _fallback();
+  }
+
+  Widget _fallback() => Image.asset(
+    _fallbackImage,
+    fit: BoxFit.contain,
+    alignment: Alignment.center,
+  );
 }

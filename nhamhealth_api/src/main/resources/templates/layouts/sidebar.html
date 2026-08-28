@@ -32,7 +32,6 @@
         <a class="nav-link" th:classappend="${activePage == 'serving-sizes'} ? ' active' : ''" th:href="@{/admin/serving-sizes}"><i class="bi bi-cup-straw"></i><span>Serving Sizes</span></a>
         <a class="nav-link" th:classappend="${activePage == 'moods'} ? ' active' : ''" th:href="@{/admin/moods}"><i class="bi bi-emoji-smile"></i><span>Moods</span></a>
         <a class="nav-link" th:classappend="${activePage == 'favorites'} ? ' active' : ''" th:href="@{/admin/favorites}"><i class="bi bi-heart-fill"></i><span>Favorites</span></a>
-        <a class="nav-link" th:classappend="${activePage == 'reviews'} ? ' active' : ''" th:href="@{/admin/reviews}"><i class="bi bi-star-fill"></i><span>Reviews</span></a>
         </div>
 
         <button class="nav-section" type="button" aria-expanded="false" aria-controls="health-menu">
@@ -58,18 +57,12 @@
         </button>
         <div class="nav-group" id="community-menu">
         <a class="nav-link" th:classappend="${activePage == 'posts'} ? ' active' : ''" th:href="@{/admin/posts}"><i class="bi bi-file-post"></i><span>Posts</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'community-recipes'} ? ' active' : ''" th:href="@{/admin/community-recipes}"><i class="bi bi-journal-richtext"></i><span>Community Recipes</span></a>
         <a class="nav-link" th:classappend="${activePage == 'comments'} ? ' active' : ''" th:href="@{/admin/comments}"><i class="bi bi-chat-left-text"></i><span>Comments</span></a>
         <a class="nav-link" th:classappend="${activePage == 'post-likes'} ? ' active' : ''" th:href="@{/admin/post-likes}"><i class="bi bi-heart"></i><span>Post Likes</span></a>
         <a class="nav-link" th:classappend="${activePage == 'reports'} ? ' active' : ''" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
         <a class="nav-link" th:classappend="${activePage == 'follows'} ? ' active' : ''" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
         <a class="nav-link" th:classappend="${activePage == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
-        </div>
-
-        <button class="nav-section" type="button" aria-expanded="false" aria-controls="messaging-menu">
-            <span>Messaging</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
-        </button>
-        <div class="nav-group" id="messaging-menu">
-        <a class="nav-link" th:classappend="${activePage == 'chats'} ? ' active' : ''" th:href="@{/admin/chats}"><i class="bi bi-chat-dots"></i><span>Chats</span></a>
         </div>
 
         <button class="nav-section" type="button" aria-expanded="false" aria-controls="system-menu">

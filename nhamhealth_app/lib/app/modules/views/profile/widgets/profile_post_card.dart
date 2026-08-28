@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import '../../../../../config/api_config.dart';
 import '../../../models/community/community_post.dart';
-import '../../community/widgets/community_shared_post_card.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -17,7 +16,6 @@ class ProfilePostCard extends StatelessWidget {
     required this.onLike,
     this.isLiking = false,
     required this.onComment,
-    required this.onShare,
     super.key,
   });
 
@@ -31,7 +29,6 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onLike;
   final bool isLiking;
   final VoidCallback onComment;
-  final VoidCallback onShare;
 
   static const green = Color(0xFF009B46);
 
@@ -135,11 +132,6 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-          if (post.sharedPost != null) ...[
-            const SizedBox(height: 14),
-            CommunitySharedPostCard(post: post.sharedPost!),
-          ],
-
           if (post.imageBytes != null ||
               post.imageUrls.isNotEmpty ||
               post.imageUrl.isNotEmpty) ...[
@@ -151,7 +143,7 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-          if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
+          if (post.likes > 0 || post.comments > 0) ...[
             const SizedBox(height: 11),
             _EngagementSummary(post: post),
           ],
@@ -180,13 +172,6 @@ class ProfilePostCard extends StatelessWidget {
                   value: 'Comment',
                   color: const Color(0xFF69756D),
                   onTap: onComment,
-                ),
-                const _ProfileMetricDivider(),
-                _ProfilePostMetric(
-                  icon: Icons.reply_rounded,
-                  value: 'Share',
-                  color: const Color(0xFF69756D),
-                  onTap: onShare,
                 ),
               ],
             ),

@@ -54,6 +54,7 @@ import '../modules/views/community/community_page.dart';
 import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/bindings/community/community_binding.dart';
 import '../modules/bindings/community/community_post_detail_binding.dart';
+import '../modules/views/recipes/my_recipes_view.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -236,6 +237,11 @@ abstract class AppPages {
       name: AppRoutes.communityPost,
       page: () => const CommunityPostDetailPage(),
       binding: CommunityPostDetailBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.myRecipes,
+      page: () => const MyRecipesView(),
       transition: Transition.rightToLeft,
     ),
   ];

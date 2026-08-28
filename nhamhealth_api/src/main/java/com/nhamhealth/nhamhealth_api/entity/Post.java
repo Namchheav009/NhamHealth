@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "posts", indexes = {
     @jakarta.persistence.Index(name = "idx_posts_user_id", columnList = "user_id"),
     @jakarta.persistence.Index(name = "idx_posts_tagged_meal_id", columnList = "tagged_meal_id"),
+    @jakarta.persistence.Index(name = "idx_posts_recipe_id", columnList = "recipe_id"),
     @jakarta.persistence.Index(name = "idx_posts_updated_at_created_at", columnList = "updated_at, created_at")
 })
 public class Post {
@@ -34,9 +36,10 @@ public class Post {
     @JoinColumn(name = "tagged_meal_id")
     private Meal taggedMeal;
 
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "shared_post_id")
-    private Post sharedPost;
+    /** The recipe displayed by this community post, when the post is recipe-based. */
+    @OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "recipe_id", unique = true)
+    private Recipe recipe;
 
     @Column(name = "caption")
     private String caption;
@@ -82,12 +85,12 @@ public class Post {
         this.taggedMeal = taggedMeal;
     }
 
-    public Post getSharedPost() {
-        return sharedPost;
+    public Recipe getRecipe() {
+        return recipe;
     }
 
-    public void setSharedPost(Post sharedPost) {
-        this.sharedPost = sharedPost;
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
     }
 
     public String getCaption() {

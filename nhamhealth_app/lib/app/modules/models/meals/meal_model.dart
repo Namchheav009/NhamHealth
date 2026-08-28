@@ -39,7 +39,7 @@ class MealModel {
       id: id.toInt(),
       name: name,
       calories: (json['calories'] as num?)?.round() ?? 0,
-      image: rawImage.startsWith('/') ? '$baseUrl$rawImage' : rawImage,
+      image: _resolveImageUrl(rawImage, baseUrl),
       category: (json['category'] as String? ?? 'Uncategorized').trim(),
       categoryId: (json['categoryId'] as num?)?.toInt() ?? 0,
       description: (json['description'] as String? ?? '').trim(),
@@ -47,5 +47,16 @@ class MealModel {
       difficulty: (json['difficulty'] as String? ?? '').trim(),
       servings: (json['servings'] as num?)?.toInt(),
     );
+  }
+
+  static String _resolveImageUrl(String image, String baseUrl) {
+    if (image.isEmpty ||
+        image.startsWith('http://') ||
+        image.startsWith('https://') ||
+        image.startsWith('assets/')) {
+      return image;
+    }
+    final separator = image.startsWith('/') ? '' : '/';
+    return '$baseUrl$separator$image';
   }
 }

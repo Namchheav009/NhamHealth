@@ -161,20 +161,11 @@ public class ReportAdminController {
         if (post.getCaption() != null && !post.getCaption().isBlank()) {
             return post.getCaption();
         }
-        Post sharedPost = post.getSharedPost();
-        if (sharedPost != null && sharedPost.getCaption() != null && !sharedPost.getCaption().isBlank()) {
-            return "Shared post: " + sharedPost.getCaption();
-        }
         return "This post has no written caption. Review any attached images before taking action.";
     }
 
     private List<String> imageUrlsFor(Post post) {
-        List<String> imageUrls = mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
-                .map(PostMedia::getMediaUrl).toList();
-        if (!imageUrls.isEmpty() || post.getSharedPost() == null) {
-            return imageUrls;
-        }
-        return mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getSharedPost().getPostId()).stream()
+        return mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
                 .map(PostMedia::getMediaUrl).toList();
     }
 }
