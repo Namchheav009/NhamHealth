@@ -46,97 +46,102 @@ class ProfileView extends GetView<ProfileController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  _buildTopBar(),
-                  Obx(() {
-                    final message = controller.errorMessage.value;
-                    if (message == null) return const SizedBox.shrink();
-                    return _ProfileErrorBanner(
-                      message: message,
-                      onRetry: controller.loadProfile,
-                    );
-                  }),
-                  const SizedBox(height: AppSpacing.topBarBottom),
-                  Obx(
-                    () => LoadingContentTransition(
-                      isLoading:
-                          controller.isLoading.value &&
-                          controller.dashboard.value == null,
-                      loading: const PageSkeleton.profile(),
-                      content: Column(
-                        children: [
-                          const ProfileHeader(),
-                          const SizedBox(height: 14),
-                          const HealthStatsCard(),
-                          const SizedBox(height: 14),
-                          const InsightCard(),
-                          const SizedBox(height: 22),
-                          CommunityComposerCard(
-                            onTap: _showCreatePost,
-                            authorAvatarUrl:
-                                controller.authenticatedUser.value?.profileImageUrl ??
-                                '',
-                          ),
-                          Row(
+                      _buildTopBar(),
+                      Obx(() {
+                        final message = controller.errorMessage.value;
+                        if (message == null) return const SizedBox.shrink();
+                        return _ProfileErrorBanner(
+                          message: message,
+                          onRetry: controller.loadProfile,
+                        );
+                      }),
+                      const SizedBox(height: AppSpacing.topBarBottom),
+                      Obx(
+                        () => LoadingContentTransition(
+                          isLoading:
+                              controller.isLoading.value &&
+                              controller.dashboard.value == null,
+                          loading: const PageSkeleton.profile(),
+                          content: Column(
                             children: [
-                              const Text(
-                                'My posts',
-                                style: TextStyle(
-                                  color: Color(0xFF26322B),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              const ProfileHeader(),
+                              const SizedBox(height: 14),
+                              const HealthStatsCard(),
+                              const SizedBox(height: 14),
+                              const InsightCard(),
+                              const SizedBox(height: 22),
+                              CommunityComposerCard(
+                                onTap: _showCreatePost,
+                                authorAvatarUrl:
+                                    controller
+                                        .authenticatedUser
+                                        .value
+                                        ?.profileImageUrl ??
+                                    '',
                               ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF7EE),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${controller.posts.length} ${controller.posts.length == 1 ? 'post' : 'posts'}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF178344),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                              Row(
+                                children: [
+                                  const Text(
+                                    'My posts',
+                                    style: TextStyle(
+                                      color: Color(0xFF26322B),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEAF7EE),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${controller.posts.length} ${controller.posts.length == 1 ? 'post' : 'posts'}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF178344),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              if (controller.posts.isEmpty)
+                                const _EmptyPosts()
+                              else
+                                ...controller.posts.map(
+                                  (post) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ProfilePostCard(
+                                      post: post,
+                                      authorName: controller.name.value,
+                                      authorAvatarUrl:
+                                          controller
+                                              .authenticatedUser
+                                              .value
+                                              ?.profileImageUrl ??
+                                          '',
+                                      membership: controller.membership.value,
+                                      onEdit: () => _showEditPost(post),
+                                      onDelete: () => _confirmDeletePost(post),
+                                      onLike:
+                                          () => controller.togglePostLike(post),
+                                      isLiking: controller.likingPostIds
+                                          .contains(post.id),
+                                      onComment: () => _showComments(post),
+                                      onShare: () => _showShare(post),
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          if (controller.posts.isEmpty)
-                            const _EmptyPosts()
-                          else
-                            ...controller.posts.map(
-                              (post) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: ProfilePostCard(
-                                  post: post,
-                                  authorName: controller.name.value,
-                                  authorAvatarUrl:
-                                      controller.authenticatedUser.value?.profileImageUrl ?? '',
-                                  membership: controller.membership.value,
-                                  onEdit: () => _showEditPost(post),
-                                  onDelete: () => _confirmDeletePost(post),
-                                  onLike: () => controller.togglePostLike(post),
-                                  isLiking:
-                                      controller.likingPostIds.contains(post.id),
-                                  onComment: () => _showComments(post),
-<<<<<<< HEAD
-                                  onShare: () => _showShare(post),
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
-                                ),
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
                     ],
                   ),
                 ),
@@ -163,16 +168,17 @@ class ProfileView extends GetView<ProfileController> {
         post: post,
         authorName: user?.displayName ?? post.author,
         authorAvatarUrl: user?.profileImageUrl ?? post.authorAvatarUrl,
-        onSubmit: (draft) => controller.updatePost(
-          post: post,
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          removeImage: draft.removeImage,
-          tagIds: draft.tagIds,
-        ),
+        onSubmit:
+            (draft) => controller.updatePost(
+              post: post,
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              removeImage: draft.removeImage,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -194,7 +200,10 @@ class ProfileView extends GetView<ProfileController> {
                 children: [
                   Icon(Icons.edit_rounded, color: Color(0xFF009B46)),
                   SizedBox(width: 10),
-                  Text('Edit post', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  Text(
+                    'Edit post',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -202,7 +211,10 @@ class ProfileView extends GetView<ProfileController> {
                 controller: description,
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: _postInput('What would you like to share?', alignLabelWithHint: true),
+                decoration: _postInput(
+                  'What would you like to share?',
+                  alignLabelWithHint: true,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -213,7 +225,10 @@ class ProfileView extends GetView<ProfileController> {
                   FilledButton(
                     onPressed: () async {
                       if (description.text.trim().isEmpty) {
-                        Get.snackbar('Add your message', 'A post needs a message.');
+                        Get.snackbar(
+                          'Add your message',
+                          'A post needs a message.',
+                        );
                         return;
                       }
                       try {
@@ -222,12 +237,17 @@ class ProfileView extends GetView<ProfileController> {
                           description: description.text,
                         );
                         Get.back<void>();
-                        Get.snackbar('Post updated', 'Your changes have been saved.');
+                        Get.snackbar(
+                          'Post updated',
+                          'Your changes have been saved.',
+                        );
                       } on Object catch (error) {
                         Get.snackbar('Could not update post', error.toString());
                       }
                     },
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF009B46)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF009B46),
+                    ),
                     child: const Text('Save changes'),
                   ),
                 ],
@@ -244,12 +264,19 @@ class ProfileView extends GetView<ProfileController> {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Delete this post?'),
-        content: const Text('This will remove the post from your profile and Community. You cannot undo this action.'),
+        content: const Text(
+          'This will remove the post from your profile and Community. You cannot undo this action.',
+        ),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFD94545)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD94545),
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -269,22 +296,24 @@ class ProfileView extends GetView<ProfileController> {
       () => CommunityCommentsPage(
         post: post,
         onPostChanged: controller.posts.refresh,
-        onShareToFeed: (message, visibility) => controller.sharePostToFeed(
-          post,
-          message: message,
-          visibility: visibility,
-        ),
+        onShareToFeed:
+            (message, visibility) => controller.sharePostToFeed(
+              post,
+              message: message,
+              visibility: visibility,
+            ),
         canEdit: true,
-        onEditPost: (draft) => controller.updatePost(
-          post: post,
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          removeImage: draft.removeImage,
-          tagIds: draft.tagIds,
-        ),
+        onEditPost:
+            (draft) => controller.updatePost(
+              post: post,
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              removeImage: draft.removeImage,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -327,11 +356,12 @@ class ProfileView extends GetView<ProfileController> {
         post: post,
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
-        onShare: (message, visibility) => controller.sharePostToFeed(
-          post,
-          message: message,
-          visibility: visibility,
-        ),
+        onShare:
+            (message, visibility) => controller.sharePostToFeed(
+              post,
+              message: message,
+              visibility: visibility,
+            ),
       ),
       transition: Transition.rightToLeft,
     );
@@ -347,66 +377,90 @@ class ProfileView extends GetView<ProfileController> {
     final selectedIds = <String>{};
     await Get.bottomSheet<void>(
       StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Share with friends', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 10),
-                if (controller.friends.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Text('Add friends before sharing posts privately.'),
-                  )
-                else
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 280),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.friends.length,
-                      itemBuilder: (context, index) {
-                        final friend = controller.friends[index];
-                        return CheckboxListTile(
-                          value: selectedIds.contains(friend.id),
-                          title: Text(friend.name),
-                          onChanged: (selected) => setSheetState(() {
-                            selected == true ? selectedIds.add(friend.id) : selectedIds.remove(friend.id);
-                          }),
-                        );
-                      },
-                    ),
-                  ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: selectedIds.isEmpty
-                        ? null
-                        : () async {
-                            try {
-                              await controller.sharePost(post, recipientIds: selectedIds.toList());
-                              Get.back<void>();
-                              Get.snackbar('Post shared', 'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.');
-                            } on Object catch (error) {
-                              Get.snackbar('Could not share post', error.toString());
-                            }
-                          },
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Send'),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF009B46)),
-                  ),
+        builder:
+            (context, setSheetState) => SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-              ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Share with friends',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (controller.friends.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'Add friends before sharing posts privately.',
+                        ),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 280),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: controller.friends.length,
+                          itemBuilder: (context, index) {
+                            final friend = controller.friends[index];
+                            return CheckboxListTile(
+                              value: selectedIds.contains(friend.id),
+                              title: Text(friend.name),
+                              onChanged:
+                                  (selected) => setSheetState(() {
+                                    selected == true
+                                        ? selectedIds.add(friend.id)
+                                        : selectedIds.remove(friend.id);
+                                  }),
+                            );
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed:
+                            selectedIds.isEmpty
+                                ? null
+                                : () async {
+                                  try {
+                                    await controller.sharePost(
+                                      post,
+                                      recipientIds: selectedIds.toList(),
+                                    );
+                                    Get.back<void>();
+                                    Get.snackbar(
+                                      'Post shared',
+                                      'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
+                                    );
+                                  } on Object catch (error) {
+                                    Get.snackbar(
+                                      'Could not share post',
+                                      error.toString(),
+                                    );
+                                  }
+                                },
+                        icon: const Icon(Icons.send_rounded),
+                        label: const Text('Send'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF009B46),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -419,14 +473,15 @@ class ProfileView extends GetView<ProfileController> {
       () => CommunityPostEditorPage(
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
-        onSubmit: (draft) => controller.addPost(
-          description: draft.description,
-          imageBytes: draft.imageBytes,
-          visibility: draft.visibility,
-          allowComments: draft.allowComments,
-          allowReplies: draft.allowReplies,
-          tagIds: draft.tagIds,
-        ),
+        onSubmit:
+            (draft) => controller.addPost(
+              description: draft.description,
+              imageBytes: draft.imageBytes,
+              visibility: draft.visibility,
+              allowComments: draft.allowComments,
+              allowReplies: draft.allowReplies,
+              tagIds: draft.tagIds,
+            ),
       ),
       transition: Transition.rightToLeft,
     );

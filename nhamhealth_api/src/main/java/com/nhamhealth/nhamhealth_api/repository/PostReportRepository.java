@@ -13,19 +13,11 @@ import com.nhamhealth.nhamhealth_api.entity.PostReport;
 /** Data access for the community moderation queue. */
 public interface PostReportRepository extends JpaRepository<PostReport, Integer> {
 
-<<<<<<< HEAD
     @EntityGraph(attributePaths = {"post", "post.user", "post.sharedPost", "post.sharedPost.user", "comment", "comment.user",
             "reportedByUser", "reportReason", "reviewedByUser"})
     List<PostReport> findAllByOrderByCreatedAtDesc();
 
     @EntityGraph(attributePaths = {"post", "post.user", "post.sharedPost", "post.sharedPost.user", "comment", "comment.user",
-=======
-    @EntityGraph(attributePaths = {"post", "post.user", "comment", "comment.user",
-            "reportedByUser", "reportReason", "reviewedByUser"})
-    List<PostReport> findAllByOrderByCreatedAtDesc();
-
-    @EntityGraph(attributePaths = {"post", "post.user", "comment", "comment.user",
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             "reportedByUser", "reportReason", "reviewedByUser"})
     Optional<PostReport> findByReportId(Integer reportId);
 

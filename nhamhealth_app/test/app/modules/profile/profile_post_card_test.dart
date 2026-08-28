@@ -37,11 +37,7 @@ void main() {
                   onDelete: _noop,
                   onLike: _noop,
                   onComment: _noop,
-<<<<<<< HEAD
                   onShare: _noop,
-=======
-                  // onShare: _noop,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                 ),
               ),
             ),
@@ -90,11 +86,7 @@ void main() {
               onDelete: _noop,
               onLike: _noop,
               onComment: _noop,
-<<<<<<< HEAD
               onShare: _noop,
-=======
-              // onShare: _noop,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             ),
           ),
         ),
