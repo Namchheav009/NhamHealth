@@ -31,6 +31,10 @@ abstract class AppRoutes {
       '/wellness/calories/food-source-detail';
   static const String community = '/community';
   static const String communityPost = '/community/posts/:postId';
+<<<<<<< HEAD
+=======
+  static const String myRecipes = '/community/my-recipes';
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
   static String communityPostPath(int postId) => '/community/posts/$postId';
 }

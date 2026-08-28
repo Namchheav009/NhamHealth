@@ -14,7 +14,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
+<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.dto.response.CommunitySharedPostResponse;
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.*;
@@ -27,7 +30,10 @@ public class CommunityService {
     private final PostLikeRepository likes;
     private final PostCommentRepository comments;
     private final CommentLikeRepository commentLikes;
+<<<<<<< HEAD
     private final ShareRepository shares;
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     private final UserRepository users;
     private final UserProfileRepository profiles;
     private final FollowRepository follows;
@@ -38,7 +44,10 @@ public class CommunityService {
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
+<<<<<<< HEAD
             ShareRepository shares,
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             UserRepository users, UserProfileRepository profiles, FollowRepository follows,
             PostTagRepository postTags, TagTypeRepository tagTypes,
             ProfileImageStorageService imageStorage,
@@ -48,7 +57,10 @@ public class CommunityService {
         this.likes = likes;
         this.comments = comments;
         this.commentLikes = commentLikes;
+<<<<<<< HEAD
         this.shares = shares;
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         this.users = users;
         this.profiles = profiles;
         this.follows = follows;
@@ -189,6 +201,7 @@ public class CommunityService {
         return response(post, userId, followedIds(userId));
     }
 
+<<<<<<< HEAD
     @Transactional
     public void share(Integer userId, Integer postId, List<Integer> recipientIds) {
         Post selected = visiblePost(userId, postId);
@@ -260,6 +273,8 @@ public class CommunityService {
         if (recipient != null) communityNotifications.postShared(actor, recipient, post);
     }
 
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     @Transactional(readOnly = true)
     public List<CommunityCommentResponse> comments(Integer userId, Integer postId) {
         visiblePost(userId, postId);
@@ -389,9 +404,12 @@ public class CommunityService {
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {
         UserProfile profile = profiles.findByUser_UserId(post.getUser().getUserId()).orElse(null);
+<<<<<<< HEAD
         Integer sharedReferenceId = post.getSharedPost() == null
                 ? post.getPostId()
                 : post.getSharedPost().getPostId();
+=======
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
                 .map(PostMedia::getMediaUrl).toList();
         String imageUrl = imageUrls.isEmpty() ? "" : imageUrls.getFirst();
@@ -401,6 +419,7 @@ public class CommunityService {
                 profile == null ? post.getUser().getName() : profile.getFullName(),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 assignedTags.stream().map(item -> item.getTag().getTagName()).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
+<<<<<<< HEAD
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
                 shares.countByReferenceTypeIgnoreCaseAndReferenceId("POST", sharedReferenceId),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
@@ -428,6 +447,13 @@ public class CommunityService {
                 imageUrls.isEmpty() ? "" : imageUrls.getFirst(),
                 imageUrls,
                 original.getCreatedAt());
+=======
+                comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"), 0,
+                likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
+                followed.contains(post.getUser().getUserId()), post.getVisibility(),
+                post.isAllowComments(), post.isAllowReplies(),
+                assignedTags.stream().map(item -> item.getTag().getTagId()).toList());
+>>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     }
 
     private CommunityCommentResponse commentResponse(PostComment comment) {
