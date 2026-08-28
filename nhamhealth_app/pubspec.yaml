@@ -36,6 +36,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   http: ^1.2.0
+  http_parser: ^4.1.2
   flutter_secure_storage: ^11.0.0
   local_auth: ^2.3.0
   crypto: ^3.0.6
@@ -89,10 +90,7 @@ flutter:
     - assets/images/meals/slideshow1.png
     - assets/images/meals/slideshow2.png
     - assets/images/meals/slideshow3.png
-<<<<<<< HEAD
-=======
     - assets/images/food_detail/
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png

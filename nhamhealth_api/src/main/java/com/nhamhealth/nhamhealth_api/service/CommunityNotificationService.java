@@ -48,7 +48,6 @@ public class CommunityNotificationService {
         send(actor, comment.getUser(), "POST", comment.getPost().getPostId(), "liked your comment.");
     }
 
-<<<<<<< HEAD
     public void postShared(User actor, User recipient, Post post) {
         send(actor, recipient, "POST", post.getPostId(), "shared a community post with you.");
     }
@@ -57,8 +56,6 @@ public class CommunityNotificationService {
         send(actor, recipient, "POST", sharedPost.getPostId(), "shared your post.");
     }
 
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     public void followed(User actor, User recipient) {
         send(actor, recipient, "USER", actor.getUserId(), "started following you.");
     }

@@ -3,10 +3,7 @@ import 'dart:typed_data';
 
 import '../../../../../config/api_config.dart';
 import '../../../models/community/community_post.dart';
-<<<<<<< HEAD
 import '../../community/widgets/community_shared_post_card.dart';
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -20,10 +17,7 @@ class ProfilePostCard extends StatelessWidget {
     required this.onLike,
     this.isLiking = false,
     required this.onComment,
-<<<<<<< HEAD
     required this.onShare,
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     super.key,
   });
 
@@ -37,10 +31,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onLike;
   final bool isLiking;
   final VoidCallback onComment;
-<<<<<<< HEAD
   final VoidCallback onShare;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 
   static const green = Color(0xFF009B46);
 
@@ -144,14 +135,11 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-<<<<<<< HEAD
           if (post.sharedPost != null) ...[
             const SizedBox(height: 14),
             CommunitySharedPostCard(post: post.sharedPost!),
           ],
 
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
           if (post.imageBytes != null ||
               post.imageUrls.isNotEmpty ||
               post.imageUrl.isNotEmpty) ...[
@@ -163,11 +151,7 @@ class ProfilePostCard extends StatelessWidget {
             ),
           ],
 
-<<<<<<< HEAD
           if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
-=======
-          if (post.likes > 0 || post.comments > 0) ...[
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             const SizedBox(height: 11),
             _EngagementSummary(post: post),
           ],
@@ -197,7 +181,6 @@ class ProfilePostCard extends StatelessWidget {
                   color: const Color(0xFF69756D),
                   onTap: onComment,
                 ),
-<<<<<<< HEAD
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
                   icon: Icons.reply_rounded,
@@ -205,8 +188,6 @@ class ProfilePostCard extends StatelessWidget {
                   color: const Color(0xFF69756D),
                   onTap: onShare,
                 ),
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
               ],
             ),
           ),
@@ -267,11 +248,12 @@ class ProfilePostCard extends StatelessWidget {
                         ? InteractiveViewer(
                           minScale: 0.8,
                           maxScale: 4,
-                          child: Image.memory(post.imageBytes!, fit: BoxFit.contain),
+                          child: Image.memory(
+                            post.imageBytes!,
+                            fit: BoxFit.contain,
+                          ),
                         )
-                        : _ProfileFullscreenCarousel(
-                          imageUrls: _imageUrls,
-                        ),
+                        : _ProfileFullscreenCarousel(imageUrls: _imageUrls),
               ),
               Positioned(
                 top: 18,
@@ -650,7 +632,8 @@ class _ProfileFullscreenCarousel extends StatefulWidget {
       _ProfileFullscreenCarouselState();
 }
 
-class _ProfileFullscreenCarouselState extends State<_ProfileFullscreenCarousel> {
+class _ProfileFullscreenCarouselState
+    extends State<_ProfileFullscreenCarousel> {
   late PageController _pageController;
   int _currentPage = 0;
 
@@ -751,9 +734,7 @@ class _ProfileFullscreenCarouselState extends State<_ProfileFullscreenCarousel> 
                   height: _currentPage == index ? 8 : 6,
                   decoration: BoxDecoration(
                     color:
-                        _currentPage == index
-                            ? Colors.white
-                            : Colors.white54,
+                        _currentPage == index ? Colors.white : Colors.white54,
                     shape: BoxShape.circle,
                   ),
                 ),

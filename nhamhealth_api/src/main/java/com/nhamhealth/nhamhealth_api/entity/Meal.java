@@ -38,8 +38,6 @@ public class Meal {
     @JoinColumn(name = "created_by_user_id")
     private User createdByUser;
 
-<<<<<<< HEAD
-=======
     /** Present only when this catalog meal was promoted from an AI-approved community recipe. */
     @jakarta.persistence.OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "source_recipe_id", unique = true)
@@ -53,7 +51,6 @@ public class Meal {
     @Column(name = "approval_source", nullable = false, length = 20)
     private String approvalSource = "ADMIN";
 
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     @Column(name = "meal_name", nullable = false, length = 150)
     private String mealName;
 
@@ -113,8 +110,6 @@ public class Meal {
         this.createdByUser = createdByUser;
     }
 
-<<<<<<< HEAD
-=======
     public Recipe getSourceRecipe() {
         return sourceRecipe;
     }
@@ -139,7 +134,6 @@ public class Meal {
         this.approvalSource = approvalSource;
     }
 
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     public String getMealName() {
         return mealName;
     }

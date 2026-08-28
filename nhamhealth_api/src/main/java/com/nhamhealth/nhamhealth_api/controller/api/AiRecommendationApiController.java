@@ -19,10 +19,7 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.service.AiMealRecommendationService;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,7 +31,6 @@ public class AiRecommendationApiController {
 
     private final AiRecommendationRepository recommendationRepository;
     private final AiRecommendationItemRepository itemRepository;
-<<<<<<< HEAD
     private final ReviewRepository reviewRepository;
     private final AiMealRecommendationService recommendationService;
 
@@ -44,15 +40,6 @@ public class AiRecommendationApiController {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
         this.reviewRepository = reviewRepository;
-=======
-    private final AiMealRecommendationService recommendationService;
-
-    public AiRecommendationApiController(AiRecommendationRepository recommendationRepository,
-            AiRecommendationItemRepository itemRepository,
-            AiMealRecommendationService recommendationService) {
-        this.recommendationRepository = recommendationRepository;
-        this.itemRepository = itemRepository;
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         this.recommendationService = recommendationService;
     }
 
@@ -99,7 +86,6 @@ public class AiRecommendationApiController {
 
     private RecommendedMealResponse toResponse(AiRecommendation recommendation, AiRecommendationItem item) {
         Meal meal = item.getMeal();
-<<<<<<< HEAD
         double rating = reviewRepository.findByMealMealId(meal.getMealId()).stream()
                 .mapToInt(review -> review.getRating() == null ? 0 : review.getRating())
                 .average()
@@ -108,12 +94,6 @@ public class AiRecommendationApiController {
                 meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
                 meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),
                 meal.getCookingTimeMinutes(), rating, recommendation.getRecommendationId(),
-=======
-        return new RecommendedMealResponse(
-                meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
-                meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),
-                meal.getCookingTimeMinutes(), 0.0, recommendation.getRecommendationId(),
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                 recommendation.getMood() == null ? null : recommendation.getMood().getMoodId(),
                 item.getReasonText());
     }

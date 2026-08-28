@@ -17,36 +17,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.entity.Review;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.repository.ChatRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
 import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealLogRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-<<<<<<< HEAD
 import com.nhamhealth.nhamhealth_api.repository.MessageRepository;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
-=======
-import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostRepository;
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
@@ -62,10 +50,7 @@ public class AdminDashboardService {
     private final MealRepository mealRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final MealLogRepository mealLogRepository;
-<<<<<<< HEAD
     private final ReviewRepository reviewRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     private final DailyWellnessSummaryRepository dailyWellnessSummaryRepository;
     private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
     private final AiFoodAnalysisRepository aiFoodAnalysisRepository;
@@ -74,11 +59,8 @@ public class AdminDashboardService {
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
     private final FollowRepository followRepository;
-<<<<<<< HEAD
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     private final NotificationRepository notificationRepository;
 
     public AdminDashboardService(
@@ -87,10 +69,7 @@ public class AdminDashboardService {
             MealRepository mealRepository,
             MealCategoryRepository mealCategoryRepository,
             MealLogRepository mealLogRepository,
-<<<<<<< HEAD
             ReviewRepository reviewRepository,
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             DailyWellnessSummaryRepository dailyWellnessSummaryRepository,
             DailyNutrientTotalRepository dailyNutrientTotalRepository,
             AiFoodAnalysisRepository aiFoodAnalysisRepository,
@@ -99,21 +78,15 @@ public class AdminDashboardService {
             PostRepository postRepository,
             PostReportRepository postReportRepository,
             FollowRepository followRepository,
-<<<<<<< HEAD
             ChatRepository chatRepository,
             MessageRepository messageRepository,
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
             NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.mealRepository = mealRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.mealLogRepository = mealLogRepository;
-<<<<<<< HEAD
         this.reviewRepository = reviewRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         this.dailyWellnessSummaryRepository = dailyWellnessSummaryRepository;
         this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
         this.aiFoodAnalysisRepository = aiFoodAnalysisRepository;
@@ -122,11 +95,8 @@ public class AdminDashboardService {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.followRepository = followRepository;
-<<<<<<< HEAD
         this.chatRepository = chatRepository;
         this.messageRepository = messageRepository;
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
         this.notificationRepository = notificationRepository;
     }
 
@@ -141,21 +111,13 @@ public class AdminDashboardService {
                 mealRepository.count(),
                 mealRepository.countByIsPublishedTrue(),
                 mealLogRepository.count(),
-<<<<<<< HEAD
                 reviewRepository.count(),
-=======
-                0,
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                 notificationRepository.countByIsReadFalse(),
                 startDate.format(PERIOD_LABEL) + " – " + today.format(PERIOD_LABEL),
                 buildActivity(startDate),
                 buildCategories(),
                 buildRecentUsers(),
-<<<<<<< HEAD
                 buildRecentReviews(),
-=======
-                List.of(),
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                 buildNutrientMetrics(today),
                 buildRecentRecommendations(),
                 List.of(
@@ -165,10 +127,7 @@ public class AdminDashboardService {
                         new ModuleMetric("Community posts", postRepository.count(), "bi-file-post", "/admin/posts"),
                         new ModuleMetric("Community reports", postReportRepository.count(), "bi-flag", "/admin/reports"),
                         new ModuleMetric("Connections", followRepository.count(), "bi-person-plus", "/admin/follows"),
-<<<<<<< HEAD
                         new ModuleMetric("Conversations", chatRepository.count() + messageRepository.count(), "bi-chat-dots", "/admin/chats"),
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
                         new ModuleMetric("Notifications", notificationRepository.count(), "bi-bell", "/admin/notifications")));
     }
 
@@ -247,7 +206,6 @@ public class AdminDashboardService {
                 .toList();
     }
 
-<<<<<<< HEAD
     private List<RecentReview> buildRecentReviews() {
         return reviewRepository.findTop5ByOrderByCreatedAtDesc().stream()
                 .map(review -> new RecentReview(
@@ -258,8 +216,6 @@ public class AdminDashboardService {
                 .toList();
     }
 
-=======
->>>>>>> de26f8c42978dce467e11832233dcabe163d6bc0
     public record DashboardSnapshot(
             long totalUsers,
             long verifiedUsers,
