@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../controllers/assistant/assistant_controller.dart';
 import '../../models/assistant/assistant_message.dart';
@@ -50,6 +51,7 @@ class AssistantView extends GetView<AssistantController> {
 
   @override
   Widget build(BuildContext context) {
+    final useSidebar = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
@@ -61,245 +63,398 @@ class AssistantView extends GetView<AssistantController> {
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         titleSpacing: 10,
-        title: AppBackHeader(
-          title: 'NhamHealth AI',
-          onBack: Get.back,
-          backButtonKey: const ValueKey<String>('assistant-back-button'),
-          titleWidget: const _AssistantHeaderIdentity(),
-          trailing: IconButton(
-            tooltip: 'Open Daily Wellness',
-            onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
-            style: IconButton.styleFrom(
-              backgroundColor: context.appSoftGreen,
-              foregroundColor: context.appColorScheme.primary,
+        title: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxWideContentWidth,
             ),
-            icon: const Icon(Icons.monitor_heart_rounded, size: 21),
+            child: AppBackHeader(
+              title: 'NhamHealth AI',
+              onBack: Get.back,
+              backButtonKey: const ValueKey<String>('assistant-back-button'),
+              titleWidget: const _AssistantHeaderIdentity(),
+              trailing: IconButton(
+                tooltip: 'Open Daily Wellness',
+                onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
+                style: IconButton.styleFrom(
+                  backgroundColor: context.appSoftGreen,
+                  foregroundColor: context.appColorScheme.primary,
+                ),
+                icon: const Icon(Icons.monitor_heart_rounded, size: 21),
+              ),
+            ),
           ),
         ),
       ),
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: Obx(
-                () => ListView.builder(
-                  key: const ValueKey<String>('assistant-message-list'),
-                  controller: controller.scrollController,
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-                  itemCount:
-                      controller.messages.length +
-                      (controller.isSending.value ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == controller.messages.length) {
-                      return const _TypingBubble();
-                    }
-                    final message = controller.messages[index];
-                    return _MessageBubble(
-                      message: message,
-                      canReload: index > 0 && !message.isUser,
-                      isReloading: controller.isSending.value,
-                      onReload: () => controller.reloadReply(index),
-                    );
-                  },
-                ),
-              ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: useSidebar ? AppSpacing.maxWideContentWidth : 800,
             ),
-            Container(
-              key: const ValueKey<String>('assistant-suggested-questions'),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: context.appSurface,
-                border: Border(top: BorderSide(color: context.appBorder)),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 9, 0, 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 15,
-                          color: AppColors.primaryGreen,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Quick questions',
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+            child: Row(
+              key:
+                  useSidebar
+                      ? const ValueKey<String>('assistant-tablet-layout')
+                      : null,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => ListView.builder(
+                            key: const ValueKey<String>(
+                              'assistant-message-list',
                             ),
+                            controller: controller.scrollController,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+                            itemCount:
+                                controller.messages.length +
+                                (controller.isSending.value ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == controller.messages.length) {
+                                return const _TypingBubble();
+                              }
+                              final message = controller.messages[index];
+                              return _MessageBubble(
+                                message: message,
+                                canReload: index > 0 && !message.isUser,
+                                isReloading: controller.isSending.value,
+                                onReload: () => controller.reloadReply(index),
+                              );
+                            },
                           ),
                         ),
-                        TextButton.icon(
+                      ),
+                      if (!useSidebar)
+                        Container(
                           key: const ValueKey<String>(
-                            'assistant-all-questions',
+                            'assistant-suggested-questions',
                           ),
-                          onPressed: () => _showAllQuestions(context),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primaryGreen,
-                            minimumSize: const Size(0, 28),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          icon: const Icon(Icons.grid_view_rounded, size: 14),
-                          label: const Text(
-                            'All questions',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: context.appSurface,
+                            border: Border(
+                              top: BorderSide(color: context.appBorder),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  SizedBox(
-                    height: 42,
-                    child: Obx(() {
-                      final isSending = controller.isSending.value;
-                      return ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.only(right: 16),
-                        itemCount: _suggestions.length,
-                        separatorBuilder:
-                            (context, index) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          return ActionChip(
-                            key: ValueKey<String>('assistant-question-$index'),
-                            avatar: Icon(
-                              _suggestionIcons[index],
-                              size: 17,
-                              color: _questionColor(index),
-                            ),
-                            label: Text(_questionLabel(index)),
-                            onPressed:
-                                isSending
-                                    ? null
-                                    : () =>
-                                        controller.send(_suggestions[index]),
-                            backgroundColor: _questionBackground(
-                              context,
-                              index,
-                            ),
-                            disabledColor: _questionBackground(context, index),
-                            side: BorderSide(
-                              color: _questionColor(index).withAlpha(45),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            labelStyle: TextStyle(
-                              color: context.appText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          );
-                        },
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-              decoration: BoxDecoration(
-                color: context.appSurface,
-                border: Border(top: BorderSide(color: context.appBorder)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      key: const ValueKey<String>('assistant-input'),
-                      controller: controller.inputController,
-                      minLines: 1,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => controller.send(),
-                      decoration: InputDecoration(
-                        hintText: 'Ask about your wellness...',
-                        hintStyle: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 13,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 19,
-                          color: AppColors.primaryGreen,
-                        ),
-                        filled: true,
-                        fillColor: context.appMutedSurface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(
-                            color: context.appColorScheme.primary,
-                            width: 1.4,
+                          padding: const EdgeInsets.fromLTRB(16, 9, 0, 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.auto_awesome_rounded,
+                                      size: 15,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Quick questions',
+                                        style: TextStyle(
+                                          color: context.appText,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton.icon(
+                                      key: const ValueKey<String>(
+                                        'assistant-all-questions',
+                                      ),
+                                      onPressed:
+                                          () => _showAllQuestions(context),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.primaryGreen,
+                                        minimumSize: const Size(0, 28),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                        ),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      icon: const Icon(
+                                        Icons.grid_view_rounded,
+                                        size: 14,
+                                      ),
+                                      label: const Text(
+                                        'All questions',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 7),
+                              SizedBox(
+                                height: 42,
+                                child: Obx(() {
+                                  final isSending = controller.isSending.value;
+                                  return ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.only(right: 16),
+                                    itemCount: _suggestions.length,
+                                    separatorBuilder:
+                                        (context, index) =>
+                                            const SizedBox(width: 8),
+                                    itemBuilder: (context, index) {
+                                      return ActionChip(
+                                        key: ValueKey<String>(
+                                          'assistant-question-$index',
+                                        ),
+                                        avatar: Icon(
+                                          _suggestionIcons[index],
+                                          size: 17,
+                                          color: _questionColor(index),
+                                        ),
+                                        label: Text(_questionLabel(index)),
+                                        onPressed:
+                                            isSending
+                                                ? null
+                                                : () => controller.send(
+                                                  _suggestions[index],
+                                                ),
+                                        backgroundColor: _questionBackground(
+                                          context,
+                                          index,
+                                        ),
+                                        disabledColor: _questionBackground(
+                                          context,
+                                          index,
+                                        ),
+                                        side: BorderSide(
+                                          color: _questionColor(
+                                            index,
+                                          ).withAlpha(45),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                        ),
+                                        labelStyle: TextStyle(
+                                          color: context.appText,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Obx(
-                    () => SizedBox.square(
-                      dimension: 48,
-                      child: IconButton.filled(
-                        key: const ValueKey<String>('assistant-send'),
-                        tooltip: 'Send message',
-                        onPressed:
-                            controller.isSending.value ? null : controller.send,
-                        style: IconButton.styleFrom(
-                          backgroundColor: context.appColorScheme.primary,
-                          disabledBackgroundColor: context.appMutedSurface,
-                          shadowColor: const Color(0x5500A651),
-                          elevation: 3,
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                        decoration: BoxDecoration(
+                          color: context.appSurface,
+                          border: Border(
+                            top: BorderSide(color: context.appBorder),
+                          ),
                         ),
-                        icon:
-                            controller.isSending.value
-                                ? const SizedBox.square(
-                                  dimension: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                key: const ValueKey<String>('assistant-input'),
+                                controller: controller.inputController,
+                                minLines: 1,
+                                maxLines: 4,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                textInputAction: TextInputAction.send,
+                                onSubmitted: (_) => controller.send(),
+                                decoration: InputDecoration(
+                                  hintText: 'Ask about your wellness...',
+                                  hintStyle: TextStyle(
+                                    color: context.appMutedText,
+                                    fontSize: 13,
                                   ),
-                                )
-                                : const Icon(Icons.send_rounded, size: 21),
+                                  prefixIcon: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 19,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                  filled: true,
+                                  fillColor: context.appMutedSurface,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(22),
+                                    borderSide: BorderSide(
+                                      color: context.appBorder,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(22),
+                                    borderSide: BorderSide(
+                                      color: context.appBorder,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(22),
+                                    borderSide: BorderSide(
+                                      color: context.appColorScheme.primary,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Obx(
+                              () => SizedBox.square(
+                                dimension: 48,
+                                child: IconButton.filled(
+                                  key: const ValueKey<String>('assistant-send'),
+                                  tooltip: 'Send message',
+                                  onPressed:
+                                      controller.isSending.value
+                                          ? null
+                                          : controller.send,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor:
+                                        context.appColorScheme.primary,
+                                    disabledBackgroundColor:
+                                        context.appMutedSurface,
+                                    shadowColor: const Color(0x5500A651),
+                                    elevation: 3,
+                                  ),
+                                  icon:
+                                      controller.isSending.value
+                                          ? const SizedBox.square(
+                                            dimension: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          : const Icon(
+                                            Icons.send_rounded,
+                                            size: 21,
+                                          ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
+                ),
+                if (useSidebar) ...[
+                  VerticalDivider(width: 1, color: context.appBorder),
+                  SizedBox(width: 300, child: _tabletSuggestions(context)),
                 ],
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _tabletSuggestions(BuildContext context) => Container(
+    key: const ValueKey<String>('assistant-suggested-questions'),
+    color: context.appSurface,
+    padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.auto_awesome_rounded,
+              size: 16,
+              color: AppColors.primaryGreen,
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                'Quick questions',
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            TextButton(
+              key: const ValueKey<String>('assistant-all-questions'),
+              onPressed: () => _showAllQuestions(context),
+              child: const Text('All'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Obx(() {
+            final isSending = controller.isSending.value;
+            return ListView.separated(
+              key: const ValueKey<String>('assistant-tablet-questions'),
+              itemCount: _suggestions.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 7),
+              itemBuilder:
+                  (context, index) => Material(
+                    color: _questionBackground(context, index),
+                    borderRadius: BorderRadius.circular(14),
+                    child: ListTile(
+                      key: ValueKey<String>('assistant-question-$index'),
+                      enabled: !isSending,
+                      onTap:
+                          isSending
+                              ? null
+                              : () => controller.send(_suggestions[index]),
+                      dense: true,
+                      minTileHeight: 48,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: _questionColor(index).withAlpha(45),
+                        ),
+                      ),
+                      leading: Icon(
+                        _suggestionIcons[index],
+                        size: 18,
+                        color: _questionColor(index),
+                      ),
+                      title: Text(
+                        _questionLabel(index),
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+            );
+          }),
+        ),
+      ],
+    ),
+  );
 
   String _questionLabel(int index) {
     const labels = [

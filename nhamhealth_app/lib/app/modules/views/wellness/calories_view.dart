@@ -5,6 +5,7 @@ import '../../controllers/wellness/calories_controller.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import 'widgets/calories_intake_editor.dart';
 import 'widgets/calories_progress_card.dart';
 import 'widgets/calories_ai_insight_card.dart';
@@ -72,13 +73,7 @@ class CaloriesView extends GetView<CaloriesController> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: Get.back,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: context.appColorScheme.primary,
-            ),
-          ),
+          AppBackButton(onPressed: Get.back),
 
           Expanded(
             child: Center(
@@ -93,7 +88,7 @@ class CaloriesView extends GetView<CaloriesController> {
             ),
           ),
 
-          const SizedBox(width: 48),
+          const SizedBox(width: AppBackButton.layoutSize),
         ],
       ),
     );

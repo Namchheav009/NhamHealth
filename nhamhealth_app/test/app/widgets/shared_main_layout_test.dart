@@ -247,6 +247,66 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('loading skeletons match wide tablet layouts', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 768);
+    addTearDown(tester.view.reset);
+
+    Future<void> pumpSkeleton(Widget skeleton) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: skeleton,
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await pumpSkeleton(const PageSkeleton.home());
+    expect(
+      find.byKey(const ValueKey<String>('home-skeleton-tablet-layout')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await pumpSkeleton(const PageSkeleton.meals());
+    final mealGrid = tester.widget<GridView>(
+      find.byKey(const ValueKey<String>('meal-skeleton-grid')),
+    );
+    final mealDelegate =
+        mealGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+    expect(mealDelegate.crossAxisCount, 5);
+    expect(tester.takeException(), isNull);
+
+    await pumpSkeleton(const PageSkeleton.community());
+    expect(
+      find.byKey(const ValueKey<String>('community-skeleton-tablet-layout')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await pumpSkeleton(const PageSkeleton.profile());
+    expect(
+      find.byKey(const ValueKey<String>('profile-skeleton-tablet-layout')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await pumpSkeleton(const PageSkeleton.wellness());
+    expect(
+      find.byKey(const ValueKey<String>('wellness-skeleton-tablet-layout')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
   testWidgets('Community uses the shared bar and loading shell', (
     tester,
   ) async {

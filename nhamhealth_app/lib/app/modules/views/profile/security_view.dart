@@ -9,7 +9,9 @@ import '../../../widgets/pin_keypad_dialog.dart';
 import 'change_password_view.dart';
 import '../../bindings/profile/change_password_binding.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 
 class SecurityView extends StatefulWidget {
   const SecurityView({
@@ -205,30 +207,47 @@ class _SecurityViewState extends State<SecurityView> {
               child:
                   _loading
                       ? const Center(child: CircularProgressIndicator())
-                      : ListView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(22, 12, 22, 36),
-                        children: [
-                          _statusCard(),
-                          const SizedBox(height: 28),
-                          const _SectionTitle(
-                            title: 'App protection',
-                            subtitle: 'Choose how you unlock private features',
-                          ),
-                          const SizedBox(height: 12),
-                          _settingsCard(),
-                          const SizedBox(height: 28),
-                          const _SectionTitle(
-                            title: 'Account security',
-                            subtitle: 'Keep your NhamHealth account secure',
-                          ),
-                          const SizedBox(height: 12),
-                          _accountCard(),
-                          if (_hasPin) ...[
-                            const SizedBox(height: 22),
-                            _disableButton(),
-                          ],
-                        ],
+                      : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final wide = constraints.maxWidth >= 820;
+                          return ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpacing.pageHorizontalFor(context),
+                              12,
+                              AppSpacing.pageHorizontalFor(context),
+                              36,
+                            ),
+                            children: [
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: AppSpacing.maxWideContentWidth,
+                                  ),
+                                  child:
+                                      wide
+                                          ? Row(
+                                            key: const ValueKey<String>(
+                                              'security-tablet-layout',
+                                            ),
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: _securityOverview(),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              Expanded(
+                                                child: _protectionSettings(),
+                                              ),
+                                            ],
+                                          )
+                                          : _compactSecurityContent(),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
             ),
           ],
@@ -237,32 +256,76 @@ class _SecurityViewState extends State<SecurityView> {
     ),
   );
 
-  Widget _header() => Padding(
-    padding: const EdgeInsets.fromLTRB(10, 8, 20, 10),
-    child: Row(
-      children: [
-        if (widget.requirePinCreation && !_hasPin)
-          const SizedBox(width: 48)
-        else
-          IconButton(
-            onPressed: Get.back,
-            icon: const Icon(Icons.arrow_back_rounded),
-            color: const Color(0xFF006B38),
-          ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            'Password & Security'.tr,
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.35,
-              color: Color(0xFF17211B),
+  Widget _header() => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: AppSpacing.maxWideContentWidth,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 20, 10),
+        child: Row(
+          children: [
+            if (widget.requirePinCreation && !_hasPin)
+              const SizedBox(width: AppBackButton.layoutSize)
+            else
+              AppBackButton(onPressed: Get.back),
+            const SizedBox(width: AppBackButton.headerGap),
+            Expanded(
+              child: Text(
+                'Password & Security'.tr,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.35,
+                  color: Color(0xFF17211B),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     ),
+  );
+
+  Widget _compactSecurityContent() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _statusCard(),
+      const SizedBox(height: 28),
+      _protectionSettings(),
+      const SizedBox(height: 28),
+      _accountSettings(),
+    ],
+  );
+
+  Widget _securityOverview() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [_statusCard(), const SizedBox(height: 24), _accountSettings()],
+  );
+
+  Widget _protectionSettings() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _SectionTitle(
+        title: 'App protection',
+        subtitle: 'Choose how you unlock private features',
+      ),
+      const SizedBox(height: 12),
+      _settingsCard(),
+    ],
+  );
+
+  Widget _accountSettings() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _SectionTitle(
+        title: 'Account security',
+        subtitle: 'Keep your NhamHealth account secure',
+      ),
+      const SizedBox(height: 12),
+      _accountCard(),
+      if (_hasPin) ...[const SizedBox(height: 22), _disableButton()],
+    ],
   );
 
   Widget _statusCard() {

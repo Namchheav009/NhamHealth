@@ -148,52 +148,59 @@ class SettingsView extends GetView<SettingsController> {
                 bottom: false,
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: AppSpacing.pagePaddingWithNavigation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
+                  padding: AppSpacing.pagePaddingWithNavigationFor(context),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxContentWidth,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(),
 
-                      const SizedBox(height: 24),
-                      Obx(
-                        () => AnimatedSize(
-                          duration: const Duration(milliseconds: 360),
-                          curve: Curves.easeOutCubic,
-                          alignment: Alignment.topCenter,
-                          child: LoadingContentTransition(
-                            isLoading: controller.isLoading.value,
-                            loading: const PageSkeleton.settings(),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle(
-                                  context,
-                                  'settings_account'.tr,
+                          const SizedBox(height: 24),
+                          Obx(
+                            () => AnimatedSize(
+                              duration: const Duration(milliseconds: 360),
+                              curve: Curves.easeOutCubic,
+                              alignment: Alignment.topCenter,
+                              child: LoadingContentTransition(
+                                isLoading: controller.isLoading.value,
+                                loading: const PageSkeleton.settings(),
+                                content: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildSectionTitle(
+                                      context,
+                                      'settings_account'.tr,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildAccountCard(context),
+                                    const SizedBox(height: 21),
+                                    _buildSectionTitle(
+                                      context,
+                                      'settings_preferences'.tr,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildPreferenceCard(context),
+                                    const SizedBox(height: 21),
+                                    _buildSectionTitle(
+                                      context,
+                                      'settings_support'.tr,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildSupportCard(context),
+                                    const SizedBox(height: 13),
+                                    _buildLogoutCard(context),
+                                  ],
                                 ),
-                                const SizedBox(height: 10),
-                                _buildAccountCard(context),
-                                const SizedBox(height: 21),
-                                _buildSectionTitle(
-                                  context,
-                                  'settings_preferences'.tr,
-                                ),
-                                const SizedBox(height: 10),
-                                _buildPreferenceCard(context),
-                                const SizedBox(height: 21),
-                                _buildSectionTitle(
-                                  context,
-                                  'settings_support'.tr,
-                                ),
-                                const SizedBox(height: 10),
-                                _buildSupportCard(context),
-                                const SizedBox(height: 13),
-                                _buildLogoutCard(context),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

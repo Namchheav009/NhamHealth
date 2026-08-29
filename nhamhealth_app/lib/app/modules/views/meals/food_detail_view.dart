@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../bindings/meals/how_to_make_binding.dart';
 import '../../bindings/meals/ingredient_binding.dart';
 import '../../controllers/meals/food_detail_controller.dart';
@@ -29,17 +30,9 @@ class FoodDetailView extends GetView<FoodDetailController> {
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          toolbarHeight: 64,
-          leadingWidth: 58,
-          leading: IconButton(
-            onPressed: controller.goBack,
-            tooltip: 'Back'.tr,
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              size: 28,
-              color: darkGreen,
-            ),
-          ),
+          toolbarHeight: AppBackButton.appBarToolbarHeight,
+          leadingWidth: AppBackButton.appBarLeadingWidth,
+          leading: AppBackButton.appBar(onPressed: controller.goBack),
           titleSpacing: 0,
           title: Text(
             'Food Detail'.tr,

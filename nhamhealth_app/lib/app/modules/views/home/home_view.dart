@@ -18,7 +18,7 @@ import 'widgets/recommended_meal_card.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
-  static const double _maxContentWidth = AppSpacing.maxContentWidth;
+  static const double _maxContentWidth = AppSpacing.maxWideContentWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -55,21 +55,7 @@ class HomeView extends GetView<HomeController> {
                                 controller.isLoading.value &&
                                 controller.dashboard.value == null,
                             loading: const PageSkeleton.home(),
-                            content: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                RepaintBoundary(child: HomeSearchBar()),
-                                SizedBox(height: 14),
-                                RepaintBoundary(child: GreetingSection()),
-                                SizedBox(height: 14),
-                                RepaintBoundary(child: AiRecommendationCard()),
-                                SizedBox(height: 14),
-                                RepaintBoundary(child: DailySummaryCard()),
-                                RepaintBoundary(
-                                  child: _RecommendedMealsSection(),
-                                ),
-                              ],
-                            ),
+                            content: const _HomeDashboardContent(),
                           ),
                         ),
                       ],
@@ -86,12 +72,73 @@ class HomeView extends GetView<HomeController> {
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+              constraints: const BoxConstraints(
+                maxWidth: AppSpacing.maxContentWidth,
+              ),
               child: const HomeBottomNavigation(),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HomeDashboardContent extends StatelessWidget {
+  const _HomeDashboardContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < AppSpacing.twoColumnBreakpoint) {
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RepaintBoundary(child: HomeSearchBar()),
+              SizedBox(height: 14),
+              RepaintBoundary(child: GreetingSection()),
+              SizedBox(height: 14),
+              RepaintBoundary(child: AiRecommendationCard()),
+              SizedBox(height: 14),
+              RepaintBoundary(child: DailySummaryCard()),
+              RepaintBoundary(child: _RecommendedMealsSection()),
+            ],
+          );
+        }
+
+        return const Column(
+          key: ValueKey<String>('home-tablet-layout'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RepaintBoundary(child: HomeSearchBar()),
+            SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      RepaintBoundary(child: GreetingSection()),
+                      SizedBox(height: 16),
+                      RepaintBoundary(child: AiRecommendationCard()),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    children: [
+                      RepaintBoundary(child: DailySummaryCard()),
+                      RepaintBoundary(child: _RecommendedMealsSection()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

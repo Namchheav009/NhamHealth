@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
 import 'widgets/animated_reveal_text.dart';
 
 /// -----------------------------------------------------------------------
@@ -35,187 +38,235 @@ class AiFoodView extends GetView<AiFoodController> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: bg,
-    appBar: _appBar(),
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Obx(
-            () => ListView(
-              padding: const EdgeInsets.fromLTRB(
-                pageHorizontalPadding,
-                8,
-                pageHorizontalPadding,
-                40,
+          constraints: const BoxConstraints(
+            maxWidth: AppSpacing.maxWideContentWidth,
+          ),
+          child: Column(
+            children: [
+              _header(context),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 820;
+                    return Obx(
+                      () => ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          wide
+                              ? AppSpacing.tabletPageHorizontal
+                              : pageHorizontalPadding,
+                          8,
+                          wide
+                              ? AppSpacing.tabletPageHorizontal
+                              : pageHorizontalPadding,
+                          40,
+                        ),
+                        children: [
+                          if (wide)
+                            Row(
+                              key: const ValueKey<String>(
+                                'ai-food-tablet-layout',
+                              ),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _capturePanel()),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: _resultsPanel(context, wide: true),
+                                ),
+                              ],
+                            )
+                          else ...[
+                            _capturePanel(),
+                            _resultsPanel(context),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-              children: [
-                _intro(),
-                const SizedBox(height: sectionSpacing),
-                if (controller.isModelLoading.value) ...[
-                  const _ModelLoadingBar(),
-                  const SizedBox(height: 12),
-                ],
-                _imageCard(),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _button(
-                        icon: Icons.photo_camera_outlined,
-                        text: 'Take Photo',
-                        action: controller.takePhoto,
-                        style: _ButtonStyle.outlined,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _button(
-                        icon: Icons.photo_library_outlined,
-                        text: 'Gallery',
-                        action: controller.pickImageFromGallery,
-                        style: _ButtonStyle.outlined,
-                      ),
-                    ),
-                  ],
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  child:
-                      controller.selectedImage.value != null
-                          ? Padding(
-                            padding: const EdgeInsets.only(top: 14),
-                            child: _button(
-                              icon: Icons.auto_awesome,
-                              text:
-                                  controller.isAnalyzing.value
-                                      ? 'Analyzing food or drink...'
-                                      : 'Analyze Food or Drink',
-                              action:
-                                  controller.isAnalyzing.value
-                                      ? null
-                                      : controller.analyzeFood,
-                              style: _ButtonStyle.primary,
-                              loading: controller.isAnalyzing.value,
-                            ),
-                          )
-                          : const SizedBox(width: double.infinity),
-                ),
-                if (controller.errorMessage.value != null)
-                  _message(
-                    controller.errorMessage.value!,
-                    Colors.red.shade700,
-                    Icons.error_outline_rounded,
-                    params: controller.errorMessageParams,
-                  ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child:
-                      controller.hasCompleteResult
-                          ? Padding(
-                            key: const ValueKey('nutrition'),
-                            padding: const EdgeInsets.only(top: 14),
-                            child: Column(
-                              children: [
-                                _confidenceLine(),
-                                const SizedBox(height: 14),
-                                _analysisCard(controller.nutrition.value!),
-                                const SizedBox(height: 14),
-                                _nutritionCard(controller.nutrition.value!),
-                                if (controller.nutrition.value!.hasDrink) ...[
-                                  const SizedBox(height: 14),
-                                  _hydrationCard(controller.nutrition.value!),
-                                ],
-                              ],
-                            ),
-                          )
-                          : const SizedBox.shrink(),
-                ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child:
-                      controller.recommendation.value != null
-                          ? Padding(
-                            key: const ValueKey('recommendation'),
-                            padding: const EdgeInsets.only(top: 14),
-                            child: Column(
-                              children: [
-                                _recommendationCard(
-                                  controller.recommendation.value!,
-                                ),
-                                const SizedBox(height: 14),
-                                _button(
-                                  icon:
-                                      controller.wasAdded.value
-                                          ? Icons.check_circle
-                                          : Icons.add_circle_outline,
-                                  text:
-                                      controller.wasAdded.value
-                                          ? controller
-                                                  .nutrition
-                                                  .value!
-                                                  .isPlainWaterOnly
-                                              ? 'Water Added Today'
-                                              : 'Added to Today'
-                                          : controller.isSaving.value
-                                          ? 'Adding...'
-                                          : controller
-                                              .nutrition
-                                              .value!
-                                              .isPlainWaterOnly
-                                          ? "Add to Today's Water"
-                                          : "Add to Today's Food",
-                                  action:
-                                      controller.isSaving.value ||
-                                              controller.wasAdded.value ||
-                                              !controller.canAddFood
-                                          ? null
-                                          : controller.addFoodToToday,
-                                  style:
-                                      controller.wasAdded.value
-                                          ? _ButtonStyle.success
-                                          : _ButtonStyle.primary,
-                                  loading: controller.isSaving.value,
-                                ),
-                              ],
-                            ),
-                          )
-                          : const SizedBox.shrink(),
-                ),
-                const SizedBox(height: 14),
-                _legalNotice(controller.nutrition.value),
-              ],
-            ),
+            ],
           ),
         ),
       ),
     ),
   );
 
-  // ---- AppBar -------------------------------------------------------------
-
-  PreferredSizeWidget _appBar() => AppBar(
-    backgroundColor: bg,
-    surfaceTintColor: bg,
-    elevation: 0,
-    scrolledUnderElevation: 0,
-    leading: IconButton(
-      onPressed: Get.back,
-      icon: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: cardBorder),
-        ),
-        child: const Icon(Icons.arrow_back_rounded, color: green, size: 20),
+  Widget _header(BuildContext context) {
+    final horizontal = AppSpacing.pageHorizontalFor(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontal, 14, horizontal, 10),
+      child: Row(
+        children: [
+          AppBackButton(
+            buttonKey: const ValueKey<String>('ai-food-back-button'),
+            onPressed: Get.back,
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                'AI Food Check'.tr,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: context.appText,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppBackButton.layoutSize),
+        ],
       ),
-    ),
-    title: Text(
-      'AI Food Check'.tr,
-      style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.2),
-    ),
-    centerTitle: true,
+    );
+  }
+
+  Widget _capturePanel() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _intro(),
+      const SizedBox(height: sectionSpacing),
+      if (controller.isModelLoading.value) ...[
+        const _ModelLoadingBar(),
+        const SizedBox(height: 12),
+      ],
+      _imageCard(),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(
+            child: _button(
+              icon: Icons.photo_camera_outlined,
+              text: 'Take Photo',
+              action: controller.takePhoto,
+              style: _ButtonStyle.outlined,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _button(
+              icon: Icons.photo_library_outlined,
+              text: 'Gallery',
+              action: controller.pickImageFromGallery,
+              style: _ButtonStyle.outlined,
+            ),
+          ),
+        ],
+      ),
+      AnimatedSize(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child:
+            controller.selectedImage.value != null
+                ? Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: _button(
+                    icon: Icons.auto_awesome,
+                    text:
+                        controller.isAnalyzing.value
+                            ? 'Analyzing food or drink...'
+                            : 'Analyze Food or Drink',
+                    action:
+                        controller.isAnalyzing.value
+                            ? null
+                            : controller.analyzeFood,
+                    style: _ButtonStyle.primary,
+                    loading: controller.isAnalyzing.value,
+                  ),
+                )
+                : const SizedBox(width: double.infinity),
+      ),
+    ],
+  );
+
+  Widget _resultsPanel(BuildContext context, {bool wide = false}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (wide && !controller.hasCompleteResult)
+        const _TabletAnalysisPlaceholder(),
+      if (controller.errorMessage.value != null)
+        _message(
+          controller.errorMessage.value!,
+          Colors.red.shade700,
+          Icons.error_outline_rounded,
+          params: controller.errorMessageParams,
+        ),
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child:
+            controller.hasCompleteResult
+                ? Padding(
+                  key: const ValueKey('nutrition'),
+                  padding: EdgeInsets.only(top: wide ? 0 : 14),
+                  child: Column(
+                    children: [
+                      _confidenceLine(),
+                      const SizedBox(height: 14),
+                      _analysisCard(controller.nutrition.value!),
+                      if (controller.nutrition.value!.needsUserConfirmation &&
+                          !controller.isUserConfirmed.value) ...[
+                        const SizedBox(height: 14),
+                        _reviewCard(context, controller.nutrition.value!),
+                      ],
+                      const SizedBox(height: 14),
+                      _nutritionCard(controller.nutrition.value!),
+                      if (controller.nutrition.value!.hasDrink) ...[
+                        const SizedBox(height: 14),
+                        _hydrationCard(controller.nutrition.value!),
+                      ],
+                    ],
+                  ),
+                )
+                : const SizedBox.shrink(),
+      ),
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child:
+            controller.recommendation.value != null
+                ? Padding(
+                  key: const ValueKey('recommendation'),
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(
+                    children: [
+                      _recommendationCard(controller.recommendation.value!),
+                      const SizedBox(height: 14),
+                      _button(
+                        icon:
+                            controller.wasAdded.value
+                                ? Icons.check_circle
+                                : Icons.add_circle_outline,
+                        text:
+                            controller.wasAdded.value
+                                ? controller.nutrition.value!.isPlainWaterOnly
+                                    ? 'Water Added Today'
+                                    : 'Added to Today'
+                                : controller.isSaving.value
+                                ? 'Adding...'
+                                : controller.nutrition.value!.isPlainWaterOnly
+                                ? "Add to Today's Water"
+                                : "Add to Today's Food",
+                        action:
+                            controller.isSaving.value ||
+                                    controller.wasAdded.value ||
+                                    !controller.canAddFood
+                                ? null
+                                : controller.addFoodToToday,
+                        style:
+                            controller.wasAdded.value
+                                ? _ButtonStyle.success
+                                : _ButtonStyle.primary,
+                        loading: controller.isSaving.value,
+                      ),
+                    ],
+                  ),
+                )
+                : const SizedBox.shrink(),
+      ),
+      const SizedBox(height: 14),
+      _legalNotice(controller.nutrition.value),
+    ],
   );
 
   // ---- Hero / intro ---------------------------------------------------
@@ -668,6 +719,245 @@ class AiFoodView extends GetView<AiFoodController> {
     );
   }
 
+  Widget _reviewCard(BuildContext context, FoodNutritionModel food) => _card(
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.fact_check_outlined, color: warn, size: 22),
+            SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                'Please review this result',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'The AI is not fully certain about the food or portion. Confirm it or correct the result before adding it to today.',
+          style: TextStyle(color: textMuted, fontSize: 12.5, height: 1.4),
+        ),
+        if (food.candidates.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: food.candidates
+                .map(
+                  (candidate) => ActionChip(
+                    onPressed:
+                        controller.isFeedbackSaving.value
+                            ? null
+                            : () => _showCorrectionDialog(
+                              context,
+                              food,
+                              initialName: candidate.name,
+                            ),
+                    backgroundColor: warn.withValues(alpha: .08),
+                    side: BorderSide(color: warn.withValues(alpha: .22)),
+                    visualDensity: VisualDensity.compact,
+                    label: Text(
+                      '${candidate.name} ${(candidate.confidence * 100).round()}%',
+                      style: const TextStyle(
+                        color: Color(0xFFA94A20),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed:
+                    controller.isFeedbackSaving.value
+                        ? null
+                        : () => _showCorrectionDialog(context, food),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text('Correct'.tr),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: greenDark,
+                  side: const BorderSide(color: green),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed:
+                    controller.isFeedbackSaving.value
+                        ? null
+                        : controller.confirmFood,
+                icon:
+                    controller.isFeedbackSaving.value
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(Icons.check_rounded, size: 18),
+                label: Text('Confirm'.tr),
+                style: FilledButton.styleFrom(backgroundColor: green),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Future<void> _showCorrectionDialog(
+    BuildContext context,
+    FoodNutritionModel food, {
+    String? initialName,
+  }) async {
+    final nameController = TextEditingController(
+      text: initialName?.trim().isNotEmpty == true ? initialName : food.name,
+    );
+    final amountController = TextEditingController(
+      text: _amount(food.servingSize),
+    );
+    final unitController = TextEditingController(text: food.servingUnit);
+    String? validationError;
+    var saving = false;
+    await showDialog<void>(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (context, updateDialog) => AlertDialog(
+                  title: Text('Correct AI result'.tr),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: nameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'Food name'.tr,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: amountController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: InputDecoration(
+                                  labelText: 'Amount'.tr,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: unitController,
+                                decoration: InputDecoration(
+                                  labelText: 'Unit'.tr,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (validationError != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            validationError!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed:
+                          saving
+                              ? null
+                              : () => Navigator.of(dialogContext).pop(),
+                      child: Text('Cancel'.tr),
+                    ),
+                    FilledButton(
+                      onPressed:
+                          saving
+                              ? null
+                              : () async {
+                                final amount = double.tryParse(
+                                  amountController.text.trim(),
+                                );
+                                if (nameController.text.trim().isEmpty ||
+                                    unitController.text.trim().isEmpty ||
+                                    amount == null ||
+                                    amount <= 0) {
+                                  updateDialog(
+                                    () =>
+                                        validationError =
+                                            'Enter a valid food, amount, and unit.',
+                                  );
+                                  return;
+                                }
+                                updateDialog(() {
+                                  saving = true;
+                                  validationError = null;
+                                });
+                                await controller.correctFood(
+                                  foodName: nameController.text,
+                                  servingSize: amount,
+                                  servingUnit: unitController.text,
+                                );
+                                if (!dialogContext.mounted) return;
+                                if (controller.isUserConfirmed.value) {
+                                  Navigator.of(dialogContext).pop();
+                                  return;
+                                }
+                                updateDialog(() {
+                                  saving = false;
+                                  validationError =
+                                      controller.errorMessage.value ??
+                                      'The correction could not be saved.';
+                                });
+                              },
+                      child:
+                          saving
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Text('Save correction'.tr),
+                    ),
+                  ],
+                ),
+          ),
+    );
+    nameController.dispose();
+    amountController.dispose();
+    unitController.dispose();
+  }
+
   Widget _nutritionCard(FoodNutritionModel food) => _card(
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -994,6 +1284,54 @@ class AiFoodView extends GetView<AiFoodController> {
       ],
     ),
     child: child,
+  );
+}
+
+class _TabletAnalysisPlaceholder extends StatelessWidget {
+  const _TabletAnalysisPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey<String>('ai-food-tablet-placeholder'),
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: AiFoodView.cardBorder),
+    ),
+    child: Column(
+      children: [
+        Container(
+          width: 62,
+          height: 62,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE8F7EA),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.analytics_outlined,
+            color: AiFoodView.green,
+            size: 31,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Your nutrition analysis will appear here'.tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          'Choose a clear food or drink photo, then tap Analyze.'.tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AiFoodView.textMuted,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+      ],
+    ),
   );
 }
 

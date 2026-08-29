@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../widgets/app_back_header.dart';
 
 class AuthFlowScaffold extends StatelessWidget {
   const AuthFlowScaffold({
@@ -53,19 +54,12 @@ class AuthFlowScaffold extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         SizedBox(
-                          height: 48,
+                          height: AppBackButton.layoutSize,
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child:
                                 showBackButton
-                                    ? IconButton(
-                                      tooltip: 'Back'.tr,
-                                      onPressed: Get.back,
-                                      icon: const Icon(
-                                        Icons.arrow_back_rounded,
-                                        color: AppColors.darkGreen,
-                                      ),
-                                    )
+                                    ? AppBackButton(onPressed: Get.back)
                                     : null,
                           ),
                         ),

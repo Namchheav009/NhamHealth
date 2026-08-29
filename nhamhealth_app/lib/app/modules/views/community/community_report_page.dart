@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_report_reason.dart';
 import '../../repositories/community/community_repository.dart';
 
@@ -64,18 +65,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: _submitting ? null : Get.back,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-                alignment: Alignment.centerLeft,
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: Color(0xFF087B3A),
-                  size: 22,
-                ),
-                tooltip: 'Back',
-              ),
+              AppBackButton(onPressed: _submitting ? null : Get.back),
               const SizedBox(height: 14),
               const Center(
                 child: Text(
@@ -86,7 +76,10 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
               const SizedBox(height: 32),
               Text(
                 'Why are you reporting this ${widget.subject}?',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 13),
               const Text(
@@ -179,7 +172,8 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
             width: double.infinity,
             height: 42,
             child: FilledButton(
-              onPressed: _selectedReasonId == null || _submitting ? null : _submit,
+              onPressed:
+                  _selectedReasonId == null || _submitting ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF087B3A),
                 disabledBackgroundColor: const Color(0xFFE1E4E9),
@@ -188,16 +182,23 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: _submitting
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text(
-                      'Submit Report',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                    ),
+              child:
+                  _submitting
+                      ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Text(
+                        'Submit Report',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
             ),
           ),
         ],
@@ -223,7 +224,9 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       height: 46,
       child: InkWell(
         onTap:
-            _submitting ? null : () => setState(() => _selectedReasonId = reason.id),
+            _submitting
+                ? null
+                : () => setState(() => _selectedReasonId = reason.id),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13),
           child: Row(
@@ -277,7 +280,10 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       }
       if (!mounted) return;
       Get.back<void>();
-      Get.snackbar('Report submitted', 'Thanks for helping keep the community safe.');
+      Get.snackbar(
+        'Report submitted',
+        'Thanks for helping keep the community safe.',
+      );
     } on Object catch (error) {
       if (mounted) Get.snackbar('Could not submit report', error.toString());
     } finally {

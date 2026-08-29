@@ -63,7 +63,7 @@ class NvidiaFoodVisionServiceTests {
             assertEquals(2, requests.get());
             assertEquals("Egg fried rice", result.response().mealName());
             assertEquals(1, result.response().components().size());
-            assertEquals("vision-model", result.modelName());
+            assertEquals("fallback-vision-model", result.modelName());
             assertFalse(result.nutritionFallbackUsed());
         } finally {
             server.stop(0);
@@ -95,7 +95,7 @@ class NvidiaFoodVisionServiceTests {
     }
 
     @Test
-    void recoversPrimaryFoodIdentityWithoutWaitingForFallbackModel() throws Exception {
+    void confirmsRecoverablePrimaryFoodIdentityWithFallbackModel() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         AtomicInteger requests = new AtomicInteger();
         HttpServer server = server(List.of(completion(
@@ -106,10 +106,10 @@ class NvidiaFoodVisionServiceTests {
         try {
             AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
 
-            assertEquals(1, requests.get());
+            assertEquals(2, requests.get());
             assertEquals("Beef salad", result.response().mealName());
             assertEquals(0.25, result.response().mealConfidence());
-            assertEquals("vision-model", result.modelName());
+            assertEquals("fallback-vision-model", result.modelName());
         } finally {
             server.stop(0);
         }
@@ -128,7 +128,7 @@ class NvidiaFoodVisionServiceTests {
         try {
             AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
 
-            assertEquals(1, requests.get());
+            assertEquals(2, requests.get());
             assertTrue(result.response().foodDetected());
             assertEquals("Strawberry milkshake", result.response().mealName());
             assertEquals("drink", result.response().type());
@@ -150,9 +150,10 @@ class NvidiaFoodVisionServiceTests {
         try {
             AiFoodModelResult result = service(server).analyze(jpeg(), "image/jpeg");
 
-            assertEquals(1, requests.get());
+            assertEquals(2, requests.get());
             assertEquals(1, result.response().components().getFirst().estimatedAmount());
-            assertEquals(0.25, result.response().mealConfidence());
+            assertEquals(0.82, result.response().mealConfidence());
+            assertEquals("fallback-vision-model", result.modelName());
         } finally {
             server.stop(0);
         }
@@ -211,9 +212,10 @@ class NvidiaFoodVisionServiceTests {
             assertTrue(result.response().foodDetected());
             assertEquals("Strawberry milkshake", result.response().mealName());
             assertEquals("drink", result.response().type());
-            assertEquals("vision-model", result.modelName());
+            assertEquals("fallback-vision-model", result.modelName());
             JsonNode retryRequest = mapper.readTree(requestBodies.get(1));
             assertTrue(retryRequest.toString().contains("single centered cup or glass"));
+            assertEquals("fallback-vision-model", retryRequest.path("model").asText());
         } finally {
             server.stop(0);
         }

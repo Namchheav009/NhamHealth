@@ -5,6 +5,7 @@ import '../../controllers/wellness/food_source_detail_controller.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import 'widgets/food_amount_editor_card.dart';
 import 'widgets/food_contribution_card.dart';
 import 'widgets/food_detail_ai_insight_card.dart';
@@ -69,13 +70,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: Get.back,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: context.appColorScheme.primary,
-            ),
-          ),
+          AppBackButton(onPressed: Get.back),
           Expanded(
             child: Center(
               child: Text(
@@ -88,7 +83,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               ),
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: AppBackButton.layoutSize),
         ],
       ),
     );
