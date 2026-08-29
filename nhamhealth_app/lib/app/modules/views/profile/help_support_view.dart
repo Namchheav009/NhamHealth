@@ -286,10 +286,13 @@ class _FaqItem extends StatelessWidget {
           InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 62,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 62),
               child: Padding(
-                padding: const EdgeInsets.only(left: 13, right: 13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -311,11 +314,11 @@ class _FaqItem extends StatelessWidget {
                     Expanded(
                       child: Text(
                         question.tr,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 14,
-                          height: 1,
+                          height: 1.25,
                           fontWeight: FontWeight.w600,
                           color: context.appText,
                         ),

@@ -4,17 +4,21 @@ import 'package:get/get.dart';
 
 import '../../../widgets/app_alert.dart';
 import '../../../routes/app_routes.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../models/notifications/notification_item.dart';
 import '../../repositories/notifications/notifications_repository.dart';
 
 class NotificationsController extends GetxController {
-  NotificationsController({this.repository});
+  NotificationsController({this.repository, this.realtimeEvents});
   final NotificationsRepository? repository;
+  final Stream<NotificationRealtimeEvent>? realtimeEvents;
   final notifications = <NotificationItem>[].obs;
   final isLoading = false.obs;
   Timer? _refreshTimer;
+  StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
   bool _requestInFlight = false;
   bool _hasLoaded = false;
+  bool _reloadRequested = false;
 
   static const refreshInterval = Duration(seconds: 5);
 
@@ -26,6 +30,9 @@ class NotificationsController extends GetxController {
   void onInit() {
     super.onInit();
     load();
+    _realtimeSubscription = realtimeEvents?.listen(
+      (_) => load(silent: true, announceNew: false),
+    );
     if (repository != null) {
       _refreshTimer = Timer.periodic(
         refreshInterval,
@@ -34,9 +41,13 @@ class NotificationsController extends GetxController {
     }
   }
 
-  Future<void> load({bool silent = false}) async {
+  Future<void> load({bool silent = false, bool announceNew = true}) async {
     final repository = this.repository;
-    if (repository == null || _requestInFlight) return;
+    if (repository == null) return;
+    if (_requestInFlight) {
+      _reloadRequested = true;
+      return;
+    }
     _requestInFlight = true;
     try {
       if (!silent) isLoading.value = true;
@@ -47,7 +58,7 @@ class NotificationsController extends GetxController {
           : const <NotificationItem>[];
       notifications.assignAll(result);
       _hasLoaded = true;
-      if (silent && newItems.isNotEmpty) {
+      if (silent && announceNew && newItems.isNotEmpty) {
         final newest = newItems.first;
         AppAlert.success(
           title: newest.title,
@@ -64,6 +75,10 @@ class NotificationsController extends GetxController {
     } finally {
       _requestInFlight = false;
       if (!silent) isLoading.value = false;
+      if (_reloadRequested) {
+        _reloadRequested = false;
+        unawaited(load(silent: true, announceNew: false));
+      }
     }
   }
 
@@ -121,6 +136,7 @@ class NotificationsController extends GetxController {
   @override
   void onClose() {
     _refreshTimer?.cancel();
+    _realtimeSubscription?.cancel();
     super.onClose();
   }
 }

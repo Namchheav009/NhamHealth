@@ -14,6 +14,7 @@ import '../../app/routes/app_routes.dart';
 import '../../app/widgets/app_alert.dart';
 import '../../config/api_config.dart';
 import 'auth_service.dart';
+import 'notification_realtime_event.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -34,10 +35,14 @@ class PushNotificationService {
 
   final AuthService _authService;
   final http.Client _client;
+  final StreamController<NotificationRealtimeEvent> _events =
+      StreamController<NotificationRealtimeEvent>.broadcast(sync: true);
   StreamSubscription<String>? _tokenSubscription;
   StreamSubscription<RemoteMessage>? _messageSubscription;
   StreamSubscription<RemoteMessage>? _tapSubscription;
   String? _token;
+
+  Stream<NotificationRealtimeEvent> get events => _events.stream;
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
@@ -50,6 +55,7 @@ class PushNotificationService {
     await messaging.requestPermission(alert: true, badge: true, sound: true);
     _tokenSubscription = messaging.onTokenRefresh.listen(_registerToken);
     _messageSubscription = FirebaseMessaging.onMessage.listen((message) async {
+      _publish(message);
       final notification = message.notification;
       if (notification == null) return;
       final title = notification.title ?? 'NhamHealth';
@@ -73,6 +79,20 @@ class PushNotificationService {
         (_) => _open(initialMessage),
       );
     }
+  }
+
+  void _publish(RemoteMessage message) {
+    if (_events.isClosed) return;
+    final notification = message.notification;
+    _events.add(
+      NotificationRealtimeEvent(
+        id: int.tryParse(message.data['notificationId'] ?? ''),
+        title: notification?.title ?? 'NhamHealth',
+        message: notification?.body ?? '',
+        referenceType: message.data['referenceType']?.trim().toUpperCase(),
+        referenceId: int.tryParse(message.data['referenceId'] ?? ''),
+      ),
+    );
   }
 
   Future<void> syncToken() async {
@@ -144,6 +164,7 @@ class PushNotificationService {
     await _tokenSubscription?.cancel();
     await _messageSubscription?.cancel();
     await _tapSubscription?.cancel();
+    await _events.close();
     _client.close();
     if (identical(instance, this)) instance = null;
   }

@@ -31,16 +31,18 @@ public class CommunityReportService {
     private final ReportReasonRepository reasons;
     private final UserRepository users;
     private final NotificationRepository notifications;
+    private final PushNotificationService pushNotifications;
 
     public CommunityReportService(PostRepository posts, PostCommentRepository comments,
             PostReportRepository reports, ReportReasonRepository reasons, UserRepository users,
-            NotificationRepository notifications) {
+            NotificationRepository notifications, PushNotificationService pushNotifications) {
         this.posts = posts;
         this.comments = comments;
         this.reports = reports;
         this.reasons = reasons;
         this.users = users;
         this.notifications = notifications;
+        this.pushNotifications = pushNotifications;
     }
 
     @Transactional(readOnly = true)
@@ -199,7 +201,7 @@ public class CommunityReportService {
         notification.setMessage(message);
         notification.setIsRead(false);
         notification.setCreatedAt(LocalDateTime.now());
-        notifications.save(notification);
+        pushNotifications.send(notifications.saveAndFlush(notification));
     }
 
     private boolean isCommentReport(PostReport report) {

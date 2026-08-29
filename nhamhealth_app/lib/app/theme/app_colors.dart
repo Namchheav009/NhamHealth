@@ -104,7 +104,10 @@ extension AppColorContext on BuildContext {
 
   List<BoxShadow> get appTileShadow => [
     BoxShadow(
-      color: appShadow.withValues(alpha: appIsDark ? 0.7 : 0.55),
+      color:
+          appIsDark
+              ? Colors.black.withValues(alpha: 0.26)
+              : const Color(0x0D263D30),
       blurRadius: 10,
       offset: const Offset(0, 3),
     ),
