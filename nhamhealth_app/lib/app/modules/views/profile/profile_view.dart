@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_post.dart';
 import '../../../theme/app_colors.dart';
@@ -122,7 +123,7 @@ class ProfileView extends GetView<ProfileController> {
   Widget _profileFeed(BuildContext context) => Column(
     children: [
       CommunityComposerCard(
-        onTap: _showCreatePost,
+        onTap: () => Get.toNamed<void>(AppRoutes.myRecipes),
         authorAvatarUrl:
             controller.authenticatedUser.value?.profileImageUrl ?? '',
       ),

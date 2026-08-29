@@ -11,8 +11,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "recipe_steps", indexes = {
-    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_id", columnList = "recipe_id"),
-    @jakarta.persistence.Index(name = "idx_recipe_steps_recipe_order", columnList = "recipe_id, step_number")
+    @jakarta.persistence.Index(name = "idx_recipe_steps_meal_post_id", columnList = "user_meal_post_id"),
+    @jakarta.persistence.Index(name = "idx_recipe_steps_meal_post_order", columnList = "user_meal_post_id, step_number")
 })
 public class RecipeStep {
 
@@ -26,11 +26,11 @@ public class RecipeStep {
     private Meal meal;
 
     /**
-     * Community recipe owner. {@code meal} remains only for existing admin
-     * meal instructions; a step belongs to exactly one of meal or recipe.
+     * User meal-post owner. {@code meal} remains only for existing admin
+     * meal instructions; a step belongs to exactly one parent.
      */
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "recipe_id")
+    @JoinColumn(name = "user_meal_post_id")
     private Recipe recipe;
 
     @Column(name = "step_number", nullable = false)

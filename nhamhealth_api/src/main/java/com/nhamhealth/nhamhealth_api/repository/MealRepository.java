@@ -27,12 +27,11 @@ public interface MealRepository extends JpaRepository<Meal, Integer> {
                                                                          meal.servings as servings,
                                                                          meal.isPublished as published,
                                                                          meal.updatedAt as updatedAt,
-                                                                         coalesce(avg(review.rating), 0) as rating,
-                                                                         count(distinct review.reviewId) as reviewCount,
+                                                                         0.0 as rating,
+                                                                         0L as reviewCount,
                                                                          count(distinct favorite.mealFavoriteId) as favorites
                                                 from Meal meal
                                                 left join meal.category category
-                                                left join Review review on review.meal = meal
                                                 left join MealFavorite favorite on favorite.meal = meal
             where (:search = '' or lower(meal.mealName) like concat('%', :search, '%'))
                                                         and (:category = '' or lower(category.categoryName) = :category)

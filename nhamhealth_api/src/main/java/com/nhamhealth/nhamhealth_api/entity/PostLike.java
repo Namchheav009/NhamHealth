@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "post_likes", uniqueConstraints =
-        @UniqueConstraint(name = "uk_post_likes_user_post", columnNames = {"user_id", "post_id"}))
+        @UniqueConstraint(name = "uk_post_likes_user_post", columnNames = {"user_id", "user_meal_post_id"}))
 public class PostLike {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +18,8 @@ public class PostLike {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false,
+            foreignKey = @jakarta.persistence.ForeignKey(value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private Post post;
 
     @Column(name = "created_at", nullable = false)

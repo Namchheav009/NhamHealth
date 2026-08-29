@@ -26,6 +26,13 @@ class CommunityPost {
     this.allowComments = true,
     this.allowReplies = true,
     this.sharedPost,
+    this.mealName = '',
+    this.cookingTimeMinutes,
+    this.servings,
+    this.difficulty = '',
+    this.aiStatus = 'PENDING',
+    this.aiReviewReason = '',
+    this.mealId,
   });
 
   final String id;
@@ -37,6 +44,8 @@ class CommunityPost {
   final bool allowComments;
   final bool allowReplies;
   final CommunitySharedPost? sharedPost;
+  final String mealName, difficulty, aiStatus, aiReviewReason;
+  final int? cookingTimeMinutes, servings, mealId;
   final String author;
   final String role;
   final int authorId;
@@ -85,6 +94,13 @@ class CommunityPost {
               Map<String, dynamic>.from(json['sharedPost'] as Map),
             )
             : null,
+    mealName: (json['mealName'] as String? ?? '').trim(),
+    cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
+    servings: (json['servings'] as num?)?.toInt(),
+    difficulty: (json['difficulty'] as String? ?? '').trim(),
+    aiStatus: (json['aiStatus'] as String? ?? 'PENDING').trim(),
+    aiReviewReason: (json['aiReviewReason'] as String? ?? '').trim(),
+    mealId: (json['mealId'] as num?)?.toInt(),
   );
 
   CommunityPost copyWith({
@@ -109,6 +125,13 @@ class CommunityPost {
     bool? isLiked,
     bool? isSaved,
     CommunitySharedPost? sharedPost,
+    String? mealName,
+    int? cookingTimeMinutes,
+    int? servings,
+    String? difficulty,
+    String? aiStatus,
+    String? aiReviewReason,
+    int? mealId,
   }) => CommunityPost(
     id: id,
     description: description ?? this.description,
@@ -132,6 +155,13 @@ class CommunityPost {
     isLiked: isLiked ?? this.isLiked,
     isSaved: isSaved ?? this.isSaved,
     sharedPost: sharedPost ?? this.sharedPost,
+    mealName: mealName ?? this.mealName,
+    cookingTimeMinutes: cookingTimeMinutes ?? this.cookingTimeMinutes,
+    servings: servings ?? this.servings,
+    difficulty: difficulty ?? this.difficulty,
+    aiStatus: aiStatus ?? this.aiStatus,
+    aiReviewReason: aiReviewReason ?? this.aiReviewReason,
+    mealId: mealId ?? this.mealId,
   );
 
   static List<String> _imageUrls(Map<String, dynamic> json) {

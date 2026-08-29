@@ -56,10 +56,43 @@ class _MyRecipesViewState extends State<MyRecipesView> {
     }
   }
 
+  Future<void> _delete(CommunityRecipe recipe) async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Delete meal post?'),
+        content: Text(
+          'This permanently removes "${recipe.name}" from Community and Meals.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _repository.delete(recipe.id);
+      if (mounted) {
+        setState(
+          () => _recipes =
+              _recipes.where((item) => item.id != recipe.id).toList(),
+        );
+      }
+    } catch (error) {
+      Get.snackbar('Meal post not deleted', '$error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('My recipes'),
+          title: const Text('My meal posts'),
           actions: [
             IconButton(
               onPressed: _load,
@@ -77,7 +110,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
             }
           },
           icon: const Icon(Icons.add_rounded),
-          label: const Text('Create recipe'),
+          label: const Text('Create meal post'),
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -95,7 +128,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                           SizedBox(height: 14),
                           Center(
                             child: Text(
-                              'Create your first community recipe.',
+                              'Share your first meal with the Community.',
                             ),
                           ),
                         ],
@@ -111,6 +144,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                             recipe: recipe,
                             repository: _repository,
                             onRun: _run,
+                            onDelete: () => _delete(recipe),
                           );
                         },
                       ),
@@ -123,6 +157,7 @@ class _RecipeCard extends StatelessWidget {
     required this.recipe,
     required this.repository,
     required this.onRun,
+    required this.onDelete,
   });
 
   final CommunityRecipe recipe;
@@ -131,6 +166,7 @@ class _RecipeCard extends StatelessWidget {
     CommunityRecipe,
     Future<CommunityRecipe> Function(),
   ) onRun;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -170,6 +206,11 @@ class _RecipeCard extends StatelessWidget {
                       Icons.timer_outlined,
                       '${recipe.cookingTimeMinutes} min',
                     ),
+                  if (recipe.difficulty.isNotEmpty)
+                    _InfoChip(
+                      Icons.signal_cellular_alt_rounded,
+                      _displayValue(recipe.difficulty),
+                    ),
                   _InfoChip(
                     Icons.restaurant_outlined,
                     '${recipe.ingredients.length} ingredients',
@@ -181,24 +222,29 @@ class _RecipeCard extends StatelessWidget {
                     ),
                 ],
               ),
-              if (recipe.review != null)
+              if (recipe.aiReviewReason.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: recipe.review!.status == 'APPROVED'
+                    color: recipe.aiStatus == 'APPROVED'
                         ? const Color(0xFFE7F6EB)
                         : const Color(0xFFFFF4DF),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${recipe.review!.summary}\n${recipe.review!.feedback}',
+                    recipe.aiReviewReason,
                   ),
                 ),
               const SizedBox(height: 8),
               OverflowBar(
                 alignment: MainAxisAlignment.end,
                 children: [
+                  IconButton(
+                    tooltip: 'Delete meal post',
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline_rounded),
+                  ),
                   TextButton.icon(
                     onPressed: () => onRun(
                       recipe,
@@ -222,6 +268,12 @@ class _RecipeCard extends StatelessWidget {
           ),
         ),
       );
+
+  static String _displayValue(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.isEmpty) return '';
+    return '${normalized[0].toUpperCase()}${normalized.substring(1)}';
+  }
 }
 
 class _RecipeEditor extends StatefulWidget {
@@ -246,6 +298,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
   final _steps = <RecipeStep>[];
   Uint8List? _image;
   bool _saving = false;
+  String _difficulty = 'EASY';
 
   @override
   void dispose() {
@@ -282,18 +335,18 @@ class _RecipeEditorState extends State<_RecipeEditor> {
     }
     setState(() => _saving = true);
     try {
-      final recipe = await widget.repository.create(
+      final draft = await widget.repository.create(
         name: _name.text,
         description: _description.text,
         cookingTimeMinutes: int.tryParse(_time.text),
         servings: int.tryParse(_servings.text),
+        difficulty: _difficulty,
         ingredients: _ingredients,
         steps: _steps,
         imageBytes: _image,
       );
-      if (mounted) {
-        Get.back(result: recipe);
-      }
+      final recipe = await widget.repository.publish(draft.id);
+      if (mounted) Get.back(result: recipe);
     } catch (error) {
       Get.snackbar('Recipe not saved', '$error');
     } finally {
@@ -305,7 +358,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Create recipe')),
+        appBar: AppBar(title: const Text('Create Meal Post')),
         body: Form(
           key: _form,
           child: ListView(
@@ -313,7 +366,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
             children: [
               TextFormField(
                 controller: _name,
-                decoration: const InputDecoration(labelText: 'Recipe name'),
+                decoration: const InputDecoration(labelText: 'Meal name'),
                 validator: (value) =>
                     value == null || value.trim().isEmpty
                         ? 'Enter a name'
@@ -346,6 +399,18 @@ class _RecipeEditorState extends State<_RecipeEditor> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _difficulty,
+                decoration: const InputDecoration(labelText: 'Difficulty'),
+                items: const [
+                  DropdownMenuItem(value: 'EASY', child: Text('Easy')),
+                  DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
+                  DropdownMenuItem(value: 'HARD', child: Text('Hard')),
+                ],
+                onChanged: (value) =>
+                    setState(() => _difficulty = value ?? 'EASY'),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
@@ -394,7 +459,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
               const SizedBox(height: 28),
               FilledButton(
                 onPressed: _saving ? null : _save,
-                child: Text(_saving ? 'Saving…' : 'Save draft'),
+                child: Text(_saving ? 'Publishing…' : 'Publish Meal'),
               ),
             ],
           ),

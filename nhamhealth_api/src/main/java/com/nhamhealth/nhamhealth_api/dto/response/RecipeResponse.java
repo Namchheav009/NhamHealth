@@ -6,7 +6,8 @@ import java.util.List;
 
 public record RecipeResponse(
         Integer id, String authorName, String recipeName, String description, String mainImageUrl,
-        Integer cookingTimeMinutes, Integer servings, String status,
+        Integer cookingTimeMinutes, Integer servings, String difficulty, String status,
+        String aiStatus, String aiReviewReason,
         LocalDateTime publishedAt, LocalDateTime createdAt, LocalDateTime updatedAt,
         List<String> tags, List<RecipeIngredient> ingredients, List<RecipeStep> steps,
         RecipeReview latestReview, Integer postId, Integer mealId, boolean saved) {

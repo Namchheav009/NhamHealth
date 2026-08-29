@@ -533,14 +533,9 @@ class CommunityPage extends GetView<CommunityController> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       CommunityComposerCard(
-        onTap: _showCreatePost,
+        onTap: () => Get.toNamed<void>(AppRoutes.myRecipes),
         authorAvatarUrl:
             controller.authenticatedUser.value?.profileImageUrl ?? '',
-      ),
-      OutlinedButton.icon(
-        onPressed: () => Get.toNamed<void>(AppRoutes.myRecipes),
-        icon: const Icon(Icons.menu_book_outlined),
-        label: const Text('Share a recipe'),
       ),
       const SizedBox(height: 10),
       _feedFilters(),

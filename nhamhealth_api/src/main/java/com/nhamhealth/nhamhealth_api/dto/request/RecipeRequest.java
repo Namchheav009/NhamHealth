@@ -12,6 +12,7 @@ public record RecipeRequest(
         @Size(max = 4000) String description,
         @Positive Integer cookingTimeMinutes,
         @Positive Integer servings,
+        @Size(max = 20) String difficulty,
         List<Integer> tagIds,
         List<@Valid RecipeIngredientRequest> ingredients,
         List<@Valid RecipeStepRequest> steps) { }

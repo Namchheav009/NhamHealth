@@ -12,40 +12,76 @@ class RecipeRepository {
       _client = client ?? http.Client();
   final AuthService _auth;
   final http.Client _client;
-  Future<List<CommunityRecipe>> mine() async => _list('/api/v1/recipes/mine');
-  Future<List<CommunityRecipe>> saved() async => _list('/api/v1/recipes/saved');
+  static const _basePath = '/api/community/meals';
+
+  Future<List<CommunityRecipe>> feed() async => _list(_basePath);
+  Future<List<CommunityRecipe>> mine() async => _list('$_basePath/mine');
+  Future<List<CommunityRecipe>> saved() async => _list('$_basePath/saved');
+  Future<CommunityRecipe> detail(int id) async => CommunityRecipe.fromJson(
+    _map(await _client.get(_uri('$_basePath/$id'), headers: await _headers())),
+  );
   Future<CommunityRecipe> create({
     required String name,
     String description = '',
     int? cookingTimeMinutes,
     int? servings,
+    String difficulty = 'EASY',
     required List<RecipeIngredient> ingredients,
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
   }) => _sendRecipe(
     'POST',
-    '/api/v1/recipes',
+    _basePath,
     name: name,
     description: description,
     cookingTimeMinutes: cookingTimeMinutes,
     servings: servings,
+    difficulty: difficulty,
+    ingredients: ingredients,
+    steps: steps,
+    imageBytes: imageBytes,
+  );
+  Future<CommunityRecipe> update({
+    required int id,
+    required String name,
+    String description = '',
+    int? cookingTimeMinutes,
+    int? servings,
+    String difficulty = 'EASY',
+    required List<RecipeIngredient> ingredients,
+    required List<RecipeStep> steps,
+    Uint8List? imageBytes,
+  }) => _sendRecipe(
+    'PUT', '$_basePath/$id',
+    name: name,
+    description: description,
+    cookingTimeMinutes: cookingTimeMinutes,
+    servings: servings,
+    difficulty: difficulty,
     ingredients: ingredients,
     steps: steps,
     imageBytes: imageBytes,
   );
   Future<CommunityRecipe> publish(int id) =>
-      _post('/api/v1/recipes/$id/publish');
+      _post('$_basePath/$id/publish');
   Future<CommunityRecipe> aiCheck(int id) =>
-      _post('/api/v1/recipes/$id/ai-check');
+      _post('$_basePath/$id/ai-review');
+  Future<void> delete(int id) async {
+    final response = await _client.delete(
+      _uri('$_basePath/$id'),
+      headers: await _headers(),
+    );
+    _ok(response);
+  }
   Future<CommunityRecipe> toggleSaved(CommunityRecipe recipe) async {
     final response =
         recipe.saved
             ? await _client.delete(
-              _uri('/api/v1/recipes/${recipe.id}/saved'),
+              _uri('$_basePath/${recipe.id}/saved'),
               headers: await _headers(),
             )
             : await _client.post(
-              _uri('/api/v1/recipes/${recipe.id}/saved'),
+              _uri('$_basePath/${recipe.id}/saved'),
               headers: await _headers(),
             );
     return CommunityRecipe.fromJson(_map(response));
@@ -58,6 +94,7 @@ class RecipeRepository {
     required String description,
     required int? cookingTimeMinutes,
     required int? servings,
+    String difficulty = 'EASY',
     required List<RecipeIngredient> ingredients,
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
@@ -69,6 +106,7 @@ class RecipeRepository {
       'description': description.trim(),
       if (cookingTimeMinutes != null) 'cookingTimeMinutes': cookingTimeMinutes,
       if (servings != null) 'servings': servings,
+      'difficulty': difficulty,
       'ingredients': ingredients.map((item) => item.toJson()).toList(),
       'steps': steps.map((item) => item.toJson()).toList(),
     };

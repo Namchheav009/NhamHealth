@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "ai_recipe_reviews", indexes = {
-    @jakarta.persistence.Index(name = "idx_ai_recipe_reviews_recipe_created", columnList = "recipe_id, created_at"),
+    @jakarta.persistence.Index(name = "idx_ai_recipe_reviews_meal_post_created", columnList = "user_meal_post_id, created_at"),
     @jakarta.persistence.Index(name = "idx_ai_recipe_reviews_status", columnList = "status")
 })
 public class AiRecipeReview {
@@ -30,7 +30,7 @@ public class AiRecipeReview {
     private Integer aiRecipeReviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false)
     private Recipe recipe;
 
     /** APPROVED, INCOMPLETE, or NOT_SUITABLE. */

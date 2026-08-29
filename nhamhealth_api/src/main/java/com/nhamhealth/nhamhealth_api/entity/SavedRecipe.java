@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "saved_recipes", uniqueConstraints =
-        @UniqueConstraint(name = "uk_saved_recipes_user_recipe", columnNames = {"user_id", "recipe_id"}), indexes = {
-    @jakarta.persistence.Index(name = "idx_saved_recipes_recipe_id", columnList = "recipe_id")
+        @UniqueConstraint(name = "uk_saved_recipes_user_recipe", columnNames = {"user_id", "user_meal_post_id"}), indexes = {
+    @jakarta.persistence.Index(name = "idx_saved_recipes_meal_post_id", columnList = "user_meal_post_id")
 })
 public class SavedRecipe {
 
@@ -30,7 +30,7 @@ public class SavedRecipe {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false)
     private Recipe recipe;
 
     @Column(name = "saved_at", nullable = false, updatable = false)

@@ -2,7 +2,6 @@ package com.nhamhealth.nhamhealth_api.controller.admin;
 
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
+import com.nhamhealth.nhamhealth_api.dto.response.PageResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
 import com.nhamhealth.nhamhealth_api.service.MealAdminService;
 import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
@@ -48,14 +48,15 @@ public class MealAdminController {
 
     @GetMapping("/admin/meals/data")
     @ResponseBody
-    public ResponseEntity<Page<MealAdminRowDto>> listMeals(
+    public ResponseEntity<PageResponse<MealAdminRowDto>> listMeals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String tag) {
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10, Sort.by(Sort.Direction.DESC, "updatedAt"));
-        return ResponseEntity.ok(mealAdminService.getMealsForAdmin(search, category, status, tag, pageRequest));
+        return ResponseEntity.ok(PageResponse.from(
+                mealAdminService.getMealsForAdmin(search, category, status, tag, pageRequest)));
     }
 
     @GetMapping("/admin/meals/summary")
