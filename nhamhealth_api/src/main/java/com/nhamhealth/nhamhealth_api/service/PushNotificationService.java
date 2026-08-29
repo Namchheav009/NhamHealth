@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.google.firebase.messaging.AndroidConfig;
 import com.google.firebase.messaging.AndroidNotification;
@@ -28,6 +30,20 @@ public class PushNotificationService {
     }
 
     public void send(Notification notification) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendNow(notification);
+                }
+            });
+            return;
+        }
+        sendNow(notification);
+    }
+
+    private void sendNow(Notification notification) {
         var firebase = messaging.getIfAvailable();
         if (firebase == null) return;
         var data = Map.of(

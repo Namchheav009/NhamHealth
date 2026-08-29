@@ -5,6 +5,7 @@ import '../../../widgets/app_alert.dart';
 import '../../../widgets/favorite_removal_confirmation.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../services/auth/google_auth_service.dart';
 import '../../../routes/app_routes.dart';
@@ -16,9 +17,10 @@ import '../../models/home/mood_model.dart';
 import '../../repositories/home/home_repository.dart';
 
 class HomeController extends GetxController {
-  HomeController({required this.repository});
+  HomeController({required this.repository, this.realtimeEvents});
 
   final HomeRepository repository;
+  final Stream<NotificationRealtimeEvent>? realtimeEvents;
   final isLoading = false.obs;
   final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
   final selectedMoodId = RxnInt();
@@ -39,6 +41,7 @@ class HomeController extends GetxController {
   final favoriteMealIds = <int>{}.obs;
   final unreadNotificationCount = 0.obs;
   Timer? _notificationCountTimer;
+  StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
 
   @override
   void onInit() {
@@ -59,6 +62,9 @@ class HomeController extends GetxController {
     loadMoods();
     loadFavoriteMeals();
     loadUnreadNotificationCount();
+    _notificationSubscription = realtimeEvents?.listen(
+      (_) => loadUnreadNotificationCount(),
+    );
     _notificationCountTimer = Timer.periodic(
       const Duration(seconds: 5),
       (_) => loadUnreadNotificationCount(),
@@ -429,6 +435,7 @@ class HomeController extends GetxController {
   @override
   void onClose() {
     _notificationCountTimer?.cancel();
+    _notificationSubscription?.cancel();
     super.onClose();
   }
 }
