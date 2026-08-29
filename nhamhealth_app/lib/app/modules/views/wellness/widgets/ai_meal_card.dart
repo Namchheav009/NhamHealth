@@ -3,24 +3,30 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../controllers/wellness/wellness_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class AiMealCard extends GetView<WellnessController> {
   const AiMealCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? context.appSurfaceLow : Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: isDark ? Border.all(color: context.appBorder) : null,
+        boxShadow:
+            isDark
+                ? context.appCardShadow
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 18,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,10 +56,10 @@ class AiMealCard extends GetView<WellnessController> {
               children: [
                 Text(
                   'Log food with AI'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF555555),
+                    color: isDark ? context.appText : const Color(0xFF555555),
                   ),
                 ),
 
@@ -62,10 +68,10 @@ class AiMealCard extends GetView<WellnessController> {
                 Text(
                   'Tell AI what you ate and choose the amount for a better estimate.'
                       .tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     height: 1.4,
-                    color: Colors.black54,
+                    color: isDark ? context.appMutedText : Colors.black54,
                   ),
                 ),
 
@@ -90,8 +96,8 @@ class AiMealCard extends GetView<WellnessController> {
 
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
-                      backgroundColor: const Color(0xFF00A651),
-                      foregroundColor: Colors.white,
+                      backgroundColor: context.appColorScheme.primary,
+                      foregroundColor: context.appColorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),

@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/food_source_detail_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
   const FoodNutritionEstimateCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Obx(
       () => Container(
         padding: const EdgeInsets.all(14),
-        decoration: _cardDecoration(),
+        decoration: _cardDecoration(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -19,9 +21,10 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
               children: [
                 Text(
                   'Nutrition estimate'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
+                    color: isDark ? context.appText : null,
                   ),
                 ),
                 const SizedBox(width: 5),
@@ -37,6 +40,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             Row(
               children: [
                 _nutritionBox(
+                  context: context,
                   icon: Icons.local_fire_department_rounded,
                   title: 'Calories',
                   value: '+${controller.currentCalories.value}',
@@ -46,6 +50,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
+                  context: context,
                   icon: Icons.bolt_rounded,
                   title: 'Protein',
                   value: '+${controller.estimatedProtein}',
@@ -55,6 +60,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
+                  context: context,
                   icon: Icons.air_rounded,
                   title: 'Fiber',
                   value: '+${controller.estimatedFiber}',
@@ -64,6 +70,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
+                  context: context,
                   icon: Icons.hexagon_rounded,
                   title: 'Sugar',
                   value: '+${controller.estimatedSugar}',
@@ -73,6 +80,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
+                  context: context,
                   icon: Icons.water_drop_rounded,
                   title: 'Hydration tip',
                   value: controller.hydrationTip,
@@ -90,6 +98,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
   }
 
   Widget _nutritionBox({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String value,
@@ -102,7 +111,13 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
-          color: bg,
+          color:
+              context.appIsDark
+                  ? Color.alphaBlend(
+                    color.withValues(alpha: 0.12),
+                    context.appSurfaceLow,
+                  )
+                  : bg,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -112,7 +127,11 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             Text(
               title.tr,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 9, color: Colors.black54),
+              style: TextStyle(
+                fontSize: 9,
+                color:
+                    context.appIsDark ? context.appMutedText : Colors.black54,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -127,7 +146,11 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             if (unit.isNotEmpty)
               Text(
                 unit.tr,
-                style: const TextStyle(fontSize: 9, color: Colors.black45),
+                style: TextStyle(
+                  fontSize: 9,
+                  color:
+                      context.appIsDark ? context.appMutedText : Colors.black45,
+                ),
               ),
           ],
         ),
@@ -135,17 +158,22 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
     );
   }
 
-  BoxDecoration _cardDecoration() {
+  BoxDecoration _cardDecoration(BuildContext context) {
+    final isDark = context.appIsDark;
     return BoxDecoration(
-      color: Colors.white,
+      color: isDark ? context.appSurfaceLow : Colors.white,
       borderRadius: BorderRadius.circular(18),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 15,
-          offset: const Offset(0, 5),
-        ),
-      ],
+      border: isDark ? Border.all(color: context.appBorder) : null,
+      boxShadow:
+          isDark
+              ? context.appCardShadow
+              : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
     );
   }
 }

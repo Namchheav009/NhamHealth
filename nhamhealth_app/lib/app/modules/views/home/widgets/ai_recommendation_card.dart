@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import '../../../models/home/mood_model.dart';
@@ -19,12 +18,15 @@ class AiRecommendationCard extends GetView<HomeController> {
           height: 188,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
+            color: context.appElevatedSurface.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(15),
-            boxShadow: AppShadows.surface,
+            border:
+                context.appIsDark ? Border.all(color: context.appBorder) : null,
+            boxShadow: context.appHomeCardShadow,
           ),
           child: InnerShadow(
             borderRadius: BorderRadius.circular(15),
+            shadows: context.appIsDark ? context.appInnerShadow : const [],
             child: Stack(
               children: [
                 Positioned(
@@ -99,10 +101,10 @@ class AiRecommendationCard extends GetView<HomeController> {
                                       key: const ValueKey('no-mood'),
                                       maxLines: 4,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         height: 1.08,
-                                        color: AppColors.primaryText,
+                                        color: context.appText,
                                       ),
                                     )
                                     : _SelectedMoodDetail(mood: selectedMood),
@@ -224,10 +226,10 @@ class _SelectedMoodDetail extends StatelessWidget {
             ),
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               height: 1.2,
-              color: AppColors.primaryText,
+              color: context.appText,
             ),
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
@@ -176,9 +177,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFFFEFF),
+    backgroundColor: context.appBackground,
     appBar: AppBar(
-      backgroundColor: const Color(0xFFFFFEFF),
+      backgroundColor: context.appSurface,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: true,
@@ -839,9 +840,9 @@ class _AudiencePageState extends State<_AudiencePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFFFEFF),
+    backgroundColor: context.appBackground,
     appBar: AppBar(
-      backgroundColor: const Color(0xFFFFFEFF),
+      backgroundColor: context.appSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(

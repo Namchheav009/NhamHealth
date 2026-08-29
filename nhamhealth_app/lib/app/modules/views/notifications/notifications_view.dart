@@ -21,7 +21,7 @@ class NotificationsView extends StatelessWidget {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
-        backgroundColor: AppColors.homeBackground,
+        backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             child: Column(
@@ -121,14 +121,15 @@ class _NotificationsHeader extends StatelessWidget {
         backButtonKey: const ValueKey<String>('notifications-back-button'),
         onBack: Get.back,
         trailing: Obx(
-          () => controller.unread.isEmpty
-              ? const SizedBox(width: 44)
-              : IconButton(
-                  tooltip: 'Mark all as read',
-                  onPressed: controller.markAllRead,
-                  icon: const Icon(Icons.done_all_rounded),
-                  color: AppColors.primaryGreen,
-                ),
+          () =>
+              controller.unread.isEmpty
+                  ? const SizedBox(width: 44)
+                  : IconButton(
+                    tooltip: 'Mark all as read',
+                    onPressed: controller.markAllRead,
+                    icon: const Icon(Icons.done_all_rounded),
+                    color: AppColors.primaryGreen,
+                  ),
         ),
       ),
     );
@@ -158,8 +159,8 @@ class _NotificationSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(4, 7, 4, 8),
             child: Text(
               title.tr,
-              style: const TextStyle(
-                color: AppColors.primaryText,
+              style: TextStyle(
+                color: context.appText,
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),
@@ -195,9 +196,14 @@ class _NotificationTile extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         constraints: const BoxConstraints(minHeight: 82),
         decoration: BoxDecoration(
-          color: notification.isUnread
-              ? const Color(0xFFEAF7F0)
-              : Colors.transparent,
+          color:
+              notification.isUnread ? context.appSoftGreen : Colors.transparent,
+          border: Border.all(
+            color:
+                notification.isUnread
+                    ? context.appColorScheme.primary.withValues(alpha: 0.18)
+                    : Colors.transparent,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
@@ -205,14 +211,15 @@ class _NotificationTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-                _NotificationLeading(notification: notification),
-                const SizedBox(width: 11),
-                Expanded(child: _NotificationCopy(notification: notification)),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 28,
-                  child: notification.isUnread
-                      ? const Center(
+              _NotificationLeading(notification: notification),
+              const SizedBox(width: 11),
+              Expanded(child: _NotificationCopy(notification: notification)),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 28,
+                child:
+                    notification.isUnread
+                        ? const Center(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               color: AppColors.primaryGreen,
@@ -221,12 +228,12 @@ class _NotificationTile extends StatelessWidget {
                             child: SizedBox(width: 11, height: 11),
                           ),
                         )
-                      : const Icon(
+                        : Icon(
                           Icons.chevron_right_rounded,
-                          color: Color(0xFF9AA29E),
+                          color: context.appMutedText,
                           size: 22,
                         ),
-                ),
+              ),
             ],
           ),
         ),
@@ -254,10 +261,13 @@ class _NotificationLeading extends StatelessWidget {
           decoration: BoxDecoration(
             color:
                 notification.kind == NotificationKind.wellness
-                    ? const Color(0xFFE5F1FF)
-                    : const Color(0xFFE8FFF0),
+                    ? Color.alphaBlend(
+                      const Color(0xFF4396FF).withValues(alpha: 0.14),
+                      context.appSurface,
+                    )
+                    : context.appSoftGreen,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
+            border: Border.all(color: context.appSurface, width: 2),
           ),
           clipBehavior: Clip.antiAlias,
           child:
@@ -286,7 +296,7 @@ class _NotificationLeading extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF2E8BFF),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: context.appSurface, width: 2),
               ),
               child: const Icon(
                 Icons.chat_bubble_rounded,
@@ -354,14 +364,14 @@ class _NotificationCopy extends StatelessWidget {
               TextSpan(
                 text: notification.displayTitle.tr,
                 style: TextStyle(
-                  color: AppColors.primaryText,
+                  color: context.appText,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               TextSpan(
                 text: ' ${notification.displayMessage.tr}',
-                style: const TextStyle(
-                  color: AppColors.primaryText,
+                style: TextStyle(
+                  color: context.appText,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -375,13 +385,13 @@ class _NotificationCopy extends StatelessWidget {
         Text(
           notification.time.tr,
           style: TextStyle(
-            color: notification.isUnread
-                ? AppColors.primaryGreen
-                : AppColors.secondaryText,
+            color:
+                notification.isUnread
+                    ? AppColors.primaryGreen
+                    : context.appMutedText,
             fontSize: 12,
-            fontWeight: notification.isUnread
-                ? FontWeight.w700
-                : FontWeight.w500,
+            fontWeight:
+                notification.isUnread ? FontWeight.w700 : FontWeight.w500,
             height: 1,
           ),
         ),

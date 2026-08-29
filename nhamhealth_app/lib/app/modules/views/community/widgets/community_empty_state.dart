@@ -20,24 +20,18 @@ class CommunityEmptyState extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 14),
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 42),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .97),
+      color: context.appElevatedSurface.withValues(alpha: .97),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE3EBE5)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0A173D25),
-          blurRadius: 16,
-          offset: Offset(0, 5),
-        ),
-      ],
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appCardShadow,
     ),
     child: Column(
       children: [
         Container(
           width: 62,
           height: 62,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE8F7ED),
+          decoration: BoxDecoration(
+            color: context.appSoftGreen,
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: AppColors.primaryGreen, size: 30),
@@ -46,20 +40,20 @@ class CommunityEmptyState extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF17221B),
+            color: context.appText,
           ),
         ),
         const SizedBox(height: 5),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             height: 1.4,
-            color: Color(0xFF718078),
+            color: context.appMutedText,
           ),
         ),
       ],

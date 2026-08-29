@@ -18,16 +18,14 @@ class CommunityTabSwitcher extends StatelessWidget {
     Icons.dynamic_feed_outlined,
     Icons.people_outline_rounded,
   ];
-  static const _muted = Color(0xFF718078);
-
   @override
   Widget build(BuildContext context) => Container(
     height: 50,
     padding: const EdgeInsets.all(4),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .94),
+      color: context.appElevatedSurface.withValues(alpha: .94),
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0xFFE2EBE5)),
+      border: Border.all(color: context.appBorder),
     ),
     child: Row(
       children:
@@ -43,9 +41,7 @@ class CommunityTabSwitcher extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color:
-                        isSelected
-                            ? const Color(0xFFE5F7EB)
-                            : Colors.transparent,
+                        isSelected ? context.appSoftGreen : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -54,7 +50,10 @@ class CommunityTabSwitcher extends StatelessWidget {
                       Icon(
                         _icons[section.index],
                         size: 18,
-                        color: isSelected ? AppColors.primaryGreen : _muted,
+                        color:
+                            isSelected
+                                ? context.appColorScheme.primary
+                                : context.appMutedText,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -62,7 +61,10 @@ class CommunityTabSwitcher extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: isSelected ? const Color(0xFF087B3A) : _muted,
+                          color:
+                              isSelected
+                                  ? context.appColorScheme.primary
+                                  : context.appMutedText,
                         ),
                       ),
                     ],

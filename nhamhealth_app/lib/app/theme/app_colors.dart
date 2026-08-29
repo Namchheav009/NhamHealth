@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_shadows.dart';
+
 abstract class AppColors {
   AppColors._();
 
@@ -28,4 +30,122 @@ abstract class AppColors {
   static const Color secondaryText = Color(0xFF858585);
   static const Color inactiveText = Color(0xFF929292);
   static const Color progressTrack = Color(0xFFDDE3DF);
+}
+
+/// Semantic colors that automatically adapt to the active app theme.
+///
+/// Prefer these tokens for surfaces and text. Brand and status colors can
+/// continue to use [AppColors] directly when they should not change by theme.
+extension AppColorContext on BuildContext {
+  ColorScheme get appColorScheme => Theme.of(this).colorScheme;
+
+  bool get appIsDark => Theme.of(this).brightness == Brightness.dark;
+
+  Color get appBackground => Theme.of(this).scaffoldBackgroundColor;
+
+  Color get appSurface => appColorScheme.surface;
+
+  Color get appSurfaceLow =>
+      appIsDark ? appColorScheme.surfaceContainerLow : AppColors.cardSurface;
+
+  Color get appElevatedSurface =>
+      appIsDark ? appColorScheme.surfaceContainerHigh : AppColors.cardSurface;
+
+  Color get appMutedSurface => appColorScheme.surfaceContainerHighest;
+
+  Color get appSelectedSurface => appColorScheme.primaryContainer;
+
+  Color get appText => appColorScheme.onSurface;
+
+  Color get appMutedText => appColorScheme.onSurfaceVariant;
+
+  Color get appBorder => appColorScheme.outline;
+
+  Color get appStrongBorder => appColorScheme.outline;
+
+  Color get appSoftGreen =>
+      appIsDark
+          ? Color.alphaBlend(
+            appColorScheme.primary.withValues(alpha: 0.13),
+            appColorScheme.surfaceContainerLow,
+          )
+          : AppColors.softGreen;
+
+  Color get appSoftPink =>
+      appIsDark
+          ? Color.alphaBlend(
+            appColorScheme.secondary.withValues(alpha: 0.12),
+            appColorScheme.surfaceContainerLow,
+          )
+          : AppColors.softPink;
+
+  Color get appDangerSurface =>
+      appIsDark ? const Color(0xFF402327) : const Color(0xFFFFF1F1);
+
+  Color get appOnDangerSurface =>
+      appIsDark ? const Color(0xFFFFB4BA) : const Color(0xFFB3261E);
+
+  Color get appShadow =>
+      Colors.black.withValues(alpha: appIsDark ? 0.38 : 0.08);
+
+  List<BoxShadow> get appCardShadow => [
+    BoxShadow(
+      color: appShadow,
+      blurRadius: 18,
+      offset: Offset(0, appIsDark ? 7 : 6),
+    ),
+    if (!appIsDark)
+      const BoxShadow(
+        color: Color(0x66FFFFFF),
+        blurRadius: 4,
+        offset: Offset(-1, -2),
+      ),
+  ];
+
+  List<BoxShadow> get appTileShadow => [
+    BoxShadow(
+      color: appShadow.withValues(alpha: appIsDark ? 0.7 : 0.55),
+      blurRadius: 10,
+      offset: const Offset(0, 3),
+    ),
+  ];
+
+  /// Softer elevation used by cards on the home dashboard.
+  List<BoxShadow> get appHomeCardShadow =>
+      appIsDark
+          ? appCardShadow
+          : const [
+            BoxShadow(
+              color: Color(0x1431543F),
+              blurRadius: 18,
+              offset: Offset(0, 6),
+            ),
+          ];
+
+  List<BoxShadow> get appHomeTileShadow =>
+      appIsDark
+          ? appTileShadow
+          : const [
+            BoxShadow(
+              color: Color(0x1231543F),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ];
+
+  List<BoxShadow> get appInnerShadow =>
+      appIsDark
+          ? const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 7,
+              offset: Offset(-1, -1),
+            ),
+            BoxShadow(
+              color: Color(0x1839D879),
+              blurRadius: 3,
+              offset: Offset(1, 1),
+            ),
+          ]
+          : AppShadows.innerSurface;
 }

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../controllers/wellness/food_source_detail_controller.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../theme/app_colors.dart';
+import '../../../widgets/app_background.dart';
 import 'widgets/food_amount_editor_card.dart';
 import 'widgets/food_contribution_card.dart';
 import 'widgets/food_detail_ai_insight_card.dart';
@@ -15,8 +17,9 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
+      backgroundColor: Colors.transparent,
+      body: AppBackground(
+        lightDecoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -29,7 +32,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 children: [
-                  _header(),
+                  _header(context),
 
                   Expanded(
                     child: SingleChildScrollView(
@@ -51,7 +54,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
                     ),
                   ),
 
-                  _bottomActions(),
+                  _bottomActions(context),
                 ],
               ),
             ),
@@ -61,25 +64,26 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
     );
   }
 
-  Widget _header() {
+  Widget _header(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
         children: [
           IconButton(
             onPressed: Get.back,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
-              color: Color(0xFF00A651),
+              color: context.appColorScheme.primary,
             ),
           ),
           Expanded(
             child: Center(
               child: Text(
                 'Food Detail'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
+                  color: context.appText,
                 ),
               ),
             ),
@@ -90,7 +94,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
     );
   }
 
-  Widget _bottomActions() {
+  Widget _bottomActions(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
       child: Row(
@@ -100,8 +104,8 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               onPressed: controller.cancelChanges,
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(45),
-                foregroundColor: const Color(0xFF00A651),
-                side: const BorderSide(color: Color(0xFF00A651)),
+                foregroundColor: context.appColorScheme.primary,
+                side: BorderSide(color: context.appColorScheme.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -116,8 +120,8 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(45),
-                backgroundColor: const Color(0xFF00A651),
-                foregroundColor: Colors.white,
+                backgroundColor: context.appColorScheme.primary,
+                foregroundColor: context.appColorScheme.onPrimary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),

@@ -38,12 +38,16 @@ class MealCategory extends GetView<MealController> {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.navigationGreen : Colors.white,
+                    color:
+                        selected
+                            ? context.appColorScheme.primary
+                            : context.appElevatedSurface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: selected
-                          ? AppColors.navigationGreen
-                          : const Color(0xFFB4E0C3),
+                      color:
+                          selected
+                              ? context.appColorScheme.primary
+                              : context.appBorder,
                     ),
                   ),
                   child: Text(
@@ -51,7 +55,10 @@ class MealCategory extends GetView<MealController> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected ? Colors.white : Colors.black,
+                      color:
+                          selected
+                              ? context.appColorScheme.onPrimary
+                              : context.appText,
                     ),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
 
 class CommunitySharedPostCard extends StatelessWidget {
@@ -16,11 +17,11 @@ class CommunitySharedPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: const Color(0xFFFBFDFC),
+    color: context.appElevatedSurface,
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: Color(0xFFDDE6E0)),
+      side: BorderSide(color: context.appBorder),
     ),
     child: InkWell(
       onTap: onTap,
@@ -33,7 +34,7 @@ class CommunitySharedPostCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: compact ? 18 : 20,
-                  backgroundColor: const Color(0xFFEAF7EE),
+                  backgroundColor: context.appSoftGreen,
                   backgroundImage:
                       post.authorAvatarUrl.isEmpty
                           ? null
@@ -56,10 +57,10 @@ class CommunitySharedPostCard extends StatelessWidget {
                         post.author,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF18231C),
+                          color: context.appText,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -67,9 +68,9 @@ class CommunitySharedPostCard extends StatelessWidget {
                         '${post.ageLabel}  ·  ${post.role}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF778078),
+                          color: context.appMutedText,
                         ),
                       ),
                     ],
@@ -85,10 +86,10 @@ class CommunitySharedPostCard extends StatelessWidget {
                 post.description,
                 maxLines: compact ? 4 : null,
                 overflow: compact ? TextOverflow.ellipsis : null,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
-                  color: Color(0xFF505951),
+                  color: context.appText,
                 ),
               ),
             ),

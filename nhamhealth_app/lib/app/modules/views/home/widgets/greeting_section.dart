@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'mood_card.dart';
@@ -14,12 +13,14 @@ class GreetingSection extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: AppShadows.surface,
+        border: context.appIsDark ? Border.all(color: context.appBorder) : null,
+        boxShadow: context.appHomeCardShadow,
       ),
       child: InnerShadow(
         borderRadius: BorderRadius.circular(15),
+        shadows: context.appIsDark ? context.appInnerShadow : const [],
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 15),
           child: Column(
@@ -59,19 +60,19 @@ class GreetingSection extends GetView<HomeController> {
                     child: Center(
                       child: Text(
                         'No moods are available right now.'.tr,
-                        style: const TextStyle(
-                          color: AppColors.primaryText,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: context.appText, fontSize: 12),
                       ),
                     ),
                   );
                 }
                 return SizedBox(
-                  height: 78,
+                  height: 88,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 5,
+                    ),
                     itemCount: moods.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../models/wellness/food_source_model.dart';
+import '../../../../theme/app_colors.dart';
 
 class FoodSourceTile extends StatelessWidget {
   const FoodSourceTile({super.key, required this.source, required this.onTap});
@@ -11,8 +12,9 @@ class FoodSourceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Material(
-      color: const Color(0xFFFCFCFC),
+      color: isDark ? context.appSurfaceLow : const Color(0xFFFCFCFC),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -21,7 +23,9 @@ class FoodSourceTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFECECEC)),
+            border: Border.all(
+              color: isDark ? context.appBorder : const Color(0xFFECECEC),
+            ),
           ),
           child: Row(
             children: [
@@ -29,8 +33,14 @@ class FoodSourceTile extends StatelessWidget {
                 width: 38,
                 height: 38,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFF3ED),
+                decoration: BoxDecoration(
+                  color:
+                      isDark
+                          ? Color.alphaBlend(
+                            const Color(0xFFFF641E).withValues(alpha: 0.12),
+                            context.appSurfaceLow,
+                          )
+                          : const Color(0xFFFFF3ED),
                   shape: BoxShape.circle,
                 ),
                 child: Text(source.emoji, style: const TextStyle(fontSize: 20)),
@@ -44,16 +54,17 @@ class FoodSourceTile extends StatelessWidget {
                   children: [
                     Text(
                       source.mealType.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: Colors.black38,
+                        color: isDark ? context.appMutedText : Colors.black38,
                       ),
                     ),
                     Text(
                       source.foodName.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
+                        color: isDark ? context.appText : null,
                       ),
                     ),
                   ],
@@ -73,12 +84,18 @@ class FoodSourceTile extends StatelessWidget {
 
               Text(
                 'kcal'.tr,
-                style: const TextStyle(color: Colors.black38, fontSize: 9),
+                style: TextStyle(
+                  color: isDark ? context.appMutedText : Colors.black38,
+                  fontSize: 9,
+                ),
               ),
 
               const SizedBox(width: 5),
 
-              const Icon(Icons.chevron_right_rounded, color: Colors.black26),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: isDark ? context.appColorScheme.outline : Colors.black26,
+              ),
             ],
           ),
         ),

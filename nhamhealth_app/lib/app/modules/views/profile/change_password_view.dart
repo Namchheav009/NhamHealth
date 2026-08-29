@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/profile/change_password_controller.dart';
 
@@ -14,7 +13,7 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.3,
       child: Scaffold(
-        backgroundColor: AppColors.homeBackground,
+        backgroundColor: context.appBackground,
         resizeToAvoidBottomInset: true,
         body: AppBackground(
           child: SafeArea(
@@ -22,7 +21,8 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
               builder: (context, constraints) {
                 final side = constraints.maxWidth < 360 ? 16.0 : 24.0;
                 return SingleChildScrollView(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     side,
@@ -73,8 +73,8 @@ class _PageHeader extends StatelessWidget {
         Expanded(
           child: Text(
             'Change password'.tr,
-            style: const TextStyle(
-              color: Color(0xFF17211B),
+            style: TextStyle(
+              color: context.appText,
               fontSize: 22,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.45,
@@ -101,8 +101,8 @@ class _SecurityIntro extends StatelessWidget {
           children: [
             Text(
               'Secure your account'.tr,
-              style: const TextStyle(
-                color: AppColors.primaryText,
+              style: TextStyle(
+                color: context.appText,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
@@ -110,8 +110,8 @@ class _SecurityIntro extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               'Choose a strong password you have not used before.'.tr,
-              style: const TextStyle(
-                color: AppColors.mutedText,
+              style: TextStyle(
+                color: context.appMutedText,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -131,7 +131,7 @@ class _IntroIcon extends StatelessWidget {
     width: 52,
     height: 52,
     decoration: BoxDecoration(
-      color: const Color(0xFFE8F7EC),
+      color: context.appSoftGreen,
       borderRadius: BorderRadius.circular(17),
     ),
     child: const Icon(
@@ -151,10 +151,10 @@ class _PasswordForm extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.9),
+      color: context.appElevatedSurface.withValues(alpha: 0.94),
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: Colors.white, width: 1.2),
-      boxShadow: AppShadows.surface,
+      border: Border.all(color: context.appBorder, width: 1.2),
+      boxShadow: context.appCardShadow,
     ),
     child: AutofillGroup(
       child: Column(
@@ -255,8 +255,8 @@ class _PasswordField extends StatelessWidget {
     children: [
       Text(
         label.tr,
-        style: const TextStyle(
-          color: Color(0xFF29352E),
+        style: TextStyle(
+          color: context.appText,
           fontSize: 13,
           fontWeight: FontWeight.w700,
         ),
@@ -271,17 +271,14 @@ class _PasswordField extends StatelessWidget {
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
         cursorColor: AppColors.primaryGreen,
-        style: const TextStyle(
-          color: AppColors.primaryText,
+        style: TextStyle(
+          color: context.appText,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: hint.tr,
-          hintStyle: const TextStyle(
-            color: AppColors.placeholder,
-            fontSize: 14,
-          ),
+          hintStyle: TextStyle(color: context.appMutedText, fontSize: 14),
           prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
           suffixIcon: IconButton(
             tooltip: (obscureText ? 'Show password' : 'Hide password').tr,
@@ -294,7 +291,7 @@ class _PasswordField extends StatelessWidget {
             ),
           ),
           filled: true,
-          fillColor: const Color(0xFFF8FBF8),
+          fillColor: context.appMutedSurface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 17,
@@ -303,7 +300,7 @@ class _PasswordField extends StatelessWidget {
           suffixIconColor: AppColors.mutedText,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: context.appBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
@@ -326,9 +323,9 @@ class _PasswordGuidance extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: const Color(0xFFF2F9F4),
+      color: context.appSoftGreen,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFDCEEE1)),
+      border: Border.all(color: context.appBorder),
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,31 +372,32 @@ class _SubmitButton extends StatelessWidget {
     ),
     child: AnimatedSwitcher(
       duration: const Duration(milliseconds: 180),
-      child: loading
-          ? const SizedBox(
-              key: ValueKey('loading'),
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.4,
-                color: Colors.white,
-              ),
-            )
-          : Row(
-              key: const ValueKey('label'),
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.lock_reset_rounded, size: 20),
-                const SizedBox(width: 9),
-                Text(
-                  'Update password'.tr,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+      child:
+          loading
+              ? const SizedBox(
+                key: ValueKey('loading'),
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
                 ),
-              ],
-            ),
+              )
+              : Row(
+                key: const ValueKey('label'),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_reset_rounded, size: 20),
+                  const SizedBox(width: 9),
+                  Text(
+                    'Update password'.tr,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
     ),
   );
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../widgets/app_alert.dart';
 
 import '../../../controllers/wellness/calories_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class AddFoodSourceSheet extends StatefulWidget {
   const AddFoodSourceSheet({super.key});
@@ -35,9 +36,9 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
         20,
         MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.appIsDark ? context.appSurfaceLow : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -49,7 +50,10 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
                 width: 45,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.black12,
+                  color:
+                      context.appIsDark
+                          ? context.appColorScheme.outline
+                          : Colors.black12,
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
@@ -139,8 +143,8 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A651),
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.appColorScheme.primary,
+                  foregroundColor: context.appColorScheme.onPrimary,
                 ),
                 child: Text('Add Food'.tr),
               ),

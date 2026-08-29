@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../../models/meals/meal_model.dart';
 
 class MealCard extends StatelessWidget {
@@ -18,8 +19,11 @@ class MealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.88),
-      borderRadius: BorderRadius.circular(14),
+      color: context.appElevatedSurface.withValues(alpha: 0.94),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: context.appBorder),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -42,10 +46,10 @@ class MealCard extends StatelessWidget {
                     meal.name.tr,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.25,
-                      color: Color(0xFF424242),
+                      color: context.appText,
                     ),
                   ),
 
@@ -56,9 +60,9 @@ class MealCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${meal.calories} kcal',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF999999),
+                            color: context.appMutedText,
                           ),
                         ),
                       ),
@@ -82,7 +86,7 @@ class MealCard extends StatelessWidget {
                               color:
                                   meal.isFavorite
                                       ? Colors.red
-                                      : const Color(0xFF969696),
+                                      : context.appMutedText,
                             ),
                           ),
                         ),

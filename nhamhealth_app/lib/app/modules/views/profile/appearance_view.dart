@@ -12,14 +12,14 @@ class AppearanceView extends GetView<AppearanceController> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFDFBFB),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Stack(
           children: [
             const _SettingsBackground(),
-
             SafeArea(
               child: Align(
                 alignment: Alignment.topCenter,
@@ -35,35 +35,30 @@ class AppearanceView extends GetView<AppearanceController> {
                           title: 'Appearance',
                           onBack: controller.goBack,
                         ),
-
                         const SizedBox(height: 24),
                         Text(
                           'Choose how NhamHealth looks on this device.'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             height: 1.4,
-                            color: Color(0xFF687185),
+                            color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-
                         const SizedBox(height: 24),
-
                         Padding(
                           padding: const EdgeInsets.only(left: 6),
                           child: Text(
                             'Theme'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF101010),
+                              color: colors.onSurface,
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
-                        _buildThemeCard(),
+                        _buildThemeCard(context),
                       ],
                     ),
                   ),
@@ -76,16 +71,22 @@ class AppearanceView extends GetView<AppearanceController> {
     );
   }
 
-  Widget _buildThemeCard() {
+  Widget _buildThemeCard(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: colors.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE3EBE6)),
+        border: Border.all(color: colors.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
+            color: Colors.black.withValues(
+              alpha:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 0.24
+                      : 0.045,
+            ),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -103,16 +104,14 @@ class AppearanceView extends GetView<AppearanceController> {
               selected: controller.selectedTheme.value == 'light',
               onTap: controller.selectLightMode,
             ),
-
-            const Padding(
-              padding: EdgeInsets.only(left: 64),
+            Padding(
+              padding: const EdgeInsets.only(left: 64),
               child: Divider(
                 height: 1,
                 thickness: 0.7,
-                color: Color(0xFFD7D9DC),
+                color: colors.outlineVariant,
               ),
             ),
-
             _ThemeItem(
               icon: Icons.dark_mode_outlined,
               iconBackground: const Color(0xFFF1F1F1),
@@ -130,14 +129,6 @@ class AppearanceView extends GetView<AppearanceController> {
 }
 
 class _ThemeItem extends StatelessWidget {
-  final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
   const _ThemeItem({
     required this.icon,
     required this.iconBackground,
@@ -148,8 +139,18 @@ class _ThemeItem extends StatelessWidget {
     required this.onTap,
   });
 
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(17),
@@ -157,7 +158,12 @@ class _ThemeItem extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         height: 76,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0FAF3) : Colors.transparent,
+          color:
+              selected
+                  ? colors.primaryContainer.withValues(
+                    alpha: isDark ? 0.4 : 0.5,
+                  )
+                  : Colors.transparent,
           borderRadius: BorderRadius.circular(17),
         ),
         child: Padding(
@@ -169,13 +175,16 @@ class _ThemeItem extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(13),
-                  color: iconBackground,
+                  color:
+                      isDark ? colors.surfaceContainerHighest : iconBackground,
                 ),
-                child: Icon(icon, size: 23, color: iconColor),
+                child: Icon(
+                  icon,
+                  size: 23,
+                  color: isDark ? colors.primary : iconColor,
+                ),
               ),
-
               const SizedBox(width: 14),
-
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -183,24 +192,23 @@ class _ThemeItem extends StatelessWidget {
                   children: [
                     Text(
                       title.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF171717),
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       subtitle.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF707788),
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-
               _RadioCircle(selected: selected),
             ],
           ),
@@ -217,6 +225,7 @@ class _RadioCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: 22,
@@ -224,9 +233,9 @@ class _RadioCircle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
+        color: colors.surface,
         border: Border.all(
-          color: selected ? AppearanceView.green : const Color(0xFFB9BDC4),
+          color: selected ? colors.primary : colors.outline,
           width: 1.5,
         ),
       ),
@@ -234,7 +243,7 @@ class _RadioCircle extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: selected ? AppearanceView.green : Colors.transparent,
+          color: selected ? colors.primary : Colors.transparent,
         ),
       ),
     );
@@ -246,14 +255,24 @@ class _SettingsBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned.fill(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background/bg.png'),
-            fit: BoxFit.cover,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Positioned.fill(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: isDark ? 0.12 : 1,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/background/bg.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
-        ),
+          if (isDark) ColoredBox(color: Colors.black.withValues(alpha: 0.16)),
+        ],
       ),
     );
   }

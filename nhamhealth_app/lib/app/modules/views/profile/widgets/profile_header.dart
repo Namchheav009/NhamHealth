@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../../../config/api_config.dart';
 import '../../../models/auth/authenticated_user_model.dart';
 import '../../../controllers/profile/profile_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class ProfileHeader extends GetView<ProfileController> {
   const ProfileHeader({super.key});
@@ -18,12 +19,10 @@ class ProfileHeader extends GetView<ProfileController> {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: context.appElevatedSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white),
-        boxShadow: const [
-          BoxShadow(color: Color(0x1231543F), blurRadius: 18, offset: Offset(0, 6)),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
@@ -31,9 +30,9 @@ class ProfileHeader extends GetView<ProfileController> {
             children: [
               Container(
                 padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: context.appSurface,
                 ),
                 child: Obx(
                   () => _ProfileAvatar(
@@ -54,8 +53,8 @@ class ProfileHeader extends GetView<ProfileController> {
                         controller.name.value,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF1D2922),
+                        style: TextStyle(
+                          color: context.appText,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
@@ -80,10 +79,10 @@ class ProfileHeader extends GetView<ProfileController> {
 
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.mail_outline_rounded,
                           size: 14,
-                          color: Color(0xFF7E9488),
+                          color: context.appMutedText,
                         ),
 
                         const SizedBox(width: 5),
@@ -93,8 +92,8 @@ class ProfileHeader extends GetView<ProfileController> {
                             () => Text(
                               controller.email.value,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF65766C),
+                              style: TextStyle(
+                                color: context.appMutedText,
                                 fontSize: 9,
                               ),
                             ),
@@ -156,10 +155,10 @@ class _ProfileAvatar extends StatelessWidget {
 
     final remotePath = user?.profileImageUrl?.trim();
     if (remotePath != null && remotePath.isNotEmpty) {
-      final imageUrl = remotePath.startsWith('http://') ||
-              remotePath.startsWith('https://')
-          ? remotePath
-          : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+      final imageUrl =
+          remotePath.startsWith('http://') || remotePath.startsWith('https://')
+              ? remotePath
+              : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
       return CircleAvatar(
         radius: 36,
         backgroundColor: const Color(0xFFE8F5E9),

@@ -5,6 +5,7 @@ import '../../controllers/profile/language_controller.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/language_flag.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../theme/app_colors.dart';
 
 class LanguageView extends GetView<LanguageController> {
   const LanguageView({super.key});
@@ -16,7 +17,7 @@ class LanguageView extends GetView<LanguageController> {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFDFBFB),
+        backgroundColor: context.appBackground,
         body: Stack(
           children: [
             const _SettingsBackground(),
@@ -46,10 +47,10 @@ class LanguageView extends GetView<LanguageController> {
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
                                 'language_choose'.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF151515),
+                                  color: context.appText,
                                 ),
                               ),
                             ),
@@ -60,21 +61,21 @@ class LanguageView extends GetView<LanguageController> {
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
                                 'language_description'.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
-                                  color: Color(0xFF687185),
+                                  color: context.appMutedText,
                                 ),
                               ),
                             ),
 
                             const SizedBox(height: 18),
 
-                            _buildLanguageCard(),
+                            _buildLanguageCard(context),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        _buildInfo(),
+                        _buildInfo(context),
                       ],
                     ),
                   ),
@@ -87,20 +88,14 @@ class LanguageView extends GetView<LanguageController> {
     );
   }
 
-  Widget _buildLanguageCard() {
+  Widget _buildLanguageCard(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.84),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE3EBE6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Obx(
         () => Column(
@@ -112,12 +107,12 @@ class LanguageView extends GetView<LanguageController> {
               onTap: controller.selectKhmer,
             ),
 
-            const Padding(
-              padding: EdgeInsets.only(left: 64),
+            Padding(
+              padding: const EdgeInsets.only(left: 64),
               child: Divider(
                 height: 1,
                 thickness: 0.7,
-                color: Color(0xFFD7D9DC),
+                color: context.appBorder,
               ),
             ),
 
@@ -133,13 +128,13 @@ class LanguageView extends GetView<LanguageController> {
     );
   }
 
-  Widget _buildInfo() {
+  Widget _buildInfo(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EE),
+        color: context.appSoftGreen,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCDE9D5)),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +200,7 @@ class _LanguageItem extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         height: 76,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0FAF3) : Colors.transparent,
+          color: selected ? context.appSoftGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(17),
         ),
         child: Padding(
@@ -219,10 +214,10 @@ class _LanguageItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF161616),
+                    color: context.appText,
                   ),
                 ),
               ),
@@ -250,7 +245,7 @@ class _RadioCircle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
+        color: context.appSurface,
         border: Border.all(
           color: selected ? LanguageView.green : const Color(0xFFB9BDC4),
           width: 1.5,
@@ -272,12 +267,15 @@ class _SettingsBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned.fill(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background/bg.png'),
-            fit: BoxFit.cover,
+    return Positioned.fill(
+      child: Opacity(
+        opacity: context.appIsDark ? 0.12 : 1,
+        child: const DecoratedBox(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background/bg.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),

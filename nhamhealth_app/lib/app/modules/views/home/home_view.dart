@@ -26,7 +26,7 @@ class HomeView extends GetView<HomeController> {
       maxScaleFactor: 1.2,
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.homeBackground,
+        backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             bottom: false,
@@ -117,7 +117,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppColors.primaryText,
+                      color: context.appText,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
@@ -185,8 +185,8 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               Text(
                 'Choose a mood, then tap Get Recommendation to see personalized meals.'
                     .tr,
-                style: const TextStyle(
-                  color: AppColors.secondaryText,
+                style: TextStyle(
+                  color: context.appMutedText,
                   fontSize: 11,
                   height: 1.35,
                 ),

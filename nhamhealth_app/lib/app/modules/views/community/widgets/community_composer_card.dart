@@ -20,16 +20,10 @@ class CommunityComposerCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .97),
+        color: context.appElevatedSurface.withValues(alpha: .97),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE3EBE5)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A173D25),
-            blurRadius: 16,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
@@ -37,7 +31,7 @@ class CommunityComposerCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 21,
-                backgroundColor: const Color(0xFFE4F6EA),
+                backgroundColor: context.appSoftGreen,
                 backgroundImage:
                     authorAvatarUrl.isEmpty
                         ? null
@@ -58,22 +52,22 @@ class CommunityComposerCard extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F8F6),
+                    color: context.appMutedSurface,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFE3EAE5)),
+                    border: Border.all(color: context.appBorder),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Share a win, question, or healthy idea...',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: Color(0xFF718078)),
+                    style: TextStyle(fontSize: 13, color: context.appMutedText),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: Color(0xFFE8EEE9)),
+          Divider(height: 1, color: context.appBorder),
           const SizedBox(height: 6),
           Row(
             children: [
@@ -84,10 +78,7 @@ class CommunityComposerCard extends StatelessWidget {
                   color: Color(0xFF168B4A),
                 ),
               ),
-              SizedBox(
-                height: 22,
-                child: VerticalDivider(width: 1, color: Color(0xFFE1E8E3)),
-              ),
+              const SizedBox(height: 22, child: VerticalDivider(width: 1)),
               Expanded(
                 child: _ComposerShortcut(
                   icon: Icons.chat_bubble_outline_rounded,
@@ -127,10 +118,10 @@ class _ComposerShortcut extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF4E5B52),
+              color: context.appMutedText,
             ),
           ),
         ),
