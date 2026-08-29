@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../widgets/app_back_header.dart';
 import '../../../models/onboarding/onboarding_item.dart';
 import 'onboarding_indicator.dart';
 import 'onboarding_next_button.dart';
@@ -129,7 +130,7 @@ class _BrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: AppBackButton.layoutSize,
       child: Row(
         children: [
           Image.asset('assets/icons/logo.png', width: 26, height: 26),
@@ -151,15 +152,7 @@ class _BrandHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          if (showBackButton)
-            IconButton(
-              tooltip: 'Back'.tr,
-              onPressed: onBack,
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.darkGreen,
-              ),
-            ),
+          if (showBackButton) AppBackButton(onPressed: onBack),
         ],
       ),
     );

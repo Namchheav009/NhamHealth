@@ -81,4 +81,37 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('assistant uses a persistent question sidebar on wide tablets', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 768);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final messages = find.byKey(
+      const ValueKey<String>('assistant-message-list'),
+    );
+    final questions = find.byKey(
+      const ValueKey<String>('assistant-tablet-questions'),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('assistant-tablet-layout')),
+      findsOneWidget,
+    );
+    expect(questions, findsOneWidget);
+    expect(
+      tester.getTopLeft(questions).dx,
+      greaterThan(tester.getTopLeft(messages).dx),
+    );
+    expect(
+      find.byKey(const ValueKey<String>('assistant-input')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

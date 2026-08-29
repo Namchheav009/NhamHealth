@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../controllers/meals/how_to_make_controller.dart';
 
 class HowToMakeView extends GetView<HowToMakeController> {
@@ -70,21 +71,9 @@ class HowToMakeView extends GetView<HowToMakeController> {
       padding: EdgeInsets.only(left: 9 * scale),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: controller.goBack,
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 40 * scale,
-              height: 40 * scale,
-              child: Icon(
-                Icons.arrow_back_rounded,
-                size: 30 * scale,
-                color: darkGreen,
-              ),
-            ),
-          ),
+          AppBackButton(onPressed: controller.goBack),
 
-          SizedBox(width: 11 * scale),
+          const SizedBox(width: AppBackButton.headerGap),
 
           Text(
             'How to make'.tr,

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../controllers/profile/change_password_controller.dart';
 
 class ChangePasswordView extends GetView<ChangePasswordController> {
@@ -19,7 +21,11 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final side = constraints.maxWidth < 360 ? 16.0 : 24.0;
+                final wide = constraints.maxWidth >= 820;
+                final side =
+                    constraints.maxWidth < 360
+                        ? 16.0
+                        : AppSpacing.pageHorizontalFor(context);
                 return SingleChildScrollView(
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
@@ -32,15 +38,34 @@ class ChangePasswordView extends GetView<ChangePasswordController> {
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
+                      constraints: BoxConstraints(
+                        maxWidth: wide ? AppSpacing.maxWideContentWidth : 520,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const _PageHeader(),
                           const SizedBox(height: 26),
-                          const _SecurityIntro(),
-                          const SizedBox(height: 22),
-                          _PasswordForm(controller: controller),
+                          if (wide)
+                            Row(
+                              key: const ValueKey<String>(
+                                'change-password-tablet-layout',
+                              ),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Expanded(child: _SecurityIntro()),
+                                const SizedBox(width: 28),
+                                Expanded(
+                                  flex: 2,
+                                  child: _PasswordForm(controller: controller),
+                                ),
+                              ],
+                            )
+                          else ...[
+                            const _SecurityIntro(),
+                            const SizedBox(height: 22),
+                            _PasswordForm(controller: controller),
+                          ],
                         ],
                       ),
                     ),
@@ -60,16 +85,11 @@ class _PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 48,
+    height: AppBackButton.layoutSize,
     child: Row(
       children: [
-        IconButton(
-          tooltip: 'Back'.tr,
-          onPressed: Get.back,
-          icon: const Icon(Icons.arrow_back_rounded),
-          color: AppColors.darkGreen,
-        ),
-        const SizedBox(width: 4),
+        AppBackButton(onPressed: Get.back),
+        const SizedBox(width: AppBackButton.headerGap),
         Expanded(
           child: Text(
             'Change password'.tr,

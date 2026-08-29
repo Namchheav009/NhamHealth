@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
@@ -845,14 +846,10 @@ class _AudiencePageState extends State<_AudiencePage> {
       backgroundColor: context.appSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
+      toolbarHeight: AppBackButton.appBarToolbarHeight,
+      leadingWidth: AppBackButton.appBarLeadingWidth,
+      leading: AppBackButton.appBar(
         onPressed: () => Navigator.of(context).pop(),
-        icon: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: Colors.black,
-          size: 23,
-        ),
-        tooltip: 'Back',
       ),
       centerTitle: true,
       title: const Text(

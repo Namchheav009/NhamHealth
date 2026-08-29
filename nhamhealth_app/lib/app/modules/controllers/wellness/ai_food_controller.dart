@@ -308,7 +308,9 @@ class AiFoodController extends GetxController {
   }
 
   bool get canAddFood =>
-      nutrition.value != null && nutrition.value!.hasCompleteNutrition;
+      nutrition.value != null &&
+      nutrition.value!.hasCompleteNutrition &&
+      (!nutrition.value!.needsUserConfirmation || isUserConfirmed.value);
 
   bool get hasCompleteResult =>
       prediction.value != null &&
@@ -440,7 +442,7 @@ class AiFoodController extends GetxController {
       confidence: food.confidence.clamp(0, 1),
       classIndex: -1,
     );
-    isUserConfirmed.value = true;
+    isUserConfirmed.value = !food.needsUserConfirmation;
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 
 enum PageSkeletonType {
   home,
@@ -87,7 +88,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     child: ExcludeSemantics(
       child: AnimatedBuilder(
         animation: _controller,
-        child: _layout(),
+        child: _layout(context),
         builder:
             (context, child) => ShaderMask(
               blendMode: BlendMode.srcATop,
@@ -110,19 +111,8 @@ class _PageSkeletonState extends State<PageSkeleton>
     ),
   );
 
-  Widget _layout() => switch (widget.type) {
-    PageSkeletonType.home => const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SkeletonBox(height: 48, radius: 24),
-        SizedBox(height: 18),
-        _TextLines(widths: [.56, .82]),
-        SizedBox(height: 18),
-        _SkeletonCard(height: 150),
-        SizedBox(height: 16),
-        _SkeletonCard(height: 190),
-      ],
-    ),
+  Widget _layout(BuildContext context) => switch (widget.type) {
+    PageSkeletonType.home => const _HomePlaceholder(),
     PageSkeletonType.meals => const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,31 +127,49 @@ class _PageSkeletonState extends State<PageSkeleton>
         _MealGridPlaceholder(),
       ],
     ),
-    PageSkeletonType.profile => const Column(
-      children: [
-        _ProfileHeaderPlaceholder(),
-        SizedBox(height: 16),
-        _MetricRow(),
-        SizedBox(height: 14),
-        _SkeletonCard(height: 120),
-        SizedBox(height: 14),
-        _SkeletonCard(height: 150),
-      ],
-    ),
-    PageSkeletonType.wellness => const Column(
-      children: [
-        _SkeletonCard(height: 210),
-        SizedBox(height: 16),
-        _SkeletonCard(height: 120),
-        SizedBox(height: 16),
-        _TextLines(widths: [.45, .92, .78]),
-      ],
-    ),
+    PageSkeletonType.profile => const _ProfilePlaceholder(),
+    PageSkeletonType.wellness => const _WellnessPlaceholder(),
     PageSkeletonType.notifications => const _NotificationsPlaceholder(),
     PageSkeletonType.favorites => const _FavoritesPlaceholder(),
     PageSkeletonType.community => const _CommunityPlaceholder(),
     PageSkeletonType.settings => const _SettingsPlaceholder(),
   };
+}
+
+class _WellnessPlaceholder extends StatelessWidget {
+  const _WellnessPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const summary = _SkeletonCard(height: 210);
+        const aiCards = Column(
+          children: [
+            _SkeletonCard(height: 120),
+            SizedBox(height: 16),
+            _TextLines(widths: [.45, .92, .78]),
+          ],
+        );
+
+        if (constraints.maxWidth < 820) {
+          return const Column(
+            children: [summary, SizedBox(height: 16), aiCards],
+          );
+        }
+
+        return const Row(
+          key: ValueKey<String>('wellness-skeleton-tablet-layout'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 5, child: summary),
+            SizedBox(width: 20),
+            Expanded(flex: 6, child: aiCards),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _SettingsPlaceholder extends StatelessWidget {
@@ -183,6 +191,64 @@ class _SettingsPlaceholder extends StatelessWidget {
       SizedBox(height: 10),
       _SkeletonCard(height: 145),
     ],
+  );
+}
+
+class _HomePlaceholder extends StatelessWidget {
+  const _HomePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      const search = _SkeletonBox(height: 48, radius: 24);
+      if (constraints.maxWidth < AppSpacing.twoColumnBreakpoint) {
+        return const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            search,
+            SizedBox(height: 18),
+            _TextLines(widths: [.56, .82]),
+            SizedBox(height: 18),
+            _SkeletonCard(height: 150),
+            SizedBox(height: 16),
+            _SkeletonCard(height: 190),
+          ],
+        );
+      }
+
+      return const Column(
+        key: ValueKey<String>('home-skeleton-tablet-layout'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          search,
+          SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    _SkeletonCard(height: 150),
+                    SizedBox(height: 16),
+                    _SkeletonCard(height: 190),
+                  ],
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  children: [
+                    _SkeletonCard(height: 272),
+                    SizedBox(height: 16),
+                    _SkeletonCard(height: 120),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
   );
 }
 
@@ -236,6 +302,46 @@ class _ProfileHeaderPlaceholder extends StatelessWidget {
       SizedBox(height: 9),
       _SkeletonBox(width: 205, height: 12, radius: 6),
     ],
+  );
+}
+
+class _ProfilePlaceholder extends StatelessWidget {
+  const _ProfilePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      const overview = Column(
+        children: [
+          _ProfileHeaderPlaceholder(),
+          SizedBox(height: 16),
+          _MetricRow(),
+          SizedBox(height: 14),
+          _SkeletonCard(height: 120),
+        ],
+      );
+      const feed = Column(
+        children: [
+          _SkeletonCard(height: 150),
+          SizedBox(height: 14),
+          _CommunityPostPlaceholder(),
+        ],
+      );
+
+      if (constraints.maxWidth < 820) {
+        return const Column(children: [overview, SizedBox(height: 14), feed]);
+      }
+
+      return const Row(
+        key: ValueKey<String>('profile-skeleton-tablet-layout'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: overview),
+          SizedBox(width: 20),
+          Expanded(child: feed),
+        ],
+      );
+    },
   );
 }
 
@@ -312,17 +418,28 @@ class _MealGridPlaceholder extends StatelessWidget {
   const _MealGridPlaceholder();
 
   @override
-  Widget build(BuildContext context) => GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: 6,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 16,
-      childAspectRatio: .67,
-    ),
-    itemBuilder: (_, _) => const _MealCardPlaceholder(),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = switch (constraints.maxWidth) {
+        < 330 => 2,
+        < AppSpacing.tabletBreakpoint => 3,
+        < 840 => 4,
+        _ => 5,
+      };
+      return GridView.builder(
+        key: const ValueKey<String>('meal-skeleton-grid'),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: columns * 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 16,
+          childAspectRatio: columns == 2 ? .72 : .67,
+        ),
+        itemBuilder: (_, _) => const _MealCardPlaceholder(),
+      );
+    },
   );
 }
 
@@ -405,8 +522,13 @@ class _FavoritesPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth < 330 ? 2 : 3;
+      final columns = switch (constraints.maxWidth) {
+        < 330 => 2,
+        < AppSpacing.tabletBreakpoint => 3,
+        _ => 4,
+      };
       return GridView.builder(
+        key: const ValueKey<String>('favorites-skeleton-grid'),
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 24),
         itemCount: 6,
@@ -445,11 +567,57 @@ class _CommunityPlaceholder extends StatelessWidget {
   const _CommunityPlaceholder();
 
   @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: AppSpacing.maxWideContentWidth,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 820) {
+            return const Column(
+              children: [
+                _CommunityPostPlaceholder(),
+                SizedBox(height: 14),
+                _CommunityPostPlaceholder(),
+              ],
+            );
+          }
+
+          return const Row(
+            key: ValueKey<String>('community-skeleton-tablet-layout'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 290, child: _CommunityControlsPlaceholder()),
+              SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  children: [
+                    _CommunityPostPlaceholder(),
+                    SizedBox(height: 14),
+                    _CommunityPostPlaceholder(),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
+}
+
+class _CommunityControlsPlaceholder extends StatelessWidget {
+  const _CommunityControlsPlaceholder();
+
+  @override
   Widget build(BuildContext context) => const Column(
     children: [
-      _CommunityPostPlaceholder(),
+      _SkeletonCard(height: 150),
       SizedBox(height: 14),
-      _CommunityPostPlaceholder(),
+      _SkeletonBox(height: 40, radius: 20),
+      SizedBox(height: 10),
+      _SkeletonBox(height: 44, radius: 15),
     ],
   );
 }

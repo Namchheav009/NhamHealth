@@ -4,9 +4,15 @@ abstract final class AppSpacing {
   AppSpacing._();
 
   static const double pageHorizontal = 20;
+  static const double tabletPageHorizontal = 32;
   static const double pageTop = 16;
   static const double pageBottom = 32;
+  static const double tabletBreakpoint = 600;
+  static const double twoColumnBreakpoint = 700;
   static const double maxContentWidth = 720;
+  static const double maxWideContentWidth = 960;
+  static const double maxWidePaddedContentWidth =
+      maxWideContentWidth + (tabletPageHorizontal * 2);
   static const double maxPaddedContentWidth =
       maxContentWidth + (pageHorizontal * 2);
   static const double topBarHeight = 60;
@@ -34,12 +40,23 @@ abstract final class AppSpacing {
     final deviceBottom = MediaQuery.viewPaddingOf(context).bottom;
     final safeBottom =
         deviceBottom > navigationBottom ? deviceBottom : navigationBottom;
+    final horizontal = pageHorizontalFor(context);
     return EdgeInsets.fromLTRB(
-      pageHorizontal,
+      horizontal,
       pageTop,
-      pageHorizontal,
+      horizontal,
       navigationBarHeight + safeBottom + navigationContentGap,
     );
+  }
+
+  static double pageHorizontalFor(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= tabletBreakpoint
+          ? tabletPageHorizontal
+          : pageHorizontal;
+
+  static EdgeInsets pagePaddingFor(BuildContext context) {
+    final horizontal = pageHorizontalFor(context);
+    return EdgeInsets.fromLTRB(horizontal, pageTop, horizontal, pageBottom);
   }
 
   static const EdgeInsets topBarPagePadding = EdgeInsets.fromLTRB(

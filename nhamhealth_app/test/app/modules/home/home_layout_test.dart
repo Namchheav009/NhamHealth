@@ -9,6 +9,8 @@ import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/daily_summary_card.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/greeting_section.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/mood_card.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
@@ -74,15 +76,30 @@ void main() {
       addTearDown(tester.view.reset);
 
       Get.put<AuthService>(_SessionAuthService());
-      Get.put<HomeController>(
-        HomeController(repository: HomeRepository(provider: HomeProvider())),
+      final controller = HomeController(
+        repository: HomeRepository(provider: HomeProvider()),
       );
+      Get.put<HomeController>(controller);
 
       await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
       await tester.pump(const Duration(milliseconds: 900));
 
       expect(find.text('How are you feeling today?'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('home-tablet-layout')),
+        size.width >= 768 ? findsOneWidget : findsNothing,
+      );
+      if (size.width >= 768) {
+        expect(
+          tester.getTopLeft(find.byType(GreetingSection)).dy,
+          tester.getTopLeft(find.byType(DailySummaryCard)).dy,
+        );
+      }
       expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      controller.onClose();
+      await tester.pump();
     });
   }
 

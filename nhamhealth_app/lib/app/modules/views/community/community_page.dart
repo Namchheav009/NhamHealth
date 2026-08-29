@@ -43,30 +43,30 @@ class CommunityPage extends GetView<CommunityController> {
             bottom: false,
             child: Column(
               children: [
-                _header(),
-                _intro(),
+                _header(context),
+                _intro(context),
                 const SizedBox(height: 14),
-                _mainTabs(),
+                _mainTabs(context),
                 const SizedBox(height: 4),
                 Expanded(
                   child: LoadingContentTransition(
                     isLoading:
                         controller.isLoading.value &&
                         !controller.hasLoaded.value,
-                    loading: const SingleChildScrollView(
+                    loading: SingleChildScrollView(
                       physics: NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
-                        AppSpacing.pageHorizontal,
+                        AppSpacing.pageHorizontalFor(context),
                         4,
-                        AppSpacing.pageHorizontal,
+                        AppSpacing.pageHorizontalFor(context),
                         110,
                       ),
-                      child: PageSkeleton.community(),
+                      child: const PageSkeleton.community(),
                     ),
                     content: RefreshIndicator(
                       color: green,
                       onRefresh: controller.reload,
-                      child: _body(),
+                      child: _body(context),
                     ),
                   ),
                 ),
@@ -79,13 +79,18 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
-  Widget _header() => Center(
+  Widget _header(BuildContext context) => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(
-        maxWidth: AppSpacing.maxPaddedContentWidth,
+        maxWidth: AppSpacing.maxWidePaddedContentWidth,
       ),
       child: Padding(
-        padding: AppSpacing.topBarPagePadding,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.pageHorizontalFor(context),
+          AppSpacing.pageTop,
+          AppSpacing.pageHorizontalFor(context),
+          0,
+        ),
         child: NhamAppBar(
           user: controller.authenticatedUser.value,
           unreadNotificationCount: controller.unreadNotificationCount.value,
@@ -103,18 +108,18 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
-  Widget _intro() => _contentWidth(
+  Widget _intro(BuildContext context) => _contentWidth(
     Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.pageHorizontal,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontalFor(context),
       ),
     ),
   );
 
-  Widget _mainTabs() => _contentWidth(
+  Widget _mainTabs(BuildContext context) => _contentWidth(
     Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.pageHorizontal,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontalFor(context),
       ),
       child: CommunityTabSwitcher(
         selected: controller.section.value,
@@ -123,26 +128,26 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
-  Widget _body() {
+  Widget _body(BuildContext context) {
     switch (controller.section.value) {
       case CommunitySection.feed:
-        return _feed();
+        return _feed(context);
       case CommunitySection.people:
-        return _friends();
+        return _friends(context);
     }
   }
 
-  Widget _friends() {
+  Widget _friends(BuildContext context) {
     final view = controller.friendsView.value;
     final isAdd = view == FriendsView.addFriends;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontalFor(context),
         12,
-        AppSpacing.pageHorizontal,
+        AppSpacing.pageHorizontalFor(context),
         115,
       ),
       children: [
@@ -480,48 +485,82 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _feed() => ListView(
+  Widget _feed(BuildContext context) => ListView(
     physics: const AlwaysScrollableScrollPhysics(
       parent: BouncingScrollPhysics(),
     ),
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.pageHorizontal,
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
       12,
-      AppSpacing.pageHorizontal,
+      AppSpacing.pageHorizontalFor(context),
       115,
     ),
     children: [
       _contentWidth(
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (controller.errorMessage.value != null) ...[
-              _feedErrorBanner(controller.errorMessage.value!),
-              const SizedBox(height: 12),
-            ],
-            CommunityComposerCard(
-              onTap: _showCreatePost,
-              authorAvatarUrl:
-                  controller.authenticatedUser.value?.profileImageUrl ?? '',
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => Get.toNamed<void>(AppRoutes.myRecipes),
-              icon: const Icon(Icons.menu_book_outlined),
-              label: const Text('Share a recipe'),
-            ),
-            _feedFilters(),
-            const SizedBox(height: 14),
-            if (controller.visiblePosts.isEmpty)
-              const CommunityEmptyState(
-                icon: Icons.dynamic_feed_outlined,
-                title: 'Nothing here yet',
-                message: 'Follow more people or check another feed filter.',
-              ),
-            ...controller.visiblePosts.map(_postCard),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 820) return _compactFeed();
+
+            return Row(
+              key: const ValueKey<String>('community-tablet-layout'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 290, child: _feedControls()),
+                const SizedBox(width: 18),
+                Expanded(child: _feedPosts()),
+              ],
+            );
+          },
         ),
       ),
+    ],
+  );
+
+  Widget _compactFeed() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (controller.errorMessage.value != null) ...[
+        _feedErrorBanner(controller.errorMessage.value!),
+        const SizedBox(height: 12),
+      ],
+      _feedControls(),
+      const SizedBox(height: 14),
+      _feedPosts(showError: false),
+    ],
+  );
+
+  Widget _feedControls() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CommunityComposerCard(
+        onTap: _showCreatePost,
+        authorAvatarUrl:
+            controller.authenticatedUser.value?.profileImageUrl ?? '',
+      ),
+      OutlinedButton.icon(
+        onPressed: () => Get.toNamed<void>(AppRoutes.myRecipes),
+        icon: const Icon(Icons.menu_book_outlined),
+        label: const Text('Share a recipe'),
+      ),
+      const SizedBox(height: 10),
+      _feedFilters(),
+    ],
+  );
+
+  Widget _feedPosts({bool showError = true}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (showError && controller.errorMessage.value != null) ...[
+        _feedErrorBanner(controller.errorMessage.value!),
+        const SizedBox(height: 12),
+      ],
+      if (controller.visiblePosts.isEmpty)
+        const CommunityEmptyState(
+          icon: Icons.dynamic_feed_outlined,
+          title: 'Nothing here yet',
+          message: 'Follow more people or check another feed filter.',
+        ),
+      ...controller.visiblePosts.map(_postCard),
     ],
   );
 
@@ -1485,7 +1524,7 @@ class CommunityPage extends GetView<CommunityController> {
   Widget _contentWidth(Widget child) => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(
-        maxWidth: AppSpacing.maxPaddedContentWidth,
+        maxWidth: AppSpacing.maxWidePaddedContentWidth,
       ),
       child: child,
     ),

@@ -36,11 +36,11 @@ class MealView extends GetView<MealController> {
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
-                padding: AppSpacing.pagePaddingWithNavigation,
+                padding: AppSpacing.pagePaddingWithNavigationFor(context),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
-                      maxWidth: AppSpacing.maxContentWidth,
+                      maxWidth: AppSpacing.maxWideContentWidth,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,28 +56,23 @@ class MealView extends GetView<MealController> {
                         ),
 
                         const SizedBox(height: AppSpacing.topBarBottom),
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 430),
-                            child: Obx(
-                              () => LoadingContentTransition(
-                                isLoading:
-                                    controller.isLoading.value &&
-                                    controller.meals.isEmpty,
-                                loading: const PageSkeleton.meals(),
-                                content: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildSearch(),
-                                    const SizedBox(height: 14),
-                                    const MealCategory(),
-                                    const SizedBox(height: 22),
-                                    const MealSlideShow(),
-                                    const SizedBox(height: 23),
-                                    _buildMealGrid(),
-                                  ],
-                                ),
-                              ),
+                        Obx(
+                          () => LoadingContentTransition(
+                            isLoading:
+                                controller.isLoading.value &&
+                                controller.meals.isEmpty,
+                            loading: const PageSkeleton.meals(),
+                            content: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSearch(),
+                                const SizedBox(height: 14),
+                                const MealCategory(),
+                                const SizedBox(height: 22),
+                                const MealSlideShow(),
+                                const SizedBox(height: 23),
+                                _buildMealGrid(),
+                              ],
                             ),
                           ),
                         ),
@@ -173,7 +168,12 @@ class MealView extends GetView<MealController> {
 
       return LayoutBuilder(
         builder: (context, constraints) {
-          final columns = constraints.maxWidth < 330 ? 2 : 3;
+          final columns = switch (constraints.maxWidth) {
+            < 330 => 2,
+            < AppSpacing.tabletBreakpoint => 3,
+            < 840 => 4,
+            _ => 5,
+          };
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -182,7 +182,7 @@ class MealView extends GetView<MealController> {
               crossAxisCount: columns,
               crossAxisSpacing: 10,
               mainAxisSpacing: 16,
-              childAspectRatio: columns == 3 ? 0.67 : 0.72,
+              childAspectRatio: columns == 2 ? 0.72 : 0.67,
             ),
             itemBuilder: (context, index) {
               final meal = meals[index];

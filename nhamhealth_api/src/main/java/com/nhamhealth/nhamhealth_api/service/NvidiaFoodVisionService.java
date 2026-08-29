@@ -158,6 +158,7 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
     private final FoodVisionResultValidator validator;
     private final String apiKey;
     private final String model;
+    private final String fallbackVisionModel;
     private final String promptVersion;
     private final int maxTokens;
 
@@ -179,7 +180,7 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
             String baseUrl,
             String apiKey,
             String model,
-            String unusedFallbackVisionModel,
+            String fallbackVisionModel,
             String promptVersion,
             int textMaxTokens,
             ObjectMapper mapper,
@@ -190,6 +191,8 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
         this.client = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
         this.apiKey = apiKey;
         this.model = model;
+        this.fallbackVisionModel = fallbackVisionModel == null || fallbackVisionModel.isBlank()
+                ? model : fallbackVisionModel.trim();
         this.promptVersion = promptVersion;
         this.maxTokens = Math.max(1_200, Math.min(textMaxTokens, 4_096));
         this.mapper = mapper;
@@ -242,7 +245,7 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
         FoodVisionResult inconclusiveResult = null;
         String inconclusiveModel = model;
         for (int attempt = 1; attempt <= 2; attempt++) {
-            String selectedModel = model;
+            String selectedModel = attempt == 1 ? model : fallbackVisionModel;
             String responseBody;
             try {
                 responseBody = requestWithRetry(visionRequestBody(
@@ -314,12 +317,12 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
             } catch (IllegalArgumentException | com.fasterxml.jackson.core.JsonProcessingException error) {
                 lastError = error;
                 FoodVisionResult recovered = recoverFoodIdentity(content);
-                if (recovered != null) {
-                    log.warn("Vision JSON was malformed; recovered a low-confidence food identity without another provider call");
-                    return new VisionPassResult(
-                            recovered, promptTokens, completionTokens, selectedModel);
-                }
                 if (attempt == 2) {
+                    if (recovered != null) {
+                        log.warn("Fallback vision JSON was malformed; returning its recoverable low-confidence identity");
+                        return new VisionPassResult(
+                                recovered, promptTokens, completionTokens, selectedModel);
+                    }
                     if (inconclusiveResult != null) {
                         log.warn("Vision repair JSON was also invalid; returning a structured inconclusive result");
                         return new VisionPassResult(
@@ -327,11 +330,12 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
                     }
                     throw error;
                 }
-                inconclusiveResult = inconclusiveVisionResult();
+                inconclusiveResult = recovered == null
+                        ? inconclusiveVisionResult() : recovered;
                 inconclusiveModel = selectedModel;
                 String finishReason = choice.path("finish_reason").asText("unknown");
-                log.warn("Food vision returned invalid structured JSON (finishReason={}, characters={}); retrying once",
-                        finishReason, content.length());
+                log.warn("Primary food vision returned invalid structured JSON (finishReason={}, characters={}); retrying with fallback model {}",
+                        finishReason, content.length(), fallbackVisionModel);
             }
         }
         if (negativeResult != null) {

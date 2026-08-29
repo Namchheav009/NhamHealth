@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 
 import '../../controllers/favorites/favorites_controller.dart';
 import 'widgets/favorite_food_card.dart';
@@ -21,21 +23,22 @@ class FavoritesView extends GetView<FavoritesController> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxContentWidth,
+            ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontalFor(context),
+                8,
+                AppSpacing.pageHorizontalFor(context),
+                0,
+              ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: Get.back,
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xFF087A42),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
+                      AppBackButton(onPressed: Get.back),
+                      const SizedBox(width: AppBackButton.headerGap),
                       Text(
                         'favorites'.tr,
                         style: const TextStyle(
@@ -103,7 +106,11 @@ class FavoritesView extends GetView<FavoritesController> {
           }
           return LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth < 330 ? 2 : 3;
+              final columns = switch (constraints.maxWidth) {
+                < 330 => 2,
+                < AppSpacing.tabletBreakpoint => 3,
+                _ => 4,
+              };
               final cardWidth =
                   (constraints.maxWidth - ((columns - 1) * 8)) / columns;
               return GridView.builder(

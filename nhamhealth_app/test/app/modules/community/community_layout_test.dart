@@ -51,6 +51,35 @@ void main() {
       },
     );
   }
+
+  testWidgets('community uses a sidebar feed on a landscape tablet', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 768);
+    addTearDown(tester.view.reset);
+
+    final authService = _CommunityAuthService();
+    Get.put<AuthService>(authService);
+    Get.put<CommunityController>(
+      CommunityController(
+        repository: _ImagePostRepository(authService),
+        authService: authService,
+        homeProvider: _CommunityHomeProvider(authService),
+      ),
+    );
+
+    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final tabletLayout = find.byKey(
+      const ValueKey<String>('community-tablet-layout'),
+    );
+    expect(tabletLayout, findsOneWidget);
+    expect(find.byType(CommunityComposerCard), findsOneWidget);
+    expect(tester.getSize(tabletLayout).width, lessThanOrEqualTo(960));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _ImagePostRepository extends CommunityRepository {

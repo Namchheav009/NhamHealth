@@ -38,11 +38,11 @@ class ProfileView extends GetView<ProfileController> {
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: AppSpacing.pagePadding,
+              padding: AppSpacing.pagePaddingFor(context),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
-                    maxWidth: AppSpacing.maxContentWidth,
+                    maxWidth: AppSpacing.maxWideContentWidth,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,84 +63,7 @@ class ProfileView extends GetView<ProfileController> {
                               controller.isLoading.value &&
                               controller.dashboard.value == null,
                           loading: const PageSkeleton.profile(),
-                          content: Column(
-                            children: [
-                              const ProfileHeader(),
-                              const SizedBox(height: 14),
-                              const HealthStatsCard(),
-                              const SizedBox(height: 14),
-                              const InsightCard(),
-                              const SizedBox(height: 22),
-                              CommunityComposerCard(
-                                onTap: _showCreatePost,
-                                authorAvatarUrl:
-                                    controller
-                                        .authenticatedUser
-                                        .value
-                                        ?.profileImageUrl ??
-                                    '',
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    'My posts',
-                                    style: TextStyle(
-                                      color: context.appText,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context.appSoftGreen,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '${controller.posts.length} ${controller.posts.length == 1 ? 'post' : 'posts'}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF178344),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              if (controller.posts.isEmpty)
-                                const _EmptyPosts()
-                              else
-                                ...controller.posts.map(
-                                  (post) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ProfilePostCard(
-                                      post: post,
-                                      authorName: controller.name.value,
-                                      authorAvatarUrl:
-                                          controller
-                                              .authenticatedUser
-                                              .value
-                                              ?.profileImageUrl ??
-                                          '',
-                                      membership: controller.membership.value,
-                                      onEdit: () => _showEditPost(post),
-                                      onDelete: () => _confirmDeletePost(post),
-                                      onLike:
-                                          () => controller.togglePostLike(post),
-                                      isLiking: controller.likingPostIds
-                                          .contains(post.id),
-                                      onComment: () => _showComments(post),
-                                      onShare: () => _showShare(post),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                          content: _profileContent(context),
                         ),
                       ),
                     ],
@@ -161,6 +84,100 @@ class ProfileView extends GetView<ProfileController> {
       onBack: controller.goBack,
     );
   }
+
+  Widget _profileContent(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < 820) {
+        return Column(
+          children: [
+            _profileOverview(),
+            const SizedBox(height: 22),
+            _profileFeed(context),
+          ],
+        );
+      }
+
+      return Row(
+        key: const ValueKey<String>('profile-tablet-layout'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _profileOverview()),
+          const SizedBox(width: 20),
+          Expanded(child: _profileFeed(context)),
+        ],
+      );
+    },
+  );
+
+  Widget _profileOverview() => const Column(
+    children: [
+      ProfileHeader(),
+      SizedBox(height: 14),
+      HealthStatsCard(),
+      SizedBox(height: 14),
+      InsightCard(),
+    ],
+  );
+
+  Widget _profileFeed(BuildContext context) => Column(
+    children: [
+      CommunityComposerCard(
+        onTap: _showCreatePost,
+        authorAvatarUrl:
+            controller.authenticatedUser.value?.profileImageUrl ?? '',
+      ),
+      Row(
+        children: [
+          Text(
+            'My posts',
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${controller.posts.length} ${controller.posts.length == 1 ? 'post' : 'posts'}',
+              style: const TextStyle(
+                color: Color(0xFF178344),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      if (controller.posts.isEmpty)
+        const _EmptyPosts()
+      else
+        ...controller.posts.map(
+          (post) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: ProfilePostCard(
+              post: post,
+              authorName: controller.name.value,
+              authorAvatarUrl:
+                  controller.authenticatedUser.value?.profileImageUrl ?? '',
+              membership: controller.membership.value,
+              onEdit: () => _showEditPost(post),
+              onDelete: () => _confirmDeletePost(post),
+              onLike: () => controller.togglePostLike(post),
+              isLiking: controller.likingPostIds.contains(post.id),
+              onComment: () => _showComments(post),
+              onShare: () => _showShare(post),
+            ),
+          ),
+        ),
+    ],
+  );
 
   Future<void> _showEditPost(CommunityPost post) async {
     final user = controller.authenticatedUser.value;

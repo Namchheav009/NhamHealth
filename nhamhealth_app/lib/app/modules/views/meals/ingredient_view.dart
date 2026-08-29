@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../controllers/meals/ingredient_controller.dart';
 
 class IngredientView extends GetView<IngredientController> {
@@ -62,17 +63,9 @@ class IngredientView extends GetView<IngredientController> {
   Widget _buildHeader() {
     return Row(
       children: [
-        GestureDetector(
-          onTap: controller.goBack,
-          behavior: HitTestBehavior.opaque,
-          child: const SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(Icons.arrow_back_rounded, size: 30, color: darkGreen),
-          ),
-        ),
+        AppBackButton(onPressed: controller.goBack),
 
-        const SizedBox(width: 11),
+        const SizedBox(width: AppBackButton.headerGap),
 
         Text(
           'Ingredient'.tr,
