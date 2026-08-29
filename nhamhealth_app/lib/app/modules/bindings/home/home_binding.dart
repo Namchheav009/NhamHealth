@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../controllers/home/home_controller.dart';
 import '../../providers/home/home_provider.dart';
@@ -31,6 +32,7 @@ class HomeBinding extends Bindings {
     Get.lazyPut<HomeController>(
       () => HomeController(
         repository: Get.find<HomeRepository>(),
+        realtimeEvents: PushNotificationService.instance?.events,
       ),
     );
   }
