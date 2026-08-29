@@ -17,24 +17,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.repository.ChatRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
 import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealLogRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.MessageRepository;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
 
@@ -50,7 +46,6 @@ public class AdminDashboardService {
     private final MealRepository mealRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final MealLogRepository mealLogRepository;
-    private final ReviewRepository reviewRepository;
     private final DailyWellnessSummaryRepository dailyWellnessSummaryRepository;
     private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
     private final AiFoodAnalysisRepository aiFoodAnalysisRepository;
@@ -59,8 +54,6 @@ public class AdminDashboardService {
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
     private final FollowRepository followRepository;
-    private final ChatRepository chatRepository;
-    private final MessageRepository messageRepository;
     private final NotificationRepository notificationRepository;
 
     public AdminDashboardService(
@@ -69,7 +62,6 @@ public class AdminDashboardService {
             MealRepository mealRepository,
             MealCategoryRepository mealCategoryRepository,
             MealLogRepository mealLogRepository,
-            ReviewRepository reviewRepository,
             DailyWellnessSummaryRepository dailyWellnessSummaryRepository,
             DailyNutrientTotalRepository dailyNutrientTotalRepository,
             AiFoodAnalysisRepository aiFoodAnalysisRepository,
@@ -78,15 +70,12 @@ public class AdminDashboardService {
             PostRepository postRepository,
             PostReportRepository postReportRepository,
             FollowRepository followRepository,
-            ChatRepository chatRepository,
-            MessageRepository messageRepository,
             NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.mealRepository = mealRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.mealLogRepository = mealLogRepository;
-        this.reviewRepository = reviewRepository;
         this.dailyWellnessSummaryRepository = dailyWellnessSummaryRepository;
         this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
         this.aiFoodAnalysisRepository = aiFoodAnalysisRepository;
@@ -95,8 +84,6 @@ public class AdminDashboardService {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.followRepository = followRepository;
-        this.chatRepository = chatRepository;
-        this.messageRepository = messageRepository;
         this.notificationRepository = notificationRepository;
     }
 
@@ -111,13 +98,13 @@ public class AdminDashboardService {
                 mealRepository.count(),
                 mealRepository.countByIsPublishedTrue(),
                 mealLogRepository.count(),
-                reviewRepository.count(),
+                0,
                 notificationRepository.countByIsReadFalse(),
                 startDate.format(PERIOD_LABEL) + " – " + today.format(PERIOD_LABEL),
                 buildActivity(startDate),
                 buildCategories(),
                 buildRecentUsers(),
-                buildRecentReviews(),
+                List.of(),
                 buildNutrientMetrics(today),
                 buildRecentRecommendations(),
                 List.of(
@@ -127,7 +114,6 @@ public class AdminDashboardService {
                         new ModuleMetric("Community posts", postRepository.count(), "bi-file-post", "/admin/posts"),
                         new ModuleMetric("Community reports", postReportRepository.count(), "bi-flag", "/admin/reports"),
                         new ModuleMetric("Connections", followRepository.count(), "bi-person-plus", "/admin/follows"),
-                        new ModuleMetric("Conversations", chatRepository.count() + messageRepository.count(), "bi-chat-dots", "/admin/chats"),
                         new ModuleMetric("Notifications", notificationRepository.count(), "bi-bell", "/admin/notifications")));
     }
 
@@ -203,16 +189,6 @@ public class AdminDashboardService {
                         profiles.containsKey(user.getUserId()) ? profiles.get(user.getUserId()).getProfileImageUrl() : null,
                         user.getStatus(),
                         user.getCreatedAt()))
-                .toList();
-    }
-
-    private List<RecentReview> buildRecentReviews() {
-        return reviewRepository.findTop5ByOrderByCreatedAtDesc().stream()
-                .map(review -> new RecentReview(
-                        review.getMeal() != null ? review.getMeal().getMealName() : "Unknown meal",
-                        review.getUser() != null ? review.getUser().getEmail() : "Unknown user",
-                        review.getRating(),
-                        review.getCreatedAt()))
                 .toList();
     }
 

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_comments", indexes = {
-    @jakarta.persistence.Index(name = "idx_post_comments_post_id_created_at", columnList = "post_id, created_at"),
+    @jakarta.persistence.Index(name = "idx_post_comments_post_id_created_at", columnList = "user_meal_post_id, created_at"),
     @jakarta.persistence.Index(name = "idx_post_comments_user_id", columnList = "user_id"),
     @jakarta.persistence.Index(name = "idx_post_comments_parent_comment_id", columnList = "parent_comment_id")
 })
@@ -27,7 +27,8 @@ public class PostComment {
     private Integer commentId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false,
+            foreignKey = @jakarta.persistence.ForeignKey(value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private Post post;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)

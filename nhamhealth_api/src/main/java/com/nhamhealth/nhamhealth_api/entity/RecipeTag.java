@@ -11,7 +11,7 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "recipe_tags", uniqueConstraints =
-        @UniqueConstraint(name = "uk_recipe_tags_recipe_tag", columnNames = {"recipe_id", "tag_id"}), indexes = {
+        @UniqueConstraint(name = "uk_recipe_tags_recipe_tag", columnNames = {"user_meal_post_id", "tag_id"}), indexes = {
     @jakarta.persistence.Index(name = "idx_recipe_tags_tag_id", columnList = "tag_id")
 })
 public class RecipeTag {
@@ -22,7 +22,7 @@ public class RecipeTag {
     private Integer recipeTagId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false)
     private Recipe recipe;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)

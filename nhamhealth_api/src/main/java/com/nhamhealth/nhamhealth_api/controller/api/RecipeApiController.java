@@ -26,12 +26,13 @@ import com.nhamhealth.nhamhealth_api.service.RecipeFlowService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/recipes")
+@RequestMapping({"/api/v1/recipes", "/api/community/meals"})
 public class RecipeApiController {
     private final RecipeFlowService recipes;
     public RecipeApiController(RecipeFlowService recipes) { this.recipes = recipes; }
 
     @GetMapping("/mine") public List<RecipeResponse> mine(@AuthenticationPrincipal Jwt jwt) { return recipes.mine(userId(jwt)); }
+    @GetMapping public List<RecipeResponse> feed(@AuthenticationPrincipal Jwt jwt) { return recipes.feed(userId(jwt)); }
     @GetMapping("/saved") public List<RecipeResponse> saved(@AuthenticationPrincipal Jwt jwt) { return recipes.saved(userId(jwt)); }
     @GetMapping("/{recipeId}") public RecipeResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.detail(userId(jwt), recipeId); }
     @PostMapping(consumes = "multipart/form-data") @ResponseStatus(HttpStatus.CREATED)
@@ -40,6 +41,9 @@ public class RecipeApiController {
     public RecipeResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId, @Valid @RequestPart("recipe") RecipeRequest recipe, @RequestPart(value = "image", required = false) MultipartFile image) { return recipes.update(userId(jwt), recipeId, recipe, image); }
     @PostMapping("/{recipeId}/publish") public RecipeResponse publish(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.publish(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/ai-check") public RecipeResponse aiCheck(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }
+    @PostMapping("/{recipeId}/ai-review") public RecipeResponse aiReview(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }
+    @DeleteMapping("/{recipeId}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { recipes.delete(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/saved") public RecipeResponse save(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.toggleSaved(userId(jwt), recipeId); }
     @DeleteMapping("/{recipeId}/saved") public RecipeResponse unsave(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.toggleSaved(userId(jwt), recipeId); }
     private Integer userId(Jwt jwt) { if (jwt == null) throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required."); Number id = jwt.getClaim("userId"); if (id == null) throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID."); return id.intValue(); }

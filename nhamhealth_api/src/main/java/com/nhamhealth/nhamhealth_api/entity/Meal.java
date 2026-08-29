@@ -38,9 +38,9 @@ public class Meal {
     @JoinColumn(name = "created_by_user_id")
     private User createdByUser;
 
-    /** Present only when this catalog meal was promoted from an AI-approved community recipe. */
+    /** Present only when this catalog meal was promoted from an AI-approved user meal post. */
     @jakarta.persistence.OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "source_recipe_id", unique = true)
+    @JoinColumn(name = "source_user_meal_post_id", unique = true)
     private Recipe sourceRecipe;
 
     /** ADMIN for curated meals and COMMUNITY for a promoted recipe. */

@@ -68,11 +68,19 @@ class LoginPageTests {
 	}
 
 	@Test
-	void authenticatedAdminCanRenderReviewsPage() throws Exception {
-		mockMvc.perform(get("/admin/reviews")
+	void authenticatedAdminCanRenderCommunityRecipesPage() throws Exception {
+		mockMvc.perform(get("/admin/community-recipes")
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
 				.andExpect(status().isOk())
-				.andExpect(view().name("admin/review"));
+				.andExpect(view().name("admin/community-recipes"))
+				.andExpect(content().string(containsString("Community recipes")));
+	}
+
+	@Test
+	void removedReviewsPageReturnsNotFound() throws Exception {
+		mockMvc.perform(get("/admin/reviews")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test

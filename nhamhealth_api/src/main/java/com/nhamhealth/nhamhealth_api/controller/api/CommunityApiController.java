@@ -18,8 +18,6 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.SharePostRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.SharePostToFeedRequest;
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
 import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
 
@@ -80,40 +78,6 @@ public class CommunityApiController {
         reportService.reportComment(reporterId, postId, commentId, reasonId);
     }
 
-    @PostMapping(value = "/posts", consumes = "multipart/form-data")
-    @ResponseStatus(HttpStatus.CREATED)
-    public CommunityPostResponse create(@AuthenticationPrincipal Jwt jwt,
-            @RequestParam String description,
-            @RequestParam(defaultValue = "PUBLIC") String visibility,
-            @RequestParam(defaultValue = "true") boolean allowComments,
-            @RequestParam(defaultValue = "true") boolean allowReplies,
-            @RequestParam(required = false) List<Integer> tagIds,
-            @RequestPart(name = "images", required = false) List<MultipartFile> images,
-            @RequestPart(name = "image", required = false) MultipartFile image) {
-        return service.create(userId(jwt), description, visibility, allowComments, allowReplies, tagIds,
-                mergeImages(images, image));
-    }
-
-    @PutMapping(value = "/posts/{postId}", consumes = "multipart/form-data")
-    public CommunityPostResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
-            @RequestParam String description,
-            @RequestParam(defaultValue = "PUBLIC") String visibility,
-            @RequestParam(defaultValue = "true") boolean allowComments,
-            @RequestParam(defaultValue = "true") boolean allowReplies,
-            @RequestParam(defaultValue = "false") boolean removeImage,
-            @RequestParam(required = false) List<Integer> tagIds,
-            @RequestPart(name = "images", required = false) List<MultipartFile> images,
-            @RequestPart(name = "image", required = false) MultipartFile image) {
-        return service.update(userId(jwt), postId, description, visibility, allowComments, allowReplies,
-                removeImage, tagIds, mergeImages(images, image), image != null && !image.isEmpty());
-    }
-
-    @DeleteMapping("/posts/{postId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
-        service.delete(userId(jwt), postId);
-    }
-
     @PostMapping("/posts/{postId}/like")
     public CommunityPostResponse like(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
         return service.toggleLike(userId(jwt), postId);
@@ -142,22 +106,6 @@ public class CommunityApiController {
     public CommunityCommentResponse likeComment(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
             @PathVariable Integer commentId) {
         return service.toggleCommentLike(userId(jwt), postId, commentId);
-    }
-
-    @PostMapping("/posts/{postId}/share")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void share(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
-            @RequestBody(required = false) SharePostRequest request) {
-        service.share(userId(jwt), postId, request == null ? List.of() : request.recipientIds());
-    }
-
-    @PostMapping("/posts/{postId}/share-to-feed")
-    @ResponseStatus(HttpStatus.CREATED)
-    public CommunityPostResponse shareToFeed(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId,
-            @RequestBody(required = false) SharePostToFeedRequest request) {
-        String message = request == null ? "" : request.message();
-        String visibility = request == null ? "PUBLIC" : request.visibility();
-        return service.shareToFeed(userId(jwt), postId, message, visibility);
     }
 
     @GetMapping("/people")

@@ -162,9 +162,9 @@ public class CommunityReportService {
                 report.getComment().setUpdatedAt(LocalDateTime.now());
                 comments.save(report.getComment());
             } else {
-                report.getPost().setStatus("DELETED");
-                report.getPost().setUpdatedAt(LocalDateTime.now());
-                posts.save(report.getPost());
+                var recipe = report.getPost().getRecipe();
+                recipe.setStatus("ARCHIVED");
+                recipe.setUpdatedAt(LocalDateTime.now());
             }
         }
         if ("SUSPEND".equals(action)) targetUser(report).setStatus("SUSPENDED");

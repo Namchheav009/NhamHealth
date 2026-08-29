@@ -19,7 +19,6 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
 import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
 import com.nhamhealth.nhamhealth_api.service.AiMealRecommendationService;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -31,15 +30,13 @@ public class AiRecommendationApiController {
 
     private final AiRecommendationRepository recommendationRepository;
     private final AiRecommendationItemRepository itemRepository;
-    private final ReviewRepository reviewRepository;
     private final AiMealRecommendationService recommendationService;
 
     public AiRecommendationApiController(AiRecommendationRepository recommendationRepository,
-            AiRecommendationItemRepository itemRepository, ReviewRepository reviewRepository,
+            AiRecommendationItemRepository itemRepository,
             AiMealRecommendationService recommendationService) {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
-        this.reviewRepository = reviewRepository;
         this.recommendationService = recommendationService;
     }
 
@@ -86,10 +83,7 @@ public class AiRecommendationApiController {
 
     private RecommendedMealResponse toResponse(AiRecommendation recommendation, AiRecommendationItem item) {
         Meal meal = item.getMeal();
-        double rating = reviewRepository.findByMealMealId(meal.getMealId()).stream()
-                .mapToInt(review -> review.getRating() == null ? 0 : review.getRating())
-                .average()
-                .orElse(0);
+        double rating = 0;
         return new RecommendedMealResponse(
                 meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
                 meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),

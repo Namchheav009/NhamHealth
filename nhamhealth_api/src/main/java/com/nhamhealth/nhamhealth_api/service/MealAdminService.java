@@ -24,12 +24,10 @@ import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
 import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.entity.Review;
 import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealTagRepository;
-import com.nhamhealth.nhamhealth_api.repository.ReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealIngredientRepository;
@@ -41,7 +39,6 @@ public class MealAdminService {
     private final MealRepository mealRepository;
     private final MealTagRepository mealTagRepository;
     private final MealFavoriteRepository mealFavoriteRepository;
-    private final ReviewRepository reviewRepository;
     private final MealCategoryRepository mealCategoryRepository;
     private final RecipeStepRepository recipeStepRepository;
     private final IngredientRepository ingredientRepository;
@@ -54,7 +51,6 @@ public class MealAdminService {
             MealRepository mealRepository,
             MealTagRepository mealTagRepository,
             MealFavoriteRepository mealFavoriteRepository,
-            ReviewRepository reviewRepository,
             MealCategoryRepository mealCategoryRepository,
             RecipeStepRepository recipeStepRepository,
             IngredientRepository ingredientRepository,
@@ -65,7 +61,6 @@ public class MealAdminService {
         this.mealRepository = mealRepository;
         this.mealTagRepository = mealTagRepository;
         this.mealFavoriteRepository = mealFavoriteRepository;
-        this.reviewRepository = reviewRepository;
         this.mealCategoryRepository = mealCategoryRepository;
         this.recipeStepRepository = recipeStepRepository;
         this.ingredientRepository = ingredientRepository;
@@ -87,7 +82,7 @@ public class MealAdminService {
     }
 
     public double getAverageRating() {
-        return reviewRepository.findAverageRating();
+        return 0;
     }
 
     public long getFavoriteCount() {
@@ -125,11 +120,7 @@ public class MealAdminService {
                     item.getNutrient().getNutrientId(), item.getNutrient().getNutrientName(),
                     item.getAmountPerServing(), item.getNutrient().getUnit()))
                 .toList();
-            List<AdminMealReviewDto> reviews = reviewRepository.findByMealMealId(mealId).stream()
-                .map(review -> new AdminMealReviewDto(
-                    review.getReviewId(), review.getUser() == null ? "Unknown user" : review.getUser().getEmail(),
-                    review.getRating(), review.getReviewText(), review.getCreatedAt()))
-                .toList();
+            List<AdminMealReviewDto> reviews = List.of();
         return new AdminMealEditorDto(
                 meal.getMealId(), meal.getMealName(), meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), meal.getDifficulty(), meal.getCookingTimeMinutes(),
@@ -157,13 +148,9 @@ public class MealAdminService {
         deleteRelatedRows("recipe_steps", mealId);
         deleteRelatedRows("meal_tags", mealId);
         deleteRelatedRows("meal_favorites", mealId);
-        deleteRelatedRows("reviews", mealId);
         deleteRelatedRows("meal_ingredients", mealId);
         deleteRelatedRows("meal_nutrition", mealId);
         entityManager.createNativeQuery("UPDATE meal_logs SET meal_id = NULL WHERE meal_id = :mealId")
-                .setParameter("mealId", mealId)
-                .executeUpdate();
-        entityManager.createNativeQuery("UPDATE posts SET tagged_meal_id = NULL WHERE tagged_meal_id = :mealId")
                 .setParameter("mealId", mealId)
                 .executeUpdate();
         mealRepository.deleteById(mealId);
@@ -274,12 +261,8 @@ public class MealAdminService {
                 .filter(tag -> tag != null && !tag.isBlank())
                 .collect(Collectors.toList());
 
-        List<Review> reviews = reviewRepository.findByMealMealId(meal.getMealId());
-        double averageRating = reviews.stream()
-                .filter(review -> review.getRating() != null)
-                .mapToDouble(Review::getRating)
-                .average()
-                .orElse(0.0);
+        List<AdminMealReviewDto> reviews = List.of();
+        double averageRating = 0;
         String rating = String.format("%.1f", averageRating);
 
         long favorites = mealFavoriteRepository.countByMealMealId(meal.getMealId());

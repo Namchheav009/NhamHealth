@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 /** An ingredient as written by the recipe author; it is not restricted to the admin ingredient catalog. */
 @Entity
 @Table(name = "recipe_ingredients", indexes = {
-    @jakarta.persistence.Index(name = "idx_recipe_ingredients_recipe_order", columnList = "recipe_id, display_order")
+    @jakarta.persistence.Index(name = "idx_recipe_ingredients_meal_post_order", columnList = "user_meal_post_id, display_order")
 })
 public class RecipeIngredient {
 
@@ -25,8 +25,13 @@ public class RecipeIngredient {
     private Integer recipeIngredientId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false)
     private Recipe recipe;
+
+    /** Optional link to the curated ingredient catalog; author-entered names remain supported. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ingredient_id")
+    private Ingredient ingredient;
 
     @Column(name = "ingredient_name", nullable = false, length = 150)
     private String ingredientName;
@@ -46,6 +51,8 @@ public class RecipeIngredient {
     public Integer getRecipeIngredientId() { return recipeIngredientId; }
     public Recipe getRecipe() { return recipe; }
     public void setRecipe(Recipe recipe) { this.recipe = recipe; }
+    public Ingredient getIngredient() { return ingredient; }
+    public void setIngredient(Ingredient ingredient) { this.ingredient = ingredient; }
     public String getIngredientName() { return ingredientName; }
     public void setIngredientName(String ingredientName) { this.ingredientName = ingredientName; }
     public BigDecimal getAmount() { return amount; }

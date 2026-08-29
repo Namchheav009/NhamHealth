@@ -15,12 +15,8 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "posts", indexes = {
-    @jakarta.persistence.Index(name = "idx_posts_user_id", columnList = "user_id"),
-    @jakarta.persistence.Index(name = "idx_posts_tagged_meal_id", columnList = "tagged_meal_id"),
-    @jakarta.persistence.Index(name = "idx_posts_recipe_id", columnList = "recipe_id"),
-    @jakarta.persistence.Index(name = "idx_posts_updated_at_created_at", columnList = "updated_at, created_at")
-})
+@org.hibernate.annotations.Immutable
+@Table(name = "community_meal_posts")
 public class Post {
 
     @Id
@@ -29,20 +25,22 @@ public class Post {
     private Integer postId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false,
+            foreignKey = @jakarta.persistence.ForeignKey(
+                    value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private User user;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "tagged_meal_id")
+    @JoinColumn(name = "tagged_meal_id",
+            foreignKey = @jakarta.persistence.ForeignKey(
+                    value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private Meal taggedMeal;
 
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "shared_post_id")
-    private Post sharedPost;
-
-    /** The recipe displayed by this community post, when the post is recipe-based. */
+    /** Compatibility mapping to the user meal post that is itself being displayed. */
     @OneToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", unique = true)
+    @JoinColumn(name = "user_meal_post_id", unique = true,
+            foreignKey = @jakarta.persistence.ForeignKey(
+                    value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private Recipe recipe;
 
     @Column(name = "caption")
@@ -87,14 +85,6 @@ public class Post {
 
     public void setTaggedMeal(Meal taggedMeal) {
         this.taggedMeal = taggedMeal;
-    }
-
-    public Post getSharedPost() {
-        return sharedPost;
-    }
-
-    public void setSharedPost(Post sharedPost) {
-        this.sharedPost = sharedPost;
     }
 
     public Recipe getRecipe() {

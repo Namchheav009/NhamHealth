@@ -23,7 +23,8 @@ public class PostReport {
     private Integer reportId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "user_meal_post_id", nullable = false,
+            foreignKey = @jakarta.persistence.ForeignKey(value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private Post post;
 
     /**

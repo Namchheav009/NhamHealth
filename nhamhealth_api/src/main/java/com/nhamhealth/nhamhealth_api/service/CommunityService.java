@@ -14,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
-import com.nhamhealth.nhamhealth_api.dto.response.CommunitySharedPostResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.*;
@@ -27,7 +26,6 @@ public class CommunityService {
     private final PostLikeRepository likes;
     private final PostCommentRepository comments;
     private final CommentLikeRepository commentLikes;
-    private final ShareRepository shares;
     private final UserRepository users;
     private final UserProfileRepository profiles;
     private final FollowRepository follows;
@@ -38,7 +36,6 @@ public class CommunityService {
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
-            ShareRepository shares,
             UserRepository users, UserProfileRepository profiles, FollowRepository follows,
             PostTagRepository postTags, TagTypeRepository tagTypes,
             ProfileImageStorageService imageStorage,
@@ -48,7 +45,6 @@ public class CommunityService {
         this.likes = likes;
         this.comments = comments;
         this.commentLikes = commentLikes;
-        this.shares = shares;
         this.users = users;
         this.profiles = profiles;
         this.follows = follows;
@@ -64,6 +60,7 @@ public class CommunityService {
         Set<Integer> followers = followerIds(viewerId);
         return posts.findAllByOrderByUpdatedAtDescCreatedAtDesc().stream()
                 .filter(post -> "ACTIVE".equalsIgnoreCase(post.getStatus()))
+                .filter(post -> post.getRecipe() != null)
                 .filter(post -> canView(post, viewerId, followed, followers))
                 .filter(post -> !followingOnly || followed.contains(post.getUser().getUserId())
                         || post.getUser().getUserId().equals(viewerId))
@@ -75,7 +72,8 @@ public class CommunityService {
         Set<Integer> followed = followedIds(userId);
         return posts
                 .findByUser_UserIdAndStatusIgnoreCaseOrderByUpdatedAtDescCreatedAtDesc(userId, "ACTIVE")
-                .stream().map(post -> response(post, userId, followed)).toList();
+                .stream().filter(post -> post.getRecipe() != null)
+                .map(post -> response(post, userId, followed)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -187,77 +185,6 @@ public class CommunityService {
             communityNotifications.postLiked(actor, post);
         }
         return response(post, userId, followedIds(userId));
-    }
-
-    @Transactional
-    public void share(Integer userId, Integer postId, List<Integer> recipientIds) {
-        Post selected = visiblePost(userId, postId);
-        Post post = selected.getSharedPost() == null ? selected : selected.getSharedPost();
-        User actor = user(userId);
-        Set<Integer> recipients = recipientIds == null ? Set.of() : new LinkedHashSet<>(recipientIds);
-        if (!recipients.isEmpty()) {
-            Set<Integer> friends = followedIds(userId);
-            friends.retainAll(followerIds(userId));
-            if (!friends.containsAll(recipients)) {
-                throw new IllegalArgumentException("Posts can only be shared with your friends.");
-            }
-            if (recipients.stream().anyMatch(recipientId -> !canView(post, recipientId,
-                    followedIds(recipientId), followerIds(recipientId)))) {
-                throw new IllegalArgumentException("One or more recipients cannot view this post.");
-            }
-        }
-        if (recipients.isEmpty()) {
-            saveShare(actor, post, null);
-            return;
-        }
-        for (Integer recipientId : recipients) {
-            saveShare(actor, post, recipientId);
-        }
-    }
-
-    @Transactional
-    public CommunityPostResponse shareToFeed(Integer userId, Integer postId, String message, String visibility) {
-        Post selected = visiblePost(userId, postId);
-        Post original = selected.getSharedPost() == null ? selected : selected.getSharedPost();
-        if (!"ACTIVE".equalsIgnoreCase(original.getStatus())
-                || !"PUBLIC".equalsIgnoreCase(value(original.getVisibility(), "PUBLIC"))) {
-            throw new IllegalArgumentException("Only public posts can be shared to your feed.");
-        }
-
-        User actor = user(userId);
-        LocalDateTime now = LocalDateTime.now();
-        Post sharedPost = new Post();
-        sharedPost.setUser(actor);
-        sharedPost.setSharedPost(original);
-        sharedPost.setCaption(value(message, "").trim());
-        sharedPost.setVisibility(cleanVisibility(visibility));
-        sharedPost.setAllowComments(true);
-        sharedPost.setAllowReplies(true);
-        sharedPost.setStatus("ACTIVE");
-        sharedPost.setCreatedAt(now);
-        sharedPost.setUpdatedAt(now);
-        sharedPost = posts.save(sharedPost);
-
-        saveShare(actor, original, null, "COMMUNITY_FEED");
-        communityNotifications.postSharedToFeed(actor, original.getUser(), sharedPost);
-        return response(sharedPost, userId, followedIds(userId));
-    }
-
-    private void saveShare(User actor, Post post, Integer recipientId) {
-        saveShare(actor, post, recipientId, "COMMUNITY");
-    }
-
-    private void saveShare(User actor, Post post, Integer recipientId, String sharedVia) {
-        Share share = new Share();
-        share.setSenderUser(actor);
-        User recipient = recipientId == null ? null : user(recipientId);
-        if (recipient != null) share.setReceiverUser(recipient);
-        share.setReferenceType("POST");
-        share.setReferenceId(post.getPostId());
-        share.setSharedVia(sharedVia);
-        share.setCreatedAt(LocalDateTime.now());
-        shares.save(share);
-        if (recipient != null) communityNotifications.postShared(actor, recipient, post);
     }
 
     @Transactional(readOnly = true)
@@ -389,45 +316,28 @@ public class CommunityService {
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {
         UserProfile profile = profiles.findByUser_UserId(post.getUser().getUserId()).orElse(null);
-        Integer sharedReferenceId = post.getSharedPost() == null
-                ? post.getPostId()
-                : post.getSharedPost().getPostId();
         List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
                 .map(PostMedia::getMediaUrl).toList();
-        String imageUrl = imageUrls.isEmpty() ? "" : imageUrls.getFirst();
+        String imageUrl = imageUrls.isEmpty() && post.getRecipe() != null
+                ? value(post.getRecipe().getMainImageUrl(), "")
+                : (imageUrls.isEmpty() ? "" : imageUrls.getFirst());
+        if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
         List<PostTag> assignedTags = postTags.findByPostPostIdOrderByPostTagId(post.getPostId());
+        com.nhamhealth.nhamhealth_api.entity.Recipe recipe = post.getRecipe();
         return new CommunityPostResponse(post.getPostId(), value(post.getCaption(), ""), imageUrl, imageUrls,
                 post.getUser().getUserId(),
                 profile == null ? post.getUser().getName() : profile.getFullName(),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 assignedTags.stream().map(item -> item.getTag().getTagName()).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
-                shares.countByReferenceTypeIgnoreCaseAndReferenceId("POST", sharedReferenceId),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
                 followed.contains(post.getUser().getUserId()), post.getVisibility(),
                 post.isAllowComments(), post.isAllowReplies(),
                 assignedTags.stream().map(item -> item.getTag().getTagId()).toList(),
-                sharedPostResponse(post.getSharedPost()));
-    }
-
-    private CommunitySharedPostResponse sharedPostResponse(Post original) {
-        if (original == null || !"ACTIVE".equalsIgnoreCase(original.getStatus())
-                || !"PUBLIC".equalsIgnoreCase(value(original.getVisibility(), "PUBLIC"))) {
-            return null;
-        }
-        UserProfile profile = profiles.findByUser_UserId(original.getUser().getUserId()).orElse(null);
-        List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(original.getPostId()).stream()
-                .map(PostMedia::getMediaUrl).toList();
-        return new CommunitySharedPostResponse(
-                original.getPostId(),
-                original.getUser().getUserId(),
-                profile == null ? original.getUser().getName() : profile.getFullName(),
-                original.getUser().getRoleLabel(),
-                profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                value(original.getCaption(), ""),
-                imageUrls.isEmpty() ? "" : imageUrls.getFirst(),
-                imageUrls,
-                original.getCreatedAt());
+                recipe == null ? "" : recipe.getRecipeName(), recipe == null ? null : recipe.getCookingTimeMinutes(),
+                recipe == null ? null : recipe.getServings(), recipe == null ? "" : value(recipe.getDifficulty(), ""),
+                recipe == null ? "PENDING" : recipe.getAiStatus(), recipe == null ? "" : value(recipe.getAiReviewReason(), ""),
+                recipe == null || recipe.getMeal() == null ? null : recipe.getMeal().getMealId());
     }
 
     private CommunityCommentResponse commentResponse(PostComment comment) {

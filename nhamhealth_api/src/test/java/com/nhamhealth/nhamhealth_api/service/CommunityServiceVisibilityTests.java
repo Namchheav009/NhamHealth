@@ -24,7 +24,6 @@ import com.nhamhealth.nhamhealth_api.repository.PostLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostMediaRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostTagRepository;
-import com.nhamhealth.nhamhealth_api.repository.ShareRepository;
 import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserRepository;
@@ -89,7 +88,6 @@ class CommunityServiceVisibilityTests {
         private final PostLikeRepository likes = mock(PostLikeRepository.class);
         private final PostCommentRepository comments = mock(PostCommentRepository.class);
         private final CommentLikeRepository commentLikes = mock(CommentLikeRepository.class);
-        private final ShareRepository shares = mock(ShareRepository.class);
         private final UserRepository users = mock(UserRepository.class);
         private final UserProfileRepository profiles = mock(UserProfileRepository.class);
         private final FollowRepository follows = mock(FollowRepository.class);
@@ -98,6 +96,6 @@ class CommunityServiceVisibilityTests {
         private final ProfileImageStorageService imageStorage = mock(ProfileImageStorageService.class);
         private final CommunityNotificationService notifications = mock(CommunityNotificationService.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
-                commentLikes, shares, users, profiles, follows, postTags, tagTypes, imageStorage, notifications);
+                commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications);
     }
 }
