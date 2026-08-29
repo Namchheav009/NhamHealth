@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/recommended_meal_model.dart';
 
@@ -26,14 +25,14 @@ class RecommendedMealCard extends StatelessWidget {
     return Container(
       width: 100,
       decoration: BoxDecoration(
-        color: AppColors.cardSurface.withValues(alpha: 0.92),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFFE3E8E5)),
-        boxShadow: AppShadows.tile,
+        border: context.appIsDark ? Border.all(color: context.appBorder) : null,
+        boxShadow: context.appHomeTileShadow,
       ),
       child: InnerShadow(
         borderRadius: BorderRadius.circular(13),
-        shadows: AppShadows.innerSurface,
+        shadows: context.appIsDark ? context.appInnerShadow : const [],
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -60,9 +59,11 @@ class RecommendedMealCard extends StatelessWidget {
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.94),
+                            color: context.appElevatedSurface.withValues(
+                              alpha: 0.94,
+                            ),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFD5DAD7)),
+                            border: Border.all(color: context.appBorder),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.08),
@@ -100,8 +101,8 @@ class RecommendedMealCard extends StatelessWidget {
                             meal.name.tr,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.primaryText,
+                            style: TextStyle(
+                              color: context.appText,
                               fontSize: 9,
                               height: 1.12,
                               fontWeight: FontWeight.w500,
@@ -115,8 +116,8 @@ class RecommendedMealCard extends StatelessWidget {
                                 '${meal.calories} kcal',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFFAAA9A9),
+                                style: TextStyle(
+                                  color: context.appMutedText,
                                   fontSize: 8,
                                 ),
                               ),
@@ -129,8 +130,8 @@ class RecommendedMealCard extends StatelessWidget {
                             const SizedBox(width: 1),
                             Text(
                               meal.rating.toStringAsFixed(1),
-                              style: const TextStyle(
-                                color: Color(0xFF737373),
+                              style: TextStyle(
+                                color: context.appMutedText,
                                 fontSize: 8,
                               ),
                             ),

@@ -37,7 +37,7 @@ class CommunityPage extends GetView<CommunityController> {
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.homeBackground,
+        backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             bottom: false,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/profile/profile_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class HealthStatsCard extends GetView<ProfileController> {
   const HealthStatsCard({super.key});
@@ -13,16 +14,10 @@ class HealthStatsCard extends GetView<ProfileController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Obx(
         () => Row(
@@ -32,9 +27,7 @@ class HealthStatsCard extends GetView<ProfileController> {
                 icon: Icons.person_outline_rounded,
                 title: 'Age',
                 value:
-                    controller.age.value > 0
-                        ? '${controller.age.value}'
-                        : '--',
+                    controller.age.value > 0 ? '${controller.age.value}' : '--',
                 unit: 'Years',
               ),
             ),
@@ -106,9 +99,9 @@ class _Stat extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFFF6FBEF),
+            color: context.appSoftGreen,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE3EFD9)),
+            border: Border.all(color: context.appBorder),
           ),
           child: Icon(icon, color: HealthStatsCard.green, size: 17),
         ),
@@ -122,8 +115,8 @@ class _Stat extends StatelessWidget {
                 title.tr,
                 maxLines: 1,
                 textScaler: TextScaler.noScaling,
-                style: const TextStyle(
-                  color: Color(0xFF65766C),
+                style: TextStyle(
+                  color: context.appMutedText,
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
                 ),
@@ -133,8 +126,8 @@ class _Stat extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textScaler: TextScaler.noScaling,
-                style: const TextStyle(
-                  color: Color(0xFF26322B),
+                style: TextStyle(
+                  color: context.appText,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -145,7 +138,7 @@ class _Stat extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textScaler: TextScaler.noScaling,
                 style: TextStyle(
-                  color: unitColor ?? const Color(0xFF65766C),
+                  color: unitColor ?? context.appMutedText,
                   fontSize: 8,
                   fontWeight:
                       unitColor == null ? FontWeight.w400 : FontWeight.w600,
@@ -167,6 +160,6 @@ class _StatDivider extends StatelessWidget {
     width: 1,
     height: 48,
     margin: const EdgeInsets.symmetric(horizontal: 3),
-    color: const Color(0xFFE4EAE6),
+    color: context.appBorder,
   );
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class AiInsightCard extends StatelessWidget {
   const AiInsightCard({super.key});
 
@@ -9,15 +11,10 @@ class AiInsightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
@@ -45,10 +42,10 @@ class AiInsightCard extends StatelessWidget {
                       children: [
                         Text(
                           'AI Insight'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF555555),
+                            color: context.appText,
                           ),
                         ),
 
@@ -90,10 +87,10 @@ class AiInsightCard extends StatelessWidget {
                     Text(
                       'Sugar is a bit high and fiber is still low. Drink 1 more glass of water and choose a light next meal.'
                           .tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         height: 1.5,
-                        color: Colors.black54,
+                        color: context.appMutedText,
                       ),
                     ),
                   ],
@@ -110,18 +107,21 @@ class AiInsightCard extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: [
               _chip(
+                context,
                 emoji: '🍎',
                 text: 'Add fruit',
                 background: const Color(0xFFE8F7EB),
                 foreground: const Color(0xFF24A852),
               ),
               _chip(
+                context,
                 emoji: '💧',
                 text: 'Drink more water',
                 background: const Color(0xFFE7F7FF),
                 foreground: const Color(0xFF42B8EC),
               ),
               _chip(
+                context,
                 emoji: '🥗',
                 text: 'Choose lighter dinner',
                 background: const Color(0xFFFFEEE8),
@@ -134,7 +134,8 @@ class AiInsightCard extends StatelessWidget {
     );
   }
 
-  Widget _chip({
+  Widget _chip(
+    BuildContext context, {
     required String emoji,
     required String text,
     required Color background,
@@ -143,7 +144,13 @@ class AiInsightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
-        color: background,
+        color:
+            context.appIsDark
+                ? Color.alphaBlend(
+                  foreground.withValues(alpha: 0.14),
+                  context.appSurface,
+                )
+                : background,
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: foreground.withValues(alpha: 0.25)),
       ),

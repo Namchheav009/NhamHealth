@@ -28,9 +28,9 @@ class LogoutDialog extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 380),
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appElevatedSurface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFF3E3E5)),
+            border: Border.all(color: context.appBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.14),
@@ -46,9 +46,11 @@ class LogoutDialog extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFEFF1),
+                  color: context.appDangerSurface,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFFDDE1)),
+                  border: Border.all(
+                    color: context.appOnDangerSurface.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: const Icon(
                   Icons.logout_rounded,
@@ -60,8 +62,8 @@ class LogoutDialog extends StatelessWidget {
               Text(
                 'Log out of NhamHealth?'.tr,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF1D2520),
+                style: TextStyle(
+                  color: context.appText,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -72,8 +74,8 @@ class LogoutDialog extends StatelessWidget {
                 "You'll need to sign in again to access your health data and saved meals."
                     .tr,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.mutedText,
+                style: TextStyle(
+                  color: context.appMutedText,
                   fontSize: 13,
                   height: 1.45,
                 ),
@@ -82,16 +84,17 @@ class LogoutDialog extends StatelessWidget {
               Obx(
                 () => FilledButton.icon(
                   onPressed: isLoading.value ? null : onLogout,
-                  icon: isLoading.value
-                      ? const SizedBox(
-                          width: 19,
-                          height: 19,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.logout_rounded, size: 19),
+                  icon:
+                      isLoading.value
+                          ? const SizedBox(
+                            width: 19,
+                            height: 19,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Icon(Icons.logout_rounded, size: 19),
                   label: Text(
                     (isLoading.value ? 'Logging out…' : 'Log out').tr,
                   ),
@@ -116,8 +119,8 @@ class LogoutDialog extends StatelessWidget {
                   onPressed: isLoading.value ? null : Get.back,
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
-                    foregroundColor: const Color(0xFF34423A),
-                    side: const BorderSide(color: AppColors.border),
+                    foregroundColor: context.appText,
+                    side: BorderSide(color: context.appBorder),
                     textStyle: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

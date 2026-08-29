@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_post.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
@@ -26,7 +27,7 @@ class ProfileView extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(0xFFFFFBFC),
+      backgroundColor: context.appBackground,
       body: AppBackground(
         child: SafeArea(
           bottom: false,
@@ -81,10 +82,10 @@ class ProfileView extends GetView<ProfileController> {
                               ),
                               Row(
                                 children: [
-                                  const Text(
+                                  Text(
                                     'My posts',
                                     style: TextStyle(
-                                      color: Color(0xFF26322B),
+                                      color: context.appText,
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -96,7 +97,7 @@ class ProfileView extends GetView<ProfileController> {
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEAF7EE),
+                                      color: context.appSoftGreen,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -189,7 +190,7 @@ class ProfileView extends GetView<ProfileController> {
     final description = TextEditingController(text: post.description);
     await Get.dialog<void>(
       Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Get.context?.appSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -381,9 +382,11 @@ class ProfileView extends GetView<ProfileController> {
             (context, setSheetState) => SafeArea(
               child: Container(
                 padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                decoration: BoxDecoration(
+                  color: context.appSurface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -505,8 +508,9 @@ class _EmptyPosts extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .9),
+      color: context.appElevatedSurface.withValues(alpha: .94),
       borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.appBorder),
     ),
     child: const Column(
       children: [
@@ -530,7 +534,7 @@ class _ProfileErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3F3),
+        color: context.appDangerSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

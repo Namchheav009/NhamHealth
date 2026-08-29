@@ -25,7 +25,7 @@ class MealView extends GetView<MealController> {
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.homeBackground,
+        backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             bottom: false,
@@ -66,8 +66,7 @@ class MealView extends GetView<MealController> {
                                     controller.meals.isEmpty,
                                 loading: const PageSkeleton.meals(),
                                 content: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildSearch(),
                                     const SizedBox(height: 14),
@@ -146,8 +145,8 @@ class MealView extends GetView<MealController> {
               Text(
                 error.tr,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.secondaryText,
+                style: TextStyle(
+                  color: Get.context?.appMutedText,
                   fontSize: 12,
                 ),
               ),
@@ -166,10 +165,7 @@ class MealView extends GetView<MealController> {
             child: Text(
               'No meals found. Try another search or category.'.tr,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: Get.context?.appMutedText, fontSize: 13),
             ),
           ),
         );

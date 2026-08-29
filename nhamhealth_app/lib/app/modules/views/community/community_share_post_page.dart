@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/community/community_post.dart';
 import 'widgets/community_shared_post_card.dart';
@@ -70,9 +71,9 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFFFBFC),
+    backgroundColor: context.appBackground,
     appBar: AppBar(
-      backgroundColor: const Color(0xFFFFFBFC),
+      backgroundColor: context.appSurface,
       surfaceTintColor: Colors.transparent,
       title: const Text(
         'Share post',

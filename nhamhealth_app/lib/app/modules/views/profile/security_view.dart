@@ -9,6 +9,7 @@ import '../../../widgets/pin_keypad_dialog.dart';
 import 'change_password_view.dart';
 import '../../bindings/profile/change_password_binding.dart';
 import '../../../widgets/app_background.dart';
+import '../../../theme/app_colors.dart';
 
 class SecurityView extends StatefulWidget {
   const SecurityView({
@@ -194,7 +195,7 @@ class _SecurityViewState extends State<SecurityView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFFFFBFC),
+    backgroundColor: context.appBackground,
     body: AppBackground(
       child: SafeArea(
         child: Column(

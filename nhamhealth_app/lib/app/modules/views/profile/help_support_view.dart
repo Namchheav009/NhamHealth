@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_back_header.dart';
+import '../../../theme/app_colors.dart';
 
 import '../../controllers/profile/help_support_controller.dart';
 import '../../../theme/app_spacing.dart';
@@ -16,7 +17,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFDFBFB),
+        backgroundColor: context.appBackground,
         body: Stack(
           children: [
             const _HelpSupportBackground(),
@@ -37,12 +38,13 @@ class HelpSupportView extends GetView<HelpSupportController> {
                         const SizedBox(height: 25),
 
                         Text(
-                          'Need help? Contact us or find quick answers below.'.tr,
-                          style: const TextStyle(
+                          'Need help? Contact us or find quick answers below.'
+                              .tr,
+                          style: TextStyle(
                             fontSize: 13,
                             height: 1.4,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF8BA797),
+                            color: context.appMutedText,
                           ),
                         ),
 
@@ -52,17 +54,17 @@ class HelpSupportView extends GetView<HelpSupportController> {
                           padding: const EdgeInsets.only(left: 15),
                           child: Text(
                             'Contact Support'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF151515),
+                              color: context.appText,
                             ),
                           ),
                         ),
 
                         const SizedBox(height: 12),
 
-                        _buildContactCard(),
+                        _buildContactCard(context),
 
                         const SizedBox(height: 26),
 
@@ -70,10 +72,10 @@ class HelpSupportView extends GetView<HelpSupportController> {
                           padding: const EdgeInsets.only(left: 15),
                           child: Text(
                             'Frequently Asked Questions'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF151515),
+                              color: context.appText,
                             ),
                           ),
                         ),
@@ -98,30 +100,21 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // ============================================================
 
   Widget _buildHeader() {
-    return AppBackHeader(
-      title: 'Help & Support',
-      onBack: controller.goBack,
-    );
+    return AppBackHeader(title: 'Help & Support', onBack: controller.goBack);
   }
 
   // ============================================================
   // CONTACT SUPPORT
   // ============================================================
 
-  Widget _buildContactCard() {
+  Widget _buildContactCard(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.80),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE3EBE6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
@@ -132,9 +125,9 @@ class HelpSupportView extends GetView<HelpSupportController> {
             onTap: controller.emailSupport,
           ),
 
-          const Padding(
-            padding: EdgeInsets.only(left: 64),
-            child: Divider(height: 1, thickness: 0.7, color: Color(0xFFDADADA)),
+          Padding(
+            padding: const EdgeInsets.only(left: 64),
+            child: Divider(height: 1, thickness: 0.7, color: context.appBorder),
           ),
 
           _ContactItem(
@@ -209,9 +202,9 @@ class _ContactItem extends StatelessWidget {
                 Container(
                   width: 39,
                   height: 39,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFE5F6EA),
+                    color: context.appSoftGreen,
                   ),
                   child: Icon(icon, size: 21, color: HelpSupportView.green),
                 ),
@@ -225,11 +218,11 @@ class _ContactItem extends StatelessWidget {
                     children: [
                       Text(
                         title.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           height: 1,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF161616),
+                          color: context.appText,
                         ),
                       ),
 
@@ -237,10 +230,10 @@ class _ContactItem extends StatelessWidget {
 
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           height: 1,
-                          color: Color(0xFF9398A0),
+                          color: context.appMutedText,
                         ),
                       ),
                     ],
@@ -278,19 +271,15 @@ class _FaqItem extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color:
-              expanded ? const Color(0xFFBFE4CB) : const Color(0xFFE5ECE7),
+              expanded
+                  ? context.appColorScheme.primary.withValues(alpha: 0.45)
+                  : context.appBorder,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: context.appTileShadow,
       ),
       child: Column(
         children: [
@@ -306,9 +295,9 @@ class _FaqItem extends StatelessWidget {
                     Container(
                       width: 27,
                       height: 27,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFFE5F6EA),
+                        color: context.appSoftGreen,
                       ),
                       child: const Icon(
                         Icons.help_outline_rounded,
@@ -324,11 +313,11 @@ class _FaqItem extends StatelessWidget {
                         question.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           height: 1,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF171717),
+                          color: context.appText,
                         ),
                       ),
                     ),

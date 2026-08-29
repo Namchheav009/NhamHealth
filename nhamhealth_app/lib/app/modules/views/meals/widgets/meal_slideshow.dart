@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../../controllers/meals/meal_controller.dart';
 
 class MealSlideShow extends GetView<MealController> {
@@ -17,16 +18,10 @@ class MealSlideShow extends GetView<MealController> {
           height: 205,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.88),
+            color: context.appElevatedSurface.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(17),
-            border: Border.all(color: Colors.white, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.055),
-                blurRadius: 14,
-                offset: const Offset(0, 5),
-              ),
-            ],
+            border: Border.all(color: context.appBorder, width: 1),
+            boxShadow: context.appCardShadow,
           ),
           child: PageView.builder(
             controller: controller.slideController,
@@ -47,11 +42,11 @@ class MealSlideShow extends GetView<MealController> {
                         children: [
                           Text(
                             slide.title.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               height: 1.1,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                              color: context.appText,
                             ),
                           ),
 
@@ -59,7 +54,7 @@ class MealSlideShow extends GetView<MealController> {
 
                           Text(
                             slide.highlight.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               height: 1,
                               fontWeight: FontWeight.w500,
@@ -71,11 +66,11 @@ class MealSlideShow extends GetView<MealController> {
 
                           Text(
                             slide.description.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               height: 1.3,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFFAEB3BA),
+                              color: context.appMutedText,
                             ),
                           ),
                         ],
@@ -107,7 +102,10 @@ class MealSlideShow extends GetView<MealController> {
                 width: selected ? 20 : 7,
                 height: 7,
                 decoration: BoxDecoration(
-                  color: selected ? green : const Color(0xFFD2D2D2),
+                  color:
+                      selected
+                          ? context.appColorScheme.primary
+                          : context.appColorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(20),
                 ),
               );

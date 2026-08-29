@@ -4,7 +4,6 @@ import 'package:lottie/lottie.dart';
 
 import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/views/assistant/assistant_view.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
 /// Shared four-destination navigation used by the main app pages.
@@ -23,6 +22,8 @@ class AppBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: SizedBox(
@@ -38,23 +39,30 @@ class AppBottomNavigation extends StatelessWidget {
               child: PhysicalShape(
                 clipper: const _NavigationBarClipper(),
                 clipBehavior: Clip.antiAlias,
-                color: Colors.white,
-                shadowColor: const Color(0x1A31543F),
+                color: colors.surface,
+                shadowColor: Colors.black.withValues(alpha: 0.2),
                 elevation: 4,
                 child: DecoratedBox(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        AppColors.homeBackground,
-                        AppColors.cardSurface,
-                        AppColors.softGreen,
+                        colors.surface,
+                        colors.surfaceContainer,
+                        Color.alphaBlend(
+                          colors.primary.withValues(
+                            alpha: isDark ? 0.12 : 0.06,
+                          ),
+                          colors.surface,
+                        ),
                       ],
                     ),
                   ),
                   child: CustomPaint(
-                    foregroundPainter: const _NavigationInnerShadowPainter(),
+                    foregroundPainter: _NavigationInnerShadowPainter(
+                      isDark: isDark,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Row(
@@ -144,7 +152,9 @@ class _NavigationBarClipper extends CustomClipper<Path> {
 }
 
 class _NavigationInnerShadowPainter extends CustomPainter {
-  const _NavigationInnerShadowPainter();
+  const _NavigationInnerShadowPainter({required this.isDark});
+
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -156,21 +166,24 @@ class _NavigationInnerShadowPainter extends CustomPainter {
     _paintInsetShadow(
       canvas,
       path,
-      color: const Color(0x14005C32),
+      color: isDark ? const Color(0x66000000) : const Color(0x14005C32),
       blurRadius: 9,
       offset: const Offset(-1, -1),
     );
     _paintInsetShadow(
       canvas,
       path,
-      color: const Color(0x99FFFFFF),
+      color: isDark ? const Color(0x1839D879) : const Color(0x99FFFFFF),
       blurRadius: 6,
       offset: const Offset(1, 2),
     );
     canvas.drawPath(
       path,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.9)
+        ..color =
+            isDark
+                ? const Color(0xFF35483B)
+                : Colors.white.withValues(alpha: 0.9)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2,
     );
@@ -196,7 +209,7 @@ class _NavigationInnerShadowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NavigationInnerShadowPainter oldDelegate) =>
-      false;
+      oldDelegate.isDark != isDark;
 }
 
 class _NavItem extends StatelessWidget {
@@ -218,6 +231,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Semantics(
       button: true,
       selected: selected,
@@ -238,7 +252,10 @@ class _NavItem extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.softGreen : Colors.transparent,
+                  color:
+                      selected
+                          ? colors.primaryContainer.withValues(alpha: 0.42)
+                          : Colors.transparent,
                   borderRadius: BorderRadius.circular(31),
                 ),
                 child: Column(
@@ -252,8 +269,8 @@ class _NavItem extends StatelessWidget {
                           selected ? selectedIcon ?? icon : icon,
                           color:
                               selected
-                                  ? AppColors.navigationGreen
-                                  : AppColors.inactiveText,
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
                           size: 27,
                         ),
                       ),
@@ -266,7 +283,8 @@ class _NavItem extends StatelessWidget {
                       textAlign: TextAlign.center,
                       textScaler: TextScaler.noScaling,
                       style: TextStyle(
-                        color: AppColors.inactiveText,
+                        color:
+                            selected ? colors.primary : colors.onSurfaceVariant,
                         fontSize: 11,
                         height: 1,
                         fontWeight:
@@ -289,89 +307,92 @@ class _ChatbotButton extends StatelessWidget {
   const _ChatbotButton();
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: 'Open AI Assistant'.tr,
-    child: Tooltip(
-      message: 'Chat with AI Assistant'.tr,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: const ValueKey<String>('nav-chatbot'),
-          onTap:
-              () => Get.to<void>(
-                () => const AssistantView(),
-                binding: AssistantBinding(),
-                transition: Transition.rightToLeft,
-              ),
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 72,
-            height: 72,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Transform.scale(
-                      scale: 1.25,
-                      child: RepaintBoundary(
-                        child: Lottie.asset(
-                          'assets/animations/chatbot.json',
-                          fit: BoxFit.contain,
-                          repeat: true,
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: 'Open AI Assistant'.tr,
+      child: Tooltip(
+        message: 'Chat with AI Assistant'.tr,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey<String>('nav-chatbot'),
+            onTap:
+                () => Get.to<void>(
+                  () => const AssistantView(),
+                  binding: AssistantBinding(),
+                  transition: Transition.rightToLeft,
+                ),
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Transform.scale(
+                        scale: 1.25,
+                        child: RepaintBoundary(
+                          child: Lottie.asset(
+                            'assets/animations/chatbot.json',
+                            fit: BoxFit.contain,
+                            repeat: true,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 7,
-                  right: 8,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF39D879),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x4439D879), blurRadius: 5),
-                      ],
+                  Positioned(
+                    top: 7,
+                    right: 8,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF39D879),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.surface, width: 2),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x4439D879), blurRadius: 5),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: Container(
-                    width: 25,
-                    height: 25,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x33075E2D),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.chat_bubble_rounded,
-                      color: Colors.white,
-                      size: 13,
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      width: 25,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.surface, width: 2),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33075E2D),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.chat_bubble_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

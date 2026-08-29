@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/wellness/wellness_controller.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
@@ -16,11 +17,15 @@ class WellnessView extends GetView<WellnessController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [Color(0xFFFFF4F6), Color(0xFFFFFFFF), Color(0xFFF6FFF1)],
+            colors: [
+              context.appSoftPink,
+              context.appBackground,
+              context.appSoftGreen,
+            ],
           ),
         ),
         child: SafeArea(
@@ -44,18 +49,18 @@ class WellnessView extends GetView<WellnessController> {
                               isLoading: controller.isLoading.value,
                               loading: const PageSkeleton.wellness(),
                               content: const Column(
-                                      children: [
-                                        WellnessDailySummaryCard(),
+                                children: [
+                                  WellnessDailySummaryCard(),
 
-                                        SizedBox(height: 14),
+                                  SizedBox(height: 14),
 
-                                        AiMealCard(),
+                                  AiMealCard(),
 
-                                        SizedBox(height: 14),
+                                  SizedBox(height: 14),
 
-                                        AiInsightCard(),
-                                      ],
-                                    ),
+                                  AiInsightCard(),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -93,10 +98,10 @@ class WellnessView extends GetView<WellnessController> {
             child: Center(
               child: Text(
                 'Daily Wellness'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  color: context.appText,
                 ),
               ),
             ),
@@ -117,7 +122,7 @@ class WellnessView extends GetView<WellnessController> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF9E8),
+                    color: context.appSoftGreen,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Row(
@@ -133,10 +138,10 @@ class WellnessView extends GetView<WellnessController> {
 
                       Text(
                         controller.selectedDateText.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF444444),
+                          color: context.appText,
                         ),
                       ),
 

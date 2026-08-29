@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_back_header.dart';
+import '../../../theme/app_colors.dart';
 
 import '../../controllers/profile/terms_privacy_controller.dart';
 import '../../../theme/app_spacing.dart';
@@ -16,7 +17,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFDFBFB),
+        backgroundColor: context.appBackground,
         body: Stack(
           children: [
             const _TermsBackground(),
@@ -38,11 +39,11 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
                         Text(
                           'Read the main policies that protect'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             height: 1.3,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF7C8589),
+                            color: context.appMutedText,
                           ),
                         ),
 
@@ -50,11 +51,11 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
 
                         Text(
                           'your account and data.'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             height: 1.3,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF7C8589),
+                            color: context.appMutedText,
                           ),
                         ),
 
@@ -64,11 +65,11 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                           padding: const EdgeInsets.only(left: 2),
                           child: Text(
                             'Main Policies'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               height: 1,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF151515),
+                              color: context.appText,
                             ),
                           ),
                         ),
@@ -161,10 +162,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
   }
 
   Widget _buildHeader() {
-    return AppBackHeader(
-      title: 'Terms & Privacy',
-      onBack: controller.goBack,
-    );
+    return AppBackHeader(title: 'Terms & Privacy', onBack: controller.goBack);
   }
 }
 
@@ -190,11 +188,13 @@ class _PolicyCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color:
-              expanded ? const Color(0xFFBFE4CB) : const Color(0xFFE3EBE6),
+              expanded
+                  ? context.appColorScheme.primary.withValues(alpha: 0.45)
+                  : context.appBorder,
         ),
         boxShadow: [
           BoxShadow(
@@ -216,9 +216,9 @@ class _PolicyCard extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFE5F6EA),
+                      color: context.appSoftGreen,
                     ),
                     child: Icon(icon, color: TermsPrivacyView.green, size: 22),
                   ),
@@ -321,12 +321,15 @@ class _TermsBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned.fill(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background/bg.png'),
-            fit: BoxFit.cover,
+    return Positioned.fill(
+      child: Opacity(
+        opacity: context.appIsDark ? 0.12 : 1,
+        child: const DecoratedBox(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background/bg.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),

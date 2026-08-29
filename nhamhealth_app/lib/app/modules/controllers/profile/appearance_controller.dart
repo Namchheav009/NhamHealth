@@ -1,17 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/app_theme_service.dart';
+
 class AppearanceController extends GetxController {
-  final selectedTheme = 'light'.obs;
+  AppearanceController({AppThemeService? themeService})
+    : _themeService = themeService ?? Get.find<AppThemeService>();
+
+  final AppThemeService _themeService;
+  late final selectedTheme = _themeService.themeMode.name.obs;
 
   void selectLightMode() {
-    selectedTheme.value = 'light';
-    Get.changeThemeMode(ThemeMode.light);
+    _selectTheme(ThemeMode.light);
   }
 
   void selectDarkMode() {
-    selectedTheme.value = 'dark';
-    Get.changeThemeMode(ThemeMode.dark);
+    _selectTheme(ThemeMode.dark);
+  }
+
+  void _selectTheme(ThemeMode themeMode) {
+    selectedTheme.value = themeMode.name;
+    Get.changeThemeMode(themeMode);
+    unawaited(_themeService.saveThemeMode(themeMode));
   }
 
   void goBack() {

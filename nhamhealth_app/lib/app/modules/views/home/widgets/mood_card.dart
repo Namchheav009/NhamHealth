@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 
 class MoodCard extends StatelessWidget {
@@ -22,6 +21,7 @@ class MoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     final content = Stack(
       fit: StackFit.expand,
       alignment: Alignment.center,
@@ -78,8 +78,8 @@ class MoodCard extends StatelessWidget {
                       fontSize: 10.5,
                       color:
                           selected
-                              ? AppColors.primaryGreen
-                              : AppColors.primaryPink,
+                              ? context.appColorScheme.primary
+                              : context.appColorScheme.secondary,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
@@ -97,28 +97,48 @@ class MoodCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient:
             selected
-                ? const LinearGradient(
+                ? LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFE9FAEF), Color(0xFFFFF1F5)],
+                  colors: [context.appSoftGreen, context.appSoftPink],
                 )
                 : null,
-        color: selected ? null : AppColors.cardSurface,
+        color: selected ? null : context.appElevatedSurface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: selected ? AppColors.primaryGreen : AppColors.border,
-          width: selected ? 1.6 : 1,
-        ),
+        border:
+            isDark
+                ? Border.all(
+                  color:
+                      selected
+                          ? context.appColorScheme.primary
+                          : context.appBorder,
+                  width: selected ? 1.6 : 1,
+                )
+                : null,
         boxShadow:
-            selected
-                ? const [
+            !isDark
+                ? selected
+                    ? [
+                      BoxShadow(
+                        color: context.appColorScheme.primary.withValues(
+                          alpha: 0.13,
+                        ),
+                        blurRadius: 11,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                    : context.appHomeTileShadow
+                : selected
+                ? [
                   BoxShadow(
-                    color: Color(0x1F00A651),
+                    color: context.appColorScheme.primary.withValues(
+                      alpha: 0.18,
+                    ),
                     blurRadius: 8,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ]
-                : AppShadows.tile,
+                : context.appTileShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -130,7 +150,7 @@ class MoodCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: InnerShadow(
             borderRadius: BorderRadius.circular(12),
-            shadows: AppShadows.innerSurface,
+            shadows: isDark ? context.appInnerShadow : const [],
             child: content,
           ),
         ),

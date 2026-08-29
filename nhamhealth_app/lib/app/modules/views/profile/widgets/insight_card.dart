@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/profile/profile_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class InsightCard extends GetView<ProfileController> {
   const InsightCard({super.key});
@@ -13,20 +14,20 @@ class InsightCard extends GetView<ProfileController> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE8F8EE), Color(0xFFF5FFF7)],
+        gradient: LinearGradient(
+          colors: [context.appSoftGreen, context.appElevatedSurface],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFD3EDDB)),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         children: [
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFBDEACD),
-              borderRadius: BorderRadius.all(Radius.circular(15)),
+            decoration: BoxDecoration(
+              color: context.appColorScheme.primaryContainer,
+              borderRadius: const BorderRadius.all(Radius.circular(15)),
             ),
             child: const Icon(
               Icons.emoji_events_outlined,
@@ -43,18 +44,19 @@ class InsightCard extends GetView<ProfileController> {
               children: [
                 Text(
                   "You're doing amazing!".tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    color: context.appText,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Obx(
                   () => Text(
                     controller.insight.value.tr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF65766C),
+                      color: context.appMutedText,
                       height: 1.35,
                     ),
                   ),
@@ -62,7 +64,6 @@ class InsightCard extends GetView<ProfileController> {
               ],
             ),
           ),
-
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../bindings/meals/how_to_make_binding.dart';
 import '../../bindings/meals/ingredient_binding.dart';
 import '../../controllers/meals/food_detail_controller.dart';
@@ -22,7 +23,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
     return MediaQuery(
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
+        backgroundColor: context.appBackground,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,

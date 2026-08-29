@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../controllers/meals/how_to_make_controller.dart';
 
 class HowToMakeView extends GetView<HowToMakeController> {
@@ -17,7 +18,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
     return MediaQuery(
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
+        backgroundColor: context.appBackground,
         body: LayoutBuilder(
           builder: (context, constraints) {
             // Screenshot-based logical design width.
@@ -405,10 +406,16 @@ class _HowToMakeBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: Image.asset(
-        'assets/images/food_detail/background.png',
-        fit: BoxFit.cover,
+    return ColoredBox(
+      color: context.appBackground,
+      child: SizedBox.expand(
+        child: Opacity(
+          opacity: context.appIsDark ? 0.12 : 1,
+          child: Image.asset(
+            'assets/images/food_detail/background.png',
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }

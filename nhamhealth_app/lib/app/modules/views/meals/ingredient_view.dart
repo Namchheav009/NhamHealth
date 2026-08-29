@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../controllers/meals/ingredient_controller.dart';
 
 class IngredientView extends GetView<IngredientController> {
@@ -17,7 +18,7 @@ class IngredientView extends GetView<IngredientController> {
     return MediaQuery(
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
+        backgroundColor: context.appBackground,
         body: Stack(
           children: [
             const _IngredientBackground(),
@@ -296,10 +297,16 @@ class _IngredientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: Image.asset(
-        'assets/images/food_detail/background.png',
-        fit: BoxFit.cover,
+    return ColoredBox(
+      color: context.appBackground,
+      child: SizedBox.expand(
+        child: Opacity(
+          opacity: context.appIsDark ? 0.12 : 1,
+          child: Image.asset(
+            'assets/images/food_detail/background.png',
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }

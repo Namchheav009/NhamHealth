@@ -11,6 +11,7 @@ class HomeSearchBar extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return AppSearchBar(
       hintText: 'Search for meals, tips or healthy groceries',
+      useSoftHomeStyle: true,
       onSubmitted: (query) => controller.openMeals(query: query),
     );
   }

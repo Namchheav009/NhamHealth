@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/food_source_detail_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
   const FoodDetailSummaryCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Obx(
       () => Container(
         padding: const EdgeInsets.all(16),
-        decoration: _cardDecoration(),
+        decoration: _cardDecoration(context),
         child: Column(
           children: [
             Row(
@@ -36,16 +38,17 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     children: [
                       Text(
                         controller.source.mealType.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: Colors.black38,
+                          color: isDark ? context.appMutedText : Colors.black38,
                         ),
                       ),
                       Text(
                         controller.source.foodName.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          color: isDark ? context.appText : null,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -60,10 +63,13 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                                 fontSize: 14,
                               ),
                             ),
-                            const TextSpan(
+                            TextSpan(
                               text: ' kcal',
                               style: TextStyle(
-                                color: Colors.black38,
+                                color:
+                                    isDark
+                                        ? context.appMutedText
+                                        : Colors.black38,
                                 fontSize: 10,
                               ),
                             ),
@@ -73,17 +79,17 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                       const SizedBox(height: 3),
                       Text(
                         '☕ Medium cup   ⏰ Added 10:30 AM'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Colors.black38,
+                          color: isDark ? context.appMutedText : Colors.black38,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         'Sweet drink, enjoy in balance.'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Colors.black38,
+                          color: isDark ? context.appMutedText : Colors.black38,
                         ),
                       ),
                     ],
@@ -103,9 +109,9 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     Text(
                       "of today's\ncalories".tr,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: Colors.black38,
+                        color: isDark ? context.appMutedText : Colors.black38,
                       ),
                     ),
                   ],
@@ -118,7 +124,10 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
               child: LinearProgressIndicator(
                 value: controller.progress,
                 minHeight: 7,
-                backgroundColor: const Color(0xFFE3E3E3),
+                backgroundColor:
+                    isDark
+                        ? context.appColorScheme.surfaceContainerHighest
+                        : const Color(0xFFE3E3E3),
                 valueColor: const AlwaysStoppedAnimation(Color(0xFFFF641E)),
               ),
             ),
@@ -128,17 +137,22 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
     );
   }
 
-  BoxDecoration _cardDecoration() {
+  BoxDecoration _cardDecoration(BuildContext context) {
+    final isDark = context.appIsDark;
     return BoxDecoration(
-      color: Colors.white,
+      color: isDark ? context.appSurfaceLow : Colors.white,
       borderRadius: BorderRadius.circular(18),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 16,
-          offset: const Offset(0, 5),
-        ),
-      ],
+      border: isDark ? Border.all(color: context.appBorder) : null,
+      boxShadow:
+          isDark
+              ? context.appCardShadow
+              : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 5),
+                ),
+              ],
     );
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_shadows.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'nutrition_progress_card.dart';
@@ -33,19 +32,22 @@ class DailySummaryCard extends GetView<HomeController> {
         constraints: const BoxConstraints(minHeight: 160),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              AppColors.softPink,
-              AppColors.cardSurface,
-              AppColors.softGreen,
+              context.appSoftPink,
+              context.appElevatedSurface,
+              context.appSoftGreen,
             ],
           ),
-          boxShadow: AppShadows.surface,
+          border:
+              context.appIsDark ? Border.all(color: context.appBorder) : null,
+          boxShadow: context.appHomeCardShadow,
         ),
         child: InnerShadow(
           borderRadius: BorderRadius.circular(15),
+          shadows: context.appIsDark ? context.appInnerShadow : const [],
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 15, 16, 17),
             child: Column(
@@ -64,7 +66,7 @@ class DailySummaryCard extends GetView<HomeController> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: AppColors.primaryText,
+                          color: context.appText,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -135,7 +137,9 @@ class DailySummaryCard extends GetView<HomeController> {
                                 color:
                                     selected
                                         ? AppColors.primaryGreen
-                                        : Colors.white.withValues(alpha: 0.72),
+                                        : context.appMutedSurface.withValues(
+                                          alpha: 0.82,
+                                        ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -148,7 +152,7 @@ class DailySummaryCard extends GetView<HomeController> {
                                       color:
                                           selected
                                               ? Colors.white70
-                                              : AppColors.primaryText,
+                                              : context.appText,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -160,7 +164,7 @@ class DailySummaryCard extends GetView<HomeController> {
                                       color:
                                           selected
                                               ? Colors.white
-                                              : AppColors.primaryText,
+                                              : context.appText,
                                     ),
                                   ),
                                 ],

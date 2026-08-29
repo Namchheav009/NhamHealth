@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class EditInfoRow extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -30,10 +32,7 @@ class EditInfoRow extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Row(
                 children: [
                   Container(
@@ -43,11 +42,7 @@ class EditInfoRow extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: iconBackground,
                     ),
-                    child: Icon(
-                      icon,
-                      size: 19,
-                      color: iconColor,
-                    ),
+                    child: Icon(icon, size: 19, color: iconColor),
                   ),
 
                   const SizedBox(width: 10),
@@ -56,9 +51,9 @@ class EditInfoRow extends StatelessWidget {
                     width: 90,
                     child: Text(
                       label.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF858585),
+                        color: context.appMutedText,
                       ),
                     ),
                   ),
@@ -67,9 +62,9 @@ class EditInfoRow extends StatelessWidget {
                     child: Text(
                       value.tr,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Colors.black,
+                        color: context.appText,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -77,24 +72,22 @@ class EditInfoRow extends StatelessWidget {
 
                   const SizedBox(width: 5),
 
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     size: 23,
-                    color: Color(0xFF999999),
+                    color: context.appMutedText,
                   ),
                 ],
               ),
             ),
 
             if (showDivider)
-              const Padding(
-                padding: EdgeInsets.only(
-                  left: 57,
-                ),
+              Padding(
+                padding: const EdgeInsets.only(left: 57),
                 child: Divider(
                   height: 1,
                   thickness: 0.7,
-                  color: Color(0xFFE3E3E3),
+                  color: context.appBorder,
                 ),
               ),
           ],
