@@ -21,10 +21,13 @@ class NutritionProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.76),
+      color: context.appElevatedSurface.withValues(alpha: 0.9),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Colors.white),
+        side:
+            context.appIsDark
+                ? BorderSide(color: context.appBorder)
+                : BorderSide.none,
       ),
       child: InkWell(
         onTap: onTap,
@@ -43,10 +46,10 @@ class NutritionProgressCard extends StatelessWidget {
                       data.title.tr,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.secondaryText,
+                        color: context.appMutedText,
                       ),
                     ),
                   ),
@@ -56,8 +59,8 @@ class NutritionProgressCard extends StatelessWidget {
               Text(
                 '${data.value} / ${data.target}',
                 maxLines: 1,
-                style: const TextStyle(
-                  color: AppColors.primaryText,
+                style: TextStyle(
+                  color: context.appText,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -67,10 +70,7 @@ class NutritionProgressCard extends StatelessWidget {
                 data.unit.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.inactiveText,
-                ),
+                style: TextStyle(fontSize: 10, color: context.appMutedText),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -78,7 +78,7 @@ class NutritionProgressCard extends StatelessWidget {
                 child: Container(
                   height: 6,
                   decoration: BoxDecoration(
-                    color: AppColors.progressTrack,
+                    color: context.appColorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ClipRRect(
@@ -89,7 +89,7 @@ class NutritionProgressCard extends StatelessWidget {
                         widthFactor: data.progress.clamp(0.0, 1.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppColors.primaryGreen,
+                            color: context.appColorScheme.primary,
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),

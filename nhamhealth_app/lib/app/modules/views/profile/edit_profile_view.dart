@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_back_header.dart';
+import '../../../theme/app_colors.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../theme/app_spacing.dart';
@@ -19,7 +20,7 @@ class EditProfileView extends GetView<EditProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.appBackground,
       body: AppBackground(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -35,7 +36,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
                     const SizedBox(height: 12),
 
-                    _buildProfileHeader(),
+                    _buildProfileHeader(context),
 
                     const SizedBox(height: 12),
 
@@ -43,7 +44,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
                     const SizedBox(height: 14),
 
-                    _buildHealthInformation(),
+                    _buildHealthInformation(context),
                   ],
                 ),
               ),
@@ -63,12 +64,11 @@ class EditProfileView extends GetView<EditProfileController> {
       title: 'Edit Profile',
       onBack: controller.goBack,
       trailing: Obx(
-          () => TextButton(
-            onPressed: controller.isSaving.value
-                ? null
-                : controller.saveProfile,
-            child: controller.isSaving.value
-                ? const SizedBox(
+        () => TextButton(
+          onPressed: controller.isSaving.value ? null : controller.saveProfile,
+          child:
+              controller.isSaving.value
+                  ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
@@ -76,7 +76,7 @@ class EditProfileView extends GetView<EditProfileController> {
                       color: green,
                     ),
                   )
-                : Text(
+                  : Text(
                     'Save'.tr,
                     style: const TextStyle(
                       color: green,
@@ -84,8 +84,8 @@ class EditProfileView extends GetView<EditProfileController> {
                       fontSize: 16,
                     ),
                   ),
-          ),
         ),
+      ),
     );
   }
 
@@ -93,20 +93,15 @@ class EditProfileView extends GetView<EditProfileController> {
   // PROFILE HEADER
   // -----------------------------------------
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Row(
         children: [
@@ -115,28 +110,26 @@ class EditProfileView extends GetView<EditProfileController> {
             children: [
               Container(
                 padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: context.appSurface,
                   shape: BoxShape.circle,
                 ),
-                child: Obx(
-                  () {
-                    final image = _editAvatarImage();
-                    return CircleAvatar(
-                      radius: 39,
-                      backgroundColor: const Color(0xFFEAF7EE),
-                      backgroundImage: image,
-                      child:
-                          image == null
-                              ? const Icon(
-                                Icons.person_outline_rounded,
-                                size: 40,
-                                color: green,
-                              )
-                              : null,
-                    );
-                  },
-                ),
+                child: Obx(() {
+                  final image = _editAvatarImage();
+                  return CircleAvatar(
+                    radius: 39,
+                    backgroundColor: context.appSoftGreen,
+                    backgroundImage: image,
+                    child:
+                        image == null
+                            ? const Icon(
+                              Icons.person_outline_rounded,
+                              size: 40,
+                              color: green,
+                            )
+                            : null,
+                  );
+                }),
               ),
 
               Positioned(
@@ -148,7 +141,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.appSurface,
                       shape: BoxShape.circle,
                       border: Border.all(color: green),
                     ),
@@ -219,17 +212,14 @@ class EditProfileView extends GetView<EditProfileController> {
     final localPath = controller.profileImagePath.value.trim();
     if (localPath.isNotEmpty) return FileImage(File(localPath));
 
-    final remotePath = controller
-        .profileController
-        .authenticatedUser
-        .value
-        ?.profileImageUrl
-        ?.trim();
+    final remotePath =
+        controller.profileController.authenticatedUser.value?.profileImageUrl
+            ?.trim();
     if (remotePath != null && remotePath.isNotEmpty) {
-      final url = remotePath.startsWith('http://') ||
-              remotePath.startsWith('https://')
-          ? remotePath
-          : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+      final url =
+          remotePath.startsWith('http://') || remotePath.startsWith('https://')
+              ? remotePath
+              : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
       return NetworkImage(url);
     }
     return null;
@@ -241,6 +231,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
   Widget _buildPersonalInformation(BuildContext context) {
     return _sectionCard(
+      context,
       title: 'Personal Information',
       child: Obx(
         () => Column(
@@ -305,20 +296,15 @@ class EditProfileView extends GetView<EditProfileController> {
   // BODY AND HEALTH
   // -----------------------------------------
 
-  Widget _buildHealthInformation() {
+  Widget _buildHealthInformation(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 13),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,9 +325,9 @@ class EditProfileView extends GetView<EditProfileController> {
 
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.60),
+              color: context.appMutedSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE7E7E7)),
+              border: Border.all(color: context.appBorder),
             ),
             child: Obx(
               () => Column(
@@ -391,7 +377,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
           const SizedBox(height: 8),
 
-          _buildBmiCard(),
+          _buildBmiCard(context),
         ],
       ),
     );
@@ -401,16 +387,16 @@ class EditProfileView extends GetView<EditProfileController> {
   // BMI
   // -----------------------------------------
 
-  Widget _buildBmiCard() {
+  Widget _buildBmiCard(BuildContext context) {
     return Obx(
       () => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF2FFF4), Color(0xFFE8FFE2)],
+          gradient: LinearGradient(
+            colors: [context.appSoftGreen, context.appElevatedSurface],
           ),
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: const Color(0xFFA8DDB0)),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           children: [
@@ -481,20 +467,19 @@ class EditProfileView extends GetView<EditProfileController> {
   // SECTION CARD
   // -----------------------------------------
 
-  Widget _sectionCard({required String title, required Widget child}) {
+  Widget _sectionCard(
+    BuildContext context, {
+    required String title,
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,9 +494,9 @@ class EditProfileView extends GetView<EditProfileController> {
 
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.60),
+              color: context.appMutedSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE7E7E7)),
+              border: Border.all(color: context.appBorder),
             ),
             child: child,
           ),

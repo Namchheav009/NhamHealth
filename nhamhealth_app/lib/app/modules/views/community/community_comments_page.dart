@@ -620,7 +620,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.homeBackground,
+    backgroundColor: context.appBackground,
     body: AppBackground(
       child: SafeArea(
         bottom: false,

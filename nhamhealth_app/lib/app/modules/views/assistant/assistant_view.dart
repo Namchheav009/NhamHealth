@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../controllers/assistant/assistant_controller.dart';
 import '../../models/assistant/assistant_message.dart';
 
@@ -50,122 +51,31 @@ class AssistantView extends GetView<AssistantController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.homeBackground,
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         toolbarHeight: 70,
         elevation: 0,
         scrolledUnderElevation: 1,
         shadowColor: const Color(0x19000000),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        leadingWidth: 54,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10),
-          child: IconButton(
-            tooltip: 'Back',
-            onPressed: Get.back,
-            style: IconButton.styleFrom(backgroundColor: AppColors.softGreen),
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: AppColors.darkGreen,
+        backgroundColor: context.appSurface,
+        surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        titleSpacing: 10,
+        title: AppBackHeader(
+          title: 'NhamHealth AI',
+          onBack: Get.back,
+          backButtonKey: const ValueKey<String>('assistant-back-button'),
+          titleWidget: const _AssistantHeaderIdentity(),
+          trailing: IconButton(
+            tooltip: 'Open Daily Wellness',
+            onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
+            style: IconButton.styleFrom(
+              backgroundColor: context.appSoftGreen,
+              foregroundColor: context.appColorScheme.primary,
             ),
+            icon: const Icon(Icons.monitor_heart_rounded, size: 21),
           ),
         ),
-        titleSpacing: 6,
-        title: Row(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: AppColors.softGreen,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFCBECD8)),
-                  ),
-                  child: ClipOval(
-                    child: Lottie.asset(
-                      'assets/animations/chatbot.json',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 1,
-                  child: Container(
-                    width: 11,
-                    height: 11,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF35D07F),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'NhamHealth AI',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppColors.primaryText,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.verified_rounded,
-                        size: 12,
-                        color: AppColors.primaryGreen,
-                      ),
-                      SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          'Connected to your wellness data',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.primaryGreen,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: IconButton(
-              tooltip: 'Open Daily Wellness',
-              onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.softGreen,
-                foregroundColor: AppColors.primaryGreen,
-              ),
-              icon: const Icon(Icons.monitor_heart_rounded, size: 21),
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         top: false,
@@ -200,9 +110,9 @@ class AssistantView extends GetView<AssistantController> {
             Container(
               key: const ValueKey<String>('assistant-suggested-questions'),
               width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: context.appSurface,
+                border: Border(top: BorderSide(color: context.appBorder)),
               ),
               padding: const EdgeInsets.fromLTRB(16, 9, 0, 10),
               child: Column(
@@ -218,11 +128,11 @@ class AssistantView extends GetView<AssistantController> {
                           color: AppColors.primaryGreen,
                         ),
                         const SizedBox(width: 6),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Quick questions',
                             style: TextStyle(
-                              color: AppColors.primaryText,
+                              color: context.appText,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
@@ -276,8 +186,11 @@ class AssistantView extends GetView<AssistantController> {
                                     ? null
                                     : () =>
                                         controller.send(_suggestions[index]),
-                            backgroundColor: _questionBackground(index),
-                            disabledColor: _questionBackground(index),
+                            backgroundColor: _questionBackground(
+                              context,
+                              index,
+                            ),
+                            disabledColor: _questionBackground(context, index),
                             side: BorderSide(
                               color: _questionColor(index).withAlpha(45),
                             ),
@@ -285,8 +198,8 @@ class AssistantView extends GetView<AssistantController> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 5),
-                            labelStyle: const TextStyle(
-                              color: AppColors.primaryText,
+                            labelStyle: TextStyle(
+                              color: context.appText,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -300,9 +213,9 @@ class AssistantView extends GetView<AssistantController> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: context.appSurface,
+                border: Border(top: BorderSide(color: context.appBorder)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -318,8 +231,8 @@ class AssistantView extends GetView<AssistantController> {
                       onSubmitted: (_) => controller.send(),
                       decoration: InputDecoration(
                         hintText: 'Ask about your wellness...',
-                        hintStyle: const TextStyle(
-                          color: AppColors.placeholder,
+                        hintStyle: TextStyle(
+                          color: context.appMutedText,
                           fontSize: 13,
                         ),
                         prefixIcon: const Icon(
@@ -328,23 +241,23 @@ class AssistantView extends GetView<AssistantController> {
                           color: AppColors.primaryGreen,
                         ),
                         filled: true,
-                        fillColor: AppColors.field,
+                        fillColor: context.appMutedSurface,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: context.appBorder),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: context.appBorder),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryGreen,
+                          borderSide: BorderSide(
+                            color: context.appColorScheme.primary,
                             width: 1.4,
                           ),
                         ),
@@ -361,8 +274,8 @@ class AssistantView extends GetView<AssistantController> {
                         onPressed:
                             controller.isSending.value ? null : controller.send,
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          disabledBackgroundColor: AppColors.progressTrack,
+                          backgroundColor: context.appColorScheme.primary,
+                          disabledBackgroundColor: context.appMutedSurface,
                           shadowColor: const Color(0x5500A651),
                           elevation: 3,
                         ),
@@ -421,7 +334,7 @@ class AssistantView extends GetView<AssistantController> {
     return colors[index % colors.length];
   }
 
-  Color _questionBackground(int index) {
+  Color _questionBackground(BuildContext context, int index) {
     const backgrounds = [
       Color(0xFFEAF9F1),
       Color(0xFFEAF4FF),
@@ -430,7 +343,12 @@ class AssistantView extends GetView<AssistantController> {
       Color(0xFFEAF9F4),
       Color(0xFFFFEDF6),
     ];
-    return backgrounds[index % backgrounds.length];
+    return context.appIsDark
+        ? Color.alphaBlend(
+          _questionColor(index).withValues(alpha: 0.13),
+          context.appSurface,
+        )
+        : backgrounds[index % backgrounds.length];
   }
 
   Future<void> _showAllQuestions(BuildContext context) {
@@ -447,9 +365,9 @@ class AssistantView extends GetView<AssistantController> {
             expand: false,
             builder:
                 (context, scrollController) => Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
+                  decoration: BoxDecoration(
+                    color: context.appSurface,
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(28),
                     ),
                   ),
@@ -460,7 +378,7 @@ class AssistantView extends GetView<AssistantController> {
                         width: 42,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.progressTrack,
+                          color: context.appColorScheme.outlineVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -471,8 +389,8 @@ class AssistantView extends GetView<AssistantController> {
                             Container(
                               width: 38,
                               height: 38,
-                              decoration: const BoxDecoration(
-                                color: AppColors.softGreen,
+                              decoration: BoxDecoration(
+                                color: context.appSoftGreen,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -482,14 +400,14 @@ class AssistantView extends GetView<AssistantController> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Ask NhamHealth AI',
                                     style: TextStyle(
-                                      color: AppColors.primaryText,
+                                      color: context.appText,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -497,7 +415,7 @@ class AssistantView extends GetView<AssistantController> {
                                   Text(
                                     'Choose any question below',
                                     style: TextStyle(
-                                      color: AppColors.secondaryText,
+                                      color: context.appMutedText,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -512,7 +430,7 @@ class AssistantView extends GetView<AssistantController> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: AppColors.border),
+                      Divider(height: 1, color: context.appBorder),
                       Expanded(
                         child: ListView.separated(
                           controller: scrollController,
@@ -523,7 +441,7 @@ class AssistantView extends GetView<AssistantController> {
                           itemBuilder: (context, index) {
                             return Obx(
                               () => Material(
-                                color: _questionBackground(index),
+                                color: _questionBackground(context, index),
                                 borderRadius: BorderRadius.circular(16),
                                 child: ListTile(
                                   enabled: !controller.isSending.value,
@@ -538,8 +456,8 @@ class AssistantView extends GetView<AssistantController> {
                                   leading: Container(
                                     width: 38,
                                     height: 38,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
+                                    decoration: BoxDecoration(
+                                      color: context.appElevatedSurface,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -550,8 +468,8 @@ class AssistantView extends GetView<AssistantController> {
                                   ),
                                   title: Text(
                                     _suggestions[index],
-                                    style: const TextStyle(
-                                      color: AppColors.primaryText,
+                                    style: TextStyle(
+                                      color: context.appText,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -571,6 +489,96 @@ class AssistantView extends GetView<AssistantController> {
                   ),
                 ),
           ),
+    );
+  }
+}
+
+class _AssistantHeaderIdentity extends StatelessWidget {
+  const _AssistantHeaderIdentity();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                shape: BoxShape.circle,
+                border: Border.all(color: context.appBorder),
+              ),
+              child: ClipOval(
+                child: Lottie.asset(
+                  'assets/animations/chatbot.json',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: 1,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF35D07F),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.appSurface, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'NhamHealth AI',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textScaler: TextScaler.noScaling,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.verified_rounded,
+                    size: 12,
+                    color: AppColors.primaryGreen,
+                  ),
+                  const SizedBox(width: 4),
+                  const Flexible(
+                    child: Text(
+                      'Connected to your wellness data',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textScaler: TextScaler.noScaling,
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -618,7 +626,7 @@ class _MessageBubble extends StatelessWidget {
                           color:
                               message.isError
                                   ? AppColors.errorCoral
-                                  : AppColors.secondaryText,
+                                  : context.appMutedText,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -648,10 +656,10 @@ class _MessageBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     color:
                         message.isError
-                            ? const Color(0xFFFFF4F4)
+                            ? context.appDangerSurface
                             : message.isUser
                             ? AppColors.primaryGreen
-                            : Colors.white,
+                            : context.appElevatedSurface,
                     borderRadius: BorderRadius.circular(18).copyWith(
                       bottomRight:
                           message.isUser ? const Radius.circular(5) : null,
@@ -664,12 +672,14 @@ class _MessageBubble extends StatelessWidget {
                             : Border.all(
                               color:
                                   message.isError
-                                      ? const Color(0xFFFFD8D8)
-                                      : AppColors.border,
+                                      ? context.appOnDangerSurface.withValues(
+                                        alpha: 0.45,
+                                      )
+                                      : context.appBorder,
                             ),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
-                        color: Color(0x0D000000),
+                        color: context.appShadow,
                         blurRadius: 10,
                         offset: Offset(0, 3),
                       ),
@@ -677,7 +687,7 @@ class _MessageBubble extends StatelessWidget {
                   ),
                   child:
                       message.isUser
-                          ? Text(message.content, style: _messageStyle())
+                          ? Text(message.content, style: _messageStyle(context))
                           : _AssistantReplyText(
                             content: message.content,
                             isError: message.isError,
@@ -706,7 +716,7 @@ class _MessageBubble extends StatelessWidget {
                           },
                           visualDensity: VisualDensity.compact,
                           style: IconButton.styleFrom(
-                            foregroundColor: AppColors.secondaryText,
+                            foregroundColor: context.appMutedText,
                             minimumSize: const Size(30, 30),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -722,7 +732,7 @@ class _MessageBubble extends StatelessWidget {
                             onPressed: isReloading ? null : onReload,
                             visualDensity: VisualDensity.compact,
                             style: IconButton.styleFrom(
-                              foregroundColor: AppColors.secondaryText,
+                              foregroundColor: context.appMutedText,
                               minimumSize: const Size(30, 30),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -748,13 +758,13 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  TextStyle _messageStyle() => TextStyle(
+  TextStyle _messageStyle(BuildContext context) => TextStyle(
     color:
         message.isError
             ? AppColors.errorCoral
             : message.isUser
             ? Colors.white
-            : AppColors.primaryText,
+            : context.appText,
     fontSize: 13,
     height: 1.45,
   );
@@ -777,7 +787,7 @@ class _AssistantReplyText extends StatelessWidget {
   Widget build(BuildContext context) {
     final lines = content.trim().split('\n');
     final baseStyle = TextStyle(
-      color: isError ? AppColors.errorCoral : AppColors.primaryText,
+      color: isError ? AppColors.errorCoral : context.appText,
       fontSize: 13,
       height: 1.5,
     );
@@ -792,7 +802,7 @@ class _AssistantReplyText extends StatelessWidget {
             if (lines[index].trim().isEmpty)
               const SizedBox(height: 7)
             else
-              _buildLine(lines[index], baseStyle, index),
+              _buildLine(context, lines[index], baseStyle, index),
             if (index < lines.length - 1 &&
                 lines[index].trim().isNotEmpty &&
                 lines[index + 1].trim().isNotEmpty)
@@ -803,7 +813,12 @@ class _AssistantReplyText extends StatelessWidget {
     );
   }
 
-  Widget _buildLine(String line, TextStyle baseStyle, int lineIndex) {
+  Widget _buildLine(
+    BuildContext context,
+    String line,
+    TextStyle baseStyle,
+    int lineIndex,
+  ) {
     final bullet = _bulletPattern.firstMatch(line);
     if (bullet != null) {
       return Row(
@@ -837,8 +852,8 @@ class _AssistantReplyText extends StatelessWidget {
             height: 22,
             margin: const EdgeInsets.only(top: 1),
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.softGreen,
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
               shape: BoxShape.circle,
             ),
             child: Text(
@@ -863,7 +878,10 @@ class _AssistantReplyText extends StatelessWidget {
         trimmed,
         isShortHeading
             ? baseStyle.copyWith(
-              color: isError ? AppColors.errorCoral : AppColors.darkGreen,
+              color:
+                  isError
+                      ? AppColors.errorCoral
+                      : context.appColorScheme.primary,
               fontWeight: FontWeight.w700,
             )
             : baseStyle,
@@ -890,7 +908,7 @@ class _AssistantReplyText extends StatelessWidget {
                 isError
                     ? AppColors.errorCoral
                     : isMarkdownBold
-                    ? AppColors.darkGreen
+                    ? baseStyle.color
                     : AppColors.primaryGreen,
             fontWeight: FontWeight.w800,
           ),
@@ -918,10 +936,19 @@ class _ChatAvatar extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: isUser ? const Color(0xFFEAF4FF) : AppColors.softGreen,
+        color:
+            isUser
+                ? Color.alphaBlend(
+                  const Color(0xFF2879D9).withValues(alpha: 0.14),
+                  context.appSurface,
+                )
+                : context.appSoftGreen,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isUser ? const Color(0xFFD4E6FA) : const Color(0xFFCBECD8),
+          color:
+              isUser
+                  ? const Color(0xFF2879D9).withValues(alpha: 0.35)
+                  : context.appBorder,
         ),
       ),
       child: Icon(
@@ -937,36 +964,36 @@ class _TypingBubble extends StatelessWidget {
   const _TypingBubble();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.only(bottom: 14),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ChatAvatar(isUser: false),
-        SizedBox(width: 8),
+        const _ChatAvatar(isUser: false),
+        const SizedBox(width: 8),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(Radius.circular(18)),
-            border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
+            color: context.appElevatedSurface,
+            borderRadius: const BorderRadius.all(Radius.circular(18)),
+            border: Border.fromBorderSide(BorderSide(color: context.appBorder)),
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox.square(
+                const SizedBox.square(
                   dimension: 15,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: AppColors.primaryGreen,
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'Checking your wellness...',
                   style: TextStyle(
-                    color: AppColors.secondaryText,
+                    color: context.appMutedText,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/calories_controller.dart';
+import '../../../../theme/app_colors.dart';
 import 'add_food_source_sheet.dart';
 import 'food_source_tile.dart';
 
@@ -21,15 +22,10 @@ class FoodSourcesCard extends GetView<CaloriesController> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
@@ -40,9 +36,10 @@ class FoodSourcesCard extends GetView<CaloriesController> {
                   children: [
                     Text(
                       'Today\'s food sources'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
+                        color: context.appText,
                       ),
                     ),
                     const SizedBox(width: 5),

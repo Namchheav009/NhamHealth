@@ -135,8 +135,10 @@ class _AppAlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = _isSuccess ? AppColors.primaryGreen : AppColors.errorCoral;
     final titleColor =
-        _isSuccess ? AppColors.darkGreen : const Color(0xFFB3261E);
-    final tint = _isSuccess ? AppColors.softGreen : const Color(0xFFFFF1F1);
+        _isSuccess
+            ? context.appColorScheme.primary
+            : context.appOnDangerSurface;
+    final tint = _isSuccess ? context.appSoftGreen : context.appDangerSurface;
     final icon = _isSuccess ? Icons.check_rounded : Icons.priority_high_rounded;
     final localizedTitle = title.tr;
     final localizedMessage = message.tr;
@@ -162,7 +164,7 @@ class _AppAlertCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withValues(alpha: 0.96),
+                  context.appElevatedSurface.withValues(alpha: 0.96),
                   tint.withValues(alpha: 0.93),
                 ],
               ),
@@ -207,8 +209,8 @@ class _AppAlertCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             localizedMessage,
-                            style: const TextStyle(
-                              color: AppColors.primaryText,
+                            style: TextStyle(
+                              color: context.appText,
                               fontSize: 12.5,
                               height: 1.35,
                               fontWeight: FontWeight.w500,

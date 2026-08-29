@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
 import '../../../../../config/api_config.dart';
+import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
 import '../../community/widgets/community_shared_post_card.dart';
 
@@ -40,16 +41,10 @@ class ProfilePostCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .96),
+        color: context.appElevatedSurface.withValues(alpha: .96),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE5ECE7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A173D25),
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +53,7 @@ class ProfilePostCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 23,
-                backgroundColor: const Color(0xFFEAF7EE),
+                backgroundColor: context.appSoftGreen,
                 foregroundImage: _avatarImage,
                 child: Text(
                   _initials,
@@ -80,10 +75,10 @@ class ProfilePostCard extends StatelessWidget {
                       _displayAuthorName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF18231C),
+                        color: context.appText,
                       ),
                     ),
 
@@ -93,9 +88,9 @@ class ProfilePostCard extends StatelessWidget {
                       '${post.ageLabel}  •  ${membership ?? post.role}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF7A857D),
+                        color: context.appMutedText,
                       ),
                     ),
                   ],
@@ -105,9 +100,9 @@ class ProfilePostCard extends StatelessWidget {
               if (onOptions != null || onEdit != null || onDelete != null)
                 IconButton(
                   tooltip: 'Post options',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_horiz_rounded,
-                    color: Color(0xFF768178),
+                    color: context.appMutedText,
                   ),
                   onPressed: onOptions ?? () => _showPostOptions(context),
                 ),
@@ -118,10 +113,10 @@ class ProfilePostCard extends StatelessWidget {
             const SizedBox(height: 15),
             Text(
               post.description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.42,
-                color: Color(0xFF5E6961),
+                color: context.appText,
               ),
             ),
           ],
@@ -157,8 +152,8 @@ class ProfilePostCard extends StatelessWidget {
           ],
           Container(
             padding: const EdgeInsets.only(top: 7),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: context.appBorder)),
             ),
             child: Row(
               children: [
@@ -171,21 +166,21 @@ class ProfilePostCard extends StatelessWidget {
                   color:
                       post.isLiked
                           ? const Color(0xFFE64657)
-                          : const Color(0xFF69756D),
+                          : context.appMutedText,
                   onTap: isLiking ? null : onLike,
                 ),
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
                   icon: Icons.chat_bubble_outline_rounded,
                   value: 'Comment',
-                  color: const Color(0xFF69756D),
+                  color: context.appMutedText,
                   onTap: onComment,
                 ),
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
                   icon: Icons.reply_rounded,
                   value: 'Share',
-                  color: const Color(0xFF69756D),
+                  color: context.appMutedText,
                   onTap: onShare,
                 ),
               ],
@@ -333,9 +328,9 @@ class _ProfileMetricDivider extends StatelessWidget {
   const _ProfileMetricDivider();
 
   @override
-  Widget build(BuildContext context) => const SizedBox(
+  Widget build(BuildContext context) => SizedBox(
     height: 18,
-    child: VerticalDivider(width: 1, color: Color(0xFFDCE6DF)),
+    child: VerticalDivider(width: 1, color: context.appBorder),
   );
 }
 
@@ -366,21 +361,21 @@ class _EngagementSummary extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             _compactCount(post.likes),
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+            style: TextStyle(fontSize: 12, color: context.appMutedText),
           ),
         ],
         const Spacer(),
         if (post.comments > 0)
           Text(
             '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+            style: TextStyle(fontSize: 12, color: context.appMutedText),
           ),
         if (post.comments > 0 && post.shares > 0)
           const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
         if (post.shares > 0)
           Text(
             '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+            style: TextStyle(fontSize: 12, color: context.appMutedText),
           ),
       ],
     ),
@@ -395,9 +390,9 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
     top: false,
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.appSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -413,18 +408,18 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F6F4),
+              color: context.appMutedSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
-              children: const [
-                _ProfilePostOption(
+              children: [
+                const _ProfilePostOption(
                   value: 'edit',
                   label: 'Edit post',
                   icon: Icons.edit_outlined,
                 ),
-                Divider(height: 1, indent: 64, color: Color(0xFFE0E5E1)),
-                _ProfilePostOption(
+                Divider(height: 1, indent: 64, color: context.appBorder),
+                const _ProfilePostOption(
                   value: 'delete',
                   label: 'Delete post',
                   icon: Icons.delete_outline_rounded,
@@ -454,8 +449,7 @@ class _ProfilePostOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
+    final color = isDestructive ? const Color(0xFFFF777F) : context.appText;
     return ListTile(
       onTap: () => Navigator.of(context).pop(value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
@@ -758,7 +752,7 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE5F6EA),
+        color: context.appSoftGreen,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Text(

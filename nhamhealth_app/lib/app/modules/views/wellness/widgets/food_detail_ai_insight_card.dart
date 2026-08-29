@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class FoodDetailAiInsightCard extends StatelessWidget {
   const FoodDetailAiInsightCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? context.appSurfaceLow : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: isDark ? Border.all(color: context.appBorder) : null,
+        boxShadow:
+            isDark
+                ? context.appCardShadow
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
       ),
       child: Column(
         children: [
@@ -43,9 +50,10 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                       children: [
                         Text(
                           'AI Insight'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
+                            color: isDark ? context.appText : null,
                           ),
                         ),
                         const Spacer(),
@@ -55,7 +63,15 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFEEE6),
+                            color:
+                                isDark
+                                    ? Color.alphaBlend(
+                                      const Color(
+                                        0xFFFF641E,
+                                      ).withValues(alpha: 0.12),
+                                      context.appSurfaceLow,
+                                    )
+                                    : const Color(0xFFFFEEE6),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -72,10 +88,10 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                     Text(
                       'Milk tea is okay sometimes, but sugar is a bit high for one drink. Balance it with water and a lighter next choice.'
                           .tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         height: 1.5,
-                        color: Colors.black54,
+                        color: isDark ? context.appMutedText : Colors.black54,
                       ),
                     ),
                   ],

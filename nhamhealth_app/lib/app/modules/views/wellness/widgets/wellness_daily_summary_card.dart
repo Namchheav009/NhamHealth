@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/wellness_controller.dart';
+import '../../../../theme/app_colors.dart';
 import 'wellness_nutrient_tile.dart';
 
 class WellnessDailySummaryCard extends GetView<WellnessController> {
@@ -12,23 +13,18 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCFFF8),
+        color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
-                backgroundColor: Colors.white,
+                backgroundColor: context.appSoftGreen,
                 child: Icon(
                   Icons.eco_rounded,
                   color: Color(0xFF43C756),
@@ -38,10 +34,10 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
               const SizedBox(width: 10),
               Text(
                 'Your Daily Summary'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF666666),
+                  color: context.appText,
                 ),
               ),
             ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/calories_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class CalorieProgressCard extends GetView<CaloriesController> {
   const CalorieProgressCard({super.key});
@@ -11,7 +12,7 @@ class CalorieProgressCard extends GetView<CaloriesController> {
     return Obx(
       () => Container(
         padding: const EdgeInsets.all(16),
-        decoration: _cardDecoration(),
+        decoration: _cardDecoration(context),
         child: Column(
           children: [
             Row(
@@ -59,8 +60,8 @@ class CalorieProgressCard extends GetView<CaloriesController> {
                             ),
                             TextSpan(
                               text: '/${controller.targetCalories.value} kcal',
-                              style: const TextStyle(
-                                color: Colors.black38,
+                              style: TextStyle(
+                                color: context.appMutedText,
                                 fontSize: 10,
                               ),
                             ),
@@ -72,9 +73,9 @@ class CalorieProgressCard extends GetView<CaloriesController> {
 
                       Text(
                         '✨ You\'re on track today'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Colors.black38,
+                          color: context.appMutedText,
                         ),
                       ),
                     ],
@@ -99,7 +100,7 @@ class CalorieProgressCard extends GetView<CaloriesController> {
               child: LinearProgressIndicator(
                 value: controller.progress,
                 minHeight: 7,
-                backgroundColor: const Color(0xFFE3E3E3),
+                backgroundColor: context.appColorScheme.outlineVariant,
                 valueColor: const AlwaysStoppedAnimation(Color(0xFFFF641E)),
               ),
             ),
@@ -109,17 +110,12 @@ class CalorieProgressCard extends GetView<CaloriesController> {
     );
   }
 
-  BoxDecoration _cardDecoration() {
+  BoxDecoration _cardDecoration(BuildContext context) {
     return BoxDecoration(
-      color: Colors.white,
+      color: context.appElevatedSurface,
       borderRadius: BorderRadius.circular(18),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 16,
-          offset: const Offset(0, 5),
-        ),
-      ],
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appCardShadow,
     );
   }
 }

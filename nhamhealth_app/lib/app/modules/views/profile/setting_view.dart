@@ -14,31 +14,43 @@ class SettingsView extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: const Color(0xFFFFFDFD),
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SizedBox.expand(
           child: Stack(
             children: [
               // --------------------------------------------
               // BACKGROUND
               // --------------------------------------------
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/background/bg.png'),
-                      fit: BoxFit.cover,
+              Positioned.fill(
+                child: Opacity(
+                  opacity: isDark ? 0.12 : 1,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/background/bg.png'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
               ),
+
+              if (isDark)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.16),
+                  ),
+                ),
 
               // Soft pink left background
               Positioned(
@@ -47,12 +59,16 @@ class SettingsView extends GetView<SettingsController> {
                 child: Container(
                   width: 390,
                   height: 620,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Color(0x55FFF0F3),
-                        Color(0x22FFF4F6),
-                        Color(0x00FFFFFF),
+                        isDark
+                            ? const Color(0x203B1820)
+                            : const Color(0x55FFF0F3),
+                        isDark
+                            ? const Color(0x1027181C)
+                            : const Color(0x22FFF4F6),
+                        Colors.transparent,
                       ],
                     ),
                   ),
@@ -66,12 +82,16 @@ class SettingsView extends GetView<SettingsController> {
                 child: Container(
                   width: 360,
                   height: 420,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Color(0x55E8FFD9),
-                        Color(0x22F4FFE9),
-                        Color(0x00FFFFFF),
+                        isDark
+                            ? const Color(0x2039D879)
+                            : const Color(0x55E8FFD9),
+                        isDark
+                            ? const Color(0x101D4A2E)
+                            : const Color(0x22F4FFE9),
+                        Colors.transparent,
                       ],
                     ),
                   ),
@@ -85,12 +105,16 @@ class SettingsView extends GetView<SettingsController> {
                 child: Container(
                   width: 430,
                   height: 470,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Color(0x55EEFFD8),
-                        Color(0x22F6FFE9),
-                        Color(0x00FFFFFF),
+                        isDark
+                            ? const Color(0x2039D879)
+                            : const Color(0x55EEFFD8),
+                        isDark
+                            ? const Color(0x101D4A2E)
+                            : const Color(0x22F6FFE9),
+                        Colors.transparent,
                       ],
                     ),
                   ),
@@ -104,9 +128,14 @@ class SettingsView extends GetView<SettingsController> {
                 child: Container(
                   width: 400,
                   height: 450,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: RadialGradient(
-                      colors: [Color(0x44FFF0F2), Color(0x00FFFFFF)],
+                      colors: [
+                        isDark
+                            ? const Color(0x203B1820)
+                            : const Color(0x44FFF0F2),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
                 ),
@@ -137,19 +166,28 @@ class SettingsView extends GetView<SettingsController> {
                             content: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildSectionTitle('settings_account'.tr),
+                                _buildSectionTitle(
+                                  context,
+                                  'settings_account'.tr,
+                                ),
                                 const SizedBox(height: 10),
-                                _buildAccountCard(),
+                                _buildAccountCard(context),
                                 const SizedBox(height: 21),
-                                _buildSectionTitle('settings_preferences'.tr),
+                                _buildSectionTitle(
+                                  context,
+                                  'settings_preferences'.tr,
+                                ),
                                 const SizedBox(height: 10),
-                                _buildPreferenceCard(),
+                                _buildPreferenceCard(context),
                                 const SizedBox(height: 21),
-                                _buildSectionTitle('settings_support'.tr),
+                                _buildSectionTitle(
+                                  context,
+                                  'settings_support'.tr,
+                                ),
                                 const SizedBox(height: 10),
-                                _buildSupportCard(),
+                                _buildSupportCard(context),
                                 const SizedBox(height: 13),
-                                _buildLogoutCard(),
+                                _buildLogoutCard(context),
                               ],
                             ),
                           ),
@@ -198,16 +236,16 @@ class SettingsView extends GetView<SettingsController> {
   // SECTION TITLE
   // ============================================================
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           height: 1.1,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF101010),
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -217,8 +255,9 @@ class SettingsView extends GetView<SettingsController> {
   // ACCOUNT
   // ============================================================
 
-  Widget _buildAccountCard() {
+  Widget _buildAccountCard(BuildContext context) {
     return _groupCard(
+      context,
       children: [
         _SettingsItem(
           icon: Icons.lock_outline_rounded,
@@ -226,7 +265,7 @@ class SettingsView extends GetView<SettingsController> {
           subtitle: 'password_security_description'.tr,
           onTap: controller.openPasswordSecurity,
         ),
-        _divider(),
+        _divider(context),
         _SettingsItem(
           icon: Icons.favorite_border_rounded,
           title: 'favorites'.tr,
@@ -241,8 +280,9 @@ class SettingsView extends GetView<SettingsController> {
   // PREFERENCES
   // ============================================================
 
-  Widget _buildPreferenceCard() {
+  Widget _buildPreferenceCard(BuildContext context) {
     return _groupCard(
+      context,
       children: [
         _SettingsItem(
           icon: Icons.dark_mode_outlined,
@@ -251,7 +291,7 @@ class SettingsView extends GetView<SettingsController> {
           onTap: controller.openAppearance,
         ),
 
-        _divider(),
+        _divider(context),
 
         _SettingsItem(
           icon: Icons.language_rounded,
@@ -271,8 +311,9 @@ class SettingsView extends GetView<SettingsController> {
   // SUPPORT
   // ============================================================
 
-  Widget _buildSupportCard() {
+  Widget _buildSupportCard(BuildContext context) {
     return _groupCard(
+      context,
       children: [
         _SettingsItem(
           icon: Icons.help_outline_rounded,
@@ -281,7 +322,7 @@ class SettingsView extends GetView<SettingsController> {
           onTap: controller.openHelpSupport,
         ),
 
-        _divider(),
+        _divider(context),
 
         _SettingsItem(
           icon: Icons.description_outlined,
@@ -297,18 +338,27 @@ class SettingsView extends GetView<SettingsController> {
   // LOGOUT
   // ============================================================
 
-  Widget _buildLogoutCard() {
+  Widget _buildLogoutCard(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       height: 65,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFFFFF6F7), Color(0xFFFFFFFF), Color(0xFFF2FFED)],
+          colors:
+              isDark
+                  ? [colors.surface, colors.surfaceContainer, colors.surface]
+                  : const [
+                    Color(0xFFFFF6F7),
+                    Color(0xFFFFFFFF),
+                    Color(0xFFF2FFED),
+                  ],
         ),
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white, width: 1),
+        border: Border.all(color: colors.outline, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -331,11 +381,12 @@ class SettingsView extends GetView<SettingsController> {
   // CARD
   // ============================================================
 
-  Widget _groupCard({required List<Widget> children}) {
+  Widget _groupCard(BuildContext context, {required List<Widget> children}) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.80),
+        color: colors.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
@@ -349,10 +400,14 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
-  Widget _divider() {
-    return const Padding(
-      padding: EdgeInsets.only(left: 64),
-      child: Divider(height: 1, thickness: 0.7, color: Color(0xFFD9D9D9)),
+  Widget _divider(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 64),
+      child: Divider(
+        height: 1,
+        thickness: 0.7,
+        color: Theme.of(context).colorScheme.outlineVariant,
+      ),
     );
   }
 }
@@ -383,10 +438,10 @@ class _SettingsItem extends StatelessWidget {
     this.isLogout = false,
   });
 
-  static const Color green = Color(0xFF00A651);
-
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -409,14 +464,23 @@ class _SettingsItem extends StatelessWidget {
                     shape: BoxShape.circle,
                     color:
                         isLogout
-                            ? const Color(0xFFFFE1E4)
-                            : const Color(0xFFE4F4E7),
+                            ? (isDark
+                                ? const Color(0xFF4B252A)
+                                : const Color(0xFFFFE1E4))
+                            : colors.primaryContainer.withValues(
+                              alpha: isDark ? 0.45 : 0.65,
+                            ),
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     icon,
                     size: 22,
-                    color: isLogout ? const Color(0xFFFF202A) : green,
+                    color:
+                        isLogout
+                            ? (isDark
+                                ? const Color(0xFFFF8B94)
+                                : const Color(0xFFFF202A))
+                            : colors.primary,
                   ),
                 ),
 
@@ -440,8 +504,10 @@ class _SettingsItem extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color:
                               isLogout
-                                  ? const Color(0xFFFF151E)
-                                  : const Color(0xFF161616),
+                                  ? (isDark
+                                      ? const Color(0xFFFFA2A9)
+                                      : const Color(0xFFFF151E))
+                                  : colors.onSurface,
                         ),
                       ),
 
@@ -451,11 +517,11 @@ class _SettingsItem extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9.5,
                           height: 1,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF6F7380),
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -468,10 +534,10 @@ class _SettingsItem extends StatelessWidget {
                 if (trailingText != null) ...[
                   Text(
                     trailingText!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF415D87),
+                      color: colors.secondary,
                     ),
                   ),
                   const SizedBox(width: 9),
@@ -480,10 +546,10 @@ class _SettingsItem extends StatelessWidget {
                 // ----------------------------------------
                 // ARROW
                 // ----------------------------------------
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 29,
-                  color: Color(0xFF3E3E3E),
+                  color: colors.onSurfaceVariant,
                 ),
               ],
             ),

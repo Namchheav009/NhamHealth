@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../controllers/community/community_post_detail_controller.dart';
 import 'community_comments_page.dart';
 
@@ -20,9 +21,9 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBFC),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFBFC),
+        backgroundColor: context.appSurface,
         title: const Text('Community post'),
       ),
       body: Center(

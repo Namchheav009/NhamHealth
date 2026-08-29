@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/page_skeleton.dart';
+import '../../../theme/app_colors.dart';
+import '../../../widgets/app_background.dart';
 
 import '../../controllers/favorites/favorites_controller.dart';
 import 'widgets/favorite_food_card.dart';
@@ -14,14 +16,8 @@ class FavoritesView extends GetView<FavoritesController> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.white,
-    body: Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/background/bg.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
+    backgroundColor: context.appBackground,
+    body: AppBackground(
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -93,7 +89,8 @@ class FavoritesView extends GetView<FavoritesController> {
               controller.foods
                   .where(
                     (food) =>
-                        categories.isEmpty || categories.contains(food.category),
+                        categories.isEmpty ||
+                        categories.contains(food.category),
                   )
                   .toList();
           if (visible.isEmpty) {

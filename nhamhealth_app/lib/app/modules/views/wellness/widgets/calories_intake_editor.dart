@@ -2,24 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/wellness/calories_controller.dart';
+import '../../../../theme/app_colors.dart';
 
 class CalorieIntakeEditor extends GetView<CaloriesController> {
   const CalorieIntakeEditor({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Edit intake'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF555555),
+              color: isDark ? context.appText : const Color(0xFF555555),
             ),
           ),
 
@@ -28,6 +30,7 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
           Row(
             children: [
               _roundButton(
+                context: context,
                 icon: Icons.remove_rounded,
                 onTap: controller.decreaseCalories,
               ),
@@ -38,9 +41,15 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
                 child: Container(
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAFAFA),
+                    color:
+                        isDark
+                            ? context.appColorScheme.surfaceContainerHigh
+                            : const Color(0xFFFAFAFA),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE5E5E5)),
+                    border: Border.all(
+                      color:
+                          isDark ? context.appBorder : const Color(0xFFE5E5E5),
+                    ),
                   ),
                   child: TextField(
                     controller: controller.intakeController,
@@ -63,12 +72,16 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
 
               Text(
                 'kcal'.tr,
-                style: const TextStyle(color: Colors.black38, fontSize: 10),
+                style: TextStyle(
+                  color: isDark ? context.appMutedText : Colors.black38,
+                  fontSize: 10,
+                ),
               ),
 
               const SizedBox(width: 6),
 
               _roundButton(
+                context: context,
                 icon: Icons.add_rounded,
                 onTap: controller.increaseCalories,
               ),
@@ -80,15 +93,15 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _quickAdd('+100', () => controller.addCalories(100)),
+              _quickAdd(context, '+100', () => controller.addCalories(100)),
 
               const SizedBox(width: 8),
 
-              _quickAdd('+250', () => controller.addCalories(250)),
+              _quickAdd(context, '+250', () => controller.addCalories(250)),
 
               const SizedBox(width: 8),
 
-              _quickAdd('+500', () => controller.addCalories(500)),
+              _quickAdd(context, '+500', () => controller.addCalories(500)),
             ],
           ),
         ],
@@ -96,7 +109,11 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
     );
   }
 
-  Widget _roundButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _roundButton({
+    required BuildContext context,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -104,7 +121,13 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
         width: 50,
         height: 42,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF4EF),
+          color:
+              context.appIsDark
+                  ? Color.alphaBlend(
+                    const Color(0xFFFF641E).withValues(alpha: 0.11),
+                    context.appSurfaceLow,
+                  )
+                  : const Color(0xFFFFF4EF),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFFFBE9D)),
         ),
@@ -113,14 +136,20 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
     );
   }
 
-  Widget _quickAdd(String text, VoidCallback onTap) {
+  Widget _quickAdd(BuildContext context, String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF2EC),
+          color:
+              context.appIsDark
+                  ? Color.alphaBlend(
+                    const Color(0xFFFF6B35).withValues(alpha: 0.10),
+                    context.appSurfaceLow,
+                  )
+                  : const Color(0xFFFFF2EC),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFFFFC9AE)),
         ),
@@ -136,17 +165,22 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
     );
   }
 
-  BoxDecoration _cardDecoration() {
+  BoxDecoration _cardDecoration(BuildContext context) {
+    final isDark = context.appIsDark;
     return BoxDecoration(
-      color: Colors.white,
+      color: isDark ? context.appSurfaceLow : Colors.white,
       borderRadius: BorderRadius.circular(18),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 15,
-          offset: const Offset(0, 5),
-        ),
-      ],
+      border: isDark ? Border.all(color: context.appBorder) : null,
+      boxShadow:
+          isDark
+              ? context.appCardShadow
+              : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
     );
   }
 }

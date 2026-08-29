@@ -96,10 +96,10 @@ class _PageSkeletonState extends State<PageSkeleton>
                 return LinearGradient(
                   begin: Alignment(position, 0),
                   end: Alignment(position + .9, 0),
-                  colors: const [
-                    Color(0xFFE6ECE8),
-                    Color(0xFFF9FCFA),
-                    Color(0xFFE6ECE8),
+                  colors: [
+                    context.appMutedSurface,
+                    context.appElevatedSurface,
+                    context.appMutedSurface,
                   ],
                   stops: const [0, .5, 1],
                 ).createShader(bounds);
@@ -198,7 +198,7 @@ class _SkeletonBox extends StatelessWidget {
     width: width,
     height: height,
     decoration: BoxDecoration(
-      color: const Color(0xFFE6ECE8),
+      color: context.appMutedSurface,
       borderRadius: BorderRadius.circular(radius),
     ),
   );
@@ -265,9 +265,9 @@ class _SkeletonCard extends StatelessWidget {
     height: height,
     padding: const EdgeInsets.all(17),
     decoration: BoxDecoration(
-      color: AppColors.cardSurface.withValues(alpha: .72),
+      color: context.appSurface.withValues(alpha: .82),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE2EAE5)),
+      border: Border.all(color: context.appBorder),
     ),
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +384,7 @@ class _NotificationTilePlaceholder extends StatelessWidget {
     height: 60,
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     decoration: BoxDecoration(
-      color: AppColors.cardSurface.withValues(alpha: .72),
+      color: context.appSurface.withValues(alpha: .82),
       borderRadius: BorderRadius.circular(14),
     ),
     child: const Row(
@@ -463,9 +463,9 @@ class _CommunityPostPlaceholder extends StatelessWidget {
     height: 286,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.cardSurface.withValues(alpha: .72),
+      color: context.appSurface.withValues(alpha: .82),
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFFE2EAE5)),
+      border: Border.all(color: context.appBorder),
     ),
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
