@@ -1,0 +1,98 @@
+spring.application.name=nhamhealth_api
+server.address=0.0.0.0
+server.port=8080
+server.compression.enabled=true
+server.compression.min-response-size=1024
+server.compression.mime-types=text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+spring.profiles.active=supabase
+
+# Keep Tomcat session files out of the shared Windows temp directory. Spring
+# Boot 4 rejects temp directories created by a different Windows identity.
+server.servlet.session.store-dir=target/runtime-temp/sessions
+
+# Authentication
+app.auth.jwt.secret=REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
+app.auth.jwt.issuer=nhamhealth-api
+app.auth.jwt.expiration=PT24H
+app.auth.google.client-id=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+app.auth.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+
+# Development seed accounts
+app.seed.admin-email=admin@nhamhealth.local
+app.seed.admin-password=CHANGE_THIS_ADMIN_PASSWORD
+app.seed.user-email=user@nhamhealth.local
+app.seed.user-password=CHANGE_THIS_USER_PASSWORD
+
+# Upload storage
+app.upload.directory=uploads
+app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
+app.storage.supabase.service-key=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+app.storage.supabase.bucket=nhamhealth-images
+
+# NVIDIA AI (meal generation falls back to local ranking when the key is empty)
+app.ai.nvidia.api-key=${NVIDIA_API_KEY:}
+app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
+app.ai.nvidia.model=meta/llama-3.2-11b-vision-instruct
+app.ai.nvidia.fallback-vision-model=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
+app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
+app.ai.nvidia.assistant-model=openai/gpt-oss-20b
+app.ai.nvidia.assistant-max-tokens=2000
+app.ai.nvidia.text-max-tokens=4096
+app.ai.nvidia.nutrition-max-tokens=1000
+app.ai.nvidia.reasoning-effort=low
+app.ai.nvidia.nutrition-reasoning-effort=low
+app.ai.prompt-version=food-drink-vision-v5
+app.ai.food.confirmation-threshold=0.75
+app.ai.food.candidate-margin-threshold=0.15
+app.ai.food.portion-confirmation-threshold=0.70
+app.ai.food.component-confirmation-threshold=0.65
+app.ai.food.database-match-threshold=0.78
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=6MB
+
+# Supabase PostgreSQL
+spring.datasource.url=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
+spring.datasource.username=postgres.YOUR_PROJECT_REF
+spring.datasource.password=YOUR_DATABASE_PASSWORD
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.hikari.data-source-properties.sslmode=require
+spring.datasource.hikari.maximum-pool-size=5
+spring.datasource.hikari.minimum-idle=1
+spring.datasource.hikari.idle-timeout=60000
+spring.datasource.hikari.max-lifetime=300000
+spring.datasource.hikari.keepalive-time=120000
+spring.datasource.hikari.validation-timeout=5000
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
+# Supabase may close an idle pooled session between checks. Hikari discards and
+# replaces it automatically, so hide only this recoverable validation warning.
+logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
+logging.level.root=INFO
+spring.jpa.properties.hibernate.default_schema=public
+spring.jpa.properties.hibernate.default_batch_fetch_size=20
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=0
+spring.jpa.open-in-view=false
+spring.cache.type=caffeine
+spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches
+spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=60s
+
+# Gmail SMTP (set GMAIL_USERNAME and GMAIL_APP_PASSWORD in your environment)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${GMAIL_USERNAME:}
+spring.mail.password=${GMAIL_APP_PASSWORD:}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+spring.mail.default-encoding=UTF-8
+app.mail.from=${GMAIL_USERNAME:}
+# Firebase Cloud Messaging. Point GOOGLE_APPLICATION_CREDENTIALS to the
+# downloaded service-account JSON file; never commit that private file.
+nhamhealth.push.enabled=${NHAMHEALTH_PUSH_ENABLED:false}

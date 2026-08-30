@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">AI Recommendations | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-ai-recommendation.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('ai-recommendations')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>AI Recommendations</h1>
+                        <span>Administration interface for AI-generated recommendations.</span>
+                    </div>
+                    <p>Dashboard &gt; AI Features &gt; AI Recommendations</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" id="exportRecommendations" type="button"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openRecModal" type="button"><i class="fa-solid fa-plus"></i> Add Recommendation</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-lightbulb"></i></div>
+                    <div class="stat-content">
+                        <span>Total Recommendations</span>
+                        <strong id="totalRecommendations" th:text="${totalRecs}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-content">
+                        <span>Unique Users</span>
+                        <strong id="uniqueUsers" th:text="${uniqueUsers}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-list"></i></div>
+                    <div class="stat-content">
+                        <span>Total Items</span>
+                        <strong id="totalItems" th:text="${totalItems}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="recSearch">Search</label>
+                    <input id="recSearch" type="search" placeholder="Search user, mood, request, or response">
+                </div>
+                <div class="field-group">
+                    <label for="statusFilter">Filter by status</label>
+                    <select id="statusFilter">
+                        <option value="">All statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="ready">Ready</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <div class="field-group" style="align-self: end;">
+                    <button class="btn btn-secondary" id="clearFilters" type="button">Clear Filters</button>
+                </div>
+            </section>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Recommendation Feed</h2>
+                    <button class="action-button" id="refreshRecommendations" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Mood</th>
+                            <th>Request</th>
+                            <th>Response</th>
+                            <th>Status</th>
+                            <th>Items</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="recommendationRows">
+                        <tr th:each="rec, iterStat : ${aiRecs}" th:data-id="${rec.recommendationId}" th:data-user-id="${rec.user != null ? rec.user.userId : ''}" th:data-user="${rec.user != null ? rec.user.name : 'Unknown'}" th:data-status="${rec.status != null ? rec.status.toLowerCase() : ''}" th:data-items="${itemCounts[rec.recommendationId]}">
+                            <td th:text="${iterStat.count}">1</td>
+                            <td><strong th:text="${rec.user != null ? rec.user.name : 'Unknown'}">User</strong><small th:text="${rec.user != null ? rec.user.email : ''}">email</small></td>
+                            <td><span class="mood-pill" th:text="${rec.mood != null ? rec.mood.moodName : 'No mood'}">Happy</span></td>
+                            <td th:text="${rec.requestText}">What should I eat?</td>
+                            <td th:text="${rec.responseText}">Try more vegetables</td>
+                            <td><span class="status-pill" th:classappend="${rec.status == 'ready' ? ' status-active' : (rec.status == 'archived' ? ' status-neutral' : ' status-inactive')}" th:text="${rec.status}">pending</span></td>
+                            <td>
+                                <strong th:text="${itemCounts[rec.recommendationId] + ' meal(s)'}">0 meals</strong>
+                                <small th:each="item : ${recommendationItems[rec.recommendationId]}"
+                                       th:text="${item.meal.mealName + ' · ' + (item.meal.caloriesCached != null ? item.meal.caloriesCached + ' kcal' : 'calories not set')}">Meal · 400 kcal</small>
+                            </td>
+                            <td th:text="${#temporals.format(rec.createdAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                            <td><button class="icon-button delete-recommendation" type="button" aria-label="Delete recommendation"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                        <tr th:if="${aiRecs.empty}">
+                            <td class="empty-state" colspan="9">No AI recommendations found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="modal" id="recModal" role="dialog" aria-modal="true" aria-labelledby="recModalTitle">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="recModalTitle">Add Recommendation</h2>
+                            <p>Create a new AI recommendation record.</p>
+                        </div>
+                        <button class="icon-button small" id="closeRecModal" type="button"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="recForm" th:action="@{/admin/ai-recommendations}" th:method="post">
+                        <div class="modal-body">
+                            <div class="form-grid">
+                            <div class="field-group">
+                                <label for="recUser">User</label>
+                                <select id="recUser" name="userId" required>
+                                    <option value="">Select user</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="recMood">Mood <span>(optional)</span></label>
+                                <select id="recMood" name="moodId">
+                                    <option value="">No mood</option>
+                                    <option th:each="mood : ${moods}" th:value="${mood.moodId}" th:text="${mood.moodName}"></option>
+                                </select>
+                            </div>
+                            </div>
+                            <div class="field-group">
+                                <label for="recRequest">User request</label>
+                                <textarea id="recRequest" name="requestText" rows="3" placeholder="What did the user ask the AI?" required></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="recStatus">Status</label>
+                                <select id="recStatus" name="status" required>
+                                    <option value="pending">pending</option>
+                                    <option value="ready">ready</option>
+                                    <option value="archived">archived</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="recMeals">Recommended meals <span>(optional)</span></label>
+                                <select id="recMeals" name="mealIds" multiple size="5">
+                                    <option th:each="meal : ${meals}" th:value="${meal.mealId}"
+                                            th:text="${meal.mealName + ' · ' + (meal.caloriesCached != null ? meal.caloriesCached + ' kcal' : 'calories not set')}">Meal · 400 kcal</option>
+                                </select>
+                                <small class="field-help">Use Ctrl (Windows) or Command (Mac) to select several meals. Calories come from the meal model.</small>
+                            </div>
+                            <div class="field-group">
+                                <label for="recResponse">AI response <span>(optional)</span></label>
+                                <textarea id="recResponse" name="responseText" rows="5" placeholder="Recommendation response"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelRecModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save Recommendation</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-ai-recommendation.js(v=2)}"></script>
+</body>
+</html>

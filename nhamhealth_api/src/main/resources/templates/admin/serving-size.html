@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title th:text="${pageTitle + ' | Nham Health Admin'}">Serving Sizes | Nham Health Admin</title>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+	<meta name="_csrf" th:content="${_csrf.token}">
+	<meta name="_csrf_header" th:content="${_csrf.headerName}">
+	<link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+	<link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+	<link rel="stylesheet" th:href="@{/css/admin-serving-size.css}">
+</head>
+<body>
+<div class="app-shell">
+	<div th:replace="~{layouts/sidebar :: sidebar('serving-sizes')}"></div>
+
+	<main class="main-area">
+		<div th:replace="~{layouts/topbar :: topbar}"></div>
+
+		<section class="page-content">
+			<div class="page-heading">
+				<div>
+					<div class="title-line">
+						<h1>Serving Sizes</h1>
+						<span>Nutrition measurement library</span>
+					</div>
+					<p>Dashboard &gt; Meal Management &gt; Serving Sizes</p>
+				</div>
+				<div class="heading-actions">
+					<button class="btn" id="exportServingSizes" type="button"><i class="bi bi-download"></i> Export CSV</button>
+					<button class="btn btn-primary" id="openServingModal" type="button"><i class="bi bi-plus-lg"></i> Add serving size</button>
+				</div>
+			</div>
+
+			<div class="stats-grid">
+				<article class="stat-card">
+					<div class="stat-icon green"><i class="bi bi-cup-straw"></i></div>
+					<div class="stat-content">
+						<span>Total Serving Sizes</span>
+						<strong id="totalServingSizeCount" th:text="${totalServingSizes}">48</strong>
+						<small>All serving sizes</small>
+					</div>
+				</article>
+
+				<article class="stat-card">
+					<div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
+					<div class="stat-content">
+						<span>Active</span>
+						<strong id="activeServingSizeCount" th:text="${activeServingSizes}">24</strong>
+						<small id="activeServingSizePercentage" th:text="${totalServingSizes > 0 ? #numbers.formatDecimal(activeServingSizes * 100.0 / totalServingSizes, 1, 1) + '% active' : 'No records yet'}">50% active</small>
+					</div>
+				</article>
+
+				<article class="stat-card">
+					<div class="stat-icon orange"><i class="bi bi-slash-circle"></i></div>
+					<div class="stat-content">
+						<span>Inactive</span>
+						<strong id="inactiveServingSizeCount" th:text="${inactiveServingSizes}">24</strong>
+						<small>Hidden from new meal logs</small>
+					</div>
+				</article>
+			</div>
+
+			<article class="panel table-panel">
+				<div class="panel-header">
+					<div><h2>All serving sizes</h2><p>Reusable measurements connected to meal logs</p></div>
+					<div class="panel-tools">
+						<select class="table-filter-pill" id="statusFilter" aria-label="Filter by status">
+							<option value="all">All Status</option>
+							<option value="active">Active</option>
+							<option value="inactive">Inactive</option>
+						</select>
+						<input class="table-search" id="servingSearch" type="search" placeholder="Search serving sizes..." aria-label="Search serving sizes">
+						<button class="btn btn-secondary" id="clearServingFilter" type="button">Clear</button>
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table>
+						<thead>
+						<tr>
+							<th>Serving Size Name</th>
+							<th>Multiplier</th>
+							<th>Description</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+						</thead>
+					<tbody id="servingSizeRows">
+					<tr th:each="s : ${servingSizes}" th:data-id="${s.servingSizeId}" th:data-name="${#strings.toLowerCase(s.servingSizeName)}" th:data-description="${s.description ?: ''}" th:data-multiplier="${s.multiplier}" th:data-status="${s.isActive != null and s.isActive ? 'active' : 'inactive'}">
+							<td><span class="pill tag-green" th:text="${s.servingSizeName}">1 Teaspoon (tsp)</span></td>
+							<td><strong class="multiplier" th:text="${s.multiplier}">1.0</strong></td>
+							<td th:text="${s.description != null ? s.description : '-'}">Standard teaspoon</td>
+							<td><span class="status-badge" th:classappend="${s.isActive != null and s.isActive ? ' active-status' : ' inactive-status'}" th:text="${s.isActive != null and s.isActive ? 'Active' : 'Inactive'}">Active</span></td>
+							<td>
+								<div class="action-group">
+									<button class="icon-button small edit-serving" type="button" title="Edit serving size"><i class="bi bi-pencil-square"></i></button>
+									<button class="icon-button small danger delete-serving" type="button" title="Delete serving size"><i class="bi bi-trash"></i></button>
+								</div>
+							</td>
+						</tr>
+						<tr th:if="${#lists.isEmpty(servingSizes)}" id="emptyServingSizeRow"><td class="empty-state" colspan="5"><i class="bi bi-cup-straw"></i><strong>No serving sizes yet</strong><span>Add a serving size to make it available for meal logs.</span></td></tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="pagination-wrap">
+					<div class="pagination-summary">Showing <span id="pageStart">1</span> to <span id="pageEnd">10</span> of <span id="pageTotal" th:text="${totalServingSizes}">48</span> serving sizes</div>
+					<nav class="pagination-nav" aria-label="Pagination">
+						<button class="page-btn" id="pagePrev" aria-label="Previous">‹</button>
+						<div class="page-numbers" id="pageNumbers"></div>
+						<button class="page-btn" id="pageNext" aria-label="Next">›</button>
+					</nav>
+				</div>
+			</article>
+		</section>
+
+		<footer class="page-footer">
+			<span>© 2026 Nham Health. All rights reserved.</span>
+			<span>Version 1.0.0</span>
+		</footer>
+	</main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="modal" id="servingModal" aria-hidden="true">
+	<section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="servingModalTitle">
+		<div class="modal-header">
+			<div>
+				<h2 id="servingModalTitle">Add serving size</h2>
+				<p id="servingModalDescription">Define a reusable multiplier for meal logs.</p>
+			</div>
+			<button class="close" id="closeServingModal" type="button" aria-label="Close dialog">
+				<i class="bi bi-x-lg"></i>
+			</button>
+		</div>
+		<form id="servingForm" novalidate>
+			<input id="servingId" name="servingId" type="hidden">
+			<div class="modal-body">
+				<div class="field">
+					<label for="servingName">Serving name</label>
+					<input id="servingName" name="servingSizeName" type="text" maxlength="50" placeholder="e.g. Half portion" required>
+				</div>
+				<div class="field">
+					<label for="servingAmount">Multiplier</label>
+					<input id="servingAmount" name="multiplier" type="number" min="0.0001" step="0.0001" placeholder="1.0" required>
+				</div>
+				<div class="field full">
+					<label for="servingDescription">Description</label>
+					<textarea id="servingDescription" name="description" maxlength="255" placeholder="Explain when this serving size should be used..."></textarea>
+				</div>
+				<div class="field">
+					<label for="servingStatus">Status</label>
+					<select id="servingStatus" name="status" required>
+						<option value="active">Active</option>
+						<option value="inactive">Inactive</option>
+					</select>
+				</div>
+				<p class="form-error full" id="servingFormError" role="alert" hidden></p>
+			</div>
+			<div class="modal-actions">
+				<button class="btn" id="cancelServingModal" type="button">Cancel</button>
+				<button class="btn btn-primary" id="saveServingButton" type="submit">Save serving size</button>
+			</div>
+		</form>
+	</section>
+</div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-serving-size.js(v=20260815-1)}" defer></script>
+</body>
+</html>

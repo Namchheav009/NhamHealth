@@ -1,0 +1,44 @@
+<th:block th:fragment="topbar">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<header class="topbar">
+    <div class="topbar-inner">
+        <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="search" placeholder="Search users, meals, logs, and more..." aria-label="Search">
+        </div>
+
+        <div class="topbar-actions">
+            <a class="icon-button notification-button" th:href="@{/admin/notifications}" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="badge-dot" th:if="${globalUnreadNotificationCount > 0}"
+                      th:text="${globalUnreadNotificationCount > 99 ? '99+' : globalUnreadNotificationCount}">0</span>
+            </a>
+            <a class="icon-button notification-button" th:href="@{/admin/chats}" aria-label="Messages">
+                <i class="bi bi-envelope"></i>
+                <span class="badge-dot">5</span>
+            </a>
+            <div class="admin-menu">
+                <button class="admin-profile" id="adminProfileMenuToggle" type="button" aria-expanded="false" aria-controls="adminProfileMenu">
+                    <span class="avatar" th:text="${adminName != null && adminName.length() > 0 ? #strings.substring(adminName, 0, 1) : 'A'}">A</span>
+                    <span class="admin-text">
+                        <strong th:text="${adminName}">Admin</strong>
+                        <span>Super Admin</span>
+                    </span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="admin-profile-menu" id="adminProfileMenu" hidden>
+                    <a th:href="@{/admin/settings}"><i class="bi bi-gear"></i> Settings</a>
+                    <form id="logoutForm" th:action="@{/logout}" method="post">
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit"><i class="bi bi-box-arrow-right"></i> Log out</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+</th:block>

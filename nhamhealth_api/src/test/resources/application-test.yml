@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: nhamhealth_api
+  datasource:
+    url: jdbc:h2:mem:nhamhealth-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  cache:
+    type: caffeine
+    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=60s
+    properties:
+      hibernate:
+        default_schema: public
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 32MB
+  mail:
+    host: localhost
+    port: 2525
+    username: ""
+    password: ""
+
+server:
+  port: 0
+
+app:
+  auth:
+    jwt:
+      secret: test-only-jwt-secret-that-is-at-least-32-characters
+      issuer: nhamhealth-api
+      expiration: PT24H
+    google:
+      client-id: ""
+      client-secret: ""
+  seed:
+    admin-email: admin@nhamhealth.local
+    admin-password: Admin123!
+    user-email: user@nhamhealth.local
+    user-password: User123!
+  upload:
+    directory: target/test-uploads
+  storage:
+    supabase:
+      url: ""
+      service-key: ""
+      bucket: nhamhealth-images
+  ai:
+    prompt-version: food-drink-vision-v5
+    food:
+      confirmation-threshold: 0.75
+      candidate-margin-threshold: 0.15
+      portion-confirmation-threshold: 0.70
+      component-confirmation-threshold: 0.65
+      database-match-threshold: 0.78
+    nvidia:
+      base-url: https://integrate.api.nvidia.com/v1
+      api-key: ""
+      model: nvidia/nemotron-nano-12b-v2-vl
+      nutrition-model: openai/gpt-oss-120b
+      recommendation-model: openai/gpt-oss-20b
+      text-max-tokens: 4096
+      reasoning-effort: low
+      nutrition-reasoning-effort: medium
+  mail:
+    from: no-reply@nhamhealth.local
+nhamhealth:
+  push:
+    enabled: false

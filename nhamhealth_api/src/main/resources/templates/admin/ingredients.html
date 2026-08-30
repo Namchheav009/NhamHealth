@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Ingredients | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-ingredients.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('ingredients')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Ingredients</h1>
+                        <span>Manage ingredient catalog, type grouping, and nutrition references.</span>
+                    </div>
+                    <p>Dashboard &gt; Meal Management &gt; Ingredients</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn btn-primary" id="openIngredientModal" type="button"><i class="bi bi-plus-lg"></i> Add New Ingredient</button>
+                    <button class="btn" id="exportIngredients" type="button"><i class="bi bi-download"></i> Export</button>
+                </div>
+            </div>
+
+            <div class="stats-grid two-up">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-flower1"></i></div>
+                    <div class="stat-content">
+                        <span>Total Ingredients</span>
+                        <strong th:text="${#numbers.formatInteger(totalIngredients, 0, 'COMMA')}">1,356</strong>
+                        <small>All ingredients</small>
+                    </div>
+                </article>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>All Ingredients</h2>
+                    <div class="panel-tools">
+                        <select class="table-filter-pill" id="categoryFilter" aria-label="Filter by ingredient category">
+                            <option value="all">All Types</option>
+                        </select>
+                        <input class="table-search" id="ingredientSearch" type="search" placeholder="Search ingredients..." aria-label="Search ingredients">
+                        <button class="btn btn-secondary" id="clearIngredientFilter" type="button">Clear</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ingredient Name</th>
+                            <th>Type</th>
+                            <th>Default Unit</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ingredientRows">
+                        <tr th:each="ingredient, iter : ${ingredients}" th:data-id="${ingredient.ingredientId}" th:data-name="${ingredient.ingredientName}" th:data-type="${ingredient.ingredientType}" th:data-unit="${ingredient.defaultUnit}" th:data-description="${ingredient.description}" th:data-image-url="${ingredient.imageUrl}">
+                            <td th:text="${iter.index + 1}">1</td>
+                            <td>
+                                <div class="ingredient-name">
+                                    <span class="ingredient-icon"><img th:if="${ingredient.imageUrl != null}" th:src="${ingredient.imageUrl}" th:alt="${ingredient.ingredientName}"><i th:unless="${ingredient.imageUrl != null}" class="bi bi-flower1"></i></span>
+                                    <span th:text="${ingredient.ingredientName}">Spinach</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="pill tag-green" th:text="${ingredient.ingredientType != null ? ingredient.ingredientType : 'General'}">Plant-Based</span>
+                            </td>
+                            <td th:text="${ingredient.defaultUnit != null ? ingredient.defaultUnit : '-'}">g</td>
+                            <td th:text="${ingredient.description != null ? ingredient.description : '-'}">Salads, Smoothies, Stir-fries</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="icon-button small" data-action="edit" type="button" aria-label="Edit ingredient"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger" data-action="delete" type="button" aria-label="Delete ingredient"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(ingredients)}" id="emptyIngredientRow">
+                            <td colspan="6" class="empty-state">No ingredients found. Add your first ingredient to begin.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="modal" id="ingredientModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ingredientModalTitle">
+        <div class="modal-header">
+            <div>
+                <h2 id="ingredientModalTitle">Add Ingredient</h2>
+                <p id="ingredientModalText">Enter ingredient information for your catalog.</p>
+            </div>
+            <button class="close" id="closeIngredientModal" type="button" aria-label="Close dialog">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form id="ingredientForm">
+            <div class="modal-body">
+                <div class="field">
+                    <label for="ingredientName">Ingredient name</label>
+                    <input id="ingredientName" name="ingredientName" type="text" maxlength="100" required>
+                </div>
+                <div class="field">
+                    <label for="ingredientType">Type</label>
+                    <input id="ingredientType" name="ingredientType" type="text" maxlength="50" list="ingredientTypes" placeholder="Example: Vegetable" required>
+                    <datalist id="ingredientTypes"></datalist>
+                </div>
+                <div class="field">
+                    <label for="defaultUnit">Default unit</label>
+                    <input id="defaultUnit" name="defaultUnit" type="text" maxlength="30" placeholder="Example: g, cup, tbsp">
+                </div>
+                <div class="field">
+                    <label for="ingredientImageFile">Ingredient image</label>
+                    <input id="ingredientImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp">
+                    <span class="field-help" id="ingredientImageHelp">Optional. JPG, PNG, or WebP; maximum 5 MB.</span>
+                </div>
+                <div class="field full">
+                    <label for="ingredientDescription">Description</label>
+                    <textarea id="ingredientDescription" name="description" maxlength="255" placeholder="Ingredient description..."></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelIngredientModal" type="button">Cancel</button>
+                <button class="btn btn-primary" id="saveIngredientButton" type="submit">Save Ingredient</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-ingredients.js}" defer></script>
+</body>
+</html>

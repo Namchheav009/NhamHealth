@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Settings | Nham Health Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}"><link rel="stylesheet" th:href="@{/css/admin-dashboard.css}"><link rel="stylesheet" th:href="@{/css/admin-setting.css}">
+</head>
+<body><div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('settings')}"></div>
+    <main class="main-area"><div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+            <div class="page-heading"><div><div class="title-line"><h1>Settings</h1><span>Your admin account preferences.</span></div><p>Dashboard &gt; System &gt; Settings</p></div>
+                <div class="heading-actions"><button class="btn" id="resetSettings" type="button"><i class="bi bi-arrow-counterclockwise"></i> Reset</button><button class="btn btn-primary" form="settingsForm" id="saveSettings" type="submit"><i class="bi bi-check2-circle"></i> Save changes</button></div></div>
+
+            <form id="settingsForm" th:action="@{/admin/settings}" method="post">
+                <div class="settings-grid">
+                    <article class="panel settings-card"><div class="card-icon"><i class="bi bi-sliders"></i></div><div class="panel-header"><div><h2>Appearance & language</h2><p>Choose how the admin experience should look.</p></div></div>
+                        <div class="setting-group"><label for="languageCode">Language</label><select id="languageCode" name="languageCode"><option value="en" th:selected="${languageCode == 'en'}">English</option><option value="km" th:selected="${languageCode == 'km'}">Khmer</option></select></div>
+                        <div class="setting-group"><label for="theme">Theme preference</label><select id="theme" name="theme"><option value="system" th:selected="${theme == 'system'}">Use system theme</option><option value="light" th:selected="${theme == 'light'}">Light</option><option value="dark" th:selected="${theme == 'dark'}">Dark</option></select></div>
+                    </article>
+
+                    <article class="panel settings-card"><div class="card-icon blue"><i class="bi bi-person-badge"></i></div><div class="panel-header"><div><h2>Account & security</h2><p>Identity supplied by the authenticated admin account.</p></div></div>
+                        <div class="account-detail"><span>Email</span><strong th:text="${accountEmail}">admin@example.com</strong></div><div class="account-detail"><span>Role</span><strong th:text="${accountRole}">ADMIN</strong></div>
+                        <div class="security-note"><i class="bi bi-shield-check"></i><span>Password and access controls are managed by the project security configuration.</span></div>
+                    </article>
+
+                    <article class="panel settings-card"><div class="card-icon orange"><i class="bi bi-bell"></i></div><div class="panel-header"><div><h2>Notifications</h2><p>Control how this account receives updates.</p></div></div>
+                        <label class="switch-row" for="emailNotifications"><span><strong>Email notifications</strong><small>Receive important updates by email.</small></span><input id="emailNotifications" name="emailNotifications" type="checkbox" value="true" th:checked="${emailNotifications}"><span class="switch"></span></label>
+                        <label class="switch-row" for="pushNotifications"><span><strong>Push notifications</strong><small>Receive notifications on supported devices.</small></span><input id="pushNotifications" name="pushNotifications" type="checkbox" value="true" th:checked="${pushNotifications}"><span class="switch"></span></label>
+                    </article>
+                </div>
+            </form>
+            <div class="settings-meta"><i class="bi bi-clock-history"></i><span id="lastUpdated" th:text="${lastUpdated != null ? 'Last saved ' + #temporals.format(lastUpdated, 'dd MMM yyyy, HH:mm') : 'Preferences have not been saved yet'}">Not saved</span></div>
+        </section>
+        <footer class="page-footer"><span>&copy; 2026 Nham Health. All rights reserved.</span><span>Version 1.0.0</span></footer>
+    </main></div><div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <script th:src="@{/js/admin-layout.js}"></script><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script th:src="@{/js/admin-setting.js(v=2)}"></script>
+</body></html>

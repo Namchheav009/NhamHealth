@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Moods | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-moods.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('moods')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Moods</h1>
+                        <span>Wellness emotion library</span>
+                    </div>
+                    <p>Dashboard &gt; Meal Management &gt; Moods</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" id="exportMoods" type="button"><i class="bi bi-download"></i> Export CSV</button>
+                    <button class="btn btn-primary" id="openMoodModal" type="button"><i class="bi bi-plus-lg"></i> Add mood</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon purple"><i class="bi bi-emoji-smile"></i></div>
+                    <div class="stat-content">
+                        <span>Total Moods</span>
+                        <strong id="totalMoodCount" th:text="${totalMoods}">10</strong>
+                        <small>All mood types</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-graph-up"></i></div>
+                    <div class="stat-content">
+                        <span>Active moods</span>
+                        <strong id="activeMoodCount" th:text="${activeMoods}">8</strong>
+                        <small id="activeMoodPercentage" th:text="${totalMoods > 0 ? #numbers.formatDecimal(activeMoods * 100.0 / totalMoods, 1, 1) + '% active' : 'No moods yet'}">80% active</small>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon pink"><i class="bi bi-heart"></i></div>
+                    <div class="stat-content">
+                        <span>Inactive moods</span>
+                        <strong id="inactiveMoodCount" th:text="${inactiveMoods}">2</strong>
+                        <small>Unavailable for new selections</small>
+                    </div>
+                </article>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <div><h2>All moods</h2><p><span id="visibleMoodCount" th:text="${totalMoods}">0</span> records shown</p></div>
+                    <div class="panel-tools">
+                        <select class="table-filter-pill" id="statusFilter" aria-label="Filter by status">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <input class="table-search" id="moodSearch" type="search" placeholder="Search moods..." aria-label="Search moods">
+                        <button class="btn btn-secondary" id="clearMoodFilter" type="button">Clear</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Mood Name</th>
+                            <th>Emoji</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="moodRows">
+                        <tr th:each="mood : ${moods}" th:data-id="${mood.moodId}" th:data-name="${#strings.toLowerCase(mood.moodName)}" th:data-emoji="${mood.emojiCode ?: ''}" th:data-status="${mood.isActive != null and mood.isActive ? 'active' : 'inactive'}">
+                            <td><div class="mood-name"><span class="mood-avatar" th:text="${mood.emojiCode ?: '•'}">😄</span><strong th:text="${mood.moodName}">Happy</strong></div></td>
+                            <td><span class="emoji-code" th:text="${mood.emojiCode ?: '—'}">😄</span></td>
+                            <td><span class="status-badge" th:classappend="${mood.isActive != null and mood.isActive ? ' active-status' : ' inactive-status'}" th:text="${mood.isActive != null and mood.isActive ? 'Active' : 'Inactive'}">Active</span></td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="icon-button small edit-mood" type="button" title="Edit mood"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="icon-button small danger delete-mood" type="button" title="Delete mood"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(moods)}" id="emptyMoodRow"><td class="empty-state" colspan="4"><i class="bi bi-emoji-smile"></i><strong>No moods yet</strong><span>Add a mood for wellness tracking and AI recommendations.</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="modal" id="moodModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="moodModalTitle">
+        <div class="modal-header">
+            <div>
+                <h2 id="moodModalTitle">Add mood</h2>
+                <p id="moodModalDescription">Create an emotion option for wellness tracking.</p>
+            </div>
+            <button class="close" id="closeMoodModal" type="button" aria-label="Close dialog">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form id="moodForm" novalidate>
+            <input id="moodId" name="moodId" type="hidden">
+            <div class="modal-body">
+                <div class="field">
+                    <label for="moodName">Mood name</label>
+                    <input id="moodName" name="moodName" type="text" maxlength="100" placeholder="e.g. Energized" required>
+                </div>
+                <div class="field">
+                    <label for="moodEmoji">Emoji</label>
+                    <input id="moodEmoji" name="emojiCode" type="text" maxlength="30" placeholder="1F604 or 😄" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="moodStatus">Status</label>
+                    <select id="moodStatus" name="status" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="field full emoji-picker-field">
+                    <div class="emoji-picker-heading">
+                        <label id="feelingEmojiLabel">Feeling emoji</label>
+                        <small>Choose one to fill the emoji field. You can still enter a custom emoji.</small>
+                    </div>
+                    <div class="emoji-presets" role="group" aria-labelledby="feelingEmojiLabel">
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Happy" data-emoji="1F604" aria-label="Happy emoji">&#128516;<span>Happy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Great" data-emoji="1F929" aria-label="Great emoji">&#129321;<span>Great</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Excited" data-emoji="1F917" aria-label="Excited emoji">&#129303;<span>Excited</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Joyful" data-emoji="1F601" aria-label="Joyful emoji">&#128513;<span>Joyful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Loved" data-emoji="1F970" aria-label="Loved emoji">&#129392;<span>Loved</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Calm" data-emoji="1F60C" aria-label="Calm emoji">&#128524;<span>Calm</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Relaxed" data-emoji="1F60E" aria-label="Relaxed emoji">&#128526;<span>Relaxed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Grateful" data-emoji="1F64F" aria-label="Grateful emoji">&#128591;<span>Grateful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Motivated" data-emoji="1F4AA" aria-label="Motivated emoji">&#128170;<span>Motivated</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Focused" data-emoji="1F9E0" aria-label="Focused emoji">&#129504;<span>Focused</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Energized" data-emoji="26A1" aria-label="Energized emoji">&#9889;<span>Energized</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hopeful" data-emoji="1F91E" aria-label="Hopeful emoji">&#128286;<span>Hopeful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Okay" data-emoji="1F642" aria-label="Okay emoji">&#128578;<span>Okay</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Proud" data-emoji="1F973" aria-label="Proud emoji">&#129395;<span>Proud</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Playful" data-emoji="1F61C" aria-label="Playful emoji">&#128540;<span>Playful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Curious" data-emoji="1F9D0" aria-label="Curious emoji">&#129488;<span>Curious</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Surprised" data-emoji="1F632" aria-label="Surprised emoji">&#128562;<span>Surprised</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Confident" data-emoji="1F60F" aria-label="Confident emoji">&#128527;<span>Confident</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Peaceful" data-emoji="1F54A" aria-label="Peaceful emoji">&#128330;<span>Peaceful</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Relieved" data-emoji="1F62E-200D-1F4A8" aria-label="Relieved emoji">&#128558;&#8205;&#128168;<span>Relieved</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Busy" data-emoji="1F635-200D-1F4AB" aria-label="Busy emoji">&#128565;&#8205;&#128171;<span>Busy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Tired" data-emoji="1F62B" aria-label="Tired emoji">&#128555;<span>Tired</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sleepy" data-emoji="1F634" aria-label="Sleepy emoji">&#128564;<span>Sleepy</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Stressed" data-emoji="1F616" aria-label="Stressed emoji">&#128534;<span>Stressed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Anxious" data-emoji="1F630" aria-label="Anxious emoji">&#128560;<span>Anxious</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Overwhelmed" data-emoji="1F635" aria-label="Overwhelmed emoji">&#128565;<span>Overwhelmed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Confused" data-emoji="1F615" aria-label="Confused emoji">&#128533;<span>Confused</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Bored" data-emoji="1F610" aria-label="Bored emoji">&#128528;<span>Bored</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sad" data-emoji="1F622" aria-label="Sad emoji">&#128546;<span>Sad</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Lonely" data-emoji="1F614" aria-label="Lonely emoji">&#128532;<span>Lonely</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Angry" data-emoji="1F620" aria-label="Angry emoji">&#128544;<span>Angry</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Frustrated" data-emoji="1F624" aria-label="Frustrated emoji">&#128548;<span>Frustrated</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Disappointed" data-emoji="1F61E" aria-label="Disappointed emoji">&#128542;<span>Disappointed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Embarrassed" data-emoji="1F633" aria-label="Embarrassed emoji">&#128563;<span>Embarrassed</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Nervous" data-emoji="1F62C" aria-label="Nervous emoji">&#128556;<span>Nervous</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Afraid" data-emoji="1F628" aria-label="Afraid emoji">&#128552;<span>Afraid</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hurt" data-emoji="1F915" aria-label="Hurt emoji">&#129301;<span>Hurt</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Jealous" data-emoji="1F612" aria-label="Jealous emoji">&#128530;<span>Jealous</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Drained" data-emoji="1FAE0" aria-label="Drained emoji">&#129760;<span>Drained</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Restless" data-emoji="1F623" aria-label="Restless emoji">&#128547;<span>Restless</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Sick" data-emoji="1F912" aria-label="Sick emoji">&#129298;<span>Sick</span></button>
+                        <button class="emoji-preset" type="button" data-mood-preset data-name="Hungry" data-emoji="1F60B" aria-label="Hungry emoji">&#128523;<span>Hungry</span></button>
+                    </div>
+                </div>
+                <p class="form-error full" id="moodFormError" role="alert" hidden></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelMoodModal" type="button">Cancel</button>
+                <button class="btn btn-primary" id="saveMoodButton" type="submit">Save mood</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-moods.js(v=20260817-2)}" defer></script>
+</body>
+</html>

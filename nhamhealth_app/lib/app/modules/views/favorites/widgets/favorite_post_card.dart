@@ -1,0 +1,198 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../../theme/app_colors.dart';
+import '../../../models/favorites/favorite_post.dart';
+
+class FavoritePostCard extends StatelessWidget {
+  const FavoritePostCard({
+    super.key,
+    required this.post,
+    required this.onRemove,
+  });
+
+  final FavoritePost post;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface.withValues(alpha: .94),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _authorHeader(context),
+          Text(
+            post.title.tr,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: context.appText,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            post.body.tr,
+            style: TextStyle(
+              fontSize: 11,
+              color: context.appMutedText,
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 7),
+          const Wrap(
+            spacing: 7,
+            runSpacing: 4,
+            children: [_Tag('#HealthyMeal'), _Tag('#HighProtein')],
+          ),
+          const SizedBox(height: 9),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: 1.75,
+              child: Image.asset(
+                post.image,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder:
+                    (_, _, _) => const ColoredBox(
+                      color: Color(0xFFEAF4EE),
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                      ),
+                    ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _Metric(
+                Icons.favorite_rounded,
+                _short(post.likes),
+                const Color(0xFFFF5364),
+              ),
+              _Metric(
+                Icons.chat_bubble_outline_rounded,
+                '${post.comments}',
+                Colors.grey,
+              ),
+              _Metric(Icons.reply_rounded, '${post.shares}', Colors.grey),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _authorHeader(BuildContext context) {
+    return Row(
+      children: [
+        const CircleAvatar(
+          radius: 22,
+          backgroundImage: AssetImage('assets/images/profile/profile.jpg'),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                post.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: context.appText,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${post.timeAgo.tr}  •  ${post.role.tr}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          'Following'.tr,
+          style: TextStyle(fontSize: 9, color: context.appMutedText),
+        ),
+        SizedBox(
+          width: 32,
+          height: 36,
+          child: PopupMenuButton<String>(
+            padding: EdgeInsets.zero,
+            iconSize: 20,
+            icon: Icon(Icons.more_vert, color: context.appMutedText),
+            onSelected: (_) => onRemove(),
+            itemBuilder:
+                (_) => [
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Text('Remove from favorites'.tr),
+                  ),
+                ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _short(int value) =>
+      value >= 1000 ? '${value ~/ 1000}k' : '$value';
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: context.appSoftGreen,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF0AA653),
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric(this.icon, this.text, this.color);
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 5),
+        Text(text, style: TextStyle(fontSize: 10, color: context.appMutedText)),
+      ],
+    );
+  }
+}

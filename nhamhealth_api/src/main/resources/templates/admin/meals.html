@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Meals | Nham Health Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-meals.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('meals')}"></div>
+
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+
+        <section class="page-content">
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Meals</h1>
+                        <span>Manage meal content, nutrition summaries, and publishing status.</span>
+                    </div>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" id="exportButton" type="button"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openModal" type="button"><i class="bi bi-plus-lg"></i> Add Meal</button>
+                </div>
+            </div>
+
+            <div class="meals-page">
+                <section class="filters">
+                    <div class="search">
+                        <input id="searchInput" type="search" placeholder="Search by meal name...">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <label class="filter"><span>Category</span>
+                        <select id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option th:each="category : ${mealCategories}" th:value="${category.categoryName}" th:text="${category.categoryName}">Category</option>
+                        </select>
+                    </label>
+                    <label class="filter"><span>Status</span>
+                        <select id="statusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </label>
+                    <label class="filter"><span>Tag</span>
+                        <select id="tagFilter">
+                            <option value="">All Tags</option>
+                            <option th:each="tag : ${mealTags}" th:value="${tag}" th:text="${tag}">Tag</option>
+                        </select>
+                    </label>
+                    <button class="btn clear-btn" id="clearFilters" type="button"><i class="bi bi-x-lg"></i> Clear Filters</button>
+                </section>
+
+                <section class="summary-grid">
+                    <article class="summary-card">
+                        <div class="summary-icon green"><i class="bi bi-egg-fried"></i></div>
+                        <div>
+                            <span class="summary-label">Total Meals</span>
+                            <strong class="summary-number" id="totalMeals">0</strong>
+                            <span class="change">Live catalog total</span>
+                        </div>
+                    </article>
+                    <article class="summary-card">
+                        <div class="summary-icon blue"><i class="bi bi-star-fill"></i></div>
+                        <div>
+                            <span class="summary-label">Average Rating</span>
+                            <strong class="summary-number" id="averageRating">0.0 / 5</strong>
+                            <span class="change">Based on published reviews</span>
+                        </div>
+                    </article>
+                    <article class="summary-card">
+                        <div class="summary-icon pink"><i class="bi bi-heart-fill"></i></div>
+                        <div>
+                            <span class="summary-label">Favorites Saved</span>
+                            <strong class="summary-number" id="favoritesSaved">0</strong>
+                            <span class="change">Saved across all meals</span>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="table-card">
+                    <div class="table-title">
+                        <h2>All Meals</h2>
+                        <span id="resultText">Loading meals...</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Meal Name</th><th>Category</th><th>Calories</th><th>Serving</th><th>Rating</th><th>Review Count</th><th>Favorite Count</th><th>Status</th><th>Updated Date</th><th>Image URL</th><th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="mealRows"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <span id="showingText">Loading meals...</span>
+                        <nav class="pagination" id="mealPagination" aria-label="Meal pages">
+                            <button>‹</button><button class="active">1</button><button>2</button><button>3</button><button>…</button><button>156</button><button>›</button>
+                        </nav>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Nham Health. All rights reserved.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="modal" id="mealModal">
+    <section class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="mealModalTitle">Add Meal</h2>
+                <p id="mealModalText">Enter meal information for your catalog.</p>
+            </div>
+            <button class="close" id="closeModal" type="button"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form id="mealForm">
+            <div class="modal-body">
+                <div class="field"><label>Meal name</label><input name="mealName" type="text" maxlength="150" required></div>
+                <div class="field"><label>Category</label><select name="categoryId" required><option value="">Select category</option><option th:each="category : ${mealCategories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Category</option></select></div>
+                <div class="field"><label>Calories</label><input name="calories" type="number" min="0" step="0.1"></div>
+                <div class="field"><label>Servings</label><input name="servings" type="number" min="1" max="100" required></div>
+                <div class="field"><label>Cooking time (minutes)</label><input name="cookingTimeMinutes" type="number" min="0" max="1440"></div>
+                <div class="field"><label>Difficulty</label><select name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                <div class="field"><label>Status</label><select name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
+                <div class="field full"><label>Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><button id="openMealImageViewer" class="meal-image-preview-button" type="button" aria-label="View meal image at full size"><img id="mealImagePreviewImage" alt="Meal image preview"></button><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users. Select the image to view it larger.</span></div></div></div>
+                <div class="field full"><label>Description</label><textarea name="description" maxlength="500" placeholder="Meal description..."></textarea></div>
+                <div class="field full related-data-summary" id="mealRelatedData" hidden>
+                    <label>Related meal data</label>
+                    <div class="related-data-grid">
+                        <span><strong data-related-count="ingredients">0</strong> Ingredients</span>
+                        <span><strong data-related-count="nutrition">0</strong> Nutrition fields</span>
+                        <span><strong data-related-count="recipeSteps">0</strong> Recipe Steps</span>
+                        <span><strong data-related-count="reviews">0</strong> Reviews</span>
+                    </div>
+                </div>
+                <div class="field full meal-ingredients-field">
+                    <div class="meal-ingredients-heading">
+                        <div><label for="ingredientSearchInput">Ingredients</label><span>Search the ingredient catalog, select each ingredient, then add its recipe details.</span></div>
+                    </div>
+                    <div class="ingredient-picker">
+                        <input id="ingredientSearchInput" type="search" autocomplete="off" placeholder="Search ingredients to add..." aria-controls="ingredientSearchResults">
+                        <div id="ingredientSearchResults" class="ingredient-search-results" role="listbox" aria-label="Ingredient search results"></div>
+                    </div>
+                    <div id="selectedMealIngredients" class="selected-meal-ingredients" aria-live="polite"></div>
+                    <span class="field-help">At least one ingredient is required. Quantity, unit, and preparation note are optional.</span>
+                </div>
+                <div class="field full recipe-steps-field">
+                    <div class="recipe-steps-heading">
+                        <div><label>Cooking steps</label><span>Add the instructions users need to prepare this meal.</span></div>
+                        <button class="btn step-add" id="addRecipeStep" type="button"><i class="bi bi-plus-lg"></i> Add Step</button>
+                    </div>
+                    <div id="recipeSteps">
+                        <article class="recipe-step" data-recipe-step>
+                            <div class="recipe-step-title"><strong>Step 1</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div>
+                            <input data-step-title type="text" maxlength="150" placeholder="Step title (optional)">
+                            <textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea>
+                            <input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step 1">
+                            <div class="recipe-step-image-preview" data-step-image-preview hidden>
+                                <img data-step-image-preview-image alt="Cooking step image preview">
+                                <div>
+                                    <strong data-step-image-preview-title>Current step image</strong>
+                                    <span data-step-image-preview-text>This image is currently shown to users.</span>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelModal" type="button">Cancel</button>
+                <button class="btn btn-primary" id="saveMealButton" type="submit">Save Meal</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="image-viewer" id="mealImageViewer" hidden aria-hidden="true">
+    <button class="image-viewer-backdrop" id="closeMealImageViewer" type="button" aria-label="Close image viewer"></button>
+    <section class="image-viewer-content" role="dialog" aria-modal="true" aria-label="Meal image preview">
+        <button class="close image-viewer-close" id="closeMealImageViewerButton" type="button" aria-label="Close image viewer"><i class="bi bi-x-lg"></i></button>
+        <img id="mealImageViewerImage" alt="Full size meal image">
+    </section>
+</div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script th:src="@{/js/admin-meals.js}"></script>
+</body>
+</html>

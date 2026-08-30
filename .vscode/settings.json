@@ -1,0 +1,33 @@
+{
+  "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-21.0.10",
+  "java.import.gradle.java.home": "C:\\Program Files\\Java\\jdk-21.0.10",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Program Files\\Java\\jdk-21.0.10",
+      "default": true
+    }
+  ],
+  "java.compile.nullAnalysis.mode": "automatic",
+  "cmake.ignoreCMakeListsMissing": true,
+  "java.import.exclusions": [
+    "**/.dart_tool/**",
+    "**/build/**"
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true,
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/target": true,
+    ".m2": true,
+    ".dart_appdata": true
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/target": true,
+    ".m2": true,
+    ".dart_appdata": true
+  }
+}

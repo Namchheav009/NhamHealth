@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Follows | Nham Health Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-follows.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layouts/sidebar :: sidebar('follows')}"></div>
+    <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+
+            <!-- Page Heading -->
+            <div class="page-heading">
+                <div>
+                    <div class="title-line">
+                        <h1>Follows</h1>
+                        <span>Manage user follows and connections.</span>
+                    </div>
+                    <p>Dashboard &gt; Community &gt; Follows</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="btn" id="exportFollows" type="button"><i class="bi bi-download"></i> Export</button>
+                    <button class="btn btn-primary" id="openFollowModal" type="button"><i class="bi bi-plus-lg"></i> New Follow</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-person-plus-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Total Follows</span>
+                        <strong id="totalFollows" th:text="${totalFollows}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-content">
+                        <span>Mutual Connections</span>
+                        <strong id="mutualConnections" th:text="${mutualConnections}">0</strong>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-clock-fill"></i></div>
+                    <div class="stat-content">
+                        <span>New This Week</span>
+                        <strong id="newThisWeek" th:text="${newThisWeek}">0</strong>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Filters -->
+            <section class="filters-grid">
+                <div class="field-group">
+                    <label for="followSearch">Search</label>
+                    <input id="followSearch" type="search" placeholder="Search follower or following">
+                </div>
+                <div class="field-group">
+                    <label for="followStatus">Status</label>
+                    <select id="followStatus">
+                        <option value="">All</option>
+                        <option value="active">Active</option>
+                        <option value="blocked">Blocked</option>
+                    </select>
+                </div>
+                <button class="btn" id="clearFollowFilters" type="button">Clear Filters</button>
+            </section>
+
+            <!-- Follows Table -->
+            <article class="panel table-panel">
+                <div class="panel-header">
+                    <h2>Follows</h2>
+                    <button class="action-button" id="refreshFollows" type="button">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Follower</th>
+                                <th>Following</th>
+                                <th>Since</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="followRows">
+                            <tr th:each="f, s : ${follows}" th:data-id="${f.followId}" th:data-follower-id="${f.followerUser.userId}" th:data-following-id="${f.followingUser.userId}" th:data-follower="${f.followerUser.email}" th:data-status="${f.status}" th:data-requested-at="${f.requestedAt}">
+                                <td th:text="${s.count}">1</td>
+                                <td>
+                                    <strong th:text="${f.followerUser.name}">Follower</strong>
+                                    <small th:text="${f.followerUser.email}">email</small>
+                                </td>
+                                <td>
+                                    <strong th:text="${f.followingUser.name}">Following</strong>
+                                    <small th:text="${f.followingUser.email}">email</small>
+                                </td>
+                                <td th:text="${f.requestedAt == null ? '—' : #temporals.format(f.requestedAt, 'dd MMM yyyy, HH:mm')}">05 Aug 2026</td>
+                                <td>
+                                    <span class="status-pill" th:classappend="${' status-' + (f.status ?: 'unknown')}" th:text="${f.status ?: 'unknown'}">active</span>
+                                </td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="icon-button edit-follow" type="button" aria-label="Change status">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="icon-button danger delete-follow" type="button" aria-label="Remove follow">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${follows.empty}">
+                                <td colspan="6" class="empty-state">No follows found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <!-- Add Follow Modal -->
+            <div class="modal" id="followModal" role="dialog" aria-modal="true" aria-labelledby="followModalTitle">
+                <section class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="followModalTitle">New Follow</h2>
+                            <p>Create a follow relationship.</p>
+                        </div>
+                        <button class="icon-button" id="closeFollowModal" type="button" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <form id="followForm" th:action="@{/admin/follows}" method="post">
+                        <div class="modal-body">
+                            <div class="field-group">
+                                <label for="followerUser">Follower</label>
+                                <select id="followerUser" name="followerId" required>
+                                    <option value="">Select follower</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="followingUser">Following</label>
+                                <select id="followingUser" name="followingId" required>
+                                    <option value="">Select user to follow</option>
+                                    <option th:each="user : ${users}" th:value="${user.userId}" th:text="${user.name + ' · ' + user.email}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" id="cancelFollowModal" type="button">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Create Follow</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+        </section>
+        <footer class="page-footer">
+            <span>© 2026 Nham Health.</span>
+            <span>Version 1.0.0</span>
+        </footer>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script th:src="@{/js/admin-layout.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/admin-follows.js(v=2)}"></script>
+
+</body>
+</html>
