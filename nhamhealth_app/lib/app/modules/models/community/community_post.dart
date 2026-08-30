@@ -15,6 +15,7 @@ class CommunityPost {
     this.tags = const [],
     this.tagIds = const [],
     this.ageLabel = 'Just now',
+    this.createdAt,
     this.likes = 0,
     this.comments = 0,
     this.shares = 0,
@@ -33,6 +34,8 @@ class CommunityPost {
     this.aiStatus = 'PENDING',
     this.aiReviewReason = '',
     this.mealId,
+    this.ingredients = const [],
+    this.steps = const [],
   });
 
   final String id;
@@ -46,6 +49,8 @@ class CommunityPost {
   final CommunitySharedPost? sharedPost;
   final String mealName, difficulty, aiStatus, aiReviewReason;
   final int? cookingTimeMinutes, servings, mealId;
+  final List<MealPostIngredient> ingredients;
+  final List<MealPostStep> steps;
   final String author;
   final String role;
   final int authorId;
@@ -53,6 +58,7 @@ class CommunityPost {
   final List<String> tags;
   final List<int> tagIds;
   final String ageLabel;
+  final DateTime? createdAt;
   int likes;
   int comments;
   int shares;
@@ -77,12 +83,19 @@ class CommunityPost {
         .whereType<int>()
         .toList(growable: false),
     ageLabel: (json['ageLabel'] as String? ?? 'Just now').trim(),
+    createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal(),
     likes: (json['likes'] as num?)?.toInt() ?? 0,
     comments: (json['comments'] as num?)?.toInt() ?? 0,
     shares: (json['shares'] as num?)?.toInt() ?? 0,
-    isFollowingAuthor: json['isFollowingAuthor'] as bool? ?? false,
-    isLiked: json['isLiked'] as bool? ?? false,
-    isSaved: json['isSaved'] as bool? ?? false,
+    // Spring serializes the CommunityPostResponse record components without
+    // the Flutter-facing `is` prefix (followingAuthor, liked, and saved).
+    // Keep accepting the normalized names as well for locally-created data.
+    isFollowingAuthor:
+        json['followingAuthor'] as bool? ??
+        json['isFollowingAuthor'] as bool? ??
+        false,
+    isLiked: json['liked'] as bool? ?? json['isLiked'] as bool? ?? false,
+    isSaved: json['saved'] as bool? ?? json['isSaved'] as bool? ?? false,
     visibility: CommunityPostVisibility.fromApi(
       json['visibility'] as String? ?? 'PUBLIC',
     ),
@@ -101,6 +114,17 @@ class CommunityPost {
     aiStatus: (json['aiStatus'] as String? ?? 'PENDING').trim(),
     aiReviewReason: (json['aiReviewReason'] as String? ?? '').trim(),
     mealId: (json['mealId'] as num?)?.toInt(),
+    ingredients: (json['ingredients'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map(
+          (item) =>
+              MealPostIngredient.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(growable: false),
+    steps: (json['steps'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((item) => MealPostStep.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false),
   );
 
   CommunityPost copyWith({
@@ -118,6 +142,7 @@ class CommunityPost {
     List<String>? tags,
     List<int>? tagIds,
     String? ageLabel,
+    DateTime? createdAt,
     int? likes,
     int? comments,
     int? shares,
@@ -132,6 +157,8 @@ class CommunityPost {
     String? aiStatus,
     String? aiReviewReason,
     int? mealId,
+    List<MealPostIngredient>? ingredients,
+    List<MealPostStep>? steps,
   }) => CommunityPost(
     id: id,
     description: description ?? this.description,
@@ -148,6 +175,7 @@ class CommunityPost {
     tags: tags ?? this.tags,
     tagIds: tagIds ?? this.tagIds,
     ageLabel: ageLabel ?? this.ageLabel,
+    createdAt: createdAt ?? this.createdAt,
     likes: likes ?? this.likes,
     comments: comments ?? this.comments,
     shares: shares ?? this.shares,
@@ -162,6 +190,8 @@ class CommunityPost {
     aiStatus: aiStatus ?? this.aiStatus,
     aiReviewReason: aiReviewReason ?? this.aiReviewReason,
     mealId: mealId ?? this.mealId,
+    ingredients: ingredients ?? this.ingredients,
+    steps: steps ?? this.steps,
   );
 
   static List<String> _imageUrls(Map<String, dynamic> json) {
@@ -173,6 +203,53 @@ class CommunityPost {
     final imageUrl = (json['imageUrl'] as String? ?? '').trim();
     return imageUrl.isEmpty ? const [] : [imageUrl];
   }
+}
+
+class MealPostIngredient {
+  const MealPostIngredient({
+    required this.ingredientName,
+    required this.amount,
+    required this.unit,
+  });
+  final String ingredientName;
+  final num? amount;
+  final String unit;
+  factory MealPostIngredient.fromJson(Map<String, dynamic> json) =>
+      MealPostIngredient(
+        ingredientName:
+            '${json['ingredientName'] ?? json['name'] ?? ''}'.trim(),
+        amount: json['amount'] as num?,
+        unit: '${json['unit'] ?? ''}'.trim(),
+      );
+  Map<String, dynamic> toJson() => {
+    'name': ingredientName,
+    'amount': amount,
+    'unit': unit,
+  };
+}
+
+class MealPostStep {
+  const MealPostStep({
+    required this.stepNumber,
+    required this.instruction,
+    this.imageUrl = '',
+  });
+  final int stepNumber;
+  final String instruction;
+  final String imageUrl;
+  factory MealPostStep.fromJson(Map<String, dynamic> json) => MealPostStep(
+    stepNumber:
+        (json['stepNumber'] as num?)?.toInt() ??
+        (json['number'] as num?)?.toInt() ??
+        0,
+    instruction: '${json['instruction'] ?? ''}'.trim(),
+    imageUrl: '${json['imageUrl'] ?? ''}'.trim(),
+  );
+  Map<String, dynamic> toJson() => {
+    'title': 'Step $stepNumber',
+    'instruction': instruction,
+    if (imageUrl.isNotEmpty) 'imageUrl': imageUrl,
+  };
 }
 
 class CommunitySharedPost {

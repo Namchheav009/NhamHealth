@@ -9,11 +9,9 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/community/community_comment.dart';
-import '../../models/community/community_person.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_reply_address.dart';
-import '../../models/community/community_types.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../../../core/services/auth_service.dart';
 import 'community_post_editor_page.dart';
@@ -147,169 +145,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     }
   }
 
-  Future<void> _showShareToFriends() async {
-    if (_updatingPost) return;
-    try {
-      final people = await _repository.getPeople();
-      final friends = people[FriendsView.friends] ?? const <CommunityPerson>[];
-      final selectedIds = <String>{};
-      var isSending = false;
-      await Get.bottomSheet<void>(
-        StatefulBuilder(
-          builder:
-              (context, setSheetState) => SafeArea(
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Share with friends',
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Choose friends to send this post to.',
-                        style: TextStyle(color: Color(0xFF667069)),
-                      ),
-                      const SizedBox(height: 12),
-                      if (friends.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Text(
-                            'Add friends before sharing posts privately.',
-                          ),
-                        )
-                      else
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 280),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: friends.length,
-                            separatorBuilder:
-                                (_, _) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final friend = friends[index];
-                              final selected = selectedIds.contains(friend.id);
-                              return CheckboxListTile(
-                                value: selected,
-                                onChanged:
-                                    isSending
-                                        ? null
-                                        : (_) => setSheetState(() {
-                                          selected
-                                              ? selectedIds.remove(friend.id)
-                                              : selectedIds.add(friend.id);
-                                        }),
-                                contentPadding: EdgeInsets.zero,
-                                controlAffinity:
-                                    ListTileControlAffinity.trailing,
-                                activeColor: _green,
-                                title: Text(
-                                  friend.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle:
-                                    friend.detail == null
-                                        ? null
-                                        : Text(friend.detail!),
-                                secondary: _avatar(
-                                  friend.avatarUrl,
-                                  radius: 20,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed:
-                              selectedIds.isEmpty || isSending
-                                  ? null
-                                  : () async {
-                                    setSheetState(() => isSending = true);
-                                    try {
-                                      await _repository.sharePost(
-                                        _post.id,
-                                        recipientIds: selectedIds.toList(),
-                                      );
-                                      if (!mounted) return;
-                                      setState(() {
-                                        _post = _post.copyWith(
-                                          shares:
-                                              _post.shares + selectedIds.length,
-                                        );
-                                      });
-                                      widget.onPostChanged?.call();
-                                      Get.back<void>();
-                                      unawaited(
-                                        AppAlert.success(
-                                          title: 'Post sent',
-                                          message:
-                                              'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
-                                        ),
-                                      );
-                                    } on Object catch (error) {
-                                      setSheetState(() => isSending = false);
-                                      unawaited(
-                                        AppAlert.error(
-                                          title: 'Could not send post',
-                                          message: error.toString(),
-                                        ),
-                                      );
-                                    }
-                                  },
-                          icon:
-                              isSending
-                                  ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                  : const Icon(Icons.send_rounded),
-                          label: Text(isSending ? 'Sending...' : 'Send'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _green,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-        ),
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-      );
-    } on Object catch (error) {
-      if (mounted) {
-        unawaited(
-          AppAlert.error(
-            title: 'Could not share post',
-            message: error.toString(),
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _shareToFeed(
     String message,
     CommunityPostVisibility visibility,
@@ -370,8 +205,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           ),
           transition: Transition.rightToLeft,
         );
-      case CommunityShareAction.sendToFriends:
-        await _showShareToFriends();
     }
   }
 
@@ -722,13 +555,96 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     ),
   );
 
-  Widget _postSummary() => ProfilePostCard(
-    post: _post,
-    onLike: _togglePostLike,
-    onComment: _focusComposer,
-    onShare: _showShareOptions,
-    onOptions: _showPostOptions,
-    isLiking: _updatingPost,
+  Widget _postSummary() => Column(
+    children: [
+      ProfilePostCard(
+        post: _post,
+        onLike: _togglePostLike,
+        onComment: _focusComposer,
+        onShare: _showShareOptions,
+        onOptions: _showPostOptions,
+        isLiking: _updatingPost,
+      ),
+      if (_post.ingredients.isNotEmpty || _post.steps.isNotEmpty)
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 14),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFE3EBE5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_post.ingredients.isNotEmpty) ...[
+                const Text(
+                  'Ingredients',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                ..._post.ingredients.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.ingredientName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        Text(
+                          '${item.amount ?? ''} ${item.unit}',
+                          style: const TextStyle(color: Color(0xFF43845C)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (_post.ingredients.isNotEmpty && _post.steps.isNotEmpty)
+                const Divider(height: 32),
+              if (_post.steps.isNotEmpty) ...[
+                const Text(
+                  'How to Cook',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                ..._post.steps.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: const Color(0xFF0AAA55),
+                          child: Text(
+                            '${item.stepNumber}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item.instruction,
+                            style: const TextStyle(height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+    ],
   );
 
   // Kept temporarily as a reference while all post surfaces use the shared card.

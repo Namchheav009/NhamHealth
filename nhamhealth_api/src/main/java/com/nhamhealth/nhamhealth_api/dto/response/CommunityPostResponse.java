@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.dto.response;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 public record CommunityPostResponse(
@@ -10,4 +11,8 @@ public record CommunityPostResponse(
         boolean liked, boolean followingAuthor, String visibility,
         boolean allowComments, boolean allowReplies, List<Integer> tagIds,
         String mealName, Integer cookingTimeMinutes, Integer servings, String difficulty,
-        String aiStatus, String aiReviewReason, Integer mealId) { }
+        String aiStatus, String aiReviewReason, Integer mealId, boolean saved,
+        List<MealPostIngredient> ingredients, List<MealPostStep> steps) {
+    public record MealPostIngredient(String ingredientName, BigDecimal amount, String unit) { }
+    public record MealPostStep(Integer stepNumber, String instruction, String imageUrl) { }
+}

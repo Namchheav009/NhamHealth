@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-enum CommunityShareAction { shareNow, writePost, sendToFriends }
+enum CommunityShareAction { shareNow, writePost }
 
 Future<CommunityShareAction?> showCommunityShareActions({
   required bool canShareToFeed,
@@ -53,12 +53,6 @@ Future<CommunityShareAction?> showCommunityShareActions({
             subtitle: 'Add your thoughts and choose an audience',
             enabled: canShareToFeed,
             onTap: () => Get.back(result: CommunityShareAction.writePost),
-          ),
-          _ShareActionTile(
-            icon: Icons.send_rounded,
-            title: 'Send to friends',
-            subtitle: 'Share privately with selected friends',
-            onTap: () => Get.back(result: CommunityShareAction.sendToFriends),
           ),
         ],
       ),

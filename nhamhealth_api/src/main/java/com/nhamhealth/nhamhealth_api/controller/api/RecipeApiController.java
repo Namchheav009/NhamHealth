@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.controller.api;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.RecipeResponse;
 import com.nhamhealth.nhamhealth_api.service.RecipeFlowService;
+import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
 
 import jakarta.validation.Valid;
 
@@ -29,7 +31,8 @@ import jakarta.validation.Valid;
 @RequestMapping({"/api/v1/recipes", "/api/community/meals"})
 public class RecipeApiController {
     private final RecipeFlowService recipes;
-    public RecipeApiController(RecipeFlowService recipes) { this.recipes = recipes; }
+    private final ProfileImageStorageService images;
+    public RecipeApiController(RecipeFlowService recipes, ProfileImageStorageService images) { this.recipes = recipes; this.images = images; }
 
     @GetMapping("/mine") public List<RecipeResponse> mine(@AuthenticationPrincipal Jwt jwt) { return recipes.mine(userId(jwt)); }
     @GetMapping public List<RecipeResponse> feed(@AuthenticationPrincipal Jwt jwt) { return recipes.feed(userId(jwt)); }
@@ -39,6 +42,8 @@ public class RecipeApiController {
     public RecipeResponse create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestPart("recipe") RecipeRequest recipe, @RequestPart(value = "image", required = false) MultipartFile image) { return recipes.create(userId(jwt), recipe, image); }
     @PutMapping(value = "/{recipeId}", consumes = "multipart/form-data")
     public RecipeResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId, @Valid @RequestPart("recipe") RecipeRequest recipe, @RequestPart(value = "image", required = false) MultipartFile image) { return recipes.update(userId(jwt), recipeId, recipe, image); }
+    @PostMapping(value = "/step-images", consumes = "multipart/form-data")
+    public Map<String, String> uploadStepImage(@AuthenticationPrincipal Jwt jwt, @RequestPart("file") MultipartFile file) { userId(jwt); return Map.of("imageUrl", images.storeRecipeStepImage(file)); }
     @PostMapping("/{recipeId}/publish") public RecipeResponse publish(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.publish(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/ai-check") public RecipeResponse aiCheck(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/ai-review") public RecipeResponse aiReview(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }

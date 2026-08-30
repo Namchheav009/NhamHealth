@@ -73,7 +73,13 @@ class CommunityPostDetailController extends GetxController {
     }
     final updated = await _repository.updatePost(
       postId: current.id,
+      mealName: draft.mealName,
       description: draft.description,
+      cookingTimeMinutes: draft.cookingTimeMinutes,
+      servings: draft.servings,
+      difficulty: draft.difficulty,
+      ingredients: draft.ingredients,
+      steps: draft.steps,
       imageBytes: draft.imageBytes,
       visibility: draft.visibility,
       allowComments: draft.allowComments,

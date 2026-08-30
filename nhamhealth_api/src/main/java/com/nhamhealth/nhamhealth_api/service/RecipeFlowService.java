@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -164,8 +165,7 @@ public class RecipeFlowService {
     private void promoteApproved(Recipe recipe) {
         Meal meal = meals.findBySourceRecipeRecipeId(recipe.getRecipeId()).orElse(null);
         if (meal == null) {
-            MealCategory category = categories.findAllByOrderBySortOrderAsc().stream().findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Create a meal category before approving Community meals."));
+            MealCategory category = communityMealCategory();
             meal = new Meal(); meal.setSourceRecipe(recipe); meal.setSourceType("COMMUNITY"); meal.setApprovalSource("AI");
             meal.setCategory(category); meal.setCreatedByUser(recipe.getAuthor()); meal.setMealName(recipe.getRecipeName());
             meal.setDescription(recipe.getDescription()); meal.setMainImageUrl(recipe.getMainImageUrl());
@@ -174,6 +174,34 @@ public class RecipeFlowService {
         }
         recipe.setMeal(meal);
         recipes.save(recipe);
+    }
+
+    /**
+     * Community publishing must not fail just because a fresh installation has
+     * not configured its meal catalogue yet. Prefer an active category and
+     * create a stable fallback only when the catalogue is empty.
+     */
+    private MealCategory communityMealCategory() {
+        List<MealCategory> existing = categories.findAllByOrderBySortOrderAsc();
+        Optional<MealCategory> active = existing.stream()
+                .filter(category -> Boolean.TRUE.equals(category.getIsActive()))
+                .findFirst();
+        if (active.isPresent()) return active.get();
+
+        Optional<MealCategory> fallback = categories.findByCategoryNameIgnoreCase("Community Meals");
+        if (fallback.isPresent()) {
+            MealCategory category = fallback.get();
+            category.setIsActive(true);
+            return categories.save(category);
+        }
+
+        MealCategory category = new MealCategory();
+        category.setCategoryName("Community Meals");
+        category.setDescription("Meals approved from Community meal posts.");
+        category.setSortOrder(existing.stream().map(MealCategory::getSortOrder)
+                .filter(Objects::nonNull).max(Integer::compareTo).orElse(0) + 1);
+        category.setIsActive(true);
+        return categories.save(category);
     }
 
     @Transactional
@@ -190,6 +218,46 @@ public class RecipeFlowService {
     public List<RecipeResponse> adminRecipes() {
         return recipes.findAll().stream().sorted(Comparator.comparing(Recipe::getUpdatedAt).reversed())
                 .map(recipe -> response(recipe, null)).toList();
+    }
+
+    @Transactional
+    public RecipeResponse adminCreate(Integer authorId, String name, String description,
+            Integer cookingTimeMinutes, Integer servings, String difficulty, String status) {
+        RecipeRequest request = new RecipeRequest(name, description, cookingTimeMinutes, servings,
+                difficulty, List.of(), List.of(), List.of());
+        RecipeResponse created = create(authorId, request, null);
+        return adminUpdate(created.id(), name, description, cookingTimeMinutes, servings, difficulty, status);
+    }
+
+    @Transactional
+    public RecipeResponse adminUpdate(Integer recipeId, String name, String description,
+            Integer cookingTimeMinutes, Integer servings, String difficulty, String status) {
+        Recipe recipe = recipe(recipeId);
+        recipe.setRecipeName(name.trim());
+        recipe.setDescription(clean(description));
+        recipe.setCookingTimeMinutes(cookingTimeMinutes);
+        recipe.setServings(servings);
+        recipe.setDifficulty(clean(difficulty) == null ? null : difficulty.trim().toUpperCase(Locale.ROOT));
+        String normalizedStatus = status == null ? "DRAFT" : status.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("DRAFT", "PUBLISHED", "ARCHIVED").contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Select a valid post status.");
+        }
+        recipe.setStatus(normalizedStatus);
+        if ("PUBLISHED".equals(normalizedStatus) && recipe.getPublishedAt() == null) {
+            recipe.setPublishedAt(LocalDateTime.now());
+        } else if (!"PUBLISHED".equals(normalizedStatus)) {
+            recipe.setPublishedAt(null);
+        }
+        recipe.setAiStatus("PENDING");
+        recipe.setAiReviewReason(null);
+        recipe.setUpdatedAt(LocalDateTime.now());
+        return response(recipes.save(recipe), null);
+    }
+
+    @Transactional
+    public void adminDelete(Integer recipeId) {
+        Recipe recipe = recipe(recipeId);
+        delete(recipe.getAuthor().getUserId(), recipeId);
     }
 
     @Transactional
@@ -220,7 +288,7 @@ public class RecipeFlowService {
         List<RecipeIngredient> ingredientRows = new ArrayList<>();
         for (int i = 0; i < list(request.ingredients()).size(); i++) { RecipeIngredientRequest item = list(request.ingredients()).get(i); RecipeIngredient row = new RecipeIngredient(); row.setRecipe(recipe); row.setIngredientName(item.name().trim()); row.setAmount(item.amount()); row.setUnit(clean(item.unit())); row.setPreparationNote(clean(item.preparationNote())); row.setDisplayOrder(i); ingredientRows.add(row); }
         List<RecipeStep> stepRows = new ArrayList<>();
-        for (int i = 0; i < list(request.steps()).size(); i++) { RecipeStepRequest item = list(request.steps()).get(i); RecipeStep row = new RecipeStep(); row.setRecipe(recipe); row.setStepNumber(i + 1); row.setStepTitle(clean(item.title())); row.setInstruction(item.instruction().trim()); stepRows.add(row); }
+        for (int i = 0; i < list(request.steps()).size(); i++) { RecipeStepRequest item = list(request.steps()).get(i); RecipeStep row = new RecipeStep(); row.setRecipe(recipe); row.setStepNumber(i + 1); row.setStepTitle(clean(item.title())); row.setInstruction(item.instruction().trim()); String stepImage = clean(item.imageUrl()); if (stepImage != null && !images.isStoredRecipeStepImageUrl(stepImage)) throw new IllegalArgumentException("Choose a valid cooking step image"); row.setImageUrl(stepImage); stepRows.add(row); }
         // Save the parent first for create; for updates the managed parent already has an id.
         if (recipe.getRecipeId() == null) recipes.save(recipe);
         ingredients.saveAll(ingredientRows); steps.saveAll(stepRows);

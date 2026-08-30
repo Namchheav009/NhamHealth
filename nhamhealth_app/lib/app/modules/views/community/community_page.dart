@@ -543,22 +543,25 @@ class CommunityPage extends GetView<CommunityController> {
     ],
   );
 
-  Widget _feedPosts({bool showError = true}) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      if (showError && controller.errorMessage.value != null) ...[
-        _feedErrorBanner(controller.errorMessage.value!),
-        const SizedBox(height: 12),
+  Widget _feedPosts({bool showError = true}) => Obx(() {
+    final visiblePosts = controller.visiblePosts;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showError && controller.errorMessage.value != null) ...[
+          _feedErrorBanner(controller.errorMessage.value!),
+          const SizedBox(height: 12),
+        ],
+        if (visiblePosts.isEmpty)
+          const CommunityEmptyState(
+            icon: Icons.dynamic_feed_outlined,
+            title: 'Nothing here yet',
+            message: 'Follow more people or check another feed filter.',
+          ),
+        ...visiblePosts.map(_postCard),
       ],
-      if (controller.visiblePosts.isEmpty)
-        const CommunityEmptyState(
-          icon: Icons.dynamic_feed_outlined,
-          title: 'Nothing here yet',
-          message: 'Follow more people or check another feed filter.',
-        ),
-      ...controller.visiblePosts.map(_postCard),
-    ],
-  );
+    );
+  });
 
   Widget _feedFilters() {
     const labels = ['For You', 'Following', 'Latest'];
@@ -567,72 +570,82 @@ class CommunityPage extends GetView<CommunityController> {
       Icons.people_outline_rounded,
       Icons.schedule_rounded,
     ];
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE1E8E3)),
-      ),
-      child: Row(
-        children: List.generate(CommunityFeedFilter.values.length, (index) {
-          final filter = CommunityFeedFilter.values[index];
-          final selected = controller.feedFilter.value == filter;
-          return Expanded(
-            child: InkWell(
-              key: ValueKey<String>('community-feed-filter-${filter.name}'),
-              onTap: () => controller.selectFeedFilter(filter),
-              borderRadius: BorderRadius.circular(12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow:
-                      selected
-                          ? const [
-                            BoxShadow(
-                              color: Color(0x10173D25),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ]
-                          : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icons[index],
-                      size: 16,
-                      color:
-                          selected ? const Color(0xFF087B3A) : Colors.black45,
+    return Obx(
+      () => Container(
+        height: 44,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F4F1),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color(0xFFE1E8E3)),
+        ),
+        child: Row(
+          children: List.generate(CommunityFeedFilter.values.length, (index) {
+            final filter = CommunityFeedFilter.values[index];
+            final selected = controller.feedFilter.value == filter;
+            return Expanded(
+              child: Semantics(
+                selected: selected,
+                label: '${labels[index]} feed',
+                child: GestureDetector(
+                  key: ValueKey<String>(
+                    'community-feed-filter-${filter.name}',
+                  ),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => controller.selectFeedFilter(filter),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow:
+                          selected
+                              ? const [
+                                BoxShadow(
+                                  color: Color(0x10173D25),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ]
+                              : null,
                     ),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        labels[index],
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icons[index],
+                          size: 16,
                           color:
                               selected
                                   ? const Color(0xFF087B3A)
-                                  : Colors.black54,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                                  : Colors.black45,
                         ),
-                      ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            labels[index],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color:
+                                  selected
+                                      ? const Color(0xFF087B3A)
+                                      : Colors.black54,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -976,7 +989,13 @@ class CommunityPage extends GetView<CommunityController> {
         onSubmit:
             (draft) => controller.updatePost(
               post: post,
+              mealName: draft.mealName,
               description: draft.description,
+              cookingTimeMinutes: draft.cookingTimeMinutes,
+              servings: draft.servings,
+              difficulty: draft.difficulty,
+              ingredients: draft.ingredients,
+              steps: draft.steps,
               imageBytes: draft.imageBytes,
               visibility: draft.visibility,
               allowComments: draft.allowComments,
@@ -1119,6 +1138,7 @@ class CommunityPage extends GetView<CommunityController> {
             ),
           );
         }
+        break;
       case CommunityShareAction.writePost:
         final user = controller.authenticatedUser.value;
         await Get.to<void>(
@@ -1136,126 +1156,8 @@ class CommunityPage extends GetView<CommunityController> {
           ),
           transition: Transition.rightToLeft,
         );
-      case CommunityShareAction.sendToFriends:
-        await _showShareToFriends(post);
+        break;
     }
-  }
-
-  Future<void> _showShareToFriends(CommunityPost post) async {
-    final selectedIds = <String>{};
-    await Get.bottomSheet<void>(
-      StatefulBuilder(
-        builder:
-            (context, setSheetState) => SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Share with friends',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text('Choose friends to send this post to.'),
-                    const SizedBox(height: 10),
-                    if (controller.friends.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'Add friends before sharing posts privately.',
-                        ),
-                      )
-                    else
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 280),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: controller.friends.length,
-                          itemBuilder: (context, index) {
-                            final friend = controller.friends[index];
-                            final selected = selectedIds.contains(friend.id);
-                            return CheckboxListTile(
-                              value: selected,
-                              onChanged:
-                                  (_) => setSheetState(() {
-                                    selected
-                                        ? selectedIds.remove(friend.id)
-                                        : selectedIds.add(friend.id);
-                                  }),
-                              contentPadding: EdgeInsets.zero,
-                              controlAffinity: ListTileControlAffinity.trailing,
-                              activeColor: green,
-                              title: Text(friend.name),
-                              secondary: CircleAvatar(
-                                backgroundColor: const Color(0xFFEAF7EE),
-                                backgroundImage:
-                                    friend.avatarUrl.isEmpty
-                                        ? null
-                                        : NetworkImage(friend.avatarUrl),
-                                child:
-                                    friend.avatarUrl.isEmpty
-                                        ? const Icon(
-                                          Icons.person_outline,
-                                          color: green,
-                                        )
-                                        : null,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed:
-                            selectedIds.isEmpty
-                                ? null
-                                : () async {
-                                  try {
-                                    await controller.sharePost(
-                                      post,
-                                      recipientIds: selectedIds.toList(),
-                                    );
-                                    Get.back<void>();
-                                    unawaited(
-                                      AppAlert.success(
-                                        title: 'Post sent',
-                                        message:
-                                            'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
-                                      ),
-                                    );
-                                  } on Object catch (error) {
-                                    unawaited(
-                                      AppAlert.error(
-                                        title: 'Could not share post',
-                                        message: error.toString(),
-                                      ),
-                                    );
-                                  }
-                                },
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text('Send'),
-                        style: FilledButton.styleFrom(backgroundColor: green),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-      ),
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-    );
   }
 
   Future<void> _showComments(CommunityPost post) async {
@@ -1274,7 +1176,13 @@ class CommunityPage extends GetView<CommunityController> {
         onEditPost:
             (draft) => controller.updatePost(
               post: post,
+              mealName: draft.mealName,
               description: draft.description,
+              cookingTimeMinutes: draft.cookingTimeMinutes,
+              servings: draft.servings,
+              difficulty: draft.difficulty,
+              ingredients: draft.ingredients,
+              steps: draft.steps,
               imageBytes: draft.imageBytes,
               visibility: draft.visibility,
               allowComments: draft.allowComments,
@@ -1295,7 +1203,13 @@ class CommunityPage extends GetView<CommunityController> {
         authorAvatarUrl: user?.profileImageUrl ?? '',
         onSubmit:
             (draft) => controller.addPost(
+              mealName: draft.mealName,
               description: draft.description,
+              cookingTimeMinutes: draft.cookingTimeMinutes,
+              servings: draft.servings,
+              difficulty: draft.difficulty,
+              ingredients: draft.ingredients,
+              steps: draft.steps,
               imageBytes: draft.imageBytes,
               visibility: draft.visibility,
               allowComments: draft.allowComments,

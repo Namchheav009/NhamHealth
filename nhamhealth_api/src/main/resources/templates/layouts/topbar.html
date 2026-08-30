@@ -17,10 +17,6 @@
                 <span class="badge-dot" th:if="${globalUnreadNotificationCount > 0}"
                       th:text="${globalUnreadNotificationCount > 99 ? '99+' : globalUnreadNotificationCount}">0</span>
             </a>
-            <a class="icon-button notification-button" th:href="@{/admin/chats}" aria-label="Messages">
-                <i class="bi bi-envelope"></i>
-                <span class="badge-dot">5</span>
-            </a>
             <div class="admin-menu">
                 <button class="admin-profile" id="adminProfileMenuToggle" type="button" aria-expanded="false" aria-controls="adminProfileMenu">
                     <span class="avatar" th:text="${adminName != null && adminName.length() > 0 ? #strings.substring(adminName, 0, 1) : 'A'}">A</span>

@@ -15,6 +15,12 @@ class CommunityPostDraft {
     required this.allowComments,
     required this.allowReplies,
     required this.tagIds,
+    this.mealName = '',
+    this.cookingTimeMinutes = 0,
+    this.servings = 0,
+    this.difficulty = 'EASY',
+    this.ingredients = const [],
+    this.steps = const [],
   });
 
   final String description;
@@ -24,4 +30,10 @@ class CommunityPostDraft {
   final bool allowComments;
   final bool allowReplies;
   final List<int> tagIds;
+  final String mealName;
+  final int cookingTimeMinutes;
+  final int servings;
+  final String difficulty;
+  final List<MealPostIngredient> ingredients;
+  final List<MealPostStep> steps;
 }

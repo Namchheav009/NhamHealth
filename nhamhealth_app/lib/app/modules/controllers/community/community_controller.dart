@@ -61,12 +61,38 @@ class CommunityController extends GetxController {
   List<CommunityPost> get visiblePosts {
     switch (feedFilter.value) {
       case CommunityFeedFilter.forYou:
-        return posts;
+        final ranked = posts.toList(growable: false);
+        ranked.sort((a, b) {
+          final engagement = _engagementScore(b).compareTo(_engagementScore(a));
+          if (engagement != 0) return engagement;
+          return _newestFirst(a, b);
+        });
+        return ranked;
       case CommunityFeedFilter.following:
-        return posts.where((post) => post.isFollowingAuthor).toList();
+        final currentUserId = authenticatedUser.value?.id;
+        return posts
+            .where(
+              (post) =>
+                  post.isFollowingAuthor && post.authorId != currentUserId,
+            )
+            .toList(growable: false);
       case CommunityFeedFilter.latest:
-        return posts.reversed.toList();
+        final latest = posts.toList(growable: false);
+        latest.sort(_newestFirst);
+        return latest;
     }
+  }
+
+  int _engagementScore(CommunityPost post) =>
+      post.likes + (post.comments * 2) + (post.shares * 3);
+
+  int _newestFirst(CommunityPost a, CommunityPost b) {
+    final aDate = a.createdAt;
+    final bDate = b.createdAt;
+    if (aDate != null && bDate != null) return bDate.compareTo(aDate);
+    if (aDate != null) return -1;
+    if (bDate != null) return 1;
+    return (int.tryParse(b.id) ?? 0).compareTo(int.tryParse(a.id) ?? 0);
   }
 
   List<CommunityPerson> get people => _people[friendsView.value] ?? const [];
@@ -169,7 +195,11 @@ class CommunityController extends GetxController {
   }
 
   void selectSection(CommunitySection value) => section.value = value;
-  void selectFeedFilter(CommunityFeedFilter value) => feedFilter.value = value;
+  void selectFeedFilter(CommunityFeedFilter value) {
+    if (feedFilter.value == value) return;
+    feedFilter.value = value;
+  }
+
   void selectFriendsView(FriendsView value) {
     friendsView.value = value;
     searchQuery.value = '';
@@ -184,9 +214,10 @@ class CommunityController extends GetxController {
     if (index >= 0) posts[index] = updated;
   }
 
-  void togglePostSaved(CommunityPost post) {
-    post.isSaved = !post.isSaved;
-    posts.refresh();
+  Future<void> togglePostSaved(CommunityPost post) async {
+    final updated = await _repository.toggleSaved(post.id);
+    final index = posts.indexWhere((item) => item.id == post.id);
+    if (index >= 0) posts[index] = updated;
   }
 
   Future<void> sharePost(
@@ -237,7 +268,13 @@ class CommunityController extends GetxController {
   }
 
   Future<void> addPost({
+    String mealName = '',
     required String description,
+    int cookingTimeMinutes = 0,
+    int servings = 0,
+    String difficulty = 'EASY',
+    List<MealPostIngredient> ingredients = const [],
+    List<MealPostStep> steps = const [],
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -245,7 +282,13 @@ class CommunityController extends GetxController {
     List<int> tagIds = const [],
   }) async {
     final post = await _repository.createPost(
+      mealName: mealName,
       description: description,
+      cookingTimeMinutes: cookingTimeMinutes,
+      servings: servings,
+      difficulty: difficulty,
+      ingredients: ingredients,
+      steps: steps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,
@@ -258,7 +301,13 @@ class CommunityController extends GetxController {
 
   Future<CommunityPost> updatePost({
     required CommunityPost post,
+    String? mealName,
     required String description,
+    int? cookingTimeMinutes,
+    int? servings,
+    String? difficulty,
+    List<MealPostIngredient>? ingredients,
+    List<MealPostStep>? steps,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -268,7 +317,13 @@ class CommunityController extends GetxController {
   }) async {
     final updated = await _repository.updatePost(
       postId: post.id,
+      mealName: mealName ?? post.mealName,
       description: description,
+      cookingTimeMinutes: cookingTimeMinutes ?? post.cookingTimeMinutes ?? 0,
+      servings: servings ?? post.servings ?? 0,
+      difficulty: difficulty ?? post.difficulty,
+      ingredients: ingredients ?? post.ingredients,
+      steps: steps ?? post.steps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,
@@ -293,8 +348,15 @@ class CommunityController extends GetxController {
   ) async {
     if (view == FriendsView.friends) return;
     final status = await _repository.toggleFollow(person.id);
-    connectionStatuses[person.id] =
-        status == 'FOLLOWING' ? 'Following' : 'Follow';
+    final isFollowing = status == 'FOLLOWING';
+    connectionStatuses[person.id] = isFollowing ? 'Following' : 'Follow';
+    final personId = int.tryParse(person.id);
+    if (personId != null) {
+      for (final post in posts.where((post) => post.authorId == personId)) {
+        post.isFollowingAuthor = isFollowing;
+      }
+      posts.refresh();
+    }
     _people = await _repository.getPeople();
     update();
   }

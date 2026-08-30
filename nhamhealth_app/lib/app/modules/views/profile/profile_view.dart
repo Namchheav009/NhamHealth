@@ -324,7 +324,13 @@ class ProfileView extends GetView<ProfileController> {
         onEditPost:
             (draft) => controller.updatePost(
               post: post,
+              mealName: draft.mealName,
               description: draft.description,
+              cookingTimeMinutes: draft.cookingTimeMinutes,
+              servings: draft.servings,
+              difficulty: draft.difficulty,
+              ingredients: draft.ingredients,
+              steps: draft.steps,
               imageBytes: draft.imageBytes,
               visibility: draft.visibility,
               allowComments: draft.allowComments,
@@ -348,10 +354,10 @@ class ProfileView extends GetView<ProfileController> {
     switch (action) {
       case CommunityShareAction.shareNow:
         await _sharePostToFeed(post);
+        break;
       case CommunityShareAction.writePost:
         await _writeSharedPost(post);
-      case CommunityShareAction.sendToFriends:
-        await _showShareToFriends(post);
+        break;
     }
   }
 
@@ -385,108 +391,6 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Future<void> _showShareToFriends(CommunityPost post) async {
-    try {
-      await controller.loadFriends();
-    } on Object catch (error) {
-      Get.snackbar('Could not load friends', error.toString());
-      return;
-    }
-    final selectedIds = <String>{};
-    await Get.bottomSheet<void>(
-      StatefulBuilder(
-        builder:
-            (context, setSheetState) => SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: context.appSurface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Share with friends',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (controller.friends.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'Add friends before sharing posts privately.',
-                        ),
-                      )
-                    else
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 280),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: controller.friends.length,
-                          itemBuilder: (context, index) {
-                            final friend = controller.friends[index];
-                            return CheckboxListTile(
-                              value: selectedIds.contains(friend.id),
-                              title: Text(friend.name),
-                              onChanged:
-                                  (selected) => setSheetState(() {
-                                    selected == true
-                                        ? selectedIds.add(friend.id)
-                                        : selectedIds.remove(friend.id);
-                                  }),
-                            );
-                          },
-                        ),
-                      ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed:
-                            selectedIds.isEmpty
-                                ? null
-                                : () async {
-                                  try {
-                                    await controller.sharePost(
-                                      post,
-                                      recipientIds: selectedIds.toList(),
-                                    );
-                                    Get.back<void>();
-                                    Get.snackbar(
-                                      'Post shared',
-                                      'Sent to ${selectedIds.length} friend${selectedIds.length == 1 ? '' : 's'}.',
-                                    );
-                                  } on Object catch (error) {
-                                    Get.snackbar(
-                                      'Could not share post',
-                                      error.toString(),
-                                    );
-                                  }
-                                },
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text('Send'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF009B46),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-      ),
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-    );
-  }
-
   Future<void> _showCreatePost() async {
     final user = controller.authenticatedUser.value;
     await Get.to<void>(
@@ -495,7 +399,13 @@ class ProfileView extends GetView<ProfileController> {
         authorAvatarUrl: user?.profileImageUrl ?? '',
         onSubmit:
             (draft) => controller.addPost(
+              mealName: draft.mealName,
               description: draft.description,
+              cookingTimeMinutes: draft.cookingTimeMinutes,
+              servings: draft.servings,
+              difficulty: draft.difficulty,
+              ingredients: draft.ingredients,
+              steps: draft.steps,
               imageBytes: draft.imageBytes,
               visibility: draft.visibility,
               allowComments: draft.allowComments,

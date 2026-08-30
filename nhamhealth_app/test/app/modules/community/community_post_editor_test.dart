@@ -17,7 +17,7 @@ void main() {
 
   tearDown(Get.reset);
 
-  testWidgets('new post composer has no title and submits the message', (
+  testWidgets('new meal composer validates and submits a recipe', (
     tester,
   ) async {
     CommunityPostDraft? submitted;
@@ -32,19 +32,40 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Title (optional)'), findsNothing);
-    expect(find.text('Add to your post'), findsOneWidget);
-    expect(find.text('Post settings'), findsOneWidget);
-
+    expect(find.text('Create Meal'), findsOneWidget);
     await tester.enterText(
-      find.byKey(const ValueKey<String>('community-post-message')),
+      find.widgetWithText(TextFormField, 'Khmer Fish Amok'),
+      'Healthy lunch',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Tell people about this meal'),
       'Today I prepared a healthy lunch.',
     );
-    await tester.tap(find.text('Publish'));
-    await tester.pump(const Duration(seconds: 4));
+    await tester.drag(find.byType(ListView), const Offset(0, -260));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextFormField, '45'), '30');
+    await tester.enterText(find.widgetWithText(TextFormField, '2'), '2');
+    await tester.ensureVisible(find.text('Next: Ingredients'));
+    await tester.tap(find.text('Next: Ingredients'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ingredients & Steps'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Search ingredient'),
+      'Chicken',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '300');
+    await tester.drag(find.byType(ListView), const Offset(0, -420));
+    await tester.pump();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Describe this cooking step'),
+      'Prepare and cook the chicken.',
+    );
+    await tester.ensureVisible(find.text('Publish Meal'));
+    await tester.tap(find.text('Publish Meal'));
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
+    expect(submitted!.mealName, 'Healthy lunch');
     expect(submitted!.description, 'Today I prepared a healthy lunch.');
     expect(tester.takeException(), isNull);
   });
@@ -57,6 +78,20 @@ void main() {
           post: CommunityPost(
             id: '7',
             description: 'Original message',
+            mealName: 'Original meal',
+            cookingTimeMinutes: 20,
+            servings: 2,
+            difficulty: 'EASY',
+            ingredients: const [
+              MealPostIngredient(
+                ingredientName: 'Fish',
+                amount: 200,
+                unit: 'g',
+              ),
+            ],
+            steps: const [
+              MealPostStep(stepNumber: 1, instruction: 'Cook the fish.'),
+            ],
             imageUrl: '',
             author: 'Nham Member',
             role: 'Member',
@@ -69,8 +104,8 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Save'));
-    await tester.pump(const Duration(seconds: 4));
+    await tester.ensureVisible(find.text('Save Changes'));
+    await tester.tap(find.text('Save Changes'));
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);

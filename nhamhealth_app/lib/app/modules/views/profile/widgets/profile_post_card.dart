@@ -5,6 +5,7 @@ import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
 import '../../community/widgets/community_shared_post_card.dart';
+import '../../community/widgets/ai_status_badge.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -109,6 +110,17 @@ class ProfilePostCard extends StatelessWidget {
             ],
           ),
 
+          if (post.mealName.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              post.mealName,
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: context.appText,
+              ),
+            ),
+          ],
           if (post.description.isNotEmpty) ...[
             const SizedBox(height: 15),
             Text(
@@ -119,6 +131,34 @@ class ProfilePostCard extends StatelessWidget {
                 color: context.appText,
               ),
             ),
+          ],
+
+          if (post.cookingTimeMinutes != null || post.servings != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (post.cookingTimeMinutes != null) ...[
+                  const Icon(Icons.timer_outlined, size: 18),
+                  const SizedBox(width: 5),
+                  Text('${post.cookingTimeMinutes} min'),
+                ],
+                if (post.servings != null) ...[
+                  const SizedBox(width: 18),
+                  const Icon(Icons.people_outline_rounded, size: 18),
+                  const SizedBox(width: 5),
+                  Text('${post.servings} servings'),
+                ],
+                if (post.difficulty.isNotEmpty) ...[
+                  const SizedBox(width: 18),
+                  Text(
+                    post.difficulty.toLowerCase(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            AiStatusBadge(status: post.aiStatus),
           ],
 
           if (post.tags.isNotEmpty) ...[
@@ -178,7 +218,7 @@ class ProfilePostCard extends StatelessWidget {
                 ),
                 const _ProfileMetricDivider(),
                 _ProfilePostMetric(
-                  icon: Icons.reply_rounded,
+                  icon: Icons.share_outlined,
                   value: 'Share',
                   color: context.appMutedText,
                   onTap: onShare,

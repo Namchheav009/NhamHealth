@@ -130,7 +130,13 @@ class ProfileController extends GetxController {
 
   Future<CommunityPost> updatePost({
     required CommunityPost post,
+    String? mealName,
     required String description,
+    int? cookingTimeMinutes,
+    int? servings,
+    String? difficulty,
+    List<MealPostIngredient>? ingredients,
+    List<MealPostStep>? steps,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -138,9 +144,15 @@ class ProfileController extends GetxController {
     bool removeImage = false,
     List<int> tagIds = const [],
   }) async {
-    final updated = await _repository.updatePost(
+    final updated = await _communityRepository.updatePost(
       postId: post.id,
+      mealName: mealName ?? post.mealName,
       description: description,
+      cookingTimeMinutes: cookingTimeMinutes ?? post.cookingTimeMinutes ?? 0,
+      servings: servings ?? post.servings ?? 0,
+      difficulty: difficulty ?? post.difficulty,
+      ingredients: ingredients ?? post.ingredients,
+      steps: steps ?? post.steps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,
@@ -227,7 +239,13 @@ class ProfileController extends GetxController {
   }
 
   Future<void> addPost({
+    required String mealName,
     required String description,
+    required int cookingTimeMinutes,
+    required int servings,
+    required String difficulty,
+    required List<MealPostIngredient> ingredients,
+    required List<MealPostStep> steps,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -235,7 +253,13 @@ class ProfileController extends GetxController {
     List<int> tagIds = const [],
   }) async {
     final post = await _communityRepository.createPost(
+      mealName: mealName,
       description: description,
+      cookingTimeMinutes: cookingTimeMinutes,
+      servings: servings,
+      difficulty: difficulty,
+      ingredients: ingredients,
+      steps: steps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,

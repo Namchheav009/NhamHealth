@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,13 +34,18 @@ public class CommunityService {
     private final TagTypeRepository tagTypes;
     private final ProfileImageStorageService imageStorage;
     private final CommunityNotificationService communityNotifications;
+    private final RecipeIngredientRepository recipeIngredients;
+    private final RecipeStepRepository recipeSteps;
+    private final SavedRecipeRepository savedRecipes;
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
             UserRepository users, UserProfileRepository profiles, FollowRepository follows,
             PostTagRepository postTags, TagTypeRepository tagTypes,
             ProfileImageStorageService imageStorage,
-            CommunityNotificationService communityNotifications) {
+            CommunityNotificationService communityNotifications,
+            RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
+            SavedRecipeRepository savedRecipes) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -52,6 +58,9 @@ public class CommunityService {
         this.tagTypes = tagTypes;
         this.imageStorage = imageStorage;
         this.communityNotifications = communityNotifications;
+        this.recipeIngredients = recipeIngredients;
+        this.recipeSteps = recipeSteps;
+        this.savedRecipes = savedRecipes;
     }
 
     @Transactional(readOnly = true)
@@ -62,8 +71,9 @@ public class CommunityService {
                 .filter(post -> "ACTIVE".equalsIgnoreCase(post.getStatus()))
                 .filter(post -> post.getRecipe() != null)
                 .filter(post -> canView(post, viewerId, followed, followers))
-                .filter(post -> !followingOnly || followed.contains(post.getUser().getUserId())
-                        || post.getUser().getUserId().equals(viewerId))
+                .filter(post -> !followingOnly
+                        || (!post.getUser().getUserId().equals(viewerId)
+                                && followed.contains(post.getUser().getUserId())))
                 .map(post -> response(post, viewerId, followed)).toList();
     }
 
@@ -96,6 +106,28 @@ public class CommunityService {
                 .map(tag -> new CommunityTagResponse(tag.getTagId(), tag.getTagName(),
                         tag.getTagScope(), value(tag.getDescription(), "")))
                 .toList();
+    }
+
+    @Transactional
+    @CacheEvict(value = {"tags", "mealTagNames"}, allEntries = true)
+    public CommunityTagResponse createTag(String rawName) {
+        String name = value(rawName, "").trim();
+        if (name.isEmpty() || name.length() > 100) {
+            throw new IllegalArgumentException("Enter a tag name up to 100 characters");
+        }
+        TagType tag = tagTypes.findByTagNameIgnoreCase(name).orElseGet(() -> {
+            TagType created = new TagType();
+            created.setTagName(name);
+            created.setTagScope("LIFESTYLE");
+            created.setDescription("Community-created meal tag");
+            created.setIsActive(true);
+            return tagTypes.save(created);
+        });
+        if (!Boolean.TRUE.equals(tag.getIsActive())) {
+            throw new IllegalArgumentException("That tag is not currently available");
+        }
+        return new CommunityTagResponse(tag.getTagId(), tag.getTagName(),
+                tag.getTagScope(), value(tag.getDescription(), ""));
     }
 
     @Transactional
@@ -337,7 +369,14 @@ public class CommunityService {
                 recipe == null ? "" : recipe.getRecipeName(), recipe == null ? null : recipe.getCookingTimeMinutes(),
                 recipe == null ? null : recipe.getServings(), recipe == null ? "" : value(recipe.getDifficulty(), ""),
                 recipe == null ? "PENDING" : recipe.getAiStatus(), recipe == null ? "" : value(recipe.getAiReviewReason(), ""),
-                recipe == null || recipe.getMeal() == null ? null : recipe.getMeal().getMealId());
+                recipe == null || recipe.getMeal() == null ? null : recipe.getMeal().getMealId(),
+                recipe != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
+                recipe == null ? List.of() : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
+                        .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
+                                item.getIngredientName(), item.getAmount(), value(item.getUnit(), ""))).toList(),
+                recipe == null ? List.of() : recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())
+                        .stream().map(item -> new CommunityPostResponse.MealPostStep(
+                                item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), ""))).toList());
     }
 
     private CommunityCommentResponse commentResponse(PostComment comment) {

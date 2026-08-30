@@ -80,6 +80,33 @@ void main() {
     expect(tester.getSize(tabletLayout).width, lessThanOrEqualTo(960));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('community feed filters respond to taps', (tester) async {
+    final authService = _CommunityAuthService();
+    Get.put<AuthService>(authService);
+    final controller = Get.put<CommunityController>(
+      CommunityController(
+        repository: _ImagePostRepository(authService),
+        authService: authService,
+        homeProvider: _CommunityHomeProvider(authService),
+      ),
+    );
+
+    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('community-feed-filter-following')),
+    );
+    await tester.pump();
+    expect(controller.feedFilter.value, CommunityFeedFilter.following);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('community-feed-filter-latest')),
+    );
+    await tester.pump();
+    expect(controller.feedFilter.value, CommunityFeedFilter.latest);
+  });
 }
 
 class _ImagePostRepository extends CommunityRepository {

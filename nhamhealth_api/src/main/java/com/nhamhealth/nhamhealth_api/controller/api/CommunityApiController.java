@@ -18,6 +18,7 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.CommunityTagRequest;
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
 import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
 
@@ -52,6 +53,14 @@ public class CommunityApiController {
     public List<CommunityTagResponse> tags(@AuthenticationPrincipal Jwt jwt) {
         userId(jwt);
         return service.tags();
+    }
+
+    @PostMapping("/tags")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommunityTagResponse createTag(@AuthenticationPrincipal Jwt jwt,
+            @jakarta.validation.Valid @RequestBody CommunityTagRequest request) {
+        userId(jwt);
+        return service.createTag(request.name());
     }
 
     @GetMapping("/report-reasons")

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
@@ -56,6 +57,27 @@ class CommunityRepository {
         .toList(growable: false);
   }
 
+  Future<CommunityTag> createTag(String name) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/tags'),
+      headers: await _headers(),
+      body: jsonEncode({'name': name.trim()}),
+    );
+    return CommunityTag.fromJson(_decodeMap(response));
+  }
+
+  Future<String> uploadStepImage(Uint8List bytes) async {
+    final request = http.MultipartRequest(
+      'POST',
+      _uri('/api/v1/recipes/step-images'),
+    )..headers.addAll(await _headers(includeContentType: false));
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: 'recipe-step.jpg'),
+    );
+    final response = await http.Response.fromStream(await _client.send(request));
+    return '${_decodeMap(response)['imageUrl'] ?? ''}';
+  }
+
   Future<List<CommunityReportReason>> getReportReasons() async {
     final payload = await _getList('/api/v1/community/report-reasons');
     return payload
@@ -94,7 +116,13 @@ class CommunityRepository {
   }
 
   Future<CommunityPost> createPost({
+    required String mealName,
     required String description,
+    required int cookingTimeMinutes,
+    required int servings,
+    required String difficulty,
+    required List<MealPostIngredient> ingredients,
+    required List<MealPostStep> steps,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -102,17 +130,29 @@ class CommunityRepository {
     List<int> tagIds = const [],
   }) async {
     final request =
-        http.MultipartRequest('POST', _uri('/api/v1/community/posts'))
+        http.MultipartRequest('POST', _uri('/api/community/meals'))
           ..headers.addAll(await _headers(includeContentType: false))
-          ..fields['description'] = description.trim()
-          ..fields['visibility'] = visibility.apiValue
-          ..fields['allowComments'] = '$allowComments'
-          ..fields['allowReplies'] = '$allowReplies';
-    if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
-    for (var index = 0; index < imageBytes.length; index++) {
+          ..files.add(
+            http.MultipartFile.fromString(
+              'recipe',
+              jsonEncode({
+                'recipeName': mealName.trim(),
+                'description': description.trim(),
+                'cookingTimeMinutes': cookingTimeMinutes,
+                'servings': servings,
+                'difficulty': difficulty,
+                'tagIds': tagIds,
+                'ingredients':
+                    ingredients.map((item) => item.toJson()).toList(),
+                'steps': steps.map((item) => item.toJson()).toList(),
+              }),
+              contentType: MediaType('application', 'json'),
+            ),
+          );
+    for (var index = 0; index < imageBytes.take(1).length; index++) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          'images',
+          'image',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
         ),
@@ -121,12 +161,25 @@ class CommunityRepository {
     final response = await http.Response.fromStream(
       await _client.send(request),
     );
-    return _post(_decodeMap(response), justNow: true);
+    final created = _decodeMap(response);
+    final recipeId = '${created['id']}';
+    final published = await _client.post(
+      _uri('/api/community/meals/$recipeId/publish'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(published);
+    return getPost(recipeId);
   }
 
   Future<CommunityPost> updatePost({
     required String postId,
+    required String mealName,
     required String description,
+    required int cookingTimeMinutes,
+    required int servings,
+    required String difficulty,
+    required List<MealPostIngredient> ingredients,
+    required List<MealPostStep> steps,
     List<Uint8List> imageBytes = const [],
     CommunityPostVisibility visibility = CommunityPostVisibility.public,
     bool allowComments = true,
@@ -135,18 +188,29 @@ class CommunityRepository {
     List<int> tagIds = const [],
   }) async {
     final request =
-        http.MultipartRequest('PUT', _uri('/api/v1/community/posts/$postId'))
+        http.MultipartRequest('PUT', _uri('/api/community/meals/$postId'))
           ..headers.addAll(await _headers(includeContentType: false))
-          ..fields['description'] = description.trim()
-          ..fields['visibility'] = visibility.apiValue
-          ..fields['allowComments'] = '$allowComments'
-          ..fields['allowReplies'] = '$allowReplies'
-          ..fields['removeImage'] = '$removeImage';
-    if (tagIds.isNotEmpty) request.fields['tagIds'] = tagIds.join(',');
-    for (var index = 0; index < imageBytes.length; index++) {
+          ..files.add(
+            http.MultipartFile.fromString(
+              'recipe',
+              jsonEncode({
+                'recipeName': mealName.trim(),
+                'description': description.trim(),
+                'cookingTimeMinutes': cookingTimeMinutes,
+                'servings': servings,
+                'difficulty': difficulty,
+                'tagIds': tagIds,
+                'ingredients':
+                    ingredients.map((item) => item.toJson()).toList(),
+                'steps': steps.map((item) => item.toJson()).toList(),
+              }),
+              contentType: MediaType('application', 'json'),
+            ),
+          );
+    for (var index = 0; index < imageBytes.take(1).length; index++) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          'images',
+          'image',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
         ),
@@ -155,15 +219,29 @@ class CommunityRepository {
     final response = await http.Response.fromStream(
       await _client.send(request),
     );
-    return _post(_decodeMap(response));
+    _decodeMap(response);
+    await _client.post(
+      _uri('/api/community/meals/$postId/ai-check'),
+      headers: await _headers(),
+    );
+    return getPost(postId);
   }
 
   Future<void> deletePost(String postId) async {
     final response = await _client.delete(
-      _uri('/api/v1/community/posts/$postId'),
+      _uri('/api/community/meals/$postId'),
       headers: await _headers(),
     );
     _ensureSuccess(response);
+  }
+
+  Future<CommunityPost> toggleSaved(String postId) async {
+    final response = await _client.post(
+      _uri('/api/community/meals/$postId/saved'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
+    return getPost(postId);
   }
 
   Future<CommunityPost> toggleLike(String postId) async {
@@ -359,8 +437,12 @@ class CommunityRepository {
     var message = 'Community request failed (${response.statusCode}).';
     try {
       final body = jsonDecode(response.body);
-      if (body is Map && body['message'] is String) {
-        message = body['message'] as String;
+      if (body is Map) {
+        final serverMessage =
+            body['message'] ?? body['detail'] ?? body['error'];
+        if (serverMessage is String && serverMessage.trim().isNotEmpty) {
+          message = serverMessage.trim();
+        }
       }
     } on Object {
       /* Keep the HTTP fallback. */
