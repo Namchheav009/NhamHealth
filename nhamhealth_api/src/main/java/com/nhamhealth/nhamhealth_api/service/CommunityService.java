@@ -37,6 +37,7 @@ public class CommunityService {
     private final RecipeIngredientRepository recipeIngredients;
     private final RecipeStepRepository recipeSteps;
     private final RecipeTagRepository recipeTags;
+    private final RecipeRepository recipes;
     private final SavedRecipeRepository savedRecipes;
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
@@ -46,7 +47,8 @@ public class CommunityService {
             ProfileImageStorageService imageStorage,
             CommunityNotificationService communityNotifications,
             RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
-            RecipeTagRepository recipeTags, SavedRecipeRepository savedRecipes) {
+            RecipeTagRepository recipeTags, RecipeRepository recipes,
+            SavedRecipeRepository savedRecipes) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -62,6 +64,7 @@ public class CommunityService {
         this.recipeIngredients = recipeIngredients;
         this.recipeSteps = recipeSteps;
         this.recipeTags = recipeTags;
+        this.recipes = recipes;
         this.savedRecipes = savedRecipes;
     }
 
@@ -221,6 +224,51 @@ public class CommunityService {
         return response(post, userId, followedIds(userId));
     }
 
+    /**
+     * Community posts are a database view over published user meal posts. A
+     * share therefore creates a separate meal-post copy owned by the sharer,
+     * while retaining the original meal's ingredients, steps, tags, and image.
+     */
+    @Transactional
+    public CommunityPostResponse shareToFeed(
+            Integer userId, Integer postId, String message, String visibility) {
+        Post sourcePost = visiblePost(userId, postId);
+        Recipe source = sourcePost.getRecipe();
+        if (source == null) {
+            throw new ResponseStatusException(NOT_FOUND, "Post not found");
+        }
+
+        Recipe shared = new Recipe();
+        LocalDateTime now = LocalDateTime.now();
+        Recipe original = originalSharedSource(source);
+        original.setShareCount(original.getShareCount() + 1);
+        recipes.save(original);
+        shared.setAuthor(user(userId));
+        shared.setCategory(source.getCategory());
+        shared.setSharedFrom(original);
+        shared.setRecipeName(source.getRecipeName());
+        shared.setDescription(message == null ? "" : message.trim());
+        shared.setMainImageUrl(null);
+        shared.setCookingTimeMinutes(source.getCookingTimeMinutes());
+        shared.setServings(source.getServings());
+        shared.setDifficulty(source.getDifficulty());
+        shared.setAiStatus(source.getAiStatus());
+        shared.setAiReviewReason(source.getAiReviewReason());
+        shared.setStatus("PUBLISHED");
+        shared.setPublishedAt(now);
+        shared.setCreatedAt(now);
+        shared.setUpdatedAt(now);
+        shared = recipes.save(shared);
+
+        copyIngredients(source, shared);
+        copySteps(source, shared);
+        copyTags(source, shared);
+
+        Post sharedPost = posts.findByRecipeRecipeId(shared.getRecipeId())
+                .orElseThrow(() -> new IllegalStateException("The shared post could not be created."));
+        return response(sharedPost, userId, followedIds(userId));
+    }
+
     @Transactional(readOnly = true)
     public List<CommunityCommentResponse> comments(Integer userId, Integer postId) {
         visiblePost(userId, postId);
@@ -350,13 +398,15 @@ public class CommunityService {
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {
         UserProfile profile = profiles.findByUser_UserId(post.getUser().getUserId()).orElse(null);
-        List<String> imageUrls = media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
+        com.nhamhealth.nhamhealth_api.entity.Recipe recipe = post.getRecipe();
+        boolean isShared = recipe != null && recipe.getSharedFrom() != null;
+        List<String> imageUrls = (isShared ? List.<PostMedia>of() : media.findByPostPostIdOrderByDisplayOrder(post.getPostId()))
+                .stream()
                 .map(PostMedia::getMediaUrl).toList();
-        String imageUrl = imageUrls.isEmpty() && post.getRecipe() != null
-                ? value(post.getRecipe().getMainImageUrl(), "")
+        String imageUrl = imageUrls.isEmpty() && recipe != null && !isShared
+                ? value(recipe.getMainImageUrl(), "")
                 : (imageUrls.isEmpty() ? "" : imageUrls.getFirst());
         if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
-        com.nhamhealth.nhamhealth_api.entity.Recipe recipe = post.getRecipe();
         List<TagType> assignedTags = recipe == null
                 ? postTags.findByPostPostIdOrderByPostTagId(post.getPostId()).stream()
                         .map(PostTag::getTag).toList()
@@ -366,25 +416,56 @@ public class CommunityService {
                 post.getUser().getUserId(),
                 profile == null ? post.getUser().getName() : profile.getFullName(),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                assignedTags.stream().map(TagType::getTagName).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
+                (isShared ? List.<String>of() : assignedTags.stream().map(TagType::getTagName).toList()),
+                post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
+                recipe == null ? 0 : recipe.getShareCount(),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
                 followed.contains(post.getUser().getUserId()), post.getVisibility(),
                 post.isAllowComments(), post.isAllowReplies(),
-                assignedTags.stream().map(TagType::getTagId).toList(),
-                recipe == null ? "" : recipe.getRecipeName(), recipe == null ? null : recipe.getCookingTimeMinutes(),
-                recipe == null ? null : recipe.getServings(), recipe == null ? "" : value(recipe.getDifficulty(), ""),
-                recipe == null || recipe.getCategory() == null ? null : recipe.getCategory().getCategoryId(),
-                recipe == null || recipe.getCategory() == null ? "" : recipe.getCategory().getCategoryName(),
-                recipe == null ? "PENDING" : recipe.getAiStatus(), recipe == null ? "" : value(recipe.getAiReviewReason(), ""),
-                recipe == null || recipe.getMeal() == null ? null : recipe.getMeal().getMealId(),
-                recipe != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
+                isShared ? List.of() : assignedTags.stream().map(TagType::getTagId).toList(),
+                recipe == null || isShared ? "" : recipe.getRecipeName(),
+                recipe == null || isShared ? null : recipe.getCookingTimeMinutes(),
+                recipe == null || isShared ? null : recipe.getServings(),
+                recipe == null || isShared ? "" : value(recipe.getDifficulty(), ""),
+                recipe == null || isShared || recipe.getCategory() == null ? null : recipe.getCategory().getCategoryId(),
+                recipe == null || isShared || recipe.getCategory() == null ? "" : recipe.getCategory().getCategoryName(),
+                recipe == null || isShared ? "PENDING" : recipe.getAiStatus(),
+                recipe == null || isShared ? "" : value(recipe.getAiReviewReason(), ""),
+                recipe == null || isShared || recipe.getMeal() == null ? null : recipe.getMeal().getMealId(),
+                !isShared && recipe != null
+                        && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
                 recipe == null ? List.of() : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
                         .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
                                 item.getIngredientName(), item.getAmount(), value(item.getUnit(), ""))).toList(),
                 recipe == null ? List.of() : recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())
                         .stream().map(item -> new CommunityPostResponse.MealPostStep(
-                                item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), ""))).toList());
+                                item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), ""))).toList(),
+                isShared ? sharedPost(recipe.getSharedFrom()) : null);
+    }
+
+    private CommunityPostResponse.SharedPost sharedPost(Recipe source) {
+        Recipe original = originalSharedSource(source);
+        UserProfile profile = profiles.findByUser_UserId(original.getAuthor().getUserId()).orElse(null);
+        List<String> imageUrls = posts.findByRecipeRecipeId(original.getRecipeId())
+                .map(post -> media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
+                        .map(PostMedia::getMediaUrl).toList())
+                .orElse(List.of());
+        String imageUrl = imageUrls.isEmpty() ? value(original.getMainImageUrl(), "") : imageUrls.getFirst();
+        if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
+        return new CommunityPostResponse.SharedPost(
+                original.getRecipeId(), original.getAuthor().getUserId(),
+                profile == null ? original.getAuthor().getName() : profile.getFullName(),
+                original.getAuthor().getRoleLabel(),
+                profile == null ? "" : value(profile.getProfileImageUrl(), ""),
+                value(original.getRecipeName(), ""), value(original.getDescription(), ""),
+                imageUrl, imageUrls, "Original post", original.getShareCount());
+    }
+
+    private Recipe originalSharedSource(Recipe recipe) {
+        Recipe current = recipe;
+        while (current.getSharedFrom() != null) current = current.getSharedFrom();
+        return current;
     }
 
     private CommunityCommentResponse commentResponse(PostComment comment) {
@@ -457,6 +538,47 @@ public class CommunityService {
             postTag.setTag(tag);
             return postTag;
         }).toList());
+    }
+
+    private void copyIngredients(Recipe source, Recipe shared) {
+        List<RecipeIngredient> copies = recipeIngredients
+                .findByRecipeRecipeIdOrderByDisplayOrderAsc(source.getRecipeId())
+                .stream().map(item -> {
+                    RecipeIngredient copy = new RecipeIngredient();
+                    copy.setRecipe(shared);
+                    copy.setIngredient(item.getIngredient());
+                    copy.setIngredientName(item.getIngredientName());
+                    copy.setAmount(item.getAmount());
+                    copy.setUnit(item.getUnit());
+                    copy.setPreparationNote(item.getPreparationNote());
+                    copy.setDisplayOrder(item.getDisplayOrder());
+                    return copy;
+                }).toList();
+        recipeIngredients.saveAll(copies);
+    }
+
+    private void copySteps(Recipe source, Recipe shared) {
+        List<RecipeStep> copies = recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(source.getRecipeId())
+                .stream().map(item -> {
+                    RecipeStep copy = new RecipeStep();
+                    copy.setRecipe(shared);
+                    copy.setStepNumber(item.getStepNumber());
+                    copy.setStepTitle(item.getStepTitle());
+                    copy.setInstruction(item.getInstruction());
+                    copy.setImageUrl(item.getImageUrl());
+                    return copy;
+                }).toList();
+        recipeSteps.saveAll(copies);
+    }
+
+    private void copyTags(Recipe source, Recipe shared) {
+        List<RecipeTag> copies = recipeTags.findByRecipeRecipeId(source.getRecipeId()).stream().map(item -> {
+            RecipeTag copy = new RecipeTag();
+            copy.setRecipe(shared);
+            copy.setTag(item.getTag());
+            return copy;
+        }).toList();
+        recipeTags.saveAll(copies);
     }
 
     private List<MultipartFile> usableImages(List<MultipartFile> images) {

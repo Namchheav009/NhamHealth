@@ -39,6 +39,11 @@ public class Recipe {
     @JoinColumn(name = "category_id")
     private MealCategory category;
 
+    /** The original meal post when this record was created by sharing it. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shared_from_user_meal_post_id")
+    private Recipe sharedFrom;
+
     @Column(name = "recipe_name", nullable = false, length = 150)
     private String recipeName;
 
@@ -80,11 +85,16 @@ public class Recipe {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "share_count", nullable = false)
+    private long shareCount;
+
     public Integer getRecipeId() { return recipeId; }
     public User getAuthor() { return author; }
     public void setAuthor(User author) { this.author = author; }
     public MealCategory getCategory() { return category; }
     public void setCategory(MealCategory category) { this.category = category; }
+    public Recipe getSharedFrom() { return sharedFrom; }
+    public void setSharedFrom(Recipe sharedFrom) { this.sharedFrom = sharedFrom; }
     public String getRecipeName() { return recipeName; }
     public void setRecipeName(String recipeName) { this.recipeName = recipeName; }
     public String getDescription() { return description; }
@@ -111,4 +121,6 @@ public class Recipe {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public long getShareCount() { return shareCount; }
+    public void setShareCount(long shareCount) { this.shareCount = shareCount; }
 }

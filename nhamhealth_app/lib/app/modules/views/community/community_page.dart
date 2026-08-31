@@ -19,7 +19,6 @@ import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
-import 'community_share_post_page.dart';
 import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
 import 'widgets/community_shared_post_card.dart';
@@ -945,6 +944,11 @@ class CommunityPage extends GetView<CommunityController> {
             isOwner
                 ? const [
                   _CommunityOption(
+                    _CommunityPostAction.viewDetails,
+                    'View details',
+                    Icons.article_outlined,
+                  ),
+                  _CommunityOption(
                     _CommunityPostAction.edit,
                     'Edit post',
                     Icons.edit_outlined,
@@ -958,9 +962,9 @@ class CommunityPage extends GetView<CommunityController> {
                 ]
                 : const [
                   _CommunityOption(
-                    _CommunityPostAction.about,
-                    'About this post',
-                    Icons.info_outline_rounded,
+                    _CommunityPostAction.viewDetails,
+                    'View details',
+                    Icons.article_outlined,
                   ),
                   _CommunityOption(
                     _CommunityPostAction.report,
@@ -989,7 +993,7 @@ class CommunityPage extends GetView<CommunityController> {
         await Get.to<void>(
           () => CommunityReportPage(postId: post.id, subject: 'post'),
         );
-      case _CommunityPostAction.about:
+      case _CommunityPostAction.viewDetails:
         await _showComments(post);
     }
   }
@@ -1130,50 +1134,28 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Future<void> _showShareOptions(CommunityPost post) async {
-    final action = await showCommunityShareActions(
-      canShareToFeed:
-          post.sharedPost != null ||
-          post.visibility == CommunityPostVisibility.public,
-    );
-    if (action == null) return;
-    switch (action) {
-      case CommunityShareAction.shareNow:
-        try {
-          await controller.sharePostToFeed(post);
-          unawaited(
-            AppAlert.success(
-              title: 'Post shared',
-              message: 'The post is now on your Community feed.',
-            ),
-          );
-        } on Object catch (error) {
-          unawaited(
-            AppAlert.error(
-              title: 'Could not share post',
-              message: error.toString(),
-            ),
-          );
-        }
-        break;
-      case CommunityShareAction.writePost:
-        final user = controller.authenticatedUser.value;
-        await Get.to<void>(
-          () => CommunitySharePostPage(
-            post: post,
-            authorName: user?.displayName ?? 'Community member',
-            authorAvatarUrl: user?.profileImageUrl ?? '',
-            onShare: (message, visibility) async {
-              await controller.sharePostToFeed(
-                post,
-                message: message,
-                visibility: visibility,
-              );
-            },
-          ),
-          transition: Transition.rightToLeft,
-        );
-        break;
+    final canShare =
+        post.sharedPost != null || post.visibility == CommunityPostVisibility.public;
+    if (!canShare) {
+      unawaited(
+        AppAlert.error(
+          title: 'Cannot share this post',
+          message: 'Only public posts can be shared to your feed.',
+        ),
+      );
+      return;
     }
+    final user = controller.authenticatedUser.value;
+    await showCommunityShareComposer(
+      authorName: user?.displayName ?? 'Community member',
+      authorAvatarUrl: user?.profileImageUrl ?? '',
+      onShare:
+          (message, visibility) => controller.sharePostToFeed(
+            post,
+            message: message,
+            visibility: visibility,
+          ),
+    );
   }
 
   Future<void> _showComments(CommunityPost post) async {
@@ -1687,7 +1669,7 @@ class _MetricDivider extends StatelessWidget {
   );
 }
 
-enum _CommunityPostAction { edit, delete, about, report }
+enum _CommunityPostAction { viewDetails, edit, delete, report }
 
 class _CommunityOption {
   const _CommunityOption(

@@ -79,6 +79,20 @@ class CommunitySharedPostCard extends StatelessWidget {
               ],
             ),
           ),
+          if (post.mealName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: Text(
+                post.mealName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: context.appText,
+                ),
+              ),
+            ),
           if (post.description.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 13),
@@ -123,6 +137,20 @@ class CommunitySharedPostCard extends StatelessWidget {
                         .toList(growable: false),
                   ),
                 ),
+              ),
+            ),
+          if (post.shares > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              child: Row(
+                children: [
+                  Icon(Icons.share_outlined, size: 16, color: context.appMutedText),
+                  const SizedBox(width: 5),
+                  Text(
+                    '${post.shares} ${post.shares == 1 ? 'share' : 'shares'}',
+                    style: TextStyle(fontSize: 12, color: context.appMutedText),
+                  ),
+                ],
               ),
             ),
         ],

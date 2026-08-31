@@ -17,7 +17,6 @@ import '../../../../core/services/auth_service.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
-import 'community_share_post_page.dart';
 import 'widgets/community_shared_post_card.dart';
 import '../profile/widgets/profile_post_card.dart';
 
@@ -60,6 +59,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   String? _likingCommentId;
   String? _deletingCommentId;
   bool _updatingPost = false;
+  bool _recipeDetailsExpanded = true;
   late CommunityPost _post;
 
   @override
@@ -166,46 +166,31 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Future<void> _showShareOptions() async {
     if (_updatingPost) return;
-    final action = await showCommunityShareActions(
-      canShareToFeed:
-          _post.sharedPost != null ||
-          _post.visibility == CommunityPostVisibility.public,
-    );
-    if (!mounted || action == null) return;
-    switch (action) {
-      case CommunityShareAction.shareNow:
+    final canShare =
+        _post.sharedPost != null || _post.visibility == CommunityPostVisibility.public;
+    if (!canShare) {
+      unawaited(
+        AppAlert.error(
+          title: 'Cannot share this post',
+          message: 'Only public posts can be shared to your feed.',
+        ),
+      );
+      return;
+    }
+    final user = await Get.find<AuthService>().restoreSession();
+    if (!mounted) return;
+    await showCommunityShareComposer(
+      authorName: user?.displayName ?? 'Community member',
+      authorAvatarUrl: user?.profileImageUrl ?? '',
+      onShare: (message, visibility) async {
         setState(() => _updatingPost = true);
         try {
-          await _shareToFeed('', CommunityPostVisibility.public);
-          unawaited(
-            AppAlert.success(
-              title: 'Post shared',
-              message: 'The post is now on your Community feed.',
-            ),
-          );
-        } on Object catch (error) {
-          unawaited(
-            AppAlert.error(
-              title: 'Could not share post',
-              message: error.toString(),
-            ),
-          );
+          await _shareToFeed(message, visibility);
         } finally {
           if (mounted) setState(() => _updatingPost = false);
         }
-      case CommunityShareAction.writePost:
-        final user = await Get.find<AuthService>().restoreSession();
-        if (!mounted) return;
-        await Get.to<void>(
-          () => CommunitySharePostPage(
-            post: _post,
-            authorName: user?.displayName ?? 'Community member',
-            authorAvatarUrl: user?.profileImageUrl ?? '',
-            onShare: _shareToFeed,
-          ),
-          transition: Transition.rightToLeft,
-        );
-    }
+      },
+    );
   }
 
   Future<void> _toggleCommentLike(CommunityComment comment) async {
@@ -632,72 +617,107 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_post.ingredients.isNotEmpty) ...[
-                const Text(
-                  'Ingredients',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 12),
-                ..._post.ingredients.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.ingredientName,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        Text(
-                          '${item.amount ?? ''} ${item.unit}',
-                          style: const TextStyle(color: Color(0xFF43845C)),
-                        ),
-                      ],
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Recipe details',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                     ),
                   ),
-                ),
-              ],
-              if (_post.ingredients.isNotEmpty && _post.steps.isNotEmpty)
-                const Divider(height: 32),
-              if (_post.steps.isNotEmpty) ...[
-                const Text(
-                  'How to Cook',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 12),
-                ..._post.steps.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: const Color(0xFF0AAA55),
-                          child: Text(
-                            '${item.stepNumber}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            item.instruction,
-                            style: const TextStyle(height: 1.4),
-                          ),
-                        ),
-                      ],
+                  TextButton.icon(
+                    key: const ValueKey<String>('recipe-details-toggle'),
+                    onPressed: () => setState(
+                      () => _recipeDetailsExpanded = !_recipeDetailsExpanded,
                     ),
+                    icon: Icon(
+                      _recipeDetailsExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                    ),
+                    label: Text(_recipeDetailsExpanded ? 'Hide' : 'Show all'),
                   ),
-                ),
-              ],
+                ],
+              ),
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 180),
+                crossFadeState:
+                    _recipeDetailsExpanded
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
+                firstChild: _recipeDetailsContent(),
+                secondChild: const SizedBox.shrink(),
+              ),
             ],
           ),
         ),
+    ],
+  );
+
+  Widget _recipeDetailsContent() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_post.ingredients.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        const Text(
+          'Ingredients',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 12),
+        ..._post.ingredients.map(
+          (item) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    item.ingredientName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Text(
+                  '${item.amount ?? ''} ${item.unit}',
+                  style: const TextStyle(color: Color(0xFF43845C)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      if (_post.ingredients.isNotEmpty && _post.steps.isNotEmpty)
+        const Divider(height: 32),
+      if (_post.steps.isNotEmpty) ...[
+        const Text(
+          'How to Cook',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 12),
+        ..._post.steps.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: const Color(0xFF0AAA55),
+                  child: Text(
+                    '${item.stepNumber}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.instruction,
+                    style: const TextStyle(height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     ],
   );
 

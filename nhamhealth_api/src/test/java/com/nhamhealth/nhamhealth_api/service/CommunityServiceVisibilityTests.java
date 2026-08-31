@@ -29,6 +29,7 @@ import com.nhamhealth.nhamhealth_api.repository.PostMediaRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeIngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.SavedRecipeRepository;
@@ -133,9 +134,10 @@ class CommunityServiceVisibilityTests {
         private final RecipeIngredientRepository recipeIngredients = mock(RecipeIngredientRepository.class);
         private final RecipeStepRepository recipeSteps = mock(RecipeStepRepository.class);
         private final RecipeTagRepository recipeTags = mock(RecipeTagRepository.class);
+        private final RecipeRepository recipes = mock(RecipeRepository.class);
         private final SavedRecipeRepository savedRecipes = mock(SavedRecipeRepository.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
                 commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications,
-                recipeIngredients, recipeSteps, recipeTags, savedRecipes);
+                recipeIngredients, recipeSteps, recipeTags, recipes, savedRecipes);
     }
 }

@@ -18,6 +18,7 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.CommunityShareRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityTagRequest;
 import com.nhamhealth.nhamhealth_api.service.CommunityService;
 import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
@@ -90,6 +91,15 @@ public class CommunityApiController {
     @PostMapping("/posts/{postId}/like")
     public CommunityPostResponse like(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
         return service.toggleLike(userId(jwt), postId);
+    }
+
+    @PostMapping("/posts/{postId}/share-to-feed")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommunityPostResponse shareToFeed(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer postId,
+            @jakarta.validation.Valid @RequestBody CommunityShareRequest request) {
+        return service.shareToFeed(userId(jwt), postId, request.message(), request.visibility());
     }
 
     @GetMapping("/posts/{postId}/comments")

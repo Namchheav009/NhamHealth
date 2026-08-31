@@ -6,12 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +25,7 @@ import com.nhamhealth.nhamhealth_api.dto.response.ProfileDashboardResponse;
 
 @Service
 public class AiAssistantService {
+    private static final Logger log = LoggerFactory.getLogger(AiAssistantService.class);
     private static final Set<String> ALLOWED_ROLES = Set.of("user", "assistant");
     private static final String SYSTEM_PROMPT = """
             You are NhamHealth AI Assistant, a concise and friendly guide inside the NhamHealth app.
@@ -96,12 +102,12 @@ public class AiAssistantService {
     }
 
     public String chat(Integer userId, AssistantChatRequest request) {
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("The AI assistant is not configured.");
-        }
-
         LocalDate dashboardDate = request.date() == null ? LocalDate.now() : request.date();
         ProfileDashboardResponse dashboard = dashboardService.load(userId, dashboardDate);
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("AI assistant provider is not configured; using local assistant fallback");
+            return fallbackReply(dashboard, dashboardDate, request.message());
+        }
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of(
                 "role", "system",
@@ -127,24 +133,62 @@ public class AiAssistantService {
                 "stream", false,
                 "messages", messages);
 
-        String responseBody = client.post()
-                .uri("/chat/completions")
-                .header("Authorization", "Bearer " + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .body(String.class);
         try {
+            String responseBody = client.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(String.class);
             JsonNode response = mapper.readTree(responseBody);
             String reply = response.path("choices").path(0)
                     .path("message").path("content").asText().trim();
             reply = reply.replaceAll("(?s)<think>.*?</think>", "").trim();
             if (reply.isEmpty()) throw new IllegalArgumentException("The AI assistant returned an empty response.");
             return limitReply(reply);
+        } catch (RestClientException | IllegalArgumentException error) {
+            log.warn("AI assistant provider failed; using local assistant fallback: {}", error.getMessage());
+            return fallbackReply(dashboard, dashboardDate, request.message());
         } catch (Exception error) {
-            throw new IllegalStateException("The AI assistant returned an invalid response.", error);
+            log.warn("AI assistant response could not be read; using local assistant fallback", error);
+            return fallbackReply(dashboard, dashboardDate, request.message());
         }
+    }
+
+    static String fallbackReply(
+            ProfileDashboardResponse dashboard, LocalDate date, String message) {
+        String question = message == null ? "" : message.toLowerCase(Locale.ROOT);
+        if (question.contains("dashboard") || question.contains("nutrition")
+                || question.contains("wellness") || question.contains("calorie")) {
+            return "Here is your Daily Wellness progress for " + date + ":\n"
+                    + "- Calories: " + progress(dashboard.calories()) + "\n"
+                    + "- Protein: " + progress(dashboard.protein()) + "\n"
+                    + "- Fat: " + progress(dashboard.fat()) + "\n"
+                    + "- Water: " + progress(dashboard.water()) + "\n"
+                    + "Use View Details on the Wellness page to see fiber and sugar too.";
+        }
+        if (question.contains("photo") || question.contains("food") || question.contains("meal")) {
+            return "Open Daily Wellness to add food manually, use AI meal auto-fill, or analyze a food photo. "
+                    + "Review the food and amount before saving so your daily totals stay accurate.";
+        }
+        if (question.contains("setting") || question.contains("password") || question.contains("language")
+                || question.contains("theme") || question.contains("lock")) {
+            return "Open Profile or Settings to manage your account, language, appearance, password, privacy/help, "
+                    + "and app lock options. Choose the setting you want to change, then save your update.";
+        }
+        return "I can help you understand your Daily Wellness progress, add food, use meal recommendations, "
+                + "or find app settings. Try asking about your nutrition dashboard or a specific feature.";
+    }
+
+    private static String progress(ProfileDashboardResponse.Progress progress) {
+        if (progress == null) return "not available";
+        return number(progress.current()) + " / " + number(progress.goal());
+    }
+
+    private static String number(java.math.BigDecimal value) {
+        return value == null ? "0" : value.stripTrailingZeros().toPlainString();
     }
 
     private String dashboardJson(ProfileDashboardResponse dashboard, LocalDate dashboardDate) {

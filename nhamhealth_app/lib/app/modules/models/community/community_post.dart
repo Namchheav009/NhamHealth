@@ -267,10 +267,12 @@ class CommunitySharedPost {
     required this.author,
     required this.role,
     required this.authorAvatarUrl,
+    this.mealName = '',
     required this.description,
     required this.imageUrl,
     this.imageUrls = const [],
     this.ageLabel = 'Recently',
+    this.shares = 0,
   });
 
   final String id;
@@ -278,10 +280,12 @@ class CommunitySharedPost {
   final String author;
   final String role;
   final String authorAvatarUrl;
+  final String mealName;
   final String description;
   final String imageUrl;
   final List<String> imageUrls;
   final String ageLabel;
+  final int shares;
 
   factory CommunitySharedPost.fromJson(Map<String, dynamic> json) {
     final imageUrls = (json['imageUrls'] as List<dynamic>? ?? const [])
@@ -295,6 +299,7 @@ class CommunitySharedPost {
       author: (json['author'] as String? ?? 'Community member').trim(),
       role: (json['role'] as String? ?? 'Community member').trim(),
       authorAvatarUrl: (json['authorAvatarUrl'] as String? ?? '').trim(),
+      mealName: (json['mealName'] as String? ?? '').trim(),
       description: (json['description'] as String? ?? '').trim(),
       imageUrl: imageUrl,
       imageUrls:
@@ -304,6 +309,7 @@ class CommunitySharedPost {
               ? const []
               : [imageUrl],
       ageLabel: (json['ageLabel'] as String? ?? 'Recently').trim(),
+      shares: (json['shares'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -315,10 +321,12 @@ class CommunitySharedPost {
         role: post.sharedPost?.role ?? post.role,
         authorAvatarUrl:
             post.sharedPost?.authorAvatarUrl ?? post.authorAvatarUrl,
+        mealName: post.sharedPost?.mealName ?? post.mealName,
         description: post.sharedPost?.description ?? post.description,
         imageUrl: post.sharedPost?.imageUrl ?? post.imageUrl,
         imageUrls: post.sharedPost?.imageUrls ?? post.imageUrls,
         ageLabel: post.sharedPost?.ageLabel ?? post.ageLabel,
+        shares: post.sharedPost?.shares ?? post.shares,
       );
 }
 

@@ -15,6 +15,7 @@ class ProfilePostCard extends StatelessWidget {
     this.membership,
     this.onEdit,
     this.onDelete,
+    this.onViewDetails,
     this.onOptions,
     required this.onLike,
     this.isLiking = false,
@@ -29,6 +30,7 @@ class ProfilePostCard extends StatelessWidget {
   final String? membership;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onViewDetails;
   final VoidCallback? onOptions;
   final VoidCallback onLike;
   final bool isLiking;
@@ -98,7 +100,10 @@ class ProfilePostCard extends StatelessWidget {
                 ),
               ),
 
-              if (onOptions != null || onEdit != null || onDelete != null)
+              if (onOptions != null ||
+                  onEdit != null ||
+                  onDelete != null ||
+                  onViewDetails != null)
                 IconButton(
                   tooltip: 'Post options',
                   icon: Icon(
@@ -250,9 +255,15 @@ class ProfilePostCard extends StatelessWidget {
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _ProfilePostOptionsSheet(),
+      builder:
+          (_) => _ProfilePostOptionsSheet(
+            canEdit: onEdit != null,
+            canDelete: onDelete != null,
+            canViewDetails: onViewDetails != null,
+          ),
     );
     if (!context.mounted) return;
+    if (action == 'viewDetails') onViewDetails?.call();
     if (action == 'edit') onEdit?.call();
     if (action == 'delete') onDelete?.call();
   }
@@ -423,7 +434,15 @@ class _EngagementSummary extends StatelessWidget {
 }
 
 class _ProfilePostOptionsSheet extends StatelessWidget {
-  const _ProfilePostOptionsSheet();
+  const _ProfilePostOptionsSheet({
+    required this.canEdit,
+    required this.canDelete,
+    required this.canViewDetails,
+  });
+
+  final bool canEdit;
+  final bool canDelete;
+  final bool canViewDetails;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -464,22 +483,37 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const _ProfilePostOption(
-                  value: 'edit',
-                  label: 'Edit post',
-                  icon: Icons.edit_outlined,
-                ),
-                const Divider(
-                  height: 1,
-                  indent: 64,
-                  color: Color(0xFFE0E5E1),
-                ),
-                const _ProfilePostOption(
-                  value: 'delete',
-                  label: 'Delete post',
-                  icon: Icons.delete_outline_rounded,
-                  isDestructive: true,
-                ),
+                if (canViewDetails)
+                  const _ProfilePostOption(
+                    value: 'viewDetails',
+                    label: 'View details',
+                    icon: Icons.article_outlined,
+                  ),
+                if (canViewDetails && (canEdit || canDelete))
+                  const Divider(
+                    height: 1,
+                    indent: 64,
+                    color: Color(0xFFE0E5E1),
+                  ),
+                if (canEdit)
+                  const _ProfilePostOption(
+                    value: 'edit',
+                    label: 'Edit post',
+                    icon: Icons.edit_outlined,
+                  ),
+                if (canEdit && canDelete)
+                  const Divider(
+                    height: 1,
+                    indent: 64,
+                    color: Color(0xFFE0E5E1),
+                  ),
+                if (canDelete)
+                  const _ProfilePostOption(
+                    value: 'delete',
+                    label: 'Delete post',
+                    icon: Icons.delete_outline_rounded,
+                    isDestructive: true,
+                  ),
               ],
             ),
           ),

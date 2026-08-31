@@ -17,7 +17,6 @@ import 'widgets/profile_post_card.dart';
 import '../community/community_comments_page.dart';
 import '../community/community_post_editor_page.dart';
 import '../community/community_share_actions.dart';
-import '../community/community_share_post_page.dart';
 import '../community/widgets/community_composer_card.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -169,6 +168,7 @@ class ProfileView extends GetView<ProfileController> {
               membership: controller.membership.value,
               onEdit: () => _showEditPost(post),
               onDelete: () => _confirmDeletePost(post),
+              onViewDetails: () => _showComments(post),
               onLike: () => controller.togglePostLike(post),
               isLiking: controller.likingPostIds.contains(post.id),
               onComment: () => _showComments(post),
@@ -346,50 +346,25 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Future<void> _showShare(CommunityPost post) async {
-    final action = await showCommunityShareActions(
-      canShareToFeed:
-          post.sharedPost != null ||
-          post.visibility == CommunityPostVisibility.public,
-    );
-    if (action == null) return;
-
-    switch (action) {
-      case CommunityShareAction.shareNow:
-        await _sharePostToFeed(post);
-        break;
-      case CommunityShareAction.writePost:
-        await _writeSharedPost(post);
-        break;
-    }
-  }
-
-  Future<void> _sharePostToFeed(CommunityPost post) async {
-    try {
-      await controller.sharePostToFeed(post);
-      AppAlert.success(
-        title: 'Post shared',
-        message: 'The post is now on your profile and Community feed.',
+    final canShare =
+        post.sharedPost != null || post.visibility == CommunityPostVisibility.public;
+    if (!canShare) {
+      AppAlert.error(
+        title: 'Cannot share this post',
+        message: 'Only public posts can be shared to your feed.',
       );
-    } on Object catch (error) {
-      AppAlert.error(title: 'Could not share post', message: error.toString());
+      return;
     }
-  }
-
-  Future<void> _writeSharedPost(CommunityPost post) async {
     final user = controller.authenticatedUser.value;
-    await Get.to<void>(
-      () => CommunitySharePostPage(
-        post: post,
-        authorName: user?.displayName ?? 'Community member',
-        authorAvatarUrl: user?.profileImageUrl ?? '',
-        onShare:
-            (message, visibility) => controller.sharePostToFeed(
-              post,
-              message: message,
-              visibility: visibility,
-            ),
-      ),
-      transition: Transition.rightToLeft,
+    await showCommunityShareComposer(
+      authorName: user?.displayName ?? 'Community member',
+      authorAvatarUrl: user?.profileImageUrl ?? '',
+      onShare:
+          (message, visibility) => controller.sharePostToFeed(
+            post,
+            message: message,
+            visibility: visibility,
+          ),
     );
   }
 
