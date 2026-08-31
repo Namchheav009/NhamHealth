@@ -331,14 +331,41 @@ class CommunitySharedPost {
 }
 
 enum CommunityPostVisibility {
-  public('PUBLIC', 'Public', Icons.public_rounded),
-  friends('FRIENDS', 'Friends', Icons.group_outlined),
-  onlyMe('ONLY_ME', 'Only me', Icons.lock_outline_rounded);
+  public(
+    'PUBLIC',
+    'Public',
+    'Everyone in the Nham Health community',
+    Icons.public_rounded,
+  ),
+  followers(
+    'FOLLOWERS',
+    'Followers',
+    'Only people who follow you',
+    Icons.person_outline_rounded,
+  ),
+  friends(
+    'FRIENDS',
+    'Friends',
+    'People you follow who also follow you',
+    Icons.group_outlined,
+  ),
+  onlyMe(
+    'ONLY_ME',
+    'Only me',
+    'Only you can see this post',
+    Icons.lock_outline_rounded,
+  );
 
-  const CommunityPostVisibility(this.apiValue, this.label, this.icon);
+  const CommunityPostVisibility(
+    this.apiValue,
+    this.label,
+    this.description,
+    this.icon,
+  );
 
   final String apiValue;
   final String label;
+  final String description;
   final IconData icon;
 
   static CommunityPostVisibility fromApi(String value) =>

@@ -512,6 +512,7 @@ public class CommunityService {
         if (post.getUser().getUserId().equals(viewerId)) return true;
         return switch (value(post.getVisibility(), "PUBLIC").toUpperCase(Locale.ROOT)) {
             case "ONLY_ME" -> false;
+            case "FOLLOWERS" -> followed.contains(post.getUser().getUserId());
             case "FRIENDS" -> followed.contains(post.getUser().getUserId())
                     && followers.contains(post.getUser().getUserId());
             default -> true;
@@ -520,7 +521,7 @@ public class CommunityService {
 
     private String cleanVisibility(String visibility) {
         String clean = value(visibility, "PUBLIC").toUpperCase(Locale.ROOT);
-        if (Set.of("PUBLIC", "FRIENDS", "ONLY_ME").contains(clean)) return clean;
+        if (Set.of("PUBLIC", "FOLLOWERS", "FRIENDS", "ONLY_ME").contains(clean)) return clean;
         throw new IllegalArgumentException("Select a valid audience");
     }
 

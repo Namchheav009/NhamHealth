@@ -14,6 +14,7 @@ import '../../models/community/community_tag.dart';
 import '../../models/community/ingredient_suggestion.dart';
 import '../../models/meals/meal_category_model.dart';
 import '../../repositories/community/community_repository.dart';
+import 'widgets/community_audience_picker.dart';
 
 class CommunityPostEditorPage extends StatefulWidget {
   const CommunityPostEditorPage({
@@ -70,6 +71,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   String? _tagsError;
   String? _categoriesError;
   late int _currentStep;
+  late CommunityPostVisibility _visibility;
 
   @override
   void initState() {
@@ -112,6 +114,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _selectedTags = {...?post?.tagIds};
     _selectedCategoryId = post?.categoryId;
     _currentStep = post == null ? 0 : 1;
+    _visibility =
+        post?.visibility == CommunityPostVisibility.followers
+            ? CommunityPostVisibility.followers
+            : CommunityPostVisibility.public;
     _loadTags();
     _loadMealCategories();
   }
@@ -272,7 +278,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           ),
           imageBytes: _image == null ? const [] : [_image!],
           removeImage: false,
-          visibility: CommunityPostVisibility.public,
+          visibility: _visibility,
           allowComments: true,
           allowReplies: true,
           tagIds: _selectedTags.toList(),
@@ -1233,7 +1239,70 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       const SizedBox(height: 10),
       _addButton('Add tags', _showTagPicker),
     ],
+    _heading(
+      'Post audience',
+      'Choose who can see your meal.',
+      Icons.visibility_outlined,
+    ),
+    _audienceField(),
   ];
+
+  Widget _audienceField() => Material(
+    color: const Color(0xFFF7FAF8),
+    borderRadius: BorderRadius.circular(16),
+    child: InkWell(
+      key: const ValueKey<String>('community-post-audience'),
+      borderRadius: BorderRadius.circular(16),
+      onTap: _submitting
+          ? null
+          : () async {
+              final selected = await showCommunityAudiencePicker(
+                context,
+                selected: _visibility,
+              );
+              if (selected != null && mounted) {
+                setState(() => _visibility = selected);
+              }
+            },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: const BoxDecoration(
+                color: Color(0xFFDDF4E5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(_visibility.icon, color: green),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _visibility.label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _visibility.description,
+                    style: const TextStyle(
+                      color: Color(0xFF718078),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF718078)),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _field(
     TextEditingController controller,

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/community/community_post.dart';
+import 'widgets/community_audience_picker.dart';
 import 'widgets/community_shared_post_card.dart';
 
 class CommunitySharePostPage extends StatefulWidget {
@@ -173,46 +174,33 @@ class _AudiencePicker extends StatelessWidget {
   final ValueChanged<CommunityPostVisibility> onChanged;
 
   @override
-  Widget build(BuildContext context) =>
-      PopupMenuButton<CommunityPostVisibility>(
-        initialValue: value,
-        onSelected: onChanged,
-        itemBuilder:
-            (context) => CommunityPostVisibility.values
-                .map(
-                  (item) => PopupMenuItem(
-                    value: item,
-                    child: Row(
-                      children: [
-                        Icon(item.icon, size: 19),
-                        const SizedBox(width: 9),
-                        Text(item.label),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(growable: false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F4F1),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(value.icon, size: 15, color: const Color(0xFF4D5A51)),
-              const SizedBox(width: 5),
-              Text(
-                value.label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down_rounded, size: 18),
-            ],
-          ),
-        ),
+  Widget build(BuildContext context) => InkWell(
+    borderRadius: BorderRadius.circular(7),
+    onTap: () async {
+      final selected = await showCommunityAudiencePicker(
+        context,
+        selected: value,
       );
+      if (selected != null) onChanged(selected);
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F4F1),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(value.icon, size: 15, color: const Color(0xFF4D5A51)),
+          const SizedBox(width: 5),
+          Text(
+            value.label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          const Icon(Icons.arrow_drop_down_rounded, size: 18),
+        ],
+      ),
+    ),
+  );
 }

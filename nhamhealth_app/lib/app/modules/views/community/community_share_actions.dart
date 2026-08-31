@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/community/community_post.dart';
+import 'widgets/community_audience_picker.dart';
 
 Future<void> showCommunityShareComposer({
   required String authorName,
@@ -85,10 +86,10 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
     top: false,
     child: Container(
       padding: EdgeInsets.fromLTRB(
-        16,
+        20,
         10,
-        16,
-        16 + MediaQuery.viewInsetsOf(context).bottom,
+        20,
+        18 + MediaQuery.viewInsetsOf(context).bottom,
       ),
       decoration: BoxDecoration(
         color: context.appSurface,
@@ -108,7 +109,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Row(
             children: [
               CircleAvatar(
@@ -126,7 +127,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                         )
                         : null,
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,16 +141,10 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const _ShareDestinationChip(),
-                        const SizedBox(width: 7),
-                        _AudiencePicker(
-                          value: _visibility,
-                          onChanged: (value) => setState(() => _visibility = value),
-                        ),
-                      ],
+                    const SizedBox(height: 7),
+                    _AudiencePicker(
+                      value: _visibility,
+                      onChanged: (value) => setState(() => _visibility = value),
                     ),
                   ],
                 ),
@@ -161,80 +156,71 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          TextField(
-            key: const ValueKey<String>('community-share-message'),
-            controller: _message,
-            autofocus: true,
-            minLines: 2,
-            maxLines: 5,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              hintText: 'Say something about this...',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: context.appSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFD9E6DD)),
             ),
-            style: TextStyle(
-              fontSize: 17,
-              height: 1.4,
-              color: context.appText,
+            child: TextField(
+              key: const ValueKey<String>('community-share-message'),
+              controller: _message,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Say something about this...',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 13,
+                ),
+              ),
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                color: context.appText,
+              ),
             ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Icon(Icons.photo_outlined, color: context.appMutedText),
-              const SizedBox(width: 18),
-              Icon(Icons.person_add_alt_1_outlined, color: context.appMutedText),
-              const Spacer(),
-              FilledButton(
-                key: const ValueKey<String>('community-share-submit'),
-                onPressed: _sharing ? null : _share,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF146CEB),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 13,
-                  ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              key: const ValueKey<String>('community-share-submit'),
+              onPressed: _sharing ? null : _share,
+              style: FilledButton.styleFrom(
+                backgroundColor: _green,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 14,
                 ),
-                child:
-                    _sharing
-                        ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : const Text('Share now'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-            ],
+              child:
+                  _sharing
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Text(
+                        'Share now',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+            ),
           ),
         ],
       ),
-    ),
-  );
-}
-
-class _ShareDestinationChip extends StatelessWidget {
-  const _ShareDestinationChip();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(
-      color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(7),
-    ),
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.dynamic_feed_rounded, size: 15, color: Color(0xFF4D5A51)),
-        SizedBox(width: 5),
-        Text('Feed', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-        Icon(Icons.arrow_drop_down_rounded, size: 18),
-      ],
     ),
   );
 }
@@ -246,24 +232,16 @@ class _AudiencePicker extends StatelessWidget {
   final ValueChanged<CommunityPostVisibility> onChanged;
 
   @override
-  Widget build(BuildContext context) => PopupMenuButton<CommunityPostVisibility>(
-    initialValue: value,
-    onSelected: onChanged,
-    itemBuilder:
-        (context) => CommunityPostVisibility.values
-            .map(
-              (item) => PopupMenuItem(
-                value: item,
-                child: Row(
-                  children: [
-                    Icon(item.icon, size: 19),
-                    const SizedBox(width: 9),
-                    Text(item.label),
-                  ],
-                ),
-              ),
-            )
-            .toList(growable: false),
+  Widget build(BuildContext context) => InkWell(
+    key: const ValueKey<String>('community-share-audience'),
+    borderRadius: BorderRadius.circular(7),
+    onTap: () async {
+      final selected = await showCommunityAudiencePicker(
+        context,
+        selected: value,
+      );
+      if (selected != null) onChanged(selected);
+    },
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
