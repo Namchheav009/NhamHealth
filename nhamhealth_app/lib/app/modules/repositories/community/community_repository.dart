@@ -12,6 +12,8 @@ import '../../models/community/community_post.dart';
 import '../../models/community/community_tag.dart';
 import '../../models/community/community_types.dart';
 import '../../models/community/community_report_reason.dart';
+import '../../models/community/ingredient_suggestion.dart';
+import '../../models/meals/meal_category_model.dart';
 
 class CommunityRepository {
   CommunityRepository({required AuthService authService, http.Client? client})
@@ -54,6 +56,32 @@ class CommunityRepository {
               CommunityTag.fromJson(Map<String, dynamic>.from(item as Map)),
         )
         .where((tag) => tag.id > 0 && tag.name.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<List<MealCategoryModel>> getMealCategories() async {
+    final payload = await _getList('/api/v1/meal-categories');
+    return payload
+        .map((item) => MealCategoryModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
+  }
+
+  Future<List<IngredientSuggestion>> searchIngredients(String query) async {
+    final value = query.trim();
+    if (value.isEmpty) return const [];
+    final response = await _client.get(
+      _uri('/api/v1/ingredients').replace(queryParameters: {'query': value}),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const CommunityException('The ingredient search response is invalid.');
+    }
+    return decoded
+        .whereType<Map>()
+        .map((item) => IngredientSuggestion.fromJson(Map<String, dynamic>.from(item)))
+        .where((item) => item.id > 0 && item.name.isNotEmpty)
         .toList(growable: false);
   }
 
@@ -128,6 +156,7 @@ class CommunityRepository {
     bool allowComments = true,
     bool allowReplies = true,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final request =
         http.MultipartRequest('POST', _uri('/api/community/meals'))
@@ -142,6 +171,7 @@ class CommunityRepository {
                 'servings': servings,
                 'difficulty': difficulty,
                 'tagIds': tagIds,
+                if (categoryId != null) 'categoryId': categoryId,
                 'ingredients':
                     ingredients.map((item) => item.toJson()).toList(),
                 'steps': steps.map((item) => item.toJson()).toList(),
@@ -167,8 +197,12 @@ class CommunityRepository {
       _uri('/api/community/meals/$recipeId/publish'),
       headers: await _headers(),
     );
-    _ensureSuccess(published);
-    return getPost(recipeId);
+    final publishedMeal = _decodeMap(published);
+    // A published user meal is exposed by Spring Boot as a Community post.
+    // Use that API-provided ID instead of relying on recipe and post IDs
+    // remaining identical in the database view.
+    final postId = '${publishedMeal['postId'] ?? recipeId}';
+    return getPost(postId);
   }
 
   Future<CommunityPost> updatePost({
@@ -186,6 +220,7 @@ class CommunityRepository {
     bool allowReplies = true,
     bool removeImage = false,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final request =
         http.MultipartRequest('PUT', _uri('/api/community/meals/$postId'))
@@ -200,6 +235,7 @@ class CommunityRepository {
                 'servings': servings,
                 'difficulty': difficulty,
                 'tagIds': tagIds,
+                if (categoryId != null) 'categoryId': categoryId,
                 'ingredients':
                     ingredients.map((item) => item.toJson()).toList(),
                 'steps': steps.map((item) => item.toJson()).toList(),

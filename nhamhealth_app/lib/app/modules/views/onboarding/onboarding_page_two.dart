@@ -9,6 +9,7 @@ class OnboardingPageTwo extends GetView<OnboardingController> {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.items.length < 2) return const SizedBox.shrink();
     return OnboardingContent(
       item: controller.items[1],
       activePage: 1,

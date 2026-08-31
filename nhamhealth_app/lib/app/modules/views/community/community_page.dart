@@ -572,12 +572,19 @@ class CommunityPage extends GetView<CommunityController> {
     ];
     return Obx(
       () => Container(
-        height: 44,
-        padding: const EdgeInsets.all(3),
+        height: 48,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F4F1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFE1E8E3)),
+          color: Colors.white.withValues(alpha: .92),
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(color: const Color(0xFFD9E6DE)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0D173D25),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           children: List.generate(CommunityFeedFilter.values.length, (index) {
@@ -586,26 +593,34 @@ class CommunityPage extends GetView<CommunityController> {
             return Expanded(
               child: Semantics(
                 selected: selected,
-                label: '${labels[index]} feed',
-                child: GestureDetector(
+                button: true,
+                label: '${labels[index]} feed filter',
+                child: InkWell(
                   key: ValueKey<String>(
                     'community-feed-filter-${filter.name}',
                   ),
-                  behavior: HitTestBehavior.opaque,
                   onTap: () => controller.selectFeedFilter(filter),
+                  borderRadius: BorderRadius.circular(13),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
+                    duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: selected ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
+                      color:
+                          selected
+                              ? const Color(0xFFEAF8EF)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(13),
+                      border:
+                          selected
+                              ? Border.all(color: const Color(0xFFCDE8D7))
+                              : null,
                       boxShadow:
                           selected
                               ? const [
                                 BoxShadow(
-                                  color: Color(0x10173D25),
-                                  blurRadius: 8,
+                                  color: Color(0x12056E38),
+                                  blurRadius: 7,
                                   offset: Offset(0, 2),
                                 ),
                               ]
@@ -620,9 +635,9 @@ class CommunityPage extends GetView<CommunityController> {
                           color:
                               selected
                                   ? const Color(0xFF087B3A)
-                                  : Colors.black45,
+                                  : const Color(0xFF738077),
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         Flexible(
                           child: Text(
                             labels[index],
@@ -632,9 +647,9 @@ class CommunityPage extends GetView<CommunityController> {
                               color:
                                   selected
                                       ? const Color(0xFF087B3A)
-                                      : Colors.black54,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
+                                      : const Color(0xFF647168),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
@@ -1002,6 +1017,7 @@ class CommunityPage extends GetView<CommunityController> {
               allowReplies: draft.allowReplies,
               removeImage: draft.removeImage,
               tagIds: draft.tagIds,
+              categoryId: draft.categoryId,
             ),
       ),
       transition: Transition.rightToLeft,
@@ -1189,6 +1205,7 @@ class CommunityPage extends GetView<CommunityController> {
               allowReplies: draft.allowReplies,
               removeImage: draft.removeImage,
               tagIds: draft.tagIds,
+              categoryId: draft.categoryId,
             ),
       ),
       transition: Transition.rightToLeft,
@@ -1215,6 +1232,7 @@ class CommunityPage extends GetView<CommunityController> {
               allowComments: draft.allowComments,
               allowReplies: draft.allowReplies,
               tagIds: draft.tagIds,
+              categoryId: draft.categoryId,
             ),
       ),
       transition: Transition.rightToLeft,

@@ -430,25 +430,36 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
     top: false,
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
-      decoration: BoxDecoration(
-        color: context.appSurface,
+      decoration: const BoxDecoration(
+        color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 5,
-            decoration: BoxDecoration(
-              color: const Color(0xFF9AA19C),
-              borderRadius: BorderRadius.circular(99),
+          Center(
+            child: Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFF9AA19C),
+                borderRadius: BorderRadius.circular(99),
+              ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'Post options',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: context.appMutedSurface,
+              color: const Color(0xFFF4F6F4),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -458,7 +469,11 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
                   label: 'Edit post',
                   icon: Icons.edit_outlined,
                 ),
-                Divider(height: 1, indent: 64, color: context.appBorder),
+                const Divider(
+                  height: 1,
+                  indent: 64,
+                  color: Color(0xFFE0E5E1),
+                ),
                 const _ProfilePostOption(
                   value: 'delete',
                   label: 'Delete post',
@@ -489,12 +504,16 @@ class _ProfilePostOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? const Color(0xFFFF777F) : context.appText;
+    final color =
+        isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
     return ListTile(
       onTap: () => Navigator.of(context).pop(value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-      title: Text(label, style: TextStyle(color: color, fontSize: 15)),
-      leading: Icon(icon, color: color, size: 24),
+      title: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+      leading: Icon(icon, color: color, size: 27),
     );
   }
 }

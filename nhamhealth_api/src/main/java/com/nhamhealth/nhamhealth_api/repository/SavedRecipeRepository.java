@@ -10,4 +10,6 @@ public interface SavedRecipeRepository extends JpaRepository<SavedRecipe, Intege
     Optional<SavedRecipe> findByUserUserIdAndRecipeRecipeId(Integer userId, Integer recipeId);
 
     List<SavedRecipe> findByUserUserIdOrderBySavedAtDesc(Integer userId);
+
+    void deleteByRecipeRecipeId(Integer recipeId);
 }

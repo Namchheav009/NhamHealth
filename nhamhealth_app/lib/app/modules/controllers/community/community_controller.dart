@@ -38,10 +38,12 @@ class CommunityController extends GetxController {
   final HomeProvider _homeProvider;
   final NotificationsRepository? _notificationsRepository;
   Timer? _notificationTimer;
+  Timer? _feedRefreshTimer;
   Set<int> _knownCommunityNotificationIds = const {};
   bool _notificationsInitialized = false;
   bool _notificationRequestInFlight = false;
   static const notificationRefreshInterval = Duration(seconds: 5);
+  static const feedRefreshInterval = Duration(seconds: 10);
   final section = CommunitySection.feed.obs;
   final feedFilter = CommunityFeedFilter.forYou.obs;
   final friendsView = FriendsView.friends.obs;
@@ -116,6 +118,13 @@ class CommunityController extends GetxController {
   void onInit() {
     super.onInit();
     unawaited(reload());
+    _feedRefreshTimer = Timer.periodic(feedRefreshInterval, (_) {
+      if (Get.currentRoute == AppRoutes.community &&
+          hasLoaded.value &&
+          !isLoading.value) {
+        unawaited(_refreshPosts());
+      }
+    });
     if (_notificationsRepository != null) {
       unawaited(_refreshCommunityNotifications(showAlert: false));
       _notificationTimer = Timer.periodic(notificationRefreshInterval, (_) {
@@ -191,6 +200,16 @@ class CommunityController extends GetxController {
           await _homeProvider.getUnreadNotificationCount();
     } on Object {
       /* Stay available offline. */
+    }
+  }
+
+  /// Keeps the Community feed current when another signed-in user publishes a
+  /// meal through the Spring Boot recipe endpoint.
+  Future<void> _refreshPosts() async {
+    try {
+      posts.assignAll(await _repository.getPosts());
+    } on Object {
+      // Keep the existing feed visible until the next successful refresh.
     }
   }
 
@@ -280,6 +299,7 @@ class CommunityController extends GetxController {
     bool allowComments = true,
     bool allowReplies = true,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final post = await _repository.createPost(
       mealName: mealName,
@@ -294,6 +314,7 @@ class CommunityController extends GetxController {
       allowComments: allowComments,
       allowReplies: allowReplies,
       tagIds: tagIds,
+      categoryId: categoryId,
     );
     posts.insert(0, post);
     section.value = CommunitySection.feed;
@@ -314,6 +335,7 @@ class CommunityController extends GetxController {
     bool allowReplies = true,
     bool removeImage = false,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final updated = await _repository.updatePost(
       postId: post.id,
@@ -330,6 +352,7 @@ class CommunityController extends GetxController {
       allowReplies: allowReplies,
       removeImage: removeImage,
       tagIds: tagIds,
+      categoryId: categoryId,
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
@@ -367,6 +390,7 @@ class CommunityController extends GetxController {
   @override
   void onClose() {
     _notificationTimer?.cancel();
+    _feedRefreshTimer?.cancel();
     super.onClose();
   }
 }

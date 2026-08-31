@@ -15,6 +15,7 @@ class CommunityPostDraft {
     required this.allowComments,
     required this.allowReplies,
     required this.tagIds,
+    this.categoryId,
     this.mealName = '',
     this.cookingTimeMinutes = 0,
     this.servings = 0,
@@ -30,6 +31,7 @@ class CommunityPostDraft {
   final bool allowComments;
   final bool allowReplies;
   final List<int> tagIds;
+  final int? categoryId;
   final String mealName;
   final int cookingTimeMinutes;
   final int servings;

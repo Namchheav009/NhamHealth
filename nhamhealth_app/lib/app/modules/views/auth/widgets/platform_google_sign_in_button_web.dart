@@ -44,6 +44,11 @@ class _PlatformGoogleSignInButtonState
           Get.isRegistered<GoogleAuthService>()
               ? Get.find<GoogleAuthService>()
               : GoogleAuthService();
+      if (!service.hasWebClientConfiguration) {
+        throw const GoogleAuthException(
+          'Google sign-in is not configured for the web app.',
+        );
+      }
       await service.initialize();
       if (!mounted) return;
 

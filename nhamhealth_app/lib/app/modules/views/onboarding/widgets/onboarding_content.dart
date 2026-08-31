@@ -14,6 +14,7 @@ class OnboardingContent extends StatelessWidget {
     super.key,
     required this.item,
     required this.activePage,
+    this.pageCount = 2,
     required this.buttonText,
     required this.showSkipButton,
     required this.showBackButton,
@@ -24,6 +25,7 @@ class OnboardingContent extends StatelessWidget {
 
   final OnboardingItem item;
   final int activePage;
+  final int pageCount;
   final String buttonText;
   final bool showSkipButton;
   final bool showBackButton;
@@ -98,7 +100,10 @@ class OnboardingContent extends StatelessWidget {
                         _TitleBlock(item: item, centered: true),
                         SizedBox(height: compact ? 16 : 24),
                       ],
-                      OnboardingIndicator(activePage: activePage, pageCount: 2),
+                      OnboardingIndicator(
+                        activePage: activePage,
+                        pageCount: pageCount,
+                      ),
                       const SizedBox(height: 18),
                       OnboardingNextButton(text: buttonText, onPressed: onNext),
                       const SizedBox(height: 4),

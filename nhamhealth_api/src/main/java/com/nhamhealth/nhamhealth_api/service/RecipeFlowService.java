@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.persistence.EntityManager;
+
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeStepRequest;
@@ -62,17 +64,19 @@ public class RecipeFlowService {
     private final MealCategoryRepository categories;
     private final UserRepository users;
     private final ProfileImageStorageService images;
+    private final EntityManager entityManager;
 
     public RecipeFlowService(RecipeRepository recipes, RecipeIngredientRepository ingredients,
             RecipeStepRepository steps, RecipeTagRepository recipeTags, TagTypeRepository tags,
             AiRecipeReviewRepository reviews, UserRecipeAiCheckRepository checks,
             SavedRecipeRepository savedRecipes, PostRepository posts,
             MealRepository meals, MealCategoryRepository categories, UserRepository users,
-            ProfileImageStorageService images) {
+            ProfileImageStorageService images, EntityManager entityManager) {
         this.recipes = recipes; this.ingredients = ingredients; this.steps = steps; this.recipeTags = recipeTags;
         this.tags = tags; this.reviews = reviews; this.checks = checks; this.savedRecipes = savedRecipes;
         this.posts = posts; this.meals = meals; this.categories = categories;
         this.users = users; this.images = images;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -158,14 +162,80 @@ public class RecipeFlowService {
     @Transactional
     public void delete(Integer userId, Integer recipeId) {
         Recipe recipe = owned(userId, recipeId);
-        meals.findBySourceRecipeRecipeId(recipeId).ifPresent(meals::delete);
+
+        // A promoted catalog meal and the meal post reference each other. Clear
+        // the post -> meal reference before deleting the derived catalog meal.
+        // This also lets the same delete path work for both author and admin
+        // actions.
+        Optional<Meal> promotedMeal = meals.findBySourceRecipeRecipeId(recipeId);
+        if (recipe.getMeal() != null) {
+            recipe.setMeal(null);
+            recipes.saveAndFlush(recipe);
+        }
+
+        // The Community view uses the meal-post id as its post id. These rows
+        // do not have database foreign keys because the parent is a view, but
+        // they must not be left orphaned when an admin permanently removes a
+        // meal post. Reports must precede comments and comment likes.
+        deleteByMealPostId("post_reports", recipeId);
+        entityManager.createNativeQuery("DELETE FROM comment_likes WHERE comment_id IN "
+                        + "(SELECT comment_id FROM post_comments WHERE user_meal_post_id = :postId)")
+                .setParameter("postId", recipeId)
+                .executeUpdate();
+        deleteByMealPostId("post_comments", recipeId);
+        deleteByMealPostId("post_favorites", recipeId);
+        deleteByMealPostId("post_likes", recipeId);
+        deleteByMealPostId("post_media", recipeId);
+        deleteByMealPostId("post_tags", recipeId);
+
+        // Delete dependent rows in foreign-key order. In particular, AI check
+        // records reference both the meal post and its AI review, so removing
+        // only the parent post caused the FK violation shown to administrators.
+        checks.deleteByRecipeRecipeId(recipeId);
+        checks.flush();
+        reviews.deleteByRecipeRecipeId(recipeId);
+        savedRecipes.deleteByRecipeRecipeId(recipeId);
+        ingredients.deleteByRecipeRecipeId(recipeId);
+        steps.deleteByRecipeRecipeId(recipeId);
+        recipeTags.deleteByRecipeRecipeId(recipeId);
+        entityManager.flush();
+
+        promotedMeal.ifPresent(this::deletePromotedMeal);
         recipes.delete(recipe);
+        recipes.flush();
+    }
+
+    private void deletePromotedMeal(Meal meal) {
+        Integer mealId = meal.getMealId();
+        deleteByMealId("ai_recommendation_items", mealId);
+        deleteByMealId("recipe_steps", mealId);
+        deleteByMealId("meal_tags", mealId);
+        deleteByMealId("meal_favorites", mealId);
+        deleteByMealId("meal_ingredients", mealId);
+        deleteByMealId("meal_nutrition", mealId);
+        entityManager.createNativeQuery("UPDATE meal_logs SET meal_id = NULL WHERE meal_id = :mealId")
+                .setParameter("mealId", mealId)
+                .executeUpdate();
+        meals.delete(meal);
+        meals.flush();
+    }
+
+    private void deleteByMealPostId(String tableName, Integer mealPostId) {
+        entityManager.createNativeQuery("DELETE FROM " + tableName + " WHERE user_meal_post_id = :postId")
+                .setParameter("postId", mealPostId)
+                .executeUpdate();
+    }
+
+    private void deleteByMealId(String tableName, Integer mealId) {
+        entityManager.createNativeQuery("DELETE FROM " + tableName + " WHERE meal_id = :mealId")
+                .setParameter("mealId", mealId)
+                .executeUpdate();
     }
 
     private void promoteApproved(Recipe recipe) {
         Meal meal = meals.findBySourceRecipeRecipeId(recipe.getRecipeId()).orElse(null);
         if (meal == null) {
-            MealCategory category = communityMealCategory();
+            MealCategory category = recipe.getCategory() == null ? communityMealCategory() : recipe.getCategory();
             meal = new Meal(); meal.setSourceRecipe(recipe); meal.setSourceType("COMMUNITY"); meal.setApprovalSource("AI");
             meal.setCategory(category); meal.setCreatedByUser(recipe.getAuthor()); meal.setMealName(recipe.getRecipeName());
             meal.setDescription(recipe.getDescription()); meal.setMainImageUrl(recipe.getMainImageUrl());
@@ -224,7 +294,7 @@ public class RecipeFlowService {
     public RecipeResponse adminCreate(Integer authorId, String name, String description,
             Integer cookingTimeMinutes, Integer servings, String difficulty, String status) {
         RecipeRequest request = new RecipeRequest(name, description, cookingTimeMinutes, servings,
-                difficulty, List.of(), List.of(), List.of());
+                difficulty, List.of(), List.of(), List.of(), communityMealCategory().getCategoryId());
         RecipeResponse created = create(authorId, request, null);
         return adminUpdate(created.id(), name, description, cookingTimeMinutes, servings, difficulty, status);
     }
@@ -283,8 +353,27 @@ public class RecipeFlowService {
         recipe.setRecipeName(request.recipeName().trim()); recipe.setDescription(clean(request.description()));
         recipe.setCookingTimeMinutes(request.cookingTimeMinutes()); recipe.setServings(request.servings());
         recipe.setDifficulty(clean(request.difficulty()) == null ? null : request.difficulty().trim().toUpperCase(Locale.ROOT));
+        if (request.categoryId() != null) {
+            MealCategory category = categories.findById(request.categoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("Select a valid meal category."));
+            if (!Boolean.TRUE.equals(category.getIsActive())) {
+                throw new IllegalArgumentException("Select an active meal category.");
+            }
+            recipe.setCategory(category);
+        }
         if (image != null && !image.isEmpty()) recipe.setMainImageUrl(images.storePostImage(image));
-        if (update) { ingredients.deleteByRecipeRecipeId(recipe.getRecipeId()); steps.deleteByRecipeRecipeId(recipe.getRecipeId()); recipeTags.deleteByRecipeRecipeId(recipe.getRecipeId()); }
+        if (update) {
+            // An edit replaces the child collections. Flush the deletes before
+            // inserting replacement tags: otherwise Hibernate may insert a
+            // tag with the same (meal post, tag) pair before its old row is
+            // removed, violating uk_recipe_tags_recipe_tag and returning 500.
+            ingredients.deleteByRecipeRecipeId(recipe.getRecipeId());
+            steps.deleteByRecipeRecipeId(recipe.getRecipeId());
+            recipeTags.deleteByRecipeRecipeId(recipe.getRecipeId());
+            ingredients.flush();
+            steps.flush();
+            recipeTags.flush();
+        }
         List<RecipeIngredient> ingredientRows = new ArrayList<>();
         for (int i = 0; i < list(request.ingredients()).size(); i++) { RecipeIngredientRequest item = list(request.ingredients()).get(i); RecipeIngredient row = new RecipeIngredient(); row.setRecipe(recipe); row.setIngredientName(item.name().trim()); row.setAmount(item.amount()); row.setUnit(clean(item.unit())); row.setPreparationNote(clean(item.preparationNote())); row.setDisplayOrder(i); ingredientRows.add(row); }
         List<RecipeStep> stepRows = new ArrayList<>();

@@ -31,6 +31,8 @@ class CommunityPost {
     this.cookingTimeMinutes,
     this.servings,
     this.difficulty = '',
+    this.categoryId,
+    this.categoryName = '',
     this.aiStatus = 'PENDING',
     this.aiReviewReason = '',
     this.mealId,
@@ -47,8 +49,8 @@ class CommunityPost {
   final bool allowComments;
   final bool allowReplies;
   final CommunitySharedPost? sharedPost;
-  final String mealName, difficulty, aiStatus, aiReviewReason;
-  final int? cookingTimeMinutes, servings, mealId;
+  final String mealName, difficulty, categoryName, aiStatus, aiReviewReason;
+  final int? cookingTimeMinutes, servings, categoryId, mealId;
   final List<MealPostIngredient> ingredients;
   final List<MealPostStep> steps;
   final String author;
@@ -111,6 +113,8 @@ class CommunityPost {
     cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
     servings: (json['servings'] as num?)?.toInt(),
     difficulty: (json['difficulty'] as String? ?? '').trim(),
+    categoryId: (json['categoryId'] as num?)?.toInt(),
+    categoryName: (json['categoryName'] as String? ?? '').trim(),
     aiStatus: (json['aiStatus'] as String? ?? 'PENDING').trim(),
     aiReviewReason: (json['aiReviewReason'] as String? ?? '').trim(),
     mealId: (json['mealId'] as num?)?.toInt(),
@@ -154,6 +158,8 @@ class CommunityPost {
     int? cookingTimeMinutes,
     int? servings,
     String? difficulty,
+    int? categoryId,
+    String? categoryName,
     String? aiStatus,
     String? aiReviewReason,
     int? mealId,
@@ -187,6 +193,8 @@ class CommunityPost {
     cookingTimeMinutes: cookingTimeMinutes ?? this.cookingTimeMinutes,
     servings: servings ?? this.servings,
     difficulty: difficulty ?? this.difficulty,
+    categoryId: categoryId ?? this.categoryId,
+    categoryName: categoryName ?? this.categoryName,
     aiStatus: aiStatus ?? this.aiStatus,
     aiReviewReason: aiReviewReason ?? this.aiReviewReason,
     mealId: mealId ?? this.mealId,

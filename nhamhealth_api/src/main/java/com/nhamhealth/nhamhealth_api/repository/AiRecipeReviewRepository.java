@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface AiRecipeReviewRepository extends JpaRepository<AiRecipeReview, Integer> {
     List<AiRecipeReview> findByRecipeRecipeIdOrderByCreatedAtDesc(Integer recipeId);
+
+    void deleteByRecipeRecipeId(Integer recipeId);
 }

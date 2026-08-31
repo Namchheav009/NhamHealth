@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface UserRecipeAiCheckRepository extends JpaRepository<UserRecipeAiCheck, Integer> {
     List<UserRecipeAiCheck> findByRecipeRecipeIdOrderByCreatedAtDesc(Integer recipeId);
+
+    void deleteByRecipeRecipeId(Integer recipeId);
 }

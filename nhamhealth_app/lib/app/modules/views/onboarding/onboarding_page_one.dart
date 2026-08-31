@@ -9,8 +9,9 @@ class OnboardingPageOne extends GetView<OnboardingController> {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.items.isEmpty) return const SizedBox.shrink();
     return OnboardingContent(
-      item: controller.items[0],
+      item: controller.items.first,
       activePage: 0,
       buttonText: 'Next',
       showSkipButton: true,

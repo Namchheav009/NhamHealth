@@ -36,6 +36,7 @@ public class CommunityService {
     private final CommunityNotificationService communityNotifications;
     private final RecipeIngredientRepository recipeIngredients;
     private final RecipeStepRepository recipeSteps;
+    private final RecipeTagRepository recipeTags;
     private final SavedRecipeRepository savedRecipes;
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
@@ -45,7 +46,7 @@ public class CommunityService {
             ProfileImageStorageService imageStorage,
             CommunityNotificationService communityNotifications,
             RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
-            SavedRecipeRepository savedRecipes) {
+            RecipeTagRepository recipeTags, SavedRecipeRepository savedRecipes) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -60,6 +61,7 @@ public class CommunityService {
         this.communityNotifications = communityNotifications;
         this.recipeIngredients = recipeIngredients;
         this.recipeSteps = recipeSteps;
+        this.recipeTags = recipeTags;
         this.savedRecipes = savedRecipes;
     }
 
@@ -354,20 +356,26 @@ public class CommunityService {
                 ? value(post.getRecipe().getMainImageUrl(), "")
                 : (imageUrls.isEmpty() ? "" : imageUrls.getFirst());
         if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
-        List<PostTag> assignedTags = postTags.findByPostPostIdOrderByPostTagId(post.getPostId());
         com.nhamhealth.nhamhealth_api.entity.Recipe recipe = post.getRecipe();
+        List<TagType> assignedTags = recipe == null
+                ? postTags.findByPostPostIdOrderByPostTagId(post.getPostId()).stream()
+                        .map(PostTag::getTag).toList()
+                : recipeTags.findByRecipeRecipeId(recipe.getRecipeId()).stream()
+                        .map(RecipeTag::getTag).toList();
         return new CommunityPostResponse(post.getPostId(), value(post.getCaption(), ""), imageUrl, imageUrls,
                 post.getUser().getUserId(),
                 profile == null ? post.getUser().getName() : profile.getFullName(),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                assignedTags.stream().map(item -> item.getTag().getTagName()).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
+                assignedTags.stream().map(TagType::getTagName).toList(), post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),
                 followed.contains(post.getUser().getUserId()), post.getVisibility(),
                 post.isAllowComments(), post.isAllowReplies(),
-                assignedTags.stream().map(item -> item.getTag().getTagId()).toList(),
+                assignedTags.stream().map(TagType::getTagId).toList(),
                 recipe == null ? "" : recipe.getRecipeName(), recipe == null ? null : recipe.getCookingTimeMinutes(),
                 recipe == null ? null : recipe.getServings(), recipe == null ? "" : value(recipe.getDifficulty(), ""),
+                recipe == null || recipe.getCategory() == null ? null : recipe.getCategory().getCategoryId(),
+                recipe == null || recipe.getCategory() == null ? "" : recipe.getCategory().getCategoryName(),
                 recipe == null ? "PENDING" : recipe.getAiStatus(), recipe == null ? "" : value(recipe.getAiReviewReason(), ""),
                 recipe == null || recipe.getMeal() == null ? null : recipe.getMeal().getMealId(),
                 recipe != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),

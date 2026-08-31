@@ -1,12 +1,18 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
+import '../../models/community/ingredient_suggestion.dart';
+import '../../models/meals/meal_category_model.dart';
 import '../../repositories/community/community_repository.dart';
 
 class CommunityPostEditorPage extends StatefulWidget {
@@ -28,34 +34,41 @@ class CommunityPostEditorPage extends StatefulWidget {
 
 class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   static const green = Color(0xFF0AAA55);
-  static const _ingredientSuggestions = <String>[
-    'Fish (Catfish)',
-    'Coconut milk',
-    'Kroeung (Khmer spice paste)',
-    'Palm sugar',
-    'Fish sauce',
-    'Chicken breast',
-    'Brown rice',
-    'Garlic',
-    'Ginger',
-    'Lime',
+  static const _ingredientUnits = <String>[
+    'g',
+    'kg',
+    'ml',
+    'l',
+    'tbsp',
+    'tsp',
+    'piece',
+    'clove',
+    'cup',
   ];
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
   late final TextEditingController _name, _description, _time, _servings;
   late List<_IngredientInput> _ingredients;
+  final _newIngredient = _IngredientInput();
+  List<IngredientSuggestion> _ingredientSuggestions = const [];
+  Timer? _ingredientSearchDebounce;
+  int _ingredientSearchVersion = 0;
   late List<TextEditingController> _steps;
   late List<String> _stepImageUrls;
   late List<Uint8List?> _stepImagePreviews;
   String _difficulty = 'EASY';
   Uint8List? _image;
   List<CommunityTag> _tags = const [];
+  List<MealCategoryModel> _mealCategories = const [];
   late final Set<int> _selectedTags;
+  int? _selectedCategoryId;
   bool _submitting = false;
   bool _tagsLoading = true;
+  bool _categoriesLoading = true;
   bool _showValidation = false;
   bool _creatingTag = false;
   String? _tagsError;
+  String? _categoriesError;
   late int _currentStep;
 
   @override
@@ -76,7 +89,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         (post?.ingredients ?? const <MealPostIngredient>[])
             .map(_IngredientInput.fromModel)
             .toList();
-    if (_ingredients.isEmpty) _ingredients.add(_IngredientInput());
     _steps =
         (post?.steps ?? const <MealPostStep>[])
             .map((item) => TextEditingController(text: item.instruction))
@@ -89,10 +101,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     while (_stepImageUrls.length < _steps.length) {
       _stepImageUrls.add('');
     }
-    _stepImagePreviews = List<Uint8List?>.filled(_steps.length, null);
+    // New recipe steps add a matching preview slot, so this must remain
+    // growable. A fixed-length list fails on `.add`, leaving the step lists
+    // out of sync and causing an out-of-range error while the editor rebuilds.
+    _stepImagePreviews = List<Uint8List?>.filled(
+      _steps.length,
+      null,
+      growable: true,
+    );
     _selectedTags = {...?post?.tagIds};
+    _selectedCategoryId = post?.categoryId;
     _currentStep = post == null ? 0 : 1;
     _loadTags();
+    _loadMealCategories();
   }
 
   Future<void> _loadTags() async {
@@ -112,8 +133,26 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     }
   }
 
+  Future<void> _loadMealCategories() async {
+    if (mounted) {
+      setState(() {
+        _categoriesLoading = true;
+        _categoriesError = null;
+      });
+    }
+    try {
+      final value = await Get.find<CommunityRepository>().getMealCategories();
+      if (mounted) setState(() => _mealCategories = value);
+    } on Object catch (error) {
+      if (mounted) setState(() => _categoriesError = error.toString());
+    } finally {
+      if (mounted) setState(() => _categoriesLoading = false);
+    }
+  }
+
   @override
   void dispose() {
+    _ingredientSearchDebounce?.cancel();
     _name.dispose();
     _description.dispose();
     _time.dispose();
@@ -121,6 +160,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     for (final item in _ingredients) {
       item.dispose();
     }
+    _newIngredient.dispose();
     for (final item in _steps) {
       item.dispose();
     }
@@ -181,6 +221,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Future<void> _submit() async {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCategoryId == null) {
+      Get.snackbar('Select a category', 'Choose a meal category before publishing.');
+      return;
+    }
     final ingredients =
         _ingredients
             .where((item) => item.name.text.trim().isNotEmpty)
@@ -232,6 +276,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           allowComments: true,
           allowReplies: true,
           tagIds: _selectedTags.toList(),
+          categoryId: _selectedCategoryId,
         ),
       );
       if (mounted) Get.back(result: true);
@@ -263,11 +308,76 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   void _continueToRecipe() {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCategoryId == null) {
+      Get.snackbar('Select a category', 'Choose a meal category before continuing.');
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       _showValidation = false;
       _currentStep = 1;
     });
+  }
+
+  void _addIngredient() {
+    final name = _newIngredient.name.text.trim();
+    final amount = num.tryParse(_newIngredient.amount.text.trim());
+    if (name.isEmpty || amount == null || amount <= 0) {
+      Get.snackbar(
+        'Add ingredient details',
+        'Enter an ingredient name and a valid amount first.',
+      );
+      return;
+    }
+    _ingredientSearchDebounce?.cancel();
+    _ingredientSearchVersion++;
+    setState(() {
+      _ingredients.add(
+        _IngredientInput(
+          name: name,
+          amount: _newIngredient.amount.text.trim(),
+          unit: _newIngredient.unit,
+        ),
+      );
+      _newIngredient.name.clear();
+      _newIngredient.amount.clear();
+      _newIngredient.unit = 'g';
+      _ingredientSuggestions = const [];
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  void _searchIngredients(String rawQuery) {
+    _ingredientSearchDebounce?.cancel();
+    final query = rawQuery.trim();
+    final requestVersion = ++_ingredientSearchVersion;
+    if (query.isEmpty) {
+      setState(() => _ingredientSuggestions = const []);
+      return;
+    }
+    setState(() => _ingredientSuggestions = const []);
+    _ingredientSearchDebounce = Timer(const Duration(milliseconds: 250), () async {
+      try {
+        final results = await Get.find<CommunityRepository>().searchIngredients(query);
+        if (mounted && requestVersion == _ingredientSearchVersion) {
+          setState(() => _ingredientSuggestions = results);
+        }
+      } on Object {
+        // A temporary search failure should never prevent someone entering an
+        // ingredient manually.
+      }
+    });
+  }
+
+  void _selectIngredient(IngredientSuggestion ingredient) {
+    setState(() {
+      _newIngredient.name.text = ingredient.name;
+      if (_ingredientUnits.contains(ingredient.defaultUnit)) {
+        _newIngredient.unit = ingredient.defaultUnit;
+      }
+      _ingredientSuggestions = const [];
+    });
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _createAndSelectTag(
@@ -449,40 +559,55 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF6F8F6),
-    appBar: AppBar(
-      leading: IconButton(
-        onPressed:
-            _currentStep == 0
-                ? () => Navigator.maybePop(context)
-                : () => setState(() => _currentStep = 0),
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 21),
-      ),
-      title: Text(widget.post == null ? 'Create Meal' : 'Edit Meal'),
-      centerTitle: true,
-      surfaceTintColor: Colors.transparent,
-      backgroundColor: Colors.white,
-    ),
-    body: Form(
-      key: _formKey,
-      autovalidateMode:
-          _showValidation
-              ? AutovalidateMode.onUserInteraction
-              : AutovalidateMode.disabled,
-      child: ListView(
-        key: ValueKey(_currentStep),
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
-        children: [
-          _progressHeader(),
-          const SizedBox(height: 26),
-          if (_currentStep == 0) ..._basicInfoFields() else ..._recipeFields(),
-        ],
+    backgroundColor: Colors.transparent,
+    body: AppBackground(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: AppSpacing.topBarPagePadding,
+              child: AppBackHeader(
+                title: widget.post == null ? 'Create Meal' : 'Edit Meal',
+                onBack:
+                    _currentStep == 0
+                        ? () => Navigator.maybePop(context)
+                        : () => setState(() => _currentStep = 0),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: Form(
+                key: _formKey,
+                autovalidateMode:
+                    _showValidation
+                        ? AutovalidateMode.onUserInteraction
+                        : AutovalidateMode.disabled,
+                child: ListView(
+                  key: ValueKey(_currentStep),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                  children: [
+                    _progressHeader(),
+                    const SizedBox(height: 18),
+                    if (_currentStep == 0)
+                      ..._basicInfoFields()
+                    else
+                      ..._recipeFields(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
     bottomNavigationBar: SafeArea(
       child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE7ECE8))),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: FilledButton(
           onPressed:
               _submitting
@@ -492,7 +617,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   : _submit,
           style: FilledButton.styleFrom(
             backgroundColor: green,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            minimumSize: const Size.fromHeight(50),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
@@ -527,78 +655,93 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
   );
 
-  Widget _progressHeader() {
-    final title = _currentStep == 0 ? 'Basic Info' : 'Ingredients & Steps';
-    final subtitle =
-        _currentStep == 0
-            ? 'Tell us about your meal'
-            : 'Add details so others can cook it';
-    return Column(
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFF1FBF5),
-                border: Border.all(color: green, width: 2),
-              ),
-              child: Text(
-                '${_currentStep + 1}/2',
-                style: const TextStyle(
-                  color: green,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+  Widget _progressHeader() => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _progressStep(
+        1,
+        'Basic Info',
+        isActive: _currentStep == 0,
+        isComplete: _currentStep == 1,
+      ),
+      Expanded(
+        child: Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          color:
+              _currentStep == 1
+                  ? const Color(0xFF9BCFB0)
+                  : const Color(0xFFE0E6E2),
+        ),
+      ),
+      _progressStep(
+        2,
+        'Ingredients & Steps',
+        isActive: _currentStep == 1,
+      ),
+    ],
+  );
+
+  Widget _progressStep(
+    int number,
+    String label, {
+    required bool isActive,
+    bool isComplete = false,
+  }) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 22,
+        height: 22,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color:
+              isActive
+                  ? green
+                  : isComplete
+                  ? const Color(0xFFE5F7EC)
+                  : const Color(0xFFF1F3F2),
+        ),
+        child:
+            isComplete
+                ? const Icon(Icons.check_rounded, size: 14, color: green)
+                : Text(
+                  '$number',
+                  style: TextStyle(
+                    color: isActive ? Colors.white : const Color(0xFF89928C),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: Color(0xFF758078)),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      ),
+      const SizedBox(width: 7),
+      Text(
+        label,
+        style: TextStyle(
+          color: isActive ? const Color(0xFF2B6242) : const Color(0xFF7B847E),
+          fontSize: 11,
+          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
         ),
-        const SizedBox(height: 18),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: (_currentStep + 1) / 2,
-            minHeight: 4,
-            color: green,
-            backgroundColor: const Color(0xFFE8EBE9),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 
   List<Widget> _basicInfoFields() => [
     InkWell(
       onTap: _submitting ? null : _chooseImage,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        height: 210,
+        height: 174,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5EC),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFCFE4D5)),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF8FCF9), Color(0xFFE6F7EC)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFC5E6D0)),
         ),
         child: Stack(
           fit: StackFit.expand,
@@ -607,25 +750,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 ? Image.memory(_image!, fit: BoxFit.cover)
                 : widget.post?.imageUrl.isNotEmpty == true
                 ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
-                : const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add_a_photo_outlined, color: green, size: 34),
-                    SizedBox(height: 8),
-                    Text(
-                      'Add meal photo',
-                      style: TextStyle(
-                        color: green,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Use a bright, clear photo',
-                      style: TextStyle(color: Color(0xFF637169)),
-                    ),
-                  ],
-                ),
+                : _emptyPhotoPrompt(),
             if (_image != null || widget.post?.imageUrl.isNotEmpty == true)
               Positioned(
                 right: 12,
@@ -662,11 +787,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
       ),
     ),
-    const SizedBox(height: 22),
+    const SizedBox(height: 18),
     _field(
       _name,
       'Meal name',
       hint: 'Khmer Fish Amok',
+      icon: Icons.restaurant_menu_rounded,
       validator:
           (v) =>
               v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
@@ -675,7 +801,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       _description,
       'Description',
       hint: 'Tell people about this meal',
-      lines: 3,
+      icon: Icons.subject_rounded,
+      lines: 2,
       maxLength: 4000,
     ),
     Row(
@@ -686,6 +813,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             'Cooking time',
             hint: '45',
             suffix: 'min',
+            icon: Icons.schedule_rounded,
             keyboard: TextInputType.number,
             validator: (v) => _positive(v, 'Cooking time'),
           ),
@@ -696,34 +824,370 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             _servings,
             'Servings',
             hint: '2',
+            icon: Icons.group_outlined,
             keyboard: TextInputType.number,
             validator: (v) => _positive(v, 'Servings'),
           ),
         ),
       ],
     ),
-    const Text('Difficulty', style: TextStyle(fontWeight: FontWeight.w700)),
-    const SizedBox(height: 7),
-    const SizedBox(height: 8),
-    Row(
+    const Row(
       children: [
-        _difficultyCard('EASY', Icons.sentiment_satisfied_alt_rounded),
-        const SizedBox(width: 10),
-        _difficultyCard('MEDIUM', Icons.sentiment_neutral_rounded),
-        const SizedBox(width: 10),
-        _difficultyCard('HARD', Icons.sentiment_dissatisfied_rounded),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Color(0xFFEAF8EF),
+            shape: BoxShape.circle,
+          ),
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: Icon(Icons.tune_rounded, color: green, size: 13),
+          ),
+        ),
+        SizedBox(width: 7),
+        Text(
+          'Difficulty',
+          style: TextStyle(
+            color: Color(0xFF334139),
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ],
     ),
+    const SizedBox(height: 8),
+    Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F7F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCE5DF)),
+      ),
+      child: Row(
+        children: [
+          _difficultyCard('EASY', Icons.sentiment_satisfied_alt_rounded),
+          const SizedBox(width: 4),
+          _difficultyCard('MEDIUM', Icons.sentiment_neutral_rounded),
+          const SizedBox(width: 4),
+          _difficultyCard('HARD', Icons.sentiment_dissatisfied_rounded),
+        ],
+      ),
+    ),
+    const SizedBox(height: 16),
+    _mealCategoryField(),
   ];
 
+  Widget _emptyPhotoPrompt() => Stack(
+    children: [
+      Positioned(
+        top: 13,
+        left: 14,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.image_outlined, color: green, size: 15),
+              SizedBox(width: 5),
+              Text(
+                'Cover photo',
+                style: TextStyle(
+                  color: Color(0xFF2B6242),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const Positioned(
+        top: 19,
+        right: 16,
+        child: Text(
+          'Recommended',
+          style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+        ),
+      ),
+      Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x19056E38),
+                    blurRadius: 14,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.add_a_photo_outlined, color: green, size: 27),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add a delicious photo',
+              style: TextStyle(color: Color(0xFF17643A), fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 3),
+            const Text(
+              'A clear photo helps your meal stand out',
+              style: TextStyle(color: Color(0xFF637169), fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+
+  Widget _mealCategoryField() {
+    if (_categoriesLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: LinearProgressIndicator(minHeight: 2),
+      );
+    }
+    if (_categoriesError != null) {
+      return _inlineError('Meal categories could not be loaded.', _loadMealCategories);
+    }
+    MealCategoryModel? selectedCategory;
+    for (final category in _mealCategories) {
+      if (category.id == _selectedCategoryId) {
+        selectedCategory = category;
+        break;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Meal category', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Material(
+            color: Colors.transparent,
+            child: Ink(
+              decoration: BoxDecoration(
+                color: selectedCategory == null
+                    ? const Color(0xFFF7F9F7)
+                    : const Color(0xFFEAF8EF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: selectedCategory == null
+                      ? const Color(0xFFDCE5DF)
+                      : green,
+                ),
+              ),
+              child: InkWell(
+                onTap: _submitting ? null : _showMealCategoryPicker,
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: selectedCategory == null ? Colors.white : green,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _mealCategoryIcon(selectedCategory?.name ?? ''),
+                          color: selectedCategory == null ? green : Colors.white,
+                          size: 19,
+                        ),
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              selectedCategory?.name ?? 'Choose a category',
+                              style: TextStyle(
+                                color: selectedCategory == null
+                                    ? const Color(0xFF526158)
+                                    : const Color(0xFF145C35),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              selectedCategory == null
+                                  ? 'Select where your meal belongs'
+                                  : 'Tap to change',
+                              style: const TextStyle(
+                                color: Color(0xFF718078),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF526158),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (_showValidation && _selectedCategoryId == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 6, left: 12),
+              child: Text(
+                'Select a meal category.',
+                style: TextStyle(color: Color(0xFFCF3B3B), fontSize: 12),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showMealCategoryPicker() async {
+    final categoryId = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * .65,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    height: 5,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF9AA19C),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Choose meal category',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'This is where your meal will appear after approval.',
+                  style: TextStyle(color: Color(0xFF718078), fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _mealCategories.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final category = _mealCategories[index];
+                      final selected = category.id == _selectedCategoryId;
+                      return Material(
+                        color: selected ? const Color(0xFFEAF8EF) : const Color(0xFFF7F9F7),
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => Navigator.pop(sheetContext, category.id),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: selected ? green : Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _mealCategoryIcon(category.name),
+                                    color: selected ? Colors.white : green,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: TextStyle(
+                                      color: const Color(0xFF18231C),
+                                      fontSize: 15,
+                                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (selected)
+                                  const Icon(Icons.check_circle_rounded, color: green),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (categoryId != null && mounted) {
+      setState(() => _selectedCategoryId = categoryId);
+    }
+  }
+
+  IconData _mealCategoryIcon(String categoryName) {
+    final name = categoryName.toLowerCase();
+    if (name.contains('breakfast') || name.contains('brunch')) return Icons.egg_alt_rounded;
+    if (name.contains('snack') || name.contains('dessert')) return Icons.bakery_dining_rounded;
+    if (name.contains('beverage') || name.contains('drink')) return Icons.local_drink_rounded;
+    if (name.contains('appetizer')) return Icons.tapas_rounded;
+    if (name.contains('late')) return Icons.nightlight_round;
+    if (name.contains('lunch') || name.contains('dinner')) return Icons.dinner_dining_rounded;
+    return Icons.restaurant_rounded;
+  }
+
   List<Widget> _recipeFields() => [
-    _heading('Ingredients', 'Add exact amounts so others can cook it.'),
-    ...List.generate(_ingredients.length, _ingredientCard),
-    _addButton(
-      'Add ingredient',
-      () => setState(() => _ingredients.add(_IngredientInput())),
+    _heading(
+      'Ingredients',
+      'Search a food, then add the amount you used.',
+      Icons.shopping_basket_outlined,
     ),
-    _heading('How to Cook', 'Keep each instruction short and clear.'),
+    _ingredientComposer(),
+    const SizedBox(height: 16),
+    _ingredientList(),
+    _heading(
+      'How to Cook',
+      'Keep each instruction short and clear.',
+      Icons.restaurant_menu_rounded,
+    ),
     ...List.generate(_steps.length, _stepCard),
     _addButton(
       'Add step',
@@ -733,7 +1197,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         _stepImagePreviews.add(null);
       }),
     ),
-    _heading('Tags', 'Help people discover your meal.'),
+    _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
     if (_tagsLoading)
       const Center(
         child: Padding(
@@ -756,6 +1220,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     selected: true,
                     selectedColor: const Color(0xFFDDF5E6),
                     checkmarkColor: green,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    side: const BorderSide(color: Color(0xFFB9DFC7)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     onSelected: (_) => setState(() => _selectedTags.remove(tag.id)),
                   ),
                 )
@@ -771,17 +1240,42 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     String label, {
     String? hint,
     String? suffix,
+    IconData? icon,
     int lines = 1,
     int? maxLength,
     TextInputType? keyboard,
     String? Function(String?)? validator,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.only(bottom: 13),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 7),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEAF8EF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: green, size: 13),
+              ),
+              const SizedBox(width: 7),
+            ],
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF334139),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           maxLines: lines,
@@ -798,7 +1292,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         hintText: hint,
         suffixText: suffix,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFFFEFF),
+        hintStyle: const TextStyle(color: Color(0xFF909A94)),
+        suffixStyle: const TextStyle(color: Color(0xFF617068), fontWeight: FontWeight.w600),
+        counterStyle: const TextStyle(color: Color(0xFF7B847E), fontSize: 11),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFDDE5DF)),
@@ -806,6 +1304,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFDDE5DF)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: green, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFCF3B3B)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFCF3B3B), width: 1.5),
         ),
       );
 
@@ -824,28 +1334,102 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ],
     ),
   );
-  Widget _heading(String title, String subtitle) => Padding(
-    padding: const EdgeInsets.only(top: 28, bottom: 12),
+  Widget _heading(String title, String subtitle, IconData icon) => Padding(
+    padding: const EdgeInsets.only(top: 22, bottom: 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE7F6EC),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 17, color: green),
+            ),
+            const SizedBox(width: 9),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
         const SizedBox(height: 2),
         Text(subtitle, style: const TextStyle(color: Color(0xFF718078))),
       ],
     ),
   );
-  Widget _addButton(String label, VoidCallback action) => OutlinedButton.icon(
-    onPressed: _submitting ? null : action,
-    icon: const Icon(Icons.add_rounded),
-    label: Text(label),
-    style: OutlinedButton.styleFrom(
-      foregroundColor: green,
-      side: const BorderSide(color: Color(0xFFB9DFC7)),
-      padding: const EdgeInsets.symmetric(vertical: 13),
+  Widget _addButton(String label, VoidCallback action) => Opacity(
+    opacity: _submitting ? .55 : 1,
+    child: Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1FBF5), Color(0xFFE2F6E9)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFB8DEC6)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x12056E38),
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: _submitting ? null : action,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add_rounded, color: Colors.white),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: Color(0xFF17643A),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Text(
+                        'Keep your recipe clear and easy to follow',
+                        style: TextStyle(
+                          color: Color(0xFF62816D),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Color(0xFF3B885B),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     ),
   );
 
@@ -854,27 +1438,36 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _difficulty = value),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          height: 94,
+          height: 42,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFF2FBF5) : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? green : const Color(0xFFDDE5DF),
-              width: selected ? 1.5 : 1,
-            ),
+            color: selected ? green : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: selected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x26056E38),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ]
+                : null,
           ),
-          child: Column(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: selected ? green : const Color(0xFF858D88)),
-              const SizedBox(height: 7),
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.white : const Color(0xFF728078),
+              ),
+              const SizedBox(width: 5),
               Text(
                 value[0] + value.substring(1).toLowerCase(),
                 style: TextStyle(
-                  color: selected ? green : const Color(0xFF29302C),
+                  color: selected ? Colors.white : const Color(0xFF526158),
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -885,121 +1478,239 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _ingredientCard(int index) {
-    final item = _ingredients[index];
-    return Card(
-      color: const Color(0xFFF0FAF3),
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
+  Widget _ingredientComposer() => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF2FBF5),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFD7EBDE)),
+    ),
+    child: Column(
+      children: [
+        TextFormField(
+          controller: _newIngredient.name,
+          onChanged: _searchIngredients,
+          decoration: _decoration(
+            hint: 'Search ingredient catalog',
+          ).copyWith(
+            prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          ),
+          textInputAction: TextInputAction.next,
+        ),
+        if (_ingredientSuggestions.isNotEmpty) ...[
+          const SizedBox(height: 7),
+          _ingredientSuggestionPanel(),
+        ],
+        const SizedBox(height: 10),
+        Row(
           children: [
-            Row(
-              children: [
-                Text(
-                  'Ingredient ${index + 1}',
-                  style: const TextStyle(
-                    color: green,
-                    fontWeight: FontWeight.w700,
-                  ),
+            Expanded(
+              child: TextFormField(
+                controller: _newIngredient.amount,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
-                const Spacer(),
-                if (_ingredients.length > 1)
-                  IconButton(
-                    onPressed: () {
-                      item.dispose();
-                      setState(() => _ingredients.removeAt(index));
-                    },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-              ],
+                decoration: _decoration(hint: 'Amount'),
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _addIngredient(),
+              ),
             ),
-            Autocomplete<String>(
-              initialValue: TextEditingValue(text: item.name.text),
-              optionsBuilder: (value) {
-                final query = value.text.trim().toLowerCase();
-                if (query.isEmpty) return const Iterable<String>.empty();
-                return _ingredientSuggestions.where(
-                  (name) => name.toLowerCase().contains(query),
-                );
-              },
-              onSelected: (value) => item.name.text = value,
-              fieldViewBuilder:
-                  (context, controller, focusNode, onSubmit) => TextFormField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    onChanged: (value) => item.name.text = value,
-                    decoration: _decoration(
-                      hint: 'Search ingredient',
-                    ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
-                    validator:
-                        (v) =>
-                            v == null || v.trim().isEmpty
-                                ? 'Ingredient is required.'
-                                : null,
-                  ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: item.amount,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _decoration(hint: 'Amount'),
-                    validator:
-                        (v) =>
-                            num.tryParse(v ?? '') == null
-                                ? 'Amount is required.'
-                                : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 105,
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: item.unit,
-                    items:
-                        const [
-                              'g',
-                              'kg',
-                              'ml',
-                              'l',
-                              'tbsp',
-                              'tsp',
-                              'piece',
-                              'clove',
-                              'cup',
-                            ]
-                            .map(
-                              (u) => DropdownMenuItem(value: u, child: Text(u)),
-                            )
-                            .toList(),
-                    onChanged: (v) => item.unit = v!,
-                    decoration: _decoration(),
-                  ),
-                ),
-              ],
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 96,
+              child: DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: _newIngredient.unit,
+                items:
+                    _ingredientUnits
+                        .map(
+                          (unit) => DropdownMenuItem(
+                            value: unit,
+                            child: Text(unit),
+                          ),
+                        )
+                        .toList(),
+                onChanged:
+                    (value) => setState(() => _newIngredient.unit = value!),
+                decoration: _decoration(),
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _submitting ? null : _addIngredient,
+            icon: const Icon(Icons.playlist_add_rounded, size: 20),
+            label: const Text('Add ingredient to list'),
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              minimumSize: const Size.fromHeight(46),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _ingredientSuggestionPanel() => Container(
+    constraints: const BoxConstraints(maxHeight: 180),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFB9DFC7)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1600331B),
+          blurRadius: 12,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: ListView.separated(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      itemCount: _ingredientSuggestions.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final ingredient = _ingredientSuggestions[index];
+        return ListTile(
+          dense: true,
+          leading: const Icon(
+            Icons.restaurant_rounded,
+            color: green,
+            size: 20,
+          ),
+          title: Text(ingredient.name),
+          trailing:
+              ingredient.defaultUnit.isEmpty
+                  ? null
+                  : Text(
+                    ingredient.defaultUnit,
+                    style: const TextStyle(color: Color(0xFF718078)),
+                  ),
+          onTap: () => _selectIngredient(ingredient),
+        );
+      },
+    ),
+  );
+
+  Widget _ingredientList() {
+    if (_ingredients.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E9E4)),
+        ),
+        child: const Text(
+          'No ingredients added yet',
+          style: TextStyle(color: Color(0xFF718078)),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 2, bottom: 7),
+          child: Text(
+            'Ingredients list',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E9E4)),
+          ),
+          child: Column(
+            children: List.generate(_ingredients.length, (index) {
+              final item = _ingredients[index];
+              return Column(
+                children: [
+                  _ingredientListRow(index, item),
+                  if (index < _ingredients.length - 1)
+                    const Divider(height: 1, color: Color(0xFFEDF1EE)),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 
+  Widget _ingredientListRow(int index, _IngredientInput item) => SizedBox(
+    height: 44,
+    child: Row(
+      children: [
+        const SizedBox(width: 10),
+        const Icon(
+          Icons.drag_indicator_rounded,
+          size: 17,
+          color: Color(0xFFA5AFA8),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            item.name.text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ),
+        SizedBox(
+          width: 38,
+          child: Text(
+            item.amount.text,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        SizedBox(
+          width: 42,
+          child: Text(
+            item.unit,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF637169)),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Remove ${item.name.text}',
+          visualDensity: VisualDensity.compact,
+          onPressed: () {
+            item.dispose();
+            setState(() => _ingredients.removeAt(index));
+          },
+          icon: const Icon(Icons.delete_outline_rounded, size: 18),
+          color: const Color(0xFF65716A),
+        ),
+        const SizedBox(width: 2),
+      ],
+    ),
+  );
+
   Widget _stepCard(int index) => Card(
-    color: const Color(0xFFF0FAF3),
+    color: Colors.white,
     elevation: 0,
-    margin: const EdgeInsets.only(bottom: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: Color(0xFFDDE9E1)),
+    ),
+    margin: const EdgeInsets.only(bottom: 12),
     child: Padding(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

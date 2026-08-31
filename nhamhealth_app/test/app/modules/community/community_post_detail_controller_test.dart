@@ -35,10 +35,12 @@ void main() {
           allowComments: true,
           allowReplies: true,
           tagIds: [],
+          categoryId: 3,
         ),
       );
 
       expect(updated.description, 'Updated post');
+      expect(updated.categoryId, 3);
       expect(controller.post.value?.description, 'Updated post');
     },
   );
@@ -94,6 +96,7 @@ class _DetailRepository extends CommunityRepository {
     bool allowReplies = true,
     bool removeImage = false,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async => CommunityPost(
     id: postId,
     description: description,
@@ -105,6 +108,7 @@ class _DetailRepository extends CommunityRepository {
     cookingTimeMinutes: cookingTimeMinutes,
     servings: servings,
     difficulty: difficulty,
+    categoryId: categoryId,
     ingredients: ingredients,
     steps: steps,
     visibility: visibility,

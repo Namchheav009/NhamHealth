@@ -19,6 +19,12 @@ class GoogleAuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _initialization;
 
+  /// The Google Identity Services web button requires an explicit web client
+  /// ID. Without one, its JavaScript SDK fails during rendering and produces
+  /// opaque browser TypeErrors instead of a useful app-level error.
+  bool get hasWebClientConfiguration =>
+      _clientId.isNotEmpty || _serverClientId.isNotEmpty;
+
   Future<void> initialize() => _initialization ??= _initialize();
 
   Stream<String> get authenticationTokens async* {
@@ -107,6 +113,12 @@ class GoogleAuthService {
 
     final platformClientId =
         kIsWeb && _clientId.isEmpty ? _serverClientId : _clientId;
+    if (kIsWeb && platformClientId.isEmpty) {
+      throw const GoogleAuthException(
+        'Google sign-in is not configured for the web app. Start Flutter with '
+        '--dart-define=GOOGLE_CLIENT_ID=<your-web-client-id>.',
+      );
+    }
     await _googleSignIn.initialize(
       clientId: platformClientId.isEmpty ? null : platformClientId,
       serverClientId:

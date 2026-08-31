@@ -143,6 +143,7 @@ class ProfileController extends GetxController {
     bool allowReplies = true,
     bool removeImage = false,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final updated = await _communityRepository.updatePost(
       postId: post.id,
@@ -159,6 +160,7 @@ class ProfileController extends GetxController {
       allowReplies: allowReplies,
       removeImage: removeImage,
       tagIds: tagIds,
+      categoryId: categoryId,
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
@@ -251,6 +253,7 @@ class ProfileController extends GetxController {
     bool allowComments = true,
     bool allowReplies = true,
     List<int> tagIds = const [],
+    int? categoryId,
   }) async {
     final post = await _communityRepository.createPost(
       mealName: mealName,
@@ -265,6 +268,7 @@ class ProfileController extends GetxController {
       allowComments: allowComments,
       allowReplies: allowReplies,
       tagIds: tagIds,
+      categoryId: categoryId,
     );
     posts.insert(0, post);
   }

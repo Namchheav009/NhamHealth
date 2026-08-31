@@ -86,6 +86,7 @@ class CommunityPostDetailController extends GetxController {
       allowReplies: draft.allowReplies,
       removeImage: draft.removeImage,
       tagIds: draft.tagIds,
+      categoryId: draft.categoryId,
     );
     post.value = updated;
     return updated;

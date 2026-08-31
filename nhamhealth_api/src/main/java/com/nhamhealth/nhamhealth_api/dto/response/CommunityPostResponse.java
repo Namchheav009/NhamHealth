@@ -11,7 +11,7 @@ public record CommunityPostResponse(
         boolean liked, boolean followingAuthor, String visibility,
         boolean allowComments, boolean allowReplies, List<Integer> tagIds,
         String mealName, Integer cookingTimeMinutes, Integer servings, String difficulty,
-        String aiStatus, String aiReviewReason, Integer mealId, boolean saved,
+        Integer categoryId, String categoryName, String aiStatus, String aiReviewReason, Integer mealId, boolean saved,
         List<MealPostIngredient> ingredients, List<MealPostStep> steps) {
     public record MealPostIngredient(String ingredientName, BigDecimal amount, String unit) { }
     public record MealPostStep(Integer stepNumber, String instruction, String imageUrl) { }

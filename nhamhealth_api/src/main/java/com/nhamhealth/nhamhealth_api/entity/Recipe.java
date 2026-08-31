@@ -34,6 +34,11 @@ public class Recipe {
     @JoinColumn(name = "author_user_id", nullable = false)
     private User author;
 
+    /** The category selected by the author for the eventual catalog meal. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private MealCategory category;
+
     @Column(name = "recipe_name", nullable = false, length = 150)
     private String recipeName;
 
@@ -78,6 +83,8 @@ public class Recipe {
     public Integer getRecipeId() { return recipeId; }
     public User getAuthor() { return author; }
     public void setAuthor(User author) { this.author = author; }
+    public MealCategory getCategory() { return category; }
+    public void setCategory(MealCategory category) { this.category = category; }
     public String getRecipeName() { return recipeName; }
     public void setRecipeName(String recipeName) { this.recipeName = recipeName; }
     public String getDescription() { return description; }

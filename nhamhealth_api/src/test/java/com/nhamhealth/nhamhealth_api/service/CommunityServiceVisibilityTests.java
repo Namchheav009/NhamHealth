@@ -15,7 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
 import com.nhamhealth.nhamhealth_api.entity.Post;
+import com.nhamhealth.nhamhealth_api.entity.Recipe;
+import com.nhamhealth.nhamhealth_api.entity.RecipeTag;
+import com.nhamhealth.nhamhealth_api.entity.TagType;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.CommentLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
@@ -26,6 +30,7 @@ import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeIngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
+import com.nhamhealth.nhamhealth_api.repository.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.SavedRecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
@@ -74,6 +79,33 @@ class CommunityServiceVisibilityTests {
         verify(dependencies.posts, never()).save(deletedPost);
     }
 
+    @Test
+    void mealPostResponsesReturnTagsSavedWithTheRecipe() {
+        Dependencies dependencies = new Dependencies();
+        Post post = post(42, 7, "ACTIVE", "PUBLIC");
+        Recipe recipe = mock(Recipe.class);
+        RecipeTag recipeTag = mock(RecipeTag.class);
+        TagType tag = mock(TagType.class);
+        when(post.getRecipe()).thenReturn(recipe);
+        when(recipe.getRecipeId()).thenReturn(42);
+        when(recipeTag.getTag()).thenReturn(tag);
+        when(tag.getTagId()).thenReturn(3);
+        when(tag.getTagName()).thenReturn("Vegan");
+        when(dependencies.posts.findById(42)).thenReturn(Optional.of(post));
+        when(dependencies.follows.findByFollowerUserUserId(7)).thenReturn(List.of());
+        when(dependencies.follows.findByFollowingUserUserId(7)).thenReturn(List.of());
+        when(dependencies.media.findByPostPostIdOrderByDisplayOrder(42)).thenReturn(List.of());
+        when(dependencies.profiles.findByUser_UserId(7)).thenReturn(Optional.empty());
+        when(dependencies.recipeTags.findByRecipeRecipeId(42)).thenReturn(List.of(recipeTag));
+        when(dependencies.recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(42)).thenReturn(List.of());
+        when(dependencies.recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(42)).thenReturn(List.of());
+
+        CommunityPostResponse response = dependencies.service.postDetails(7, 42);
+
+        assertEquals(List.of("Vegan"), response.tags());
+        assertEquals(List.of(3), response.tagIds());
+    }
+
     private static Post post(int postId, int ownerId, String status, String visibility) {
         Post post = mock(Post.class);
         User owner = mock(User.class);
@@ -100,9 +132,10 @@ class CommunityServiceVisibilityTests {
         private final CommunityNotificationService notifications = mock(CommunityNotificationService.class);
         private final RecipeIngredientRepository recipeIngredients = mock(RecipeIngredientRepository.class);
         private final RecipeStepRepository recipeSteps = mock(RecipeStepRepository.class);
+        private final RecipeTagRepository recipeTags = mock(RecipeTagRepository.class);
         private final SavedRecipeRepository savedRecipes = mock(SavedRecipeRepository.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
                 commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications,
-                recipeIngredients, recipeSteps, savedRecipes);
+                recipeIngredients, recipeSteps, recipeTags, savedRecipes);
     }
 }

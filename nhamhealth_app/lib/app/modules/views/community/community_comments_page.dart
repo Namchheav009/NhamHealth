@@ -353,28 +353,39 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _showPostOptions() async {
+    final isOwner = widget.canEdit;
     final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
-        title: 'Post options',
-        actions: [
-          if (widget.canEdit && widget.onEditPost != null)
-            const _CommentOption(
-              _DiscussionAction.edit,
-              'Edit post',
-              Icons.edit_outlined,
-            ),
-          const _CommentOption(
-            _DiscussionAction.share,
-            'Share post',
-            Icons.reply_rounded,
-          ),
-          const _CommentOption(
-            _DiscussionAction.report,
-            'Report post',
-            Icons.flag_outlined,
-            isDestructive: true,
-          ),
-        ],
+        title: isOwner ? 'Post options' : 'More options',
+        actions:
+            isOwner
+                ? [
+                  if (widget.onEditPost != null)
+                    const _CommentOption(
+                      _DiscussionAction.edit,
+                      'Edit post',
+                      Icons.edit_outlined,
+                    ),
+                  const _CommentOption(
+                    _DiscussionAction.delete,
+                    'Delete post',
+                    Icons.delete_outline_rounded,
+                    isDestructive: true,
+                  ),
+                ]
+                : const [
+                  _CommentOption(
+                    _DiscussionAction.share,
+                    'Share post',
+                    Icons.reply_rounded,
+                  ),
+                  _CommentOption(
+                    _DiscussionAction.report,
+                    'Report post',
+                    Icons.flag_outlined,
+                    isDestructive: true,
+                  ),
+                ],
       ),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -384,6 +395,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       await _editPost();
       return;
     }
+    if (action == _DiscussionAction.delete) {
+      await _confirmAndDeletePost();
+      return;
+    }
     if (action == _DiscussionAction.share) {
       await _showShareOptions();
       return;
@@ -391,6 +406,45 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     await Get.to<void>(
       () => CommunityReportPage(postId: _post.id, subject: 'post'),
     );
+  }
+
+  Future<void> _confirmAndDeletePost() async {
+    if (_updatingPost) return;
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Delete this post?'),
+        content: const Text(
+          'This will remove the post from Community and your profile. You cannot undo this action.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD94545),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _updatingPost = true);
+    try {
+      await _repository.deletePost(_post.id);
+      if (!mounted) return;
+      widget.onPostChanged?.call();
+      Get.back<void>();
+      Get.snackbar('Post deleted', 'Your post has been removed.');
+    } on Object catch (error) {
+      if (mounted) Get.snackbar('Could not delete post', error.toString());
+    } finally {
+      if (mounted) setState(() => _updatingPost = false);
+    }
   }
 
   Future<void> _editPost() async {

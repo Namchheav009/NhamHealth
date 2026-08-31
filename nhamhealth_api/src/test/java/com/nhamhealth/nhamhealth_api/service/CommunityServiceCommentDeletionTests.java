@@ -25,6 +25,7 @@ import com.nhamhealth.nhamhealth_api.repository.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeIngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
+import com.nhamhealth.nhamhealth_api.repository.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.SavedRecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
@@ -76,10 +77,11 @@ class CommunityServiceCommentDeletionTests {
         private final CommunityNotificationService notifications = mock(CommunityNotificationService.class);
         private final RecipeIngredientRepository recipeIngredients = mock(RecipeIngredientRepository.class);
         private final RecipeStepRepository recipeSteps = mock(RecipeStepRepository.class);
+        private final RecipeTagRepository recipeTags = mock(RecipeTagRepository.class);
         private final SavedRecipeRepository savedRecipes = mock(SavedRecipeRepository.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
                 commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications,
-                recipeIngredients, recipeSteps, savedRecipes);
+                recipeIngredients, recipeSteps, recipeTags, savedRecipes);
         private final PostComment comment = mock(PostComment.class);
 
         private Dependencies(int postOwnerId, int commentAuthorId) {

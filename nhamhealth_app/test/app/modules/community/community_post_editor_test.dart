@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_tag.dart';
+import 'package:nhamhealth_flutter/app/modules/models/community/ingredient_suggestion.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_post_editor_page.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post_draft.dart';
+import 'package:nhamhealth_flutter/app/modules/models/meals/meal_category_model.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -30,7 +32,13 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Choose a category'));
+    await tester.tap(find.text('Choose a category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Main dishes').last);
+    await tester.pumpAndSettle();
 
     expect(find.text('Create Meal'), findsOneWidget);
     await tester.enterText(
@@ -50,10 +58,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ingredients & Steps'), findsOneWidget);
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Search ingredient'),
+      find.widgetWithText(TextFormField, 'Search ingredient catalog'),
       'Chicken',
     );
     await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '300');
+    await tester.tap(find.text('Add ingredient to list'));
+    await tester.pump();
     await tester.drag(find.byType(ListView), const Offset(0, -420));
     await tester.pump();
     await tester.enterText(
@@ -67,6 +77,7 @@ void main() {
     expect(submitted, isNotNull);
     expect(submitted!.mealName, 'Healthy lunch');
     expect(submitted!.description, 'Today I prepared a healthy lunch.');
+    expect(submitted!.categoryId, 1);
     expect(tester.takeException(), isNull);
   });
 
@@ -82,6 +93,7 @@ void main() {
             cookingTimeMinutes: 20,
             servings: 2,
             difficulty: 'EASY',
+            categoryId: 1,
             ingredients: const [
               MealPostIngredient(
                 ingredientName: 'Fish',
@@ -120,6 +132,15 @@ class _ComposerRepository extends CommunityRepository {
 
   @override
   Future<List<CommunityTag>> getTags() async => const [];
+
+  @override
+  Future<List<MealCategoryModel>> getMealCategories() async => const [
+    MealCategoryModel(id: 1, name: 'Main dishes'),
+  ];
+
+  @override
+  Future<List<IngredientSuggestion>> searchIngredients(String query) async =>
+      const [IngredientSuggestion(id: 1, name: 'Chicken', defaultUnit: 'g')];
 }
 
 class _ComposerAuthService extends AuthService {}
