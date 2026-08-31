@@ -363,7 +363,6 @@ async function openEditModal(mealId) {
         form.elements.cookingTimeMinutes.value = meal.cookingTimeMinutes ?? "";
         form.elements.difficulty.value = meal.difficulty ?? "";
         form.elements.published.value = String(meal.published);
-        form.elements.description.value = meal.description ?? "";
         selectedIngredients = meal.ingredients || [];
         renderSelectedIngredients();
         ingredientSearchInput.value = "";
@@ -441,7 +440,7 @@ async function saveMeal(event) {
     const imageFile = data.get("imageFile");
     data.delete("imageFile");
     const payload = Object.fromEntries(data.entries());
-    ["calories", "cookingTimeMinutes", "difficulty", "description"].forEach(key => {
+    ["calories", "cookingTimeMinutes", "difficulty"].forEach(key => {
         if (payload[key] === "") delete payload[key];
     });
     payload.published = payload.published === "true";

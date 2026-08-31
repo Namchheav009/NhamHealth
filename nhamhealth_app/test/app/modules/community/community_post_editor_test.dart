@@ -45,9 +45,10 @@ void main() {
       find.widgetWithText(TextFormField, 'Khmer Fish Amok'),
       'Healthy lunch',
     );
-    await tester.enterText(
+    expect(find.text('Description'), findsNothing);
+    expect(
       find.widgetWithText(TextFormField, 'Tell people about this meal'),
-      'Today I prepared a healthy lunch.',
+      findsNothing,
     );
     await tester.drag(find.byType(ListView), const Offset(0, -260));
     await tester.pump();
@@ -76,12 +77,12 @@ void main() {
 
     expect(submitted, isNotNull);
     expect(submitted!.mealName, 'Healthy lunch');
-    expect(submitted!.description, 'Today I prepared a healthy lunch.');
+    expect(submitted!.description, isEmpty);
     expect(submitted!.categoryId, 1);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('editing submits the existing message', (tester) async {
+  testWidgets('editing submits without a description', (tester) async {
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
@@ -121,7 +122,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
-    expect(submitted!.description, 'Original message');
+    expect(submitted!.description, isEmpty);
     expect(tester.takeException(), isNull);
   });
 }

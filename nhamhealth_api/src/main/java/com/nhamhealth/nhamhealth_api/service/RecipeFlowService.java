@@ -399,7 +399,6 @@ public class RecipeFlowService {
 
     private List<String> readinessGaps(Recipe recipe) {
         List<String> gaps = new ArrayList<>();
-        if (recipe.getDescription() == null || recipe.getDescription().isBlank()) gaps.add("a description");
         if (recipe.getMainImageUrl() == null || recipe.getMainImageUrl().isBlank()) gaps.add("a cover image");
         if (recipe.getCookingTimeMinutes() == null) gaps.add("cooking time");
         if (recipe.getServings() == null) gaps.add("servings");

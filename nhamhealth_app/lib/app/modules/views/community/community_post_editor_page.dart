@@ -48,7 +48,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   ];
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
-  late final TextEditingController _name, _description, _time, _servings;
+  late final TextEditingController _name, _time, _servings;
   late List<_IngredientInput> _ingredients;
   final _newIngredient = _IngredientInput();
   List<IngredientSuggestion> _ingredientSuggestions = const [];
@@ -78,7 +78,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     super.initState();
     final post = widget.post;
     _name = TextEditingController(text: post?.mealName ?? '');
-    _description = TextEditingController(text: post?.description ?? '');
     _time = TextEditingController(
       text: post?.cookingTimeMinutes?.toString() ?? '',
     );
@@ -160,7 +159,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   void dispose() {
     _ingredientSearchDebounce?.cancel();
     _name.dispose();
-    _description.dispose();
     _time.dispose();
     _servings.dispose();
     for (final item in _ingredients) {
@@ -263,7 +261,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       await widget.onSubmit(
         CommunityPostDraft(
           mealName: _name.text.trim(),
-          description: _description.text.trim(),
+          description: '',
           cookingTimeMinutes: int.parse(_time.text),
           servings: int.parse(_servings.text),
           difficulty: _difficulty,
@@ -802,14 +800,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       validator:
           (v) =>
               v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
-    ),
-    _field(
-      _description,
-      'Description',
-      hint: 'Tell people about this meal',
-      icon: Icons.subject_rounded,
-      lines: 2,
-      maxLength: 4000,
     ),
     Row(
       children: [
