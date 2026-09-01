@@ -54,16 +54,6 @@
                     <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
                 </a>
 
-                <a class="stat-card stat-link" th:href="@{/admin/meal-logs}">
-                    <div class="stat-icon purple"><i class="bi bi-journal-richtext"></i></div>
-                    <div class="stat-content">
-                        <span>Meal logs</span>
-                        <strong th:text="${#numbers.formatInteger(dashboard.totalMealLogs(), 1, 'COMMA')}">0</strong>
-                        <small>Recorded nutrition entries</small>
-                    </div>
-                    <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
-                </a>
-
                 <a class="stat-card stat-link" th:href="@{/admin/reviews}">
                     <div class="stat-icon teal"><i class="bi bi-star-fill"></i></div>
                     <div class="stat-content">
@@ -80,10 +70,10 @@
                     <div class="panel-header">
                         <div>
                             <h2>Activity over the last 7 days</h2>
-                            <div class="legend"><span><i class="dot green-dot"></i>New users</span><span><i class="dot blue-dot"></i>Meal logs</span></div>
+                            <div class="legend"><span><i class="dot green-dot"></i>New users</span></div>
                         </div>
                     </div>
-                    <div class="chart-wrap"><canvas id="activityChart" aria-label="New users and meal logs over seven days"></canvas></div>
+                    <div class="chart-wrap"><canvas id="activityChart" aria-label="New users over seven days"></canvas></div>
                 </article>
 
                 <article class="panel category-panel">
@@ -175,7 +165,6 @@
     window.adminDashboardChartData = {
         activityLabels: /*[[${activityLabels}]]*/ [],
         activityUsers: /*[[${activityUsers}]]*/ [],
-        activityMealLogs: /*[[${activityMealLogs}]]*/ [],
         categoryLabels: /*[[${categoryLabels}]]*/ [],
         categoryValues: /*[[${categoryValues}]]*/ []
     };

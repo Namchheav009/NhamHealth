@@ -84,19 +84,17 @@ class LoginPageTests {
 	}
 
 	@Test
-	void authenticatedAdminCanRenderMealLogsPage() throws Exception {
+	void removedMealLogsPageReturnsNotFound() throws Exception {
 		mockMvc.perform(get("/admin/meal-logs")
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
-				.andExpect(status().isOk())
-				.andExpect(view().name("admin/meals-log"));
+				.andExpect(status().isNotFound());
 	}
 
 	@Test
-	void authenticatedAdminCanRenderNutrientGoalsPage() throws Exception {
+	void removedNutrientGoalsPageReturnsNotFound() throws Exception {
 		mockMvc.perform(get("/admin/nutrient-goals")
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
-				.andExpect(status().isOk())
-				.andExpect(view().name("admin/nutrient-goal"));
+				.andExpect(status().isNotFound());
 	}
 
 	@Test

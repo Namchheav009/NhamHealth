@@ -213,9 +213,6 @@ public class RecipeFlowService {
         deleteByMealId("meal_favorites", mealId);
         deleteByMealId("meal_ingredients", mealId);
         deleteByMealId("meal_nutrition", mealId);
-        entityManager.createNativeQuery("UPDATE meal_logs SET meal_id = NULL WHERE meal_id = :mealId")
-                .setParameter("mealId", mealId)
-                .executeUpdate();
         meals.delete(meal);
         meals.flush();
     }

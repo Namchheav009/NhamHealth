@@ -25,10 +25,8 @@ import com.nhamhealth.nhamhealth_api.dto.request.AdminNutrientRequest;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisNutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealLogNutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealNutritionRepository;
 import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserNutrientGoalRepository;
 
 @Controller
 public class NutrientAdminController {
@@ -36,23 +34,17 @@ public class NutrientAdminController {
     private final NutrientRepository nutrientRepository;
     private final AiFoodAnalysisNutrientRepository analysisNutrientRepository;
     private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
-    private final MealLogNutrientRepository mealLogNutrientRepository;
     private final MealNutritionRepository mealNutritionRepository;
-    private final UserNutrientGoalRepository userNutrientGoalRepository;
 
     public NutrientAdminController(
             NutrientRepository nutrientRepository,
             AiFoodAnalysisNutrientRepository analysisNutrientRepository,
             DailyNutrientTotalRepository dailyNutrientTotalRepository,
-            MealLogNutrientRepository mealLogNutrientRepository,
-            MealNutritionRepository mealNutritionRepository,
-            UserNutrientGoalRepository userNutrientGoalRepository) {
+            MealNutritionRepository mealNutritionRepository) {
         this.nutrientRepository = nutrientRepository;
         this.analysisNutrientRepository = analysisNutrientRepository;
         this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
-        this.mealLogNutrientRepository = mealLogNutrientRepository;
         this.mealNutritionRepository = mealNutritionRepository;
-        this.userNutrientGoalRepository = userNutrientGoalRepository;
     }
 
     @GetMapping("/admin/nutrients")
@@ -122,9 +114,7 @@ public class NutrientAdminController {
         try {
             analysisNutrientRepository.deleteByNutrientNutrientId(nutrientId);
             dailyNutrientTotalRepository.deleteByNutrientNutrientId(nutrientId);
-            mealLogNutrientRepository.deleteByNutrientNutrientId(nutrientId);
             mealNutritionRepository.deleteByNutrientNutrientId(nutrientId);
-            userNutrientGoalRepository.deleteByNutrientNutrientId(nutrientId);
             nutrientRepository.delete(nutrient);
             nutrientRepository.flush();
             return ResponseEntity.noContent().build();

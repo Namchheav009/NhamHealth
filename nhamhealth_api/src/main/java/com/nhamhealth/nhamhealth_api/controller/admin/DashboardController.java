@@ -32,7 +32,6 @@ public class DashboardController {
         model.addAttribute("dashboard", dashboard);
         model.addAttribute("activityLabels", dashboard.activity().stream().map(point -> point.label()).toList());
         model.addAttribute("activityUsers", dashboard.activity().stream().map(point -> point.newUsers()).toList());
-        model.addAttribute("activityMealLogs", dashboard.activity().stream().map(point -> point.mealLogs()).toList());
         model.addAttribute("categoryLabels", dashboard.categories().stream().map(category -> category.name()).toList());
         model.addAttribute("categoryValues", dashboard.categories().stream().map(category -> category.count()).toList());
         return "admin/dashboard";

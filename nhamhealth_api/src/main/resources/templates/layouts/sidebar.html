@@ -38,8 +38,6 @@
             <span>Health Tracking</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>
         <div class="nav-group" id="health-menu">
-        <a class="nav-link" th:classappend="${activePage == 'meal-logs'} ? ' active' : ''" th:href="@{/admin/meal-logs}"><i class="bi bi-journal-text"></i><span>Meal Logs</span></a>
-        <a class="nav-link" th:classappend="${activePage == 'nutrient-goals'} ? ' active' : ''" th:href="@{/admin/nutrient-goals}"><i class="bi bi-bullseye"></i><span>Nutrient Goals</span></a>
         <a class="nav-link" th:classappend="${activePage == 'daily-wellness'} ? ' active' : ''" th:href="@{/admin/daily-wellness}"><i class="bi bi-calendar2-check"></i><span>Daily Wellness</span></a>
         </div>
 

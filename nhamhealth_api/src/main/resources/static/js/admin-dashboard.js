@@ -2,7 +2,6 @@
     const chartData = window.adminDashboardChartData || {};
     const activityLabels = chartData.activityLabels || [];
     const activityUsers = chartData.activityUsers || [];
-    const activityMealLogs = chartData.activityMealLogs || [];
     const categoryLabels = chartData.categoryLabels || [];
     const categoryValues = chartData.categoryValues || [];
 
@@ -24,14 +23,6 @@
                         pointHoverRadius: 4,
                         tension: 0.35,
                         yAxisID: 'y'
-                    },
-                    {
-                        label: 'Meal logs',
-                        data: activityMealLogs,
-                        backgroundColor: 'rgba(76, 157, 247, .45)',
-                        borderRadius: 3,
-                        maxBarThickness: 18,
-                        yAxisID: 'y1'
                     }
                 ]
             },
@@ -42,8 +33,7 @@
                 plugins: { legend: { display: false }, tooltip: { padding: 10 } },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8895a5', font: { size: 9 } }, border: { display: false } },
-                    y: { beginAtZero: true, ticks: { precision: 0, color: '#8895a5', font: { size: 9 } }, grid: { color: '#eef1f5' }, border: { display: false } },
-                    y1: { beginAtZero: true, position: 'right', ticks: { precision: 0, color: '#8895a5', font: { size: 9 } }, grid: { drawOnChartArea: false }, border: { display: false } }
+                    y: { beginAtZero: true, ticks: { precision: 0, color: '#8895a5', font: { size: 9 } }, grid: { color: '#eef1f5' }, border: { display: false } }
                 }
             }
         });

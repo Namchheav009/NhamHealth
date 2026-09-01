@@ -26,7 +26,6 @@ import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
 import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealLogRepository;
 import com.nhamhealth.nhamhealth_api.repository.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
@@ -45,7 +44,6 @@ public class AdminDashboardService {
     private final UserProfileRepository userProfileRepository;
     private final MealRepository mealRepository;
     private final MealCategoryRepository mealCategoryRepository;
-    private final MealLogRepository mealLogRepository;
     private final DailyWellnessSummaryRepository dailyWellnessSummaryRepository;
     private final DailyNutrientTotalRepository dailyNutrientTotalRepository;
     private final AiFoodAnalysisRepository aiFoodAnalysisRepository;
@@ -61,7 +59,6 @@ public class AdminDashboardService {
             UserProfileRepository userProfileRepository,
             MealRepository mealRepository,
             MealCategoryRepository mealCategoryRepository,
-            MealLogRepository mealLogRepository,
             DailyWellnessSummaryRepository dailyWellnessSummaryRepository,
             DailyNutrientTotalRepository dailyNutrientTotalRepository,
             AiFoodAnalysisRepository aiFoodAnalysisRepository,
@@ -75,7 +72,6 @@ public class AdminDashboardService {
         this.userProfileRepository = userProfileRepository;
         this.mealRepository = mealRepository;
         this.mealCategoryRepository = mealCategoryRepository;
-        this.mealLogRepository = mealLogRepository;
         this.dailyWellnessSummaryRepository = dailyWellnessSummaryRepository;
         this.dailyNutrientTotalRepository = dailyNutrientTotalRepository;
         this.aiFoodAnalysisRepository = aiFoodAnalysisRepository;
@@ -97,7 +93,6 @@ public class AdminDashboardService {
                 userRepository.countByIsVerifiedTrue(),
                 mealRepository.count(),
                 mealRepository.countByIsPublishedTrue(),
-                mealLogRepository.count(),
                 0,
                 notificationRepository.countByIsReadFalse(),
                 startDate.format(PERIOD_LABEL) + " – " + today.format(PERIOD_LABEL),
@@ -156,8 +151,7 @@ public class AdminDashboardService {
                     LocalDateTime dayStart = date.atStartOfDay();
                     LocalDateTime dayEnd = dayStart.plusDays(1);
                     long newUsers = userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(dayStart, dayEnd);
-                    long logs = mealLogRepository.countByLoggedAtGreaterThanEqualAndLoggedAtLessThan(dayStart, dayEnd);
-                    return new ActivityPoint(date.format(DAY_LABEL), newUsers, logs);
+                    return new ActivityPoint(date.format(DAY_LABEL), newUsers);
                 })
                 .toList();
     }
@@ -197,7 +191,6 @@ public class AdminDashboardService {
             long verifiedUsers,
             long totalMeals,
             long publishedMeals,
-            long totalMealLogs,
             long totalReviews,
             long unreadNotifications,
             String periodLabel,
@@ -210,7 +203,7 @@ public class AdminDashboardService {
             List<ModuleMetric> modules) {
     }
 
-    public record ActivityPoint(String label, long newUsers, long mealLogs) {
+    public record ActivityPoint(String label, long newUsers) {
     }
 
     public record CategoryMetric(String name, long count) {
