@@ -202,7 +202,7 @@ class WellnessController extends GetxController {
   // AI MEAL
   // =========================
 
-  Future<void> openAiMealAutoFill() async {
+  Future<void> openMealAutoFill() async {
     await Get.toNamed<void>(AppRoutes.aiFood);
   }
 

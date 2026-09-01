@@ -53,7 +53,7 @@ app:
       service-key: ""
       bucket: nhamhealth-images
   ai:
-    prompt-version: food-drink-vision-v5
+    prompt-version: food-drink-vision-v7
     food:
       confirmation-threshold: 0.75
       candidate-margin-threshold: 0.15
@@ -64,11 +64,14 @@ app:
       base-url: https://integrate.api.nvidia.com/v1
       api-key: ""
       model: nvidia/nemotron-nano-12b-v2-vl
-      nutrition-model: openai/gpt-oss-120b
-      recommendation-model: openai/gpt-oss-20b
+      fallback-vision-model: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      nutrition-model: nvidia/nemotron-3.5-lightning-30b-a3b
+      recommendation-model: nvidia/nemotron-3.5-lightning-30b-a3b
+      assistant-model: nvidia/nemotron-3.5-lightning-30b-a3b
+      assistant-max-tokens: 2000
       text-max-tokens: 4096
-      reasoning-effort: low
-      nutrition-reasoning-effort: medium
+      nutrition-max-tokens: 1200
+      recommendation-reasoning-budget: 1024
   mail:
     from: no-reply@nhamhealth.local
 nhamhealth:

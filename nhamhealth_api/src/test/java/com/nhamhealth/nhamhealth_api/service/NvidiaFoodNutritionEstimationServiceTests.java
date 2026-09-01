@@ -103,7 +103,7 @@ class NvidiaFoodNutritionEstimationServiceTests {
     private static NvidiaFoodNutritionEstimationService service(HttpServer server) {
         return new NvidiaFoodNutritionEstimationService(
                 "http://127.0.0.1:" + server.getAddress().getPort(),
-                "test-key", "nutrition-model", 1_200, "low", new ObjectMapper());
+                "test-key", "nutrition-model", 1_200, new ObjectMapper());
     }
 
     private static HttpServer server(String response) throws IOException {

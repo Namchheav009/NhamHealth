@@ -166,9 +166,9 @@ class AiMealRecommendationServiceTests {
                 userHealthProfileService,
                 "https://integrate.api.nvidia.com/v1",
                 "",
-                "openai/gpt-oss-20b",
+                "nvidia/nemotron-3.5-lightning-30b-a3b",
                 4096,
-                "low");
+                1024);
     }
 
     private List<Meal> meals(int count) {

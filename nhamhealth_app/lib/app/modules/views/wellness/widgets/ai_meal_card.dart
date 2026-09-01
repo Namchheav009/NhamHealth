@@ -82,7 +82,7 @@ class AiMealCard extends GetView<WellnessController> {
                   height: 38,
                   child: ElevatedButton.icon(
                     // CLICK -> AI PAGE
-                    onPressed: controller.openAiMealAutoFill,
+                    onPressed: controller.openMealAutoFill,
 
                     icon: const Icon(Icons.auto_awesome_rounded, size: 17),
 

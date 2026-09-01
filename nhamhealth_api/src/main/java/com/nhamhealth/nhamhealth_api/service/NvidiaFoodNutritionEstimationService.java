@@ -72,16 +72,14 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
     private final String apiKey;
     private final String model;
     private final int maxTokens;
-    private final String reasoningEffort;
 
     @Autowired
     public NvidiaFoodNutritionEstimationService(
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.nutrition-model:openai/gpt-oss-20b}") String model,
-            @Value("${app.ai.nvidia.nutrition-max-tokens:1000}") int maxTokens,
-            @Value("${app.ai.nvidia.nutrition-reasoning-effort:${app.ai.nvidia.reasoning-effort:medium}}") String reasoningEffort) {
-        this(baseUrl, apiKey, model, maxTokens, reasoningEffort, new ObjectMapper());
+            @Value("${app.ai.nvidia.nutrition-model:nvidia/nemotron-3.5-lightning-30b-a3b}") String model,
+            @Value("${app.ai.nvidia.nutrition-max-tokens:1200}") int maxTokens) {
+        this(baseUrl, apiKey, model, maxTokens, new ObjectMapper());
     }
 
     NvidiaFoodNutritionEstimationService(
@@ -89,7 +87,6 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
             String apiKey,
             String model,
             int maxTokens,
-            String reasoningEffort,
             ObjectMapper mapper) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
@@ -98,8 +95,6 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
         this.apiKey = apiKey;
         this.model = model;
         this.maxTokens = Math.max(800, Math.min(maxTokens, 4_096));
-        this.reasoningEffort = reasoningEffort == null || reasoningEffort.isBlank()
-                ? "low" : reasoningEffort.trim();
         this.mapper = mapper;
     }
 
@@ -124,8 +119,9 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
                     JsonNode response = mapper.readTree(responseBody);
                     promptTokens += response.path("usage").path("prompt_tokens").asInt(0);
                     completionTokens += response.path("usage").path("completion_tokens").asInt(0);
-                    String content = response.path("choices").path(0)
-                            .path("message").path("content").asText();
+                    String content = NvidiaChatResponseParser.structuredText(
+                            response.path("choices").path(0).path("message"),
+                            "\"components\"");
                     String json = ModelJsonExtractor.extractObject(content);
                     FoodNutritionEstimationEnvelope envelope = mapper.readValue(
                             json, FoodNutritionEstimationEnvelope.class);
@@ -165,9 +161,10 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
         return Map.of(
                 "model", model,
                 "temperature", 1,
-                "top_p", 1,
+                "top_p", 0.95,
                 "max_tokens", maxTokens,
-                "reasoning_effort", reasoningEffort,
+                "seed", 42,
+                "chat_template_kwargs", Map.of("enable_thinking", false),
                 "stream", false,
                 "response_format", Map.of("type", "json_object"),
                 "messages", List.of(

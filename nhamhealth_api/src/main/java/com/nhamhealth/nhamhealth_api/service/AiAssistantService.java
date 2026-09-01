@@ -88,7 +88,7 @@ public class AiAssistantService {
             ProfileDashboardService dashboardService,
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.assistant-model:${app.ai.nvidia.recommendation-model:openai/gpt-oss-20b}}") String model,
+            @Value("${app.ai.nvidia.assistant-model:${app.ai.nvidia.recommendation-model:nvidia/nemotron-3.5-lightning-30b-a3b}}") String model,
             @Value("${app.ai.nvidia.assistant-max-tokens:2000}") int maxTokens) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
@@ -126,10 +126,11 @@ public class AiAssistantService {
 
         Map<String, Object> body = Map.of(
                 "model", model,
-                "temperature", 0.4,
-                "top_p", 0.9,
+                "temperature", 1.0,
+                "top_p", 0.95,
                 "max_tokens", maxTokens,
-                "reasoning_effort", "low",
+                "seed", 42,
+                "chat_template_kwargs", Map.of("enable_thinking", false),
                 "stream", false,
                 "messages", messages);
 
@@ -143,8 +144,8 @@ public class AiAssistantService {
                     .retrieve()
                     .body(String.class);
             JsonNode response = mapper.readTree(responseBody);
-            String reply = response.path("choices").path(0)
-                    .path("message").path("content").asText().trim();
+            String reply = NvidiaChatResponseParser.text(
+                    response.path("choices").path(0).path("message"));
             reply = reply.replaceAll("(?s)<think>.*?</think>", "").trim();
             if (reply.isEmpty()) throw new IllegalArgumentException("The AI assistant returned an empty response.");
             return limitReply(reply);

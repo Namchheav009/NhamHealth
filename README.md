@@ -127,6 +127,36 @@ New mobile users can register through `POST /api/v1/auth/register` with
 returns the same bearer-token response as login. The Flutter client stores this
 token in platform secure storage.
 
+### Configure NVIDIA AI
+
+NVIDIA NIM powers food and drink image recognition, nutrition estimates, meal
+recommendations, and the wellness chatbot. Keep the key on the server, then
+restart the API so it can read the environment variable:
+
+```powershell
+$env:APP_AI_NVIDIA_API_KEY="your-nvidia-api-key"
+$env:APP_STORAGE_SUPABASE_SERVICE_KEY="your-supabase-service-role-key"
+$env:SPRING_DATASOURCE_PASSWORD="your-database-password"
+cd nhamhealth_api
+.\mvnw.cmd spring-boot:run
+```
+
+From Git Bash/MINGW, use `export` in the same terminal before starting Spring:
+
+```bash
+export APP_AI_NVIDIA_API_KEY='your-nvidia-api-key'
+export APP_STORAGE_SUPABASE_SERVICE_KEY='your-supabase-service-role-key'
+export SPRING_DATASOURCE_PASSWORD='your-database-password'
+cd nhamhealth_api
+./mvnw.cmd spring-boot:run
+```
+
+Vision, fallback vision, nutrition, recommendation, and assistant models can be
+changed through the `app.ai.nvidia.*` properties documented in
+`application.properties.example`. When `NVIDIA_API_KEY` is absent, meal ranking
+and chatbot features use their local fallbacks; remote image analysis is
+unavailable. Never put the NVIDIA key in Flutter or commit it to the repository.
+
 ### Configure password-reset email
 
 Forgot password uses a real email verification flow. Configure the API with a

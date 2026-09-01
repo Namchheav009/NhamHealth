@@ -71,7 +71,7 @@ public class AiMealRecommendationService {
     private final String apiKey;
     private final String model;
     private final int textMaxTokens;
-    private final String reasoningEffort;
+    private final int reasoningBudget;
 
     public AiMealRecommendationService(
             AiRecommendationRepository recommendationRepository,
@@ -85,9 +85,9 @@ public class AiMealRecommendationService {
             AiUserHealthProfileService userHealthProfileService,
             @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}") String baseUrl,
             @Value("${app.ai.nvidia.api-key:}") String apiKey,
-            @Value("${app.ai.nvidia.recommendation-model:openai/gpt-oss-20b}") String model,
+            @Value("${app.ai.nvidia.recommendation-model:nvidia/nemotron-3.5-lightning-30b-a3b}") String model,
             @Value("${app.ai.nvidia.text-max-tokens:4096}") int textMaxTokens,
-            @Value("${app.ai.nvidia.reasoning-effort:low}") String reasoningEffort) {
+            @Value("${app.ai.nvidia.recommendation-reasoning-budget:1024}") int reasoningBudget) {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
         this.mealRepository = mealRepository;
@@ -102,7 +102,7 @@ public class AiMealRecommendationService {
         this.apiKey = apiKey;
         this.model = model;
         this.textMaxTokens = Math.max(1_200, textMaxTokens);
-        this.reasoningEffort = reasoningEffort;
+        this.reasoningBudget = Math.max(0, Math.min(reasoningBudget, 4_096));
     }
 
     @Transactional
@@ -226,9 +226,13 @@ public class AiMealRecommendationService {
         Map<String, Object> body = Map.of(
                 "model", model,
                 "temperature", 1,
-                "top_p", 1,
+                "top_p", 0.95,
                 "max_tokens", textMaxTokens,
-                "reasoning_effort", reasoningEffort,
+                "seed", 42,
+                "reasoning_budget", reasoningBudget,
+                "chat_template_kwargs", Map.of(
+                        "enable_thinking", reasoningBudget > 0,
+                        "reasoning_budget", reasoningBudget),
                 "stream", false,
                 "response_format", Map.of("type", "json_object"),
                 "messages", List.of(
@@ -241,14 +245,15 @@ public class AiMealRecommendationService {
                 .body(body).retrieve().body(String.class);
         JsonNode response = mapper.readTree(responseBody);
         JsonNode choice = response.path("choices").path(0);
-        String content = choice.path("message").path("content").asText();
+        String content = NvidiaChatResponseParser.structuredText(
+                choice.path("message"), "\"meals\"");
         try {
             content = ModelJsonExtractor.extractObject(content);
         } catch (IllegalArgumentException error) {
             String finishReason = choice.path("finish_reason").asText("unknown");
             int completionTokens = response.path("usage").path("completion_tokens").asInt(0);
             throw new IllegalArgumentException(
-                    "Incomplete GPT-OSS JSON (finish_reason=" + finishReason
+                    "Incomplete NVIDIA ranking JSON (finish_reason=" + finishReason
                             + ", completion_tokens=" + completionTokens + ").",
                     error);
         }

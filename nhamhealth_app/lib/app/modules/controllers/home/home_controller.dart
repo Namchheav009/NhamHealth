@@ -340,7 +340,7 @@ class HomeController extends GetxController {
     await loadDashboard();
   }
 
-  void openAiFoodAnalyzer() {
+  void openFoodAnalyzer() {
     Get.toNamed<void>(AppRoutes.aiFood);
   }
 

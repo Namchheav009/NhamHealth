@@ -105,10 +105,14 @@ class FoodNutritionRepository {
         );
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
+        final providerMessage = _serverErrorMessage(response.body);
         throw FoodNutritionException(
-          response.statusCode == 503
-              ? 'Cloud food AI is not configured on the server.'
-              : 'Cloud food AI could not analyze this image.',
+          providerMessage ??
+              (response.statusCode == 503
+                  ? 'Food analysis is temporarily unavailable. Please try again '
+                      'shortly. If it continues, check the AI provider keys, billing, '
+                      'and usage limits.'
+                  : 'Cloud food AI could not analyze this image.'),
         );
       }
       final payload = jsonDecode(response.body);
@@ -127,6 +131,20 @@ class FoodNutritionRepository {
         'Could not reach the NhamHealth API at ${ApiConfig.baseUrl}. Start the API server and try again.',
       );
     }
+  }
+
+  String? _serverErrorMessage(String responseBody) {
+    try {
+      final payload = jsonDecode(responseBody);
+      if (payload is! Map<String, dynamic>) return null;
+      for (final key in const ['message', 'detail']) {
+        final value = payload[key];
+        if (value is String && value.trim().isNotEmpty) return value.trim();
+      }
+    } catch (_) {
+      // Older API versions may return an empty or non-JSON error body.
+    }
+    return null;
   }
 
   String? _imageMediaSubtype(Uint8List bytes) {

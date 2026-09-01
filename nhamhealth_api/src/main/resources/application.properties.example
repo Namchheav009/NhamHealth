@@ -26,23 +26,24 @@ app.seed.user-password=CHANGE_THIS_USER_PASSWORD
 # Upload storage
 app.upload.directory=uploads
 app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
-app.storage.supabase.service-key=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+app.storage.supabase.service-key=${APP_STORAGE_SUPABASE_SERVICE_KEY:}
 app.storage.supabase.bucket=nhamhealth-images
 
-# NVIDIA AI (meal generation falls back to local ranking when the key is empty)
-app.ai.nvidia.api-key=${NVIDIA_API_KEY:}
+# NVIDIA AI. Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
+app.ai.nvidia.api-key=${APP_AI_NVIDIA_API_KEY:}
 app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
-app.ai.nvidia.model=meta/llama-3.2-11b-vision-instruct
+app.ai.nvidia.model=nvidia/nemotron-nano-12b-v2-vl
 app.ai.nvidia.fallback-vision-model=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-app.ai.nvidia.nutrition-model=openai/gpt-oss-20b
-app.ai.nvidia.recommendation-model=openai/gpt-oss-20b
-app.ai.nvidia.assistant-model=openai/gpt-oss-20b
+app.ai.nvidia.nutrition-model=nvidia/nemotron-3.5-lightning-30b-a3b
+app.ai.nvidia.recommendation-model=nvidia/nemotron-3.5-lightning-30b-a3b
+app.ai.nvidia.assistant-model=nvidia/nemotron-3.5-lightning-30b-a3b
 app.ai.nvidia.assistant-max-tokens=2000
 app.ai.nvidia.text-max-tokens=4096
-app.ai.nvidia.nutrition-max-tokens=1000
-app.ai.nvidia.reasoning-effort=low
-app.ai.nvidia.nutrition-reasoning-effort=low
-app.ai.prompt-version=food-drink-vision-v5
+app.ai.nvidia.nutrition-max-tokens=1200
+app.ai.nvidia.recommendation-reasoning-budget=1024
+
+# Food image recognition and nutrition confidence thresholds.
+app.ai.prompt-version=food-drink-vision-v7
 app.ai.food.confirmation-threshold=0.75
 app.ai.food.candidate-margin-threshold=0.15
 app.ai.food.portion-confirmation-threshold=0.70
@@ -54,7 +55,7 @@ spring.servlet.multipart.max-request-size=6MB
 # Supabase PostgreSQL
 spring.datasource.url=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
 spring.datasource.username=postgres.YOUR_PROJECT_REF
-spring.datasource.password=YOUR_DATABASE_PASSWORD
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
 spring.datasource.hikari.data-source-properties.sslmode=require
 spring.datasource.hikari.maximum-pool-size=5
