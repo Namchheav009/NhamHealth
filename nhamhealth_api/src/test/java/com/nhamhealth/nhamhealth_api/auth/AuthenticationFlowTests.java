@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -277,7 +278,7 @@ class AuthenticationFlowTests {
     }
 
     @Test
-    void googleLoginRefreshesTheLinkedUsersRealProfile() throws Exception {
+    void googleLoginPreservesTheLinkedUsersSavedProfile() throws Exception {
         String email = "google-linked-" + UUID.randomUUID() + "@example.com";
         Role userRole = findOrCreateRole("USER");
 
@@ -313,14 +314,42 @@ class AuthenticationFlowTests {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.email").value(email))
-                .andExpect(jsonPath("$.user.fullName").value("Google Profile Name"))
-                .andExpect(jsonPath("$.user.profileImageUrl").value(googlePicture));
+                .andExpect(jsonPath("$.user.fullName").value("Old Profile Name"))
+                .andExpect(jsonPath("$.user.profileImageUrl").doesNotExist());
 
         UserProfile refreshed = userProfileRepository
                 .findByUser_UserId(user.getUserId())
                 .orElseThrow();
-        assertEquals("Google Profile Name", refreshed.getFullName());
-        assertEquals(googlePicture, refreshed.getProfileImageUrl());
+        assertEquals("Old Profile Name", refreshed.getFullName());
+        assertNull(refreshed.getProfileImageUrl());
+    }
+
+    @Test
+    void googleLoginCreatesANewUsersProfileFromGoogle() throws Exception {
+        String email = "google-new-" + UUID.randomUUID() + "@example.com";
+        String googleName = "Google New User";
+        String googlePicture = "https://lh3.googleusercontent.com/a/new-google-profile";
+        when(googleTokenVerifier.verify("new-google-token"))
+                .thenReturn(new GoogleTokenVerifier.GoogleIdentity(
+                        "google-subject-" + UUID.randomUUID(),
+                        email,
+                        googleName,
+                        googlePicture));
+
+        mockMvc.perform(post("/api/v1/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idToken":"new-google-token"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.email").value(email))
+                .andExpect(jsonPath("$.user.fullName").value(googleName))
+                .andExpect(jsonPath("$.user.profileImageUrl").value(googlePicture));
+
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+        UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId()).orElseThrow();
+        assertEquals(googleName, profile.getFullName());
+        assertEquals(googlePicture, profile.getProfileImageUrl());
     }
 
     @Test
