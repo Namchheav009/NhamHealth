@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityProfileResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
@@ -48,6 +49,18 @@ public class CommunityApiController {
     @GetMapping("/posts/mine")
     public List<CommunityPostResponse> myPosts(@AuthenticationPrincipal Jwt jwt) {
         return service.myPosts(userId(jwt));
+    }
+
+    @GetMapping("/people/{targetUserId}/posts")
+    public List<CommunityPostResponse> personPosts(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer targetUserId) {
+        return service.personPosts(userId(jwt), targetUserId);
+    }
+
+    @GetMapping("/people/{targetUserId}/profile")
+    public CommunityProfileResponse personProfile(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer targetUserId) {
+        return service.personProfile(userId(jwt), targetUserId);
     }
 
     @GetMapping("/tags")

@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../models/community/community_person.dart';
+import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_tag.dart';
@@ -38,6 +39,23 @@ class CommunityRepository {
       headers: await _headers(),
     );
     return _post(_decodeMap(response));
+  }
+
+  Future<List<CommunityPost>> getPersonPosts(int userId) async {
+    final payload = await _getList('/api/v1/community/people/$userId/posts');
+    return payload
+        .map((item) => _post(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
+  }
+
+  Future<CommunityPersonProfile> getPersonProfile(int userId) async {
+    final response = await _client.get(
+      _uri('/api/v1/community/people/$userId/profile'),
+      headers: await _headers(),
+    );
+    final json = _decodeMap(response);
+    json['avatarUrl'] = _absoluteUrl('${json['avatarUrl'] ?? ''}');
+    return CommunityPersonProfile.fromJson(json);
   }
 
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {

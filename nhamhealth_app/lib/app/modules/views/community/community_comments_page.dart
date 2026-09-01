@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
@@ -598,6 +599,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     children: [
       ProfilePostCard(
         post: _post,
+        onAuthorTap: _openAuthorProfile,
         onLike: _togglePostLike,
         onComment: _focusComposer,
         onShare: _showShareOptions,
@@ -653,6 +655,18 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         ),
     ],
   );
+
+  void _openAuthorProfile() {
+    if (_post.authorId <= 0) return;
+    if (widget.canEdit) {
+      Get.toNamed<void>(AppRoutes.profile);
+      return;
+    }
+    Get.toNamed<void>(
+      AppRoutes.communityPersonProfilePath(_post.authorId),
+      arguments: _post,
+    );
+  }
 
   Widget _recipeDetailsContent() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

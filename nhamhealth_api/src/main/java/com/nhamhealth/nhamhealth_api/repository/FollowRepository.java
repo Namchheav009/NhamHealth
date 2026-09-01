@@ -22,6 +22,8 @@ public interface FollowRepository extends JpaRepository<Follow, Integer> {
     java.util.Optional<Follow> findByFollowerUserUserIdAndFollowingUserUserId(Integer followerId, Integer followingId);
 
     long countByRequestedAtGreaterThanEqual(LocalDateTime since);
+    long countByFollowingUserUserIdAndStatusIgnoreCase(Integer userId, String status);
+    long countByFollowerUserUserIdAndStatusIgnoreCase(Integer userId, String status);
 
     @Query("select count(follow) from Follow follow where lower(follow.status) = 'active' and exists "
             + "(select reciprocal.followId from Follow reciprocal where reciprocal.followerUser = follow.followingUser "

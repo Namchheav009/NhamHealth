@@ -52,6 +52,7 @@ import '../modules/bindings/wellness/food_source_detail_binding.dart';
 import 'app_routes.dart';
 import '../modules/views/community/community_page.dart';
 import '../modules/views/community/community_post_detail_page.dart';
+import '../modules/views/community/community_person_profile_view.dart';
 import '../modules/bindings/community/community_binding.dart';
 import '../modules/bindings/community/community_post_detail_binding.dart';
 import '../modules/views/recipes/my_recipes_view.dart';
@@ -237,6 +238,12 @@ abstract class AppPages {
       name: AppRoutes.communityPost,
       page: () => const CommunityPostDetailPage(),
       binding: CommunityPostDetailBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.communityPersonProfile,
+      page: () => const CommunityPersonProfileView(),
+      binding: CommunityBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(

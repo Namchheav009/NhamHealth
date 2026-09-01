@@ -4,6 +4,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityProfileResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
@@ -89,6 +91,41 @@ public class CommunityService {
                 .findByUser_UserIdAndStatusIgnoreCaseOrderByUpdatedAtDescCreatedAtDesc(userId, "ACTIVE")
                 .stream().filter(post -> post.getRecipe() != null)
                 .map(post -> response(post, userId, followed)).toList();
+    }
+
+    /** Returns only the target member's posts that the viewer may see. */
+    @Transactional(readOnly = true)
+    public List<CommunityPostResponse> personPosts(Integer viewerId, Integer targetUserId) {
+        user(targetUserId);
+        Set<Integer> followed = followedIds(viewerId);
+        Set<Integer> followers = followerIds(viewerId);
+        return posts
+                .findByUser_UserIdAndStatusIgnoreCaseOrderByUpdatedAtDescCreatedAtDesc(targetUserId, "ACTIVE")
+                .stream()
+                .filter(post -> post.getRecipe() != null)
+                .filter(post -> canView(post, viewerId, followed, followers))
+                .map(post -> response(post, viewerId, followed))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityProfileResponse personProfile(Integer viewerId, Integer targetUserId) {
+        User target = user(targetUserId);
+        UserProfile profile = profiles.findByUser_UserId(targetUserId).orElse(null);
+        long visiblePosts = personPosts(viewerId, targetUserId).size();
+        return new CommunityProfileResponse(
+                targetUserId,
+                profile == null ? target.getName() : profile.getFullName(),
+                profile == null ? "" : value(profile.getProfileImageUrl(), ""),
+                target.getRoleLabel(),
+                profile == null ? "" : value(profile.getBio(), ""),
+                target.getCreatedAt() == null ? "" : target.getCreatedAt()
+                        .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)),
+                Boolean.TRUE.equals(target.getIsVerified()),
+                visiblePosts,
+                follows.countByFollowingUserUserIdAndStatusIgnoreCase(targetUserId, "ACTIVE"),
+                follows.countByFollowerUserUserIdAndStatusIgnoreCase(targetUserId, "ACTIVE"),
+                followedIds(viewerId).contains(targetUserId));
     }
 
     @Transactional(readOnly = true)

@@ -17,6 +17,7 @@ class ProfilePostCard extends StatelessWidget {
     this.onDelete,
     this.onViewDetails,
     this.onOptions,
+    this.onAuthorTap,
     required this.onLike,
     this.isLiking = false,
     required this.onComment,
@@ -32,6 +33,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onViewDetails;
   final VoidCallback? onOptions;
+  final VoidCallback? onAuthorTap;
   final VoidCallback onLike;
   final bool isLiking;
   final VoidCallback onComment;
@@ -54,16 +56,20 @@ class ProfilePostCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 23,
-                backgroundColor: context.appSoftGreen,
-                foregroundImage: _avatarImage,
-                child: Text(
-                  _initials,
-                  style: const TextStyle(
-                    color: green,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+              InkResponse(
+                onTap: onAuthorTap,
+                radius: 27,
+                child: CircleAvatar(
+                  radius: 23,
+                  backgroundColor: context.appSoftGreen,
+                  foregroundImage: _avatarImage,
+                  child: Text(
+                    _initials,
+                    style: const TextStyle(
+                      color: green,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -71,9 +77,14 @@ class ProfilePostCard extends StatelessWidget {
               const SizedBox(width: 11),
 
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: InkWell(
+                  onTap: onAuthorTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     Text(
                       _displayAuthorName,
                       maxLines: 1,
@@ -96,7 +107,9 @@ class ProfilePostCard extends StatelessWidget {
                         color: context.appMutedText,
                       ),
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
 

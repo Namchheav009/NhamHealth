@@ -696,12 +696,26 @@ class CommunityPage extends GetView<CommunityController> {
     padding: const EdgeInsets.only(bottom: 14),
     child: ProfilePostCard(
       post: post,
+      onAuthorTap: () => _openAuthorProfile(post),
       onLike: () => controller.togglePostLike(post),
       onComment: () => _showComments(post),
       onShare: () => _showShareOptions(post),
       onOptions: () => _showPostOptions(post),
     ),
   );
+
+  void _openAuthorProfile(CommunityPost post) {
+    final currentUserId = controller.authenticatedUser.value?.id;
+    if (post.authorId <= 0) return;
+    if (post.authorId == currentUserId) {
+      Get.toNamed<void>(AppRoutes.profile, arguments: controller.authenticatedUser.value);
+      return;
+    }
+    Get.toNamed<void>(
+      AppRoutes.communityPersonProfilePath(post.authorId),
+      arguments: post,
+    );
+  }
 
   // Kept temporarily as a reference while all post surfaces use the shared card.
   // ignore: unused_element
