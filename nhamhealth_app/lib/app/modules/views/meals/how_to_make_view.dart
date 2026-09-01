@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../controllers/meals/how_to_make_controller.dart';
+import '../../models/meals/meal_model.dart';
 
 class HowToMakeView extends GetView<HowToMakeController> {
   const HowToMakeView({super.key});
@@ -144,7 +145,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
                 SizedBox(height: 8 * scale),
 
                 Text(
-                  'Fresh & Healthy Mixed salad'.tr,
+                  (controller.meal?.name ?? '').tr,
                   style: TextStyle(
                     fontSize: 14.5 * scale,
                     height: 1,
@@ -259,7 +260,7 @@ class HowToMakeView extends GetView<HowToMakeController> {
 // ================================================================
 
 class _CookingStepCard extends StatelessWidget {
-  final CookingStepModel step;
+  final MealStepModel step;
   final double scale;
 
   const _CookingStepCard({required this.step, required this.scale});
@@ -294,27 +295,11 @@ class _CookingStepCard extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               ClipOval(
-                child: Image.asset(
-                  step.image,
-                  width: 82 * scale,
-                  height: 82 * scale,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 82 * scale,
-                      height: 82 * scale,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFE6F4E8),
-                      ),
-                      child: Icon(
-                        Icons.restaurant_rounded,
-                        color: HowToMakeView.green,
-                        size: 30 * scale,
-                      ),
-                    );
-                  },
-                ),
+                child: step.image.startsWith('http')
+                    ? Image.network(step.image, width: 82 * scale, height: 82 * scale, fit: BoxFit.cover, errorBuilder: (_, _, _) => _stepFallback())
+                    : step.image.startsWith('assets/')
+                        ? Image.asset(step.image, width: 82 * scale, height: 82 * scale, fit: BoxFit.cover, errorBuilder: (_, _, _) => _stepFallback())
+                        : _stepFallback(),
               ),
 
               Positioned(
@@ -344,16 +329,13 @@ class _CookingStepCard extends StatelessWidget {
 
           SizedBox(width: 16 * scale),
 
-          // =====================================================
-          // TEXT
-          // =====================================================
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  step.title.tr,
+                  (step.title.isEmpty ? 'Step ${step.number}' : step.title).tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -367,7 +349,7 @@ class _CookingStepCard extends StatelessWidget {
                 SizedBox(height: 7 * scale),
 
                 Text(
-                  step.description.tr,
+                  step.instruction.tr,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -384,6 +366,20 @@ class _CookingStepCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _stepFallback() => Container(
+                      width: 82 * scale,
+                      height: 82 * scale,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFE6F4E8),
+                      ),
+                      child: Icon(
+                        Icons.restaurant_rounded,
+                        color: HowToMakeView.green,
+                        size: 30 * scale,
+                      ),
+                    );
 }
 
 // ================================================================

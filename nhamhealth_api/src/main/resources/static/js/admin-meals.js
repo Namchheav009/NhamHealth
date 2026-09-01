@@ -94,7 +94,7 @@ function closeImageViewer() {
 function drawRows(list) {
     rowsBox.innerHTML = "";
     if (!list.length) {
-        rowsBox.innerHTML = '<tr><td colspan="11" style="padding:40px;text-align:center">No meals found.</td></tr>';
+        rowsBox.innerHTML = '<tr><td colspan="12" style="padding:40px;text-align:center">No meals found.</td></tr>';
     } else {
         list.forEach(meal => {
             const tags = (meal.tags || []).map(tag => `<span class="pill ${tagClass(tag)}">${escapeHtml(tag)}</span>`).join(" ");
@@ -113,7 +113,9 @@ function drawRows(list) {
                     <td>${Number(meal.favorites || 0).toLocaleString()}</td>
                     <td><span class="pill ${statusClass(meal.status)}">${escapeHtml(meal.status)}</span></td>
                     <td>${escapeHtml(meal.updatedDate)}</td>
-                    <td class="image-url-cell" title="${escapeHtml(meal.mainImageUrl)}">${escapeHtml(meal.mainImageUrl || "—")}</td>
+                    <td class="image-url-cell">${meal.mainImageUrl
+                        ? `<a class="image-link" href="${escapeHtml(meal.mainImageUrl)}" target="_blank" rel="noopener" title="${escapeHtml(meal.mainImageUrl)}"><i class="bi bi-image"></i> View</a>`
+                        : "—"}</td>
                     <td><div class="meal-actions"><button class="action" data-action="edit" data-meal-id="${meal.mealId}" type="button" aria-label="Edit meal"><i class="bi bi-pencil"></i></button><button class="action danger-action" data-action="delete" data-meal-id="${meal.mealId}" type="button" aria-label="Delete meal"><i class="bi bi-trash3"></i></button></div></td>
                 </tr>`);
         });

@@ -6,6 +6,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../bindings/meals/how_to_make_binding.dart';
 import '../../bindings/meals/ingredient_binding.dart';
 import '../../controllers/meals/food_detail_controller.dart';
+import '../../models/meals/meal_model.dart';
 import 'how_to_make_view.dart';
 import 'ingredient_view.dart';
 
@@ -43,7 +44,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             ),
           ),
         ),
-        body: Stack(
+        body: Obx(() => Stack(
           children: [
             const _FoodBackground(),
 
@@ -80,7 +81,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
               ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -90,6 +91,16 @@ class FoodDetailView extends GetView<FoodDetailController> {
   // ============================================================
 
   Widget _buildHero() {
+    final meal = controller.meal;
+    final description = meal?.description ?? '';
+    MealNutritionModel? protein;
+    for (final nutrient in meal?.nutrition ?? const <MealNutritionModel>[]) {
+      if (nutrient.name.toLowerCase().contains('protein')) {
+        protein = nutrient;
+        break;
+      }
+    }
+
     return SizedBox(
       height: 275,
       child: Stack(
@@ -116,7 +127,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
             child: SizedBox(
               width: 260,
               height: 260,
-              child: _MealHeroImage(imageUrl: controller.meal?.image ?? ''),
+              child: _MealHeroImage(imageUrl: meal?.image ?? ''),
             ),
           ),
 
@@ -127,7 +138,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  controller.meal?.category ?? 'fresh & Healthy'.tr,
+                  meal?.category ?? 'fresh & Healthy'.tr,
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
@@ -140,7 +151,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
                 SizedBox(
                   width: 195,
                   child: Text(
-                    controller.meal?.name ?? 'Mix salad\nVegetables'.tr,
+                    meal?.name ?? 'Mix salad\nVegetables'.tr,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -167,12 +178,18 @@ class FoodDetailView extends GetView<FoodDetailController> {
                     children: [
                       const Icon(Icons.eco_rounded, color: green, size: 17),
                       const SizedBox(width: 7),
-                      Text(
-                        'Light, crunchy & super tasty!'.tr,
-                        style: const TextStyle(
-                          color: Color(0xFF6B9E45),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
+                      Flexible(
+                        child: Text(
+                          description.isNotEmpty
+                              ? description
+                              : 'A nourishing choice for your day'.tr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF6B9E45),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -183,17 +200,18 @@ class FoodDetailView extends GetView<FoodDetailController> {
 
                 _nutritionValue(
                   barColor: Color(0xFFB4FFD0),
-                  value: '${controller.meal?.calories ?? 240}',
+                  value: '${meal?.calories ?? 0}',
                   label: 'Calories',
                 ),
 
-                const SizedBox(height: 6),
-
-                _nutritionValue(
-                  barColor: Color(0xFFA7C5E3),
-                  value: '19',
-                  label: 'gr Protein',
-                ),
+                if (protein != null) ...[
+                  const SizedBox(height: 6),
+                  _nutritionValue(
+                    barColor: const Color(0xFFA7C5E3),
+                    value: _formatNumber(protein.amount),
+                    label: '${protein.unit} ${protein.name}',
+                  ),
+                ],
               ],
             ),
           ),
@@ -201,6 +219,8 @@ class FoodDetailView extends GetView<FoodDetailController> {
       ),
     );
   }
+
+  String _formatNumber(num value) => value == value.roundToDouble() ? '${value.toInt()}' : value.toStringAsFixed(1);
 
   Widget _nutritionValue({
     required Color barColor,
@@ -300,11 +320,12 @@ class FoodDetailView extends GetView<FoodDetailController> {
     return _sectionHeader(
       image: 'assets/images/food_detail/ingredent.png',
       title: 'Ingredients',
-      subtitle: '6 healthy ingredients',
+      subtitle: '${controller.meal?.ingredients.length ?? 0} ingredients',
       onSeeMore:
           () => Get.to<void>(
             () => const IngredientView(),
             binding: IngredientBinding(),
+            arguments: controller.meal,
             transition: Transition.rightToLeft,
           ),
     );
@@ -318,11 +339,12 @@ class FoodDetailView extends GetView<FoodDetailController> {
     return _sectionHeader(
       image: 'assets/images/food_detail/howtomake.png',
       title: 'How to make',
-      subtitle: 'Fresh & Healthy Mixed salad',
+      subtitle: '${controller.meal?.steps.length ?? 0} preparation steps',
       onSeeMore:
           () => Get.to<void>(
             () => const HowToMakeView(),
             binding: HowToMakeBinding(),
+            arguments: controller.meal,
             transition: Transition.rightToLeft,
           ),
     );
@@ -495,30 +517,17 @@ class _MealHeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.contain,
-        alignment: Alignment.center,
-        errorBuilder: (_, _, _) => _fallback(),
-      );
-    }
-
-    if (imageUrl.startsWith('assets/')) {
-      return Image.asset(
-        imageUrl,
-        fit: BoxFit.contain,
-        alignment: Alignment.center,
-        errorBuilder: (_, _, _) => _fallback(),
-      );
-    }
-
-    return _fallback();
+    final image = imageUrl.startsWith('http://') || imageUrl.startsWith('https://')
+        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, _, _) => _fallback())
+        : imageUrl.startsWith('assets/')
+            ? Image.asset(imageUrl, fit: BoxFit.cover, errorBuilder: (_, _, _) => _fallback())
+            : _fallback();
+    return ClipOval(child: SizedBox.expand(child: image));
   }
 
   Widget _fallback() => Image.asset(
     _fallbackImage,
-    fit: BoxFit.contain,
+    fit: BoxFit.cover,
     alignment: Alignment.center,
   );
 }

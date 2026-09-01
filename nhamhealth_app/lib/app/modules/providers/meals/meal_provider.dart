@@ -31,6 +31,15 @@ class MealProvider {
         .toList(growable: false);
   }
 
+  Future<MealModel> getMealDetail(int mealId) async {
+    final payload = await _getObject('/api/v1/meals/$mealId');
+    try {
+      return MealModel.fromDetailJson(payload, baseUrl: ApiConfig.baseUrl);
+    } on Object {
+      throw const MealProviderException('The meal details are incomplete.');
+    }
+  }
+
   Future<List<MealCategoryModel>> getCategories() async {
     final payload = await _getList(
       Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'),
