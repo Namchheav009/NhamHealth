@@ -451,7 +451,7 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

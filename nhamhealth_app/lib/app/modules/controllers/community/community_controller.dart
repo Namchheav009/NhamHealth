@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
@@ -26,9 +27,11 @@ class CommunityController extends GetxController {
     AuthService? authService,
     HomeProvider? homeProvider,
     NotificationsRepository? notificationsRepository,
+    Stream<NotificationRealtimeEvent>? realtimeEvents,
   }) : _repository = repository,
        _authService = authService ?? Get.find<AuthService>(),
        _notificationsRepository = notificationsRepository,
+       _realtimeEvents = realtimeEvents,
        _homeProvider =
            homeProvider ??
            HomeProvider(authService: authService ?? Get.find<AuthService>());
@@ -37,8 +40,10 @@ class CommunityController extends GetxController {
   final AuthService _authService;
   final HomeProvider _homeProvider;
   final NotificationsRepository? _notificationsRepository;
+  final Stream<NotificationRealtimeEvent>? _realtimeEvents;
   Timer? _notificationTimer;
   Timer? _feedRefreshTimer;
+  StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
   Set<int> _knownCommunityNotificationIds = const {};
   bool _notificationsInitialized = false;
   bool _notificationRequestInFlight = false;
@@ -133,6 +138,16 @@ class CommunityController extends GetxController {
         }
       });
     }
+    _realtimeSubscription = _realtimeEvents?.listen((_) {
+      unawaited(_refreshAfterRealtimeEvent());
+    });
+  }
+
+  Future<void> _refreshAfterRealtimeEvent() async {
+    await Future.wait([
+      _refreshUnreadNotificationCount(),
+      _refreshCommunityNotifications(showAlert: false),
+    ]);
   }
 
   Future<void> _refreshCommunityNotifications({required bool showAlert}) async {
@@ -195,6 +210,10 @@ class CommunityController extends GetxController {
 
   Future<void> loadTopBar() async {
     authenticatedUser.value = await _authService.restoreSession();
+    await _refreshUnreadNotificationCount();
+  }
+
+  Future<void> _refreshUnreadNotificationCount() async {
     try {
       unreadNotificationCount.value =
           await _homeProvider.getUnreadNotificationCount();
@@ -391,6 +410,7 @@ class CommunityController extends GetxController {
   void onClose() {
     _notificationTimer?.cancel();
     _feedRefreshTimer?.cancel();
+    _realtimeSubscription?.cancel();
     super.onClose();
   }
 }

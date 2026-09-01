@@ -48,6 +48,8 @@ public class PushNotificationService {
         if (firebase == null) return;
         var data = Map.of(
                 "notificationId", notification.getNotificationId().toString(),
+                "title", value(notification.getTitle()),
+                "body", value(notification.getMessage()),
                 "referenceType", value(notification.getReferenceType()),
                 "referenceId", notification.getReferenceId() == null ? "" : notification.getReferenceId().toString());
         for (var device : devices.findByUserUserId(notification.getUser().getUserId())) {

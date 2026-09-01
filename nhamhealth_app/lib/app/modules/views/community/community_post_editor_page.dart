@@ -1637,7 +1637,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       itemCount: _ingredientSuggestions.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final ingredient = _ingredientSuggestions[index];
         return ListTile(

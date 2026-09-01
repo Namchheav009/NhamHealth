@@ -41,43 +41,69 @@ class PushNotificationService {
   StreamSubscription<RemoteMessage>? _messageSubscription;
   StreamSubscription<RemoteMessage>? _tapSubscription;
   String? _token;
+  bool _initialized = false;
 
   Stream<NotificationRealtimeEvent> get events => _events.stream;
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
   Future<void> initialize() async {
-    if (!isSupported) return;
+    if (!isSupported || _initialized) return;
+    _initialized = true;
     instance = this;
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
+    final permission = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (permission.authorizationStatus == AuthorizationStatus.denied) return;
+
+    _androidNotifications.setMethodCallHandler((call) async {
+      if (call.method != 'notificationTapped') return;
+      _openNativeNotification(call.arguments);
+    });
+    final initialNativeNotification = await _androidNotifications
+        .invokeMethod<Object?>('getInitialNotificationTap');
+    if (initialNativeNotification != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _openNativeNotification(initialNativeNotification),
+      );
+    }
     _tokenSubscription = messaging.onTokenRefresh.listen(_registerToken);
     _messageSubscription = FirebaseMessaging.onMessage.listen((message) async {
       _publish(message);
       final notification = message.notification;
-      if (notification == null) return;
-      final title = notification.title ?? 'NhamHealth';
-      final body = notification.body ?? '';
+      final title =
+          notification?.title ?? message.data['title'] ?? 'NhamHealth';
+      final body = notification?.body ?? message.data['body'] ?? '';
       try {
         await _androidNotifications.invokeMethod<void>('showNotification', {
           'title': title,
           'body': body,
+          'notificationId': message.data['notificationId'] ?? '',
+          'referenceType': message.data['referenceType'] ?? '',
+          'referenceId': message.data['referenceId'] ?? '',
         });
       } on Object {
         AppAlert.success(title: title, message: body);
       }
     });
-    _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen(_open);
+    _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _publish(message);
+      _open(message);
+    });
     _token = await messaging.getToken();
     await syncToken();
 
     final initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _open(initialMessage),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _publish(initialMessage);
+        _open(initialMessage);
+      });
     }
   }
 
@@ -87,8 +113,8 @@ class PushNotificationService {
     _events.add(
       NotificationRealtimeEvent(
         id: int.tryParse(message.data['notificationId'] ?? ''),
-        title: notification?.title ?? 'NhamHealth',
-        message: notification?.body ?? '',
+        title: notification?.title ?? message.data['title'] ?? 'NhamHealth',
+        message: notification?.body ?? message.data['body'] ?? '',
         referenceType: message.data['referenceType']?.trim().toUpperCase(),
         referenceId: int.tryParse(message.data['referenceId'] ?? ''),
       ),
@@ -151,8 +177,19 @@ class PushNotificationService {
   }
 
   void _open(RemoteMessage message) {
-    final referenceType = message.data['referenceType']?.toUpperCase();
-    final referenceId = int.tryParse(message.data['referenceId'] ?? '');
+    _openData(message.data);
+  }
+
+  void _openNativeNotification(Object? rawArguments) {
+    final arguments = Map<String, dynamic>.from(
+      (rawArguments as Map?) ?? const <String, dynamic>{},
+    );
+    _openData(arguments);
+  }
+
+  void _openData(Map<String, dynamic> data) {
+    final referenceType = data['referenceType']?.toString().toUpperCase();
+    final referenceId = int.tryParse(data['referenceId']?.toString() ?? '');
     if (referenceType == 'POST' && referenceId != null) {
       Get.toNamed<void>(AppRoutes.communityPostPath(referenceId));
       return;
@@ -164,6 +201,7 @@ class PushNotificationService {
     await _tokenSubscription?.cancel();
     await _messageSubscription?.cancel();
     await _tapSubscription?.cancel();
+    _androidNotifications.setMethodCallHandler(null);
     await _events.close();
     _client.close();
     if (identical(instance, this)) instance = null;

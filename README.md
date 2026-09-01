@@ -220,6 +220,26 @@ builds must use HTTPS. The same override can point to staging or production:
 flutter run --dart-define=API_BASE_URL=https://api.example.com
 ```
 
+### Enable real-time phone notifications
+
+Android notifications use Firebase Cloud Messaging. The checked-in
+`google-services.json` configures the Flutter client, while the Spring API must
+authenticate separately with a Firebase service account. Download the private
+key from **Firebase console > Project settings > Service accounts**, keep it
+outside the repository, and start the API from PowerShell with:
+
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS="C:\secure\nhamhealth-firebase-admin.json"
+$env:NHAMHEALTH_PUSH_ENABLED="true"
+mvn spring-boot:run
+```
+
+Restart the app (or sign in again) on each physical phone after enabling push
+so its current FCM token is registered with the API. Android 13 and newer also
+require the user to allow notifications when prompted. Incoming community and
+admin notifications then show immediately while the app is open, backgrounded,
+or closed; tapping a post notification opens that post.
+
 If multiple devices are available, Flutter will ask you to select one. A target
 can also be selected explicitly:
 

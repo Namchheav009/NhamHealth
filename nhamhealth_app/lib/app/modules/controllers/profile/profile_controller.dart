@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:get/get.dart';
 
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_post.dart';
@@ -21,11 +22,14 @@ class ProfileController extends GetxController {
   ProfileController({
     required ProfileRepository repository,
     required CommunityRepository communityRepository,
+    Stream<NotificationRealtimeEvent>? realtimeEvents,
   }) : _repository = repository,
-       _communityRepository = communityRepository;
+       _communityRepository = communityRepository,
+       _realtimeEvents = realtimeEvents;
 
   final ProfileRepository _repository;
   final CommunityRepository _communityRepository;
+  final Stream<NotificationRealtimeEvent>? _realtimeEvents;
   String? _uploadedProfileImagePath;
   final selectedNavIndex = 4.obs;
   final isLoading = false.obs;
@@ -38,6 +42,7 @@ class ProfileController extends GetxController {
   final friends = <CommunityPerson>[].obs;
   final unreadNotificationCount = 0.obs;
   Timer? _notificationCountTimer;
+  StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
 
   final name = 'My Profile'.obs;
   final email = ''.obs;
@@ -92,6 +97,9 @@ class ProfileController extends GetxController {
     loadUnreadNotificationCount();
     _notificationCountTimer = Timer.periodic(
       const Duration(seconds: 5),
+      (_) => loadUnreadNotificationCount(),
+    );
+    _notificationSubscription = _realtimeEvents?.listen(
       (_) => loadUnreadNotificationCount(),
     );
   }
@@ -459,6 +467,7 @@ class ProfileController extends GetxController {
   @override
   void onClose() {
     _notificationCountTimer?.cancel();
+    _notificationSubscription?.cancel();
     super.onClose();
   }
 }
