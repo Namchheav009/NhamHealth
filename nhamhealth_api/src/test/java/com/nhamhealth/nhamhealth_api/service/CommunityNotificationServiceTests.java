@@ -74,6 +74,38 @@ class CommunityNotificationServiceTests {
         verifyNoInteractions(notifications, profiles);
     }
 
+    @Test
+    void followCreatesNotificationAndSendsDevicePush() {
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        UserProfileRepository profiles = mock(UserProfileRepository.class);
+        PushNotificationService pushNotifications = mock(PushNotificationService.class);
+        CommunityNotificationService service = new CommunityNotificationService(
+            notifications, profiles, pushNotifications);
+        User actor = user(7);
+        User recipient = user(11);
+        UserProfile profile = mock(UserProfile.class);
+
+        when(profile.getFullName()).thenReturn("Maya Chen");
+        when(profiles.findByUser_UserId(7)).thenReturn(Optional.of(profile));
+        when(notifications.saveAndFlush(org.mockito.ArgumentMatchers.any(Notification.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.followed(actor, recipient);
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notifications).saveAndFlush(captor.capture());
+        Notification saved = captor.getValue();
+        assertSame(recipient, saved.getUser());
+        assertSame(actor, saved.getActorUser());
+        assertEquals("COMMUNITY", saved.getNotificationType());
+        assertEquals("USER", saved.getReferenceType());
+        assertEquals(7, saved.getReferenceId());
+        assertEquals("Maya Chen", saved.getTitle());
+        assertEquals("started following you.", saved.getMessage());
+        assertFalse(saved.getIsRead());
+        verify(pushNotifications).send(saved);
+    }
+
     private User user(int id) {
         User user = mock(User.class);
         when(user.getUserId()).thenReturn(id);

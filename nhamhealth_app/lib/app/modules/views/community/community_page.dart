@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
@@ -15,48 +13,49 @@ import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_controller.dart';
+import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
-import 'widgets/community_shared_post_card.dart';
 import 'widgets/community_tab_switcher.dart';
-import '../profile/widgets/profile_post_card.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
-  static const green = Color(0xFF08A936);
-  static const navy = Color(0xFF071A43);
+
+  static const Color green = AppColors.primaryGreen;
+
+  static const double _mobileBreakpoint = 720;
+  static const double _feedTwoColumnBreakpoint = 820;
+  static const double _cardRadius = 18;
 
   @override
-  Widget build(BuildContext context) => Obx(
-    () => MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-      child: Scaffold(
-        extendBody: true,
-        backgroundColor: context.appBackground,
-        body: AppBackground(
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _header(context),
-                _intro(context),
-                const SizedBox(height: 14),
-                _mainTabs(context),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: LoadingContentTransition(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: context.appBackground,
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Obx(() => _header(context)),
+              const SizedBox(height: 10),
+              Obx(() => _mainTabs(context)),
+              const SizedBox(height: 4),
+              Expanded(
+                child: Obx(
+                  () => LoadingContentTransition(
                     isLoading:
                         controller.isLoading.value &&
                         !controller.hasLoaded.value,
                     loading: SingleChildScrollView(
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
                         AppSpacing.pageHorizontalFor(context),
-                        4,
+                        6,
                         AppSpacing.pageHorizontalFor(context),
                         110,
                       ),
@@ -69,48 +68,39 @@ class CommunityPage extends GetView<CommunityController> {
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-        bottomNavigationBar: _bottomNav(),
       ),
-    ),
-  );
+      bottomNavigationBar: _bottomNav(),
+    );
+  }
 
-  Widget _header(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxWidth: AppSpacing.maxWidePaddedContentWidth,
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.pageHorizontalFor(context),
-          AppSpacing.pageTop,
-          AppSpacing.pageHorizontalFor(context),
-          0,
-        ),
-        child: NhamAppBar(
-          user: controller.authenticatedUser.value,
-          unreadNotificationCount: controller.unreadNotificationCount.value,
-          onNotifications: () async {
-            await Get.toNamed<void>(AppRoutes.notifications);
-            await controller.loadTopBar();
-          },
-          onProfile:
-              () => Get.toNamed<void>(
-                AppRoutes.profile,
-                arguments: controller.authenticatedUser.value,
-              ),
-        ),
-      ),
-    ),
-  );
+  // ---------------------------------------------------------------------------
+  // Top-level layout
+  // ---------------------------------------------------------------------------
 
-  Widget _intro(BuildContext context) => _contentWidth(
+  Widget _header(BuildContext context) => _contentWidth(
     Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.pageHorizontalFor(context),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontalFor(context),
+        AppSpacing.pageTop,
+        AppSpacing.pageHorizontalFor(context),
+        0,
+      ),
+      child: NhamAppBar(
+        user: controller.authenticatedUser.value,
+        unreadNotificationCount: controller.unreadNotificationCount.value,
+        onNotifications: () async {
+          await Get.toNamed<void>(AppRoutes.notifications);
+          await controller.loadTopBar();
+        },
+        onProfile:
+            () => Get.toNamed<void>(
+              AppRoutes.profile,
+              arguments: controller.authenticatedUser.value,
+            ),
       ),
     ),
   );
@@ -128,105 +118,60 @@ class CommunityPage extends GetView<CommunityController> {
   );
 
   Widget _body(BuildContext context) {
-    switch (controller.section.value) {
-      case CommunitySection.feed:
-        return _feed(context);
-      case CommunitySection.people:
-        return _friends(context);
-    }
+    return switch (controller.section.value) {
+      CommunitySection.feed => _feed(context),
+      CommunitySection.people => _people(context),
+    };
   }
 
-  Widget _friends(BuildContext context) {
+  Widget _contentWidth(Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: AppSpacing.maxWidePaddedContentWidth,
+      ),
+      child: child,
+    ),
+  );
+
+  // ---------------------------------------------------------------------------
+  // People
+  // ---------------------------------------------------------------------------
+
+  Widget _people(BuildContext context) {
     final view = controller.friendsView.value;
-    final isAdd = view == FriendsView.addFriends;
+    final isDiscover = view == FriendsView.addFriends;
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.pageHorizontalFor(context),
-        12,
+        10,
         AppSpacing.pageHorizontalFor(context),
         115,
       ),
       children: [
         _contentWidth(
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                _title(view),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: navy,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _subtitle(view),
-                style: const TextStyle(fontSize: 12, color: Color(0xFF718078)),
-              ),
+              _peopleSections(context),
               const SizedBox(height: 14),
-              _peopleSections(),
-              const SizedBox(height: 14),
-              TextField(
+              _PeopleSearchField(
+                key: ValueKey<String>('people-search-${view.name}'),
+                hintText:
+                    isDiscover
+                        ? 'Search people by name'
+                        : 'Search ${_resultLabel(view)}',
                 onChanged: controller.updateSearch,
-                decoration: InputDecoration(
-                  hintText:
-                      isAdd
-                          ? 'Search for people by name...'
-                          : 'Search ${_title(view).toLowerCase()}...',
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: Colors.black,
-                    size: 27,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
               ),
-              if (isAdd) ...[const SizedBox(height: 14), _peopleFilters()],
-              const SizedBox(height: 24),
-              if (!isAdd)
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${controller.countFor(view)} ${_title(view).toLowerCase()}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      'Newest',
-                      style: TextStyle(color: navy, fontSize: 12),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: navy,
-                    ),
-                  ],
-                ),
-              if (!isAdd) const SizedBox(height: 10),
-              if (controller.filteredPeople.isEmpty)
-                const CommunityEmptyState(
-                  icon: Icons.search_off_rounded,
-                  title: 'No people found',
-                  message: 'Try another name, interest, or filter.',
-                ),
-              ...controller.filteredPeople.map(
-                (person) => _personTile(person, view),
-              ),
+              if (isDiscover) ...[
+                const SizedBox(height: 10),
+                _peopleFilters(context),
+              ],
+              const SizedBox(height: 18),
+              _peopleResults(context, view),
             ],
           ),
         ),
@@ -234,32 +179,75 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _peopleSections() {
-    const labels = ['Friends', 'Requests', 'Following', 'Discover'];
+  Widget _peopleSections(BuildContext context) {
+    const labels = ['Friends', 'Followers', 'Following', 'Discover'];
+    const icons = [
+      Icons.people_alt_rounded,
+      Icons.person_add_alt_1_rounded,
+      Icons.favorite_rounded,
+      Icons.explore_rounded,
+    ];
+
     return SizedBox(
-      height: 36,
+      height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: FriendsView.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 7),
-        itemBuilder: (context, index) {
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, index) {
           final section = FriendsView.values[index];
           final selected = controller.friendsView.value == section;
-          return ChoiceChip(
-            label: Text(labels[index]),
+
+          return Semantics(
             selected: selected,
-            onSelected: (_) => controller.selectFriendsView(section),
-            showCheckmark: false,
-            selectedColor: const Color(0xFFE3F6E8),
-            backgroundColor: Colors.white,
-            side: BorderSide(
+            button: true,
+            label: '${labels[index]} people filter',
+            child: Material(
               color:
-                  selected ? const Color(0xFFB8E4C5) : const Color(0xFFE3E7E5),
-            ),
-            labelStyle: TextStyle(
-              color: selected ? const Color(0xFF087B3A) : Colors.black54,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+                  selected
+                      ? context.appSoftGreen
+                      : context.appSurfaceLow.withValues(alpha: .75),
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                key: ValueKey<String>('people-section-${section.name}'),
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => controller.selectFriendsView(section),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color:
+                          selected
+                              ? green.withValues(alpha: .28)
+                              : context.appBorder,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icons[index],
+                        size: 16,
+                        color: selected ? green : context.appMutedText,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        labels[index],
+                        style: TextStyle(
+                          color: selected ? green : context.appMutedText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           );
         },
@@ -267,174 +255,42 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _personTile(CommunityPerson person, FriendsView view) => Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .97),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0xFFE3EBE5)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x08173D25),
-          blurRadius: 12,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: const Color(0xFFE9F4EC),
-          backgroundImage: NetworkImage(person.avatarUrl),
-          onBackgroundImageError: (_, _) {},
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                person.name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF10152A),
-                ),
-              ),
-              if (person.detail != null) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      view == FriendsView.addFriends
-                          ? Icons.group
-                          : Icons.schedule,
-                      size: 14,
-                      color: const Color(0xFF6076A7),
-                    ),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        person.detail!,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF6076A7),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              if (person.tags.isNotEmpty) ...[
-                const SizedBox(height: 5),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children:
-                      person.tags
-                          .map(
-                            (tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEAF7EE),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                tag,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF078D35),
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                ),
-              ],
-            ],
+  Widget _peopleFilters(BuildContext context) {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: context.appMutedSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: Row(
+        children: [
+          _peopleFilterOption(
+            context: context,
+            icon: Icons.public_rounded,
+            label: 'Everyone',
+            filter: PeopleFilter.all,
           ),
-        ),
-        if (view == FriendsView.followers) ...[
-          _outlineButton(
-            'Accept',
-            green,
-            () => controller.updateConnection(person, view),
+          _peopleFilterOption(
+            context: context,
+            icon: Icons.people_alt_rounded,
+            label: 'Mutual friends',
+            filter: PeopleFilter.mutualFriends,
           ),
-          const SizedBox(width: 6),
-          _outlineButton(
-            'Decline',
-            Colors.red,
-            () => controller.declineFollower(person),
-          ),
-        ] else
-          _outlineButton(
-            controller.connectionStatuses[person.id] ??
-                (view == FriendsView.friends
-                    ? 'Message'
-                    : view == FriendsView.following
-                    ? 'Following'
-                    : 'Add'),
-            green,
-            () => controller.updateConnection(person, view),
-          ),
-        const SizedBox(width: 5),
-        const Icon(Icons.more_vert, size: 22, color: Colors.black),
-      ],
-    ),
-  );
-
-  Widget _outlineButton(String text, Color color, VoidCallback onPressed) =>
-      OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: BorderSide(color: color.withValues(alpha: .75)),
-          minimumSize: const Size(62, 35),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-        ),
-      );
-  Widget _peopleFilters() => Container(
-    height: 42,
-    padding: const EdgeInsets.all(3),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF2F5F3),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFE1E8E3)),
-    ),
-    child: Row(
-      children: [
-        _peopleFilterOption(
-          icon: Icons.people_alt_rounded,
-          label: 'All people',
-          filter: PeopleFilter.all,
-        ),
-        _peopleFilterOption(
-          icon: Icons.group_outlined,
-          label: 'Mutual friends',
-          filter: PeopleFilter.mutualFriends,
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _peopleFilterOption({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required PeopleFilter filter,
   }) {
     final selected = controller.peopleFilter.value == filter;
+
     return Expanded(
       child: InkWell(
         onTap: () => controller.selectPeopleFilter(filter),
@@ -444,7 +300,7 @@ class CommunityPage extends GetView<CommunityController> {
           curve: Curves.easeOutCubic,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
+            color: selected ? context.appSurfaceLow : Colors.transparent,
             borderRadius: BorderRadius.circular(11),
             boxShadow:
                 selected
@@ -462,19 +318,20 @@ class CommunityPage extends GetView<CommunityController> {
             children: [
               Icon(
                 icon,
-                size: 17,
-                color: selected ? green : const Color(0xFF718078),
+                size: 16,
+                color: selected ? green : context.appMutedText,
               ),
               const SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color:
-                      selected
-                          ? const Color(0xFF087B3A)
-                          : const Color(0xFF59645D),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? green : context.appMutedText,
+                  ),
                 ),
               ),
             ],
@@ -484,473 +341,584 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _feed(BuildContext context) => ListView(
-    physics: const AlwaysScrollableScrollPhysics(
-      parent: BouncingScrollPhysics(),
-    ),
-    padding: EdgeInsets.fromLTRB(
-      AppSpacing.pageHorizontalFor(context),
-      12,
-      AppSpacing.pageHorizontalFor(context),
-      115,
-    ),
-    children: [
-      _contentWidth(
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 820) return _compactFeed();
+  Widget _peopleResults(BuildContext context, FriendsView view) {
+    final people = controller.filteredPeople;
+    final hasQuery = controller.searchQuery.value.trim().isNotEmpty;
 
-            return Row(
-              key: const ValueKey<String>('community-tablet-layout'),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 290, child: _feedControls()),
-                const SizedBox(width: 18),
-                Expanded(child: _feedPosts()),
+    if (people.isEmpty) {
+      return CommunityEmptyState(
+        icon: hasQuery ? Icons.search_off_rounded : _viewIcon(view),
+        title: hasQuery ? 'No matching people' : _emptyTitle(view),
+        message: hasQuery ? 'Try another name.' : _emptyMessage(view),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        if (constraints.maxWidth < _mobileBreakpoint) {
+          return Column(
+            children: people
+                .map((person) => _personCard(context, person, view))
+                .toList(growable: false),
+          );
+        }
+
+        final cardWidth = (constraints.maxWidth - 14) / 2;
+
+        return Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: people
+              .map(
+                (person) => SizedBox(
+                  width: cardWidth,
+                  child: _personCard(
+                    context,
+                    person,
+                    view,
+                    addBottomMargin: false,
+                  ),
+                ),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+
+  Widget _personCard(
+    BuildContext context,
+    CommunityPerson person,
+    FriendsView view, {
+    bool addBottomMargin = true,
+  }) {
+    return Container(
+      key: ValueKey<String>('people-card-${person.id}'),
+      margin: EdgeInsets.only(bottom: addBottomMargin ? 10 : 0),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow.withValues(alpha: .98),
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(
+          color:
+              view == FriendsView.addFriends
+                  ? green.withValues(alpha: .20)
+                  : context.appBorder,
+        ),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          child: Column(
+            children: [
+              InkWell(
+                key: ValueKey<String>('people-profile-area-${person.id}'),
+                onTap: () => _openPersonProfile(person),
+                borderRadius: BorderRadius.circular(14),
+                child: Row(
+                  children: [
+                    _personAvatar(context, person),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            person.name.trim().isEmpty
+                                ? 'Community member'
+                                : person.name.trim(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: context.appText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 22,
+                      color: context.appMutedText,
+                    ),
+                  ],
+                ),
+              ),
+              if (person.tags.isNotEmpty) ...[
+                const SizedBox(height: 11),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: person.tags
+                        .take(3)
+                        .map(
+                          (tag) => _personTag(context, tag, Icons.eco_outlined),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
               ],
-            );
-          },
+              const SizedBox(height: 12),
+              Obx(() => _personAction(context, person, view)),
+            ],
+          ),
         ),
       ),
-    ],
-  );
+    );
+  }
 
-  Widget _compactFeed() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      if (controller.errorMessage.value != null) ...[
-        _feedErrorBanner(controller.errorMessage.value!),
-        const SizedBox(height: 12),
-      ],
-      _feedControls(),
-      const SizedBox(height: 14),
-      _feedPosts(showError: false),
-    ],
-  );
-
-  Widget _feedControls() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      CommunityComposerCard(
-        onTap: _showCreatePost,
-        authorAvatarUrl:
-            controller.authenticatedUser.value?.profileImageUrl ?? '',
+  Widget _personAvatar(BuildContext context, CommunityPerson person) {
+    final fallback = Container(
+      color: context.appSoftGreen,
+      alignment: Alignment.center,
+      child: Text(
+        _initials(person.name),
+        style: const TextStyle(
+          color: green,
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+        ),
       ),
-      const SizedBox(height: 14),
-      _feedFilters(),
-      const SizedBox(height: 14),
-    ],
-  );
+    );
 
-  Widget _feedPosts({bool showError = true}) => Obx(() {
-    final visiblePosts = controller.visiblePosts;
+    return Semantics(
+      image: true,
+      label: '${person.name} profile photo',
+      child: Container(
+        width: 50,
+        height: 50,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: green.withValues(alpha: .20), width: 1.5),
+        ),
+        child: ClipOval(
+          child:
+              person.avatarUrl.trim().isEmpty
+                  ? fallback
+                  : Image.network(
+                    person.avatarUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => fallback,
+                  ),
+        ),
+      ),
+    );
+  }
+
+  Widget _personTag(BuildContext context, String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: context.appSoftGreen,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: green),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: green,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _personAction(
+    BuildContext context,
+    CommunityPerson person,
+    FriendsView view,
+  ) {
+    final status = _effectiveConnectionStatus(person);
+    final isFriend = status == 'FRIEND' || view == FriendsView.friends;
+    final isUpdating = controller.updatingConnectionIds.contains(person.id);
+
+    if (isFriend) {
+      return SizedBox(
+        width: double.infinity,
+        height: 40,
+        child: _profileButton(context, person, expandedLabel: true),
+      );
+    }
+
+    final isFollowing = status == 'FOLLOWING';
+
+    final label =
+        isFollowing
+            ? 'Following'
+            : view == FriendsView.followers || status == 'FOLLOWS_YOU'
+            ? 'Follow back'
+            : 'Follow';
+
+    final followButton =
+        isFollowing
+            ? OutlinedButton(
+              key: ValueKey<String>('people-action-${person.id}'),
+              onPressed:
+                  isUpdating
+                      ? null
+                      : () => controller.updateConnection(person, view),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: green,
+                backgroundColor: context.appSurfaceLow.withValues(alpha: .72),
+                side: BorderSide(color: green.withValues(alpha: .34)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _followButtonContent(
+                label: 'Following',
+                icon: Icons.check_rounded,
+                isLoading: isUpdating,
+                spinnerColor: green,
+              ),
+            )
+            : FilledButton(
+              key: ValueKey<String>('people-action-${person.id}'),
+              onPressed:
+                  isUpdating
+                      ? null
+                      : () => controller.updateConnection(person, view),
+              style: FilledButton.styleFrom(
+                backgroundColor: green,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _followButtonContent(
+                label: label,
+                icon: Icons.person_add_alt_1_rounded,
+                isLoading: isUpdating,
+                spinnerColor: Colors.white,
+              ),
+            );
+
+    return SizedBox(
+      height: 40,
+      child: Row(
+        children: [
+          Expanded(flex: 4, child: _profileButton(context, person)),
+          const SizedBox(width: 8),
+          Expanded(flex: 5, child: followButton),
+        ],
+      ),
+    );
+  }
+
+  Widget _followButtonContent({
+    required String label,
+    required IconData icon,
+    required bool isLoading,
+    required Color spinnerColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isLoading)
+          SizedBox.square(
+            dimension: 16,
+            child: CircularProgressIndicator(
+              key: const ValueKey<String>('people-follow-progress'),
+              strokeWidth: 2,
+              color: spinnerColor,
+            ),
+          )
+        else
+          Icon(icon, size: 17),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _profileButton(
+    BuildContext context,
+    CommunityPerson person, {
+    bool expandedLabel = false,
+  }) {
+    return OutlinedButton.icon(
+      key: ValueKey<String>('people-profile-${person.id}'),
+      onPressed: () => _openPersonProfile(person),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.appText,
+        backgroundColor: context.appSurfaceLow.withValues(alpha: .72),
+        side: BorderSide(color: context.appBorder),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: const Icon(Icons.person_outline_rounded, size: 17),
+      label: Text(
+        expandedLabel ? 'View profile' : 'Profile',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feed
+  // ---------------------------------------------------------------------------
+
+  Widget _feed(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontalFor(context),
+        10,
+        AppSpacing.pageHorizontalFor(context),
+        115,
+      ),
+      children: [
+        _contentWidth(
+          LayoutBuilder(
+            builder: (_, constraints) {
+              if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
+                return _compactFeed(context);
+              }
+
+              return Row(
+                key: const ValueKey<String>('community-tablet-layout'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 290, child: _feedControls(context)),
+                  const SizedBox(width: 20),
+                  Expanded(child: _feedPosts(context)),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _compactFeed(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showError && controller.errorMessage.value != null) ...[
-          _feedErrorBanner(controller.errorMessage.value!),
-          const SizedBox(height: 12),
+        if (controller.errorMessage.value != null) ...[
+          _feedErrorBanner(context, controller.errorMessage.value!),
+          const SizedBox(height: 10),
         ],
-        if (visiblePosts.isEmpty)
-          const CommunityEmptyState(
-            icon: Icons.dynamic_feed_outlined,
-            title: 'Nothing here yet',
-            message: 'Follow more people or check another feed filter.',
-          ),
-        ...visiblePosts.map(_postCard),
+        _feedControls(context),
+        const SizedBox(height: 12),
+        _feedPosts(context, showError: false),
       ],
     );
-  });
+  }
 
-  Widget _feedFilters() {
+  Widget _feedControls(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CommunityComposerCard(
+          onTap: _showCreatePost,
+          authorAvatarUrl:
+              controller.authenticatedUser.value?.profileImageUrl ?? '',
+        ),
+        const SizedBox(height: 10),
+        _feedFilters(context),
+      ],
+    );
+  }
+
+  Widget _feedFilters(BuildContext context) {
     const labels = ['For You', 'Following', 'Latest'];
     const icons = [
       Icons.auto_awesome_rounded,
       Icons.people_outline_rounded,
       Icons.schedule_rounded,
     ];
-    return Obx(
-      () => Container(
-        height: 48,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .92),
-          borderRadius: BorderRadius.circular(17),
-          border: Border.all(color: const Color(0xFFD9E6DE)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0D173D25),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: List.generate(CommunityFeedFilter.values.length, (index) {
-            final filter = CommunityFeedFilter.values[index];
-            final selected = controller.feedFilter.value == filter;
-            return Expanded(
-              child: Semantics(
-                selected: selected,
-                button: true,
-                label: '${labels[index]} feed filter',
-                child: InkWell(
-                  key: ValueKey<String>(
-                    'community-feed-filter-${filter.name}',
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow.withValues(alpha: .92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: Row(
+        children: List.generate(CommunityFeedFilter.values.length, (index) {
+          final filter = CommunityFeedFilter.values[index];
+          final selected = controller.feedFilter.value == filter;
+
+          return Expanded(
+            child: Semantics(
+              selected: selected,
+              button: true,
+              label: '${labels[index]} feed filter',
+              child: InkWell(
+                key: ValueKey<String>('community-feed-filter-${filter.name}'),
+                onTap: () => controller.selectFeedFilter(filter),
+                borderRadius: BorderRadius.circular(11),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? context.appSoftGreen : Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                    border:
+                        selected
+                            ? Border.all(color: green.withValues(alpha: .18))
+                            : null,
                   ),
-                  onTap: () => controller.selectFeedFilter(filter),
-                  borderRadius: BorderRadius.circular(13),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color:
-                          selected
-                              ? const Color(0xFFEAF8EF)
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(13),
-                      border:
-                          selected
-                              ? Border.all(color: const Color(0xFFCDE8D7))
-                              : null,
-                      boxShadow:
-                          selected
-                              ? const [
-                                BoxShadow(
-                                  color: Color(0x12056E38),
-                                  blurRadius: 7,
-                                  offset: Offset(0, 2),
-                                ),
-                              ]
-                              : null,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          icons[index],
-                          size: 16,
-                          color:
-                              selected
-                                  ? const Color(0xFF087B3A)
-                                  : const Color(0xFF738077),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            labels[index],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color:
-                                  selected
-                                      ? const Color(0xFF087B3A)
-                                      : const Color(0xFF647168),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        icons[index],
+                        size: 15,
+                        color: selected ? green : context.appMutedText,
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          labels[index],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: selected ? green : context.appMutedText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }),
-        ),
+            ),
+          );
+        }),
       ),
     );
   }
 
-  Widget _feedErrorBanner(String message) => Container(
-    padding: const EdgeInsets.fromLTRB(13, 11, 8, 11),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFF4F2),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFFFD8D2)),
-    ),
-    child: Row(
+  Widget _feedPosts(BuildContext context, {bool showError = true}) {
+    final visiblePosts = controller.visiblePosts;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.cloud_off_rounded, color: Color(0xFFD85245), size: 21),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            message,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF78453F),
-              fontSize: 12,
-              height: 1.3,
+        if (showError && controller.errorMessage.value != null) ...[
+          _feedErrorBanner(context, controller.errorMessage.value!),
+          const SizedBox(height: 12),
+        ],
+        if (visiblePosts.isEmpty)
+          const CommunityEmptyState(
+            icon: Icons.dynamic_feed_outlined,
+            title: 'Nothing here yet',
+            message: 'Follow more people or try another feed filter.',
+          )
+        else
+          ...visiblePosts.map(_postCard),
+      ],
+    );
+  }
+
+  Widget _feedErrorBanner(BuildContext context, String message) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F3),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFFDAD4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: Color(0xFFD85245),
+            size: 20,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF78453F),
+                fontSize: 12.5,
+                height: 1.3,
+              ),
             ),
           ),
-        ),
-        TextButton(onPressed: controller.reload, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(onPressed: controller.reload, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
 
-  Widget _postCard(CommunityPost post) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
-    child: ProfilePostCard(
-      post: post,
-      onAuthorTap: () => _openAuthorProfile(post),
-      onLike: () => controller.togglePostLike(post),
-      onComment: () => _showComments(post),
-      onShare: () => _showShareOptions(post),
-      onOptions: () => _showPostOptions(post),
-    ),
-  );
+  Widget _postCard(CommunityPost post) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ProfilePostCard(
+        post: post,
+        onAuthorTap: () => _openAuthorProfile(post),
+        onLike: () => controller.togglePostLike(post),
+        onComment: () => _showComments(post),
+        onShare: () => _showShareOptions(post),
+        onOptions: () => _showPostOptions(post),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Post actions
+  // ---------------------------------------------------------------------------
 
   void _openAuthorProfile(CommunityPost post) {
     final currentUserId = controller.authenticatedUser.value?.id;
+
     if (post.authorId <= 0) return;
+
     if (post.authorId == currentUserId) {
-      Get.toNamed<void>(AppRoutes.profile, arguments: controller.authenticatedUser.value);
+      Get.toNamed<void>(
+        AppRoutes.profile,
+        arguments: controller.authenticatedUser.value,
+      );
       return;
     }
+
     Get.toNamed<void>(
       AppRoutes.communityPersonProfilePath(post.authorId),
       arguments: post,
     );
   }
 
-  // Kept temporarily as a reference while all post surfaces use the shared card.
-  // ignore: unused_element
-  Widget _legacyPostCard(CommunityPost post) => Container(
-    padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
-    margin: const EdgeInsets.only(bottom: 14),
-    decoration: _cardDecoration().copyWith(
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE5ECE7)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 23,
-              backgroundColor: const Color(0xFFEAF7EE),
-              backgroundImage:
-                  post.authorAvatarUrl.isEmpty
-                      ? null
-                      : NetworkImage(post.authorAvatarUrl),
-              child:
-                  post.authorAvatarUrl.isEmpty
-                      ? const Icon(Icons.person_outline_rounded, color: green)
-                      : null,
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.author,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF18231C),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(
-                        post.visibility.icon,
-                        size: 13,
-                        color: const Color(0xFF7A857D),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '${post.ageLabel}  ·  ${post.role}${post.sharedPost == null ? '' : '  ·  Shared'}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF7A857D),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Post options',
-              onPressed: () => _showPostOptions(post),
-              icon: const Icon(
-                Icons.more_horiz_rounded,
-                color: Color(0xFF768178),
-              ),
-            ),
-          ],
-        ),
-        if (post.description.isNotEmpty) ...[
-          const SizedBox(height: 15),
-          Text(
-            post.description,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.42,
-              color: Color(0xFF5E6961),
-            ),
-          ),
-        ],
-        if (post.tags.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children:
-                post.tags
-                    .map(
-                      (tag) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7EE),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '#${tag.replaceAll(' ', '')}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF178344),
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-          ),
-        ],
-        if (post.sharedPost != null) ...[
-          const SizedBox(height: 14),
-          CommunitySharedPostCard(post: post.sharedPost!),
-        ],
-        if (post.imageBytes != null ||
-            post.imageUrls.isNotEmpty ||
-            post.imageUrl.isNotEmpty) ...[
-          const SizedBox(height: 15),
-          _ImageCarousel(
-            imageBytes: post.imageBytes,
-            imageUrls:
-                post.imageUrls.isNotEmpty ? post.imageUrls : [post.imageUrl],
-          ),
-        ],
-        if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
-          const SizedBox(height: 11),
-          _engagementSummary(post),
-        ],
-        Container(
-          margin: const EdgeInsets.only(top: 7),
-          padding: const EdgeInsets.only(top: 4),
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _PostMetricButton(
-                  icon:
-                      post.isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                  label: post.isLiked ? 'Liked' : 'Like',
-                  color:
-                      post.isLiked
-                          ? const Color(0xFFE64657)
-                          : const Color(0xFF69756D),
-                  tooltip: 'Like post',
-                  onTap: () => controller.togglePostLike(post),
-                ),
-              ),
-              const _MetricDivider(),
-              Expanded(
-                child: _PostMetricButton(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Comment',
-                  color: const Color(0xFF69756D),
-                  tooltip: 'Comments',
-                  onTap: () => _showComments(post),
-                ),
-              ),
-              const _MetricDivider(),
-              Expanded(
-                child: _PostMetricButton(
-                  icon: Icons.reply_rounded,
-                  label: 'Share',
-                  color: const Color(0xFF69756D),
-                  tooltip: 'Share post',
-                  onTap: () => _showShareOptions(post),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _engagementSummary(CommunityPost post) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 2),
-    child: Row(
-      children: [
-        if (post.likes > 0) ...[
-          Container(
-            width: 20,
-            height: 20,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE64657),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.favorite_rounded,
-              size: 12,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            _compactCount(post.likes),
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
-          ),
-        ],
-        const Spacer(),
-        if (post.comments > 0)
-          Text(
-            '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
-          ),
-        if (post.comments > 0 && post.shares > 0)
-          const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
-        if (post.shares > 0)
-          Text(
-            '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
-          ),
-      ],
-    ),
-  );
-
-  String _compactCount(int value) {
-    if (value < 1000) return '$value';
-    final compact = value / 1000;
-    return '${compact == compact.roundToDouble() ? compact.toStringAsFixed(0) : compact.toStringAsFixed(1)}k';
-  }
-
   Future<void> _showPostOptions(CommunityPost post) async {
     final isOwner = post.authorId == controller.authenticatedUser.value?.id;
+
     final action = await Get.bottomSheet<_CommunityPostAction>(
       _CommunityOptionsSheet(
         title: isOwner ? 'Post options' : 'More options',
@@ -991,7 +959,10 @@ class CommunityPage extends GetView<CommunityController> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
     );
-    if (action != null) await _handlePostOption(action, post);
+
+    if (action != null) {
+      await _handlePostOption(action, post);
+    }
   }
 
   Future<void> _handlePostOption(
@@ -1001,19 +972,27 @@ class CommunityPage extends GetView<CommunityController> {
     switch (action) {
       case _CommunityPostAction.edit:
         await _showEditPost(post);
+        return;
+
       case _CommunityPostAction.delete:
         await _confirmDeletePost(post);
+        return;
+
       case _CommunityPostAction.report:
         await Get.to<void>(
           () => CommunityReportPage(postId: post.id, subject: 'post'),
         );
+        return;
+
       case _CommunityPostAction.viewDetails:
         await _showComments(post);
+        return;
     }
   }
 
   Future<void> _showEditPost(CommunityPost post) async {
     final user = controller.authenticatedUser.value;
+
     await Get.to<void>(
       () => CommunityPostEditorPage(
         post: post,
@@ -1042,86 +1021,13 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  // ignore: unused_element
-  Future<void> _showLegacyEditPost(CommunityPost post) async {
-    final description = TextEditingController(text: post.description);
-    await Get.dialog<void>(
-      Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.edit_rounded, color: green),
-                  SizedBox(width: 10),
-                  Text(
-                    'Edit post',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: description,
-                maxLines: 5,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: _postInput(
-                  'What would you like to share?',
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(onPressed: Get.back, child: const Text('Cancel')),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: () async {
-                      if (description.text.trim().isEmpty) {
-                        Get.snackbar(
-                          'Add your message',
-                          'A post needs a message.',
-                        );
-                        return;
-                      }
-                      try {
-                        await controller.updatePost(
-                          post: post,
-                          description: description.text,
-                        );
-                        Get.back<void>();
-                        Get.snackbar(
-                          'Post updated',
-                          'Your changes have been saved.',
-                        );
-                      } on Object catch (error) {
-                        Get.snackbar('Could not update post', error.toString());
-                      }
-                    },
-                    style: FilledButton.styleFrom(backgroundColor: green),
-                    child: const Text('Save changes'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    description.dispose();
-  }
-
   Future<void> _confirmDeletePost(CommunityPost post) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Delete this post?'),
         content: const Text(
-          'This will remove the post from Community. You cannot undo this action.',
+          'This will remove the post from Community. '
+          'You cannot undo this action.',
         ),
         actions: [
           TextButton(
@@ -1138,7 +1044,9 @@ class CommunityPage extends GetView<CommunityController> {
         ],
       ),
     );
+
     if (confirmed != true) return;
+
     try {
       await controller.deletePost(post);
       Get.snackbar('Post deleted', 'Your post has been removed.');
@@ -1149,7 +1057,9 @@ class CommunityPage extends GetView<CommunityController> {
 
   Future<void> _showShareOptions(CommunityPost post) async {
     final canShare =
-        post.sharedPost != null || post.visibility == CommunityPostVisibility.public;
+        post.sharedPost != null ||
+        post.visibility == CommunityPostVisibility.public;
+
     if (!canShare) {
       unawaited(
         AppAlert.error(
@@ -1159,7 +1069,9 @@ class CommunityPage extends GetView<CommunityController> {
       );
       return;
     }
+
     final user = controller.authenticatedUser.value;
+
     await showCommunityShareComposer(
       authorName: user?.displayName ?? 'Community member',
       authorAvatarUrl: user?.profileImageUrl ?? '',
@@ -1210,6 +1122,7 @@ class CommunityPage extends GetView<CommunityController> {
 
   Future<void> _showCreatePost() async {
     final user = controller.authenticatedUser.value;
+
     await Get.to<void>(
       () => CommunityPostEditorPage(
         authorName: user?.displayName ?? 'Community member',
@@ -1235,233 +1148,71 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  // ignore: unused_element
-  Future<void> _showLegacyCreatePost() async {
-    final description = TextEditingController();
-    final imagePicker = ImagePicker();
-    Uint8List? selectedImage;
+  // ---------------------------------------------------------------------------
+  // People helpers
+  // ---------------------------------------------------------------------------
 
-    await Get.dialog<void>(
-      Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420, maxHeight: 640),
-          child: StatefulBuilder(
-            builder:
-                (context, setDialogState) => Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.edit_note_rounded, color: green),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Create a post',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: Get.back,
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: description,
-                                autofocus: true,
-                                maxLines: 4,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                decoration: _postInput(
-                                  'What would you like to share?',
-                                  alignLabelWithHint: true,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              if (selectedImage != null) ...[
-                                AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: Image.memory(
-                                          selectedImage!,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 8,
-                                        right: 8,
-                                        child: Material(
-                                          color: Colors.black54,
-                                          shape: const CircleBorder(),
-                                          child: IconButton(
-                                            onPressed:
-                                                () => setDialogState(
-                                                  () => selectedImage = null,
-                                                ),
-                                            tooltip: 'Remove image',
-                                            icon: const Icon(
-                                              Icons.close_rounded,
-                                              color: Colors.white,
-                                              size: 19,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                              ],
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final image = await imagePicker.pickImage(
-                                      source: ImageSource.gallery,
-                                      imageQuality: 82,
-                                      maxWidth: 1600,
-                                    );
-                                    if (image == null) return;
-                                    final bytes = await image.readAsBytes();
-                                    if (context.mounted) {
-                                      setDialogState(
-                                        () => selectedImage = bytes,
-                                      );
-                                    }
-                                  },
-                                  icon: Icon(
-                                    selectedImage == null
-                                        ? Icons.add_photo_alternate_outlined
-                                        : Icons.image_outlined,
-                                  ),
-                                  label: Text(
-                                    selectedImage == null
-                                        ? 'Add image'
-                                        : 'Change image',
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: green,
-                                    side: const BorderSide(
-                                      color: Color(0xFFB8E4C5),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 13,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: Get.back,
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton(
-                            onPressed: () async {
-                              if (description.text.trim().isEmpty) {
-                                Get.snackbar(
-                                  'Add your message',
-                                  'Write something you would like to share.',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  margin: const EdgeInsets.all(16),
-                                );
-                                return;
-                              }
-                              try {
-                                await controller.addPost(
-                                  description: description.text,
-                                  imageBytes:
-                                      selectedImage == null
-                                          ? const []
-                                          : [selectedImage!],
-                                );
-                                Get.back<void>();
-                              } on Object catch (error) {
-                                Get.snackbar(
-                                  'Could not publish',
-                                  error.toString(),
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  margin: const EdgeInsets.all(16),
-                                );
-                              }
-                            },
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primaryGreen,
-                            ),
-                            child: const Text('Publish'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-          ),
-        ),
-      ),
-    );
-    description.dispose();
+  String _resultLabel(FriendsView view) =>
+      const ['friends', 'followers', 'people you follow', 'people'][view.index];
+
+  IconData _viewIcon(FriendsView view) =>
+      const [
+        Icons.people_alt_rounded,
+        Icons.person_add_alt_1_rounded,
+        Icons.favorite_rounded,
+        Icons.explore_rounded,
+      ][view.index];
+
+  String _emptyTitle(FriendsView view) =>
+      const [
+        'No friends yet',
+        'No followers yet',
+        'You are not following anyone',
+        'No suggestions right now',
+      ][view.index];
+
+  String _emptyMessage(FriendsView view) =>
+      const [
+        'Discover people and follow each other to become friends.',
+        'Share useful posts to help more people find you.',
+        'Discover people whose wellness journey inspires you.',
+        'Pull to refresh and check again soon.',
+      ][view.index];
+
+  String _effectiveConnectionStatus(CommunityPerson person) {
+    final local = controller.connectionStatuses[person.id]?.toUpperCase();
+
+    if (local == 'FOLLOWING') return 'FOLLOWING';
+    if (local == 'FOLLOW') return 'NONE';
+
+    return person.connectionStatus.toUpperCase();
   }
 
-  InputDecoration _postInput(String label, {bool alignLabelWithHint = false}) =>
-      InputDecoration(
-        labelText: label,
-        alignLabelWithHint: alignLabelWithHint,
-        filled: true,
-        fillColor: const Color(0xFFF7FAF8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      );
+  String _initials(String name) {
+    final parts =
+        name
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((part) => part.isNotEmpty)
+            .toList();
 
-  BoxDecoration _cardDecoration() => BoxDecoration(
-    color: Colors.white.withValues(alpha: .98),
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(color: const Color(0xFFE3EBE5)),
-    boxShadow: const [
-      BoxShadow(color: Color(0x0A173D25), blurRadius: 18, offset: Offset(0, 6)),
-    ],
-  );
-  Widget _contentWidth(Widget child) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxWidth: AppSpacing.maxWidePaddedContentWidth,
-      ),
-      child: child,
-    ),
-  );
-  String _title(FriendsView view) =>
-      const ['Friends', 'Followers', 'Following', 'Add Friends'][view.index];
-  String _subtitle(FriendsView view) =>
-      const [
-        'Your accepted connections.',
-        'People who want to connect with you.',
-        'People and accounts you follow.',
-        'Find and connect with new people.',
-      ][view.index];
+    if (parts.isEmpty) return 'NH';
+
+    return parts.take(2).map((part) => part[0].toUpperCase()).join();
+  }
+
+  void _openPersonProfile(CommunityPerson person) {
+    final userId = int.tryParse(person.id);
+
+    if (userId == null || userId <= 0) return;
+
+    Get.toNamed<void>(AppRoutes.communityPersonProfilePath(userId));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bottom navigation
+  // ---------------------------------------------------------------------------
+
   Widget _bottomNav() => SafeArea(
     top: false,
     minimum: AppSpacing.navigationMargin,
@@ -1482,205 +1233,81 @@ class CommunityPage extends GetView<CommunityController> {
   );
 }
 
-class _ImageCarousel extends StatefulWidget {
-  const _ImageCarousel({required this.imageBytes, required this.imageUrls});
+class _PeopleSearchField extends StatefulWidget {
+  const _PeopleSearchField({
+    required this.hintText,
+    required this.onChanged,
+    super.key,
+  });
 
-  final Uint8List? imageBytes;
-  final List<String> imageUrls;
+  final String hintText;
+  final ValueChanged<String> onChanged;
 
   @override
-  State<_ImageCarousel> createState() => _ImageCarouselState();
+  State<_PeopleSearchField> createState() => _PeopleSearchFieldState();
 }
 
-class _ImageCarouselState extends State<_ImageCarousel> {
-  late PageController _pageController;
-  int _currentPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page?.toInt() ?? 0;
-      });
-    });
-  }
+class _PeopleSearchFieldState extends State<_PeopleSearchField> {
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final imageCount = widget.imageUrls.length;
-    final showCarousel = imageCount > 1;
-
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            fit: StackFit.passthrough,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 360),
-                  child: AspectRatio(
-                    aspectRatio: 5 / 4,
-                    child:
-                        widget.imageBytes != null
-                            ? Image.memory(
-                              widget.imageBytes!,
-                              fit: BoxFit.cover,
-                              filterQuality: FilterQuality.medium,
-                            )
-                            : PageView(
-                              controller: _pageController,
-                              children: widget.imageUrls
-                                  .map(
-                                    (url) => Image.network(
-                                      url,
-                                      fit: BoxFit.cover,
-                                      filterQuality: FilterQuality.medium,
-                                      errorBuilder:
-                                          (_, _, _) => Container(
-                                            color: const Color(0xFFF3F7F4),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.image_outlined,
-                                                color: Color(0xFF8D9990),
-                                              ),
-                                            ),
-                                          ),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                            ),
-                  ),
-                ),
-              ),
-              // Carousel Counter
-              if (showCarousel)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_currentPage + 1}/$imageCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+    return TextField(
+      key: const ValueKey<String>('people-search-field'),
+      controller: _controller,
+      onChanged: (value) {
+        widget.onChanged(value);
+        setState(() {});
+      },
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        hintText: widget.hintText,
+        hintStyle: TextStyle(color: context.appMutedText, fontSize: 13),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: CommunityPage.green,
+          size: 21,
         ),
-        // Pagination Dots
-        if (showCarousel) ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              imageCount,
-              (index) => GestureDetector(
-                onTap: () {
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 8 : 6,
-                  height: _currentPage == index ? 8 : 6,
-                  decoration: BoxDecoration(
-                    color:
-                        _currentPage == index
-                            ? const Color(0xFF1F2937)
-                            : const Color(0xFFD1D5DB),
-                    shape: BoxShape.circle,
+        suffixIcon:
+            _controller.text.isEmpty
+                ? null
+                : IconButton(
+                  key: const ValueKey<String>('people-search-clear'),
+                  tooltip: 'Clear search',
+                  onPressed: () {
+                    _controller.clear();
+                    widget.onChanged('');
+                    setState(() {});
+                  },
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 19,
+                    color: context.appMutedText,
                   ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _PostMetricButton extends StatelessWidget {
-  const _PostMetricButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
+        filled: true,
+        fillColor: context.appSurfaceLow,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 13,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.appBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: CommunityPage.green, width: 1.4),
         ),
       ),
-    ),
-  );
-}
-
-class _MetricDivider extends StatelessWidget {
-  const _MetricDivider();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox(
-    height: 18,
-    child: VerticalDivider(width: 1, color: Color(0xFFDCE6DF)),
-  );
+    );
+  }
 }
 
 enum _CommunityPostAction { viewDetails, edit, delete, report }
@@ -1706,60 +1333,63 @@ class _CommunityOptionsSheet extends StatelessWidget {
   final List<_CommunityOption> actions;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              height: 5,
-              width: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF9AA19C),
-                borderRadius: BorderRadius.circular(99),
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+        decoration: BoxDecoration(
+          color: context.appSurfaceLow,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                height: 4,
+                width: 38,
+                decoration: BoxDecoration(
+                  color: context.appMutedText.withValues(alpha: .35),
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F6F4),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                for (var index = 0; index < actions.length; index++) ...[
-                  _OptionTile(option: actions[index]),
-                  if (index < actions.length - 1)
-                    const Divider(
-                      height: 1,
-                      indent: 64,
-                      color: Color(0xFFE0E5E1),
-                    ),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: context.appMutedSurface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: context.appBorder),
+              ),
+              child: Column(
+                children: [
+                  for (var index = 0; index < actions.length; index++) ...[
+                    _OptionTile(option: actions[index]),
+                    if (index < actions.length - 1)
+                      Divider(height: 1, indent: 58, color: context.appBorder),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _OptionTile extends StatelessWidget {
@@ -1770,18 +1400,17 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        option.isDestructive
-            ? const Color(0xFFD94545)
-            : const Color(0xFF18231C);
+        option.isDestructive ? const Color(0xFFD94545) : context.appText;
+
     return ListTile(
       onTap: () => Get.back(result: option.value),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-      leading: Icon(option.icon, color: color, size: 27),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+      leading: Icon(option.icon, color: color, size: 24),
       title: Text(
         option.label,
         style: TextStyle(
           color: color,
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
       ),

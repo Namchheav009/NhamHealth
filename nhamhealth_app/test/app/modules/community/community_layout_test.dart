@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -8,6 +10,7 @@ import 'package:nhamhealth_flutter/app/modules/repositories/community/community_
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_composer_card.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
+import 'package:nhamhealth_flutter/core/services/notification_realtime_event.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
@@ -107,6 +110,125 @@ void main() {
     await tester.pump();
     expect(controller.feedFilter.value, CommunityFeedFilter.latest);
   });
+
+  testWidgets(
+    'people view stays usable on a narrow phone and searches by name',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 700);
+      addTearDown(tester.view.reset);
+
+      final authService = _CommunityAuthService();
+      Get.put<AuthService>(authService);
+      final peopleRepository = _PeopleRepository(authService);
+      final controller = Get.put<CommunityController>(
+        CommunityController(
+          repository: peopleRepository,
+          authService: authService,
+          homeProvider: _CommunityHomeProvider(authService),
+        ),
+      );
+      controller.section.value = CommunitySection.people;
+
+      await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Friends'), findsWidgets);
+      expect(
+        find.byKey(const ValueKey<String>('people-card-2')),
+        findsOneWidget,
+      );
+      expect(find.text('View profile'), findsWidgets);
+      expect(find.text('2 people'), findsNothing);
+      expect(find.textContaining('mutual'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('people-search-field')),
+        'Srey',
+      );
+      await tester.pump();
+
+      expect(find.text('Srey Leak'), findsOneWidget);
+      expect(find.text('Dara Sok'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('people-search-clear')),
+        findsOneWidget,
+      );
+
+      controller.selectFriendsView(FriendsView.addFriends);
+      await tester.pump();
+
+      expect(find.text('Follow'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('people-action-4')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('people-profile-4')),
+        findsOneWidget,
+      );
+      expect(find.text('1 person'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const ValueKey<String>('people-action-4')));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(peopleRepository.followedUserId, '4');
+      expect(controller.connectionStatuses['4'], 'Following');
+      expect(find.text('Following'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('people-follow-progress')),
+        findsOneWidget,
+      );
+
+      peopleRepository.followResult.complete('FOLLOWING');
+      await tester.pump();
+
+      expect(find.text('Following'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('people-follow-progress')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('follow push event refreshes People in real time', (
+    tester,
+  ) async {
+    final authService = _CommunityAuthService();
+    final realtimeEvents = StreamController<NotificationRealtimeEvent>();
+    addTearDown(realtimeEvents.close);
+    Get.put<AuthService>(authService);
+    final repository = _RealtimePeopleRepository(authService);
+    Get.put<CommunityController>(
+      CommunityController(
+        repository: repository,
+        authService: authService,
+        homeProvider: _CommunityHomeProvider(authService),
+        realtimeEvents: realtimeEvents.stream,
+      ),
+    );
+
+    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+    await tester.pump(const Duration(milliseconds: 500));
+    final callsAfterInitialLoad = repository.peopleRequestCount;
+
+    realtimeEvents.add(
+      const NotificationRealtimeEvent(
+        id: 12,
+        title: 'Malis Chan',
+        message: 'started following you.',
+        referenceType: 'USER',
+        referenceId: 4,
+      ),
+    );
+    await tester.pump();
+
+    expect(repository.peopleRequestCount, greaterThan(callsAfterInitialLoad));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _ImagePostRepository extends CommunityRepository {
@@ -140,6 +262,65 @@ class _CommunityHomeProvider extends HomeProvider {
 
   @override
   Future<int> getUnreadNotificationCount() async => 0;
+}
+
+class _PeopleRepository extends _ImagePostRepository {
+  _PeopleRepository(super.authService);
+
+  final followResult = Completer<String>();
+  String? followedUserId;
+
+  @override
+  Future<String> toggleFollow(String userId) {
+    followedUserId = userId;
+    return followResult.future;
+  }
+
+  @override
+  Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async => {
+    FriendsView.friends: const [
+      CommunityPerson(
+        id: '2',
+        name: 'Srey Leak',
+        avatarUrl: '',
+        detail: 'Battambang',
+        mutualFriends: 1,
+        connectionStatus: 'FRIEND',
+      ),
+      CommunityPerson(
+        id: '3',
+        name: 'Dara Sok',
+        avatarUrl: '',
+        detail: 'Phnom Penh',
+        mutualFriends: 1,
+        connectionStatus: 'FRIEND',
+      ),
+    ],
+    FriendsView.followers: const [],
+    FriendsView.following: const [],
+    FriendsView.addFriends: const [
+      CommunityPerson(
+        id: '4',
+        name: 'Malis Chan',
+        avatarUrl: '',
+        connectionStatus: 'NONE',
+      ),
+    ],
+  };
+}
+
+class _RealtimePeopleRepository extends _ImagePostRepository {
+  _RealtimePeopleRepository(super.authService);
+
+  int peopleRequestCount = 0;
+
+  @override
+  Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {
+    peopleRequestCount++;
+    return {
+      for (final view in FriendsView.values) view: const <CommunityPerson>[],
+    };
+  }
 }
 
 class _CommunityAuthService extends AuthService {

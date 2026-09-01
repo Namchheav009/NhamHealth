@@ -4,7 +4,7 @@ server.port=8080
 server.compression.enabled=true
 server.compression.min-response-size=1024
 server.compression.mime-types=text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
-spring.profiles.active=supabase
+spring.profiles.active=${SPRING_PROFILES_ACTIVE:dev}
 
 # Keep Tomcat session files out of the shared Windows temp directory. Spring
 # Boot 4 rejects temp directories created by a different Windows identity.
@@ -52,30 +52,40 @@ app.ai.food.database-match-threshold=0.78
 spring.servlet.multipart.max-file-size=5MB
 spring.servlet.multipart.max-request-size=6MB
 
-# Supabase PostgreSQL
-spring.datasource.url=jdbc:postgresql://YOUR_SESSION_POOLER_HOST:5432/postgres?sslmode=require
-spring.datasource.username=postgres.YOUR_PROJECT_REF
-spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-spring.datasource.driver-class-name=org.postgresql.Driver
-spring.datasource.hikari.data-source-properties.sslmode=require
-spring.datasource.hikari.maximum-pool-size=5
-spring.datasource.hikari.minimum-idle=1
-spring.datasource.hikari.idle-timeout=60000
-spring.datasource.hikari.max-lifetime=300000
-spring.datasource.hikari.keepalive-time=120000
-spring.datasource.hikari.validation-timeout=5000
-spring.datasource.hikari.connection-timeout=30000
-spring.datasource.hikari.data-source-properties.tcpKeepAlive=true
-# Supabase may close an idle pooled session between checks. Hikari discards and
-# replaces it automatically, so hide only this recoverable validation warning.
+# Default to a local development database; set these values externally when you
+# need to point at a real PostgreSQL/Supabase instance.
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:h2:mem:nhamhealth;MODE=PostgreSQL;DB_CLOSE_DELAY=-1}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:sa}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:}
+spring.datasource.driver-class-name=${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
+spring.jpa.database-platform=${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
+spring.flyway.schemas=${SPRING_FLYWAY_SCHEMAS:PUBLIC}
+spring.flyway.default-schema=${SPRING_FLYWAY_DEFAULT_SCHEMA:PUBLIC}
+spring.flyway.create-schemas=true
+spring.datasource.hikari.maximum-pool-size=${SPRING_DATASOURCE_HIKARI_MAX_POOL_SIZE:5}
+spring.datasource.hikari.minimum-idle=${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:2}
+spring.datasource.hikari.idle-timeout=${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:60000}
+spring.datasource.hikari.max-lifetime=${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:300000}
+spring.datasource.hikari.keepalive-time=${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:120000}
+spring.datasource.hikari.validation-timeout=${SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT:10000}
+spring.datasource.hikari.connection-timeout=${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:120000}
+spring.datasource.hikari.initialization-fail-timeout=${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:120000}
+spring.datasource.hikari.data-source-properties.sslmode=${SPRING_DATASOURCE_HIKARI_SSLMODE:disabled}
+spring.datasource.hikari.data-source-properties.connectTimeout=${SPRING_DATASOURCE_HIKARI_CONNECT_TIMEOUT:20}
+spring.datasource.hikari.data-source-properties.socketTimeout=${SPRING_DATASOURCE_HIKARI_SOCKET_TIMEOUT:90}
+spring.datasource.hikari.data-source-properties.tcpKeepAlive=${SPRING_DATASOURCE_HIKARI_TCP_KEEPALIVE:true}
 logging.level.com.zaxxer.hikari.pool.PoolBase=ERROR
 logging.level.root=INFO
-spring.jpa.properties.hibernate.default_schema=public
+spring.jpa.properties.hibernate.default_schema=PUBLIC
 spring.jpa.properties.hibernate.default_batch_fetch_size=20
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
+# Local H2 development should let Hibernate generate the schema instead of trying to
+# execute PostgreSQL-only Flyway scripts that are not valid under H2.
+spring.jpa.hibernate.ddl-auto=${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+spring.flyway.enabled=${SPRING_FLYWAY_ENABLED:false}
 spring.flyway.baseline-on-migrate=true
 spring.flyway.baseline-version=0
+spring.flyway.connect-retries=5
+spring.flyway.connect-retries-interval=10s
 spring.jpa.open-in-view=false
 spring.cache.type=caffeine
 spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches

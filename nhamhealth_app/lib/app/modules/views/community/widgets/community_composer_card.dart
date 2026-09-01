@@ -15,22 +15,21 @@ class CommunityComposerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(20),
+    borderRadius: BorderRadius.circular(18),
     child: Container(
-      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface.withValues(alpha: .97),
-        borderRadius: BorderRadius.circular(20),
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.appBorder),
-        boxShadow: context.appCardShadow,
+        boxShadow: context.appTileShadow,
       ),
       child: Column(
         children: [
           Row(
             children: [
               CircleAvatar(
-                radius: 21,
+                radius: 20,
                 backgroundColor: context.appSoftGreen,
                 backgroundImage:
                     authorAvatarUrl.isEmpty
@@ -44,12 +43,12 @@ class CommunityComposerCard extends StatelessWidget {
                         )
                         : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 12,
+                    vertical: 11,
                   ),
                   decoration: BoxDecoration(
                     color: context.appMutedSurface,
@@ -60,15 +59,19 @@ class CommunityComposerCard extends StatelessWidget {
                     'Share a win, question, or healthy idea...',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: context.appMutedText),
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.2,
+                      color: context.appMutedText,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Divider(height: 1, color: context.appBorder),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Row(
             children: [
               Expanded(
@@ -119,7 +122,7 @@ class _ComposerShortcut extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w700,
               color: context.appMutedText,
             ),

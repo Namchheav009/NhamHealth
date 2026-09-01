@@ -44,12 +44,12 @@ class ProfilePostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface.withValues(alpha: .96),
-        borderRadius: BorderRadius.circular(22),
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: context.appBorder),
-        boxShadow: context.appCardShadow,
+        boxShadow: context.appTileShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,9 +58,9 @@ class ProfilePostCard extends StatelessWidget {
             children: [
               InkResponse(
                 onTap: onAuthorTap,
-                radius: 27,
+                radius: 25,
                 child: CircleAvatar(
-                  radius: 23,
+                  radius: 21,
                   backgroundColor: context.appSoftGreen,
                   foregroundImage: _avatarImage,
                   child: Text(
@@ -74,7 +74,7 @@ class ProfilePostCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 11),
+              const SizedBox(width: 10),
 
               Expanded(
                 child: InkWell(
@@ -85,28 +85,28 @@ class ProfilePostCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(
-                      _displayAuthorName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: context.appText,
-                      ),
-                    ),
+                        Text(
+                          _displayAuthorName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: context.appText,
+                          ),
+                        ),
 
-                    const SizedBox(height: 2),
+                        const SizedBox(height: 2),
 
-                    Text(
-                      '${post.ageLabel}  •  ${membership ?? post.role}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.appMutedText,
-                      ),
-                    ),
+                        Text(
+                          '${post.ageLabel}  •  ${membership ?? post.role}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.appMutedText,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -129,30 +129,31 @@ class ProfilePostCard extends StatelessWidget {
           ),
 
           if (post.mealName.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Text(
               post.mealName,
               style: TextStyle(
-                fontSize: 21,
+                fontSize: 19,
+                height: 1.25,
                 fontWeight: FontWeight.w800,
                 color: context.appText,
               ),
             ),
           ],
           if (post.description.isNotEmpty) ...[
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             Text(
               post.description,
               style: TextStyle(
                 fontSize: 14,
-                height: 1.42,
+                height: 1.45,
                 color: context.appText,
               ),
             ),
           ],
 
           if (post.cookingTimeMinutes != null || post.servings != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: [
                 if (post.cookingTimeMinutes != null) ...[
@@ -180,7 +181,7 @@ class ProfilePostCard extends StatelessWidget {
           ],
 
           if (post.tags.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -189,14 +190,14 @@ class ProfilePostCard extends StatelessWidget {
           ],
 
           if (post.sharedPost != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             CommunitySharedPostCard(post: post.sharedPost!),
           ],
 
           if (post.imageBytes != null ||
               post.imageUrls.isNotEmpty ||
               post.imageUrl.isNotEmpty) ...[
-            const SizedBox(height: 15),
+            const SizedBox(height: 12),
             _ProfileImageCarousel(
               imageBytes: post.imageBytes,
               imageUrls: _imageUrls,
@@ -205,11 +206,12 @@ class ProfilePostCard extends StatelessWidget {
           ],
 
           if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
-            const SizedBox(height: 11),
+            const SizedBox(height: 10),
             _EngagementSummary(post: post),
           ],
           Container(
-            padding: const EdgeInsets.only(top: 7),
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: 4),
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: context.appBorder)),
             ),
@@ -363,12 +365,12 @@ class _ProfilePostMetric extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 7),
+            Icon(icon, size: 19, color: color),
+            const SizedBox(width: 6),
             Flexible(
               child: Text(
                 value,
@@ -376,7 +378,7 @@ class _ProfilePostMetric extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: color,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -425,21 +427,21 @@ class _EngagementSummary extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             _compactCount(post.likes),
-            style: TextStyle(fontSize: 12, color: context.appMutedText),
+            style: TextStyle(fontSize: 12.5, color: context.appMutedText),
           ),
         ],
         const Spacer(),
         if (post.comments > 0)
           Text(
             '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
-            style: TextStyle(fontSize: 12, color: context.appMutedText),
+            style: TextStyle(fontSize: 12.5, color: context.appMutedText),
           ),
         if (post.comments > 0 && post.shares > 0)
           const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
         if (post.shares > 0)
           Text(
             '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
-            style: TextStyle(fontSize: 12, color: context.appMutedText),
+            style: TextStyle(fontSize: 12.5, color: context.appMutedText),
           ),
       ],
     ),
@@ -558,7 +560,11 @@ class _ProfilePostOption extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
       title: Text(
         label,
-        style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: color,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       leading: Icon(icon, color: color, size: 27),
     );
@@ -865,7 +871,7 @@ class _Tag extends StatelessWidget {
         text,
         style: const TextStyle(
           color: ProfilePostCard.green,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
       ),

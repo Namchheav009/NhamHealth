@@ -6,6 +6,7 @@ class CommunityPerson {
     this.detail,
     this.tags = const [],
     this.mutualFriends = 0,
+    this.connectionStatus = 'NONE',
   });
 
   final String id;
@@ -14,6 +15,7 @@ class CommunityPerson {
   final String? detail;
   final List<String> tags;
   final int mutualFriends;
+  final String connectionStatus;
 
   factory CommunityPerson.fromJson(Map<String, dynamic> json) =>
       CommunityPerson(
@@ -25,5 +27,9 @@ class CommunityPerson {
             .map((tag) => '$tag')
             .toList(growable: false),
         mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
+        connectionStatus:
+            (json['connectionStatus'] as String? ?? 'NONE')
+                .trim()
+                .toUpperCase(),
       );
 }

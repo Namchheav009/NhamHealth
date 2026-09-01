@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
@@ -18,7 +21,8 @@ class CommunityPersonProfileView extends StatefulWidget {
       _CommunityPersonProfileViewState();
 }
 
-class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView> {
+class _CommunityPersonProfileViewState
+    extends State<CommunityPersonProfileView> {
   final CommunityRepository _repository = Get.find<CommunityRepository>();
   CommunityPersonProfile? _profile;
   List<CommunityPost> _posts = const [];
@@ -75,31 +79,50 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
   Future<void> _toggleFollow() async {
     final profile = _profile;
     if (profile == null || _isUpdatingFollow) return;
-    setState(() => _isUpdatingFollow = true);
+    final optimisticFollowing = !profile.isFollowing;
+    setState(() {
+      _isUpdatingFollow = true;
+      _profile = _withFollowState(profile, optimisticFollowing);
+    });
     try {
       final status = await _repository.toggleFollow('${profile.id}');
       if (!mounted) return;
       final isFollowing = status == 'FOLLOWING';
       setState(() {
-        _profile = CommunityPersonProfile(
-          id: profile.id,
-          name: profile.name,
-          avatarUrl: profile.avatarUrl,
-          role: profile.role,
-          headline: profile.headline,
-          joinedLabel: profile.joinedLabel,
-          verified: profile.verified,
-          posts: profile.posts,
-          followers: profile.followers + (isFollowing ? 1 : -1),
-          following: profile.following,
-          isFollowing: isFollowing,
-        );
+        _profile = _withFollowState(profile, isFollowing);
         _isUpdatingFollow = false;
       });
-    } on Object {
-      if (mounted) setState(() => _isUpdatingFollow = false);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        _isUpdatingFollow = false;
+      });
+      unawaited(
+        AppAlert.error(
+          title: 'Could not update follow',
+          message: error.toString(),
+        ),
+      );
     }
   }
+
+  CommunityPersonProfile _withFollowState(
+    CommunityPersonProfile profile,
+    bool isFollowing,
+  ) => CommunityPersonProfile(
+    id: profile.id,
+    name: profile.name,
+    avatarUrl: profile.avatarUrl,
+    role: profile.role,
+    headline: profile.headline,
+    joinedLabel: profile.joinedLabel,
+    verified: profile.verified,
+    posts: profile.posts,
+    followers: (profile.followers + (isFollowing ? 1 : -1)).clamp(0, 1 << 31),
+    following: profile.following,
+    isFollowing: isFollowing,
+  );
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -176,31 +199,37 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
         PopupMenuButton<String>(
           tooltip: 'Profile options',
           onSelected: (_) {},
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'report', child: Text('Report profile')),
-          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          itemBuilder:
+              (_) => const [
+                PopupMenuItem(value: 'report', child: Text('Report profile')),
+              ],
           child: _roundButton(context, Icons.more_horiz_rounded, null),
         ),
       ],
     ),
   );
 
-  Widget _roundButton(BuildContext context, IconData icon, VoidCallback? onTap) =>
-      Material(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(14),
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(icon, color: const Color(0xFF102342), size: 22),
-          ),
-        ),
-      );
+  Widget _roundButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback? onTap,
+  ) => Material(
+    color: context.appElevatedSurface,
+    borderRadius: BorderRadius.circular(14),
+    elevation: 0,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Icon(icon, color: const Color(0xFF102342), size: 22),
+      ),
+    ),
+  );
 
   Widget _identity(BuildContext context, CommunityPersonProfile profile) =>
       Padding(
@@ -216,9 +245,10 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
               child: CircleAvatar(
                 radius: 39,
                 backgroundColor: context.appSoftGreen,
-                foregroundImage: profile.avatarUrl.isEmpty
-                    ? null
-                    : NetworkImage(profile.avatarUrl),
+                foregroundImage:
+                    profile.avatarUrl.isEmpty
+                        ? null
+                        : NetworkImage(profile.avatarUrl),
                 child: Text(
                   _initials(profile.name),
                   style: const TextStyle(
@@ -295,26 +325,27 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
         ),
       );
 
-  Widget _stats(BuildContext context, CommunityPersonProfile profile) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 36, 20, 0),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.appBorder),
-      ),
-      child: Row(
-        children: [
-          _stat(context, _formatCount(profile.posts), 'Posts'),
-          _divider(context),
-          _stat(context, _formatCount(profile.followers), 'Followers'),
-          _divider(context),
-          _stat(context, _formatCount(profile.following), 'Following'),
-        ],
-      ),
-    ),
-  );
+  Widget _stats(BuildContext context, CommunityPersonProfile profile) =>
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 36, 20, 0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.appBorder),
+          ),
+          child: Row(
+            children: [
+              _stat(context, _formatCount(profile.posts), 'Posts'),
+              _divider(context),
+              _stat(context, _formatCount(profile.followers), 'Followers'),
+              _divider(context),
+              _stat(context, _formatCount(profile.following), 'Following'),
+            ],
+          ),
+        ),
+      );
 
   Widget _stat(BuildContext context, String value, String label) => Expanded(
     child: Column(
@@ -328,7 +359,10 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
           ),
         ),
         const SizedBox(height: 3),
-        Text(label, style: TextStyle(color: context.appMutedText, fontSize: 13)),
+        Text(
+          label,
+          style: TextStyle(color: context.appMutedText, fontSize: 13),
+        ),
       ],
     ),
   );
@@ -336,40 +370,46 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
   Widget _divider(BuildContext context) =>
       Container(width: 1, height: 42, color: context.appBorder);
 
-  Widget _followButton(BuildContext context, CommunityPersonProfile profile) =>
-      SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton.icon(
-          onPressed: _isUpdatingFollow ? null : _toggleFollow,
-          icon: _isUpdatingFollow
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(
-                  profile.isFollowing
-                      ? Icons.check_rounded
-                      : Icons.person_add_alt_1_rounded,
+  Widget _followButton(
+    BuildContext context,
+    CommunityPersonProfile profile,
+  ) => SizedBox(
+    width: double.infinity,
+    height: 52,
+    child: ElevatedButton.icon(
+      onPressed: _isUpdatingFollow ? null : _toggleFollow,
+      icon:
+          _isUpdatingFollow
+              ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color:
+                      profile.isFollowing
+                          ? const Color(0xFF278A3A)
+                          : Colors.white,
                 ),
-          label: Text(profile.isFollowing ? 'Following' : 'Follow'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: profile.isFollowing
+              )
+              : Icon(
+                profile.isFollowing
+                    ? Icons.check_rounded
+                    : Icons.person_add_alt_1_rounded,
+              ),
+      label: Text(profile.isFollowing ? 'Following' : 'Follow'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor:
+            profile.isFollowing
                 ? const Color(0xFFEAF7EB)
                 : const Color(0xFF359B46),
-            foregroundColor: profile.isFollowing
-                ? const Color(0xFF278A3A)
-                : Colors.white,
-            elevation: 0,
-            textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-      );
+        foregroundColor:
+            profile.isFollowing ? const Color(0xFF278A3A) : Colors.white,
+        elevation: 0,
+        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+  );
 
   Widget _postTab(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -391,7 +431,7 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
             borderRadius: BorderRadius.circular(99),
           ),
           child: Text(
-          '${_posts.length}',
+            '${_posts.length}',
             style: const TextStyle(
               color: Color(0xFF1B9650),
               fontSize: 11,
@@ -430,13 +470,14 @@ class _CommunityPersonProfileViewState extends State<CommunityPersonProfileView>
     if (postId != null) Get.toNamed<void>(AppRoutes.communityPostPath(postId));
   }
 
-  String _initials(String name) => name
-      .split(RegExp(r'\s+'))
-      .where((word) => word.isNotEmpty)
-      .take(2)
-      .map((word) => word[0])
-      .join()
-      .toUpperCase();
+  String _initials(String name) =>
+      name
+          .split(RegExp(r'\s+'))
+          .where((word) => word.isNotEmpty)
+          .take(2)
+          .map((word) => word[0])
+          .join()
+          .toUpperCase();
 
   String _formatCount(int value) {
     if (value < 1000) return '$value';
@@ -452,9 +493,8 @@ class _PostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = post.imageUrls.isNotEmpty
-        ? post.imageUrls.first
-        : post.imageUrl;
+    final imageUrl =
+        post.imageUrls.isNotEmpty ? post.imageUrls.first : post.imageUrl;
     return Material(
       color: context.appElevatedSurface,
       borderRadius: BorderRadius.circular(11),
@@ -470,33 +510,34 @@ class _PostTile extends StatelessWidget {
                 children: [
                   imageUrl.isEmpty
                       ? ColoredBox(
-                          color: context.appSoftGreen,
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.restaurant_outlined,
+                        color: context.appSoftGreen,
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.restaurant_outlined,
+                              color: Color(0xFF5AC98D),
+                              size: 30,
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              'No image',
+                              style: TextStyle(
                                 color: Color(0xFF5AC98D),
-                                size: 30,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                               ),
-                              SizedBox(height: 5),
-                              Text(
-                                'No image',
-                                style: TextStyle(
-                                  color: Color(0xFF5AC98D),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
-                              ColoredBox(color: context.appSoftGreen),
+                            ),
+                          ],
                         ),
+                      )
+                      : Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, _, _) =>
+                                ColoredBox(color: context.appSoftGreen),
+                      ),
                   if (post.imageUrls.length > 1)
                     Positioned(
                       right: 8,
@@ -540,13 +581,12 @@ class _PostTile extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
-          Icons.photo_library_outlined,
-          size: 13,
-          color: Colors.white,
-        ),
+        const Icon(Icons.photo_library_outlined, size: 13, color: Colors.white),
         const SizedBox(width: 3),
-        Text('$count', style: const TextStyle(color: Colors.white, fontSize: 11)),
+        Text(
+          '$count',
+          style: const TextStyle(color: Colors.white, fontSize: 11),
+        ),
       ],
     ),
   );
@@ -555,7 +595,10 @@ class _PostTile extends StatelessWidget {
     children: [
       Icon(icon, size: 16, color: context.appMutedText),
       const SizedBox(width: 4),
-      Text('$count', style: TextStyle(color: context.appMutedText, fontSize: 12)),
+      Text(
+        '$count',
+        style: TextStyle(color: context.appMutedText, fontSize: 12),
+      ),
     ],
   );
 }

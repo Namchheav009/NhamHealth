@@ -59,6 +59,7 @@ class CommunityController extends GetxController {
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
   final unreadNotificationCount = 0.obs;
   final connectionStatuses = <String, String>{}.obs;
+  final updatingConnectionIds = <String>{}.obs;
   final errorMessage = RxnString();
 
   final posts = <CommunityPost>[].obs;
@@ -105,6 +106,9 @@ class CommunityController extends GetxController {
   List<CommunityPerson> get people => _people[friendsView.value] ?? const [];
   List<CommunityPerson> get friends => _people[FriendsView.friends] ?? const [];
   List<CommunityPerson> get filteredPeople {
+    // Track the existing reactive relationship map so a real-time People
+    // refresh rebuilds the view while `_people` remains hot-reload-safe.
+    connectionStatuses.length;
     final query = searchQuery.value.trim().toLowerCase();
     return people.where((person) {
       final matchesQuery =
@@ -123,31 +127,47 @@ class CommunityController extends GetxController {
   void onInit() {
     super.onInit();
     unawaited(reload());
-    _feedRefreshTimer = Timer.periodic(feedRefreshInterval, (_) {
-      if (Get.currentRoute == AppRoutes.community &&
-          hasLoaded.value &&
-          !isLoading.value) {
-        unawaited(_refreshPosts());
-      }
-    });
-    if (_notificationsRepository != null) {
-      unawaited(_refreshCommunityNotifications(showAlert: false));
-      _notificationTimer = Timer.periodic(notificationRefreshInterval, (_) {
-        if (Get.currentRoute == AppRoutes.community) {
-          unawaited(_refreshCommunityNotifications(showAlert: true));
+    if (!Get.testMode) {
+      _feedRefreshTimer = Timer.periodic(feedRefreshInterval, (_) {
+        if (Get.currentRoute == AppRoutes.community &&
+            hasLoaded.value &&
+            !isLoading.value) {
+          unawaited(_refreshPosts());
         }
       });
     }
-    _realtimeSubscription = _realtimeEvents?.listen((_) {
-      unawaited(_refreshAfterRealtimeEvent());
+    if (_notificationsRepository != null) {
+      unawaited(_refreshCommunityNotifications(showAlert: false));
+      if (!Get.testMode) {
+        _notificationTimer = Timer.periodic(notificationRefreshInterval, (_) {
+          if (Get.currentRoute == AppRoutes.community) {
+            unawaited(_refreshCommunityNotifications(showAlert: true));
+          }
+        });
+      }
+    }
+    _realtimeSubscription = _realtimeEvents?.listen((event) {
+      unawaited(_refreshAfterRealtimeEvent(event));
     });
   }
 
-  Future<void> _refreshAfterRealtimeEvent() async {
-    await Future.wait([
+  Future<void> _refreshAfterRealtimeEvent(
+    NotificationRealtimeEvent event,
+  ) async {
+    await Future.wait<void>([
       _refreshUnreadNotificationCount(),
       _refreshCommunityNotifications(showAlert: false),
+      if (event.referenceType == 'USER') _refreshPeople(),
     ]);
+  }
+
+  Future<void> _refreshPeople() async {
+    try {
+      _replacePeople(await _repository.getPeople());
+      connectionStatuses.clear();
+    } on Object {
+      // Keep the current People view until a later refresh succeeds.
+    }
   }
 
   Future<void> _refreshCommunityNotifications({required bool showAlert}) async {
@@ -199,7 +219,7 @@ class CommunityController extends GetxController {
         loadTopBar(),
       ]);
       posts.assignAll(results[0] as List<CommunityPost>);
-      _people = results[1] as Map<FriendsView, List<CommunityPerson>>;
+      _replacePeople(results[1] as Map<FriendsView, List<CommunityPerson>>);
       hasLoaded.value = true;
     } on Object catch (error) {
       errorMessage.value = error.toString();
@@ -388,23 +408,65 @@ class CommunityController extends GetxController {
     CommunityPerson person,
     FriendsView view,
   ) async {
-    if (view == FriendsView.friends) return;
-    final status = await _repository.toggleFollow(person.id);
-    final isFollowing = status == 'FOLLOWING';
-    connectionStatuses[person.id] = isFollowing ? 'Following' : 'Follow';
-    final personId = int.tryParse(person.id);
-    if (personId != null) {
-      for (final post in posts.where((post) => post.authorId == personId)) {
-        post.isFollowingAuthor = isFollowing;
-      }
-      posts.refresh();
+    if (view == FriendsView.friends ||
+        updatingConnectionIds.contains(person.id)) {
+      return;
     }
-    _people = await _repository.getPeople();
-    update();
+
+    final previousLocalStatus = connectionStatuses[person.id];
+    final previousStatus =
+        previousLocalStatus?.toUpperCase() ?? person.connectionStatus;
+    final wasFollowing =
+        previousStatus == 'FOLLOWING' || previousStatus == 'FRIEND';
+    final optimisticFollowing = !wasFollowing;
+
+    connectionStatuses[person.id] =
+        optimisticFollowing ? 'Following' : 'Follow';
+    _updatePostAuthorFollowState(person.id, optimisticFollowing);
+    updatingConnectionIds.add(person.id);
+
+    try {
+      final status = await _repository.toggleFollow(person.id);
+      final isFollowing = status == 'FOLLOWING';
+      connectionStatuses[person.id] = isFollowing ? 'Following' : 'Follow';
+      _updatePostAuthorFollowState(person.id, isFollowing);
+
+      try {
+        _replacePeople(await _repository.getPeople());
+      } on Object {
+        // The confirmed relationship is already visible. Refresh later.
+      }
+    } on Object catch (error) {
+      if (previousLocalStatus == null) {
+        connectionStatuses.remove(person.id);
+      } else {
+        connectionStatuses[person.id] = previousLocalStatus;
+      }
+      _updatePostAuthorFollowState(person.id, wasFollowing);
+      unawaited(
+        AppAlert.error(
+          title: 'Could not update follow',
+          message: error.toString(),
+        ),
+      );
+    } finally {
+      updatingConnectionIds.remove(person.id);
+    }
   }
 
-  void declineFollower(CommunityPerson person) =>
-      connectionStatuses[person.id] = 'Declined';
+  void _updatePostAuthorFollowState(String personIdValue, bool isFollowing) {
+    final personId = int.tryParse(personIdValue);
+    if (personId == null) return;
+    for (final post in posts.where((post) => post.authorId == personId)) {
+      post.isFollowingAuthor = isFollowing;
+    }
+    posts.refresh();
+  }
+
+  void _replacePeople(Map<FriendsView, List<CommunityPerson>> value) {
+    _people = value;
+    connectionStatuses.refresh();
+  }
 
   @override
   void onClose() {

@@ -447,6 +447,8 @@ class CommunityRepository {
                 .map((tag) => '$tag')
                 .toList(),
         mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
+        connectionStatus:
+            '${json['connectionStatus'] ?? 'NONE'}'.trim().toUpperCase(),
       );
     }).toList();
   }

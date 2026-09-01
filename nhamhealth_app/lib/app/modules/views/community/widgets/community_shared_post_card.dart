@@ -20,7 +20,7 @@ class CommunitySharedPostCard extends StatelessWidget {
     color: context.appElevatedSurface,
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       side: BorderSide(color: context.appBorder),
     ),
     child: InkWell(
@@ -29,7 +29,7 @@ class CommunitySharedPostCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
             child: Row(
               children: [
                 CircleAvatar(
@@ -48,7 +48,7 @@ class CommunitySharedPostCard extends StatelessWidget {
                           )
                           : null,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 9),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +58,7 @@ class CommunitySharedPostCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: context.appText,
                         ),
@@ -69,7 +69,7 @@ class CommunitySharedPostCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           color: context.appMutedText,
                         ),
                       ),
@@ -81,7 +81,7 @@ class CommunitySharedPostCard extends StatelessWidget {
           ),
           if (post.mealName.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               child: Text(
                 post.mealName,
                 maxLines: 2,
@@ -95,14 +95,14 @@ class CommunitySharedPostCard extends StatelessWidget {
             ),
           if (post.description.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 13),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Text(
                 post.description,
                 maxLines: compact ? 4 : null,
                 overflow: compact ? TextOverflow.ellipsis : null,
                 style: TextStyle(
-                  fontSize: 13,
-                  height: 1.4,
+                  fontSize: 13.5,
+                  height: 1.45,
                   color: context.appText,
                 ),
               ),
@@ -141,10 +141,14 @@ class CommunitySharedPostCard extends StatelessWidget {
             ),
           if (post.shares > 0)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
               child: Row(
                 children: [
-                  Icon(Icons.share_outlined, size: 16, color: context.appMutedText),
+                  Icon(
+                    Icons.share_outlined,
+                    size: 16,
+                    color: context.appMutedText,
+                  ),
                   const SizedBox(width: 5),
                   Text(
                     '${post.shares} ${post.shares == 1 ? 'share' : 'shares'}',

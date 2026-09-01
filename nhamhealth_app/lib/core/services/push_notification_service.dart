@@ -194,6 +194,10 @@ class PushNotificationService {
       Get.toNamed<void>(AppRoutes.communityPostPath(referenceId));
       return;
     }
+    if (referenceType == 'USER' && referenceId != null) {
+      Get.toNamed<void>(AppRoutes.communityPersonProfilePath(referenceId));
+      return;
+    }
     Get.toNamed<void>(AppRoutes.notifications);
   }
 
