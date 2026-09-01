@@ -241,19 +241,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             )
             .toList();
     final steps = _steps.where((item) => item.text.trim().isNotEmpty).toList();
-    if (ingredients.isEmpty) {
-      Get.snackbar('Recipe incomplete', 'Add at least one ingredient.');
-      return;
-    }
     if (ingredients.any((item) => item.amount == null || item.amount! <= 0)) {
       Get.snackbar(
         'Recipe incomplete',
         'Every ingredient needs a valid amount.',
       );
-      return;
-    }
-    if (steps.isEmpty) {
-      Get.snackbar('Recipe incomplete', 'Add at least one cooking step.');
       return;
     }
     setState(() => _submitting = true);
@@ -1173,7 +1165,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   List<Widget> _recipeFields() => [
     _heading(
       'Ingredients',
-      'Search a food, then add the amount you used.',
+      'Optional — add ingredients if you want to share them.',
       Icons.shopping_basket_outlined,
     ),
     _ingredientComposer(),
@@ -1181,7 +1173,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _ingredientList(),
     _heading(
       'How to Cook',
-      'Keep each instruction short and clear.',
+      'Optional — add steps only when they help explain your meal.',
       Icons.restaurant_menu_rounded,
     ),
     ...List.generate(_steps.length, _stepCard),
@@ -1537,87 +1529,197 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _ingredientComposer() => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF2FBF5),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFD7EBDE)),
-    ),
-    child: Column(
-      children: [
-        TextFormField(
-          controller: _newIngredient.name,
-          onChanged: _searchIngredients,
-          decoration: _decoration(
-            hint: 'Search ingredient catalog',
-          ).copyWith(
-            prefixIcon: const Icon(Icons.search_rounded, size: 20),
-          ),
-          textInputAction: TextInputAction.next,
+  Widget _ingredientComposer() {
+    final amount = num.tryParse(_newIngredient.amount.text.trim());
+    final isReady =
+        _newIngredient.name.text.trim().isNotEmpty &&
+        amount != null &&
+        amount > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF3FCF6), Color(0xFFE9F8EE)],
         ),
-        if (_ingredientSuggestions.isNotEmpty) ...[
-          const SizedBox(height: 7),
-          _ingredientSuggestionPanel(),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFCDE8D7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D056E38),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
         ],
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _newIngredient.amount,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: green,
+                  shape: BoxShape.circle,
                 ),
-                decoration: _decoration(hint: 'Amount'),
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _addIngredient(),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 21,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 96,
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                initialValue: _newIngredient.unit,
-                items:
-                    _ingredientUnits
-                        .map(
-                          (unit) => DropdownMenuItem(
-                            value: unit,
-                            child: Text(unit),
-                          ),
-                        )
-                        .toList(),
-                onChanged:
-                    (value) => setState(() => _newIngredient.unit = value!),
-                decoration: _decoration(),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Add an ingredient',
+                  style: TextStyle(
+                    color: Color(0xFF1E3E2A),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .82),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '1 of 3',
+                  style: TextStyle(
+                    color: Color(0xFF397051),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Ingredient',
+            style: TextStyle(
+              color: Color(0xFF53675A),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _newIngredient.name,
+            onChanged: _searchIngredients,
+            decoration: _decoration(hint: 'Search ingredient catalog').copyWith(
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+            ),
+            textInputAction: TextInputAction.next,
+          ),
+          if (_ingredientSuggestions.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _ingredientSuggestionPanel(),
           ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: _submitting ? null : _addIngredient,
-            icon: const Icon(Icons.playlist_add_rounded, size: 20),
-            label: const Text('Add ingredient to list'),
-            style: FilledButton.styleFrom(
-              backgroundColor: green,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size.fromHeight(46),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Amount',
+                      style: TextStyle(
+                        color: Color(0xFF53675A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _newIngredient.amount,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: _decoration(hint: 'Amount'),
+                      textInputAction: TextInputAction.done,
+                      onChanged: (_) => setState(() {}),
+                      onFieldSubmitted: (_) {
+                        if (isReady) _addIngredient();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 104,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Unit',
+                      style: TextStyle(
+                        color: Color(0xFF53675A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      initialValue: _newIngredient.unit,
+                      items: _ingredientUnits
+                          .map(
+                            (unit) => DropdownMenuItem(
+                              value: unit,
+                              child: Text(unit),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _newIngredient.unit = value!),
+                      decoration: _decoration(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _submitting || !isReady ? null : _addIngredient,
+              icon: const Icon(Icons.playlist_add_rounded, size: 20),
+              label: const Text('Add ingredient to list'),
+              style: FilledButton.styleFrom(
+                backgroundColor: green,
+                disabledBackgroundColor: const Color(0xFFB9DCC5),
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size.fromHeight(48),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              'Search • set the amount • add to your recipe',
+              style: TextStyle(color: Color(0xFF688172), fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _ingredientSuggestionPanel() => Container(
     constraints: const BoxConstraints(maxHeight: 180),
@@ -1664,27 +1766,67 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Widget _ingredientList() {
     if (_ingredients.isEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E9E4)),
+          color: const Color(0xFFFCFDFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFDDE9E1)),
         ),
-        child: const Text(
-          'No ingredients added yet',
-          style: TextStyle(color: Color(0xFF718078)),
+        child: const Row(
+          children: [
+            Icon(Icons.format_list_bulleted_rounded, color: Color(0xFF76A187)),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your ingredient list is empty',
+                    style: TextStyle(
+                      color: Color(0xFF46594D),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Search for an ingredient above to start your recipe.',
+                    style: TextStyle(color: Color(0xFF718078), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 2, bottom: 7),
-          child: Text(
-            'Ingredients list',
-            style: TextStyle(fontWeight: FontWeight.w700),
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Row(
+            children: [
+              const Text(
+                'Ingredients list',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F6EC),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_ingredients.length}',
+                  style: const TextStyle(
+                    color: Color(0xFF217344),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         Container(
@@ -1761,90 +1903,121 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   );
 
   Widget _stepCard(int index) => Card(
-    color: Colors.white,
+    color: const Color(0xFFFCFDFC),
     elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: Color(0xFFDDE9E1)),
+      borderRadius: BorderRadius.circular(18),
+      side: const BorderSide(color: Color(0xFFD6EADF)),
     ),
     margin: const EdgeInsets.only(bottom: 12),
     child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
+      padding: const EdgeInsets.all(14),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 15,
-            backgroundColor: green,
-            child: Text(
-              '${index + 1}',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _steps[index],
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: _decoration(
-                    hint: 'Describe this cooking step',
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      tooltip: 'Add step photo',
-                      onPressed: () => _pickStepImage(index),
-                      icon: Icon(
-                        _stepImageUrls[index].isEmpty
-                            ? Icons.add_photo_alternate_outlined
-                            : Icons.check_circle_rounded,
-                        color: green,
-                      ),
-                    ),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 15,
+                backgroundColor: green,
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
-                  validator:
-                      (v) =>
-                          v == null || v.trim().isEmpty
-                              ? 'Instruction is required.'
-                              : null,
                 ),
-                if (_stepImagePreviews[index] != null ||
-                    _stepImageUrls[index].isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: SizedBox(
-                      height: 90,
-                      width: double.infinity,
-                      child:
-                          _stepImagePreviews[index] != null
-                              ? Image.memory(
-                                _stepImagePreviews[index]!,
-                                fit: BoxFit.cover,
-                              )
-                              : Image.network(
-                                _stepImageUrls[index],
-                                fit: BoxFit.cover,
-                              ),
-                    ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Step ${index + 1}',
+                style: const TextStyle(
+                  color: Color(0xFF254330),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF7EE),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Optional',
+                  style: TextStyle(
+                    color: Color(0xFF49805D),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
-                ],
-              ],
+                ),
+              ),
+              const Spacer(),
+              if (_steps.length > 1)
+                IconButton(
+                  tooltip: 'Remove step ${index + 1}',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    _steps[index].dispose();
+                    setState(() {
+                      _steps.removeAt(index);
+                      _stepImageUrls.removeAt(index);
+                      _stepImagePreviews.removeAt(index);
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Color(0xFFB85050),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _steps[index],
+            minLines: 2,
+            maxLines: 4,
+            decoration: _decoration(
+              hint: 'Describe this cooking step',
+            ).copyWith(
+              suffixIcon: IconButton(
+                tooltip: 'Add step photo',
+                onPressed: () => _pickStepImage(index),
+                icon: Icon(
+                  _stepImageUrls[index].isEmpty
+                      ? Icons.add_photo_alternate_outlined
+                      : Icons.check_circle_rounded,
+                  color: green,
+                ),
+              ),
             ),
           ),
-          if (_steps.length > 1)
-            IconButton(
-              onPressed: () {
-                _steps[index].dispose();
-                setState(() {
-                  _steps.removeAt(index);
-                  _stepImageUrls.removeAt(index);
-                  _stepImagePreviews.removeAt(index);
-                });
-              },
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          const SizedBox(height: 8),
+          const Text(
+            'Leave blank to skip this step.',
+            style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+          ),
+          if (_stepImagePreviews[index] != null ||
+              _stepImageUrls[index].isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 90,
+                width: double.infinity,
+                child:
+                    _stepImagePreviews[index] != null
+                        ? Image.memory(
+                          _stepImagePreviews[index]!,
+                          fit: BoxFit.cover,
+                        )
+                        : Image.network(
+                          _stepImageUrls[index],
+                          fit: BoxFit.cover,
+                        ),
+              ),
             ),
+          ],
         ],
       ),
     ),

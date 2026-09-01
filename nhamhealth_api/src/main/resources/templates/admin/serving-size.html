@@ -61,14 +61,14 @@
 					<div class="stat-content">
 						<span>Inactive</span>
 						<strong id="inactiveServingSizeCount" th:text="${inactiveServingSizes}">24</strong>
-						<small>Hidden from new meal logs</small>
+						<small>Hidden from new meal selections</small>
 					</div>
 				</article>
 			</div>
 
 			<article class="panel table-panel">
 				<div class="panel-header">
-					<div><h2>All serving sizes</h2><p>Reusable measurements connected to meal logs</p></div>
+						<div><h2>All serving sizes</h2><p>Reusable measurements for meals and nutrition.</p></div>
 					<div class="panel-tools">
 						<select class="table-filter-pill" id="statusFilter" aria-label="Filter by status">
 							<option value="all">All Status</option>
@@ -104,7 +104,7 @@
 								</div>
 							</td>
 						</tr>
-						<tr th:if="${#lists.isEmpty(servingSizes)}" id="emptyServingSizeRow"><td class="empty-state" colspan="5"><i class="bi bi-cup-straw"></i><strong>No serving sizes yet</strong><span>Add a serving size to make it available for meal logs.</span></td></tr>
+						<tr th:if="${#lists.isEmpty(servingSizes)}" id="emptyServingSizeRow"><td class="empty-state" colspan="5"><i class="bi bi-cup-straw"></i><strong>No serving sizes yet</strong><span>Add a serving size to make it available for meal selections.</span></td></tr>
 						</tbody>
 					</table>
 				</div>
@@ -133,7 +133,7 @@
 		<div class="modal-header">
 			<div>
 				<h2 id="servingModalTitle">Add serving size</h2>
-				<p id="servingModalDescription">Define a reusable multiplier for meal logs.</p>
+				<p id="servingModalDescription">Define a reusable measurement multiplier.</p>
 			</div>
 			<button class="close" id="closeServingModal" type="button" aria-label="Close dialog">
 				<i class="bi bi-x-lg"></i>

@@ -124,7 +124,6 @@ public class AuthService {
             throw new MobileLoginNotAllowedException();
         }
 
-        syncGoogleProfile(user, identity);
         user.setLastLoginAt(LocalDateTime.now());
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
@@ -138,15 +137,9 @@ public class AuthService {
     private User linkGoogleIdentity(
             GoogleTokenVerifier.GoogleIdentity identity,
             String email) {
-        User user = userRepository.findByEmailIgnoreCase(email).orElseGet(() -> {
-            User created = new User();
-            created.setEmail(email);
-            created.setRole(requiredUserRole());
-            created.setStatus("ACTIVE");
-            created.setIsVerified(true);
-            created.setVerifiedAt(LocalDateTime.now());
-            return userRepository.save(created);
-        });
+        User existingUser = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        boolean newlyRegistered = existingUser == null;
+        User user = existingUser == null ? createGoogleUser(email) : existingUser;
 
         AuthProvider google = authProviderRepository
                 .findByProviderNameIgnoreCase("GOOGLE")
@@ -164,7 +157,45 @@ public class AuthService {
         link.setProviderEmail(email);
         link.setLinkedAt(LocalDateTime.now());
         userAuthProviderRepository.save(link);
+
+        if (newlyRegistered) {
+            createGoogleProfile(user, identity, email);
+        }
         return user;
+    }
+
+    private User createGoogleUser(String email) {
+        User created = new User();
+        created.setEmail(email);
+        created.setRole(requiredUserRole());
+        created.setStatus("ACTIVE");
+        created.setIsVerified(true);
+        created.setVerifiedAt(LocalDateTime.now());
+        return userRepository.save(created);
+    }
+
+    private void createGoogleProfile(
+            User user,
+            GoogleTokenVerifier.GoogleIdentity identity,
+            String email) {
+        LocalDateTime now = LocalDateTime.now();
+        UserProfile profile = new UserProfile();
+        profile.setUser(user);
+        profile.setFullName(googleNameOrEmail(identity.name(), email));
+        if (identity.pictureUrl() != null && !identity.pictureUrl().isBlank()) {
+            profile.setProfileImageUrl(identity.pictureUrl().trim());
+        }
+        profile.setCreatedAt(now);
+        profile.setUpdatedAt(now);
+        userProfileRepository.save(profile);
+    }
+
+    private String googleNameOrEmail(String googleName, String email) {
+        if (googleName != null && !googleName.isBlank()) {
+            return googleName.trim();
+        }
+        int atIndex = email.indexOf('@');
+        return atIndex > 0 ? email.substring(0, atIndex) : email;
     }
 
     private Role requiredUserRole() {
@@ -175,26 +206,6 @@ public class AuthService {
                     role.setDescription("Standard User");
                     return roleRepository.save(role);
                 });
-    }
-
-    private void syncGoogleProfile(
-            User user,
-            GoogleTokenVerifier.GoogleIdentity identity) {
-        LocalDateTime now = LocalDateTime.now();
-        UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId())
-                .orElse(null);
-        if (profile == null) {
-            return;
-        }
-
-        if (identity.name() != null && !identity.name().isBlank()) {
-            profile.setFullName(identity.name().trim());
-        }
-        if (identity.pictureUrl() != null && !identity.pictureUrl().isBlank()) {
-            profile.setProfileImageUrl(identity.pictureUrl().trim());
-        }
-        profile.setUpdatedAt(now);
-        userProfileRepository.save(profile);
     }
 
     private AuthResponse issueToken(AppUserPrincipal principal) {

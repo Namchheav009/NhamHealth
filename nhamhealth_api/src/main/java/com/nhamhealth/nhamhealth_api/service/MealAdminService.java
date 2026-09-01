@@ -150,9 +150,6 @@ public class MealAdminService {
         deleteRelatedRows("meal_favorites", mealId);
         deleteRelatedRows("meal_ingredients", mealId);
         deleteRelatedRows("meal_nutrition", mealId);
-        entityManager.createNativeQuery("UPDATE meal_logs SET meal_id = NULL WHERE meal_id = :mealId")
-                .setParameter("mealId", mealId)
-                .executeUpdate();
         mealRepository.deleteById(mealId);
     }
 

@@ -126,7 +126,7 @@
         if (!rows().length) {
             const empty = document.createElement('tr'); empty.id = 'emptyServingSizeRow';
             const cell = document.createElement('td'); cell.colSpan = 5; cell.className = 'empty-state';
-            cell.textContent = 'No serving sizes yet. Add one to make it available for meal logs.';
+            cell.textContent = 'No serving sizes yet. Add one to make it available for meal selections.';
             empty.appendChild(cell); rowsBox.appendChild(empty);
         }
         updateSummary(); renderPage();
@@ -146,7 +146,7 @@
         } else {
             form.elements.status.value = 'active';
             byId('servingModalTitle').textContent = 'Add serving size';
-            byId('servingModalDescription').textContent = 'Define a reusable multiplier for meal logs.';
+            byId('servingModalDescription').textContent = 'Define a reusable measurement multiplier.';
             saveButton.textContent = 'Save serving size';
         }
         modal.classList.add('show'); modal.setAttribute('aria-hidden', 'false');

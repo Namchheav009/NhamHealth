@@ -92,7 +92,7 @@ public class ServingSizeAdminController {
             return ResponseEntity.noContent().build();
         } catch (DataIntegrityViolationException exception) {
             return ResponseEntity.status(409).body(Map.of(
-                    "message", "This serving size is used by meal logs. Mark it inactive instead."));
+                    "message", "This serving size is in use. Mark it inactive instead."));
         }
     }
 
