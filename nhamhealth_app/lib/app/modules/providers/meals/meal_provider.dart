@@ -15,13 +15,16 @@ class MealProvider {
   final AuthService _authService;
   final http.Client _client;
 
-  Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) async {
+  Future<List<MealModel>> getMeals({
+    String keyword = '',
+    int categoryId = 0,
+  }) async {
     final query = <String, String>{};
     if (keyword.trim().isNotEmpty) query['keyword'] = keyword.trim();
     if (categoryId != 0) query['categoryId'] = '$categoryId';
-    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/meals').replace(
-      queryParameters: query,
-    );
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meals',
+    ).replace(queryParameters: query);
     final payload = await _getList(uri);
     return payload
         .map((item) => MealModel.fromJson(item, baseUrl: ApiConfig.baseUrl))
@@ -29,17 +32,52 @@ class MealProvider {
   }
 
   Future<List<MealCategoryModel>> getCategories() async {
-    final payload = await _getList(Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'));
-    return payload
-        .map(MealCategoryModel.fromJson)
-        .toList(growable: false);
+    final payload = await _getList(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'),
+    );
+    return payload.map(MealCategoryModel.fromJson).toList(growable: false);
+  }
+
+  Future<List<MealModel>> getPersonalizedMealIdeas({
+    bool refresh = false,
+  }) async {
+    final token = await _token();
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/ai-recommendations/meals/generate',
+    ).replace(queryParameters: {'refresh': '$refresh'});
+    final response = await _client
+        .post(
+          uri,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 45));
+    _ensureSuccess(response, 'Unable to personalize meal ideas');
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is! List) throw const FormatException();
+      return payload
+          .map(
+            (item) => MealModel.fromRecommendationJson(
+              Map<String, dynamic>.from(item as Map),
+              baseUrl: ApiConfig.baseUrl,
+            ),
+          )
+          .toList(growable: false);
+    } on Object {
+      throw const MealProviderException(
+        'The personalized meal response is incomplete.',
+      );
+    }
   }
 
   Future<Set<int>> getFavoriteMealIds() async {
-    final payload = await _getList(Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals'));
-    return payload
-        .map((item) => (item['id'] as num).toInt())
-        .toSet();
+    final payload = await _getList(
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals'),
+    );
+    return payload.map((item) => (item['id'] as num).toInt()).toSet();
   }
 
   Future<int> getUnreadNotificationCount() async {
@@ -52,10 +90,14 @@ class MealProvider {
     final uri = Uri.parse(
       '${ApiConfig.baseUrl}/api/v1/favorites/meals/$mealId',
     );
-    final headers = {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
-    final response = favorite
-        ? await _client.post(uri, headers: headers)
-        : await _client.delete(uri, headers: headers);
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    final response =
+        favorite
+            ? await _client.post(uri, headers: headers)
+            : await _client.delete(uri, headers: headers);
     _ensureSuccess(response, 'Unable to update favorite');
   }
 
@@ -64,7 +106,10 @@ class MealProvider {
     final response = await _client
         .get(
           uri,
-          headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
         )
         .timeout(const Duration(seconds: 15));
     _ensureSuccess(response, 'Unable to load meals');
@@ -85,7 +130,10 @@ class MealProvider {
     final response = await _client
         .get(
           Uri.parse('${ApiConfig.baseUrl}$path'),
-          headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
         )
         .timeout(const Duration(seconds: 15));
     _ensureSuccess(response, 'Unable to load notifications');

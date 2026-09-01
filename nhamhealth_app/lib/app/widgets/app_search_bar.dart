@@ -13,6 +13,7 @@ class AppSearchBar extends StatelessWidget {
     this.onClear,
     this.showClear = false,
     this.useSoftHomeStyle = false,
+    this.trailing,
   });
 
   final String hintText;
@@ -22,16 +23,17 @@ class AppSearchBar extends StatelessWidget {
   final VoidCallback? onClear;
   final bool showClear;
   final bool useSoftHomeStyle;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: 52,
+      height: 56,
       decoration: BoxDecoration(
         color: colors.surface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border:
             useSoftHomeStyle && !isDark
                 ? null
@@ -49,9 +51,9 @@ class AppSearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 16),
-          Icon(Icons.search_rounded, color: colors.onSurfaceVariant, size: 22),
-          const SizedBox(width: 11),
+          const SizedBox(width: 18),
+          Icon(Icons.search_rounded, color: colors.onSurfaceVariant, size: 24),
+          const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: controller,
@@ -59,12 +61,12 @@ class AppSearchBar extends StatelessWidget {
               onSubmitted: onSubmitted,
               textInputAction: TextInputAction.search,
               cursorColor: colors.primary,
-              style: TextStyle(color: colors.onSurface, fontSize: 14),
+              style: TextStyle(color: colors.onSurface, fontSize: 14.5),
               decoration: InputDecoration(
                 hintText: hintText.tr,
                 hintStyle: TextStyle(
                   color: colors.onSurfaceVariant,
-                  fontSize: 13,
+                  fontSize: 14,
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -73,22 +75,21 @@ class AppSearchBar extends StatelessWidget {
               ),
             ),
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 160),
-            child:
-                showClear
-                    ? IconButton(
-                      key: const ValueKey('search-clear'),
-                      tooltip: 'Clear search'.tr,
-                      onPressed: onClear,
-                      icon: Icon(
-                        Icons.close_rounded,
-                        size: 19,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    )
-                    : const SizedBox(width: 48),
-          ),
+          if (showClear)
+            IconButton(
+              key: const ValueKey('search-clear'),
+              tooltip: 'Clear search'.tr,
+              onPressed: onClear,
+              icon: Icon(
+                Icons.close_rounded,
+                size: 19,
+                color: colors.onSurfaceVariant,
+              ),
+            )
+          else if (trailing == null)
+            const SizedBox(width: 48),
+          if (trailing case final trailing?)
+            Padding(padding: const EdgeInsets.only(right: 4), child: trailing),
         ],
       ),
     );

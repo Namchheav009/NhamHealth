@@ -26,6 +26,10 @@ public interface AiRecommendationRepository extends JpaRepository<AiRecommendati
             Integer userId, Integer moodId, String status, LocalDateTime createdAfter);
 
     @EntityGraph(attributePaths = "mood")
+    Optional<AiRecommendation> findFirstByUserUserIdAndMoodIsNullAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+            Integer userId, String status, LocalDateTime createdAfter);
+
+    @EntityGraph(attributePaths = "mood")
     Optional<AiRecommendation> findFirstByUserUserIdAndStatusOrderByCreatedAtDesc(
             Integer userId, String status);
 }

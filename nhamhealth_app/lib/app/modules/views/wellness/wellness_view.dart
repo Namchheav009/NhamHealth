@@ -30,37 +30,47 @@ class WellnessView extends GetView<WellnessController> {
           ),
         ),
         child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppSpacing.maxWideContentWidth,
+          child: RefreshIndicator(
+            color: AppColors.primaryGreen,
+            onRefresh: controller.loadDailyWellness,
+            child: CustomScrollView(
+              key: const ValueKey<String>('wellness-page-scroll'),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxWideContentWidth,
+                      ),
+                      child: _header(context),
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      // Header
-                      _header(context),
-
-                      // Scrollable content
-                      Expanded(
+                ),
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxWideContentWidth,
+                      ),
+                      child: Padding(
+                        padding: AppSpacing.pagePaddingFor(context),
                         child: Obx(
-                          () => SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            padding: AppSpacing.pagePaddingFor(context),
-                            child: LoadingContentTransition(
-                              isLoading: controller.isLoading.value,
-                              loading: const PageSkeleton.wellness(),
-                              content: const _WellnessDashboardContent(),
-                            ),
+                          () => LoadingContentTransition(
+                            isLoading: controller.isLoading.value,
+                            loading: const PageSkeleton.wellness(),
+                            content: const _WellnessDashboardContent(),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
         ),
       ),

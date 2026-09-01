@@ -38,7 +38,11 @@ class AiInsightCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'AI Insight'.tr,
@@ -48,8 +52,6 @@ class AiInsightCard extends StatelessWidget {
                             color: context.appText,
                           ),
                         ),
-
-                        const Spacer(),
 
                         Container(
                           padding: const EdgeInsets.symmetric(

@@ -18,85 +18,137 @@ class MealCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: context.appElevatedSurface.withValues(alpha: 0.94),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: context.appBorder),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: _MealImage(path: meal.image),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(7, 8, 5, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal.name.tr,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.25,
-                      color: context.appText,
-                    ),
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 126,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(17),
                   ),
-
-                  const SizedBox(height: 9),
-
-                  Row(
+                  child: _MealImage(path: meal.image),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
+                      Text(
+                        meal.name.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.15,
+                          fontWeight: FontWeight.w600,
+                          color: context.appText,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 112),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.appSoftGreen,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         child: Text(
-                          '${meal.calories} kcal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: context.appMutedText,
+                          meal.category.tr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontSize: 10,
+                            height: 1.15,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-
-                      Tooltip(
-                        message:
-                            meal.isFavorite
-                                ? 'Remove from favorites'.tr
-                                : 'Add to favorites'.tr,
-                        child: InkResponse(
-                          onTap: onFavorite,
-                          radius: 18,
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: Icon(
-                              meal.isFavorite
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              size: 22,
-                              color:
-                                  meal.isFavorite
-                                      ? Colors.red
-                                      : context.appMutedText,
+                      const Spacer(),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.local_fire_department_rounded,
+                            color: AppColors.accentOrange,
+                            size: 15,
+                          ),
+                          const SizedBox(width: 2),
+                          Flexible(
+                            child: Text(
+                              '${meal.calories} kcal',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: context.appMutedText,
+                              ),
                             ),
                           ),
-                        ),
+                          if (meal.cookingTimeMinutes case final minutes?) ...[
+                            const SizedBox(width: 5),
+                            Icon(
+                              Icons.schedule_rounded,
+                              color: context.appMutedText,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '$minutes min',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: context.appMutedText,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          Tooltip(
+                            message:
+                                meal.isFavorite
+                                    ? 'Remove from favorites'.tr
+                                    : 'Add to favorites'.tr,
+                            child: InkResponse(
+                              onTap: onFavorite,
+                              radius: 17,
+                              child: Icon(
+                                meal.isFavorite
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: 20,
+                                color:
+                                    meal.isFavorite
+                                        ? AppColors.favoriteRed
+                                        : context.appMutedText,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

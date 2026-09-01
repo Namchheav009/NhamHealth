@@ -10,9 +10,10 @@ class MealCategory extends GetView<MealController> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
+      height: 42,
       child: Obx(
         () => ListView.separated(
+          key: const ValueKey('meal-category-top-bar'),
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           itemCount: controller.categories.length,
@@ -30,31 +31,32 @@ class MealCategory extends GetView<MealController> {
               child: InkWell(
                 key: ValueKey<int>(category.id),
                 onTap: () => controller.selectCategory(index),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(21),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOutCubic,
-                  height: 36,
+                  height: 42,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color:
                         selected
                             ? context.appColorScheme.primary
                             : context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(21),
                     border: Border.all(
                       color:
                           selected
                               ? context.appColorScheme.primary
                               : context.appBorder,
                     ),
+                    boxShadow: selected ? context.appTileShadow : null,
                   ),
                   child: Text(
                     category.name.tr,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color:
                           selected
                               ? context.appColorScheme.onPrimary

@@ -10,6 +10,7 @@ class MealModel {
     this.cookingTimeMinutes,
     this.difficulty = '',
     this.servings,
+    this.recommendationReason = '',
     this.isFavorite = false,
   });
 
@@ -23,6 +24,7 @@ class MealModel {
   final int? cookingTimeMinutes;
   final String difficulty;
   final int? servings;
+  final String recommendationReason;
   bool isFavorite;
 
   factory MealModel.fromJson(
@@ -46,6 +48,28 @@ class MealModel {
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
       difficulty: (json['difficulty'] as String? ?? '').trim(),
       servings: (json['servings'] as num?)?.toInt(),
+    );
+  }
+
+  factory MealModel.fromRecommendationJson(
+    Map<String, dynamic> json, {
+    required String baseUrl,
+  }) {
+    final id = json['id'];
+    final name = (json['name'] as String? ?? '').trim();
+    if (id is! num || name.isEmpty) {
+      throw const FormatException('Recommended meal data is incomplete.');
+    }
+    final rawImage = (json['imageUrl'] as String? ?? '').trim();
+    return MealModel(
+      id: id.toInt(),
+      name: name,
+      calories: (json['calories'] as num?)?.round() ?? 0,
+      image: _resolveImageUrl(rawImage, baseUrl),
+      category: 'AI Pick',
+      categoryId: 0,
+      cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
+      recommendationReason: (json['reason'] as String? ?? '').trim(),
     );
   }
 

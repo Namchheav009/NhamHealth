@@ -109,14 +109,20 @@ public class AiMealRecommendationService {
     public AiRecommendation generate(Integer userId, Integer moodId, boolean refresh) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
-        Mood mood = moodRepository.findById(moodId)
-                .filter(value -> Boolean.TRUE.equals(value.getIsActive()))
-                .orElseThrow(() -> new IllegalArgumentException("Select a valid active mood."));
+        Mood mood = moodId == null
+                ? null
+                : moodRepository.findById(moodId)
+                        .filter(value -> Boolean.TRUE.equals(value.getIsActive()))
+                        .orElseThrow(() -> new IllegalArgumentException("Select a valid active mood."));
 
         if (!refresh) {
-            var existing = recommendationRepository
-                    .findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
-                            userId, moodId, "ready", LocalDate.now().atStartOfDay());
+            var existing = moodId == null
+                    ? recommendationRepository
+                            .findFirstByUserUserIdAndMoodIsNullAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+                                    userId, "ready", LocalDate.now().atStartOfDay())
+                    : recommendationRepository
+                            .findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+                                    userId, moodId, "ready", LocalDate.now().atStartOfDay());
             if (existing.isPresent()) return existing.get();
         }
 
@@ -151,7 +157,9 @@ public class AiMealRecommendationService {
         AiRecommendation recommendation = new AiRecommendation();
         recommendation.setUser(user);
         recommendation.setMood(mood);
-        recommendation.setRequestText("Automatically recommend meals for mood: " + mood.getMoodName());
+        recommendation.setRequestText(mood == null
+                ? "Personalize meals using the user's wellness profile, BMI, and daily nutrition."
+                : "Automatically recommend meals for mood: " + mood.getMoodName());
         recommendation.setResponseText(limit(decision.summary(), 255));
         recommendation.setStatus("ready");
         recommendation.setCreatedAt(now);
@@ -188,7 +196,7 @@ public class AiMealRecommendationService {
             String input = mapper.writeValueAsString(Map.of(
                     "targetCount", targetCount,
                     "minimumCount", Math.min(MIN_RECOMMENDATIONS, targetCount),
-                    "mood", mood.getMoodName(),
+                    "mood", moodLabel(mood),
                     "userContext", context,
                     "catalog", catalog));
             Exception lastError = null;
@@ -263,7 +271,7 @@ public class AiMealRecommendationService {
 
     private ModelDecision fallbackDecision(
             Mood mood, List<Meal> meals, RecommendationContext context) {
-        String moodName = mood.getMoodName().toLowerCase();
+        String moodName = mood == null ? "" : mood.getMoodName().toLowerCase();
         boolean lowEnergy = List.of("tired", "sleepy", "busy", "stressed", "drained").stream()
                 .anyMatch(moodName::contains);
         List<Meal> ranked = meals.stream()
@@ -284,7 +292,11 @@ public class AiMealRecommendationService {
         }
         List<MealChoice> choices = diverse.stream().map(meal -> new MealChoice(
                 meal.getMealId(), fallbackReason(meal, mood, context, lowEnergy))).toList();
-        return new ModelDecision("Personalized meal choices based on your " + mood.getMoodName() + " mood.", choices);
+        return new ModelDecision(
+                mood == null
+                        ? "Personalized meal choices based on your wellness profile and daily goals."
+                        : "Personalized meal choices based on your " + mood.getMoodName() + " mood.",
+                choices);
     }
 
     private RecommendationContext recommendationContext(Integer userId) {
@@ -324,7 +336,9 @@ public class AiMealRecommendationService {
     private String fallbackReason(
             Meal meal, Mood mood, RecommendationContext context, boolean lowEnergy) {
         if (context.favoriteMealIds().contains(meal.getMealId())) {
-            return "Matches your saved preferences and suits your " + mood.getMoodName() + " mood.";
+            return mood == null
+                    ? "Matches your saved meal preferences and current wellness profile."
+                    : "Matches your saved preferences and suits your " + mood.getMoodName() + " mood.";
         }
         if (context.remainingProteinGrams() > 0 && meal.getProteinGramsCached() != null) {
             return "Adds " + meal.getProteinGramsCached().stripTrailingZeros().toPlainString()
@@ -339,7 +353,13 @@ public class AiMealRecommendationService {
                     + " kg, and "
                     + context.healthProfile().activityLevel() + " activity level.";
         }
-        return "A balanced, varied option for your " + mood.getMoodName() + " mood.";
+        return mood == null
+                ? "A balanced, varied option selected for your daily wellness goals."
+                : "A balanced, varied option for your " + mood.getMoodName() + " mood.";
+    }
+
+    private String moodLabel(Mood mood) {
+        return mood == null ? "Personal wellness profile" : mood.getMoodName();
     }
 
     private String limit(String value, int maxLength) {

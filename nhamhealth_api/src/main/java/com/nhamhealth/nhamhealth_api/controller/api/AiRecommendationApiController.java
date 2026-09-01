@@ -59,7 +59,7 @@ public class AiRecommendationApiController {
     @PostMapping("/meals/generate")
     public ResponseEntity<List<RecommendedMealResponse>> generateRecommendedMeals(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestParam Integer moodId,
+            @RequestParam(required = false) Integer moodId,
             @RequestParam(defaultValue = "false") boolean refresh) {
         AiRecommendation recommendation = recommendationService.generate(authenticatedUserId(jwt), moodId, refresh);
         return ResponseEntity.ok(toMealResponses(recommendation));

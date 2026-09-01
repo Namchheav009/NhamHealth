@@ -7,9 +7,11 @@ class MealRepository {
 
   final MealProvider _provider;
 
-    Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) =>
-            _provider.getMeals(keyword: keyword, categoryId: categoryId);
+  Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) =>
+      _provider.getMeals(keyword: keyword, categoryId: categoryId);
   Future<List<MealCategoryModel>> getCategories() => _provider.getCategories();
+  Future<List<MealModel>> getPersonalizedMealIdeas({bool refresh = false}) =>
+      _provider.getPersonalizedMealIdeas(refresh: refresh);
   Future<Set<int>> getFavoriteMealIds() => _provider.getFavoriteMealIds();
   Future<int> getUnreadNotificationCount() =>
       _provider.getUnreadNotificationCount();
