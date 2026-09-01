@@ -36,7 +36,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.nhamhealth.nhamhealth_api.security.DatabaseUserDetailsService;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Configuration
 public class SecurityConfig {

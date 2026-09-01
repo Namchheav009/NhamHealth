@@ -5,8 +5,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.nhamhealth.nhamhealth_api.service.AdminDashboardService;
-import com.nhamhealth.nhamhealth_api.service.AdminDashboardService.DashboardSnapshot;
+import com.nhamhealth.nhamhealth_api.service.admin.AdminDashboardService;
+import com.nhamhealth.nhamhealth_api.service.admin.AdminDashboardService.DashboardSnapshot;
 
 @Controller
 public class DashboardController {

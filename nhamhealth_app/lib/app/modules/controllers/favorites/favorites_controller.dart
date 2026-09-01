@@ -24,8 +24,32 @@ class FavoritesController extends GetxController {
   final isLoading = false.obs;
 
   final posts = const <FavoritePost>[
-    FavoritePost(id: 1, author: 'Sophia Martinez', role: 'Nutritionist', timeAgo: '2h ago', title: 'Healthy breakfast idea!', body: 'Avocado toast with poached egg and fresh fruits.\nSimple, quick and nutritious!', image: 'assets/images/meals/healthy_salad.jpg', likes: 1000, comments: 200, shares: 10),
-    FavoritePost(id: 2, author: 'Sophia Martinez', role: 'Nutritionist', timeAgo: '6h ago', title: 'A colorful snack for today!', body: 'Fresh fruit is an easy way to add more fiber and vitamins to your day.', image: 'assets/images/homepage/healthy_salad.png', likes: 824, comments: 96, shares: 18),
+    FavoritePost(
+      id: 1,
+      author: 'Sophia Martinez',
+      role: 'Nutritionist',
+      timeAgo: '2h ago',
+      title: 'Healthy breakfast idea!',
+      body:
+          'Avocado toast with poached egg and fresh fruits.\nSimple, quick and nutritious!',
+      image: 'assets/images/meals/healthy_salad.jpg',
+      likes: 1000,
+      comments: 200,
+      shares: 10,
+    ),
+    FavoritePost(
+      id: 2,
+      author: 'Sophia Martinez',
+      role: 'Nutritionist',
+      timeAgo: '6h ago',
+      title: 'A colorful snack for today!',
+      body:
+          'Fresh fruit is an easy way to add more fiber and vitamins to your day.',
+      image: 'assets/images/homepage/healthy_salad.png',
+      likes: 824,
+      comments: 96,
+      shares: 18,
+    ),
   ];
 
   @override
@@ -64,6 +88,7 @@ class FavoritesController extends GetxController {
   void applyFoodCategories(Set<String> categories) {
     selectedFoodCategories.assignAll(categories.where(foodCategories.contains));
   }
+
   void setPostSort(FavoritePostSort sort) => postSort.value = sort;
   Future<void> removeFood(int id) async {
     final index = foods.indexWhere((food) => food.id == id);
@@ -83,5 +108,6 @@ class FavoritesController extends GetxController {
       AppAlert.error(title: 'Favorite not removed', message: error.toString());
     }
   }
+
   void removePost(int id) => hiddenPostIds.add(id);
 }

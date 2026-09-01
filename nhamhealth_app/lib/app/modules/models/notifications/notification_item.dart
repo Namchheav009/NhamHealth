@@ -37,7 +37,9 @@ class NotificationItem {
       id: (json['id'] as num).toInt(),
       title: (json['title'] as String? ?? 'Notification').trim(),
       message: (json['message'] as String? ?? '').trim(),
-      time: _relativeTime(DateTime.tryParse(json['createdAt'] as String? ?? '')),
+      time: _relativeTime(
+        DateTime.tryParse(json['createdAt'] as String? ?? ''),
+      ),
       kind: switch (type) {
         'COMMUNITY' => NotificationKind.social,
         'HEALTH' || 'REMINDER' => NotificationKind.wellness,
@@ -50,7 +52,9 @@ class NotificationItem {
       actorAvatarUrl: (json['actorAvatarUrl'] as String? ?? '').trim(),
       referenceType: (json['referenceType'] as String?)?.trim().toUpperCase(),
       referenceId: (json['referenceId'] as num?)?.toInt(),
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ??
+          DateTime.now(),
     );
   }
 
@@ -75,7 +79,8 @@ class NotificationItem {
       kind == NotificationKind.system ? 'Nham Health' : title;
 
   String get displayMessage {
-    if (kind != NotificationKind.system || title.trim().toLowerCase() == 'nham health') {
+    if (kind != NotificationKind.system ||
+        title.trim().toLowerCase() == 'nham health') {
       return message;
     }
     return '$title — $message';

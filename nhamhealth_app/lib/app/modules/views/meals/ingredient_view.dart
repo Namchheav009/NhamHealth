@@ -219,11 +219,13 @@ class _IngredientCard extends StatelessWidget {
           // ----------------------------------------------
           // IMAGE
           // ----------------------------------------------
-          ClipOval(child: SizedBox(
-            width: 74,
-            height: 70,
-            child: _DynamicImage(url: ingredient.image),
-          )),
+          ClipOval(
+            child: SizedBox(
+              width: 74,
+              height: 70,
+              child: _DynamicImage(url: ingredient.image),
+            ),
+          ),
 
           const SizedBox(width: 17),
 
@@ -251,7 +253,10 @@ class _IngredientCard extends StatelessWidget {
                 const SizedBox(height: 7),
 
                 Text(
-                  (ingredient.detail.isEmpty ? 'Ingredient details unavailable' : ingredient.detail).tr,
+                  (ingredient.detail.isEmpty
+                          ? 'Ingredient details unavailable'
+                          : ingredient.detail)
+                      .tr,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
 
@@ -276,11 +281,24 @@ class _DynamicImage extends StatelessWidget {
   final String url;
   @override
   Widget build(BuildContext context) {
-    final fallback = Container(color: const Color(0xFFEAF6EE), child: const Icon(Icons.eco_rounded, size: 38, color: Color(0xFF72C63C)));
+    final fallback = Container(
+      color: const Color(0xFFEAF6EE),
+      child: const Icon(Icons.eco_rounded, size: 38, color: Color(0xFF72C63C)),
+    );
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      return Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback);
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
+      );
     }
-    if (url.startsWith('assets/')) return Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback);
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
+      );
+    }
     return fallback;
   }
 }

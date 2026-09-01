@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodSuggestion;
-import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
-import com.nhamhealth.nhamhealth_api.repository.AiFoodSuggestionRepository;
-import com.nhamhealth.nhamhealth_api.service.FoodCorrectionSuggestionService;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodAnalysisRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodSuggestionRepository;
+import com.nhamhealth.nhamhealth_api.service.catalog.FoodCorrectionSuggestionService;
 
 @Controller
 public class AiFoodSuggestionAdminController {

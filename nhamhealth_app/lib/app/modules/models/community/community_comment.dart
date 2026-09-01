@@ -29,7 +29,9 @@ class CommunityComment {
         createdAt: '${json['createdAt'] ?? ''}',
         authorAvatarUrl: '${json['authorAvatarUrl'] ?? ''}',
         parentCommentId:
-            json['parentCommentId'] == null ? null : '${json['parentCommentId']}',
+            json['parentCommentId'] == null
+                ? null
+                : '${json['parentCommentId']}',
         likes: (json['likes'] as num?)?.toInt() ?? 0,
         isLiked: json['liked'] as bool? ?? false,
         canDelete: json['canDelete'] as bool? ?? false,

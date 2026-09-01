@@ -295,10 +295,23 @@ class _CookingStepCard extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               ClipOval(
-                child: step.image.startsWith('http')
-                    ? Image.network(step.image, width: 82 * scale, height: 82 * scale, fit: BoxFit.cover, errorBuilder: (_, _, _) => _stepFallback())
-                    : step.image.startsWith('assets/')
-                        ? Image.asset(step.image, width: 82 * scale, height: 82 * scale, fit: BoxFit.cover, errorBuilder: (_, _, _) => _stepFallback())
+                child:
+                    step.image.startsWith('http')
+                        ? Image.network(
+                          step.image,
+                          width: 82 * scale,
+                          height: 82 * scale,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _stepFallback(),
+                        )
+                        : step.image.startsWith('assets/')
+                        ? Image.asset(
+                          step.image,
+                          width: 82 * scale,
+                          height: 82 * scale,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _stepFallback(),
+                        )
                         : _stepFallback(),
               ),
 
@@ -368,18 +381,18 @@ class _CookingStepCard extends StatelessWidget {
   }
 
   Widget _stepFallback() => Container(
-                      width: 82 * scale,
-                      height: 82 * scale,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFE6F4E8),
-                      ),
-                      child: Icon(
-                        Icons.restaurant_rounded,
-                        color: HowToMakeView.green,
-                        size: 30 * scale,
-                      ),
-                    );
+    width: 82 * scale,
+    height: 82 * scale,
+    decoration: const BoxDecoration(
+      shape: BoxShape.circle,
+      color: Color(0xFFE6F4E8),
+    ),
+    child: Icon(
+      Icons.restaurant_rounded,
+      color: HowToMakeView.green,
+      size: 30 * scale,
+    ),
+  );
 }
 
 // ================================================================

@@ -17,14 +17,16 @@ class FavoritesProvider {
   Future<List<FavoriteFood>> getFoods() async {
     final response = await _request('GET');
     final payload = jsonDecode(response.body) as List<dynamic>;
-    return payload.map((item) {
-      final data = Map<String, dynamic>.from(item as Map);
-      final image = data['imageUrl'] as String?;
-      if (image != null && image.startsWith('/')) {
-        data['imageUrl'] = '${ApiConfig.baseUrl}$image';
-      }
-      return FavoriteFood.fromJson(data);
-    }).toList(growable: false);
+    return payload
+        .map((item) {
+          final data = Map<String, dynamic>.from(item as Map);
+          final image = data['imageUrl'] as String?;
+          if (image != null && image.startsWith('/')) {
+            data['imageUrl'] = '${ApiConfig.baseUrl}$image';
+          }
+          return FavoriteFood.fromJson(data);
+        })
+        .toList(growable: false);
   }
 
   Future<List<String>> getFoodCategories() async {
@@ -51,27 +53,37 @@ class FavoritesProvider {
           .where((name) => name.isNotEmpty)
           .toList(growable: false);
     } on Object {
-      throw const FavoritesException('The meal category response is incomplete.');
+      throw const FavoritesException(
+        'The meal category response is incomplete.',
+      );
     }
   }
 
   Future<void> addFood(int mealId) async => _request('POST', mealId: mealId);
 
-  Future<void> removeFood(int mealId) async => _request('DELETE', mealId: mealId);
+  Future<void> removeFood(int mealId) async =>
+      _request('DELETE', mealId: mealId);
 
   Future<http.Response> _request(String method, {int? mealId}) async {
     final token = await _authService.readAccessToken();
-    if (token == null || token.isEmpty) throw const FavoritesException('Your session has expired.');
+    if (token == null || token.isEmpty) {
+      throw const FavoritesException('Your session has expired.');
+    }
     final suffix = mealId == null ? '' : '/$mealId';
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/favorites/meals$suffix');
-    final headers = {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
     final response = switch (method) {
       'POST' => await _client.post(uri, headers: headers),
       'DELETE' => await _client.delete(uri, headers: headers),
       _ => await _client.get(uri, headers: headers),
     };
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw FavoritesException('Unable to update favorites (HTTP ${response.statusCode}).');
+      throw FavoritesException(
+        'Unable to update favorites (HTTP ${response.statusCode}).',
+      );
     }
     return response;
   }
@@ -80,5 +92,6 @@ class FavoritesProvider {
 class FavoritesException implements Exception {
   const FavoritesException(this.message);
   final String message;
-  @override String toString() => message;
+  @override
+  String toString() => message;
 }

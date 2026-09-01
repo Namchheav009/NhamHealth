@@ -29,8 +29,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.jayway.jsonpath.JsonPath;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;

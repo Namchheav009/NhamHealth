@@ -21,8 +21,8 @@ import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityCommentRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityShareRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.CommunityTagRequest;
-import com.nhamhealth.nhamhealth_api.service.CommunityService;
-import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
+import com.nhamhealth.nhamhealth_api.service.community.CommunityService;
+import com.nhamhealth.nhamhealth_api.service.community.CommunityReportService;
 
 @RestController
 @RequestMapping("/api/v1/community")

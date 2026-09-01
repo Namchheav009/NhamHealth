@@ -21,9 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.nhamhealth.nhamhealth_api.entity.AiFoodAnalysis;
 import com.nhamhealth.nhamhealth_api.entity.DailyWellnessSummary;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisRepository;
-import com.nhamhealth.nhamhealth_api.repository.DailyWellnessSummaryRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodAnalysisRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

@@ -27,12 +27,18 @@ The API uses a layer-based structure under
 | `dto/` | API request and response objects |
 | `entity/` | JPA database entities |
 | `exception/` | Application-specific exceptions |
-| `repository/` | Spring Data repositories |
+| `repository/` | Spring Data repositories grouped by feature package |
 | `security/` | Authentication principals and JWT support |
-| `service/` | Business logic |
+| `service/` | Business logic grouped by feature package |
 
-Keep controllers in the single `controller/` folder so request-handling code is
-easy to locate and the source tree stays consistent.
+Controllers remain under `controller/`, with `api/`, `auth/`, and `admin/`
+subfolders so request-handling code is easy to locate. See the
+[API documentation](nhamhealth_api/docs/README.md) for a detailed folder guide,
+feature map, and a checklist for adding new Spring Boot features. Repository
+placement is documented in the
+[repository package guide](nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/repository/README.md),
+and service placement is documented in the
+[service package guide](nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/service/README.md).
 
 ## Prerequisites
 

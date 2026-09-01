@@ -6,9 +6,7 @@ import '../../providers/home/home_provider.dart';
 class HomeRepository {
   final HomeProvider provider;
 
-  HomeRepository({
-    required this.provider,
-  });
+  HomeRepository({required this.provider});
 
   Future<HomeDashboardModel> getHomeDashboard({DateTime? date}) {
     return provider.getHomeDashboard(date: date);
@@ -26,7 +24,8 @@ class HomeRepository {
 
   Future<Set<int>> getFavoriteMealIds() => provider.getFavoriteMealIds();
 
-  Future<int> getUnreadNotificationCount() => provider.getUnreadNotificationCount();
+  Future<int> getUnreadNotificationCount() =>
+      provider.getUnreadNotificationCount();
 
   Future<void> setMealFavorite(int mealId, {required bool favorite}) =>
       provider.setMealFavorite(mealId, favorite: favorite);

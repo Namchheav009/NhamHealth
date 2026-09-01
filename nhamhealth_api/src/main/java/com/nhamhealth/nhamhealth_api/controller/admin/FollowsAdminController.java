@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.Follow;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.FollowRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class FollowsAdminController {

@@ -52,7 +52,8 @@ class RecipeRepository {
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
   }) => _sendRecipe(
-    'PUT', '$_basePath/$id',
+    'PUT',
+    '$_basePath/$id',
     name: name,
     description: description,
     cookingTimeMinutes: cookingTimeMinutes,
@@ -62,10 +63,8 @@ class RecipeRepository {
     steps: steps,
     imageBytes: imageBytes,
   );
-  Future<CommunityRecipe> publish(int id) =>
-      _post('$_basePath/$id/publish');
-  Future<CommunityRecipe> aiCheck(int id) =>
-      _post('$_basePath/$id/ai-review');
+  Future<CommunityRecipe> publish(int id) => _post('$_basePath/$id/publish');
+  Future<CommunityRecipe> aiCheck(int id) => _post('$_basePath/$id/ai-review');
   Future<void> delete(int id) async {
     final response = await _client.delete(
       _uri('$_basePath/$id'),
@@ -73,6 +72,7 @@ class RecipeRepository {
     );
     _ok(response);
   }
+
   Future<CommunityRecipe> toggleSaved(CommunityRecipe recipe) async {
     final response =
         recipe.saved

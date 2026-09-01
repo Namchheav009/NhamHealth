@@ -22,9 +22,9 @@ import jakarta.validation.Valid;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminIngredientDto;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
-import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
-import com.nhamhealth.nhamhealth_api.service.IngredientAdminService;
-import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.service.catalog.IngredientAdminService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 @Controller
 public class IngredientAdminController {

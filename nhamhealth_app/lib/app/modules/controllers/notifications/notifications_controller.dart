@@ -22,9 +22,16 @@ class NotificationsController extends GetxController {
 
   static const refreshInterval = Duration(seconds: 5);
 
-  List<NotificationItem> get unread => notifications.where((item) => item.isUnread).toList();
-  List<NotificationItem> get today => notifications.where((item) => !item.isUnread && _isToday(item.createdAt)).toList();
-  List<NotificationItem> get earlier => notifications.where((item) => !item.isUnread && !_isToday(item.createdAt)).toList();
+  List<NotificationItem> get unread =>
+      notifications.where((item) => item.isUnread).toList();
+  List<NotificationItem> get today =>
+      notifications
+          .where((item) => !item.isUnread && _isToday(item.createdAt))
+          .toList();
+  List<NotificationItem> get earlier =>
+      notifications
+          .where((item) => !item.isUnread && !_isToday(item.createdAt))
+          .toList();
 
   @override
   void onInit() {
@@ -53,17 +60,15 @@ class NotificationsController extends GetxController {
       if (!silent) isLoading.value = true;
       final result = await repository.getNotifications();
       final existingIds = notifications.map((item) => item.id).toSet();
-      final newItems = _hasLoaded
-          ? result.where((item) => !existingIds.contains(item.id)).toList()
-          : const <NotificationItem>[];
+      final newItems =
+          _hasLoaded
+              ? result.where((item) => !existingIds.contains(item.id)).toList()
+              : const <NotificationItem>[];
       notifications.assignAll(result);
       _hasLoaded = true;
       if (silent && announceNew && newItems.isNotEmpty) {
         final newest = newItems.first;
-        AppAlert.success(
-          title: newest.title,
-          message: newest.message,
-        );
+        AppAlert.success(title: newest.title, message: newest.message);
       }
     } on Object catch (error) {
       if (!silent) {
@@ -93,7 +98,10 @@ class NotificationsController extends GetxController {
       await repository.markRead(item.id);
     } on Object catch (error) {
       notifications[index] = item;
-      AppAlert.error(title: 'Notification not updated', message: error.toString());
+      AppAlert.error(
+        title: 'Notification not updated',
+        message: error.toString(),
+      );
     }
   }
 
@@ -122,15 +130,15 @@ class NotificationsController extends GetxController {
   Future<void> open(NotificationItem item) async {
     await markRead(item);
     if (item.referenceType == 'POST' && item.referenceId != null) {
-      await Get.toNamed<void>(
-        AppRoutes.communityPostPath(item.referenceId!),
-      );
+      await Get.toNamed<void>(AppRoutes.communityPostPath(item.referenceId!));
     }
   }
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   @override

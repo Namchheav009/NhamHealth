@@ -42,22 +42,35 @@ class ChangePasswordController extends GetxController {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      AppAlert.error(title: 'Required', message: 'Please complete all password fields.');
+      AppAlert.error(
+        title: 'Required',
+        message: 'Please complete all password fields.',
+      );
       return;
     }
 
     if (newPassword != confirmPassword) {
-      AppAlert.error(title: 'Password does not match', message: 'Please confirm your new password correctly.');
+      AppAlert.error(
+        title: 'Password does not match',
+        message: 'Please confirm your new password correctly.',
+      );
       return;
     }
 
     if (newPassword.length < 8) {
-      AppAlert.error(title: 'Password too short', message: 'Use at least 8 characters.');
+      AppAlert.error(
+        title: 'Password too short',
+        message: 'Use at least 8 characters.',
+      );
       return;
     }
 
     if (newPassword == currentPassword) {
-      AppAlert.error(title: 'Choose a new password', message: 'Your new password must be different from your current password.');
+      AppAlert.error(
+        title: 'Choose a new password',
+        message:
+            'Your new password must be different from your current password.',
+      );
       return;
     }
 
@@ -73,11 +86,20 @@ class ChangePasswordController extends GetxController {
       newPasswordController.clear();
       confirmPasswordController.clear();
 
-      AppAlert.success(title: 'Password updated', message: 'Your password has been updated.');
+      AppAlert.success(
+        title: 'Password updated',
+        message: 'Your password has been updated.',
+      );
     } on AuthException catch (error) {
-      AppAlert.error(title: 'Could not update password', message: error.message);
+      AppAlert.error(
+        title: 'Could not update password',
+        message: error.message,
+      );
     } on Object {
-      AppAlert.error(title: 'Could not update password', message: 'Something went wrong. Please try again.');
+      AppAlert.error(
+        title: 'Could not update password',
+        message: 'Something went wrong. Please try again.',
+      );
     } finally {
       isLoading.value = false;
     }

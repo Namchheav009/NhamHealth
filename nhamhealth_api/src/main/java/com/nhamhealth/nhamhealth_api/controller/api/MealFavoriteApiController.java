@@ -25,9 +25,9 @@ import com.nhamhealth.nhamhealth_api.dto.response.FavoriteMealResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.BulkMealFavoritesRequest;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
-import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealFavoriteRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @RestController
 @RequestMapping("/api/v1/favorites/meals")

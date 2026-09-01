@@ -61,8 +61,7 @@ class _AuthPageState extends State<AuthPage> {
               fullNameController: _register.fullNameController,
               emailController: _register.emailController,
               passwordController: _register.passwordController,
-              confirmPasswordController:
-                  _register.confirmPasswordController,
+              confirmPasswordController: _register.confirmPasswordController,
               loading: _register.isLoading.value,
               onRegister: _register.submit,
               onGoogle: _register.registerWithGoogle,

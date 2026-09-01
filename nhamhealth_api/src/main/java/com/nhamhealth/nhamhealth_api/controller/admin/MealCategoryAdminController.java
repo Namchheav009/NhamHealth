@@ -21,9 +21,9 @@ import jakarta.validation.Valid;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealCategoryRequest;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.service.MealCategoryAdminService;
+import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.service.catalog.MealCategoryAdminService;
 
 @Controller
 public class MealCategoryAdminController {

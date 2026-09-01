@@ -80,7 +80,11 @@ class CommunityRepository {
   Future<List<MealCategoryModel>> getMealCategories() async {
     final payload = await _getList('/api/v1/meal-categories');
     return payload
-        .map((item) => MealCategoryModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) => MealCategoryModel.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -94,11 +98,16 @@ class CommunityRepository {
     _ensureSuccess(response);
     final decoded = jsonDecode(response.body);
     if (decoded is! List) {
-      throw const CommunityException('The ingredient search response is invalid.');
+      throw const CommunityException(
+        'The ingredient search response is invalid.',
+      );
     }
     return decoded
         .whereType<Map>()
-        .map((item) => IngredientSuggestion.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) =>
+              IngredientSuggestion.fromJson(Map<String, dynamic>.from(item)),
+        )
         .where((item) => item.id > 0 && item.name.isNotEmpty)
         .toList(growable: false);
   }
@@ -120,7 +129,9 @@ class CommunityRepository {
     request.files.add(
       http.MultipartFile.fromBytes('file', bytes, filename: 'recipe-step.jpg'),
     );
-    final response = await http.Response.fromStream(await _client.send(request));
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
     return '${_decodeMap(response)['imageUrl'] ?? ''}';
   }
 

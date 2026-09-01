@@ -52,10 +52,7 @@ class LoadingContentTransition extends StatelessWidget {
         );
         return FadeTransition(
           opacity: fade,
-          child: SlideTransition(
-            position: slide,
-            child: child,
-          ),
+          child: SlideTransition(position: slide, child: child),
         );
       },
       child: KeyedSubtree(

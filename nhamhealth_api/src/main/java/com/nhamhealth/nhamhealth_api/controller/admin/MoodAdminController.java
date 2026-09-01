@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMoodRequest;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
-import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
 
 import jakarta.validation.Valid;
 

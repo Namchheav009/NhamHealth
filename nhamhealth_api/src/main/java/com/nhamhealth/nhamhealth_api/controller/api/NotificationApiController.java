@@ -24,11 +24,11 @@ import com.nhamhealth.nhamhealth_api.dto.response.NotificationResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.PushDeviceRequest;
 import com.nhamhealth.nhamhealth_api.entity.PushNotificationDevice;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
-import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostCommentRepository;
-import com.nhamhealth.nhamhealth_api.repository.PushNotificationDeviceRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserProfileRepository;
+import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
+import com.nhamhealth.nhamhealth_api.repository.notification.PushNotificationDeviceRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import jakarta.validation.Valid;
 
 @RestController

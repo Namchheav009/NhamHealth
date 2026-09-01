@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.PostComment;
-import com.nhamhealth.nhamhealth_api.repository.CommentLikeRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostCommentRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.CommentLikeRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class CommentAdminController {

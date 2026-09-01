@@ -44,44 +44,46 @@ class FoodDetailView extends GetView<FoodDetailController> {
             ),
           ),
         ),
-        body: Obx(() => Stack(
-          children: [
-            const _FoodBackground(),
+        body: Obx(
+          () => Stack(
+            children: [
+              const _FoodBackground(),
 
-            SafeArea(
-              bottom: false,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 430),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHero(),
+              SafeArea(
+                bottom: false,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 430),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHero(),
 
-                        const SizedBox(height: 18),
+                          const SizedBox(height: 18),
 
-                        _buildQuickStats(),
+                          _buildQuickStats(),
 
-                        const SizedBox(height: 28),
+                          const SizedBox(height: 28),
 
-                        _buildIngredientsSection(),
+                          _buildIngredientsSection(),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        _buildHowToMakeSection(),
+                          _buildHowToMakeSection(),
 
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        )),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -220,7 +222,10 @@ class FoodDetailView extends GetView<FoodDetailController> {
     );
   }
 
-  String _formatNumber(num value) => value == value.roundToDouble() ? '${value.toInt()}' : value.toStringAsFixed(1);
+  String _formatNumber(num value) =>
+      value == value.roundToDouble()
+          ? '${value.toInt()}'
+          : value.toStringAsFixed(1);
 
   Widget _nutritionValue({
     required Color barColor,
@@ -517,10 +522,19 @@ class _MealHeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = imageUrl.startsWith('http://') || imageUrl.startsWith('https://')
-        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, _, _) => _fallback())
-        : imageUrl.startsWith('assets/')
-            ? Image.asset(imageUrl, fit: BoxFit.cover, errorBuilder: (_, _, _) => _fallback())
+    final image =
+        imageUrl.startsWith('http://') || imageUrl.startsWith('https://')
+            ? Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _fallback(),
+            )
+            : imageUrl.startsWith('assets/')
+            ? Image.asset(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _fallback(),
+            )
             : _fallback();
     return ClipOval(child: SizedBox.expand(child: image));
   }

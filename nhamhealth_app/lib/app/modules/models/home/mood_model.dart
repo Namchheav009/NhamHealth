@@ -1,9 +1,5 @@
 class MoodModel {
-  const MoodModel({
-    required this.id,
-    required this.name,
-    required this.emoji,
-  });
+  const MoodModel({required this.id, required this.name, required this.emoji});
 
   final int id;
   final String name;

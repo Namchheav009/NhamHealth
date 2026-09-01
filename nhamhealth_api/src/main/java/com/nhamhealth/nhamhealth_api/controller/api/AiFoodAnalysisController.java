@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
-import com.nhamhealth.nhamhealth_api.service.AiFoodAnalysisService;
+import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
 import jakarta.validation.Valid;
 import java.util.Map;
 

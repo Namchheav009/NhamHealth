@@ -60,7 +60,8 @@ class _AnimatedRevealTextState extends State<AnimatedRevealText>
 
   @override
   Widget build(BuildContext context) {
-    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (disableAnimations || widget.text.isEmpty) return _fullText();
 
     return Semantics(
@@ -72,13 +73,15 @@ class _AnimatedRevealTextState extends State<AnimatedRevealText>
           final delayFraction =
               widget.delay.inMicroseconds /
               _totalDuration.inMicroseconds.clamp(1, double.maxFinite);
-          final rawProgress =
-              ((_controller.value - delayFraction) / (1 - delayFraction))
-                  .clamp(0.0, 1.0);
+          final rawProgress = ((_controller.value - delayFraction) /
+                  (1 - delayFraction))
+              .clamp(0.0, 1.0);
           final progress = widget.curve.transform(rawProgress);
-          final chunks = RegExp(
-            r'\S+\s*',
-          ).allMatches(widget.text).map((match) => match.group(0)!).toList();
+          final chunks =
+              RegExp(r'\S+\s*')
+                  .allMatches(widget.text)
+                  .map((match) => match.group(0)!)
+                  .toList();
           final visibleChunks = (chunks.length * progress).round();
           final visibleText = chunks.take(visibleChunks).join();
           return Stack(

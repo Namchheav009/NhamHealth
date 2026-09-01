@@ -21,11 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminCreateUserRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminWellnessProfileRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminUpdateUserRequest;
-import com.nhamhealth.nhamhealth_api.service.AdminUserService;
-import com.nhamhealth.nhamhealth_api.service.AdminUserService.UserPageData;
-import com.nhamhealth.nhamhealth_api.service.AdminWellnessProfileService;
-import com.nhamhealth.nhamhealth_api.service.AdminWellnessProfileService.WellnessPageData;
-import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.admin.AdminUserService;
+import com.nhamhealth.nhamhealth_api.service.admin.AdminUserService.UserPageData;
+import com.nhamhealth.nhamhealth_api.service.wellness.AdminWellnessProfileService;
+import com.nhamhealth.nhamhealth_api.service.wellness.AdminWellnessProfileService.WellnessPageData;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 @Controller
 public class UserAdminController {

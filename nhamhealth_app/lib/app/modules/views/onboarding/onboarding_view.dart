@@ -19,23 +19,25 @@ class OnboardingView extends GetView<OnboardingController> {
                 itemCount: items.length,
                 onPageChanged: controller.onPageChanged,
                 physics: const BouncingScrollPhysics(),
-                itemBuilder: (context, index) => OnboardingContent(
-                  item: items[index],
-                  activePage: index,
-                  pageCount: items.length,
-                  buttonText: index == items.length - 1 ? 'Get Started' : 'Next',
-                  showSkipButton: index < items.length - 1,
-                  showBackButton: index > 0,
-                  onNext:
-                      index == items.length - 1
-                          ? controller.finishOnboarding
-                          : controller.nextPage,
-                  onSkip:
-                      index == items.length - 1
-                          ? controller.finishOnboarding
-                          : controller.skipToLastPage,
-                  onBack: controller.previousPage,
-                ),
+                itemBuilder:
+                    (context, index) => OnboardingContent(
+                      item: items[index],
+                      activePage: index,
+                      pageCount: items.length,
+                      buttonText:
+                          index == items.length - 1 ? 'Get Started' : 'Next',
+                      showSkipButton: index < items.length - 1,
+                      showBackButton: index > 0,
+                      onNext:
+                          index == items.length - 1
+                              ? controller.finishOnboarding
+                              : controller.nextPage,
+                      onSkip:
+                          index == items.length - 1
+                              ? controller.finishOnboarding
+                              : controller.skipToLastPage,
+                      onBack: controller.previousPage,
+                    ),
               ),
     );
   }

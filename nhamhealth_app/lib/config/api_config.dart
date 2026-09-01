@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 abstract final class ApiConfig {
-  static const String _configuredBaseUrl =
-      String.fromEnvironment('API_BASE_URL');
+  static const String _configuredBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+  );
 
   static String get baseUrl {
     // If API_BASE_URL was provided when running Flutter,
@@ -30,8 +31,6 @@ abstract final class ApiConfig {
   }
 
   static String _withoutTrailingSlash(String value) {
-    return value.endsWith('/')
-        ? value.substring(0, value.length - 1)
-        : value;
+    return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
   }
 }

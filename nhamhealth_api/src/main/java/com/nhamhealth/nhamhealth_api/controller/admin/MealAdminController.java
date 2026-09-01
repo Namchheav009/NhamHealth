@@ -21,8 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
 import com.nhamhealth.nhamhealth_api.dto.response.PageResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
-import com.nhamhealth.nhamhealth_api.service.MealAdminService;
-import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.meal.MealAdminService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 @Controller
 public class MealAdminController {

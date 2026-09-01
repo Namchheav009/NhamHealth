@@ -8,7 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
 import com.nhamhealth.nhamhealth_api.entity.FoodNutrition;
-import com.nhamhealth.nhamhealth_api.repository.FoodNutritionRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.FoodNutritionRepository;
 
 /**
  * Adds a baseline catalog without replacing administrator-managed nutrition data.

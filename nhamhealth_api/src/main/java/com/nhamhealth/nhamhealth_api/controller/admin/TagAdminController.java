@@ -19,7 +19,7 @@ import org.springframework.cache.annotation.CacheEvict;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminTagRequest;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
-import com.nhamhealth.nhamhealth_api.repository.TagTypeRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 
 import jakarta.validation.Valid;
 

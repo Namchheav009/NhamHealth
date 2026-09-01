@@ -76,10 +76,7 @@ class AuthScaffold extends StatelessWidget {
                                 AppSpacing.pageHorizontal,
                                 AppSpacing.pageBottom,
                               ),
-                              child: _EntranceMotion(
-                                delay: 0.12,
-                                child: child,
-                              ),
+                              child: _EntranceMotion(delay: 0.12, child: child),
                             ),
                           ),
                         ),

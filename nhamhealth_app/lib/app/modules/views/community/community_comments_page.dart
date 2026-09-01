@@ -168,7 +168,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   Future<void> _showShareOptions() async {
     if (_updatingPost) return;
     final canShare =
-        _post.sharedPost != null || _post.visibility == CommunityPostVisibility.public;
+        _post.sharedPost != null ||
+        _post.visibility == CommunityPostVisibility.public;
     if (!canShare) {
       unawaited(
         AppAlert.error(
@@ -624,14 +625,19 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   const Expanded(
                     child: Text(
                       'Recipe details',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   TextButton.icon(
                     key: const ValueKey<String>('recipe-details-toggle'),
-                    onPressed: () => setState(
-                      () => _recipeDetailsExpanded = !_recipeDetailsExpanded,
-                    ),
+                    onPressed:
+                        () => setState(
+                          () =>
+                              _recipeDetailsExpanded = !_recipeDetailsExpanded,
+                        ),
                     icon: Icon(
                       _recipeDetailsExpanded
                           ? Icons.keyboard_arrow_up_rounded

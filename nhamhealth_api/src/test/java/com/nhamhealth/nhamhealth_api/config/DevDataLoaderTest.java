@@ -13,9 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.RoleRepository;
-import com.nhamhealth.nhamhealth_api.repository.ReportReasonRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @SpringBootTest
 @TestPropertySource(properties = {

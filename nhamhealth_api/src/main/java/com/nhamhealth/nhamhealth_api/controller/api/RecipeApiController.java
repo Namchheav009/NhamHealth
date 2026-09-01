@@ -22,8 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.RecipeResponse;
-import com.nhamhealth.nhamhealth_api.service.RecipeFlowService;
-import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.recipe.RecipeFlowService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 import jakarta.validation.Valid;
 

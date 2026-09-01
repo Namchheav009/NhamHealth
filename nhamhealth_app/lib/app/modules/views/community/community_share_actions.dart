@@ -35,11 +35,15 @@ class _CommunityShareComposer extends StatefulWidget {
 
   final String authorName;
   final String authorAvatarUrl;
-  final Future<void> Function(String message, CommunityPostVisibility visibility)
+  final Future<void> Function(
+    String message,
+    CommunityPostVisibility visibility,
+  )
   onShare;
 
   @override
-  State<_CommunityShareComposer> createState() => _CommunityShareComposerState();
+  State<_CommunityShareComposer> createState() =>
+      _CommunityShareComposerState();
 }
 
 class _CommunityShareComposerState extends State<_CommunityShareComposer> {

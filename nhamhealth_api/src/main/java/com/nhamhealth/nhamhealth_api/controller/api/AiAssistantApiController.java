@@ -14,7 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.ai.AssistantChatRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AssistantChatResponse;
-import com.nhamhealth.nhamhealth_api.service.AiAssistantService;
+import com.nhamhealth.nhamhealth_api.service.ai.AiAssistantService;
 
 import jakarta.validation.Valid;
 

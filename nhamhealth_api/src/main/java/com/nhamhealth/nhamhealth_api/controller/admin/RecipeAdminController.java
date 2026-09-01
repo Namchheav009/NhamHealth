@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.MealAdminService;
-import com.nhamhealth.nhamhealth_api.service.RecipeFlowService;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.meal.MealAdminService;
+import com.nhamhealth.nhamhealth_api.service.recipe.RecipeFlowService;
 
 @Controller
 public class RecipeAdminController {

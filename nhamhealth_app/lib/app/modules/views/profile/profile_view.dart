@@ -347,7 +347,8 @@ class ProfileView extends GetView<ProfileController> {
 
   Future<void> _showShare(CommunityPost post) async {
     final canShare =
-        post.sharedPost != null || post.visibility == CommunityPostVisibility.public;
+        post.sharedPost != null ||
+        post.visibility == CommunityPostVisibility.public;
     if (!canShare) {
       AppAlert.error(
         title: 'Cannot share this post',

@@ -47,9 +47,10 @@ class _MyRecipesViewState extends State<MyRecipesView> {
     try {
       final updated = await action();
       setState(() {
-        _recipes = _recipes
-            .map((item) => item.id == recipe.id ? updated : item)
-            .toList();
+        _recipes =
+            _recipes
+                .map((item) => item.id == recipe.id ? updated : item)
+                .toList();
       });
     } catch (error) {
       Get.snackbar('Unable to continue', '$error');
@@ -80,8 +81,9 @@ class _MyRecipesViewState extends State<MyRecipesView> {
       await _repository.delete(recipe.id);
       if (mounted) {
         setState(
-          () => _recipes =
-              _recipes.where((item) => item.id != recipe.id).toList(),
+          () =>
+              _recipes =
+                  _recipes.where((item) => item.id != recipe.id).toList(),
         );
       }
     } catch (error) {
@@ -91,33 +93,32 @@ class _MyRecipesViewState extends State<MyRecipesView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('My meal posts'),
-          actions: [
-            IconButton(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final created = await Get.to<CommunityRecipe>(
-              () => _RecipeEditor(repository: _repository),
-            );
-            if (created != null) {
-              setState(() => _recipes = [created, ..._recipes]);
-            }
-          },
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Create meal post'),
-        ),
-        body: _loading
+    appBar: AppBar(
+      title: const Text('My meal posts'),
+      actions: [
+        IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
+      ],
+    ),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: () async {
+        final created = await Get.to<CommunityRecipe>(
+          () => _RecipeEditor(repository: _repository),
+        );
+        if (created != null) {
+          setState(() => _recipes = [created, ..._recipes]);
+        }
+      },
+      icon: const Icon(Icons.add_rounded),
+      label: const Text('Create meal post'),
+    ),
+    body:
+        _loading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-                onRefresh: _load,
-                child: _recipes.isEmpty
-                    ? ListView(
+              onRefresh: _load,
+              child:
+                  _recipes.isEmpty
+                      ? ListView(
                         children: const [
                           SizedBox(height: 170),
                           Icon(
@@ -133,11 +134,10 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                           ),
                         ],
                       )
-                    : ListView.separated(
+                      : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: _recipes.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (_, index) {
                           final recipe = _recipes[index];
                           return _RecipeCard(
@@ -148,8 +148,8 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                           );
                         },
                       ),
-              ),
-      );
+            ),
+  );
 }
 
 class _RecipeCard extends StatelessWidget {
@@ -165,109 +165,102 @@ class _RecipeCard extends StatelessWidget {
   final Future<void> Function(
     CommunityRecipe,
     Future<CommunityRecipe> Function(),
-  ) onRun;
+  )
+  onRun;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) => Card(
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    clipBehavior: Clip.antiAlias,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      recipe.name,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  _StatusChip(recipe.status),
-                ],
-              ),
-              if (recipe.description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    recipe.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+              Expanded(
+                child: Text(
+                  recipe.name,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (recipe.cookingTimeMinutes != null)
-                    _InfoChip(
-                      Icons.timer_outlined,
-                      '${recipe.cookingTimeMinutes} min',
-                    ),
-                  if (recipe.difficulty.isNotEmpty)
-                    _InfoChip(
-                      Icons.signal_cellular_alt_rounded,
-                      _displayValue(recipe.difficulty),
-                    ),
-                  _InfoChip(
-                    Icons.restaurant_outlined,
-                    '${recipe.ingredients.length} ingredients',
-                  ),
-                  if (recipe.mealId != null)
-                    const _InfoChip(
-                      Icons.verified_rounded,
-                      'In Meals',
-                    ),
-                ],
               ),
-              if (recipe.aiReviewReason.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: recipe.aiStatus == 'APPROVED'
-                        ? const Color(0xFFE7F6EB)
-                        : const Color(0xFFFFF4DF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    recipe.aiReviewReason,
-                  ),
-                ),
-              const SizedBox(height: 8),
-              OverflowBar(
-                alignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    tooltip: 'Delete meal post',
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline_rounded),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => onRun(
-                      recipe,
-                      () => repository.aiCheck(recipe.id),
-                    ),
-                    icon: const Icon(Icons.auto_awesome_outlined),
-                    label: const Text('AI check'),
-                  ),
-                  if (recipe.status == 'DRAFT')
-                    FilledButton.icon(
-                      onPressed: () => onRun(
-                        recipe,
-                        () => repository.publish(recipe.id),
-                      ),
-                      icon: const Icon(Icons.publish_outlined),
-                      label: const Text('Publish'),
-                    ),
-                ],
-              ),
+              _StatusChip(recipe.status),
             ],
           ),
-        ),
-      );
+          if (recipe.description.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                recipe.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (recipe.cookingTimeMinutes != null)
+                _InfoChip(
+                  Icons.timer_outlined,
+                  '${recipe.cookingTimeMinutes} min',
+                ),
+              if (recipe.difficulty.isNotEmpty)
+                _InfoChip(
+                  Icons.signal_cellular_alt_rounded,
+                  _displayValue(recipe.difficulty),
+                ),
+              _InfoChip(
+                Icons.restaurant_outlined,
+                '${recipe.ingredients.length} ingredients',
+              ),
+              if (recipe.mealId != null)
+                const _InfoChip(Icons.verified_rounded, 'In Meals'),
+            ],
+          ),
+          if (recipe.aiReviewReason.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color:
+                    recipe.aiStatus == 'APPROVED'
+                        ? const Color(0xFFE7F6EB)
+                        : const Color(0xFFFFF4DF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(recipe.aiReviewReason),
+            ),
+          const SizedBox(height: 8),
+          OverflowBar(
+            alignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                tooltip: 'Delete meal post',
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+              ),
+              TextButton.icon(
+                onPressed:
+                    () => onRun(recipe, () => repository.aiCheck(recipe.id)),
+                icon: const Icon(Icons.auto_awesome_outlined),
+                label: const Text('AI check'),
+              ),
+              if (recipe.status == 'DRAFT')
+                FilledButton.icon(
+                  onPressed:
+                      () => onRun(recipe, () => repository.publish(recipe.id)),
+                  icon: const Icon(Icons.publish_outlined),
+                  label: const Text('Publish'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 
   static String _displayValue(String value) {
     final normalized = value.trim().toLowerCase();
@@ -358,113 +351,110 @@ class _RecipeEditorState extends State<_RecipeEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Create Meal Post')),
-        body: Form(
-          key: _form,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              TextFormField(
-                controller: _name,
-                decoration: const InputDecoration(labelText: 'Meal name'),
-                validator: (value) =>
+    appBar: AppBar(title: const Text('Create Meal Post')),
+    body: Form(
+      key: _form,
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          TextFormField(
+            controller: _name,
+            decoration: const InputDecoration(labelText: 'Meal name'),
+            validator:
+                (value) =>
                     value == null || value.trim().isEmpty
                         ? 'Enter a name'
                         : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _description,
-                decoration: const InputDecoration(labelText: 'Description'),
-                minLines: 3,
-                maxLines: 5,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _time,
-                      decoration:
-                          const InputDecoration(labelText: 'Minutes'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _servings,
-                      decoration: const InputDecoration(labelText: 'Servings'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _difficulty,
-                decoration: const InputDecoration(labelText: 'Difficulty'),
-                items: const [
-                  DropdownMenuItem(value: 'EASY', child: Text('Easy')),
-                  DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
-                  DropdownMenuItem(value: 'HARD', child: Text('Hard')),
-                ],
-                onChanged: (value) =>
-                    setState(() => _difficulty = value ?? 'EASY'),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _chooseImage,
-                icon: const Icon(Icons.photo_outlined),
-                label: Text(
-                  _image == null
-                      ? 'Add cover photo (required to publish)'
-                      : 'Cover photo selected',
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _description,
+            decoration: const InputDecoration(labelText: 'Description'),
+            minLines: 3,
+            maxLines: 5,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _time,
+                  decoration: const InputDecoration(labelText: 'Minutes'),
+                  keyboardType: TextInputType.number,
                 ),
               ),
-              const SizedBox(height: 22),
-              _EditableList(
-                title: 'Ingredients',
-                controller: _ingredient,
-                hint: 'e.g. 2 tomatoes',
-                values: _ingredients.map((item) => item.name).toList(),
-                onAdd: () {
-                  if (_ingredient.text.trim().isNotEmpty) {
-                    setState(() {
-                      _ingredients.add(RecipeIngredient(_ingredient.text
-                          .trim()));
-                      _ingredient.clear();
-                    });
-                  }
-                },
-                onRemove: (index) =>
-                    setState(() => _ingredients.removeAt(index)),
-              ),
-              const SizedBox(height: 20),
-              _EditableList(
-                title: 'Cooking steps',
-                controller: _step,
-                hint: 'Describe this step',
-                values: _steps.map((item) => item.instruction).toList(),
-                onAdd: () {
-                  if (_step.text.trim().isNotEmpty) {
-                    setState(() {
-                      _steps.add(RecipeStep(_step.text.trim()));
-                      _step.clear();
-                    });
-                  }
-                },
-                onRemove: (index) => setState(() => _steps.removeAt(index)),
-              ),
-              const SizedBox(height: 28),
-              FilledButton(
-                onPressed: _saving ? null : _save,
-                child: Text(_saving ? 'Publishing…' : 'Publish Meal'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _servings,
+                  decoration: const InputDecoration(labelText: 'Servings'),
+                  keyboardType: TextInputType.number,
+                ),
               ),
             ],
           ),
-        ),
-      );
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _difficulty,
+            decoration: const InputDecoration(labelText: 'Difficulty'),
+            items: const [
+              DropdownMenuItem(value: 'EASY', child: Text('Easy')),
+              DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
+              DropdownMenuItem(value: 'HARD', child: Text('Hard')),
+            ],
+            onChanged: (value) => setState(() => _difficulty = value ?? 'EASY'),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _chooseImage,
+            icon: const Icon(Icons.photo_outlined),
+            label: Text(
+              _image == null
+                  ? 'Add cover photo (required to publish)'
+                  : 'Cover photo selected',
+            ),
+          ),
+          const SizedBox(height: 22),
+          _EditableList(
+            title: 'Ingredients',
+            controller: _ingredient,
+            hint: 'e.g. 2 tomatoes',
+            values: _ingredients.map((item) => item.name).toList(),
+            onAdd: () {
+              if (_ingredient.text.trim().isNotEmpty) {
+                setState(() {
+                  _ingredients.add(RecipeIngredient(_ingredient.text.trim()));
+                  _ingredient.clear();
+                });
+              }
+            },
+            onRemove: (index) => setState(() => _ingredients.removeAt(index)),
+          ),
+          const SizedBox(height: 20),
+          _EditableList(
+            title: 'Cooking steps',
+            controller: _step,
+            hint: 'Describe this step',
+            values: _steps.map((item) => item.instruction).toList(),
+            onAdd: () {
+              if (_step.text.trim().isNotEmpty) {
+                setState(() {
+                  _steps.add(RecipeStep(_step.text.trim()));
+                  _step.clear();
+                });
+              }
+            },
+            onRemove: (index) => setState(() => _steps.removeAt(index)),
+          ),
+          const SizedBox(height: 28),
+          FilledButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? 'Publishing…' : 'Publish Meal'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _EditableList extends StatelessWidget {
@@ -486,40 +476,37 @@ class _EditableList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      ...values.asMap().entries.map(
+        (entry) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: CircleAvatar(radius: 14, child: Text('${entry.key + 1}')),
+          title: Text(entry.value),
+          trailing: IconButton(
+            onPressed: () => onRemove(entry.key),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ),
+      ),
+      Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          ...values.asMap().entries.map(
-                (entry) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    radius: 14,
-                    child: Text('${entry.key + 1}'),
-                  ),
-                  title: Text(entry.value),
-                  trailing: IconButton(
-                    onPressed: () => onRemove(entry.key),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ),
-              ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(hintText: hint),
-                ),
-              ),
-              IconButton(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_circle_rounded),
-              ),
-            ],
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(hintText: hint),
+            ),
+          ),
+          IconButton(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_circle_rounded),
           ),
         ],
-      );
+      ),
+    ],
+  );
 }
 
 class _StatusChip extends StatelessWidget {
@@ -529,11 +516,12 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Chip(
-        label: Text(status == 'PUBLISHED' ? 'Published' : 'Draft'),
-        backgroundColor: status == 'PUBLISHED'
+    label: Text(status == 'PUBLISHED' ? 'Published' : 'Draft'),
+    backgroundColor:
+        status == 'PUBLISHED'
             ? const Color(0xFFE7F6EB)
             : const Color(0xFFF1F3F2),
-      );
+  );
 }
 
 class _InfoChip extends StatelessWidget {
@@ -543,8 +531,6 @@ class _InfoChip extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Chip(
-        avatar: Icon(icon, size: 17),
-        label: Text(text),
-      );
+  Widget build(BuildContext context) =>
+      Chip(avatar: Icon(icon, size: 17), label: Text(text));
 }

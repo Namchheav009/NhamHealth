@@ -22,11 +22,11 @@ import jakarta.validation.Valid;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminFavoriteRequest;
 import com.nhamhealth.nhamhealth_api.entity.MealFavorite;
 import com.nhamhealth.nhamhealth_api.entity.PostFavorite;
-import com.nhamhealth.nhamhealth_api.repository.MealFavoriteRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostFavoriteRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealFavoriteRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostFavoriteRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class FavoritesAdminController {

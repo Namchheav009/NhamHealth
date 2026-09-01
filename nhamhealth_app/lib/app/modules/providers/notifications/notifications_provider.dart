@@ -31,15 +31,23 @@ class NotificationsProvider {
 
   Future<http.Response> _request(String method, {int? id}) async {
     final token = await _authService.readAccessToken();
-    if (token == null || token.isEmpty) throw const NotificationsException('Your session has expired.');
+    if (token == null || token.isEmpty) {
+      throw const NotificationsException('Your session has expired.');
+    }
     final suffix = id == null ? '' : '/$id/read';
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/notifications$suffix');
-    final headers = {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
-    final response = method == 'PATCH'
-        ? await _client.patch(uri, headers: headers)
-        : await _client.get(uri, headers: headers);
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    final response =
+        method == 'PATCH'
+            ? await _client.patch(uri, headers: headers)
+            : await _client.get(uri, headers: headers);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw NotificationsException('Unable to load notifications (HTTP ${response.statusCode}).');
+      throw NotificationsException(
+        'Unable to load notifications (HTTP ${response.statusCode}).',
+      );
     }
     return response;
   }
@@ -48,5 +56,6 @@ class NotificationsProvider {
 class NotificationsException implements Exception {
   const NotificationsException(this.message);
   final String message;
-  @override String toString() => message;
+  @override
+  String toString() => message;
 }

@@ -24,9 +24,7 @@ class HomeBinding extends Bindings {
     );
 
     Get.lazyPut<HomeRepository>(
-      () => HomeRepository(
-        provider: Get.find<HomeProvider>(),
-      ),
+      () => HomeRepository(provider: Get.find<HomeProvider>()),
     );
 
     Get.lazyPut<HomeController>(

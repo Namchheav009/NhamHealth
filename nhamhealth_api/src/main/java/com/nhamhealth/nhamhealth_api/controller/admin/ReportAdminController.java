@@ -22,12 +22,12 @@ import com.nhamhealth.nhamhealth_api.entity.PostMedia;
 import com.nhamhealth.nhamhealth_api.entity.PostReport;
 import com.nhamhealth.nhamhealth_api.entity.ReportReason;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.PostReportRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostMediaRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.ReportReasonRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.CommunityReportService;
+import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostMediaRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.community.CommunityReportService;
 
 @Controller
 public class ReportAdminController {

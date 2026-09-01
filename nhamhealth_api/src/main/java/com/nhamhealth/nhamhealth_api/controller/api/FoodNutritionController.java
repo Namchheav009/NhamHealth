@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.nhamhealth.nhamhealth_api.dto.response.FoodNutritionResponse;
-import com.nhamhealth.nhamhealth_api.service.FoodNutritionService;
+import com.nhamhealth.nhamhealth_api.service.catalog.FoodNutritionService;
 
 @RestController
 @RequestMapping("/api/v1/foods")

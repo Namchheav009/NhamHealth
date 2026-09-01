@@ -40,73 +40,38 @@ class SplashController extends GetxController
   }
 
   void _initializeAnimations() {
-    logoRotation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(
+    logoRotation = Tween<double>(begin: 0, end: 2 * math.pi).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.0,
-          0.55,
-          curve: Curves.easeInOut,
-        ),
+        curve: const Interval(0.0, 0.55, curve: Curves.easeInOut),
       ),
     );
 
-    logoSpinOpacity = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(
+    logoSpinOpacity = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.0,
-          0.20,
-          curve: Curves.easeIn,
-        ),
+        curve: const Interval(0.0, 0.20, curve: Curves.easeIn),
       ),
     );
 
-    logoScale = Tween<double>(
-      begin: 0.6,
-      end: 1,
-    ).animate(
+    logoScale = Tween<double>(begin: 0.6, end: 1).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.45,
-          0.75,
-          curve: Curves.elasticOut,
-        ),
+        curve: const Interval(0.45, 0.75, curve: Curves.elasticOut),
       ),
     );
 
-    logoOpacity = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(
+    logoOpacity = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.45,
-          0.65,
-          curve: Curves.easeIn,
-        ),
+        curve: const Interval(0.45, 0.65, curve: Curves.easeIn),
       ),
     );
 
-    textReveal = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(
+    textReveal = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.65,
-          1.0,
-          curve: Curves.easeInOut,
-        ),
+        curve: const Interval(0.65, 1.0, curve: Curves.easeInOut),
       ),
     );
   }
@@ -118,14 +83,11 @@ class SplashController extends GetxController
 
     _hasNavigated = true;
 
-    _navigationTimer = Timer(
-      const Duration(milliseconds: 500),
-      () {
-        if (!isClosed) {
-          _finishStartup();
-        }
-      },
-    );
+    _navigationTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!isClosed) {
+        _finishStartup();
+      }
+    });
   }
 
   Future<void> _finishStartup() async {
@@ -165,9 +127,7 @@ class SplashController extends GetxController
   void onClose() {
     _navigationTimer?.cancel();
 
-    animationController.removeStatusListener(
-      _handleAnimationStatus,
-    );
+    animationController.removeStatusListener(_handleAnimationStatus);
 
     animationController.dispose();
 

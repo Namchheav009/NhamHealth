@@ -18,7 +18,7 @@ import org.springframework.cache.annotation.CacheEvict;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminServingSizeRequest;
 import com.nhamhealth.nhamhealth_api.entity.ServingSize;
-import com.nhamhealth.nhamhealth_api.repository.ServingSizeRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.ServingSizeRepository;
 
 import jakarta.validation.Valid;
 

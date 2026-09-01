@@ -23,11 +23,11 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
-import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationItemRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class AiRecommendationAdminController {

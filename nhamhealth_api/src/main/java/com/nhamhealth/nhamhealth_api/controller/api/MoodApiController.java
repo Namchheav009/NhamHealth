@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nhamhealth.nhamhealth_api.dto.response.MoodResponse;
-import com.nhamhealth.nhamhealth_api.repository.MoodRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
 
 @RestController
 @RequestMapping("/api/v1/moods")

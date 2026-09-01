@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nhamhealth.nhamhealth_api.dto.response.MealCategoryResponse;
-import com.nhamhealth.nhamhealth_api.repository.MealCategoryRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 
 @RestController
 @RequestMapping("/api/v1/meal-categories")

@@ -47,8 +47,7 @@ class SplashView extends GetView<SplashController> {
           fit: BoxFit.contain,
         ),
         builder: (context, child) {
-          final bool isSpinning =
-              controller.animationController.value < 0.55;
+          final bool isSpinning = controller.animationController.value < 0.55;
 
           if (isSpinning) {
             return Opacity(

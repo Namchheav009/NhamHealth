@@ -17,14 +17,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.response.ProfileImageResponse;
-import com.nhamhealth.nhamhealth_api.service.ProfileImageStorageService;
-import com.nhamhealth.nhamhealth_api.service.ProfileDashboardService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileDashboardService;
 import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.DailyNutritionUpdateRequest;
-import com.nhamhealth.nhamhealth_api.service.DailyNutritionService;
+import com.nhamhealth.nhamhealth_api.service.wellness.DailyNutritionService;
 
 import jakarta.validation.Valid;
-import com.nhamhealth.nhamhealth_api.service.UserProfileService;
+import com.nhamhealth.nhamhealth_api.service.user.UserProfileService;
 
 @RestController
 @RequestMapping("/api/v1/users")

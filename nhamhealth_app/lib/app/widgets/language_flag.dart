@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LanguageFlag extends StatelessWidget {
-  const LanguageFlag({
-    super.key,
-    required this.languageCode,
-    this.size = 34,
-  });
+  const LanguageFlag({super.key, required this.languageCode, this.size = 34});
 
   final String languageCode;
   final double size;

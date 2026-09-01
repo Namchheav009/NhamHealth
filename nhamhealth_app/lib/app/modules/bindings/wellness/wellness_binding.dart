@@ -15,7 +15,8 @@ class WellnessBinding extends Bindings {
       );
     }
     Get.lazyPut<WellnessController>(
-      () => WellnessController(profileRepository: Get.find<ProfileRepository>()),
+      () =>
+          WellnessController(profileRepository: Get.find<ProfileRepository>()),
       fenix: true,
     );
     Get.lazyPut<CaloriesController>(() => CaloriesController(), fenix: true);

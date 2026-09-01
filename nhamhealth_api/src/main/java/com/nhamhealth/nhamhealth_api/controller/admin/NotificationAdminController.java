@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminCreateNotificationRequest;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
-import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.PushNotificationService;
+import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.notification.PushNotificationService;
 
 import jakarta.validation.Valid;
 

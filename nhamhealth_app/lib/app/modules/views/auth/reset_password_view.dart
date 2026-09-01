@@ -45,12 +45,18 @@ class ResetPasswordController extends GetxController {
     confirmPasswordHasError.value = false;
 
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      AppAlert.error(title: 'Required', message: 'Please fill in both password fields.');
+      AppAlert.error(
+        title: 'Required',
+        message: 'Please fill in both password fields.',
+      );
       return;
     }
 
     if (newPassword.length < 8) {
-      AppAlert.error(title: 'Password too short', message: 'Use at least 8 characters for your new password.');
+      AppAlert.error(
+        title: 'Password too short',
+        message: 'Use at least 8 characters for your new password.',
+      );
       return;
     }
 
@@ -60,7 +66,10 @@ class ResetPasswordController extends GetxController {
     }
 
     if (resetToken.isEmpty) {
-      AppAlert.error(title: 'Reset session expired', message: 'Request a new verification code and try again.');
+      AppAlert.error(
+        title: 'Reset session expired',
+        message: 'Request a new verification code and try again.',
+      );
       return;
     }
 

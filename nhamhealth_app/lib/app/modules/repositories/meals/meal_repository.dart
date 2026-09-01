@@ -9,7 +9,8 @@ class MealRepository {
 
   Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) =>
       _provider.getMeals(keyword: keyword, categoryId: categoryId);
-  Future<MealModel> getMealDetail(int mealId) => _provider.getMealDetail(mealId);
+  Future<MealModel> getMealDetail(int mealId) =>
+      _provider.getMealDetail(mealId);
   Future<List<MealCategoryModel>> getCategories() => _provider.getCategories();
   Future<List<MealModel>> getPersonalizedMealIdeas({bool refresh = false}) =>
       _provider.getPersonalizedMealIdeas(refresh: refresh);

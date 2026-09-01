@@ -9,8 +9,13 @@ import '../../repositories/notifications/notifications_repository.dart';
 class NotificationsBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => NotificationsProvider(authService: Get.find<AuthService>()));
-    Get.lazyPut(() => NotificationsRepository(provider: Get.find<NotificationsProvider>()));
+    Get.lazyPut(
+      () => NotificationsProvider(authService: Get.find<AuthService>()),
+    );
+    Get.lazyPut(
+      () =>
+          NotificationsRepository(provider: Get.find<NotificationsProvider>()),
+    );
     Get.lazyPut(
       () => NotificationsController(
         repository: Get.find<NotificationsRepository>(),

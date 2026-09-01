@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nhamhealth.nhamhealth_api.dto.response.IngredientSuggestionResponse;
-import com.nhamhealth.nhamhealth_api.repository.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
 
 /** Read-only catalog search used by the Community meal-post composer. */
 @RestController

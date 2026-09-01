@@ -226,7 +226,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      Get.snackbar('Select a category', 'Choose a meal category before publishing.');
+      Get.snackbar(
+        'Select a category',
+        'Choose a meal category before publishing.',
+      );
       return;
     }
     final ingredients =
@@ -305,7 +308,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      Get.snackbar('Select a category', 'Choose a meal category before continuing.');
+      Get.snackbar(
+        'Select a category',
+        'Choose a meal category before continuing.',
+      );
       return;
     }
     FocusScope.of(context).unfocus();
@@ -352,17 +358,21 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       return;
     }
     setState(() => _ingredientSuggestions = const []);
-    _ingredientSearchDebounce = Timer(const Duration(milliseconds: 250), () async {
-      try {
-        final results = await Get.find<CommunityRepository>().searchIngredients(query);
-        if (mounted && requestVersion == _ingredientSearchVersion) {
-          setState(() => _ingredientSuggestions = results);
+    _ingredientSearchDebounce = Timer(
+      const Duration(milliseconds: 250),
+      () async {
+        try {
+          final results = await Get.find<CommunityRepository>()
+              .searchIngredients(query);
+          if (mounted && requestVersion == _ingredientSearchVersion) {
+            setState(() => _ingredientSuggestions = results);
+          }
+        } on Object {
+          // A temporary search failure should never prevent someone entering an
+          // ingredient manually.
         }
-      } on Object {
-        // A temporary search failure should never prevent someone entering an
-        // ingredient manually.
-      }
-    });
+      },
+    );
   }
 
   void _selectIngredient(IngredientSuggestion ingredient) {
@@ -376,10 +386,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     FocusScope.of(context).unfocus();
   }
 
-  Future<void> _createAndSelectTag(
-    String name,
-    StateSetter updateSheet,
-  ) async {
+  Future<void> _createAndSelectTag(String name, StateSetter updateSheet) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty || _creatingTag) return;
     updateSheet(() => _creatingTag = true);
@@ -452,9 +459,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                           controller: search,
                           autofocus: true,
                           onChanged: (_) => updateSheet(() {}),
-                          decoration: _decoration(
-                            hint: 'Search tags',
-                          ).copyWith(
+                          decoration: _decoration(hint: 'Search tags').copyWith(
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
                         ),
@@ -507,7 +512,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                   contentPadding: EdgeInsets.zero,
                                   leading: const CircleAvatar(
                                     backgroundColor: Color(0xFFE5F7EC),
-                                    child: Icon(Icons.add_rounded, color: green),
+                                    child: Icon(
+                                      Icons.add_rounded,
+                                      color: green,
+                                    ),
                                   ),
                                   title: Text('Create "${search.text.trim()}"'),
                                   subtitle: const Text('Create and select tag'),
@@ -670,11 +678,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   : const Color(0xFFE0E6E2),
         ),
       ),
-      _progressStep(
-        2,
-        'Ingredients & Steps',
-        isActive: _currentStep == 1,
-      ),
+      _progressStep(2, 'Ingredients & Steps', isActive: _currentStep == 1),
     ],
   );
 
@@ -919,12 +923,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.add_a_photo_outlined, color: green, size: 27),
+              child: const Icon(
+                Icons.add_a_photo_outlined,
+                color: green,
+                size: 27,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Add a delicious photo',
-              style: TextStyle(color: Color(0xFF17643A), fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: Color(0xFF17643A),
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 3),
             const Text(
@@ -945,7 +956,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       );
     }
     if (_categoriesError != null) {
-      return _inlineError('Meal categories could not be loaded.', _loadMealCategories);
+      return _inlineError(
+        'Meal categories could not be loaded.',
+        _loadMealCategories,
+      );
     }
     MealCategoryModel? selectedCategory;
     for (final category in _mealCategories) {
@@ -959,39 +973,49 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Meal category', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            'Meal category',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           Material(
             color: Colors.transparent,
             child: Ink(
               decoration: BoxDecoration(
-                color: selectedCategory == null
-                    ? const Color(0xFFF7F9F7)
-                    : const Color(0xFFEAF8EF),
+                color:
+                    selectedCategory == null
+                        ? const Color(0xFFF7F9F7)
+                        : const Color(0xFFEAF8EF),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: selectedCategory == null
-                      ? const Color(0xFFDCE5DF)
-                      : green,
+                  color:
+                      selectedCategory == null
+                          ? const Color(0xFFDCE5DF)
+                          : green,
                 ),
               ),
               child: InkWell(
                 onTap: _submitting ? null : _showMealCategoryPicker,
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Container(
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: selectedCategory == null ? Colors.white : green,
+                          color:
+                              selectedCategory == null ? Colors.white : green,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           _mealCategoryIcon(selectedCategory?.name ?? ''),
-                          color: selectedCategory == null ? green : Colors.white,
+                          color:
+                              selectedCategory == null ? green : Colors.white,
                           size: 19,
                         ),
                       ),
@@ -1004,9 +1028,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                             Text(
                               selectedCategory?.name ?? 'Choose a category',
                               style: TextStyle(
-                                color: selectedCategory == null
-                                    ? const Color(0xFF526158)
-                                    : const Color(0xFF145C35),
+                                color:
+                                    selectedCategory == null
+                                        ? const Color(0xFF526158)
+                                        : const Color(0xFF145C35),
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1051,100 +1076,118 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(sheetContext).height * .65,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    height: 5,
-                    width: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF9AA19C),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
+      builder:
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(sheetContext).height * .65,
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Choose meal category',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'This is where your meal will appear after approval.',
-                  style: TextStyle(color: Color(0xFF718078), fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _mealCategories.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
-                    itemBuilder: (_, index) {
-                      final category = _mealCategories[index];
-                      final selected = category.id == _selectedCategoryId;
-                      return Material(
-                        color: selected ? const Color(0xFFEAF8EF) : const Color(0xFFF7F9F7),
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () => Navigator.pop(sheetContext, category.id),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: selected ? green : Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    _mealCategoryIcon(category.name),
-                                    color: selected ? Colors.white : green,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    category.name,
-                                    style: TextStyle(
-                                      color: const Color(0xFF18231C),
-                                      fontSize: 15,
-                                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                if (selected)
-                                  const Icon(Icons.check_circle_rounded, color: green),
-                              ],
-                            ),
-                          ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        height: 5,
+                        width: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF9AA19C),
+                          borderRadius: BorderRadius.circular(99),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Choose meal category',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'This is where your meal will appear after approval.',
+                      style: TextStyle(color: Color(0xFF718078), fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: _mealCategories.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (_, index) {
+                          final category = _mealCategories[index];
+                          final selected = category.id == _selectedCategoryId;
+                          return Material(
+                            color:
+                                selected
+                                    ? const Color(0xFFEAF8EF)
+                                    : const Color(0xFFF7F9F7),
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap:
+                                  () =>
+                                      Navigator.pop(sheetContext, category.id),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: selected ? green : Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        _mealCategoryIcon(category.name),
+                                        color: selected ? Colors.white : green,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        category.name,
+                                        style: TextStyle(
+                                          color: const Color(0xFF18231C),
+                                          fontSize: 15,
+                                          fontWeight:
+                                              selected
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    if (selected)
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: green,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
     );
     if (categoryId != null && mounted) {
       setState(() => _selectedCategoryId = categoryId);
@@ -1153,12 +1196,20 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   IconData _mealCategoryIcon(String categoryName) {
     final name = categoryName.toLowerCase();
-    if (name.contains('breakfast') || name.contains('brunch')) return Icons.egg_alt_rounded;
-    if (name.contains('snack') || name.contains('dessert')) return Icons.bakery_dining_rounded;
-    if (name.contains('beverage') || name.contains('drink')) return Icons.local_drink_rounded;
+    if (name.contains('breakfast') || name.contains('brunch')) {
+      return Icons.egg_alt_rounded;
+    }
+    if (name.contains('snack') || name.contains('dessert')) {
+      return Icons.bakery_dining_rounded;
+    }
+    if (name.contains('beverage') || name.contains('drink')) {
+      return Icons.local_drink_rounded;
+    }
     if (name.contains('appetizer')) return Icons.tapas_rounded;
     if (name.contains('late')) return Icons.nightlight_round;
-    if (name.contains('lunch') || name.contains('dinner')) return Icons.dinner_dining_rounded;
+    if (name.contains('lunch') || name.contains('dinner')) {
+      return Icons.dinner_dining_rounded;
+    }
     return Icons.restaurant_rounded;
   }
 
@@ -1213,7 +1264,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    onSelected: (_) => setState(() => _selectedTags.remove(tag.id)),
+                    onSelected:
+                        (_) => setState(() => _selectedTags.remove(tag.id)),
                   ),
                 )
                 .toList(),
@@ -1235,17 +1287,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     child: InkWell(
       key: const ValueKey<String>('community-post-audience'),
       borderRadius: BorderRadius.circular(16),
-      onTap: _submitting
-          ? null
-          : () async {
-              final selected = await showCommunityAudiencePicker(
-                context,
-                selected: _visibility,
-              );
-              if (selected != null && mounted) {
-                setState(() => _visibility = selected);
-              }
-            },
+      onTap:
+          _submitting
+              ? null
+              : () async {
+                final selected = await showCommunityAudiencePicker(
+                  context,
+                  selected: _visibility,
+                );
+                if (selected != null && mounted) {
+                  setState(() => _visibility = selected);
+                }
+              },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         child: Row(
@@ -1345,9 +1398,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         filled: true,
         fillColor: const Color(0xFFFFFEFF),
         hintStyle: const TextStyle(color: Color(0xFF909A94)),
-        suffixStyle: const TextStyle(color: Color(0xFF617068), fontWeight: FontWeight.w600),
+        suffixStyle: const TextStyle(
+          color: Color(0xFF617068),
+          fontWeight: FontWeight.w600,
+        ),
         counterStyle: const TextStyle(color: Color(0xFF7B847E), fontSize: 11),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 13,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFDDE5DF)),
@@ -1496,15 +1555,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           decoration: BoxDecoration(
             color: selected ? green : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: selected
-                ? const [
-                    BoxShadow(
-                      color: Color(0x26056E38),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                selected
+                    ? const [
+                      BoxShadow(
+                        color: Color(0x26056E38),
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
+                    ]
+                    : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1613,9 +1673,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           TextFormField(
             controller: _newIngredient.name,
             onChanged: _searchIngredients,
-            decoration: _decoration(hint: 'Search ingredient catalog').copyWith(
-              prefixIcon: const Icon(Icons.search_rounded, size: 20),
-            ),
+            decoration: _decoration(
+              hint: 'Search ingredient catalog',
+            ).copyWith(prefixIcon: const Icon(Icons.search_rounded, size: 20)),
             textInputAction: TextInputAction.next,
           ),
           if (_ingredientSuggestions.isNotEmpty) ...[
@@ -1671,16 +1731,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       initialValue: _newIngredient.unit,
-                      items: _ingredientUnits
-                          .map(
-                            (unit) => DropdownMenuItem(
-                              value: unit,
-                              child: Text(unit),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _newIngredient.unit = value!),
+                      items:
+                          _ingredientUnits
+                              .map(
+                                (unit) => DropdownMenuItem(
+                                  value: unit,
+                                  child: Text(unit),
+                                ),
+                              )
+                              .toList(),
+                      onChanged:
+                          (value) =>
+                              setState(() => _newIngredient.unit = value!),
                       decoration: _decoration(),
                     ),
                   ],
@@ -1744,11 +1806,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         final ingredient = _ingredientSuggestions[index];
         return ListTile(
           dense: true,
-          leading: const Icon(
-            Icons.restaurant_rounded,
-            color: green,
-            size: 20,
-          ),
+          leading: const Icon(Icons.restaurant_rounded, color: green, size: 20),
           title: Text(ingredient.name),
           trailing:
               ingredient.defaultUnit.isEmpty

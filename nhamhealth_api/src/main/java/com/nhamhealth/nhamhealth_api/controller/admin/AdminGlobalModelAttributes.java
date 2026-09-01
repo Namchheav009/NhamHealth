@@ -6,7 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-import com.nhamhealth.nhamhealth_api.repository.NotificationRepository;
+import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 
 @ControllerAdvice
 public class AdminGlobalModelAttributes {

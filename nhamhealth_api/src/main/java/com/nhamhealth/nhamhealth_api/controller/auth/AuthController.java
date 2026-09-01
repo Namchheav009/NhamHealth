@@ -28,9 +28,9 @@ import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PinVerificationResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
-import com.nhamhealth.nhamhealth_api.service.AuthService;
-import com.nhamhealth.nhamhealth_api.service.PasswordResetService;
-import com.nhamhealth.nhamhealth_api.service.RegistrationVerificationService;
+import com.nhamhealth.nhamhealth_api.service.auth.AuthService;
+import com.nhamhealth.nhamhealth_api.service.auth.PasswordResetService;
+import com.nhamhealth.nhamhealth_api.service.auth.RegistrationVerificationService;
 
 import jakarta.validation.Valid;
 

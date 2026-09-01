@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nhamhealth.nhamhealth_api.dto.response.MealDetailResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.MealResponse;
-import com.nhamhealth.nhamhealth_api.repository.MealIngredientRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealNutritionRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.RecipeStepRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealIngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealNutritionRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 
 @RestController
 @RequestMapping("/api/v1/meals")

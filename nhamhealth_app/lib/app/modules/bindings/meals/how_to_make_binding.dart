@@ -5,8 +5,6 @@ import '../../controllers/meals/how_to_make_controller.dart';
 class HowToMakeBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<HowToMakeController>(
-      () => HowToMakeController(),
-    );
+    Get.lazyPut<HowToMakeController>(() => HowToMakeController());
   }
 }

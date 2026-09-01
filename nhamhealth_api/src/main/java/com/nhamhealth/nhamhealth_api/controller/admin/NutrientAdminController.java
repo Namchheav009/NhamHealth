@@ -23,10 +23,10 @@ import jakarta.validation.Valid;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminNutrientRequest;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
-import com.nhamhealth.nhamhealth_api.repository.AiFoodAnalysisNutrientRepository;
-import com.nhamhealth.nhamhealth_api.repository.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.MealNutritionRepository;
-import com.nhamhealth.nhamhealth_api.repository.NutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodAnalysisNutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealNutritionRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.NutrientRepository;
 
 @Controller
 public class NutrientAdminController {

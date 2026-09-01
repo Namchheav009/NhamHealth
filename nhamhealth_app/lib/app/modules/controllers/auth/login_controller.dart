@@ -91,8 +91,7 @@ class LoginController extends GetxController {
       () => SecurityView(
         promptCreatePin: true,
         requirePinCreation: true,
-        onPinCreated:
-            () => Get.offAllNamed(AppRoutes.home, arguments: user),
+        onPinCreated: () => Get.offAllNamed(AppRoutes.home, arguments: user),
       ),
       transition: Transition.rightToLeft,
     );

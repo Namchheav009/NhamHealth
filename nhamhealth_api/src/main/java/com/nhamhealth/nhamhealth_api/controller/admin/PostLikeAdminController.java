@@ -10,9 +10,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.nhamhealth.nhamhealth_api.entity.PostLike;
-import com.nhamhealth.nhamhealth_api.repository.PostLikeRepository;
-import com.nhamhealth.nhamhealth_api.repository.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostLikeRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class PostLikeAdminController {

@@ -126,7 +126,10 @@ class CaloriesController extends GetxController {
     }
 
     if (showMessage) {
-      AppAlert.success(title: 'Food added', message: '$foodName added successfully.');
+      AppAlert.success(
+        title: 'Food added',
+        message: '$foodName added successfully.',
+      );
     }
   }
 
@@ -155,7 +158,10 @@ class CaloriesController extends GetxController {
     // Later:
     // await repository.saveCalories(...);
 
-    AppAlert.success(title: 'Saved', message: 'Your calorie changes have been saved.');
+    AppAlert.success(
+      title: 'Saved',
+      message: 'Your calorie changes have been saved.',
+    );
   }
 
   @override

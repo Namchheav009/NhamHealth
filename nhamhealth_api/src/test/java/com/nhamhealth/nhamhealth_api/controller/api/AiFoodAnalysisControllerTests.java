@@ -13,7 +13,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.nhamhealth.nhamhealth_api.service.AiFoodAnalysisService;
+import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
 
 class AiFoodAnalysisControllerTests {
 

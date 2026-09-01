@@ -17,9 +17,9 @@ import com.nhamhealth.nhamhealth_api.dto.response.RecommendedMealResponse;
 import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
 import com.nhamhealth.nhamhealth_api.entity.AiRecommendationItem;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
-import com.nhamhealth.nhamhealth_api.repository.AiRecommendationItemRepository;
-import com.nhamhealth.nhamhealth_api.repository.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.service.AiMealRecommendationService;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationItemRepository;
+import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationRepository;
+import com.nhamhealth.nhamhealth_api.service.ai.AiMealRecommendationService;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;

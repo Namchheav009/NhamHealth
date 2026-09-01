@@ -121,8 +121,7 @@ class GoogleAuthService {
     }
     await _googleSignIn.initialize(
       clientId: platformClientId.isEmpty ? null : platformClientId,
-      serverClientId:
-          kIsWeb || serverClientId.isEmpty ? null : serverClientId,
+      serverClientId: kIsWeb || serverClientId.isEmpty ? null : serverClientId,
     );
   }
 }

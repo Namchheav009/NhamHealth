@@ -35,7 +35,10 @@ class FoodSourceDetailController extends GetxController {
       Future.microtask(() {
         Get.offNamed(AppRoutes.calories);
 
-        AppAlert.error(title: 'Food not found', message: 'Please select a food source again.');
+        AppAlert.error(
+          title: 'Food not found',
+          message: 'Please select a food source again.',
+        );
       });
     }
 
@@ -146,11 +149,17 @@ class FoodSourceDetailController extends GetxController {
   }
 
   void reanalyzeWithAi() {
-    AppAlert.success(title: 'AI Re-analysis', message: 'Re-analyzing your food amount...');
+    AppAlert.success(
+      title: 'AI Re-analysis',
+      message: 'Re-analyzing your food amount...',
+    );
   }
 
   void saveChanges() {
-    AppAlert.success(title: 'Saved', message: 'Food detail changes saved successfully.');
+    AppAlert.success(
+      title: 'Saved',
+      message: 'Food detail changes saved successfully.',
+    );
   }
 
   void cancelChanges() {
