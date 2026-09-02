@@ -34,6 +34,8 @@ class CommunityPostEditorPage extends StatefulWidget {
 }
 
 class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
+  // Keep the established app green for primary actions and selected states.
+  // The surrounding pale surfaces provide the visual softness.
   static const green = Color(0xFF0AAA55);
   static const _ingredientUnits = <String>[
     'g',
@@ -55,8 +57,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Timer? _ingredientSearchDebounce;
   int _ingredientSearchVersion = 0;
   late List<TextEditingController> _steps;
-  late List<String> _stepImageUrls;
-  late List<Uint8List?> _stepImagePreviews;
   String _difficulty = 'EASY';
   Uint8List? _image;
   List<CommunityTag> _tags = const [];
@@ -82,6 +82,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       text: post?.cookingTimeMinutes?.toString() ?? '',
     );
     _servings = TextEditingController(text: post?.servings?.toString() ?? '');
+    _name.addListener(_refreshBasicInfoState);
+    _time.addListener(_refreshBasicInfoState);
+    _servings.addListener(_refreshBasicInfoState);
     _difficulty =
         post?.difficulty.isNotEmpty == true
             ? post!.difficulty.toUpperCase()
@@ -95,21 +98,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             .map((item) => TextEditingController(text: item.instruction))
             .toList();
     if (_steps.isEmpty) _steps.add(TextEditingController());
-    _stepImageUrls =
-        (post?.steps ?? const <MealPostStep>[])
-            .map((step) => step.imageUrl)
-            .toList();
-    while (_stepImageUrls.length < _steps.length) {
-      _stepImageUrls.add('');
-    }
-    // New recipe steps add a matching preview slot, so this must remain
-    // growable. A fixed-length list fails on `.add`, leaving the step lists
-    // out of sync and causing an out-of-range error while the editor rebuilds.
-    _stepImagePreviews = List<Uint8List?>.filled(
-      _steps.length,
-      null,
-      growable: true,
-    );
     _selectedTags = {...?post?.tagIds};
     _selectedCategoryId = post?.categoryId;
     _currentStep = post == null ? 0 : 1;
@@ -158,6 +146,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   @override
   void dispose() {
     _ingredientSearchDebounce?.cancel();
+    _name.removeListener(_refreshBasicInfoState);
+    _time.removeListener(_refreshBasicInfoState);
+    _servings.removeListener(_refreshBasicInfoState);
     _name.dispose();
     _time.dispose();
     _servings.dispose();
@@ -170,6 +161,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     }
     super.dispose();
   }
+
+  void _refreshBasicInfoState() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _isBasicInfoComplete =>
+      _name.text.trim().isNotEmpty &&
+      (int.tryParse(_time.text.trim()) ?? 0) > 0 &&
+      (int.tryParse(_servings.text.trim()) ?? 0) > 0 &&
+      _selectedCategoryId != null;
 
   Future<void> _pickImage(ImageSource source) async {
     final file = await _picker.pickImage(
@@ -266,7 +267,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             (index) => MealPostStep(
               stepNumber: index + 1,
               instruction: steps[index].text.trim(),
-              imageUrl: _stepImageUrls[_steps.indexOf(steps[index])],
             ),
           ),
           imageBytes: _image == null ? const [] : [_image!],
@@ -283,24 +283,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       Get.snackbar('Could not publish meal', error.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _pickStepImage(int index) async {
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-      maxWidth: 1600,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    if (mounted) setState(() => _stepImagePreviews[index] = bytes);
-    try {
-      final url = await Get.find<CommunityRepository>().uploadStepImage(bytes);
-      if (mounted) setState(() => _stepImageUrls[index] = url);
-    } on Object catch (error) {
-      if (mounted) setState(() => _stepImagePreviews[index] = null);
-      Get.snackbar('Could not upload image', error.toString());
     }
   }
 
@@ -571,13 +553,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           children: [
             Padding(
               padding: AppSpacing.topBarPagePadding,
-              child: AppBackHeader(
-                title: widget.post == null ? 'Create Meal' : 'Edit Meal',
-                onBack:
-                    _currentStep == 0
-                        ? () => Navigator.maybePop(context)
-                        : () => setState(() => _currentStep = 0),
-              ),
+              child: _editorHeader(),
             ),
             const SizedBox(height: 4),
             Expanded(
@@ -589,6 +565,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         : AutovalidateMode.disabled,
                 child: ListView(
                   key: ValueKey(_currentStep),
+                  physics: const BouncingScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
                   children: [
                     _progressHeader(),
@@ -612,52 +591,92 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           border: Border(top: BorderSide(color: Color(0xFFE7ECE8))),
         ),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: FilledButton(
-          onPressed:
-              _submitting
-                  ? null
-                  : _currentStep == 0
-                  ? _continueToRecipe
-                  : _submit,
-          style: FilledButton.styleFrom(
-            backgroundColor: green,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            minimumSize: const Size.fromHeight(50),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: FilledButton(
+              onPressed:
+                  _submitting || (_currentStep == 0 && !_isBasicInfoComplete)
+                      ? null
+                      : _currentStep == 0
+                      ? _continueToRecipe
+                      : _submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: green,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFE1E3E2),
+                disabledForegroundColor: const Color(0xFF98AAA1),
+                elevation: 0,
+                minimumSize: const Size.fromHeight(50),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(39),
+                ),
+              ),
+              child:
+                  _submitting
+                      ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _currentStep == 0
+                                ? 'Next: Ingredients'
+                                : widget.post == null
+                                ? 'Publish Meal'
+                                : 'Save Changes',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 10),
+                          const Icon(Icons.arrow_forward_rounded, size: 20),
+                        ],
+                      ),
             ),
           ),
-          child:
-              _submitting
-                  ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                  : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _currentStep == 0
-                            ? 'Next: Ingredients'
-                            : widget.post == null
-                            ? 'Publish Meal'
-                            : 'Save Changes',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.arrow_forward_rounded, size: 20),
-                    ],
-                  ),
         ),
       ),
     ),
   );
+
+  Widget _editorHeader() => SizedBox(
+    height: AppBackButton.layoutSize,
+    child: Row(
+      children: [
+        AppBackButton(onPressed: _handleBack),
+        Expanded(
+          child: Center(
+            child: Text(
+              widget.post == null ? 'New meal' : 'Edit meal',
+              style: const TextStyle(
+                color: Color(0xFF15211A),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppBackButton.layoutSize),
+      ],
+    ),
+  );
+
+  void _handleBack() {
+    if (_currentStep == 1) {
+      setState(() {
+        _currentStep = 0;
+        _showValidation = false;
+      });
+      return;
+    }
+    Navigator.maybePop(context);
+  }
 
   Widget _progressHeader() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -678,7 +697,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   : const Color(0xFFE0E6E2),
         ),
       ),
-      _progressStep(2, 'Ingredients & Steps', isActive: _currentStep == 1),
+      _progressStep(2, 'Ingredients', isActive: _currentStep == 1),
     ],
   );
 
@@ -730,64 +749,68 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   List<Widget> _basicInfoFields() => [
     InkWell(
       onTap: _submitting ? null : _chooseImage,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 174,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF8FCF9), Color(0xFFE6F7EC)],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFC5E6D0)),
+      borderRadius: BorderRadius.circular(30),
+      child: CustomPaint(
+        foregroundPainter: const _DashedRoundedBorder(
+          color: Color(0xFFB7DEC7),
+          radius: 30,
         ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            _image != null
-                ? Image.memory(_image!, fit: BoxFit.cover)
-                : widget.post?.imageUrl.isNotEmpty == true
-                ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
-                : _emptyPhotoPrompt(),
-            if (_image != null || widget.post?.imageUrl.isNotEmpty == true)
-              Positioned(
-                right: 12,
-                bottom: 12,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: .62),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Change photo',
-                          style: TextStyle(
+        child: Container(
+          height: 206,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4FAF7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _image != null
+                  ? Image.memory(_image!, fit: BoxFit.cover)
+                  : widget.post?.imageUrl.isNotEmpty == true
+                  ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
+                  : _emptyPhotoPrompt(),
+              if (_image != null || widget.post?.imageUrl.isNotEmpty == true)
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: .55),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
                             color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                            size: 18,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 6),
+                          Text(
+                            'Change photo',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
-    const SizedBox(height: 18),
+    const SizedBox(height: 26),
     _field(
       _name,
       'Meal name',
@@ -851,9 +874,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F7F4),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE5DF)),
+        color: const Color(0xFFF2F7F4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE1ECE5)),
       ),
       child: Row(
         children: [
@@ -869,83 +892,53 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _mealCategoryField(),
   ];
 
-  Widget _emptyPhotoPrompt() => Stack(
-    children: [
-      Positioned(
-        top: 13,
-        left: 14,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .82),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.image_outlined, color: green, size: 15),
-              SizedBox(width: 5),
-              Text(
-                'Cover photo',
-                style: TextStyle(
-                  color: Color(0xFF2B6242),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
+  Widget _emptyPhotoPrompt() => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x0F164E34),
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
           ),
+          child: const Icon(Icons.add_a_photo_outlined, color: green, size: 26),
         ),
-      ),
-      const Positioned(
-        top: 19,
-        right: 16,
-        child: Text(
-          'Recommended',
-          style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+        const SizedBox(height: 12),
+        const Text(
+          'Add a cover photo',
+          style: TextStyle(
+            color: Color(0xFF265441),
+            fontWeight: FontWeight.w800,
+          ),
         ),
-      ),
-      Center(
-        child: Column(
+        const SizedBox(height: 4),
+        const Text(
+          'A clear photo helps your meal stand out',
+          style: TextStyle(color: Color(0xFF718078), fontSize: 12),
+        ),
+        const SizedBox(height: 10),
+        const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x19056E38),
-                    blurRadius: 14,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.add_a_photo_outlined,
-                color: green,
-                size: 27,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Add a delicious photo',
-              style: TextStyle(
-                color: Color(0xFF17643A),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            const Text(
-              'A clear photo helps your meal stand out',
-              style: TextStyle(color: Color(0xFF637169), fontSize: 12),
+            Icon(Icons.image_outlined, color: Color(0xFF91A79A), size: 14),
+            SizedBox(width: 5),
+            Text(
+              'Recommended',
+              style: TextStyle(color: Color(0xFF91A79A), fontSize: 11),
             ),
           ],
         ),
-      ),
-    ],
+      ],
+    ),
   );
 
   Widget _mealCategoryField() {
@@ -1232,8 +1225,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       'Add step',
       () => setState(() {
         _steps.add(TextEditingController());
-        _stepImageUrls.add('');
-        _stepImagePreviews.add(null);
       }),
     ),
     _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
@@ -1362,7 +1353,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 height: 22,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEAF8EF),
+                  color: Color(0xFFEAF6EF),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: green, size: 13),
@@ -1396,8 +1387,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         hintText: hint,
         suffixText: suffix,
         filled: true,
-        fillColor: const Color(0xFFFFFEFF),
-        hintStyle: const TextStyle(color: Color(0xFF909A94)),
+        fillColor: const Color(0xFFFFFFFF),
+        hintStyle: const TextStyle(color: Color(0xFF92A098)),
         suffixStyle: const TextStyle(
           color: Color(0xFF617068),
           fontWeight: FontWeight.w600,
@@ -1405,26 +1396,26 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         counterStyle: const TextStyle(color: Color(0xFF7B847E), fontSize: 11),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 15,
-          vertical: 13,
+          vertical: 12,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFDDE5DF)),
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFDDE5DF)),
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: green, width: 1.5),
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFF8AC5A4), width: 1.25),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFCF3B3B)),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFCF3B3B), width: 1.5),
         ),
       );
@@ -1554,14 +1545,14 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           height: 42,
           decoration: BoxDecoration(
             color: selected ? green : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(19),
             boxShadow:
                 selected
                     ? const [
                       BoxShadow(
-                        color: Color(0x26056E38),
-                        blurRadius: 8,
-                        offset: Offset(0, 3),
+                        color: Color(0x123C9C70),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
                       ),
                     ]
                     : null,
@@ -2017,11 +2008,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   visualDensity: VisualDensity.compact,
                   onPressed: () {
                     _steps[index].dispose();
-                    setState(() {
-                      _steps.removeAt(index);
-                      _stepImageUrls.removeAt(index);
-                      _stepImagePreviews.removeAt(index);
-                    });
+                    setState(() => _steps.removeAt(index));
                   },
                   icon: const Icon(
                     Icons.delete_outline_rounded,
@@ -2035,47 +2022,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             controller: _steps[index],
             minLines: 2,
             maxLines: 4,
-            decoration: _decoration(
-              hint: 'Describe this cooking step',
-            ).copyWith(
-              suffixIcon: IconButton(
-                tooltip: 'Add step photo',
-                onPressed: () => _pickStepImage(index),
-                icon: Icon(
-                  _stepImageUrls[index].isEmpty
-                      ? Icons.add_photo_alternate_outlined
-                      : Icons.check_circle_rounded,
-                  color: green,
-                ),
-              ),
-            ),
+            decoration: _decoration(hint: 'Describe this cooking step'),
           ),
           const SizedBox(height: 8),
           const Text(
             'Leave blank to skip this step.',
             style: TextStyle(color: Color(0xFF718078), fontSize: 11),
           ),
-          if (_stepImagePreviews[index] != null ||
-              _stepImageUrls[index].isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 90,
-                width: double.infinity,
-                child:
-                    _stepImagePreviews[index] != null
-                        ? Image.memory(
-                          _stepImagePreviews[index]!,
-                          fit: BoxFit.cover,
-                        )
-                        : Image.network(
-                          _stepImageUrls[index],
-                          fit: BoxFit.cover,
-                        ),
-              ),
-            ),
-          ],
         ],
       ),
     ),
@@ -2098,4 +2051,51 @@ class _IngredientInput {
     name.dispose();
     amount.dispose();
   }
+}
+
+class _DashedRoundedBorder extends CustomPainter {
+  const _DashedRoundedBorder({
+    required this.color,
+    required this.radius,
+    this.dashLength = 4,
+    this.gapLength = 4,
+  });
+
+  final Color color;
+  final double radius;
+  final double dashLength;
+  final double gapLength;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path =
+        Path()..addRRect(
+          RRect.fromRectAndRadius(
+            Offset(.5, .5) & Size(size.width - 1, size.height - 1),
+            Radius.circular(radius),
+          ),
+        );
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1;
+
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next =
+            (distance + dashLength).clamp(0.0, metric.length).toDouble();
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance = next + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRoundedBorder oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.dashLength != dashLength ||
+      oldDelegate.gapLength != gapLength;
 }

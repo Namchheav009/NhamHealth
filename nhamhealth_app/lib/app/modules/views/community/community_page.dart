@@ -738,6 +738,8 @@ class CommunityPage extends GetView<CommunityController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _feedIntro(context),
+        const SizedBox(height: 12),
         CommunityComposerCard(
           onTap: _showCreatePost,
           authorAvatarUrl:
@@ -748,6 +750,54 @@ class CommunityPage extends GetView<CommunityController> {
       ],
     );
   }
+
+  Widget _feedIntro(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Community',
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 24,
+                letterSpacing: -.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Small healthy steps, shared together.',
+              style: TextStyle(fontSize: 13, color: context.appMutedText),
+            ),
+          ],
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: context.appSoftGreen,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.groups_rounded, size: 16, color: green),
+            SizedBox(width: 5),
+            Text(
+              'Connect',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: green,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 
   Widget _feedFilters(BuildContext context) {
     const labels = ['For You', 'Following', 'Latest'];

@@ -44,11 +44,11 @@ class ProfilePostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 8),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: context.appBorder.withValues(alpha: .9)),
         boxShadow: context.appTileShadow,
       ),
       child: Column(
@@ -58,28 +58,35 @@ class ProfilePostCard extends StatelessWidget {
             children: [
               InkResponse(
                 onTap: onAuthorTap,
-                radius: 25,
-                child: CircleAvatar(
-                  radius: 21,
-                  backgroundColor: context.appSoftGreen,
-                  foregroundImage: _avatarImage,
-                  child: Text(
-                    _initials,
-                    style: const TextStyle(
-                      color: green,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                radius: 26,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: green.withValues(alpha: .24)),
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: context.appSoftGreen,
+                    foregroundImage: _avatarImage,
+                    child: Text(
+                      _initials,
+                      style: const TextStyle(
+                        color: green,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(width: 10),
+              const SizedBox(width: 11),
 
               Expanded(
                 child: InkWell(
                   onTap: onAuthorTap,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Column(
@@ -91,6 +98,7 @@ class ProfilePostCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 15,
+                            letterSpacing: -.1,
                             fontWeight: FontWeight.w800,
                             color: context.appText,
                           ),
@@ -119,22 +127,25 @@ class ProfilePostCard extends StatelessWidget {
                   onViewDetails != null)
                 IconButton(
                   tooltip: 'Post options',
-                  icon: Icon(
-                    Icons.more_horiz_rounded,
-                    color: context.appMutedText,
+                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    backgroundColor: context.appMutedSurface,
+                    foregroundColor: context.appMutedText,
                   ),
+                  icon: const Icon(Icons.more_horiz_rounded, size: 20),
                   onPressed: onOptions ?? () => _showPostOptions(context),
                 ),
             ],
           ),
 
           if (post.mealName.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 15),
             Text(
               post.mealName,
               style: TextStyle(
                 fontSize: 19,
-                height: 1.25,
+                height: 1.22,
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w800,
                 color: context.appText,
               ),
@@ -146,45 +157,46 @@ class ProfilePostCard extends StatelessWidget {
               post.description,
               style: TextStyle(
                 fontSize: 14,
-                height: 1.45,
+                height: 1.48,
                 color: context.appText,
               ),
             ),
           ],
 
-          if (post.cookingTimeMinutes != null || post.servings != null) ...[
-            const SizedBox(height: 10),
-            Row(
+          if (post.cookingTimeMinutes != null ||
+              post.servings != null ||
+              post.difficulty.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
               children: [
-                if (post.cookingTimeMinutes != null) ...[
-                  const Icon(Icons.timer_outlined, size: 18),
-                  const SizedBox(width: 5),
-                  Text('${post.cookingTimeMinutes} min'),
-                ],
-                if (post.servings != null) ...[
-                  const SizedBox(width: 18),
-                  const Icon(Icons.people_outline_rounded, size: 18),
-                  const SizedBox(width: 5),
-                  Text('${post.servings} servings'),
-                ],
-                if (post.difficulty.isNotEmpty) ...[
-                  const SizedBox(width: 18),
-                  Text(
-                    post.difficulty.toLowerCase(),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                if (post.cookingTimeMinutes != null)
+                  _PostInfoPill(
+                    icon: Icons.timer_outlined,
+                    label: '${post.cookingTimeMinutes} min',
                   ),
-                ],
+                if (post.servings != null)
+                  _PostInfoPill(
+                    icon: Icons.people_outline_rounded,
+                    label: '${post.servings} servings',
+                  ),
+                if (post.difficulty.isNotEmpty)
+                  _PostInfoPill(
+                    icon: Icons.local_fire_department_outlined,
+                    label: post.difficulty,
+                  ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 9),
             AiStatusBadge(status: post.aiStatus),
           ],
 
           if (post.tags.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
-              spacing: 8,
-              runSpacing: 6,
+              spacing: 7,
+              runSpacing: 7,
               children: post.tags.map((tag) => _Tag(text: '#$tag')).toList(),
             ),
           ],
@@ -346,6 +358,38 @@ String _compactCount(int value) {
   return '${compact == compact.roundToDouble() ? compact.toStringAsFixed(0) : compact.toStringAsFixed(1)}k';
 }
 
+class _PostInfoPill extends StatelessWidget {
+  const _PostInfoPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: ProfilePostCard.green.withValues(alpha: .12)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: ProfilePostCard.green),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class _ProfilePostMetric extends StatelessWidget {
   const _ProfilePostMetric({
     required this.icon,
@@ -365,7 +409,7 @@ class _ProfilePostMetric extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

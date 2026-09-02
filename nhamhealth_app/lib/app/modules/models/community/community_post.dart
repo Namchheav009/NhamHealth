@@ -253,11 +253,7 @@ class MealPostStep {
     instruction: '${json['instruction'] ?? ''}'.trim(),
     imageUrl: '${json['imageUrl'] ?? ''}'.trim(),
   );
-  Map<String, dynamic> toJson() => {
-    'title': 'Step $stepNumber',
-    'instruction': instruction,
-    if (imageUrl.isNotEmpty) 'imageUrl': imageUrl,
-  };
+  Map<String, dynamic> toJson() => {'instruction': instruction};
 }
 
 class CommunitySharedPost {

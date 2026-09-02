@@ -8,6 +8,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
@@ -183,19 +184,8 @@ class _CommunityPersonProfileViewState
     padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
     child: Row(
       children: [
-        _roundButton(context, Icons.arrow_back_ios_new_rounded, Get.back),
-        Expanded(
-          child: Text(
-            'PROFILE',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.appText,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: .3,
-            ),
-          ),
-        ),
+        AppBackButton(onPressed: Get.back),
+        const Spacer(),
         PopupMenuButton<String>(
           tooltip: 'Profile options',
           onSelected: (_) {},
@@ -206,34 +196,41 @@ class _CommunityPersonProfileViewState
               (_) => const [
                 PopupMenuItem(value: 'report', child: Text('Report profile')),
               ],
-          child: _roundButton(context, Icons.more_horiz_rounded, null),
+          child: _profileMenuButton(context),
         ),
       ],
     ),
   );
 
-  Widget _roundButton(
-    BuildContext context,
-    IconData icon,
-    VoidCallback? onTap,
-  ) => Material(
-    color: context.appElevatedSurface,
-    borderRadius: BorderRadius.circular(14),
-    elevation: 0,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: SizedBox(
-        width: 48,
-        height: 48,
-        child: Icon(icon, color: const Color(0xFF102342), size: 22),
+  Widget _profileMenuButton(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    const shape = CircleBorder();
+
+    return SizedBox.square(
+      dimension: AppBackButton.layoutSize,
+      child: Padding(
+        padding: AppBackButton.outerMargin,
+        child: Material(
+          color: colors.surface.withValues(alpha: .9),
+          shape: shape,
+          elevation: 1,
+          shadowColor: Colors.black.withValues(alpha: .16),
+          child: InkWell(
+            customBorder: shape,
+            child: Icon(
+              Icons.more_horiz_rounded,
+              color: colors.primary,
+              size: AppBackButton.iconSize,
+            ),
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _identity(BuildContext context, CommunityPersonProfile profile) =>
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 34, 24, 0),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
         child: Column(
           children: [
             Container(
@@ -259,7 +256,7 @@ class _CommunityPersonProfileViewState
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 15),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -269,7 +266,8 @@ class _CommunityPersonProfileViewState
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: context.appText,
-                      fontSize: 16,
+                      fontSize: 17,
+                      letterSpacing: -.2,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -284,32 +282,28 @@ class _CommunityPersonProfileViewState
                 ],
               ],
             ),
-            if (profile.joinedLabel.isNotEmpty) ...[
-              const SizedBox(height: 7),
-              Text(
-                'Joined ${profile.joinedLabel}',
-                style: TextStyle(color: context.appMutedText, fontSize: 10),
-              ),
-            ],
-            const SizedBox(height: 9),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF7EB),
-                borderRadius: BorderRadius.circular(99),
+                color: context.appSoftGreen,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF329342).withValues(alpha: .12),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.eco_outlined,
+                    Icons.person_outline_rounded,
                     color: Color(0xFF329342),
                     size: 13,
                   ),
                   const SizedBox(width: 7),
                   Flexible(
                     child: Text(
-                      profile.role.toUpperCase(),
+                      _roleLabel(profile.role),
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF329342),
@@ -321,9 +315,37 @@ class _CommunityPersonProfileViewState
                 ],
               ),
             ),
+            if (profile.joinedLabel.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    color: context.appMutedText,
+                    size: 12,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Member since ${profile.joinedLabel}',
+                    style: TextStyle(color: context.appMutedText, fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       );
+
+  String _roleLabel(String role) {
+    final value = role.trim();
+    if (value.isEmpty || value.toUpperCase() == 'USER') return 'Member';
+    return value
+        .toLowerCase()
+        .split(RegExp(r'[_\s]+'))
+        .map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
 
   Widget _stats(BuildContext context, CommunityPersonProfile profile) =>
       Padding(

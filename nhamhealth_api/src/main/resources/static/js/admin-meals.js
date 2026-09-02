@@ -214,33 +214,7 @@ async function loadMeals(page = mealPage) {
 }
 
 function recipeStepMarkup(number) {
-    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div><input data-step-title type="text" maxlength="150" placeholder="Step title (optional)"><textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea><input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step ${number}"><div class="recipe-step-image-preview" data-step-image-preview hidden><img data-step-image-preview-image alt="Cooking step image preview"><div><strong data-step-image-preview-title>Current step image</strong><span data-step-image-preview-text>This image is currently shown to users.</span></div></div></article>`;
-}
-
-function clearStepImagePreview(step) {
-    if (step.dataset.previewObjectUrl) {
-        URL.revokeObjectURL(step.dataset.previewObjectUrl);
-        delete step.dataset.previewObjectUrl;
-    }
-    const preview = step.querySelector("[data-step-image-preview]");
-    if (!preview) return;
-    preview.hidden = true;
-    preview.querySelector("[data-step-image-preview-image]").removeAttribute("src");
-}
-
-function showStepImagePreview(step, imageUrl, title, text) {
-    clearStepImagePreview(step);
-    if (!imageUrl) return;
-    const preview = step.querySelector("[data-step-image-preview]");
-    if (!preview) return;
-    preview.querySelector("[data-step-image-preview-image]").src = imageUrl;
-    preview.querySelector("[data-step-image-preview-title]").textContent = title;
-    preview.querySelector("[data-step-image-preview-text]").textContent = text;
-    preview.hidden = false;
-}
-
-function clearAllStepImagePreviews() {
-    recipeStepsBox.querySelectorAll("[data-recipe-step]").forEach(clearStepImagePreview);
+    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div><textarea data-step-instruction maxlength="255" placeholder="Describe this cooking step..."></textarea><span class="field-help">Leave blank to skip this step.</span></article>`;
 }
 
 function updateRecipeStepLabels() {
@@ -254,20 +228,11 @@ function updateRecipeStepLabels() {
 function appendRecipeStep(step = {}) {
     recipeStepsBox.insertAdjacentHTML("beforeend", recipeStepMarkup(recipeStepsBox.children.length + 1));
     const element = recipeStepsBox.lastElementChild;
-    element.querySelector("[data-step-title]").value = step.title || "";
     element.querySelector("[data-step-instruction]").value = step.instruction || "";
-    const imageInput = element.querySelector("[data-step-image]");
-    element.dataset.imageUrl = step.imageUrl || "";
-    imageInput.required = !step.imageUrl;
-    if (step.imageUrl) {
-        imageInput.title = "Choose a new file only to replace the current step image.";
-        showStepImagePreview(element, step.imageUrl, "Current step image", "This image is currently shown to users.");
-    }
     updateRecipeStepLabels();
 }
 
 function resetRecipeSteps() {
-    clearAllStepImagePreviews();
     recipeStepsBox.innerHTML = "";
     appendRecipeStep();
 }
@@ -372,7 +337,6 @@ async function openEditModal(mealId) {
         mealImageFile.required = false;
         mealImageHelp.textContent = "Leave empty to keep the current meal image. JPG, PNG, or WebP; maximum 5 MB.";
         showImagePreview(meal.mainImageUrl, "Current meal image", "This is the image currently shown to users.");
-        clearAllStepImagePreviews();
         recipeStepsBox.innerHTML = "";
         meal.recipeSteps.forEach(appendRecipeStep);
         const relatedData = document.getElementById("mealRelatedData");
@@ -392,7 +356,6 @@ async function openEditModal(mealId) {
 function closeModal() {
     closeImageViewer();
     clearImagePreview();
-    clearAllStepImagePreviews();
     modal.classList.remove("show");
 }
 
@@ -455,14 +418,9 @@ async function saveMeal(event) {
         payload.mainImageUrl = imageFile?.size
             ? await uploadImage("/admin/meal-images", imageFile, "mainImageUrl")
             : currentMainImageUrl;
-        payload.recipeSteps = await Promise.all([...recipeStepsBox.querySelectorAll("[data-recipe-step]")].map(async step => {
-            const stepImage = step.querySelector("[data-step-image]").files[0];
-            return {
-                title: step.querySelector("[data-step-title]").value.trim(),
-                instruction: step.querySelector("[data-step-instruction]").value.trim(),
-                imageUrl: stepImage ? await uploadImage("/admin/recipe-step-images", stepImage, "imageUrl") : step.dataset.imageUrl
-            };
-        }));
+        payload.recipeSteps = [...recipeStepsBox.querySelectorAll("[data-recipe-step]")]
+            .map(step => ({ instruction: step.querySelector("[data-step-instruction]").value.trim() }))
+            .filter(step => step.instruction.length > 0);
         const response = await fetch(isUpdate ? `/admin/meals/${editingMealId}` : "/admin/meals", {
             method: isUpdate ? "PUT" : "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json", ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}) },
@@ -580,25 +538,8 @@ recipeStepsBox.addEventListener("click", event => {
     const button = event.target.closest(".step-remove");
     if (!button || recipeStepsBox.children.length === 1) return;
     const step = button.closest("[data-recipe-step]");
-    clearStepImagePreview(step);
     step.remove();
     updateRecipeStepLabels();
-});
-recipeStepsBox.addEventListener("change", event => {
-    if (!event.target.matches("[data-step-image]")) return;
-    const step = event.target.closest("[data-recipe-step]");
-    const file = event.target.files[0];
-    if (!file) {
-        showStepImagePreview(step, step.dataset.imageUrl, "Current step image", "This image is currently shown to users.");
-        return;
-    }
-    clearStepImagePreview(step);
-    const previewUrl = URL.createObjectURL(file);
-    step.dataset.previewObjectUrl = previewUrl;
-    step.querySelector("[data-step-image-preview-image]").src = previewUrl;
-    step.querySelector("[data-step-image-preview-title]").textContent = "New step image preview";
-    step.querySelector("[data-step-image-preview-text]").textContent = "This image will replace the current one after you save.";
-    step.querySelector("[data-step-image-preview]").hidden = false;
 });
 form.addEventListener("submit", saveMeal);
 document.addEventListener("keydown", event => {

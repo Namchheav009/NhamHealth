@@ -108,7 +108,7 @@ public class MealAdminService {
         Meal meal = findMeal(mealId);
         List<AdminRecipeStepDto> recipeSteps = recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId).stream()
                 .map(step -> new AdminRecipeStepDto(
-                        step.getStepId(), step.getStepNumber(), step.getStepTitle(), step.getInstruction(), step.getImageUrl()))
+                        step.getStepId(), step.getStepNumber(), step.getInstruction()))
                 .toList();
         List<AdminMealIngredientDto> ingredients = mealIngredientRepository.findByMealMealIdOrderByDisplayOrderAsc(mealId).stream()
                 .map(ingredient -> new AdminMealIngredientDto(
@@ -178,12 +178,9 @@ public class MealAdminService {
             RecipeStep recipeStep = new RecipeStep();
             recipeStep.setMeal(savedMeal);
             recipeStep.setStepNumber(index + 1);
-            recipeStep.setStepTitle(blankToNull(requestedStep.title()));
+            recipeStep.setStepTitle(null);
             recipeStep.setInstruction(requestedStep.instruction().trim());
-            if (!profileImageStorageService.isStoredRecipeStepImageUrl(requestedStep.imageUrl())) {
-                throw new IllegalArgumentException("Upload an image for every recipe step before saving the meal");
-            }
-            recipeStep.setImageUrl(requestedStep.imageUrl().trim());
+            recipeStep.setImageUrl(null);
             recipeSteps.add(recipeStep);
         }
         recipeStepRepository.saveAll(recipeSteps);

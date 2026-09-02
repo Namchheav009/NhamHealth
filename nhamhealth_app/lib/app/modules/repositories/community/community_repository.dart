@@ -121,20 +121,6 @@ class CommunityRepository {
     return CommunityTag.fromJson(_decodeMap(response));
   }
 
-  Future<String> uploadStepImage(Uint8List bytes) async {
-    final request = http.MultipartRequest(
-      'POST',
-      _uri('/api/v1/recipes/step-images'),
-    )..headers.addAll(await _headers(includeContentType: false));
-    request.files.add(
-      http.MultipartFile.fromBytes('file', bytes, filename: 'recipe-step.jpg'),
-    );
-    final response = await http.Response.fromStream(
-      await _client.send(request),
-    );
-    return '${_decodeMap(response)['imageUrl'] ?? ''}';
-  }
-
   Future<List<CommunityReportReason>> getReportReasons() async {
     final payload = await _getList('/api/v1/community/report-reasons');
     return payload

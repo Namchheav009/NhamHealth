@@ -557,27 +557,13 @@ class AuthenticationFlowTests {
                 .andReturn();
         String mealImageUrl = JsonPath.read(imageResult.getResponse().getContentAsString(), "$.mainImageUrl");
 
-        MockMultipartFile recipeStepImage = new MockMultipartFile(
-                "file", "portal-step.webp", "image/webp", webpBytes());
-        MvcResult stepImageResult = mockMvc.perform(multipart("/admin/recipe-step-images")
-                        .file(recipeStepImage)
-                        .with(user("admin").roles("ADMIN"))
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.imageUrl").value(org.hamcrest.Matchers.startsWith("/uploads/recipe-step-images/")))
-                .andReturn();
-        String stepImageUrl = JsonPath.read(stepImageResult.getResponse().getContentAsString(), "$.imageUrl");
-        mockMvc.perform(get(stepImageUrl))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("image/webp"));
-
         MvcResult result = mockMvc.perform(post("/admin/meals")
                         .with(user("admin").roles("ADMIN"))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mealName":"Portal Meal","categoryId":%d,"calories":420,"servings":2,"description":"Created from the admin portal","difficulty":"Easy","cookingTimeMinutes":20,"published":true,"mainImageUrl":"%s","ingredients":[{"ingredientId":%d,"quantity":100,"unit":"g","preparationNote":"Washed"}],"recipeSteps":[{"title":"Prepare","instruction":"Wash and prepare the ingredients.","imageUrl":"%s"},{"title":"Cook","instruction":"Cook until ready to serve.","imageUrl":"%s"}]}
-                                """.formatted(category.getCategoryId(), mealImageUrl, ingredient.getIngredientId(), stepImageUrl, stepImageUrl)))
+                                {"mealName":"Portal Meal","categoryId":%d,"calories":420,"servings":2,"description":"Created from the admin portal","difficulty":"Easy","cookingTimeMinutes":20,"published":true,"mainImageUrl":"%s","ingredients":[{"ingredientId":%d,"quantity":100,"unit":"g","preparationNote":"Washed"}],"recipeSteps":[{"instruction":"Wash and prepare the ingredients."},{"instruction":"Cook until ready to serve."}]}
+                                """.formatted(category.getCategoryId(), mealImageUrl, ingredient.getIngredientId())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mealName").value("Portal Meal"))
                 .andExpect(jsonPath("$.category").value(category.getCategoryName()))
@@ -592,7 +578,7 @@ class AuthenticationFlowTests {
                 .toList()
                 .equals(java.util.List.of("1:Wash and prepare the ingredients.", "2:Cook until ready to serve.")));
         assertTrue(recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId).stream()
-                .allMatch(step -> stepImageUrl.equals(step.getImageUrl())));
+                .allMatch(step -> step.getStepTitle() == null && step.getImageUrl() == null));
 
         mockMvc.perform(get("/admin/meals/{mealId}", mealId).with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())

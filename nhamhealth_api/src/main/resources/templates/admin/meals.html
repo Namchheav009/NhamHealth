@@ -166,22 +166,14 @@
                 </div>
                 <div class="field full recipe-steps-field">
                     <div class="recipe-steps-heading">
-                        <div><label>Cooking steps</label><span>Add the instructions users need to prepare this meal.</span></div>
+                        <div><label>Cooking steps</label><span>Optional. Add one clear instruction for each step; no title or image is needed.</span></div>
                         <button class="btn step-add" id="addRecipeStep" type="button"><i class="bi bi-plus-lg"></i> Add Step</button>
                     </div>
                     <div id="recipeSteps">
                         <article class="recipe-step" data-recipe-step>
                             <div class="recipe-step-title"><strong>Step 1</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div>
-                            <input data-step-title type="text" maxlength="150" placeholder="Step title (optional)">
-                            <textarea data-step-instruction maxlength="255" required placeholder="Describe what to do in this step..."></textarea>
-                            <input data-step-image type="file" accept="image/jpeg,image/png,image/webp" required aria-label="Image for step 1">
-                            <div class="recipe-step-image-preview" data-step-image-preview hidden>
-                                <img data-step-image-preview-image alt="Cooking step image preview">
-                                <div>
-                                    <strong data-step-image-preview-title>Current step image</strong>
-                                    <span data-step-image-preview-text>This image is currently shown to users.</span>
-                                </div>
-                            </div>
+                            <textarea data-step-instruction maxlength="255" placeholder="Describe this cooking step..."></textarea>
+                            <span class="field-help">Leave blank to skip this step.</span>
                         </article>
                     </div>
                 </div>

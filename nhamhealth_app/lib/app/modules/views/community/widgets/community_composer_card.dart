@@ -15,52 +15,62 @@ class CommunityComposerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(22),
     child: Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: .16)),
         boxShadow: context.appTileShadow,
       ),
       child: Column(
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: context.appSoftGreen,
-                backgroundImage:
-                    authorAvatarUrl.isEmpty
-                        ? null
-                        : NetworkImage(authorAvatarUrl),
-                child:
-                    authorAvatarUrl.isEmpty
-                        ? const Icon(
-                          Icons.person_outline_rounded,
-                          color: AppColors.primaryGreen,
-                        )
-                        : null,
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: .22),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 19,
+                  backgroundColor: context.appSoftGreen,
+                  backgroundImage:
+                      authorAvatarUrl.isEmpty
+                          ? null
+                          : NetworkImage(authorAvatarUrl),
+                  child:
+                      authorAvatarUrl.isEmpty
+                          ? const Icon(
+                            Icons.person_outline_rounded,
+                            color: AppColors.primaryGreen,
+                          )
+                          : null,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
+                    horizontal: 13,
+                    vertical: 12,
                   ),
                   decoration: BoxDecoration(
                     color: context.appMutedSurface,
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: context.appBorder),
                   ),
                   child: Text(
-                    'Share a win, question, or healthy idea...',
+                    'What’s on your healthy mind?',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
                       height: 1.2,
                       color: context.appMutedText,
                     ),
@@ -69,7 +79,7 @@ class CommunityComposerCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 13),
           Divider(height: 1, color: context.appBorder),
           const SizedBox(height: 5),
           Row(
@@ -77,7 +87,7 @@ class CommunityComposerCard extends StatelessWidget {
               Expanded(
                 child: _ComposerShortcut(
                   icon: Icons.image_outlined,
-                  label: 'Photo',
+                  label: 'Add photo',
                   color: Color(0xFF168B4A),
                 ),
               ),

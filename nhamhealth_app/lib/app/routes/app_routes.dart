@@ -10,7 +10,6 @@ abstract class AppRoutes {
   static const String assistant = '/assistant';
   static const String meals = '/meals';
   static const String foodDetail = '/meals/food-detail';
-  static const String ingredients = '/meals/food-detail/ingredients';
   static const String profile = '/profile';
   static const String settings = '/settings';
   static const String changePassword = '/profile/change-password';

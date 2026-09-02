@@ -124,15 +124,4 @@ public class MealAdminController {
         }
     }
 
-    @PostMapping(value = "/admin/recipe-step-images", consumes = "multipart/form-data")
-    @ResponseBody
-    public ResponseEntity<?> uploadRecipeStepImage(@RequestParam("file") MultipartFile file) {
-        try {
-            return ResponseEntity.ok(Map.of("imageUrl", profileImageStorageService.storeRecipeStepImage(file)));
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
-        } catch (IllegalStateException exception) {
-            return ResponseEntity.internalServerError().body(Map.of("message", exception.getMessage()));
-        }
-    }
 }

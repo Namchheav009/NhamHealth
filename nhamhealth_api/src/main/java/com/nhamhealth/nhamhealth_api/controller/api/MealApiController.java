@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.controller.api;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +49,7 @@ public class MealApiController {
     }
 
     @GetMapping("/{mealId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<MealDetailResponse> publishedMeal(@PathVariable Integer mealId) {
         return mealRepository.findById(mealId)
                 .filter(meal -> Boolean.TRUE.equals(meal.getIsPublished()))

@@ -199,24 +199,15 @@ class MealNutritionModel {
 class MealStepModel {
   const MealStepModel({
     required this.number,
-    required this.title,
     required this.instruction,
-    required this.image,
   });
   final int number;
-  final String title;
   final String instruction;
-  final String image;
   factory MealStepModel.fromJson(
     Map<String, dynamic> json, {
     required String baseUrl,
   }) => MealStepModel(
     number: (json['number'] as num?)?.toInt() ?? 0,
-    title: (json['title'] as String? ?? '').trim(),
     instruction: (json['instruction'] as String? ?? '').trim(),
-    image: MealModel._resolveImageUrl(
-      (json['imageUrl'] as String? ?? '').trim(),
-      baseUrl,
-    ),
   );
 }

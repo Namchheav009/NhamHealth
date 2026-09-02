@@ -60,9 +60,9 @@ public record MealDetailResponse(
         }
     }
 
-    public record StepItem(Integer number, String title, String instruction, String imageUrl) {
+    public record StepItem(Integer number, String instruction) {
         static StepItem from(RecipeStep step) {
-            return new StepItem(step.getStepNumber(), step.getStepTitle(), step.getInstruction(), step.getImageUrl());
+            return new StepItem(step.getStepNumber(), step.getInstruction());
         }
     }
 }
