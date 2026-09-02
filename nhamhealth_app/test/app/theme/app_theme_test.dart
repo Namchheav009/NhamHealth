@@ -42,6 +42,13 @@ void main() {
       theme.outlinedButtonTheme.style?.side?.resolve({})?.color,
       colors.outline,
     );
+    expect(theme.snackBarTheme.contentTextStyle?.color, colors.onSurface);
+    expect(theme.dialogTheme.backgroundColor, colors.surfaceContainerHigh);
+    expect(theme.tooltipTheme.textStyle?.color, colors.onSurface);
+    expect(
+      colors.onSurface.computeLuminance() - colors.surface.computeLuminance(),
+      greaterThan(0.6),
+    );
   });
 
   testWidgets('semantic app colors switch between light and dark', (

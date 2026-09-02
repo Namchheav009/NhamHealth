@@ -368,7 +368,6 @@ const Map<String, String> englishPageTranslations = {
   'Oldest': 'Oldest',
   '@category category': '@category category',
   'Filter by category': 'Filter by category',
-  'All': 'All',
   'Remove from favorites': 'Remove from favorites',
   'Add to favorites': 'Add to favorites',
   'Show @category meals': 'Show @category meals',
@@ -643,6 +642,78 @@ const Map<String, String> englishPageTranslations = {
       'Nutrition was recalculated from the database.',
   'Your calorie changes have been saved.':
       'Your calorie changes have been saved.',
+
+  // AI assistant.
+  'Open Daily Wellness': 'Open Daily Wellness',
+  'Quick questions': 'Quick questions',
+  'All questions': 'All questions',
+  'All': 'All',
+  'Ask about your wellness...': 'Ask about your wellness...',
+  'Send message': 'Send message',
+  'Ask NhamHealth AI': 'Ask NhamHealth AI',
+  'Choose any question below': 'Choose any question below',
+  'NhamHealth AI': 'NhamHealth AI',
+  'Connected to your wellness data': 'Connected to your wellness data',
+  'Could not reply': 'Could not reply',
+  'Copy reply': 'Copy reply',
+  'Reply copied': 'Reply copied',
+  'Checking your wellness...': 'Checking your wellness...',
+  "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today.":
+      "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today.",
+  'Tap reload below to try again.': 'Tap reload below to try again.',
+  'How is my wellness progress today?': 'How is my wellness progress today?',
+  'What can I do in NhamHealth?': 'What can I do in NhamHealth?',
+  'Explain my nutrition dashboard': 'Explain my nutrition dashboard',
+  'How many calories do I have left today?':
+      'How many calories do I have left today?',
+  'How can I reach my protein goal?': 'How can I reach my protein goal?',
+  'How do I add food to Daily Wellness?':
+      'How do I add food to Daily Wellness?',
+  'How does AI food photo analysis work?':
+      'How does AI food photo analysis work?',
+  'How do meal recommendations work?': 'How do meal recommendations work?',
+  'Where can I find my favorite meals?': 'Where can I find my favorite meals?',
+  'What special features are available?':
+      'What special features are available?',
+  'Guide me through health monitoring': 'Guide me through health monitoring',
+  'Help me configure my app settings': 'Help me configure my app settings',
+  'How do I use NhamHealth step by step?':
+      'How do I use NhamHealth step by step?',
+  'Help me plan a new health feature': 'Help me plan a new health feature',
+  'My wellness': 'My wellness',
+  'App help': 'App help',
+  'Nutrition': 'Nutrition',
+  'Calories left': 'Calories left',
+  'Protein goal': 'Protein goal',
+  'Add food': 'Add food',
+  'Food photo AI': 'Food photo AI',
+  'Meal ideas': 'Meal ideas',
+  'Favorites': 'Favorites',
+  'Language': 'Language',
+  'Features': 'Features',
+  'Health monitoring': 'Health monitoring',
+  'Settings': 'Settings',
+  'App guide': 'App guide',
+  'Plan a feature': 'Plan a feature',
+
+  // Community discussions.
+  'Delete comment?': 'Delete comment?',
+  'This will permanently remove this comment and any replies to it.':
+      'This will permanently remove this comment and any replies to it.',
+  'Be the first to comment.': 'Be the first to comment.',
+  'Recipe details': 'Recipe details',
+  'Hide': 'Hide',
+  'Show all': 'Show all',
+  'How to Cook': 'How to Cook',
+  'Post options': 'Post options',
+  'Comment options': 'Comment options',
+  'Comments are turned off for this post.':
+      'Comments are turned off for this post.',
+  'Replying to @name': 'Replying to @name',
+  'Cancel reply': 'Cancel reply',
+  'Write a comment...': 'Write a comment...',
+  'Write a reply...': 'Write a reply...',
+  'Send': 'Send',
 };
 
 const Map<String, String> khmerPageTranslations = {
@@ -1019,7 +1090,6 @@ const Map<String, String> khmerPageTranslations = {
   'Oldest': 'ចាស់បំផុត',
   '@category category': 'ប្រភេទ @category',
   'Filter by category': 'តម្រងតាមប្រភេទ',
-  'All': 'ទាំងអស់',
   'Remove from favorites': 'លុបចេញពីចំណូលចិត្ត',
   'Add to favorites': 'បន្ថែមទៅចំណូលចិត្ត',
   'Show @category meals': 'បង្ហាញអាហារប្រភេទ @category',
@@ -1293,4 +1363,77 @@ const Map<String, String> khmerPageTranslations = {
       'អាហារូបត្ថម្ភត្រូវបានគណនាឡើងវិញពីមូលដ្ឋានទិន្នន័យ។',
   'Your calorie changes have been saved.':
       'ការផ្លាស់ប្តូរកាឡូរីរបស់អ្នកត្រូវបានរក្សាទុក។',
+
+  // ជំនួយការ AI។
+  'Open Daily Wellness': 'បើកសុខុមាលភាពប្រចាំថ្ងៃ',
+  'Quick questions': 'សំណួររហ័ស',
+  'All questions': 'សំណួរទាំងអស់',
+  'All': 'ទាំងអស់',
+  'Ask about your wellness...': 'សួរអំពីសុខុមាលភាពរបស់អ្នក...',
+  'Send message': 'ផ្ញើសារ',
+  'Ask NhamHealth AI': 'សួរ NhamHealth AI',
+  'Choose any question below': 'ជ្រើសរើសសំណួរណាមួយខាងក្រោម',
+  'NhamHealth AI': 'NhamHealth AI',
+  'Connected to your wellness data': 'បានភ្ជាប់ទៅទិន្នន័យសុខុមាលភាពរបស់អ្នក',
+  'Could not reply': 'មិនអាចឆ្លើយតបបាន',
+  'Copy reply': 'ចម្លងចម្លើយ',
+  'Reply copied': 'បានចម្លងចម្លើយ',
+  'Checking your wellness...': 'កំពុងពិនិត្យសុខុមាលភាពរបស់អ្នក...',
+  "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today.":
+      'សួស្តី! ខ្ញុំជាជំនួយការ AI របស់ NhamHealth។ សួរខ្ញុំអំពីកម្មវិធី ឬផ្ទាំងសុខុមាលភាពរបស់អ្នកថ្ងៃនេះ។',
+  'Tap reload below to try again.':
+      'ចុចផ្ទុកឡើងវិញខាងក្រោម ដើម្បីសាកល្បងម្តងទៀត។',
+  'How is my wellness progress today?':
+      'ថ្ងៃនេះការរីកចម្រើនសុខុមាលភាពរបស់ខ្ញុំយ៉ាងដូចម្តេច?',
+  'What can I do in NhamHealth?': 'ខ្ញុំអាចធ្វើអ្វីបានខ្លះក្នុង NhamHealth?',
+  'Explain my nutrition dashboard': 'ពន្យល់ផ្ទាំងអាហារូបត្ថម្ភរបស់ខ្ញុំ',
+  'How many calories do I have left today?': 'ថ្ងៃនេះខ្ញុំនៅសល់កាឡូរីប៉ុន្មាន?',
+  'How can I reach my protein goal?':
+      'តើខ្ញុំអាចសម្រេចគោលដៅប្រូតេអ៊ីនដោយរបៀបណា?',
+  'How do I add food to Daily Wellness?':
+      'តើខ្ញុំបន្ថែមអាហារទៅសុខុមាលភាពប្រចាំថ្ងៃដោយរបៀបណា?',
+  'How does AI food photo analysis work?':
+      'ការវិភាគរូបថតអាហារដោយ AI ដំណើរការយ៉ាងដូចម្តេច?',
+  'How do meal recommendations work?': 'ការណែនាំអាហារដំណើរការយ៉ាងដូចម្តេច?',
+  'Where can I find my favorite meals?': 'ខ្ញុំអាចរកអាហារចំណូលចិត្តនៅឯណា?',
+  'What special features are available?': 'មានមុខងារពិសេសអ្វីខ្លះ?',
+  'Guide me through health monitoring': 'ណែនាំខ្ញុំអំពីការតាមដានសុខភាព',
+  'Help me configure my app settings': 'ជួយខ្ញុំកំណត់កម្មវិធី',
+  'How do I use NhamHealth step by step?':
+      'តើខ្ញុំប្រើ NhamHealth ជាជំហានៗដោយរបៀបណា?',
+  'Help me plan a new health feature': 'ជួយខ្ញុំរៀបចំមុខងារសុខភាពថ្មី',
+  'My wellness': 'សុខុមាលភាពខ្ញុំ',
+  'App help': 'ជំនួយកម្មវិធី',
+  'Nutrition': 'អាហារូបត្ថម្ភ',
+  'Calories left': 'កាឡូរីនៅសល់',
+  'Protein goal': 'គោលដៅប្រូតេអ៊ីន',
+  'Add food': 'បន្ថែមអាហារ',
+  'Food photo AI': 'រូបថតអាហារ AI',
+  'Meal ideas': 'គំនិតអាហារ',
+  'Favorites': 'ចំណូលចិត្ត',
+  'Language': 'ភាសា',
+  'Features': 'មុខងារ',
+  'Health monitoring': 'តាមដានសុខភាព',
+  'Settings': 'ការកំណត់',
+  'App guide': 'មគ្គុទ្ទេសក៍កម្មវិធី',
+  'Plan a feature': 'រៀបចំមុខងារ',
+
+  // ការពិភាក្សាក្នុងសហគមន៍។
+  'Delete comment?': 'លុបមតិយោបល់?',
+  'This will permanently remove this comment and any replies to it.':
+      'វានឹងលុបមតិយោបល់នេះ និងចម្លើយទាំងអស់ជាអចិន្ត្រៃយ៍។',
+  'Be the first to comment.': 'ក្លាយជាអ្នកបញ្ចេញមតិដំបូង។',
+  'Recipe details': 'ព័ត៌មានលម្អិតរូបមន្ត',
+  'Hide': 'លាក់',
+  'Show all': 'បង្ហាញទាំងអស់',
+  'How to Cook': 'របៀបចម្អិន',
+  'Post options': 'ជម្រើសការបង្ហោះ',
+  'Comment options': 'ជម្រើសមតិយោបល់',
+  'Comments are turned off for this post.':
+      'មតិយោបល់ត្រូវបានបិទសម្រាប់ការបង្ហោះនេះ។',
+  'Replying to @name': 'កំពុងឆ្លើយតបទៅ @name',
+  'Cancel reply': 'បោះបង់ការឆ្លើយតប',
+  'Write a comment...': 'សរសេរមតិយោបល់...',
+  'Write a reply...': 'សរសេរចម្លើយ...',
+  'Send': 'ផ្ញើ',
 };

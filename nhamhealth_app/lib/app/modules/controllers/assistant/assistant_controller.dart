@@ -11,12 +11,13 @@ class AssistantController extends GetxController {
   final AssistantProvider _provider;
   final TextEditingController inputController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  final RxList<AssistantMessage> messages =
+  late final RxList<AssistantMessage> messages =
       <AssistantMessage>[
-        const AssistantMessage(
+        AssistantMessage(
           role: 'assistant',
           content:
-              "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today.",
+              "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today."
+                  .tr,
         ),
       ].obs;
   final RxBool isSending = false.obs;
@@ -74,7 +75,7 @@ class AssistantController extends GetxController {
       messages.add(
         AssistantMessage(
           role: 'assistant',
-          content: '${error.message} Tap reload below to try again.',
+          content: '${error.message} ${'Tap reload below to try again.'.tr}',
           isError: true,
         ),
       );

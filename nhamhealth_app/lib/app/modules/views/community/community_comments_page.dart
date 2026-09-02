@@ -264,14 +264,14 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (_deletingCommentId != null) return;
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete comment?'),
-        content: const Text(
-          'This will permanently remove this comment and any replies to it.',
+        title: Text('Delete comment?'.tr),
+        content: Text(
+          'This will permanently remove this comment and any replies to it.'.tr,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
@@ -569,13 +569,13 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                     ),
                                     const SizedBox(height: 14),
                                     if (_comments.isEmpty)
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
                                           vertical: 38,
                                         ),
                                         child: Center(
                                           child: Text(
-                                            'Be the first to comment.',
+                                            'Be the first to comment.'.tr,
                                           ),
                                         ),
                                       )
@@ -613,19 +613,19 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           margin: const EdgeInsets.only(top: 14),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appSurface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE3EBE5)),
+            border: Border.all(color: context.appBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Recipe details',
-                      style: TextStyle(
+                      'Recipe details'.tr,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                       ),
@@ -643,7 +643,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
                     ),
-                    label: Text(_recipeDetailsExpanded ? 'Hide' : 'Show all'),
+                    label: Text(
+                      (_recipeDetailsExpanded ? 'Hide' : 'Show all').tr,
+                    ),
                   ),
                 ],
               ),
@@ -679,9 +681,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     children: [
       if (_post.ingredients.isNotEmpty) ...[
         const SizedBox(height: 12),
-        const Text(
-          'Ingredients',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        Text(
+          'Ingredients'.tr,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 12),
         ..._post.ingredients.map(
@@ -697,7 +699,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 ),
                 Text(
                   '${item.amount ?? ''} ${item.unit}',
-                  style: const TextStyle(color: Color(0xFF43845C)),
+                  style: TextStyle(color: context.appColorScheme.primary),
                 ),
               ],
             ),
@@ -707,9 +709,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (_post.ingredients.isNotEmpty && _post.steps.isNotEmpty)
         const Divider(height: 32),
       if (_post.steps.isNotEmpty) ...[
-        const Text(
-          'How to Cook',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        Text(
+          'How to Cook'.tr,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 12),
         ..._post.steps.map(
@@ -797,7 +799,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 Icons.more_horiz_rounded,
                 color: Color(0xFF768178),
               ),
-              tooltip: 'Post options',
+              tooltip: 'Post options'.tr,
             ),
           ],
         ),
@@ -1086,7 +1088,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   size: 20,
                   color: Color(0xFF758078),
                 ),
-                tooltip: 'Comment options',
+                tooltip: 'Comment options'.tr,
               ),
             ),
           ],
@@ -1097,17 +1099,17 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Widget _composer() {
     if (!_post.allowComments) {
-      return const Material(
-        color: Colors.white,
+      return Material(
+        color: context.appSurface,
         elevation: 9,
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: EdgeInsets.all(18),
+            padding: const EdgeInsets.all(18),
             child: Center(
               child: Text(
-                'Comments are turned off for this post.',
-                style: TextStyle(color: Color(0xFF5E6961)),
+                'Comments are turned off for this post.'.tr,
+                style: TextStyle(color: context.appMutedText),
               ),
             ),
           ),
@@ -1115,9 +1117,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       );
     }
     return Material(
-      color: Colors.white,
+      color: context.appSurface,
       elevation: 9,
-      shadowColor: Colors.black12,
+      shadowColor: context.appShadow,
       child: SafeArea(
         top: false,
         child: Center(
@@ -1144,17 +1146,19 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Replying to ${_replyingTo!.author}',
-                              style: const TextStyle(
+                              'Replying to @name'.trParams({
+                                'name': _replyingTo!.author,
+                              }),
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF5E6961),
+                                color: context.appMutedText,
                               ),
                             ),
                           ),
                           IconButton(
                             onPressed: _cancelReply,
                             icon: const Icon(Icons.close_rounded, size: 18),
-                            tooltip: 'Cancel reply',
+                            tooltip: 'Cancel reply'.tr,
                           ),
                         ],
                       ),
@@ -1168,10 +1172,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     decoration: InputDecoration(
                       hintText:
                           _replyingTo == null
-                              ? 'Write a comment...'
-                              : 'Write a reply...',
+                              ? 'Write a comment...'.tr
+                              : 'Write a reply...'.tr,
                       filled: true,
-                      fillColor: const Color(0xFFF3F7F4),
+                      fillColor: context.appMutedSurface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(22),
                         borderSide: BorderSide.none,
@@ -1189,7 +1193,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                   ),
                                 )
                                 : const Icon(Icons.send_rounded, color: _green),
-                        tooltip: 'Send',
+                        tooltip: 'Send'.tr,
                       ),
                     ),
                   ),

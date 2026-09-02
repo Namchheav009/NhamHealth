@@ -6,6 +6,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/home/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
@@ -24,45 +25,62 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
-      child: Scaffold(
-        extendBody: true,
+      child: ScrollAwareScaffold(
         backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             bottom: false,
-            child: RefreshIndicator(
-              color: AppColors.primaryGreen,
-              onRefresh: controller.refreshMeals,
-              child: SingleChildScrollView(
-                primary: true,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: AppSpacing.pagePaddingWithNavigationFor(context),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: _maxContentWidth,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const RepaintBoundary(child: HomeHeader()),
-                        const SizedBox(height: AppSpacing.topBarBottom),
-                        Obx(
-                          () => LoadingContentTransition(
-                            isLoading:
-                                controller.isLoading.value &&
-                                controller.dashboard.value == null,
-                            loading: const PageSkeleton.home(),
-                            content: const _HomeDashboardContent(),
-                          ),
-                        ),
-                      ],
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.pageHorizontalFor(context),
+                    AppSpacing.pageTop,
+                    AppSpacing.pageHorizontalFor(context),
+                    0,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _maxContentWidth,
+                      ),
+                      child: const RepaintBoundary(child: HomeHeader()),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.topBarBottom),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: AppColors.primaryGreen,
+                    onRefresh: controller.refreshMeals,
+                    child: SingleChildScrollView(
+                      primary: true,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: AppSpacing.pagePaddingWithNavigationFor(
+                        context,
+                      ).copyWith(top: 0),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: _maxContentWidth,
+                          ),
+                          child: Obx(
+                            () => LoadingContentTransition(
+                              isLoading:
+                                  controller.isLoading.value &&
+                                  controller.dashboard.value == null,
+                              loading: const PageSkeleton.home(),
+                              content: const _HomeDashboardContent(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

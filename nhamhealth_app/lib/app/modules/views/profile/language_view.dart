@@ -152,10 +152,10 @@ class LanguageView extends GetView<LanguageController> {
               children: [
                 Text(
                   'language_applied'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF294C81),
+                    fontWeight: FontWeight.w700,
+                    color: context.appColorScheme.primary,
                   ),
                 ),
 
@@ -163,10 +163,10 @@ class LanguageView extends GetView<LanguageController> {
 
                 Text(
                   'language_applied_description'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     height: 1.25,
-                    color: Color(0xFF294C81),
+                    color: context.appMutedText,
                   ),
                 ),
               ],
@@ -247,7 +247,7 @@ class _RadioCircle extends StatelessWidget {
         shape: BoxShape.circle,
         color: context.appSurface,
         border: Border.all(
-          color: selected ? LanguageView.green : const Color(0xFFB9BDC4),
+          color: selected ? LanguageView.green : context.appBorder,
           width: 1.5,
         ),
       ),

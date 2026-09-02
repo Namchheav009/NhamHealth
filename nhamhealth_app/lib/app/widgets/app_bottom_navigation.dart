@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/views/assistant/assistant_view.dart';
 import '../theme/app_spacing.dart';
+import 'scroll_aware_scaffold.dart';
 
 /// Shared four-destination navigation used by the main app pages.
 ///
@@ -24,6 +25,12 @@ class AppBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navigationVisibility = ScrollAwareNavigationVisibility.maybeOf(
+      context,
+    );
+    final showNavigationItems = navigationVisibility?.visible ?? true;
+    final animationDuration =
+        navigationVisibility?.duration ?? const Duration(milliseconds: 240);
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: SizedBox(
@@ -36,76 +43,91 @@ class AppBottomNavigation extends StatelessWidget {
               right: 80,
               bottom: 0,
               height: 72,
-              child: PhysicalShape(
-                clipper: const _NavigationBarClipper(),
-                clipBehavior: Clip.antiAlias,
-                color: colors.surface,
-                shadowColor: Colors.black.withValues(alpha: 0.2),
-                elevation: 4,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        colors.surface,
-                        colors.surfaceContainer,
-                        Color.alphaBlend(
-                          colors.primary.withValues(
-                            alpha: isDark ? 0.12 : 0.06,
+              child: IgnorePointer(
+                ignoring: !showNavigationItems,
+                child: AnimatedSlide(
+                  key: const ValueKey<String>('scroll-aware-navigation-items'),
+                  offset:
+                      showNavigationItems ? Offset.zero : const Offset(0, 1.35),
+                  duration: animationDuration,
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: showNavigationItems ? 1 : 0,
+                    duration: animationDuration,
+                    curve: Curves.easeOutCubic,
+                    child: PhysicalShape(
+                      clipper: const _NavigationBarClipper(),
+                      clipBehavior: Clip.antiAlias,
+                      color: colors.surface,
+                      shadowColor: Colors.black.withValues(alpha: 0.2),
+                      elevation: 4,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              colors.surface,
+                              colors.surfaceContainer,
+                              Color.alphaBlend(
+                                colors.primary.withValues(
+                                  alpha: isDark ? 0.12 : 0.06,
+                                ),
+                                colors.surface,
+                              ),
+                            ],
                           ),
-                          colors.surface,
                         ),
-                      ],
-                    ),
-                  ),
-                  child: CustomPaint(
-                    foregroundPainter: _NavigationInnerShadowPainter(
-                      isDark: isDark,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Row(
-                        children: [
-                          _NavSlot(
-                            child: _NavItem(
-                              id: 'home',
-                              icon: Icons.home_rounded,
-                              label: 'home'.tr,
-                              selected: selectedIndex == 0,
-                              onTap: () => onSelect(0),
+                        child: CustomPaint(
+                          foregroundPainter: _NavigationInnerShadowPainter(
+                            isDark: isDark,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Row(
+                              children: [
+                                _NavSlot(
+                                  child: _NavItem(
+                                    id: 'home',
+                                    icon: Icons.home_rounded,
+                                    label: 'home'.tr,
+                                    selected: selectedIndex == 0,
+                                    onTap: () => onSelect(0),
+                                  ),
+                                ),
+                                _NavSlot(
+                                  child: _NavItem(
+                                    id: 'meals',
+                                    icon: Icons.restaurant_menu_rounded,
+                                    label: 'meals'.tr,
+                                    selected: selectedIndex == 1,
+                                    onTap: () => onSelect(1),
+                                  ),
+                                ),
+                                _NavSlot(
+                                  child: _NavItem(
+                                    id: 'community',
+                                    icon: Icons.people_outline_rounded,
+                                    selectedIcon: Icons.people_rounded,
+                                    label: 'community'.tr,
+                                    selected: selectedIndex == 2,
+                                    onTap: () => onSelect(2),
+                                  ),
+                                ),
+                                _NavSlot(
+                                  child: _NavItem(
+                                    id: 'settings',
+                                    icon: Icons.settings_outlined,
+                                    selectedIcon: Icons.settings_rounded,
+                                    label: 'settings'.tr,
+                                    selected: selectedIndex == 4,
+                                    onTap: () => onSelect(4),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          _NavSlot(
-                            child: _NavItem(
-                              id: 'meals',
-                              icon: Icons.restaurant_menu_rounded,
-                              label: 'meals'.tr,
-                              selected: selectedIndex == 1,
-                              onTap: () => onSelect(1),
-                            ),
-                          ),
-                          _NavSlot(
-                            child: _NavItem(
-                              id: 'community',
-                              icon: Icons.people_outline_rounded,
-                              selectedIcon: Icons.people_rounded,
-                              label: 'community'.tr,
-                              selected: selectedIndex == 2,
-                              onTap: () => onSelect(2),
-                            ),
-                          ),
-                          _NavSlot(
-                            child: _NavItem(
-                              id: 'settings',
-                              icon: Icons.settings_outlined,
-                              selectedIcon: Icons.settings_rounded,
-                              label: 'settings'.tr,
-                              selected: selectedIndex == 4,
-                              onTap: () => onSelect(4),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

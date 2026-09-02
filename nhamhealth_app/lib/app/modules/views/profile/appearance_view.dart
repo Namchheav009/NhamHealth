@@ -4,11 +4,10 @@ import 'package:get/get.dart';
 import '../../controllers/profile/appearance_controller.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../theme/app_colors.dart';
 
 class AppearanceView extends GetView<AppearanceController> {
   const AppearanceView({super.key});
-
-  static const green = Color(0xFF00A651);
 
   @override
   Widget build(BuildContext context) {
@@ -96,9 +95,22 @@ class AppearanceView extends GetView<AppearanceController> {
         () => Column(
           children: [
             _ThemeItem(
+              icon: Icons.brightness_auto_rounded,
+              title: 'theme_system',
+              subtitle: 'theme_system_description',
+              selected: controller.selectedTheme.value == 'system',
+              onTap: controller.selectSystemMode,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 64),
+              child: Divider(
+                height: 1,
+                thickness: 0.7,
+                color: colors.outlineVariant,
+              ),
+            ),
+            _ThemeItem(
               icon: Icons.light_mode_outlined,
-              iconBackground: const Color(0xFFE5F5E8),
-              iconColor: green,
               title: 'Light Mode',
               subtitle: 'Light theme for a bright experience',
               selected: controller.selectedTheme.value == 'light',
@@ -114,8 +126,6 @@ class AppearanceView extends GetView<AppearanceController> {
             ),
             _ThemeItem(
               icon: Icons.dark_mode_outlined,
-              iconBackground: const Color(0xFFF1F1F1),
-              iconColor: const Color(0xFF555555),
               title: 'Dark Mode',
               subtitle: 'Dark theme for comfortable viewing',
               selected: controller.selectedTheme.value == 'dark',
@@ -131,8 +141,6 @@ class AppearanceView extends GetView<AppearanceController> {
 class _ThemeItem extends StatelessWidget {
   const _ThemeItem({
     required this.icon,
-    required this.iconBackground,
-    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.selected,
@@ -140,8 +148,6 @@ class _ThemeItem extends StatelessWidget {
   });
 
   final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final bool selected;
@@ -176,12 +182,14 @@ class _ThemeItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(13),
                   color:
-                      isDark ? colors.surfaceContainerHighest : iconBackground,
+                      selected
+                          ? colors.primaryContainer
+                          : context.appMutedSurface,
                 ),
                 child: Icon(
                   icon,
                   size: 23,
-                  color: isDark ? colors.primary : iconColor,
+                  color: selected ? colors.primary : colors.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: 14),

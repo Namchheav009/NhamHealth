@@ -20,9 +20,12 @@ void main() {
     expect(service.themeMode, ThemeMode.dark);
   });
 
-  test('falls back to light for a missing or unsupported value', () {
-    expect(AppThemeService.themeModeForValue(null), ThemeMode.light);
-    expect(AppThemeService.themeModeForValue('system'), ThemeMode.light);
+  test('supports every theme mode and follows the system by default', () {
+    expect(AppThemeService.themeModeForValue(null), ThemeMode.system);
+    expect(AppThemeService.themeModeForValue('unsupported'), ThemeMode.system);
+    expect(AppThemeService.themeModeForValue('system'), ThemeMode.system);
+    expect(AppThemeService.themeModeForValue('light'), ThemeMode.light);
+    expect(AppThemeService.themeModeForValue('dark'), ThemeMode.dark);
   });
 
   test('persists a selected theme', () async {
