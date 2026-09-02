@@ -15,130 +15,113 @@ class CommunityComposerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(22),
+    borderRadius: BorderRadius.circular(26),
     child: Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 10),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: .16)),
-        boxShadow: context.appTileShadow,
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(26),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primaryGreen.withValues(alpha: .22),
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 19,
-                  backgroundColor: context.appSoftGreen,
-                  backgroundImage:
-                      authorAvatarUrl.isEmpty
-                          ? null
-                          : NetworkImage(authorAvatarUrl),
-                  child:
-                      authorAvatarUrl.isEmpty
-                          ? const Icon(
-                            Icons.person_outline_rounded,
-                            color: AppColors.primaryGreen,
-                          )
-                          : null,
-                ),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primaryGreen.withValues(alpha: 0.16),
+                width: 1.5,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appMutedSurface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.appBorder),
-                  ),
-                  child: Text(
-                    'What’s on your healthy mind?',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                      color: context.appMutedText,
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: ClipOval(
+              child:
+                  authorAvatarUrl.isEmpty
+                      ? Container(
+                        color: const Color(0xFFF2F9F4),
+                        child: const Icon(
+                          Icons.person_outline_rounded,
+                          size: 22,
+                          color: AppColors.primaryGreen,
+                        ),
+                      )
+                      : Image.network(
+                        authorAvatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, _, _) => Container(
+                              color: const Color(0xFFF2F9F4),
+                              child: const Icon(
+                                Icons.person_outline_rounded,
+                                size: 22,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                      ),
+            ),
           ),
-          const SizedBox(height: 13),
-          Divider(height: 1, color: context.appBorder),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              Expanded(
-                child: _ComposerShortcut(
-                  icon: Icons.image_outlined,
-                  label: 'Add photo',
-                  color: Color(0xFF168B4A),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFDFF2E5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Text(
+                'What’s on your mind?',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: context.appMutedText,
+                  letterSpacing: 0.1,
                 ),
               ),
-              const SizedBox(height: 22, child: VerticalDivider(width: 1)),
-              Expanded(
-                child: _ComposerShortcut(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Ask community',
-                  color: Color(0xFF596C9B),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFDFF2E5)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: const Icon(
+              Icons.image_outlined,
+              size: 21,
+              color: AppColors.primaryGreen,
+            ),
           ),
         ],
       ),
-    ),
-  );
-}
-
-class _ComposerShortcut extends StatelessWidget {
-  const _ComposerShortcut({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 19, color: color),
-        const SizedBox(width: 7),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: context.appMutedText,
-            ),
-          ),
-        ),
-      ],
     ),
   );
 }

@@ -24,8 +24,8 @@ class CommunityTabSwitcher extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: 52,
-      padding: const EdgeInsets.all(4),
+      height: 48,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
@@ -39,7 +39,7 @@ class CommunityTabSwitcher extends StatelessWidget {
             ),
           ],
         ),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: colors.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -61,18 +61,18 @@ class CommunityTabSwitcher extends StatelessWidget {
                   child: InkWell(
                     key: ValueKey('community-tab-${section.name}'),
                     onTap: () => onChanged(section),
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(24),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 240),
                       curve: Curves.easeOutCubic,
                       alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         color:
                             isSelected
                                 ? colors.primaryContainer.withValues(alpha: .42)
                                 : Colors.transparent,
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

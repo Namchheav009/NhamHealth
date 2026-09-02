@@ -136,6 +136,7 @@ class _HomeDashboardContent extends StatelessWidget {
               children: [
                 Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       RepaintBoundary(child: GreetingSection()),
                       SizedBox(height: 16),

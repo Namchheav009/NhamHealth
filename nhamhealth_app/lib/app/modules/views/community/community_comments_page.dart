@@ -799,7 +799,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 Icons.more_horiz_rounded,
                 color: Color(0xFF768178),
               ),
-              tooltip: 'Post options'.tr,
+              tooltip: 'More options'.tr,
             ),
           ],
         ),

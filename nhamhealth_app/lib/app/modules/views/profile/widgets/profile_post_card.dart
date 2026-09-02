@@ -15,6 +15,8 @@ class ProfilePostCard extends StatelessWidget {
     this.membership,
     this.onEdit,
     this.onDelete,
+    this.relationshipLabel,
+    this.onRelationshipTap,
     this.onViewDetails,
     this.onOptions,
     this.onAuthorTap,
@@ -31,6 +33,8 @@ class ProfilePostCard extends StatelessWidget {
   final String? membership;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final String? relationshipLabel;
+  final VoidCallback? onRelationshipTap;
   final VoidCallback? onViewDetails;
   final VoidCallback? onOptions;
   final VoidCallback? onAuthorTap;
@@ -43,222 +47,246 @@ class ProfilePostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 8),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: context.appBorder.withValues(alpha: .9)),
-        boxShadow: context.appTileShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              InkResponse(
-                onTap: onAuthorTap,
-                radius: 26,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: green.withValues(alpha: .24)),
-                  ),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: context.appSoftGreen,
-                    foregroundImage: _avatarImage,
-                    child: Text(
-                      _initials,
-                      style: const TextStyle(
-                        color: green,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+    return InkWell(
+      onTap: onViewDetails,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 15, 16, 8),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: context.appBorder.withValues(alpha: .9)),
+          boxShadow: context.appTileShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                InkResponse(
+                  onTap: onAuthorTap,
+                  radius: 26,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: green.withValues(alpha: .24)),
+                    ),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: context.appSoftGreen,
+                      foregroundImage: _avatarImage,
+                      child: Text(
+                        _initials,
+                        style: const TextStyle(
+                          color: green,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(width: 11),
+                const SizedBox(width: 11),
 
-              Expanded(
-                child: InkWell(
-                  onTap: onAuthorTap,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _displayAuthorName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            letterSpacing: -.1,
-                            fontWeight: FontWeight.w800,
-                            color: context.appText,
+                Expanded(
+                  child: InkWell(
+                    onTap: onAuthorTap,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _displayAuthorName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              letterSpacing: -.1,
+                              fontWeight: FontWeight.w800,
+                              color: context.appText,
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 2),
+                          const SizedBox(height: 2),
 
-                        Text(
-                          '${post.ageLabel}  •  ${membership ?? post.role}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: context.appMutedText,
+                          Text(
+                            '${post.ageLabel}  •  ${membership ?? post.role}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.appMutedText,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              if (onOptions != null ||
-                  onEdit != null ||
-                  onDelete != null ||
-                  onViewDetails != null)
-                IconButton(
-                  tooltip: 'Post options',
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(
-                    backgroundColor: context.appMutedSurface,
-                    foregroundColor: context.appMutedText,
+                if (relationshipLabel != null &&
+                    relationshipLabel!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: InkWell(
+                      onTap: onRelationshipTap,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          relationshipLabel!,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  icon: const Icon(Icons.more_horiz_rounded, size: 20),
-                  onPressed: onOptions ?? () => _showPostOptions(context),
+                if (onOptions != null || onEdit != null || onDelete != null)
+                  IconButton(
+                    tooltip: 'Post options',
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      backgroundColor: context.appMutedSurface,
+                      foregroundColor: context.appMutedText,
+                    ),
+                    icon: const Icon(Icons.more_horiz_rounded, size: 20),
+                    onPressed: onOptions ?? () => _showPostOptions(context),
+                  ),
+              ],
+            ),
+
+            if (post.mealName.isNotEmpty) ...[
+              const SizedBox(height: 15),
+              Text(
+                post.mealName,
+                style: TextStyle(
+                  fontSize: 19,
+                  height: 1.22,
+                  letterSpacing: -.25,
+                  fontWeight: FontWeight.w800,
+                  color: context.appText,
                 ),
+              ),
             ],
-          ),
+            if (post.description.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                post.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.48,
+                  color: context.appText,
+                ),
+              ),
+            ],
 
-          if (post.mealName.isNotEmpty) ...[
-            const SizedBox(height: 15),
-            Text(
-              post.mealName,
-              style: TextStyle(
-                fontSize: 19,
-                height: 1.22,
-                letterSpacing: -.25,
-                fontWeight: FontWeight.w800,
-                color: context.appText,
+            if (post.cookingTimeMinutes != null ||
+                post.servings != null ||
+                post.difficulty.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  if (post.cookingTimeMinutes != null)
+                    _PostInfoPill(
+                      icon: Icons.timer_outlined,
+                      label: '${post.cookingTimeMinutes} min',
+                    ),
+                  if (post.servings != null)
+                    _PostInfoPill(
+                      icon: Icons.people_outline_rounded,
+                      label: '${post.servings} servings',
+                    ),
+                  if (post.difficulty.isNotEmpty)
+                    _PostInfoPill(
+                      icon: Icons.local_fire_department_outlined,
+                      label: post.difficulty,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 9),
+              AiStatusBadge(status: post.aiStatus),
+            ],
+
+            if (post.tags.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: post.tags.map((tag) => _Tag(text: '#$tag')).toList(),
+              ),
+            ],
+
+            if (post.sharedPost != null) ...[
+              const SizedBox(height: 12),
+              CommunitySharedPostCard(post: post.sharedPost!),
+            ],
+
+            if (post.imageBytes != null ||
+                post.imageUrls.isNotEmpty ||
+                post.imageUrl.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _ProfileImageCarousel(
+                imageBytes: post.imageBytes,
+                imageUrls: _imageUrls,
+                onTap: () => _openImageViewer(context),
+              ),
+            ],
+
+            if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
+              const SizedBox(height: 10),
+              _EngagementSummary(post: post),
+            ],
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 4),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.appBorder)),
+              ),
+              child: Row(
+                children: [
+                  _ProfilePostMetric(
+                    icon:
+                        post.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                    value: post.isLiked ? 'Liked' : 'Like',
+                    color:
+                        post.isLiked
+                            ? const Color(0xFFE64657)
+                            : context.appMutedText,
+                    onTap: isLiking ? null : onLike,
+                  ),
+                  const _ProfileMetricDivider(),
+                  _ProfilePostMetric(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    value: 'Comment',
+                    color: context.appMutedText,
+                    onTap: onComment,
+                  ),
+                  const _ProfileMetricDivider(),
+                  _ProfilePostMetric(
+                    icon: Icons.share_outlined,
+                    value: 'Share',
+                    color: context.appMutedText,
+                    onTap: onShare,
+                  ),
+                ],
               ),
             ),
           ],
-          if (post.description.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              post.description,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.48,
-                color: context.appText,
-              ),
-            ),
-          ],
-
-          if (post.cookingTimeMinutes != null ||
-              post.servings != null ||
-              post.difficulty.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
-              children: [
-                if (post.cookingTimeMinutes != null)
-                  _PostInfoPill(
-                    icon: Icons.timer_outlined,
-                    label: '${post.cookingTimeMinutes} min',
-                  ),
-                if (post.servings != null)
-                  _PostInfoPill(
-                    icon: Icons.people_outline_rounded,
-                    label: '${post.servings} servings',
-                  ),
-                if (post.difficulty.isNotEmpty)
-                  _PostInfoPill(
-                    icon: Icons.local_fire_department_outlined,
-                    label: post.difficulty,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 9),
-            AiStatusBadge(status: post.aiStatus),
-          ],
-
-          if (post.tags.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
-              children: post.tags.map((tag) => _Tag(text: '#$tag')).toList(),
-            ),
-          ],
-
-          if (post.sharedPost != null) ...[
-            const SizedBox(height: 12),
-            CommunitySharedPostCard(post: post.sharedPost!),
-          ],
-
-          if (post.imageBytes != null ||
-              post.imageUrls.isNotEmpty ||
-              post.imageUrl.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _ProfileImageCarousel(
-              imageBytes: post.imageBytes,
-              imageUrls: _imageUrls,
-              onTap: () => _openImageViewer(context),
-            ),
-          ],
-
-          if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
-            const SizedBox(height: 10),
-            _EngagementSummary(post: post),
-          ],
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            padding: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: context.appBorder)),
-            ),
-            child: Row(
-              children: [
-                _ProfilePostMetric(
-                  icon:
-                      post.isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                  value: post.isLiked ? 'Liked' : 'Like',
-                  color:
-                      post.isLiked
-                          ? const Color(0xFFE64657)
-                          : context.appMutedText,
-                  onTap: isLiking ? null : onLike,
-                ),
-                const _ProfileMetricDivider(),
-                _ProfilePostMetric(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  value: 'Comment',
-                  color: context.appMutedText,
-                  onTap: onComment,
-                ),
-                const _ProfileMetricDivider(),
-                _ProfilePostMetric(
-                  icon: Icons.share_outlined,
-                  value: 'Share',
-                  color: context.appMutedText,
-                  onTap: onShare,
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -286,11 +314,9 @@ class ProfilePostCard extends StatelessWidget {
           (_) => _ProfilePostOptionsSheet(
             canEdit: onEdit != null,
             canDelete: onDelete != null,
-            canViewDetails: onViewDetails != null,
           ),
     );
     if (!context.mounted) return;
-    if (action == 'viewDetails') onViewDetails?.call();
     if (action == 'edit') onEdit?.call();
     if (action == 'delete') onDelete?.call();
   }
@@ -496,12 +522,10 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
   const _ProfilePostOptionsSheet({
     required this.canEdit,
     required this.canDelete,
-    required this.canViewDetails,
   });
 
   final bool canEdit;
   final bool canDelete;
-  final bool canViewDetails;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -542,18 +566,6 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
             ),
             child: Column(
               children: [
-                if (canViewDetails)
-                  const _ProfilePostOption(
-                    value: 'viewDetails',
-                    label: 'View details',
-                    icon: Icons.article_outlined,
-                  ),
-                if (canViewDetails && (canEdit || canDelete))
-                  const Divider(
-                    height: 1,
-                    indent: 64,
-                    color: Color(0xFFE0E5E1),
-                  ),
                 if (canEdit)
                   const _ProfilePostOption(
                     value: 'edit',

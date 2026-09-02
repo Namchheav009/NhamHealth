@@ -454,6 +454,57 @@ class CommunityController extends GetxController {
     }
   }
 
+  Future<void> togglePostAuthorFollow(CommunityPost post) async {
+    if (post.authorId <= 0) return;
+
+    final currentUserId = authenticatedUser.value?.id;
+    if (currentUserId != null && post.authorId == currentUserId) return;
+
+    final authorIdKey = post.authorId.toString();
+    if (updatingConnectionIds.contains(authorIdKey)) return;
+
+    final previousStatus = connectionStatuses[authorIdKey]?.toUpperCase();
+    final wasFollowing =
+        previousStatus == 'FOLLOWING' ||
+        previousStatus == 'FRIEND' ||
+        post.isFollowingAuthor;
+
+    final optimisticFollowing = !wasFollowing;
+    connectionStatuses[authorIdKey] =
+        optimisticFollowing ? 'Following' : 'Follow';
+    _updatePostAuthorFollowState(authorIdKey, optimisticFollowing);
+    updatingConnectionIds.add(authorIdKey);
+
+    try {
+      final status = await _repository.toggleFollow(authorIdKey);
+      final normalized = status.trim().toUpperCase();
+      final isFollowing = normalized == 'FOLLOWING' || normalized == 'FRIEND';
+
+      connectionStatuses[authorIdKey] =
+          normalized == 'FRIEND'
+              ? 'Friend'
+              : isFollowing
+              ? 'Following'
+              : 'Follow';
+      _updatePostAuthorFollowState(authorIdKey, isFollowing);
+    } on Object catch (error) {
+      if (previousStatus == null) {
+        connectionStatuses.remove(authorIdKey);
+      } else {
+        connectionStatuses[authorIdKey] = previousStatus;
+      }
+      _updatePostAuthorFollowState(authorIdKey, wasFollowing);
+      unawaited(
+        AppAlert.error(
+          title: 'Could not update follow',
+          message: error.toString(),
+        ),
+      );
+    } finally {
+      updatingConnectionIds.remove(authorIdKey);
+    }
+  }
+
   void _updatePostAuthorFollowState(String personIdValue, bool isFollowing) {
     final personId = int.tryParse(personIdValue);
     if (personId == null) return;
@@ -476,3 +527,4 @@ class CommunityController extends GetxController {
     super.onClose();
   }
 }
+

@@ -122,6 +122,15 @@ class AiRecommendationCard extends GetView<HomeController> {
                             duration: const Duration(milliseconds: 380),
                             switchInCurve: Curves.elasticOut,
                             switchOutCurve: Curves.easeIn,
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                alignment: Alignment.centerLeft,
+                                children: <Widget>[
+                                  ...previousChildren,
+                                  if (currentChild != null) currentChild,
+                                ],
+                              );
+                            },
                             transitionBuilder:
                                 (child, animation) => FadeTransition(
                                   opacity: animation,
@@ -149,27 +158,56 @@ class AiRecommendationCard extends GetView<HomeController> {
                                   alpha: selectedMood == null ? 0.2 : 0.42,
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                                  horizontal: 16,
+                                  vertical: 6,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(22),
                                 ),
                               ),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  isLoading
-                                      ? 'Generating…'.tr
-                                      : selectedMood == null
-                                      ? 'Get Recommendation'.tr
-                                      : 'Recommend for @mood'.trParams({
-                                        'mood': selectedMood.name.tr,
-                                      }),
-                                  maxLines: 1,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                child: Row(
+                                  key: ValueKey(isLoading),
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isLoading)
+                                      const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    else
+                                      const Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 18,
+                                      ),
+
+                                    const SizedBox(width: 8),
+
+                                    Flexible(
+                                      child: Text(
+                                        isLoading
+                                            ? 'Generating…'.tr
+                                            : selectedMood == null
+                                            ? 'Suggest Meals'.tr
+                                            : 'Suggest Meals for @mood'.trParams({
+                                              'mood': selectedMood.name.tr,
+                                            }),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

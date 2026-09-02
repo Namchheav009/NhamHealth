@@ -42,6 +42,15 @@ class CommunityPage extends GetView<CommunityController> {
           child: Column(
             children: [
               Obx(() => _header(context)),
+              const SizedBox(height: 8),
+              _contentWidth(
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pageHorizontalFor(context),
+                  ),
+                  child: _feedIntro(context),
+                ),
+              ),
               const SizedBox(height: 10),
               Obx(() => _mainTabs(context)),
               const SizedBox(height: 4),
@@ -691,7 +700,7 @@ class CommunityPage extends GetView<CommunityController> {
       ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.pageHorizontalFor(context),
-        10,
+        0,
         AppSpacing.pageHorizontalFor(context),
         115,
       ),
@@ -738,8 +747,6 @@ class CommunityPage extends GetView<CommunityController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _feedIntro(context),
-        const SizedBox(height: 12),
         CommunityComposerCard(
           onTap: _showCreatePost,
           authorAvatarUrl:
@@ -811,20 +818,17 @@ class CommunityPage extends GetView<CommunityController> {
       final selectedFilter = controller.feedFilter.value;
 
       return Container(
-        // Keep every segment at least 48 px high so it is comfortable to tap
-        // on a phone, including around the label and icon.
         height: 52,
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: context.appSurfaceLow.withValues(alpha: .92),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.appBorder),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           children: List.generate(CommunityFeedFilter.values.length, (index) {
             final filter = CommunityFeedFilter.values[index];
             final selected = selectedFilter == filter;
-            final borderRadius = BorderRadius.circular(11);
+            final borderRadius = BorderRadius.circular(24);
 
             return Expanded(
               child: Semantics(
@@ -843,19 +847,15 @@ class CommunityPage extends GetView<CommunityController> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        // Do not delay the selected state: switching filters
-                        // should be visible in the frame immediately after tap.
-                        color:
-                            selected
-                                ? context.appSoftGreen
-                                : Colors.transparent,
+                        color: Colors.transparent,
                         borderRadius: borderRadius,
-                        border:
-                            selected
-                                ? Border.all(
-                                  color: green.withValues(alpha: .18),
-                                )
-                                : null,
+                        border: Border.all(
+                          color:
+                              selected
+                                  ? green.withValues(alpha: .35)
+                                  : context.appBorder,
+                          width: selected ? 1.5 : 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -955,12 +955,81 @@ class CommunityPage extends GetView<CommunityController> {
       child: ProfilePostCard(
         post: post,
         onAuthorTap: () => _openAuthorProfile(post),
+        relationshipLabel: _authorRelationshipLabel(post),
+        onRelationshipTap: () => _toggleAuthorRelationship(post),
+        onViewDetails: () => _showComments(post),
         onLike: () => controller.togglePostLike(post),
         onComment: () => _showComments(post),
         onShare: () => _showShareOptions(post),
         onOptions: () => _showPostOptions(post),
       ),
     );
+  }
+
+  String? _authorRelationshipLabel(CommunityPost post) {
+    if (post.authorId <= 0) return null;
+
+    final currentUserId = controller.authenticatedUser.value?.id;
+    if (currentUserId != null && post.authorId == currentUserId) return null;
+
+    final status =
+        controller.connectionStatuses[post.authorId.toString()]
+            ?.trim()
+            .toUpperCase();
+
+    final isMutualFollow =
+        status == 'FRIEND' ||
+        (post.isFollowingAuthor &&
+            (status == 'FOLLOWS_YOU' ||
+                status == 'FOLLOWING' ||
+                status == 'FOLLOW'));
+
+    if (isMutualFollow) return 'Friend';
+    if (status == 'FOLLOWING' || post.isFollowingAuthor) return 'Following';
+    if (status == 'FOLLOW' ||
+        status == 'FOLLOW_BACK' ||
+        status == 'FOLLOWS_YOU') {
+      return 'Follow';
+    }
+
+    return post.isFollowingAuthor ? 'Following' : 'Follow';
+  }
+
+  Future<void> _toggleAuthorRelationship(CommunityPost post) async {
+    if (post.authorId <= 0) return;
+
+    final currentUserId = controller.authenticatedUser.value?.id;
+    if (currentUserId != null && post.authorId == currentUserId) return;
+
+    final status =
+        controller.connectionStatuses[post.authorId.toString()]
+            ?.trim()
+            .toUpperCase();
+    final isFollowing =
+        status == 'FOLLOWING' || status == 'FRIEND' || post.isFollowingAuthor;
+
+    if (isFollowing) {
+      final confirmed = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Unfollow'),
+          content: Text('Unfollow ${post.author}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text('Unfollow'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
+    await controller.togglePostAuthorFollow(post);
   }
 
   // ---------------------------------------------------------------------------
@@ -996,11 +1065,6 @@ class CommunityPage extends GetView<CommunityController> {
             isOwner
                 ? const [
                   _CommunityOption(
-                    _CommunityPostAction.viewDetails,
-                    'View details',
-                    Icons.article_outlined,
-                  ),
-                  _CommunityOption(
                     _CommunityPostAction.edit,
                     'Edit post',
                     Icons.edit_outlined,
@@ -1013,11 +1077,6 @@ class CommunityPage extends GetView<CommunityController> {
                   ),
                 ]
                 : const [
-                  _CommunityOption(
-                    _CommunityPostAction.viewDetails,
-                    'View details',
-                    Icons.article_outlined,
-                  ),
                   _CommunityOption(
                     _CommunityPostAction.report,
                     'Report post',
@@ -1052,10 +1111,6 @@ class CommunityPage extends GetView<CommunityController> {
         await Get.to<void>(
           () => CommunityReportPage(postId: post.id, subject: 'post'),
         );
-        return;
-
-      case _CommunityPostAction.viewDetails:
-        await _showComments(post);
         return;
     }
   }
@@ -1380,7 +1435,7 @@ class _PeopleSearchFieldState extends State<_PeopleSearchField> {
   }
 }
 
-enum _CommunityPostAction { viewDetails, edit, delete, report }
+enum _CommunityPostAction { edit, delete, report }
 
 class _CommunityOption {
   const _CommunityOption(
