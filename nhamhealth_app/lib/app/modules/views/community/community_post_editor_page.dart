@@ -748,26 +748,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   List<Widget> _basicInfoFields() => [
     InkWell(
       onTap: _submitting ? null : _chooseImage,
-<<<<<<< HEAD
       borderRadius: BorderRadius.circular(30),
       child: CustomPaint(
         foregroundPainter: const _DashedRoundedBorder(
           color: Color(0xFFB7DEC7),
           radius: 30,
-=======
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 174,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [context.appSubtleSurface, context.appSoftGreen],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFC5E6D0)),
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
         ),
         child: Container(
           height: 206,
@@ -888,15 +873,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-<<<<<<< HEAD
         color: const Color(0xFFF2F7F4),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE1ECE5)),
-=======
-        color: context.appSubtleSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.appBorder),
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
       ),
       child: Row(
         children: [
@@ -912,7 +891,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _mealCategoryField(),
   ];
 
-<<<<<<< HEAD
   Widget _emptyPhotoPrompt() => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -928,31 +906,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 color: Color(0x0F164E34),
                 blurRadius: 12,
                 offset: Offset(0, 4),
-=======
-  Widget _emptyPhotoPrompt() => Stack(
-    children: [
-      Positioned(
-        top: 13,
-        left: 14,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: context.appElevatedSurface.withValues(alpha: .90),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.image_outlined, color: green, size: 15),
-              SizedBox(width: 5),
-              Text(
-                'Cover photo',
-                style: TextStyle(
-                  color: Color(0xFF2B6242),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
               ),
             ],
           ),
@@ -975,46 +928,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-<<<<<<< HEAD
             Icon(Icons.image_outlined, color: Color(0xFF91A79A), size: 14),
             SizedBox(width: 5),
             Text(
               'Recommended',
               style: TextStyle(color: Color(0xFF91A79A), fontSize: 11),
-=======
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: context.appElevatedSurface,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x19056E38),
-                    blurRadius: 14,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.add_a_photo_outlined,
-                color: green,
-                size: 27,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Add a delicious photo',
-              style: TextStyle(
-                color: Color(0xFF17643A),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            const Text(
-              'A clear photo helps your meal stand out',
-              style: TextStyle(color: Color(0xFF637169), fontSize: 12),
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
             ),
           ],
         ),
@@ -1476,17 +1394,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         hintText: hint,
         suffixText: suffix,
         filled: true,
-<<<<<<< HEAD
         fillColor: const Color(0xFFFFFFFF),
         hintStyle: const TextStyle(color: Color(0xFF92A098)),
         suffixStyle: const TextStyle(
           color: Color(0xFF617068),
-=======
-        fillColor: context.appField,
-        hintStyle: TextStyle(color: context.appMutedText),
-        suffixStyle: TextStyle(
-          color: context.appMutedText,
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
           fontWeight: FontWeight.w600,
         ),
         counterStyle: TextStyle(color: context.appMutedText, fontSize: 11),
@@ -1495,21 +1406,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           vertical: 12,
         ),
         border: OutlineInputBorder(
-<<<<<<< HEAD
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
-=======
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: context.appBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: context.appBorder),
->>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
@@ -2162,9 +2064,8 @@ class _DashedRoundedBorder extends CustomPainter {
   const _DashedRoundedBorder({
     required this.color,
     required this.radius,
-    this.dashLength = 4,
-    this.gapLength = 4,
-  });
+  }) : dashLength = 4,
+       gapLength = 4;
 
   final Color color;
   final double radius;
