@@ -253,6 +253,22 @@ class ProfileRepository {
     }
   }
 
+  Future<void> deleteProfileImage() async {
+    final token = await _accessToken();
+    final response = await _client
+        .delete(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/users/me/profile-image'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ProfileException(_errorMessage(response));
+    }
+  }
+
   Future<_ProfileImageUpload> _prepareProfileImage(String imagePath) async {
     final path = imagePath.trim();
     if (path.isEmpty) {

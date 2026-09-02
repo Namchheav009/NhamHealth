@@ -186,29 +186,76 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Future<void> _chooseImage() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      showDragHandle: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
       builder:
-          (context) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+              decoration: BoxDecoration(
+                color: sheetContext.appSurfaceLow,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Add a meal photo',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      color: sheetContext.appText,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    leading: const Icon(Icons.photo_library_outlined),
-                    title: const Text('Choose from gallery'),
-                    onTap: () => Navigator.pop(context, ImageSource.gallery),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Choose how you would like to add your cover photo.',
+                    style: TextStyle(
+                      color: sheetContext.appMutedText,
+                      fontSize: 13,
+                    ),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.photo_camera_outlined),
-                    title: const Text('Take a photo'),
-                    onTap: () => Navigator.pop(context, ImageSource.camera),
+                  const SizedBox(height: 18),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: sheetContext.appMutedSurface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: sheetContext.appBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        _PhotoSourceTile(
+                          icon: Icons.photo_library_outlined,
+                          title: 'Choose from gallery',
+                          subtitle: 'Select an existing photo',
+                          onTap:
+                              () => Navigator.pop(
+                                sheetContext,
+                                ImageSource.gallery,
+                              ),
+                        ),
+                        Divider(
+                          height: 1,
+                          indent: 68,
+                          color: sheetContext.appBorder,
+                        ),
+                        _PhotoSourceTile(
+                          icon: Icons.photo_camera_outlined,
+                          title: 'Take a photo',
+                          subtitle: 'Use your camera now',
+                          onTap:
+                              () => Navigator.pop(
+                                sheetContext,
+                                ImageSource.camera,
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -417,7 +464,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
       builder:
           (sheetContext) => StatefulBuilder(
             builder: (context, updateSheet) {
@@ -433,76 +481,124 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 (tag) => tag.name.toLowerCase() == mealName.toLowerCase(),
               );
               return SafeArea(
-                child: Padding(
+                top: false,
+                child: Container(
                   padding: EdgeInsets.fromLTRB(
                     20,
-                    0,
+                    22,
                     20,
-                    MediaQuery.viewInsetsOf(context).bottom + 20,
+                    MediaQuery.viewInsetsOf(context).bottom + 24,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.appSurfaceLow,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 520),
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(context).height * .72,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Add meal tags',
                           style: TextStyle(
-                            fontSize: 20,
+                            color: context.appText,
+                            fontSize: 19,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           'Choose a tag, create your own, or use the food name.',
-                          style: TextStyle(color: Color(0xFF718078)),
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 13,
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
                         TextField(
                           controller: search,
                           autofocus: true,
                           onChanged: (_) => updateSheet(() {}),
-                          decoration: _decoration(hint: 'Search tags').copyWith(
+                          decoration: InputDecoration(
+                            hintText: 'Search tags',
                             prefixIcon: const Icon(Icons.search_rounded),
+                            filled: true,
+                            fillColor: context.appMutedSurface,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 13,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: context.appBorder),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: context.appBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                color: green,
+                                width: 1.5,
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         Flexible(
                           child: ListView(
                             shrinkWrap: true,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
                             children: [
                               ...visible.map(
-                                (tag) => CheckboxListTile(
-                                  value: _selectedTags.contains(tag.id),
-                                  activeColor: green,
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(tag.name),
-                                  onChanged: (selected) {
-                                    setState(
-                                      () =>
-                                          selected == true
-                                              ? _selectedTags.add(tag.id)
-                                              : _selectedTags.remove(tag.id),
-                                    );
-                                    updateSheet(() {});
-                                  },
+                                (tag) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: _TagSelectionTile(
+                                    label: tag.name,
+                                    selected: _selectedTags.contains(tag.id),
+                                    onTap: () {
+                                      final selected =
+                                          !_selectedTags.contains(tag.id);
+                                      setState(
+                                        () =>
+                                            selected
+                                                ? _selectedTags.add(tag.id)
+                                                : _selectedTags.remove(tag.id),
+                                      );
+                                      updateSheet(() {});
+                                    },
+                                  ),
                                 ),
                               ),
+                              if (visible.isEmpty &&
+                                  (query.isEmpty || exactMatch))
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 24,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'No tags available.',
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               if (query.isEmpty &&
                                   mealName.isNotEmpty &&
                                   !hasMealNameTag)
-                                ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Color(0xFFE5F7EC),
-                                    child: Icon(
-                                      Icons.restaurant_menu_rounded,
-                                      color: green,
-                                    ),
-                                  ),
-                                  title: Text('Use food name: "$mealName"'),
-                                  subtitle: const Text('Create and select tag'),
+                                _TagCreateTile(
+                                  icon: Icons.restaurant_menu_rounded,
+                                  title: 'Use food name: "$mealName"',
+                                  loading: _creatingTag,
                                   onTap:
                                       _creatingTag
                                           ? null
@@ -512,26 +608,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                           ),
                                 ),
                               if (query.isNotEmpty && !exactMatch)
-                                ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Color(0xFFE5F7EC),
-                                    child: Icon(
-                                      Icons.add_rounded,
-                                      color: green,
-                                    ),
-                                  ),
-                                  title: Text('Create "${search.text.trim()}"'),
-                                  subtitle: const Text('Create and select tag'),
-                                  trailing:
-                                      _creatingTag
-                                          ? const SizedBox.square(
-                                            dimension: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                          : null,
+                                _TagCreateTile(
+                                  icon: Icons.add_rounded,
+                                  title: 'Create "${search.text.trim()}"',
+                                  loading: _creatingTag,
                                   onTap:
                                       _creatingTag
                                           ? null
@@ -543,15 +623,27 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
+                          height: 48,
                           child: FilledButton(
                             onPressed: () => Navigator.pop(sheetContext),
                             style: FilledButton.styleFrom(
                               backgroundColor: green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
-                            child: const Text('Done'),
+                            child: Text(
+                              _selectedTags.isEmpty
+                                  ? 'Done'
+                                  : 'Done (${_selectedTags.length})',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1604,21 +1696,34 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               const SizedBox(width: 8),
               SizedBox(
                 width: 92,
-                child: DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  initialValue: _newIngredient.unit,
-                  items:
-                      _ingredientUnits
-                          .map(
-                            (unit) => DropdownMenuItem(
-                              value: unit,
-                              child: Text(unit),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _submitting ? null : _showIngredientUnitPicker,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InputDecorator(
+                      decoration: _decoration(),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _newIngredient.unit,
+                              style: TextStyle(
+                                color: context.appText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          )
-                          .toList(),
-                  onChanged:
-                      (value) => setState(() => _newIngredient.unit = value!),
-                  decoration: _decoration(),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: context.appMutedText,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1643,6 +1748,119 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showIngredientUnitPicker() async {
+    FocusScope.of(context).unfocus();
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+              decoration: BoxDecoration(
+                color: sheetContext.appSurfaceLow,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Choose measurement unit',
+                    style: TextStyle(
+                      color: sheetContext.appText,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Select the unit used for this ingredient amount.',
+                    style: TextStyle(
+                      color: sheetContext.appMutedText,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 2.25,
+                        ),
+                    itemCount: _ingredientUnits.length,
+                    itemBuilder: (context, index) {
+                      final unit = _ingredientUnits[index];
+                      final isSelected = unit == _newIngredient.unit;
+                      return Material(
+                        color:
+                            isSelected
+                                ? sheetContext.appSelectedSurface
+                                : sheetContext.appMutedSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: () => Navigator.pop(sheetContext, unit),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color:
+                                    isSelected
+                                        ? green
+                                        : sheetContext.appBorder,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (isSelected) ...[
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: green,
+                                    size: 17,
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Text(
+                                  unit,
+                                  style: TextStyle(
+                                    color:
+                                        isSelected
+                                            ? green
+                                            : sheetContext.appText,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _newIngredient.unit = selected);
+    }
   }
 
   Widget _ingredientSuggestionPanel() => Container(
@@ -2008,6 +2226,184 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           color: const Color(0xFF65716A),
         ),
       ],
+    ),
+  );
+}
+
+class _PhotoSourceTile extends StatelessWidget {
+  const _PhotoSourceTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    onTap: onTap,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+    leading: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: context.appSoftGreen,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: _CommunityPostEditorPageState.green, size: 21),
+    ),
+    title: Text(
+      title,
+      style: TextStyle(
+        color: context.appText,
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    subtitle: Text(
+      subtitle,
+      style: TextStyle(color: context.appMutedText, fontSize: 12),
+    ),
+    trailing: Icon(
+      Icons.chevron_right_rounded,
+      color: context.appMutedText,
+      size: 22,
+    ),
+  );
+}
+
+class _TagSelectionTile extends StatelessWidget {
+  const _TagSelectionTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: selected ? context.appSelectedSurface : context.appMutedSurface,
+    borderRadius: BorderRadius.circular(15),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color:
+                selected
+                    ? _CommunityPostEditorPageState.green
+                    : context.appBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color:
+                    selected
+                        ? _CommunityPostEditorPageState.green
+                        : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color:
+                      selected
+                          ? _CommunityPostEditorPageState.green
+                          : context.appStrongBorder,
+                ),
+              ),
+              child:
+                  selected
+                      ? const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 17,
+                      )
+                      : null,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _TagCreateTile extends StatelessWidget {
+  const _TagCreateTile({
+    required this.icon,
+    required this.title,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Material(
+      color: context.appMutedSurface,
+      borderRadius: BorderRadius.circular(15),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: context.appBorder),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        leading: CircleAvatar(
+          backgroundColor: context.appSoftGreen,
+          child: Icon(
+            icon,
+            color: _CommunityPostEditorPageState.green,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: const Text('Create and select tag'),
+        trailing:
+            loading
+                ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                : const Icon(Icons.add_circle_outline_rounded),
+      ),
     ),
   );
 }

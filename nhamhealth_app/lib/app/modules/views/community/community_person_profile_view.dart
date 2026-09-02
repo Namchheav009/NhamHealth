@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -12,6 +14,10 @@ import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
+import '../profile/widgets/profile_post_card.dart';
+import 'community_comments_page.dart';
+import 'community_report_page.dart';
+import 'community_share_actions.dart';
 
 /// Read-only public profile for a community member.
 class CommunityPersonProfileView extends StatefulWidget {
@@ -30,6 +36,7 @@ class _CommunityPersonProfileViewState
   String? _error;
   bool _isLoading = true;
   bool _isUpdatingFollow = false;
+  final Set<String> _likingPostIds = <String>{};
 
   int get _userId {
     final arguments = Get.arguments;
@@ -80,6 +87,30 @@ class _CommunityPersonProfileViewState
   Future<void> _toggleFollow() async {
     final profile = _profile;
     if (profile == null || _isUpdatingFollow) return;
+    if (profile.isFollowing) {
+      final confirmed = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Unfollow this member?'),
+          content: Text(
+            'You will stop seeing posts from ${profile.name} in your following feed.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Get.back(result: true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF278A3A),
+              ),
+              child: const Text('Unfollow'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
     final optimisticFollowing = !profile.isFollowing;
     setState(() {
       _isUpdatingFollow = true;
@@ -163,7 +194,7 @@ class _CommunityPersonProfileViewState
                         _identity(context, _profile!),
                         _stats(context, _profile!),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 30),
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
                           child: _followButton(context, _profile!),
                         ),
                         _postTab(context),
@@ -186,18 +217,7 @@ class _CommunityPersonProfileViewState
       children: [
         AppBackButton(onPressed: Get.back),
         const Spacer(),
-        PopupMenuButton<String>(
-          tooltip: 'Profile options',
-          onSelected: (_) {},
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          itemBuilder:
-              (_) => const [
-                PopupMenuItem(value: 'report', child: Text('Report profile')),
-              ],
-          child: _profileMenuButton(context),
-        ),
+        _profileMenuButton(context),
       ],
     ),
   );
@@ -217,6 +237,7 @@ class _CommunityPersonProfileViewState
           shadowColor: Colors.black.withValues(alpha: .16),
           child: InkWell(
             customBorder: shape,
+            onTap: () => _showProfileOptions(context),
             child: Icon(
               Icons.more_horiz_rounded,
               color: colors.primary,
@@ -230,33 +251,53 @@ class _CommunityPersonProfileViewState
 
   Widget _identity(BuildContext context, CommunityPersonProfile profile) =>
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: Color(0xFF00A857),
-                shape: BoxShape.circle,
-              ),
-              child: CircleAvatar(
-                radius: 39,
-                backgroundColor: context.appSoftGreen,
-                foregroundImage:
+            Semantics(
+              button: profile.avatarUrl.isNotEmpty,
+              label:
+                  profile.avatarUrl.isEmpty
+                      ? '${profile.name} profile photo'
+                      : 'View ${profile.name} full profile photo',
+              child: Tooltip(
+                message:
                     profile.avatarUrl.isEmpty
-                        ? null
-                        : NetworkImage(profile.avatarUrl),
-                child: Text(
-                  _initials(profile.name),
-                  style: const TextStyle(
-                    color: Color(0xFF00A857),
-                    fontSize: 23,
-                    fontWeight: FontWeight.w800,
+                        ? 'Profile photo'
+                        : 'View profile photo',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap:
+                      profile.avatarUrl.isEmpty
+                          ? null
+                          : () => _openProfileImage(profile),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF00A857),
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: 34,
+                      backgroundColor: context.appSoftGreen,
+                      foregroundImage:
+                          profile.avatarUrl.isEmpty
+                              ? null
+                              : CachedNetworkImageProvider(profile.avatarUrl),
+                      child: Text(
+                        _initials(profile.name),
+                        style: const TextStyle(
+                          color: Color(0xFF00A857),
+                          fontSize: 21,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 12),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -266,23 +307,15 @@ class _CommunityPersonProfileViewState
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: context.appText,
-                      fontSize: 17,
+                      fontSize: 16,
                       letterSpacing: -.2,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-                if (profile.verified) ...[
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.verified_rounded,
-                    color: Color(0xFF45A654),
-                    size: 17,
-                  ),
-                ],
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -316,7 +349,7 @@ class _CommunityPersonProfileViewState
               ),
             ),
             if (profile.joinedLabel.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -343,15 +376,20 @@ class _CommunityPersonProfileViewState
     return value
         .toLowerCase()
         .split(RegExp(r'[_\s]+'))
-        .map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
+        .map(
+          (word) =>
+              word.isEmpty
+                  ? word
+                  : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
         .join(' ');
   }
 
   Widget _stats(BuildContext context, CommunityPersonProfile profile) =>
       Padding(
-        padding: const EdgeInsets.fromLTRB(20, 36, 20, 0),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: context.appElevatedSurface,
             borderRadius: BorderRadius.circular(16),
@@ -376,28 +414,28 @@ class _CommunityPersonProfileViewState
           value,
           style: TextStyle(
             color: context.appText,
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           label,
-          style: TextStyle(color: context.appMutedText, fontSize: 13),
+          style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
       ],
     ),
   );
 
   Widget _divider(BuildContext context) =>
-      Container(width: 1, height: 42, color: context.appBorder);
+      Container(width: 1, height: 34, color: context.appBorder);
 
   Widget _followButton(
     BuildContext context,
     CommunityPersonProfile profile,
   ) => SizedBox(
     width: double.infinity,
-    height: 52,
+    height: 46,
     child: ElevatedButton.icon(
       onPressed: _isUpdatingFollow ? null : _toggleFollow,
       icon:
@@ -427,7 +465,7 @@ class _CommunityPersonProfileViewState
         foregroundColor:
             profile.isFollowing ? const Color(0xFF278A3A) : Colors.white,
         elevation: 0,
-        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
@@ -479,11 +517,216 @@ class _CommunityPersonProfileViewState
             .map(
               (post) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
-                child: _PostTile(post: post, onTap: () => _openPost(post)),
+                child: ProfilePostCard(
+                  post: post,
+                  authorName: _profile?.name,
+                  authorAvatarUrl: _profile?.avatarUrl,
+                  membership: _roleLabel(_profile?.role ?? post.role),
+                  onLike: () => _togglePostLike(post),
+                  isLiking: _likingPostIds.contains(post.id),
+                  onComment: () => _showComments(post),
+                  onShare: () => _showShare(post),
+                  onOptions: () => _showPostOptions(post),
+                ),
               ),
             )
             .toList(growable: false),
       ),
+    );
+  }
+
+  Future<void> _togglePostLike(CommunityPost post) async {
+    if (_likingPostIds.contains(post.id)) return;
+    setState(() => _likingPostIds.add(post.id));
+    try {
+      final updated = await _repository.toggleLike(post.id);
+      if (!mounted) return;
+      setState(() {
+        final index = _posts.indexWhere((item) => item.id == post.id);
+        if (index >= 0) _posts[index] = updated;
+        _likingPostIds.remove(post.id);
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _likingPostIds.remove(post.id));
+      unawaited(
+        AppAlert.error(
+          title: 'Could not update like',
+          message: error.toString(),
+        ),
+      );
+    }
+  }
+
+  void _openProfileImage(CommunityPersonProfile profile) {
+    Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black,
+        barrierDismissible: true,
+        barrierLabel: 'Close profile photo',
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder:
+            (_, animation, _) => FadeTransition(
+              opacity: animation,
+              child: _CommunityFullProfileImage(
+                imageUrl: profile.avatarUrl,
+                memberName: profile.name,
+              ),
+            ),
+      ),
+    );
+  }
+
+  Future<void> _showComments(CommunityPost post) async {
+    await Get.to<void>(
+      () => CommunityCommentsPage(
+        post: post,
+        onPostChanged: () => setState(() {}),
+        onShareToFeed:
+            (message, visibility) => _repository.sharePostToFeed(
+              post.id,
+              message: message,
+              visibility: visibility,
+            ),
+      ),
+      transition: Transition.rightToLeft,
+    );
+  }
+
+  Future<void> _showPostOptions(CommunityPost post) async {
+    final action = await Get.bottomSheet<String>(
+      const _PersonPostOptionsSheet(),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+    );
+    if (!mounted || action == null) return;
+    if (action == 'details') {
+      _openPost(post);
+      return;
+    }
+    if (action == 'report') {
+      await Get.to<void>(
+        () => CommunityReportPage(postId: post.id, subject: 'post'),
+        transition: Transition.rightToLeft,
+      );
+    }
+  }
+
+  Future<void> _showProfileOptions(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+              decoration: BoxDecoration(
+                color: sheetContext.appSurfaceLow,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(26),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: sheetContext.appMutedText.withValues(alpha: .35),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'More options',
+                      style: TextStyle(
+                        color: sheetContext.appText,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: sheetContext.appMutedSurface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: sheetContext.appBorder),
+                    ),
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        final profile = _profile;
+                        if (profile == null) return;
+                        Get.to<void>(
+                          () => CommunityReportPage(
+                            subject: 'profile',
+                            profileUserId: profile.id,
+                            subjectName: profile.name,
+                          ),
+                          transition: Transition.rightToLeft,
+                        );
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 2,
+                      ),
+                      leading: const Icon(
+                        Icons.flag_outlined,
+                        color: Color(0xFFD94545),
+                        size: 24,
+                      ),
+                      title: const Text(
+                        'Report profile',
+                        style: TextStyle(
+                          color: Color(0xFFD94545),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Future<void> _showShare(CommunityPost post) async {
+    final canShare =
+        post.sharedPost != null ||
+        post.visibility == CommunityPostVisibility.public;
+    if (!canShare) {
+      unawaited(
+        AppAlert.error(
+          title: 'Cannot share this post',
+          message: 'Only public posts can be shared to your feed.',
+        ),
+      );
+      return;
+    }
+    final user = await Get.find<AuthService>().restoreSession();
+    if (!mounted) return;
+    await showCommunityShareComposer(
+      authorName: user?.displayName ?? 'Community member',
+      authorAvatarUrl: user?.profileImageUrl ?? '',
+      onShare:
+          (message, visibility) => _repository.sharePostToFeed(
+            post.id,
+            message: message,
+            visibility: visibility,
+          ),
     );
   }
 
@@ -508,121 +751,256 @@ class _CommunityPersonProfileViewState
   }
 }
 
-class _PostTile extends StatelessWidget {
-  const _PostTile({required this.post, required this.onTap});
-  final CommunityPost post;
-  final VoidCallback onTap;
+class _PersonPostOptionsSheet extends StatelessWidget {
+  const _PersonPostOptionsSheet();
 
   @override
-  Widget build(BuildContext context) {
-    final imageUrl =
-        post.imageUrls.isNotEmpty ? post.imageUrls.first : post.imageUrl;
-    return Material(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(11),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          children: [
-            AspectRatio(
-              aspectRatio: 1.78,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  imageUrl.isEmpty
-                      ? ColoredBox(
-                        color: context.appSoftGreen,
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.restaurant_outlined,
-                              color: Color(0xFF5AC98D),
-                              size: 30,
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              'No image',
-                              style: TextStyle(
-                                color: Color(0xFF5AC98D),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      : Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, _, _) =>
-                                ColoredBox(color: context.appSoftGreen),
-                      ),
-                  if (post.imageUrls.length > 1)
-                    Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: _imageCount(post.imageUrls.length),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-              child: Row(
-                children: [
-                  _metric(context, Icons.favorite_border_rounded, post.likes),
-                  const SizedBox(width: 14),
-                  _metric(
-                    context,
-                    Icons.chat_bubble_outline_rounded,
-                    post.comments,
-                  ),
-                  const Spacer(),
-                  Text(
-                    post.ageLabel,
-                    style: TextStyle(color: context.appMutedText, fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
       ),
-    );
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.appMutedText.withValues(alpha: .35),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'More options',
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: context.appMutedSurface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: context.appBorder),
+            ),
+            child: Column(
+              children: [
+                _PersonPostOptionTile(
+                  icon: Icons.article_outlined,
+                  label: 'View details',
+                  onTap: () => Get.back(result: 'details'),
+                ),
+                Divider(height: 1, indent: 58, color: context.appBorder),
+                _PersonPostOptionTile(
+                  icon: Icons.flag_outlined,
+                  label: 'Report post',
+                  destructive: true,
+                  onTap: () => Get.back(result: 'report'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _CommunityFullProfileImage extends StatefulWidget {
+  const _CommunityFullProfileImage({
+    required this.imageUrl,
+    required this.memberName,
+  });
+
+  final String imageUrl;
+  final String memberName;
+
+  @override
+  State<_CommunityFullProfileImage> createState() =>
+      _CommunityFullProfileImageState();
+}
+
+class _CommunityFullProfileImageState
+    extends State<_CommunityFullProfileImage> {
+  final TransformationController _transformation = TransformationController();
+
+  @override
+  void dispose() {
+    _transformation.dispose();
+    super.dispose();
   }
 
-  Widget _imageCount(int count) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-    decoration: BoxDecoration(
-      color: Colors.black54,
-      borderRadius: BorderRadius.circular(5),
+  void _zoom(double factor) {
+    final current = _transformation.value.getMaxScaleOnAxis();
+    final next = (current * factor).clamp(.8, 4.0);
+    _transformation.value = Matrix4.diagonal3Values(next, next, 1);
+  }
+
+  void _resetZoom() => _transformation.value = Matrix4.identity();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    body: SafeArea(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: InteractiveViewer(
+              transformationController: _transformation,
+              minScale: .8,
+              maxScale: 4,
+              panEnabled: true,
+              scaleEnabled: true,
+              boundaryMargin: const EdgeInsets.all(80),
+              child: Center(
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder:
+                      (_, _) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                  errorWidget:
+                      (_, _, _) => const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white70,
+                          size: 48,
+                        ),
+                      ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 12,
+            left: 18,
+            right: 68,
+            child: Text(
+              widget.memberName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 12,
+            child: IconButton.filled(
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withValues(alpha: .55),
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ),
+          Positioned(
+            right: 12,
+            bottom: 18,
+            child: _CommunityZoomControls(
+              onZoomIn: () => _zoom(1.35),
+              onZoomOut: () => _zoom(1 / 1.35),
+              onReset: _resetZoom,
+            ),
+          ),
+        ],
+      ),
     ),
-    child: Row(
+  );
+}
+
+class _CommunityZoomControls extends StatelessWidget {
+  const _CommunityZoomControls({
+    required this.onZoomIn,
+    required this.onZoomOut,
+    required this.onReset,
+  });
+
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.black.withValues(alpha: .58),
+    borderRadius: BorderRadius.circular(24),
+    child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.photo_library_outlined, size: 13, color: Colors.white),
-        const SizedBox(width: 3),
-        Text(
-          '$count',
-          style: const TextStyle(color: Colors.white, fontSize: 11),
+        IconButton(
+          tooltip: 'Zoom in',
+          onPressed: onZoomIn,
+          color: Colors.white,
+          icon: const Icon(Icons.add_rounded),
+        ),
+        IconButton(
+          tooltip: 'Reset zoom',
+          onPressed: onReset,
+          color: Colors.white,
+          icon: const Icon(Icons.center_focus_strong_rounded, size: 20),
+        ),
+        IconButton(
+          tooltip: 'Zoom out',
+          onPressed: onZoomOut,
+          color: Colors.white,
+          icon: const Icon(Icons.remove_rounded),
         ),
       ],
     ),
   );
+}
 
-  Widget _metric(BuildContext context, IconData icon, int count) => Row(
-    children: [
-      Icon(icon, size: 16, color: context.appMutedText),
-      const SizedBox(width: 4),
-      Text(
-        '$count',
-        style: TextStyle(color: context.appMutedText, fontSize: 12),
+class _PersonPostOptionTile extends StatelessWidget {
+  const _PersonPostOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? const Color(0xFFD94545) : context.appText;
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+      leading: Icon(icon, color: color, size: 24),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
       ),
-    ],
-  );
+    );
+  }
 }
 
 class _ProfileMessage extends StatelessWidget {

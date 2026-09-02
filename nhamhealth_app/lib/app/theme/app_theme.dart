@@ -142,8 +142,7 @@ abstract class AppTheme {
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor:
             isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
-        showDragHandle: true,
-        dragHandleColor: colorScheme.outline,
+        showDragHandle: false,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

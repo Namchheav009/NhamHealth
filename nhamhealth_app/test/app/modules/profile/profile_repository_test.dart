@@ -91,6 +91,24 @@ void main() {
     expect(requestCount, 0);
   });
 
+  test('deletes the authenticated user profile image', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response('', 204);
+    });
+    final repository = ProfileRepository(
+      authService: _AuthenticatedAuthService(),
+      client: client,
+    );
+
+    await repository.deleteProfileImage();
+
+    expect(capturedRequest.method, 'DELETE');
+    expect(capturedRequest.url.path, '/api/v1/users/me/profile-image');
+    expect(capturedRequest.headers['authorization'], 'Bearer test-token');
+  });
+
   test('loads only the authenticated user\'s community posts', () async {
     late http.Request capturedRequest;
     final client = MockClient((request) async {

@@ -9,6 +9,7 @@ import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_person.dart';
+import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_types.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/community/community_repository.dart';
@@ -37,6 +38,8 @@ class ProfileController extends GetxController {
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
   final posts = <CommunityPost>[].obs;
+  final followerCount = 0.obs;
+  final followingCount = 0.obs;
   final likingPostIds = <String>{}.obs;
   final commentsByPost = <String, List<CommunityComment>>{}.obs;
   final friends = <CommunityPerson>[].obs;
@@ -119,12 +122,16 @@ class ProfileController extends GetxController {
     errorMessage.value = null;
 
     try {
+      final profileDashboard = await _repository.getDashboard();
       final results = await Future.wait<dynamic>([
-        _repository.getDashboard(),
         _repository.getMyPosts(),
+        _communityRepository.getPersonProfile(profileDashboard.userId),
       ]);
-      _applyDashboard(results[0] as ProfileDashboardModel);
-      posts.assignAll(results[1] as List<CommunityPost>);
+      _applyDashboard(profileDashboard);
+      posts.assignAll(results[0] as List<CommunityPost>);
+      final communityProfile = results[1] as CommunityPersonProfile;
+      followerCount.value = communityProfile.followers;
+      followingCount.value = communityProfile.following;
     } on ProfileException catch (error) {
       errorMessage.value = error.message;
     } on Object {
@@ -424,6 +431,13 @@ class ProfileController extends GetxController {
         );
       }),
     );
+  }
+
+  Future<void> deleteProfileImage() async {
+    await _repository.deleteProfileImage();
+    profileImagePath.value = '';
+    _uploadedProfileImagePath = null;
+    _applyDashboard(await _repository.getDashboard());
   }
 
   void openProfile() {

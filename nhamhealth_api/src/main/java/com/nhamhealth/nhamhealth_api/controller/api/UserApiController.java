@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -92,5 +93,12 @@ public class UserApiController {
         } catch (IllegalStateException exception) {
             return ResponseEntity.internalServerError().body(java.util.Map.of("message", exception.getMessage()));
         }
+    }
+
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<?> deleteProfileImage(@AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("userId");
+        userProfileService.updateProfileImage(userId.intValue(), null);
+        return ResponseEntity.noContent().build();
     }
 }

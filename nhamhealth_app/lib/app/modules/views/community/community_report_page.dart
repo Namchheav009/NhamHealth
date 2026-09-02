@@ -12,15 +12,19 @@ import '../../repositories/community/community_repository.dart';
 /// Lets a member select an admin-managed reason and report a community post.
 class CommunityReportPage extends StatefulWidget {
   const CommunityReportPage({
-    required this.postId,
+    this.postId,
     required this.subject,
     this.commentId,
+    this.profileUserId,
+    this.subjectName,
     super.key,
-  });
+  }) : assert(postId != null || profileUserId != null);
 
-  final String postId;
+  final String? postId;
   final String subject;
   final String? commentId;
+  final int? profileUserId;
+  final String? subjectName;
 
   @override
   State<CommunityReportPage> createState() => _CommunityReportPageState();
@@ -61,40 +65,102 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
   Widget build(BuildContext context) => Scaffold(
     body: AppBackground(
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(30, 28, 30, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppBackButton(onPressed: _submitting ? null : Get.back),
-              const SizedBox(height: 14),
-              const Center(
-                child: Text(
-                  'Report',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+              children: [
+                SizedBox(
+                  height: 48,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: AppBackButton(
+                          onPressed: _submitting ? null : Get.back,
+                        ),
+                      ),
+                      Text(
+                        'Report ${widget.subject}',
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Why are you reporting this ${widget.subject}?',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.appElevatedSurface.withValues(alpha: .92),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: context.appBorder),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: context.appSoftGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.shield_outlined,
+                          color: Color(0xFF087B3A),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Why are you reporting ${_subjectLabel}?',
+                              style: TextStyle(
+                                color: context.appText,
+                                fontSize: 14,
+                                height: 1.35,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Your report is anonymous and will be reviewed.',
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 12,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 13),
-              const Text(
-                'Your report is anonymous.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF697386)),
-              ),
-              const SizedBox(height: 26),
-              _content(),
-            ],
+                const SizedBox(height: 16),
+                _content(),
+              ],
+            ),
           ),
         ),
       ),
     ),
   );
+
+  String get _subjectLabel {
+    final name = widget.subjectName?.trim() ?? '';
+    if (name.isNotEmpty) return name;
+    return 'this ${widget.subject}';
+  }
 
   Widget _content() {
     if (_loading) {
@@ -139,39 +205,34 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       );
     }
     return Container(
-      padding: const EdgeInsets.fromLTRB(7, 0, 7, 18),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: .94),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
       ),
       child: Column(
         children: [
           SizedBox(
-            height: math.min(_reasons.length * 47.0, 188),
+            height: math.min(_reasons.length * 59.0, 236),
             child: ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: _reasons.length,
               separatorBuilder:
                   (_, _) => const Divider(
                     height: 1,
-                    indent: 0,
-                    endIndent: 0,
-                    color: Color(0xFFD9DCE1),
+                    indent: 62,
                   ),
               itemBuilder: (_, index) => _reasonTile(_reasons[index], index),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 14),
+          Divider(height: 1, color: context.appBorder),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 42,
+            height: 48,
             child: FilledButton(
               onPressed:
                   _selectedReasonId == null || _submitting ? null : _submit,
@@ -180,7 +241,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                 disabledBackgroundColor: const Color(0xFFE1E4E9),
                 disabledForegroundColor: const Color(0xFF747C8B),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(15),
                 ),
               ),
               child:
@@ -222,28 +283,43 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       const Color(0xFFA741FF),
     ];
     return SizedBox(
-      height: 46,
+      height: 58,
       child: InkWell(
         onTap:
             _submitting
                 ? null
                 : () => setState(() => _selectedReasonId = reason.id),
-        child: Padding(
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(
+            color: selected ? context.appSelectedSurface : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Row(
             children: [
-              Icon(
-                icons[index % icons.length],
-                color: colors[index % colors.length],
-                size: 23,
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: colors[index % colors.length].withValues(alpha: .1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icons[index % icons.length],
+                  color: colors[index % colors.length],
+                  size: 21,
+                ),
               ),
-              const SizedBox(width: 23),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   reason.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ),
@@ -255,7 +331,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                     selected
                         ? const Color(0xFF087B3A)
                         : const Color(0xFF737D8D),
-                size: 25,
+                size: 24,
               ),
             ],
           ),
@@ -269,12 +345,21 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
     if (reasonId == null) return;
     setState(() => _submitting = true);
     try {
+      final profileUserId = widget.profileUserId;
       final commentId = widget.commentId;
-      if (commentId == null) {
-        await _repository.reportPost(postId: widget.postId, reasonId: reasonId);
+      if (profileUserId != null) {
+        await _repository.reportProfile(
+          userId: profileUserId,
+          reasonId: reasonId,
+        );
+      } else if (commentId == null) {
+        await _repository.reportPost(
+          postId: widget.postId!,
+          reasonId: reasonId,
+        );
       } else {
         await _repository.reportComment(
-          postId: widget.postId,
+          postId: widget.postId!,
           commentId: commentId,
           reasonId: reasonId,
         );

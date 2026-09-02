@@ -109,7 +109,11 @@ class EditProfileController extends GetxController {
   }
 
   void goBack() {
-    Get.until((route) => route.isFirst);
+    if (Get.key.currentState?.canPop() ?? false) {
+      Get.back<void>();
+      return;
+    }
+    profileController.openProfile();
   }
 
   Future<void> saveProfile() async {

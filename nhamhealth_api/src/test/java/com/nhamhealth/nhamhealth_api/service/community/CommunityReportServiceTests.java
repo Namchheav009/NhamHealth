@@ -21,6 +21,7 @@ import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.UserProfileReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 class CommunityReportServiceTests {
@@ -34,8 +35,9 @@ class CommunityReportServiceTests {
         UserRepository users = mock(UserRepository.class);
         NotificationRepository notifications = mock(NotificationRepository.class);
         PushNotificationService pushNotifications = mock(PushNotificationService.class);
+        UserProfileReportRepository profileReports = mock(UserProfileReportRepository.class);
         CommunityReportService service = new CommunityReportService(
-                posts, comments, reports, reasons, users, notifications, pushNotifications);
+                posts, comments, reports, reasons, users, notifications, pushNotifications, profileReports);
         PostReport report = new PostReport();
 
         when(reports.findByReportId(12)).thenReturn(Optional.of(report));
@@ -56,8 +58,9 @@ class CommunityReportServiceTests {
         UserRepository users = mock(UserRepository.class);
         NotificationRepository notifications = mock(NotificationRepository.class);
         PushNotificationService pushNotifications = mock(PushNotificationService.class);
+        UserProfileReportRepository profileReports = mock(UserProfileReportRepository.class);
         CommunityReportService service = new CommunityReportService(
-                posts, comments, reports, reasons, users, notifications, pushNotifications);
+                posts, comments, reports, reasons, users, notifications, pushNotifications, profileReports);
         PostReport report = new PostReport();
         Post post = mock(Post.class);
         User reporter = mock(User.class);

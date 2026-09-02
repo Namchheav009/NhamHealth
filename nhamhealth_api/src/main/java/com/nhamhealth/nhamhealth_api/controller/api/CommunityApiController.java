@@ -101,6 +101,13 @@ public class CommunityApiController {
         reportService.reportComment(reporterId, postId, commentId, reasonId);
     }
 
+    @PostMapping("/people/{targetUserId}/reports")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reportProfile(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer targetUserId,
+            @RequestParam Integer reasonId) {
+        reportService.reportProfile(userId(jwt), targetUserId, reasonId);
+    }
+
     @PostMapping("/posts/{postId}/like")
     public CommunityPostResponse like(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
         return service.toggleLike(userId(jwt), postId);

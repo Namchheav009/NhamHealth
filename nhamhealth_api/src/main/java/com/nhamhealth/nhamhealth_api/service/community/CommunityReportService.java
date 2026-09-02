@@ -16,12 +16,14 @@ import com.nhamhealth.nhamhealth_api.entity.PostComment;
 import com.nhamhealth.nhamhealth_api.entity.PostReport;
 import com.nhamhealth.nhamhealth_api.entity.ReportReason;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.UserProfileReport;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.UserProfileReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Service
@@ -33,10 +35,12 @@ public class CommunityReportService {
     private final UserRepository users;
     private final NotificationRepository notifications;
     private final PushNotificationService pushNotifications;
+    private final UserProfileReportRepository profileReports;
 
     public CommunityReportService(PostRepository posts, PostCommentRepository comments,
             PostReportRepository reports, ReportReasonRepository reasons, UserRepository users,
-            NotificationRepository notifications, PushNotificationService pushNotifications) {
+            NotificationRepository notifications, PushNotificationService pushNotifications,
+            UserProfileReportRepository profileReports) {
         this.posts = posts;
         this.comments = comments;
         this.reports = reports;
@@ -44,6 +48,7 @@ public class CommunityReportService {
         this.users = users;
         this.notifications = notifications;
         this.pushNotifications = pushNotifications;
+        this.profileReports = profileReports;
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +102,20 @@ public class CommunityReportService {
         report.setStatus("pending");
         report.setCreatedAt(LocalDateTime.now());
         reports.save(report);
+    }
+
+    @Transactional
+    public void reportProfile(Integer reporterId, Integer targetUserId, Integer reasonId) {
+        if (reporterId.equals(targetUserId)) {
+            throw new IllegalArgumentException("You cannot report your own profile.");
+        }
+        UserProfileReport report = new UserProfileReport();
+        report.setReportedUser(requiredUser(targetUserId));
+        report.setReportedByUser(requiredUser(reporterId));
+        report.setReportReason(requiredReason(reasonId));
+        report.setStatus("pending");
+        report.setCreatedAt(LocalDateTime.now());
+        profileReports.save(report);
     }
 
     /** Applies an intentional moderation decision and notifies only affected users. */

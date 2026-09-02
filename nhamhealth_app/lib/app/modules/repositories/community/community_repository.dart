@@ -158,6 +158,17 @@ class CommunityRepository {
     _ensureSuccess(response);
   }
 
+  Future<void> reportProfile({
+    required int userId,
+    required int reasonId,
+  }) async {
+    final response = await _client.post(
+      _uri('/api/v1/community/people/$userId/reports?reasonId=$reasonId'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
+  }
+
   Future<CommunityPost> createPost({
     required String mealName,
     required String description,

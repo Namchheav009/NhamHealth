@@ -48,7 +48,7 @@ class ProfilePostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onViewDetails,
+      onTap: onComment,
       borderRadius: BorderRadius.circular(22),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 15, 16, 8),

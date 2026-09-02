@@ -140,6 +140,8 @@ class _SuccessfulAuthService extends AuthService {
     accessToken: 'access-token',
     tokenType: 'Bearer',
     expiresIn: 86400,
+    refreshToken: 'refresh-token',
+    refreshExpiresIn: 604800,
     user: AuthenticatedUser(id: 7, email: 'user@example.com', role: 'USER'),
   );
 
