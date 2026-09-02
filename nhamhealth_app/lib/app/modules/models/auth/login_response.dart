@@ -5,12 +5,16 @@ class LoginResponse {
     required this.accessToken,
     required this.tokenType,
     required this.expiresIn,
+    required this.refreshToken,
+    required this.refreshExpiresIn,
     required this.user,
   });
 
   final String accessToken;
   final String tokenType;
   final int expiresIn;
+  final String refreshToken;
+  final int refreshExpiresIn;
   final AuthenticatedUser user;
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -18,6 +22,8 @@ class LoginResponse {
       accessToken: json['accessToken'] as String,
       tokenType: json['tokenType'] as String,
       expiresIn: (json['expiresIn'] as num).toInt(),
+      refreshToken: json['refreshToken'] as String,
+      refreshExpiresIn: (json['refreshExpiresIn'] as num).toInt(),
       user: AuthenticatedUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }

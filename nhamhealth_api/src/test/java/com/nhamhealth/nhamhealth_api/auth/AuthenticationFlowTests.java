@@ -100,11 +100,12 @@ class AuthenticationFlowTests {
 
     @MockitoBean
     private JavaMailSender mailSender;
+    private MimeMessage emailMessage;
 
     @BeforeEach
     void createTestAccounts() {
-        when(mailSender.createMimeMessage()).thenReturn(
-                new MimeMessage(Session.getInstance(new Properties())));
+        emailMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(emailMessage);
         Role adminRole = findOrCreateRole("ADMIN");
         Role userRole = findOrCreateRole("USER");
         createUserIfMissing("admin@nhamhealth.local", "Admin123!", adminRole);
@@ -120,7 +121,9 @@ class AuthenticationFlowTests {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.expiresIn").value(86400))
+                .andExpect(jsonPath("$.expiresIn").value(900))
+                .andExpect(jsonPath("$.refreshToken").isString())
+                .andExpect(jsonPath("$.refreshExpiresIn").value(2592000))
                 .andExpect(jsonPath("$.user.id").isNumber())
                 .andExpect(jsonPath("$.user.email").value("user@nhamhealth.local"))
                 .andExpect(jsonPath("$.user.role").value("USER"))
@@ -176,6 +179,77 @@ class AuthenticationFlowTests {
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    @Test
+    void logoutRequiresOtpOnNextLoginButOnlyOnce() throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = JsonPath.read(login.getResponse().getContentAsString(), "$.refreshToken");
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.otpRequired").value(true))
+                .andExpect(jsonPath("$.email").value("user@nhamhealth.local"));
+
+        String code = emailMessage.getSubject().substring(0, 4);
+        mockMvc.perform(post("/api/v1/auth/verify-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"user@nhamhealth.local\",\"code\":\"" + code + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isString());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.otpRequired").doesNotExist());
+    }
+
+    @Test
+    void refreshTokenRotatesAndReuseRevokesTheSession() throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String original = JsonPath.read(login.getResponse().getContentAsString(), "$.refreshToken");
+
+        MvcResult refresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + original + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isString())
+                .andReturn();
+        String rotated = JsonPath.read(refresh.getResponse().getContentAsString(), "$.refreshToken");
+        assertFalse(original.equals(rotated));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + original + "\"}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + rotated + "\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

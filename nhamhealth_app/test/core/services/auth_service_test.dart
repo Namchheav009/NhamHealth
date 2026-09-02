@@ -23,6 +23,8 @@ void main() {
             'accessToken': 'access-token',
             'tokenType': 'Bearer',
             'expiresIn': 86400,
+            'refreshToken': 'refresh-token',
+            'refreshExpiresIn': 2592000,
             'user': {
               'userId': 7,
               'email': 'user@example.com',
@@ -48,6 +50,7 @@ void main() {
     expect(response.user.displayName, 'Nham User');
     expect(response.user.profileImageUrl, '/uploads/profile-images/user.png');
     expect(storage.accessToken, 'access-token');
+    expect(storage.refreshToken, 'refresh-token');
   });
 
   test(
@@ -145,6 +148,44 @@ void main() {
     );
   });
 
+  test(
+    'login surfaces the server OTP challenge without storing tokens',
+    () async {
+      final storage = _MemoryTokenStorage();
+      final service = AuthService(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'otpRequired': true,
+              'email': 'user@example.com',
+              'message': 'A login verification code was sent to your email',
+            }),
+            202,
+          ),
+        ),
+        tokenStorage: storage,
+      );
+
+      await expectLater(
+        service.login(
+          const LoginRequest(
+            email: 'user@example.com',
+            password: 'StrongPass123!',
+          ),
+        ),
+        throwsA(
+          isA<LoginOtpRequiredException>().having(
+            (error) => error.email,
+            'email',
+            'user@example.com',
+          ),
+        ),
+      );
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+    },
+  );
+
   test('restoreSession validates a saved token and returns its user', () async {
     final storage = _MemoryTokenStorage()..accessToken = 'saved-token';
     final service = AuthService(
@@ -181,6 +222,28 @@ void main() {
 
     expect(await service.restoreSession(), isNull);
     expect(storage.accessToken, isNull);
+  });
+
+  test('logout marks an access-token-only session on the server', () async {
+    final storage = _MemoryTokenStorage()..accessToken = 'saved-token';
+    final service = AuthService(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/auth/logout-all');
+        expect(request.headers['Authorization'], 'Bearer saved-token');
+        expect(jsonDecode(request.body), <String, dynamic>{});
+        return http.Response(
+          jsonEncode({'message': 'Signed out on all devices'}),
+          200,
+        );
+      }),
+      tokenStorage: storage,
+    );
+
+    await service.logout();
+
+    expect(storage.accessToken, isNull);
+    expect(storage.refreshToken, isNull);
   });
 
   test('authenticated PIN request clears a stale rejected token', () async {
@@ -290,6 +353,7 @@ void main() {
 
 class _MemoryTokenStorage extends TokenStorage {
   String? accessToken;
+  String? refreshToken;
 
   @override
   Future<void> saveAccessToken(String token) async {
@@ -297,10 +361,23 @@ class _MemoryTokenStorage extends TokenStorage {
   }
 
   @override
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+  }
+
+  @override
   Future<String?> readAccessToken() async => accessToken;
+
+  @override
+  Future<String?> readRefreshToken() async => refreshToken;
 
   @override
   Future<void> clear() async {
     accessToken = null;
+    refreshToken = null;
   }
 }

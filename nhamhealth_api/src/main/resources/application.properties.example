@@ -13,7 +13,15 @@ server.servlet.session.store-dir=target/runtime-temp/sessions
 # Authentication
 app.auth.jwt.secret=REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
 app.auth.jwt.issuer=nhamhealth-api
-app.auth.jwt.expiration=PT24H
+app.auth.jwt.expiration=${JWT_ACCESS_TOKEN_TTL:PT15M}
+app.auth.login-rate-limit.maximum-failures=${LOGIN_MAXIMUM_FAILURES:5}
+app.auth.login-rate-limit.window=${LOGIN_RATE_LIMIT_WINDOW:PT10M}
+app.auth.login-rate-limit.lock-duration=${LOGIN_LOCK_DURATION:PT15M}
+app.auth.otp.expiration=${OTP_EXPIRATION:PT5M}
+app.auth.otp.resend-cooldown=${OTP_RESEND_COOLDOWN:PT1M}
+app.auth.otp.maximum-attempts=${OTP_MAXIMUM_ATTEMPTS:5}
+app.auth.password-reset.token-expiration=${PASSWORD_RESET_TOKEN_TTL:PT15M}
+app.auth.refresh-token.expiration=${REFRESH_TOKEN_TTL:P30D}
 app.auth.google.client-id=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 app.auth.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
 

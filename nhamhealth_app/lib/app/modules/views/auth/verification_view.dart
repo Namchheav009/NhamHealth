@@ -31,6 +31,7 @@ class VerificationController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isResending = false.obs;
   final RxBool isRegistration = false.obs;
+  final RxBool isLogin = false.obs;
   final RxInt codeSeconds = codeLifetimeSeconds.obs;
   final RxInt resendSeconds = resendCooldownSeconds.obs;
   Timer? _countdownTimer;
@@ -50,6 +51,7 @@ class VerificationController extends GetxController {
     if (args is Map && args['email'] is String) {
       userEmail.value = args['email'] as String;
       isRegistration.value = args['purpose'] == 'registration';
+      isLogin.value = args['purpose'] == 'login';
     }
     codeSeconds.value = isRegistration.value ? 5 * 60 : codeLifetimeSeconds;
     codeFocusNode.addListener(_syncFocusState);
@@ -107,6 +109,15 @@ class VerificationController extends GetxController {
         await security.markSetupPendingFor(response.user.id);
         _countdownTimer?.cancel();
         Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
+      } else if (isLogin.value) {
+        final response = await _authService.verifyLogin(
+          email: userEmail.value,
+          code: code.value,
+        );
+        final security = Get.find<AppSecurityService>();
+        security.syncPinState(response.user.hasPin);
+        _countdownTimer?.cancel();
+        Get.offAllNamed(AppRoutes.home, arguments: response.user);
       } else {
         final resetToken = await _authService.verifyPasswordResetCode(
           email: userEmail.value,
@@ -143,6 +154,8 @@ class VerificationController extends GetxController {
       isResending.value = true;
       if (isRegistration.value) {
         await _authService.resendRegistrationCode(userEmail.value);
+      } else if (isLogin.value) {
+        await _authService.resendLoginCode(userEmail.value);
       } else {
         await _authService.requestPasswordReset(userEmail.value);
       }

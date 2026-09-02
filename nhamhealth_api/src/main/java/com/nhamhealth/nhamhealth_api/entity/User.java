@@ -51,6 +51,9 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Column(name = "login_otp_required", nullable = false)
+    private Boolean loginOtpRequired = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -140,12 +143,19 @@ public class User {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public Boolean getLoginOtpRequired() { return loginOtpRequired; }
+
+    public void setLoginOtpRequired(Boolean loginOtpRequired) {
+        this.loginOtpRequired = loginOtpRequired;
+    }
+
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
         if (createdAt == null) {
             createdAt = now;
         }
+        if (loginOtpRequired == null) loginOtpRequired = false;
         updatedAt = now;
     }
 

@@ -12,4 +12,5 @@ public record VerifyPasswordResetCodeRequest(
         @NotBlank(message = "Verification code is required")
         @Pattern(regexp = "\\d{4}", message = "Verification code must contain four digits")
         String code) {
+    @Override public String toString() { return "VerifyPasswordResetCodeRequest[email=" + email + ", code=[REDACTED]]"; }
 }

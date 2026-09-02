@@ -24,13 +24,16 @@ import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.AppPinRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyRegistrationRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.RefreshTokenRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PinVerificationResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.LoginChallengeResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.auth.AuthService;
 import com.nhamhealth.nhamhealth_api.service.auth.PasswordResetService;
 import com.nhamhealth.nhamhealth_api.service.auth.RegistrationVerificationService;
+import com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService;
 
 import jakarta.validation.Valid;
 
@@ -41,22 +44,35 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
     private final RegistrationVerificationService registrationVerificationService;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthController(AuthService authService, PasswordResetService passwordResetService,
-            RegistrationVerificationService registrationVerificationService) {
+            RegistrationVerificationService registrationVerificationService,
+            LoginAttemptService loginAttemptService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.registrationVerificationService = registrationVerificationService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        loginAttemptService.checkAllowed(request.email());
         try {
-            return ResponseEntity.ok(authService.loginMobileUser(request));
+            var result = authService.loginMobileUser(request);
+            loginAttemptService.recordSuccess(request.email());
+            if (result.otpRequired()) {
+                registrationVerificationService.sendLoginCode(result.otpUser(), true);
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                        new LoginChallengeResponse(true, result.otpUser().getEmail(),
+                                "A login verification code was sent to your email"));
+            }
+            return ResponseEntity.ok(result.response());
         } catch (MobileLoginNotAllowedException exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new AuthErrorResponse(exception.getMessage()));
         } catch (AuthenticationException exception) {
+            loginAttemptService.recordFailure(request.email());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthErrorResponse("Invalid email or password"));
         }
@@ -88,6 +104,24 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(new AuthErrorResponse(exception.getMessage()));
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.refreshToken()));
+    }
+
+    @PostMapping("/logout")
+    public MessageResponse logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request.refreshToken());
+        return new MessageResponse("Signed out successfully");
+    }
+
+    @PostMapping("/logout-all")
+    public MessageResponse logoutAll(@AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("userId");
+        authService.logoutAll(userId.intValue());
+        return new MessageResponse("Signed out on all devices");
     }
 
     @GetMapping("/me")
@@ -129,6 +163,18 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequest request) {
         registrationVerificationService.resend(request.email());
         return ResponseEntity.accepted().body(new MessageResponse("A new verification code was sent"));
+    }
+
+    @PostMapping("/verify-login")
+    public ResponseEntity<?> verifyLogin(@Valid @RequestBody VerifyRegistrationRequest request) {
+        return ResponseEntity.ok(registrationVerificationService.verifyLogin(request.email(), request.code()));
+    }
+
+    @PostMapping("/resend-login-code")
+    public ResponseEntity<MessageResponse> resendLoginCode(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        registrationVerificationService.resendLoginCode(request.email());
+        return ResponseEntity.accepted().body(new MessageResponse("A new login verification code was sent"));
     }
 
     @PostMapping("/change-password")

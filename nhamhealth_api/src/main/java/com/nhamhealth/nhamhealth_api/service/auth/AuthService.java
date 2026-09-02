@@ -42,6 +42,7 @@ public class AuthService {
     private final AuthProviderRepository authProviderRepository;
     private final UserAuthProviderRepository userAuthProviderRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(
             AuthenticationManager authenticationManager,
@@ -52,7 +53,8 @@ public class AuthService {
             UserProfileRepository userProfileRepository,
             AuthProviderRepository authProviderRepository,
             UserAuthProviderRepository userAuthProviderRepository,
-            GoogleTokenVerifier googleTokenVerifier) {
+            GoogleTokenVerifier googleTokenVerifier,
+            RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtTokenService = jwtTokenService;
@@ -62,10 +64,11 @@ public class AuthService {
         this.authProviderRepository = authProviderRepository;
         this.userAuthProviderRepository = userAuthProviderRepository;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
-    public AuthResponse loginMobileUser(LoginRequest request) {
+    public MobileLoginResult loginMobileUser(LoginRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(email, request.password()));
@@ -76,9 +79,12 @@ public class AuthService {
         }
 
         User user = userRepository.findById(principal.userId()).orElseThrow();
+        if (Boolean.TRUE.equals(user.getLoginOtpRequired())) {
+            return new MobileLoginResult(null, user);
+        }
         user.setLastLoginAt(LocalDateTime.now());
 
-        return issueToken(principal);
+        return new MobileLoginResult(issueToken(principal), null);
     }
 
     @Transactional
@@ -105,6 +111,7 @@ public class AuthService {
         user.setIsVerified(true);
         user.setVerifiedAt(LocalDateTime.now());
         user.setLastLoginAt(LocalDateTime.now());
+        user.setLoginOtpRequired(false);
         userRepository.save(user);
         return issueToken(AppUserPrincipal.from(user));
     }
@@ -209,10 +216,19 @@ public class AuthService {
     }
 
     private AuthResponse issueToken(AppUserPrincipal principal) {
+        User user = userRepository.findById(principal.userId())
+                .orElseThrow(InvalidSessionException::new);
+        return issueToken(principal, refreshTokenService.issue(user));
+    }
+
+    private AuthResponse issueToken(
+            AppUserPrincipal principal,
+            RefreshTokenService.IssuedRefreshToken refreshToken) {
         JwtTokenService.IssuedToken token = jwtTokenService.issue(principal);
         AuthenticatedUserResponse responseUser = authenticatedUser(
                 principal.userId(), principal.getUsername(), principal.role());
-        return new AuthResponse(token.value(), "Bearer", token.expiresIn(), responseUser);
+        return new AuthResponse(token.value(), "Bearer", token.expiresIn(),
+                refreshToken.value(), refreshToken.expiresIn(), responseUser);
     }
 
     @Transactional(readOnly = true)
@@ -267,6 +283,37 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAll(user);
+    }
+
+    @Transactional(noRollbackFor = com.nhamhealth.nhamhealth_api.exception.PasswordResetException.class)
+    public AuthResponse refresh(String refreshToken) {
+        RefreshTokenService.RotatedRefreshToken rotated = refreshTokenService.rotate(refreshToken);
+        return issueToken(AppUserPrincipal.from(rotated.user()), rotated.token());
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeForLogout(refreshToken);
+    }
+
+    @Transactional
+    public void logoutAll(Integer userId) {
+        User user = requireActiveUser(userId);
+        user.setLoginOtpRequired(true);
+        refreshTokenService.revokeAll(user);
+    }
+
+    @Transactional
+    public AuthResponse completeLoginOtp(User user) {
+        User managed = requireActiveUser(user.getUserId());
+        managed.setLoginOtpRequired(false);
+        managed.setLastLoginAt(LocalDateTime.now());
+        return issueToken(AppUserPrincipal.from(managed));
+    }
+
+    public record MobileLoginResult(AuthResponse response, User otpUser) {
+        public boolean otpRequired() { return otpUser != null; }
     }
 
     private User requireActiveUser(Integer userId) {

@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.security;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -22,7 +23,7 @@ public class JwtTokenService {
     public JwtTokenService(
             JwtEncoder jwtEncoder,
             @Value("${app.auth.jwt.issuer:nhamhealth-api}") String issuer,
-            @Value("${app.auth.jwt.expiration:PT24H}") Duration expiration) {
+            @Value("${app.auth.jwt.expiration:PT15M}") Duration expiration) {
         this.jwtEncoder = jwtEncoder;
         this.issuer = issuer;
         this.expiration = expiration;
@@ -36,6 +37,7 @@ public class JwtTokenService {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .subject(principal.getUsername())
+                .id(UUID.randomUUID().toString())
                 .claim("userId", principal.userId())
                 .claim("roles", List.of(principal.role()))
                 .build();

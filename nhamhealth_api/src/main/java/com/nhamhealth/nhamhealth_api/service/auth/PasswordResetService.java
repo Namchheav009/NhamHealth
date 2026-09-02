@@ -39,10 +39,6 @@ public class PasswordResetService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PasswordResetService.class);
     private static final String PURPOSE = "PASSWORD_RESET";
-    private static final Duration CODE_TTL = Duration.ofMinutes(3);
-    private static final Duration TOKEN_TTL = Duration.ofMinutes(15);
-    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
-    private static final int MAX_ATTEMPTS = 5;
 
     private final UserRepository userRepository;
     private final VerificationCodeRepository verificationCodeRepository;
@@ -51,6 +47,11 @@ public class PasswordResetService {
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
     private final SecureRandom secureRandom = new SecureRandom();
     private final String mailFrom;
+    private final Duration codeTtl;
+    private final Duration tokenTtl;
+    private final Duration resendCooldown;
+    private final int maximumAttempts;
+    private final RefreshTokenService refreshTokenService;
 
     public PasswordResetService(
             UserRepository userRepository,
@@ -58,13 +59,23 @@ public class PasswordResetService {
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Value("${app.mail.from:}") String mailFrom) {
+            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
+            @Value("${app.auth.password-reset.token-expiration:PT15M}") Duration tokenTtl,
+            @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
+            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.verificationCodeRepository = verificationCodeRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailSenderProvider = mailSenderProvider;
         this.mailFrom = mailFrom;
+        this.codeTtl = codeTtl;
+        this.tokenTtl = tokenTtl;
+        this.resendCooldown = resendCooldown;
+        this.maximumAttempts = maximumAttempts;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -82,11 +93,11 @@ public class PasswordResetService {
         verificationCodeRepository
                 .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, PURPOSE)
                 .filter(latest -> "PENDING".equals(latest.getStatus()))
-                .filter(latest -> latest.getCreatedAt().isAfter(now.minus(RESEND_COOLDOWN)))
+                .filter(latest -> latest.getCreatedAt().isAfter(now.minus(resendCooldown)))
                 .ifPresent(latest -> {
                     throw new PasswordResetException(
                             HttpStatus.TOO_MANY_REQUESTS,
-                            "Please wait 30 seconds before requesting another code");
+                            "Please wait before requesting another code");
                 });
 
         verificationCodeRepository
@@ -100,7 +111,7 @@ public class PasswordResetService {
         verificationCode.setDeliveryMethod("EMAIL");
         verificationCode.setPurpose(PURPOSE);
         verificationCode.setCodeHash(passwordEncoder.encode(rawCode));
-        verificationCode.setExpiresAt(now.plus(CODE_TTL));
+        verificationCode.setExpiresAt(now.plus(codeTtl));
         verificationCode.setAttemptCount(0);
         verificationCode.setStatus("PENDING");
         verificationCode.setCreatedAt(now);
@@ -125,7 +136,7 @@ public class PasswordResetService {
             verificationCodeRepository.save(verificationCode);
             throw new PasswordResetException(HttpStatus.BAD_REQUEST, "This verification code has expired");
         }
-        if (verificationCode.getAttemptCount() >= MAX_ATTEMPTS) {
+        if (verificationCode.getAttemptCount() >= maximumAttempts) {
             verificationCode.setStatus("LOCKED");
             verificationCodeRepository.save(verificationCode);
             throw new PasswordResetException(
@@ -135,11 +146,11 @@ public class PasswordResetService {
         if (!passwordEncoder.matches(rawCode, verificationCode.getCodeHash())) {
             int attempts = verificationCode.getAttemptCount() + 1;
             verificationCode.setAttemptCount(attempts);
-            if (attempts >= MAX_ATTEMPTS) {
+            if (attempts >= maximumAttempts) {
                 verificationCode.setStatus("LOCKED");
             }
             verificationCodeRepository.save(verificationCode);
-            if (attempts >= MAX_ATTEMPTS) {
+            if (attempts >= maximumAttempts) {
                 throw new PasswordResetException(
                         HttpStatus.TOO_MANY_REQUESTS,
                         "Too many incorrect attempts. Request a new code");
@@ -160,11 +171,11 @@ public class PasswordResetService {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setUser(user);
         resetToken.setTokenHash(sha256(rawToken));
-        resetToken.setExpiresAt(now.plus(TOKEN_TTL));
+        resetToken.setExpiresAt(now.plus(tokenTtl));
         resetToken.setCreatedAt(now);
         passwordResetTokenRepository.save(resetToken);
 
-        return new PasswordResetVerificationResponse(rawToken, TOKEN_TTL.toSeconds());
+        return new PasswordResetVerificationResponse(rawToken, tokenTtl.toSeconds());
     }
 
     @Transactional
@@ -187,6 +198,7 @@ public class PasswordResetService {
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.revokeAll(user);
         passwordResetTokenRepository.findByUserAndUsedAtIsNull(user).forEach(token -> token.setUsedAt(now));
         verificationCodeRepository
                 .findByDestinationIgnoreCaseAndPurposeAndStatus(user.getEmail(), PURPOSE, "VERIFIED")

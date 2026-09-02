@@ -63,7 +63,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/google",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/verify-reset-code",
-                                "/api/v1/auth/reset-password")
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/verify-login",
+                                "/api/v1/auth/resend-login-code")
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -111,7 +115,7 @@ public class SecurityConfig {
 
     @Bean
     JwtEncoder jwtEncoder(
-            @Value("${app.auth.jwt.secret:nhamhealth-local-development-secret-change-me-2026}") String secret) {
+            @Value("${app.auth.jwt.secret}") String secret) {
         return NimbusJwtEncoder.withSecretKey(jwtSecretKey(secret))
                 .algorithm(MacAlgorithm.HS256)
                 .build();
@@ -119,7 +123,7 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(
-            @Value("${app.auth.jwt.secret:nhamhealth-local-development-secret-change-me-2026}") String secret,
+            @Value("${app.auth.jwt.secret}") String secret,
             @Value("${app.auth.jwt.issuer:nhamhealth-api}") String issuer) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey(secret))
                 .macAlgorithm(MacAlgorithm.HS256)

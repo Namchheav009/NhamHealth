@@ -7,4 +7,5 @@ public record AppPinRequest(
         @NotNull(message = "PIN is required")
         @Pattern(regexp = "\\d{6}", message = "PIN must contain exactly 6 digits")
         String pin) {
+    @Override public String toString() { return "AppPinRequest[pin=[REDACTED]]"; }
 }

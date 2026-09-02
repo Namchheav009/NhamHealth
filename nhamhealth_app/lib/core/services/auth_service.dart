@@ -19,6 +19,7 @@ class AuthService {
 
   final http.Client _client;
   final TokenStorage _tokenStorage;
+  Future<LoginResponse>? _refreshInFlight;
 
   Future<LoginResponse> login(LoginRequest request) =>
       _authenticate('/api/v1/auth/login', request.toJson());
@@ -38,6 +39,20 @@ class AuthService {
     'email': email.trim().toLowerCase(),
     'code': code,
   });
+
+  Future<LoginResponse> verifyLogin({
+    required String email,
+    required String code,
+  }) => _authenticate('/api/v1/auth/verify-login', {
+    'email': email.trim().toLowerCase(),
+    'code': code,
+  });
+
+  Future<void> resendLoginCode(String email) async {
+    await _postJson('/api/v1/auth/resend-login-code', {
+      'email': email.trim().toLowerCase(),
+    }, timeout: const Duration(seconds: 30));
+  }
 
   Future<void> resendRegistrationCode(String email) async {
     await _postJson('/api/v1/auth/resend-registration-code', {
@@ -162,6 +177,38 @@ class AuthService {
     } on Object {
       // Logout must still succeed if the notification service is unavailable.
     }
+    final accessToken = await _tokenStorage.readAccessToken();
+    final refreshToken = await _tokenStorage.readRefreshToken();
+    var serverLogoutCompleted = false;
+
+    // Mark the account as logged out using the access token first. This also
+    // supports sessions created before refresh tokens were introduced.
+    if (accessToken != null && accessToken.isNotEmpty) {
+      try {
+        await _postJson(
+          '/api/v1/auth/logout-all',
+          const {},
+          accessToken: accessToken,
+          allowRefresh: false,
+        );
+        serverLogoutCompleted = true;
+      } on Object {
+        // Local sign-out must still complete while the API is unavailable.
+      }
+    }
+
+    // Fall back to refresh-token logout when the access token has expired.
+    if (!serverLogoutCompleted &&
+        refreshToken != null &&
+        refreshToken.isNotEmpty) {
+      try {
+        await _postJson('/api/v1/auth/logout', {
+          'refreshToken': refreshToken,
+        }, allowRefresh: false);
+      } on Object {
+        // Local sign-out must still complete while the API is unavailable.
+      }
+    }
     await _tokenStorage.clear();
   }
 
@@ -171,6 +218,11 @@ class AuthService {
   ) async {
     final payload = await _postJson(path, body);
 
+    if (payload['otpRequired'] == true) {
+      final email = payload['email'];
+      throw LoginOtpRequiredException(email is String ? email : '');
+    }
+
     final LoginResponse result;
     try {
       result = LoginResponse.fromJson(payload);
@@ -179,11 +231,17 @@ class AuthService {
     }
 
     try {
-      await _tokenStorage.saveAccessToken(result.accessToken);
+      await _tokenStorage.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
     } on Object {
       try {
         await _tokenStorage.clear();
-        await _tokenStorage.saveAccessToken(result.accessToken);
+        await _tokenStorage.saveTokens(
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        );
       } on Object {
         throw const AuthException(
           'Signed in, but the secure session could not be saved.',
@@ -201,6 +259,7 @@ class AuthService {
     Map<String, dynamic> body, {
     String? accessToken,
     Duration timeout = const Duration(seconds: 15),
+    bool allowRefresh = true,
   }) async {
     final http.Response response;
     try {
@@ -240,6 +299,21 @@ class AuthService {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      final storedRefreshToken = await _tokenStorage.readRefreshToken();
+      if (accessToken != null &&
+          response.statusCode == 401 &&
+          allowRefresh &&
+          storedRefreshToken != null &&
+          storedRefreshToken.isNotEmpty) {
+        final refreshed = await _refreshOnce();
+        return _postJson(
+          path,
+          body,
+          accessToken: refreshed.accessToken,
+          timeout: timeout,
+          allowRefresh: false,
+        );
+      }
       if (accessToken != null &&
           (response.statusCode == 401 || response.statusCode == 403)) {
         await _tokenStorage.clear();
@@ -259,6 +333,38 @@ class AuthService {
     }
 
     return payload;
+  }
+
+  Future<LoginResponse> _refreshOnce() {
+    final existing = _refreshInFlight;
+    if (existing != null) return existing;
+    final future = _performRefresh();
+    _refreshInFlight = future;
+    return future.whenComplete(() => _refreshInFlight = null);
+  }
+
+  Future<LoginResponse> _performRefresh() async {
+    final refreshToken = await _tokenStorage.readRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _tokenStorage.clear();
+      throw const AuthException(
+        'Your session has expired. Please sign in again.',
+      );
+    }
+    try {
+      final payload = await _postJson('/api/v1/auth/refresh', {
+        'refreshToken': refreshToken,
+      }, allowRefresh: false);
+      final response = LoginResponse.fromJson(payload);
+      await _tokenStorage.saveTokens(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      );
+      return response;
+    } on Object {
+      await _tokenStorage.clear();
+      rethrow;
+    }
   }
 
   String _errorMessage(http.Response response, Map<String, dynamic>? payload) {
@@ -294,4 +400,11 @@ class AuthException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class LoginOtpRequiredException extends AuthException {
+  const LoginOtpRequiredException(this.email)
+    : super('A login verification code was sent to your email.');
+
+  final String email;
 }

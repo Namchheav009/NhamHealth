@@ -10,4 +10,5 @@ public record ResetPasswordRequest(
         @NotBlank(message = "Password is required")
         @Size(min = 8, max = 72, message = "Password must contain between 8 and 72 characters")
         String newPassword) {
+    @Override public String toString() { return "ResetPasswordRequest[resetToken=[REDACTED], newPassword=[REDACTED]]"; }
 }

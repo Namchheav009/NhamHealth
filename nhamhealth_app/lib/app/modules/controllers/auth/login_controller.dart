@@ -11,6 +11,7 @@ import '../../services/auth/google_auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
 import '../../views/profile/security_view.dart';
 import '../../../widgets/pin_setup_prompt.dart';
+import '../../views/auth/verification_view.dart';
 
 class LoginController extends GetxController {
   LoginController({AuthService? authService, GoogleAuthService? googleAuth})
@@ -52,10 +53,23 @@ class LoginController extends GetxController {
     }
 
     await _run(() async {
-      final response = await _authService.login(
-        LoginRequest(email: normalizedEmail, password: password),
-      );
-      await _finishLogin(response.user);
+      try {
+        final response = await _authService.login(
+          LoginRequest(email: normalizedEmail, password: password),
+        );
+        await _finishLogin(response.user);
+      } on LoginOtpRequiredException catch (challenge) {
+        passwordController.clear();
+        Get.to(
+          () => const VerificationView(),
+          arguments: {
+            'email':
+                challenge.email.isEmpty ? normalizedEmail : challenge.email,
+            'purpose': 'login',
+          },
+          transition: Transition.rightToLeft,
+        );
+      }
     });
   }
 

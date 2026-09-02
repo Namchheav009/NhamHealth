@@ -28,9 +28,7 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class RegistrationVerificationService {
     private static final String PURPOSE = "EMAIL_VERIFICATION";
-    private static final Duration CODE_TTL = Duration.ofMinutes(5);
-    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
-    private static final int MAX_ATTEMPTS = 5;
+    private static final String LOGIN_PURPOSE = "LOGIN_VERIFICATION";
 
     private final AuthService authService;
     private final UserRepository userRepository;
@@ -39,6 +37,9 @@ public class RegistrationVerificationService {
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
     private final SecureRandom random = new SecureRandom();
     private final String mailFrom;
+    private final Duration codeTtl;
+    private final Duration resendCooldown;
+    private final int maximumAttempts;
 
     public RegistrationVerificationService(
             AuthService authService,
@@ -46,32 +47,67 @@ public class RegistrationVerificationService {
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Value("${app.mail.from:}") String mailFrom) {
+            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
+            @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
+            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts) {
         this.authService = authService;
         this.userRepository = userRepository;
         this.codes = codes;
         this.passwordEncoder = passwordEncoder;
         this.mailSenderProvider = mailSenderProvider;
         this.mailFrom = mailFrom;
+        this.codeTtl = codeTtl;
+        this.resendCooldown = resendCooldown;
+        this.maximumAttempts = maximumAttempts;
     }
 
     @Transactional
     public void register(RegisterRequest request) {
         User user = authService.registerPendingMobileUser(request);
-        sendCode(user, false);
+        sendCode(user, false, PURPOSE);
     }
 
     @Transactional
     public void resend(String requestedEmail) {
         User user = requiredPendingUser(requestedEmail);
-        sendCode(user, true);
+        sendCode(user, true, PURPOSE);
+    }
+
+    @Transactional
+    public void sendLoginCode(User user, boolean enforceCooldown) {
+        sendCode(user, enforceCooldown, LOGIN_PURPOSE);
+    }
+
+    @Transactional
+    public void resendLoginCode(String requestedEmail) {
+        User user = userRepository.findByEmailIgnoreCase(normalize(requestedEmail))
+                .filter(candidate -> Boolean.TRUE.equals(candidate.getLoginOtpRequired()))
+                .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
+                .orElse(null);
+        if (user == null) {
+            passwordEncoder.encode(String.format(Locale.ROOT, "%04d", random.nextInt(10_000)));
+            return;
+        }
+        sendCode(user, true, LOGIN_PURPOSE);
     }
 
     @Transactional(noRollbackFor = PasswordResetException.class)
     public AuthResponse verify(String requestedEmail, String rawCode) {
+        return authService.activateVerifiedUser(verifyCode(requestedEmail, rawCode, PURPOSE));
+    }
+
+    @Transactional(noRollbackFor = PasswordResetException.class)
+    public AuthResponse verifyLogin(String requestedEmail, String rawCode) {
+        User user = verifyCode(requestedEmail, rawCode, LOGIN_PURPOSE);
+        if (!Boolean.TRUE.equals(user.getLoginOtpRequired())) throw invalidCode();
+        return authService.completeLoginOtp(user);
+    }
+
+    private User verifyCode(String requestedEmail, String rawCode, String purpose) {
         String email = normalize(requestedEmail);
         VerificationCode code = codes
-                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, PURPOSE)
+                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, purpose)
                 .orElseThrow(this::invalidCode);
         LocalDateTime now = LocalDateTime.now();
         if (!"PENDING".equals(code.getStatus())) throw invalidCode();
@@ -80,39 +116,39 @@ public class RegistrationVerificationService {
             codes.save(code);
             throw new PasswordResetException(HttpStatus.BAD_REQUEST, "This verification code has expired");
         }
-        if (code.getAttemptCount() >= MAX_ATTEMPTS) {
+        if (code.getAttemptCount() >= maximumAttempts) {
             throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Request a new code");
         }
         if (!passwordEncoder.matches(rawCode, code.getCodeHash())) {
             code.setAttemptCount(code.getAttemptCount() + 1);
-            if (code.getAttemptCount() >= MAX_ATTEMPTS) code.setStatus("LOCKED");
+            if (code.getAttemptCount() >= maximumAttempts) code.setStatus("LOCKED");
             codes.save(code);
             throw invalidCode();
         }
         code.setStatus("VERIFIED");
         code.setVerifiedAt(now);
         codes.save(code);
-        return authService.activateVerifiedUser(code.getUser());
+        return code.getUser();
     }
 
-    private void sendCode(User user, boolean enforceCooldown) {
+    private void sendCode(User user, boolean enforceCooldown, String purpose) {
         String email = user.getEmail();
         LocalDateTime now = LocalDateTime.now();
         if (enforceCooldown) {
-            codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, PURPOSE)
-                    .filter(latest -> latest.getCreatedAt().isAfter(now.minus(RESEND_COOLDOWN)))
-                    .ifPresent(latest -> { throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Please wait 30 seconds before requesting another code"); });
+            codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, purpose)
+                    .filter(latest -> latest.getCreatedAt().isAfter(now.minus(resendCooldown)))
+                    .ifPresent(latest -> { throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Please wait before requesting another code"); });
         }
-        codes.findByDestinationIgnoreCaseAndPurposeAndStatus(email, PURPOSE, "PENDING")
+        codes.findByDestinationIgnoreCaseAndPurposeAndStatus(email, purpose, "PENDING")
                 .forEach(existing -> existing.setStatus("SUPERSEDED"));
         String rawCode = String.format(Locale.ROOT, "%04d", random.nextInt(10_000));
         VerificationCode code = new VerificationCode();
         code.setUser(user);
         code.setDestination(email);
         code.setDeliveryMethod("EMAIL");
-        code.setPurpose(PURPOSE);
+        code.setPurpose(purpose);
         code.setCodeHash(passwordEncoder.encode(rawCode));
-        code.setExpiresAt(now.plus(CODE_TTL));
+        code.setExpiresAt(now.plus(codeTtl));
         code.setAttemptCount(0);
         code.setStatus("PENDING");
         code.setCreatedAt(now);
