@@ -748,9 +748,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   Widget _legacyPostSummary() => Container(
     padding: const EdgeInsets.fromLTRB(16, 16, 12, 10),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .97),
+      color: context.appElevatedSurface.withValues(alpha: .97),
       borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE3EBE5)),
+      border: Border.all(color: context.appBorder),
       boxShadow: const [
         BoxShadow(
           color: Color(0x0A173D25),
@@ -989,7 +989,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               Container(
                 padding: const EdgeInsets.fromLTRB(13, 9, 13, 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .94),
+                  color: context.appElevatedSurface.withValues(alpha: .94),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(5),
                     topRight: Radius.circular(17),
@@ -1393,9 +1393,9 @@ class _CommentOptionsSheet extends StatelessWidget {
     top: false,
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

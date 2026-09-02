@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 class LanguageFlag extends StatelessWidget {
   const LanguageFlag({super.key, required this.languageCode, this.size = 34});
 
@@ -19,16 +21,10 @@ class LanguageFlag extends StatelessWidget {
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appElevatedSurface,
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFDDE7E0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1231543F),
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
       ),
       child: Image.asset(
         assetPath,

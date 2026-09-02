@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../widgets/app_background.dart';
 import 'auth_header.dart';
 
 class AuthScaffold extends StatelessWidget {
@@ -13,8 +14,8 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
+      body: AppBackground(
+        lightDecoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -50,18 +51,12 @@ class AuthScaffold extends StatelessWidget {
                       Expanded(
                         child: Container(
                           width: double.infinity,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.vertical(
+                          decoration: BoxDecoration(
+                            color: context.appSurfaceLow,
+                            borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(32),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0x12000000),
-                                blurRadius: 28,
-                                offset: Offset(0, -6),
-                              ),
-                            ],
+                            boxShadow: context.appCardShadow,
                           ),
                           child: SafeArea(
                             top: false,

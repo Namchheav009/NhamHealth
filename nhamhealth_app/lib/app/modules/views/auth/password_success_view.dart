@@ -28,8 +28,8 @@ class PasswordSuccessView extends StatelessWidget {
           Text(
             'Your password has been reset successfully.'.tr,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.darkGreen,
+            style: TextStyle(
+              color: context.appText,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),

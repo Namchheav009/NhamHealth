@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/splash/splash_controller.dart';
 
 class SplashView extends GetView<SplashController> {
@@ -10,26 +11,21 @@ class SplashView extends GetView<SplashController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background/bg.png',
-              fit: BoxFit.cover,
+      body: AppBackground(
+        child: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildAnimatedLogo(),
+                  const SizedBox(height: 28),
+                  _buildAnimatedAppName(),
+                ],
+              ),
             ),
-          ),
-
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildAnimatedLogo(),
-                const SizedBox(height: 28),
-                _buildAnimatedAppName(),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -231,6 +231,7 @@ class ProfileView extends GetView<ProfileController> {
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: _postInput(
+                  Get.context!,
                   'What would you like to share?',
                   alignLabelWithHint: true,
                 ),
@@ -396,14 +397,17 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  InputDecoration _postInput(String label, {bool alignLabelWithHint = false}) =>
-      InputDecoration(
-        labelText: label,
-        alignLabelWithHint: alignLabelWithHint,
-        filled: true,
-        fillColor: const Color(0xFFF7FAF8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      );
+  InputDecoration _postInput(
+    BuildContext context,
+    String label, {
+    bool alignLabelWithHint = false,
+  }) => InputDecoration(
+    labelText: label,
+    alignLabelWithHint: alignLabelWithHint,
+    filled: true,
+    fillColor: context.appField,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
 }
 
 class _EmptyPosts extends StatelessWidget {

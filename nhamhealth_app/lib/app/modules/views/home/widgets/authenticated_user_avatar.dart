@@ -29,11 +29,11 @@ class AuthenticatedUserAvatar extends StatelessWidget {
           width: size,
           height: size,
           clipBehavior: Clip.antiAlias,
-          decoration: const BoxDecoration(
-            color: AppColors.softGreen,
+          decoration: BoxDecoration(
+            color: context.appSoftGreen,
             shape: BoxShape.circle,
           ),
-          child: _avatarContent(),
+          child: _avatarContent(context),
         ),
         if (showOnlineStatus)
           Positioned(
@@ -46,7 +46,7 @@ class AuthenticatedUserAvatar extends StatelessWidget {
                 color: AppColors.primaryGreen,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.cardSurface,
+                  color: context.appElevatedSurface,
                   width: size < 60 ? 2 : 3,
                 ),
               ),
@@ -56,14 +56,14 @@ class AuthenticatedUserAvatar extends StatelessWidget {
     );
   }
 
-  Widget _avatarContent() {
+  Widget _avatarContent(BuildContext context) {
     final imageUrl = user?.profileImageUrl?.trim();
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: _resolveImageUrl(imageUrl),
         fit: BoxFit.cover,
         memCacheWidth: (size * 3).round(),
-        placeholder: (_, _) => const ColoredBox(color: AppColors.softGreen),
+        placeholder: (_, _) => ColoredBox(color: context.appSoftGreen),
         errorWidget: (_, _, _) => _Initials(user: user, size: size),
       );
     }
@@ -92,7 +92,7 @@ class _Initials extends StatelessWidget {
         user?.initials ?? '?',
         key: const ValueKey<String>('authenticated-user-initials'),
         style: TextStyle(
-          color: AppColors.darkGreen,
+          color: context.appIsDark ? context.appText : AppColors.darkGreen,
           fontSize: size * 0.34,
           fontWeight: FontWeight.w800,
         ),

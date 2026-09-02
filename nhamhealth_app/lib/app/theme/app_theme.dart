@@ -137,9 +137,13 @@ abstract class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: colorScheme.surface,
+        modalBackgroundColor:
+            isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
+        showDragHandle: true,
+        dragHandleColor: colorScheme.outline,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -247,7 +251,8 @@ abstract class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerLow : colorScheme.surface,
         indicatorColor: colorScheme.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
@@ -324,7 +329,8 @@ abstract class AppTheme {
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerLow : colorScheme.surface,
         selectedItemColor: colorScheme.primary,
         unselectedItemColor: colorScheme.onSurfaceVariant,
         elevation: 0,

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../widgets/app_background.dart';
 import '../../../../widgets/app_back_header.dart';
 import '../../../models/onboarding/onboarding_item.dart';
 import 'onboarding_indicator.dart';
@@ -35,8 +36,8 @@ class OnboardingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
+    return AppBackground(
+      lightDecoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -182,7 +183,7 @@ class _TitleBlock extends StatelessWidget {
             item.title.tr,
             textAlign: centered ? TextAlign.center : TextAlign.left,
             style: TextStyle(
-              color: AppColors.darkGreen,
+              color: context.appText,
               fontSize: centered ? 32 : 36,
               height: 1.08,
               fontWeight: FontWeight.w900,
@@ -202,8 +203,8 @@ class _TitleBlock extends StatelessWidget {
           Text(
             item.description.tr,
             textAlign: centered ? TextAlign.center : TextAlign.left,
-            style: const TextStyle(
-              color: AppColors.mutedText,
+            style: TextStyle(
+              color: context.appMutedText,
               fontSize: 14,
               height: 1.35,
               fontWeight: FontWeight.w500,

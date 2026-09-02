@@ -43,30 +43,30 @@ class AuthTextField extends StatelessWidget {
         autofillHints: autofillHints,
         onSubmitted: onSubmitted,
         onChanged: onChanged,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.darkGreen,
+          color: context.appText,
         ),
         decoration: InputDecoration(
           hintText: hintText.tr,
-          hintStyle: const TextStyle(
-            color: AppColors.placeholder,
+          hintStyle: TextStyle(
+            color: context.appMutedText,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
           filled: true,
-          fillColor: AppColors.field,
+          fillColor: context.appField,
           prefixIcon:
               prefixIcon == null
                   ? null
-                  : Icon(prefixIcon, size: 20, color: AppColors.mutedText),
+                  : Icon(prefixIcon, size: 20, color: context.appMutedText),
           suffixIcon: suffixIcon,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(24),
             borderSide: BorderSide(
-              color: hasError ? AppColors.errorCoral : Colors.white,
+              color: hasError ? AppColors.errorCoral : context.appBorder,
               width: hasError ? 1.4 : 1.2,
             ),
           ),
@@ -130,7 +130,7 @@ class _PasswordFieldState extends State<PasswordField> {
         icon: Icon(
           _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           size: 18,
-          color: widget.hasError ? AppColors.errorCoral : AppColors.mutedText,
+          color: widget.hasError ? AppColors.errorCoral : context.appMutedText,
         ),
       ),
     );

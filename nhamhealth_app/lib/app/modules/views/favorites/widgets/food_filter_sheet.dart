@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class FoodFilterSheet extends StatefulWidget {
   const FoodFilterSheet({
     super.key,
@@ -42,7 +44,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
         ),
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appElevatedSurface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
@@ -61,7 +63,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD9DEDB),
+                  color: context.appStrongBorder,
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -193,10 +195,12 @@ class _CategoryChip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color:
-                  selected ? const Color(0xFFE1F7E8) : const Color(0xFFF9FBFA),
+                  selected
+                      ? context.appSelectedSurface
+                      : context.appSubtleSurface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: selected ? accent : const Color(0xFFDDE5E0),
+                color: selected ? accent : context.appBorder,
                 width: selected ? 1.5 : 1,
               ),
               boxShadow:
@@ -231,9 +235,7 @@ class _CategoryChip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color:
-                          selected
-                              ? const Color(0xFF087A42)
-                              : const Color(0xFF555555),
+                          selected ? const Color(0xFF087A42) : context.appText,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     ),
                   ),

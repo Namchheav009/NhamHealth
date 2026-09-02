@@ -204,8 +204,8 @@ class VerificationView extends StatelessWidget {
           Text(
             'We sent a code to'.tr,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.darkGreen,
+            style: TextStyle(
+              color: context.appText,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -216,8 +216,8 @@ class VerificationView extends StatelessWidget {
               controller.userEmail.value,
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.darkGreen,
+              style: TextStyle(
+                color: context.appText,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
@@ -276,10 +276,7 @@ class VerificationView extends StatelessWidget {
               children: [
                 Text(
                   "Didn't receive the code?".tr,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.darkGreen,
-                  ),
+                  style: TextStyle(fontSize: 11, color: context.appText),
                 ),
                 TextButton(
                   onPressed:
@@ -401,7 +398,7 @@ class _VerificationCodeField extends StatelessWidget {
                           height: 58,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.appField,
                             borderRadius: BorderRadius.circular(17),
                             border: Border.all(
                               color:
@@ -409,14 +406,14 @@ class _VerificationCodeField extends StatelessWidget {
                                       ? AppColors.errorCoral
                                       : isActive
                                       ? AppColors.primaryGreen
-                                      : Colors.white,
+                                      : context.appBorder,
                               width: hasError || isActive ? 1.5 : 1.2,
                             ),
                           ),
                           child: Text(
                             digit,
-                            style: const TextStyle(
-                              color: AppColors.darkGreen,
+                            style: TextStyle(
+                              color: context.appText,
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
                             ),

@@ -178,6 +178,12 @@ const Map<String, String> englishPageTranslations = {
       'Something went wrong. Please try again.',
   'Need help? Contact us or find quick answers below.':
       'Need help? Contact us or find quick answers below.',
+  'How can we help?': 'How can we help?',
+  'Contact us or find quick answers below.':
+      'Contact us or find quick answers below.',
+  'Unable to open': 'Unable to open',
+  'No compatible app is available on this device.':
+      'No compatible app is available on this device.',
   'Contact Support': 'Contact Support',
   'Frequently Asked Questions': 'Frequently Asked Questions',
   'Email Us': 'Email Us',
@@ -896,6 +902,12 @@ const Map<String, String> khmerPageTranslations = {
   'Something went wrong. Please try again.': 'មានបញ្ហា។ សូមព្យាយាមម្តងទៀត។',
   'Need help? Contact us or find quick answers below.':
       'ត្រូវការជំនួយ? ទាក់ទងមកយើង ឬស្វែងរកចម្លើយរហ័សខាងក្រោម។',
+  'How can we help?': 'តើយើងអាចជួយអ្នកដោយរបៀបណា?',
+  'Contact us or find quick answers below.':
+      'ទាក់ទងមកយើង ឬស្វែងរកចម្លើយរហ័សខាងក្រោម។',
+  'Unable to open': 'មិនអាចបើកបានទេ',
+  'No compatible app is available on this device.':
+      'មិនមានកម្មវិធីដែលអាចប្រើបាននៅលើឧបករណ៍នេះទេ។',
   'Contact Support': 'ទាក់ទងផ្នែកជំនួយ',
   'Frequently Asked Questions': 'សំណួរដែលសួរញឹកញាប់',
   'Email Us': 'ផ្ញើអ៊ីមែលមកយើង',

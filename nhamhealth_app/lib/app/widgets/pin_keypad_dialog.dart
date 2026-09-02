@@ -174,9 +174,9 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface.withValues(alpha: .88),
+                  color: context.appElevatedSurface.withValues(alpha: .94),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: Colors.white.withValues(alpha: .8)),
+                  border: Border.all(color: context.appStrongBorder),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.darkGreen.withValues(alpha: .16),
@@ -196,8 +196,8 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                             child: Text(
                               _confirming ? 'Confirm PIN'.tr : widget.title.tr,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.darkGreen,
+                              style: TextStyle(
+                                color: context.appText,
                                 fontSize: 21,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -338,7 +338,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                 tooltip: 'Delete digit'.tr,
                 onPressed: _pin.isEmpty ? null : _removeDigit,
                 icon: const Icon(Icons.backspace_outlined),
-                color: AppColors.darkGreen,
+                color: context.appText,
               ),
             ),
           ],
@@ -354,9 +354,9 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
       onPressed: _busy ? null : () => _addDigit(number),
       style: OutlinedButton.styleFrom(
         padding: EdgeInsets.zero,
-        foregroundColor: AppColors.darkGreen,
-        backgroundColor: Colors.white.withValues(alpha: .46),
-        side: const BorderSide(color: AppColors.navigationGreen, width: 1.4),
+        foregroundColor: context.appText,
+        backgroundColor: context.appField,
+        side: BorderSide(color: context.appBorder, width: 1.4),
         shape: const CircleBorder(),
       ),
       child: Column(

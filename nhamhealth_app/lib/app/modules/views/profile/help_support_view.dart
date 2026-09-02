@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../theme/app_colors.dart';
 
 import '../../controllers/profile/help_support_controller.dart';
@@ -18,78 +19,65 @@ class HelpSupportView extends GetView<HelpSupportController> {
       maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: context.appBackground,
-        body: Stack(
-          children: [
-            const _HelpSupportBackground(),
+        body: AppBackground(
+          child: SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: AppSpacing.pagePadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
 
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: AppSpacing.pagePadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
+                      const SizedBox(height: 25),
 
-                        const SizedBox(height: 25),
+                      _SupportHero(),
 
-                        Text(
-                          'Need help? Contact us or find quick answers below.'
-                              .tr,
+                      const SizedBox(height: 26),
+
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text(
+                          'Contact Support'.tr,
                           style: TextStyle(
-                            fontSize: 13,
-                            height: 1.4,
-                            fontWeight: FontWeight.w400,
-                            color: context.appMutedText,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: context.appText,
                           ),
                         ),
+                      ),
 
-                        const SizedBox(height: 31),
+                      const SizedBox(height: 12),
 
-                        Padding(
-                          padding: const EdgeInsets.only(left: 15),
-                          child: Text(
-                            'Contact Support'.tr,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.appText,
-                            ),
+                      _buildContactCard(context),
+
+                      const SizedBox(height: 26),
+
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text(
+                          'Frequently Asked Questions'.tr,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: context.appText,
                           ),
                         ),
+                      ),
 
-                        const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
-                        _buildContactCard(context),
-
-                        const SizedBox(height: 26),
-
-                        Padding(
-                          padding: const EdgeInsets.only(left: 15),
-                          child: Text(
-                            'Frequently Asked Questions'.tr,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.appText,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        _buildFaqList(),
-                      ],
-                    ),
+                      _buildFaqList(context),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -110,6 +98,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
   Widget _buildContactCard(BuildContext context) {
     return Container(
       width: double.infinity,
+      key: const ValueKey<String>('help-contact-card'),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
@@ -145,7 +134,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // FAQ
   // ============================================================
 
-  Widget _buildFaqList() {
+  Widget _buildFaqList(BuildContext context) {
     return Obx(
       () => Column(
         children: List.generate(controller.faqs.length, (index) {
@@ -155,6 +144,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _FaqItem(
+              itemKey: ValueKey<String>('help-faq-$index'),
               question: faq['question']!,
               answer: faq['answer']!,
               expanded: isExpanded,
@@ -167,6 +157,67 @@ class HelpSupportView extends GetView<HelpSupportController> {
       ),
     );
   }
+}
+
+class _SupportHero extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey<String>('help-support-hero'),
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [context.appSoftGreen, context.appSurfaceLow],
+      ),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appTileShadow,
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: context.appSelectedSurface,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.support_agent_rounded,
+            color: context.appColorScheme.primary,
+            size: 27,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'How can we help?'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Contact us or find quick answers below.'.tr,
+                style: TextStyle(
+                  color: context.appMutedText,
+                  fontSize: 12.5,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 // ================================================================
@@ -239,6 +290,11 @@ class _ContactItem extends StatelessWidget {
                     ],
                   ),
                 ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.appMutedText,
+                  size: 21,
+                ),
               ],
             ),
           ),
@@ -253,12 +309,14 @@ class _ContactItem extends StatelessWidget {
 // ================================================================
 
 class _FaqItem extends StatelessWidget {
+  final Key itemKey;
   final String question;
   final String answer;
   final bool expanded;
   final VoidCallback onTap;
 
   const _FaqItem({
+    required this.itemKey,
     required this.question,
     required this.answer,
     required this.expanded,
@@ -268,6 +326,7 @@ class _FaqItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
+      key: itemKey,
       duration: const Duration(milliseconds: 180),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -334,7 +393,7 @@ class _FaqItem extends StatelessWidget {
                         color:
                             expanded
                                 ? HelpSupportView.green
-                                : const Color(0xFFAAB0B4),
+                                : context.appMutedText,
                       ),
                     ),
                   ],
@@ -354,11 +413,7 @@ class _FaqItem extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(54, 0, 18, 14),
               child: Column(
                 children: [
-                  const Divider(
-                    height: 1,
-                    thickness: 0.7,
-                    color: Color(0xFFD9D9D9),
-                  ),
+                  Divider(height: 1, thickness: 0.7, color: context.appBorder),
 
                   const SizedBox(height: 11),
 
@@ -366,11 +421,11 @@ class _FaqItem extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       answer.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         height: 1.45,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF72A080),
+                        color: context.appMutedText,
                       ),
                     ),
                   ),
@@ -379,84 +434,6 @@ class _FaqItem extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ================================================================
-// BACKGROUND
-// ================================================================
-
-class _HelpSupportBackground extends StatelessWidget {
-  const _HelpSupportBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background/bg.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-
-        // TOP LEFT PINK
-        Positioned(
-          left: -130,
-          top: -90,
-          child: _glow(width: 300, height: 310, color: const Color(0xFFFFE9ED)),
-        ),
-
-        // TOP RIGHT GREEN
-        Positioned(
-          right: -125,
-          top: -90,
-          child: _glow(width: 320, height: 320, color: const Color(0xFFE9FFD9)),
-        ),
-
-        // LEFT / CENTER PINK
-        Positioned(
-          left: -150,
-          bottom: -60,
-          child: _glow(width: 330, height: 420, color: const Color(0xFFFFE9ED)),
-        ),
-
-        // BOTTOM RIGHT GREEN
-        Positioned(
-          right: -130,
-          bottom: -80,
-          child: _glow(width: 330, height: 370, color: const Color(0xFFE9FFDD)),
-        ),
-      ],
-    );
-  }
-
-  static Widget _glow({
-    required double width,
-    required double height,
-    required Color color,
-  }) {
-    return IgnorePointer(
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(width),
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.7),
-              color.withValues(alpha: 0.30),
-              color.withValues(alpha: 0),
-            ],
-            stops: const [0, 0.5, 1],
-          ),
-        ),
       ),
     );
   }

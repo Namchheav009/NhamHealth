@@ -45,7 +45,7 @@ class LoginForm extends StatelessWidget {
           Text(
             'Sign in to continue your healthy journey.'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+            style: TextStyle(color: context.appMutedText, fontSize: 12),
           ),
           const SizedBox(height: 20),
           AuthTextField(
@@ -70,8 +70,8 @@ class LoginForm extends StatelessWidget {
               onPressed: loading ? null : onForgotPassword,
               child: Text(
                 'Forgot password?'.tr,
-                style: const TextStyle(
-                  color: AppColors.darkGreen,
+                style: TextStyle(
+                  color: context.appText,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportController extends GetxController {
   final expandedIndex = (-1).obs;
@@ -38,12 +39,33 @@ class HelpSupportController extends GetxController {
     }
   }
 
-  void emailSupport() {
-    // Add url_launcher later.
-  }
+  static const supportEmail = 'NhamHealth@gmail.com';
+  static const supportPhone = '+85581814451';
 
-  void callSupport() {
-    // Add url_launcher later.
+  Future<void> emailSupport() => _openSupportLink(
+    Uri(
+      scheme: 'mailto',
+      path: supportEmail,
+      queryParameters: const {'subject': 'NhamHealth support request'},
+    ),
+  );
+
+  Future<void> callSupport() =>
+      _openSupportLink(Uri(scheme: 'tel', path: supportPhone));
+
+  Future<void> _openSupportLink(Uri uri) async {
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (opened) return;
+    } on Object {
+      // The fallback below gives a clear, non-crashing result on devices that
+      // do not have an email or phone handler installed.
+    }
+    Get.snackbar(
+      'Unable to open'.tr,
+      'No compatible app is available on this device.'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void goBack() {

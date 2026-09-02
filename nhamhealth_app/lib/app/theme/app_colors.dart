@@ -51,6 +51,18 @@ extension AppColorContext on BuildContext {
   Color get appElevatedSurface =>
       appIsDark ? appColorScheme.surfaceContainerHigh : AppColors.cardSurface;
 
+  /// A quiet surface for inputs and controls nested inside a card.
+  Color get appField =>
+      appIsDark ? appColorScheme.surfaceContainerHighest : AppColors.field;
+
+  /// A slightly tinted page section. This replaces fixed near-white fills
+  /// that become glaring blocks when the rest of the app is dark.
+  Color get appSubtleSurface =>
+      appIsDark ? appColorScheme.surfaceContainerLow : const Color(0xFFF7FAF8);
+
+  /// Foreground used on solid brand-colored controls.
+  Color get appOnBrand => appIsDark ? const Color(0xFF002C18) : Colors.white;
+
   Color get appMutedSurface => appColorScheme.surfaceContainerHighest;
 
   Color get appSelectedSurface => appColorScheme.primaryContainer;
@@ -84,6 +96,12 @@ extension AppColorContext on BuildContext {
 
   Color get appOnDangerSurface =>
       appIsDark ? const Color(0xFFFFB4BA) : const Color(0xFFB3261E);
+
+  Color get appWarningSurface =>
+      appIsDark ? const Color(0xFF332B16) : const Color(0xFFFFF7E2);
+
+  Color get appOnWarningSurface =>
+      appIsDark ? const Color(0xFFFFD875) : const Color(0xFF785A00);
 
   Color get appShadow =>
       Colors.black.withValues(alpha: appIsDark ? 0.38 : 0.08);

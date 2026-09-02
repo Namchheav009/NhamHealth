@@ -47,7 +47,7 @@ class RegisterForm extends StatelessWidget {
           Text(
             'Start building healthier habits with NhamHealth.'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+            style: TextStyle(color: context.appMutedText, fontSize: 12),
           ),
           const SizedBox(height: 18),
           AuthTextField(
