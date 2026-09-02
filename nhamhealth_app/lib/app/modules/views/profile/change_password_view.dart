@@ -196,7 +196,7 @@ class _PasswordForm extends StatelessWidget {
             child: TextButton(
               onPressed: controller.forgotPassword,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.darkGreen,
+                foregroundColor: context.appText,
                 minimumSize: const Size(48, 44),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
               ),
@@ -316,8 +316,8 @@ class _PasswordField extends StatelessWidget {
             horizontal: 16,
             vertical: 17,
           ),
-          prefixIconColor: AppColors.mutedText,
-          suffixIconColor: AppColors.mutedText,
+          prefixIconColor: context.appMutedText,
+          suffixIconColor: context.appMutedText,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide(color: context.appBorder),
@@ -350,9 +350,9 @@ class _PasswordGuidance extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
+        Icon(
           Icons.info_outline_rounded,
-          color: AppColors.darkGreen,
+          color: context.appColorScheme.primary,
           size: 19,
         ),
         const SizedBox(width: 10),
@@ -360,8 +360,8 @@ class _PasswordGuidance extends StatelessWidget {
           child: Text(
             'Use at least 8 characters. Your new password must be different from your current password.'
                 .tr,
-            style: const TextStyle(
-              color: Color(0xFF577063),
+            style: TextStyle(
+              color: context.appMutedText,
               fontSize: 12,
               height: 1.4,
             ),

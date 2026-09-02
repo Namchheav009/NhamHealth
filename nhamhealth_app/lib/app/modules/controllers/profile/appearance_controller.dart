@@ -12,6 +12,10 @@ class AppearanceController extends GetxController {
   final AppThemeService _themeService;
   late final selectedTheme = _themeService.themeMode.name.obs;
 
+  void selectSystemMode() {
+    _selectTheme(ThemeMode.system);
+  }
+
   void selectLightMode() {
     _selectTheme(ThemeMode.light);
   }

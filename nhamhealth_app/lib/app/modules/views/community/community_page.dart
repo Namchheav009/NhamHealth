@@ -12,6 +12,7 @@ import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/community/community_controller.dart';
 import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
@@ -33,8 +34,7 @@ class CommunityPage extends GetView<CommunityController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
+    return ScrollAwareScaffold(
       backgroundColor: context.appBackground,
       body: AppBackground(
         child: SafeArea(

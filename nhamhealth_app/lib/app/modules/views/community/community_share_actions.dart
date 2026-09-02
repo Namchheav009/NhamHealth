@@ -108,7 +108,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
               width: 42,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFF9AA19C),
+                color: context.appStrongBorder,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -165,7 +165,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
             decoration: BoxDecoration(
               color: context.appSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD9E6DD)),
+              border: Border.all(color: context.appBorder),
             ),
             child: TextField(
               key: const ValueKey<String>('community-share-message'),
@@ -249,13 +249,13 @@ class _AudiencePicker extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F1),
+        color: context.appMutedSurface,
         borderRadius: BorderRadius.circular(7),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(value.icon, size: 15, color: const Color(0xFF4D5A51)),
+          Icon(value.icon, size: 15, color: context.appMutedText),
           const SizedBox(width: 5),
           Text(
             value.label,

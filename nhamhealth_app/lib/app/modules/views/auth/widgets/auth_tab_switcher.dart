@@ -21,16 +21,10 @@ class AuthTabSwitcher extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.appSurfaceLow,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: context.appBorder, width: 1.2),
+        boxShadow: context.appTileShadow,
       ),
       child: Row(
         children: [
@@ -84,7 +78,7 @@ class _Tab extends StatelessWidget {
             child: Text(
               label.tr,
               style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF5D625D),
+                color: selected ? Colors.white : context.appText,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),

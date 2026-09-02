@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 import '../../../models/community/community_post.dart';
 
 const communityAudienceOptions = <CommunityPostVisibility>[
@@ -19,9 +21,9 @@ Future<CommunityPostVisibility?> showCommunityAudiencePicker(
         top: false,
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -80,7 +82,7 @@ class _AudienceTile extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: Material(
-      color: selected ? const Color(0xFFEAF8EF) : const Color(0xFFF8FAF8),
+      color: selected ? context.appSelectedSurface : context.appSubtleSurface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         key: ValueKey<String>('audience-${audience.apiValue}'),

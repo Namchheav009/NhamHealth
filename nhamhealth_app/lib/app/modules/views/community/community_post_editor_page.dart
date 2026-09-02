@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
@@ -586,9 +587,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
     bottomNavigationBar: SafeArea(
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE7ECE8))),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          border: Border(top: BorderSide(color: context.appBorder)),
         ),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: Center(
@@ -692,9 +693,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           height: 1,
           margin: const EdgeInsets.symmetric(horizontal: 10),
           color:
-              _currentStep == 1
-                  ? const Color(0xFF9BCFB0)
-                  : const Color(0xFFE0E6E2),
+              _currentStep == 1 ? const Color(0xFF9BCFB0) : context.appBorder,
         ),
       ),
       _progressStep(2, 'Ingredients', isActive: _currentStep == 1),
@@ -719,8 +718,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               isActive
                   ? green
                   : isComplete
-                  ? const Color(0xFFE5F7EC)
-                  : const Color(0xFFF1F3F2),
+                  ? context.appSelectedSurface
+                  : context.appMutedSurface,
         ),
         child:
             isComplete
@@ -728,7 +727,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 : Text(
                   '$number',
                   style: TextStyle(
-                    color: isActive ? Colors.white : const Color(0xFF89928C),
+                    color: isActive ? Colors.white : context.appMutedText,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -749,11 +748,26 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   List<Widget> _basicInfoFields() => [
     InkWell(
       onTap: _submitting ? null : _chooseImage,
+<<<<<<< HEAD
       borderRadius: BorderRadius.circular(30),
       child: CustomPaint(
         foregroundPainter: const _DashedRoundedBorder(
           color: Color(0xFFB7DEC7),
           radius: 30,
+=======
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 174,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [context.appSubtleSurface, context.appSoftGreen],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFC5E6D0)),
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
         ),
         child: Container(
           height: 206,
@@ -874,9 +888,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
+<<<<<<< HEAD
         color: const Color(0xFFF2F7F4),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE1ECE5)),
+=======
+        color: context.appSubtleSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder),
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
       ),
       child: Row(
         children: [
@@ -892,6 +912,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _mealCategoryField(),
   ];
 
+<<<<<<< HEAD
   Widget _emptyPhotoPrompt() => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -907,6 +928,31 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 color: Color(0x0F164E34),
                 blurRadius: 12,
                 offset: Offset(0, 4),
+=======
+  Widget _emptyPhotoPrompt() => Stack(
+    children: [
+      Positioned(
+        top: 13,
+        left: 14,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface.withValues(alpha: .90),
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.image_outlined, color: green, size: 15),
+              SizedBox(width: 5),
+              Text(
+                'Cover photo',
+                style: TextStyle(
+                  color: Color(0xFF2B6242),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
               ),
             ],
           ),
@@ -929,11 +975,46 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+<<<<<<< HEAD
             Icon(Icons.image_outlined, color: Color(0xFF91A79A), size: 14),
             SizedBox(width: 5),
             Text(
               'Recommended',
               style: TextStyle(color: Color(0xFF91A79A), fontSize: 11),
+=======
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: context.appElevatedSurface,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x19056E38),
+                    blurRadius: 14,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.add_a_photo_outlined,
+                color: green,
+                size: 27,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add a delicious photo',
+              style: TextStyle(
+                color: Color(0xFF17643A),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 3),
+            const Text(
+              'A clear photo helps your meal stand out',
+              style: TextStyle(color: Color(0xFF637169), fontSize: 12),
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
             ),
           ],
         ),
@@ -977,8 +1058,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               decoration: BoxDecoration(
                 color:
                     selectedCategory == null
-                        ? const Color(0xFFF7F9F7)
-                        : const Color(0xFFEAF8EF),
+                        ? context.appSubtleSurface
+                        : context.appSelectedSurface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color:
@@ -1002,7 +1083,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         height: 36,
                         decoration: BoxDecoration(
                           color:
-                              selectedCategory == null ? Colors.white : green,
+                              selectedCategory == null
+                                  ? context.appElevatedSurface
+                                  : green,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1074,9 +1157,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             top: false,
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              decoration: BoxDecoration(
+                color: sheetContext.appElevatedSurface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -1091,7 +1176,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         height: 5,
                         width: 42,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF9AA19C),
+                          color: sheetContext.appStrongBorder,
                           borderRadius: BorderRadius.circular(99),
                         ),
                       ),
@@ -1121,8 +1206,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                           return Material(
                             color:
                                 selected
-                                    ? const Color(0xFFEAF8EF)
-                                    : const Color(0xFFF7F9F7),
+                                    ? sheetContext.appSelectedSurface
+                                    : sheetContext.appSubtleSurface,
                             borderRadius: BorderRadius.circular(16),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
@@ -1140,7 +1225,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                       width: 38,
                                       height: 38,
                                       decoration: BoxDecoration(
-                                        color: selected ? green : Colors.white,
+                                        color:
+                                            selected
+                                                ? green
+                                                : sheetContext
+                                                    .appElevatedSurface,
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -1154,7 +1243,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                       child: Text(
                                         category.name,
                                         style: TextStyle(
-                                          color: const Color(0xFF18231C),
+                                          color: sheetContext.appText,
                                           fontSize: 15,
                                           fontWeight:
                                               selected
@@ -1273,7 +1362,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   ];
 
   Widget _audienceField() => Material(
-    color: const Color(0xFFF7FAF8),
+    color: context.appSubtleSurface,
     borderRadius: BorderRadius.circular(16),
     child: InkWell(
       key: const ValueKey<String>('community-post-audience'),
@@ -1387,24 +1476,40 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         hintText: hint,
         suffixText: suffix,
         filled: true,
+<<<<<<< HEAD
         fillColor: const Color(0xFFFFFFFF),
         hintStyle: const TextStyle(color: Color(0xFF92A098)),
         suffixStyle: const TextStyle(
           color: Color(0xFF617068),
+=======
+        fillColor: context.appField,
+        hintStyle: TextStyle(color: context.appMutedText),
+        suffixStyle: TextStyle(
+          color: context.appMutedText,
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
           fontWeight: FontWeight.w600,
         ),
-        counterStyle: const TextStyle(color: Color(0xFF7B847E), fontSize: 11),
+        counterStyle: TextStyle(color: context.appMutedText, fontSize: 11),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 15,
           vertical: 12,
         ),
         border: OutlineInputBorder(
+<<<<<<< HEAD
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
+=======
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.appBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.appBorder),
+>>>>>>> 5c9f08d98f613e2bdd5fe89cb84f2cbcda537ff1
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
@@ -1423,7 +1528,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Widget _inlineError(String message, VoidCallback retry) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: const Color(0xFFFFF4E5),
+      color: context.appWarningSurface,
       borderRadius: BorderRadius.circular(14),
     ),
     child: Row(
@@ -1469,8 +1574,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       color: Colors.transparent,
       child: Ink(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF1FBF5), Color(0xFFE2F6E9)],
+          gradient: LinearGradient(
+            colors: [context.appSubtleSurface, context.appSoftGreen],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFB8DEC6)),
@@ -1590,10 +1695,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF3FCF6), Color(0xFFE9F8EE)],
+          colors: [context.appSubtleSurface, context.appSoftGreen],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFCDE8D7)),
@@ -1637,7 +1742,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .82),
+                  color: context.appElevatedSurface.withValues(alpha: .90),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -1777,7 +1882,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Widget _ingredientSuggestionPanel() => Container(
     constraints: const BoxConstraints(maxHeight: 180),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: context.appElevatedSurface,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: const Color(0xFFB9DFC7)),
       boxShadow: const [
@@ -1817,7 +1922,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFFFCFDFC),
+          color: context.appSubtleSurface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFDDE9E1)),
         ),
@@ -1880,7 +1985,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appElevatedSurface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E9E4)),
           ),
@@ -1952,11 +2057,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   );
 
   Widget _stepCard(int index) => Card(
-    color: const Color(0xFFFCFDFC),
+    color: context.appSurfaceLow,
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: Color(0xFFD6EADF)),
+      side: BorderSide(color: context.appBorder),
     ),
     margin: const EdgeInsets.only(bottom: 12),
     child: Padding(

@@ -75,7 +75,7 @@ class AuthSecondaryButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: loading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.darkGreen,
+          foregroundColor: context.appText,
           side: const BorderSide(color: AppColors.primaryGreen, width: 1.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -110,8 +110,11 @@ class SocialLoginButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: loading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.darkGreen,
+          backgroundColor: context.appElevatedSurface,
+          foregroundColor:
+              context.appIsDark
+                  ? context.appColorScheme.primary
+                  : AppColors.darkGreen,
           side: const BorderSide(color: AppColors.primaryGreen, width: 1.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),

@@ -6,11 +6,11 @@ import 'app_colors.dart';
 abstract class AppTheme {
   AppTheme._();
 
-  static const Color _darkBackground = Color(0xFF09110C);
-  static const Color _darkSurface = Color(0xFF121B15);
-  static const Color _darkText = Color(0xFFE8F2EB);
-  static const Color _darkMutedText = Color(0xFFB3C4B8);
-  static const Color _darkPrimary = Color(0xFF68E09E);
+  static const Color _darkBackground = Color(0xFF07100B);
+  static const Color _darkSurface = Color(0xFF111B15);
+  static const Color _darkText = Color(0xFFEAF5ED);
+  static const Color _darkMutedText = Color(0xFFAFC2B5);
+  static const Color _darkPrimary = Color(0xFF6BE7A3);
 
   /// Uses the original NhamHealth colors so enabling themes never changes the
   /// established light-mode UI.
@@ -53,15 +53,15 @@ abstract class AppTheme {
       onError: const Color(0xFF690005),
       errorContainer: const Color(0xFF93000A),
       onErrorContainer: const Color(0xFFFFDAD6),
-      surfaceDim: const Color(0xFF09110C),
+      surfaceDim: _darkBackground,
       surfaceBright: const Color(0xFF303B33),
-      surfaceContainerLowest: const Color(0xFF070D09),
-      surfaceContainerLow: const Color(0xFF101913),
-      surfaceContainer: const Color(0xFF162019),
-      surfaceContainerHigh: const Color(0xFF202C23),
-      surfaceContainerHighest: const Color(0xFF2A372D),
-      outline: const Color(0xFF83958A),
-      outlineVariant: const Color(0xFF394B40),
+      surfaceContainerLowest: const Color(0xFF050B07),
+      surfaceContainerLow: const Color(0xFF0D1711),
+      surfaceContainer: const Color(0xFF152119),
+      surfaceContainerHigh: const Color(0xFF1D2B22),
+      surfaceContainerHighest: const Color(0xFF27372C),
+      outline: const Color(0xFF667A6D),
+      outlineVariant: const Color(0xFF34473B),
       onSurface: _darkText,
       onSurfaceVariant: _darkMutedText,
       inverseSurface: const Color(0xFFE0EAE3),
@@ -82,7 +82,12 @@ abstract class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBackground,
-      fontFamilyFallback: const ['Arial', 'sans-serif'],
+      fontFamilyFallback: const [
+        'Noto Sans Khmer',
+        'Noto Sans',
+        'Arial',
+        'sans-serif',
+      ],
     );
 
     final inputBorder = OutlineInputBorder(
@@ -92,7 +97,16 @@ abstract class AppTheme {
 
     return base.copyWith(
       canvasColor: scaffoldBackground,
+      focusColor: colorScheme.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+      hoverColor: colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+      splashColor: colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.1),
+      disabledColor: colorScheme.onSurface.withValues(alpha: 0.38),
       dividerColor: colorScheme.outlineVariant,
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant,
+        thickness: 1,
+        space: 1,
+      ),
       iconTheme: IconThemeData(color: colorScheme.onSurfaceVariant),
       textTheme: base.textTheme.apply(
         bodyColor: colorScheme.onSurface,
@@ -118,13 +132,18 @@ abstract class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.surfaceContainerHigh,
         surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: colorScheme.surface,
+        modalBackgroundColor:
+            isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
+        showDragHandle: true,
+        dragHandleColor: colorScheme.outline,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -212,8 +231,28 @@ abstract class AppTheme {
         textStyle: TextStyle(color: colorScheme.onSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            colorScheme.surfaceContainerHigh,
+          ),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            colorScheme.surfaceContainerHigh,
+          ),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerLow : colorScheme.surface,
         indicatorColor: colorScheme.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
@@ -241,7 +280,10 @@ abstract class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor:
             isDark ? colorScheme.surfaceContainer : AppColors.darkGreen,
-        contentTextStyle: TextStyle(color: colorScheme.onSurface),
+        contentTextStyle: TextStyle(
+          color: isDark ? colorScheme.onSurface : Colors.white,
+        ),
+        actionTextColor: isDark ? colorScheme.primary : const Color(0xFFC7F9D9),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       listTileTheme: ListTileThemeData(
@@ -272,6 +314,32 @@ abstract class AppTheme {
                   ? colorScheme.primary
                   : colorScheme.surfaceContainerHighest,
         ),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color:
+              isDark
+                  ? colorScheme.surfaceContainerHighest
+                  : colorScheme.inverseSurface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: TextStyle(
+          color: isDark ? colorScheme.onSurface : colorScheme.onInverseSurface,
+          fontSize: 12,
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor:
+            isDark ? colorScheme.surfaceContainerLow : colorScheme.surface,
+        selectedItemColor: colorScheme.primary,
+        unselectedItemColor: colorScheme.onSurfaceVariant,
+        elevation: 0,
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        dividerColor: colorScheme.outlineVariant,
       ),
     );
   }

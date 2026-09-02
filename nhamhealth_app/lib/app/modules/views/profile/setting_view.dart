@@ -8,6 +8,7 @@ import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -22,8 +23,7 @@ class SettingsView extends GetView<SettingsController> {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
-      child: Scaffold(
-        extendBody: true,
+      child: ScrollAwareScaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SizedBox.expand(
           child: Stack(
@@ -146,62 +146,79 @@ class SettingsView extends GetView<SettingsController> {
               // --------------------------------------------
               SafeArea(
                 bottom: false,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: AppSpacing.pagePaddingWithNavigationFor(context),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppSpacing.maxContentWidth,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageHorizontalFor(context),
+                        AppSpacing.pageTop,
+                        AppSpacing.pageHorizontalFor(context),
+                        0,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(),
-
-                          const SizedBox(height: 24),
-                          Obx(
-                            () => AnimatedSize(
-                              duration: const Duration(milliseconds: 360),
-                              curve: Curves.easeOutCubic,
-                              alignment: Alignment.topCenter,
-                              child: LoadingContentTransition(
-                                isLoading: controller.isLoading.value,
-                                loading: const PageSkeleton.settings(),
-                                content: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildSectionTitle(
-                                      context,
-                                      'settings_account'.tr,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _buildAccountCard(context),
-                                    const SizedBox(height: 21),
-                                    _buildSectionTitle(
-                                      context,
-                                      'settings_preferences'.tr,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _buildPreferenceCard(context),
-                                    const SizedBox(height: 21),
-                                    _buildSectionTitle(
-                                      context,
-                                      'settings_support'.tr,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _buildSupportCard(context),
-                                    const SizedBox(height: 13),
-                                    _buildLogoutCard(context),
-                                  ],
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: AppSpacing.maxContentWidth,
+                          ),
+                          child: _buildHeader(),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: AppSpacing.pagePaddingWithNavigationFor(
+                          context,
+                        ).copyWith(top: 24),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: AppSpacing.maxContentWidth,
+                            ),
+                            child: Obx(
+                              () => AnimatedSize(
+                                duration: const Duration(milliseconds: 360),
+                                curve: Curves.easeOutCubic,
+                                alignment: Alignment.topCenter,
+                                child: LoadingContentTransition(
+                                  isLoading: controller.isLoading.value,
+                                  loading: const PageSkeleton.settings(),
+                                  content: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildSectionTitle(
+                                        context,
+                                        'settings_account'.tr,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _buildAccountCard(context),
+                                      const SizedBox(height: 21),
+                                      _buildSectionTitle(
+                                        context,
+                                        'settings_preferences'.tr,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _buildPreferenceCard(context),
+                                      const SizedBox(height: 21),
+                                      _buildSectionTitle(
+                                        context,
+                                        'settings_support'.tr,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _buildSupportCard(context),
+                                      const SizedBox(height: 13),
+                                      _buildLogoutCard(context),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],

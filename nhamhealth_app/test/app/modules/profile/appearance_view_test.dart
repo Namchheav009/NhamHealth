@@ -40,5 +40,14 @@ void main() {
       Brightness.dark,
     );
     expect(themeService.themeMode, ThemeMode.dark);
+
+    await tester.tap(find.text('theme_system'));
+    await tester.pumpAndSettle();
+
+    expect(themeService.themeMode, ThemeMode.system);
+    expect(
+      Theme.of(tester.element(find.byType(AppearanceView))).brightness,
+      tester.platformDispatcher.platformBrightness,
+    );
   });
 }

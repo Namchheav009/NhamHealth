@@ -60,8 +60,8 @@ class FavoritesView extends GetView<FavoritesController> {
                     child: Obx(
                       () =>
                           controller.selectedTab.value == FavoritesTab.foods
-                              ? _foods()
-                              : _posts(),
+                              ? _foods(context)
+                              : _posts(context),
                     ),
                   ),
                 ],
@@ -73,10 +73,11 @@ class FavoritesView extends GetView<FavoritesController> {
     ),
   );
 
-  Widget _foods() => Column(
+  Widget _foods(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _sectionHeader(
+        context,
         'Favorite foods',
         Icons.filter_list_rounded,
         onTap: _showFoodFilter,
@@ -135,10 +136,11 @@ class FavoritesView extends GetView<FavoritesController> {
     ],
   );
 
-  Widget _posts() => Column(
+  Widget _posts(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _sectionHeader(
+        context,
         'Favorite Posts',
         Icons.calendar_today_outlined,
         postMenu: true,
@@ -175,6 +177,7 @@ class FavoritesView extends GetView<FavoritesController> {
   );
 
   Widget _sectionHeader(
+    BuildContext context,
     String title,
     IconData icon, {
     VoidCallback? onTap,
@@ -191,7 +194,7 @@ class FavoritesView extends GetView<FavoritesController> {
         PopupMenuButton<FavoritePostSort>(
           initialValue: controller.postSort.value,
           onSelected: controller.setPostSort,
-          color: Colors.white,
+          color: context.appElevatedSurface,
           elevation: 6,
           offset: const Offset(0, 8),
           constraints: const BoxConstraints(minWidth: 142),

@@ -466,9 +466,9 @@ class _SecurityViewState extends State<SecurityView> {
   Widget _card({required List<Widget> children}) => Container(
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .88),
+      color: context.appElevatedSurface.withValues(alpha: .94),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Colors.white, width: 1.2),
+      border: Border.all(color: context.appBorder, width: 1.2),
       boxShadow: const [
         BoxShadow(
           color: Color(0x10002F1A),
@@ -492,9 +492,9 @@ class _SecurityViewState extends State<SecurityView> {
     style: OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFFC84444),
       minimumSize: const Size.fromHeight(50),
-      side: const BorderSide(color: Color(0xFFF0CACA)),
+      side: BorderSide(color: context.appOnDangerSurface.withValues(alpha: .4)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: Colors.white.withValues(alpha: .7),
+      backgroundColor: context.appDangerSurface,
     ),
   );
 }
@@ -559,7 +559,9 @@ class _SecurityTile extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 color:
-                    enabled ? const Color(0xFFE8F7EC) : const Color(0xFFF1F3F1),
+                    enabled
+                        ? context.appSelectedSurface
+                        : context.appMutedSurface,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
@@ -580,9 +582,7 @@ class _SecurityTile extends StatelessWidget {
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
                       color:
-                          enabled
-                              ? const Color(0xFF273029)
-                              : const Color(0xFFA3AAA5),
+                          enabled ? context.appText : const Color(0xFFA3AAA5),
                     ),
                   ),
                   const SizedBox(height: 4),

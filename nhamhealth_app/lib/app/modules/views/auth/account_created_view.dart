@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/auth/account_created_controller.dart';
 
 class AccountCreatedView extends GetView<AccountCreatedController> {
@@ -14,8 +15,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
       child: MediaQuery.withClampedTextScaling(
         maxScaleFactor: 1.2,
         child: Scaffold(
-          body: DecoratedBox(
-            decoration: const BoxDecoration(
+          body: AppBackground(
+            lightDecoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -32,8 +33,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                         Text(
                           'Account created!'.tr,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.darkGreen,
+                          style: TextStyle(
+                            color: context.appText,
                             fontSize: 24,
                             height: 1.15,
                             fontWeight: FontWeight.w800,
@@ -44,8 +45,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                         Text(
                           'Welcome to NhamHealth'.tr,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.mutedText,
+                          style: TextStyle(
+                            color: context.appMutedText,
                             fontSize: 12,
                             height: 1.4,
                             fontWeight: FontWeight.w500,
@@ -69,8 +70,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                         Text(
                           'Your account has been created'.tr,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.darkGreen,
+                          style: TextStyle(
+                            color: context.appText,
                             fontSize: 12,
                             height: 1.4,
                             fontWeight: FontWeight.w500,
@@ -80,8 +81,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                         Text(
                           'Successfully!'.tr,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.darkGreen,
+                          style: TextStyle(
+                            color: context.appText,
                             fontSize: 22,
                             height: 1.2,
                             fontWeight: FontWeight.w800,
@@ -103,8 +104,8 @@ class AccountCreatedView extends GetView<AccountCreatedController> {
                               SizedBox(width: 10),
                               Text(
                                 'Preparing your home...'.tr,
-                                style: const TextStyle(
-                                  color: AppColors.mutedText,
+                                style: TextStyle(
+                                  color: context.appMutedText,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),

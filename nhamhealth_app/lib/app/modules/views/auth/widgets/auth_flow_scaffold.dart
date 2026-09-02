@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../widgets/app_background.dart';
 import '../../../../widgets/app_back_header.dart';
 
 class AuthFlowScaffold extends StatelessWidget {
@@ -25,8 +26,8 @@ class AuthFlowScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
+      body: AppBackground(
+        lightDecoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -66,8 +67,8 @@ class AuthFlowScaffold extends StatelessWidget {
                         SizedBox(height: compact ? 4 : 10),
                         Text(
                           title.tr,
-                          style: const TextStyle(
-                            color: AppColors.darkGreen,
+                          style: TextStyle(
+                            color: context.appText,
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.3,
@@ -76,8 +77,8 @@ class AuthFlowScaffold extends StatelessWidget {
                         const SizedBox(height: 5),
                         Text(
                           subtitle.tr,
-                          style: const TextStyle(
-                            color: AppColors.mutedText,
+                          style: TextStyle(
+                            color: context.appMutedText,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),

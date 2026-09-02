@@ -508,9 +508,9 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
     top: false,
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -537,7 +537,7 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F6F4),
+              color: context.appMutedSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -597,8 +597,7 @@ class _ProfilePostOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isDestructive ? const Color(0xFFD94545) : const Color(0xFF18231C);
+    final color = isDestructive ? const Color(0xFFD94545) : context.appText;
     return ListTile(
       onTap: () => Navigator.of(context).pop(value),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
@@ -692,7 +691,7 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
                                           filterQuality: FilterQuality.medium,
                                           errorBuilder:
                                               (_, _, _) => Container(
-                                                color: const Color(0xFFF3F7F4),
+                                                color: context.appSubtleSurface,
                                                 child: const Center(
                                                   child: Icon(
                                                     Icons.image_outlined,

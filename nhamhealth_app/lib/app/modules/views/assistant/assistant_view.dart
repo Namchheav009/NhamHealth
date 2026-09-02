@@ -69,12 +69,12 @@ class AssistantView extends GetView<AssistantController> {
               maxWidth: AppSpacing.maxWideContentWidth,
             ),
             child: AppBackHeader(
-              title: 'NhamHealth AI',
+              title: 'NhamHealth AI'.tr,
               onBack: Get.back,
               backButtonKey: const ValueKey<String>('assistant-back-button'),
               titleWidget: const _AssistantHeaderIdentity(),
               trailing: IconButton(
-                tooltip: 'Open Daily Wellness',
+                tooltip: 'Open Daily Wellness'.tr,
                 onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
                 style: IconButton.styleFrom(
                   backgroundColor: context.appSoftGreen,
@@ -158,7 +158,7 @@ class AssistantView extends GetView<AssistantController> {
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
-                                        'Quick questions',
+                                        'Quick questions'.tr,
                                         style: TextStyle(
                                           color: context.appText,
                                           fontSize: 12,
@@ -185,9 +185,9 @@ class AssistantView extends GetView<AssistantController> {
                                         Icons.grid_view_rounded,
                                         size: 14,
                                       ),
-                                      label: const Text(
-                                        'All questions',
-                                        style: TextStyle(
+                                      label: Text(
+                                        'All questions'.tr,
+                                        style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -223,7 +223,7 @@ class AssistantView extends GetView<AssistantController> {
                                             isSending
                                                 ? null
                                                 : () => controller.send(
-                                                  _suggestions[index],
+                                                  _suggestions[index].tr,
                                                 ),
                                         backgroundColor: _questionBackground(
                                           context,
@@ -281,7 +281,7 @@ class AssistantView extends GetView<AssistantController> {
                                 textInputAction: TextInputAction.send,
                                 onSubmitted: (_) => controller.send(),
                                 decoration: InputDecoration(
-                                  hintText: 'Ask about your wellness...',
+                                  hintText: 'Ask about your wellness...'.tr,
                                   hintStyle: TextStyle(
                                     color: context.appMutedText,
                                     fontSize: 13,
@@ -325,7 +325,7 @@ class AssistantView extends GetView<AssistantController> {
                                 dimension: 48,
                                 child: IconButton.filled(
                                   key: const ValueKey<String>('assistant-send'),
-                                  tooltip: 'Send message',
+                                  tooltip: 'Send message'.tr,
                                   onPressed:
                                       controller.isSending.value
                                           ? null
@@ -389,7 +389,7 @@ class AssistantView extends GetView<AssistantController> {
             const SizedBox(width: 7),
             Expanded(
               child: Text(
-                'Quick questions',
+                'Quick questions'.tr,
                 style: TextStyle(
                   color: context.appText,
                   fontSize: 13,
@@ -400,7 +400,7 @@ class AssistantView extends GetView<AssistantController> {
             TextButton(
               key: const ValueKey<String>('assistant-all-questions'),
               onPressed: () => _showAllQuestions(context),
-              child: const Text('All'),
+              child: Text('All'.tr),
             ),
           ],
         ),
@@ -422,7 +422,7 @@ class AssistantView extends GetView<AssistantController> {
                       onTap:
                           isSending
                               ? null
-                              : () => controller.send(_suggestions[index]),
+                              : () => controller.send(_suggestions[index].tr),
                       dense: true,
                       minTileHeight: 48,
                       contentPadding: const EdgeInsets.symmetric(
@@ -474,7 +474,7 @@ class AssistantView extends GetView<AssistantController> {
       'App guide',
       'Plan a feature',
     ];
-    return labels[index];
+    return labels[index].tr;
   }
 
   Color _questionColor(int index) {
@@ -560,7 +560,7 @@ class AssistantView extends GetView<AssistantController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Ask NhamHealth AI',
+                                    'Ask NhamHealth AI'.tr,
                                     style: TextStyle(
                                       color: context.appText,
                                       fontSize: 17,
@@ -568,7 +568,7 @@ class AssistantView extends GetView<AssistantController> {
                                     ),
                                   ),
                                   Text(
-                                    'Choose any question below',
+                                    'Choose any question below'.tr,
                                     style: TextStyle(
                                       color: context.appMutedText,
                                       fontSize: 11,
@@ -602,7 +602,7 @@ class AssistantView extends GetView<AssistantController> {
                                   enabled: !controller.isSending.value,
                                   onTap: () {
                                     Navigator.of(sheetContext).pop();
-                                    controller.send(_suggestions[index]);
+                                    controller.send(_suggestions[index].tr);
                                   },
                                   minTileHeight: 58,
                                   shape: RoundedRectangleBorder(
@@ -622,7 +622,7 @@ class AssistantView extends GetView<AssistantController> {
                                     ),
                                   ),
                                   title: Text(
-                                    _suggestions[index],
+                                    _suggestions[index].tr,
                                     style: TextStyle(
                                       color: context.appText,
                                       fontSize: 13,
@@ -696,7 +696,7 @@ class _AssistantHeaderIdentity extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'NhamHealth AI',
+                'NhamHealth AI'.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textScaler: TextScaler.noScaling,
@@ -715,13 +715,13 @@ class _AssistantHeaderIdentity extends StatelessWidget {
                     color: AppColors.primaryGreen,
                   ),
                   const SizedBox(width: 4),
-                  const Flexible(
+                  Flexible(
                     child: Text(
-                      'Connected to your wellness data',
+                      'Connected to your wellness data'.tr,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textScaler: TextScaler.noScaling,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.primaryGreen,
                         fontSize: 9.5,
                         fontWeight: FontWeight.w600,
@@ -776,7 +776,8 @@ class _MessageBubble extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        message.isError ? 'Could not reply' : 'NhamHealth AI',
+                        (message.isError ? 'Could not reply' : 'NhamHealth AI')
+                            .tr,
                         style: TextStyle(
                           color:
                               message.isError
@@ -855,7 +856,7 @@ class _MessageBubble extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          tooltip: 'Copy reply',
+                          tooltip: 'Copy reply'.tr,
                           onPressed: () {
                             Clipboard.setData(
                               ClipboardData(text: message.content),
@@ -863,9 +864,9 @@ class _MessageBubble extends StatelessWidget {
                             ScaffoldMessenger.of(context)
                               ..hideCurrentSnackBar()
                               ..showSnackBar(
-                                const SnackBar(
-                                  content: Text('Reply copied'),
-                                  duration: Duration(seconds: 1),
+                                SnackBar(
+                                  content: Text('Reply copied'.tr),
+                                  duration: const Duration(seconds: 1),
                                 ),
                               );
                           },
@@ -1146,7 +1147,7 @@ class _TypingBubble extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Checking your wellness...',
+                  'Checking your wellness...'.tr,
                   style: TextStyle(
                     color: context.appMutedText,
                     fontSize: 11,

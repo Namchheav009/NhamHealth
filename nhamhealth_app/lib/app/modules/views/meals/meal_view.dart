@@ -9,6 +9,7 @@ import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/meals/meal_controller.dart';
 import '../../models/meals/meal_model.dart';
 import 'widgets/meal_card.dart';
@@ -25,79 +26,94 @@ class MealView extends GetView<MealController> {
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
-      child: Scaffold(
-        extendBody: true,
+      child: ScrollAwareScaffold(
         backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
             bottom: false,
-            child: RefreshIndicator(
-              color: AppColors.primaryGreen,
-              onRefresh: controller.refreshPage,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: AppSpacing.pagePaddingWithNavigationFor(context),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSpacing.maxWideContentWidth,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Obx(
-                          () => NhamAppBar(
-                            user: controller.authenticatedUser.value,
-                            unreadNotificationCount:
-                                controller.unreadNotificationCount.value,
-                            onNotifications: controller.openNotifications,
-                            onProfile: controller.openProfile,
-                          ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.pageHorizontalFor(context),
+                    AppSpacing.pageTop,
+                    AppSpacing.pageHorizontalFor(context),
+                    0,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxWideContentWidth,
+                      ),
+                      child: Obx(
+                        () => NhamAppBar(
+                          user: controller.authenticatedUser.value,
+                          unreadNotificationCount:
+                              controller.unreadNotificationCount.value,
+                          onNotifications: controller.openNotifications,
+                          onProfile: controller.openProfile,
                         ),
-
-                        const SizedBox(height: AppSpacing.topBarBottom),
-                        Obx(
-                          () => LoadingContentTransition(
-                            isLoading:
-                                controller.isLoading.value &&
-                                controller.meals.isEmpty,
-                            loading: const PageSkeleton.meals(),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Obx(
-                                  () => AppSearchBar(
-                                    hintText: 'Search meals and healthy ideas',
-                                    controller: controller.searchController,
-                                    onChanged: controller.updateSearch,
-                                    showClear:
-                                        controller.searchQuery.value.isNotEmpty,
-                                    onClear: controller.clearSearch,
-                                    trailing: const MealFilterButton(),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                const MealCategory(),
-                                const SizedBox(height: 16),
-                                const MealSlideShow(),
-                                const SizedBox(height: 24),
-                                _buildMealSections(),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.topBarBottom),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: AppColors.primaryGreen,
+                    onRefresh: controller.refreshPage,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      padding: AppSpacing.pagePaddingWithNavigationFor(
+                        context,
+                      ).copyWith(top: 0),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: AppSpacing.maxWideContentWidth,
+                          ),
+                          child: Obx(
+                            () => LoadingContentTransition(
+                              isLoading:
+                                  controller.isLoading.value &&
+                                  controller.meals.isEmpty,
+                              loading: const PageSkeleton.meals(),
+                              content: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Obx(
+                                    () => AppSearchBar(
+                                      hintText:
+                                          'Search meals and healthy ideas',
+                                      controller: controller.searchController,
+                                      onChanged: controller.updateSearch,
+                                      showClear:
+                                          controller.searchQuery.value.isNotEmpty,
+                                      onClear: controller.clearSearch,
+                                      trailing: const MealFilterButton(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const MealCategory(),
+                                  const SizedBox(height: 16),
+                                  const MealSlideShow(),
+                                  const SizedBox(height: 24),
+                                  _buildMealSections(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-
-        // YOUR EXISTING NAVIGATION
         bottomNavigationBar: SafeArea(
           top: false,
           minimum: AppSpacing.navigationMargin,

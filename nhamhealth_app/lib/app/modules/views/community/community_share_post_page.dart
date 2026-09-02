@@ -110,7 +110,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
             children: [
               CircleAvatar(
                 radius: 23,
-                backgroundColor: const Color(0xFFEAF7EE),
+                backgroundColor: context.appSoftGreen,
                 backgroundImage:
                     widget.authorAvatarUrl.isEmpty
                         ? null

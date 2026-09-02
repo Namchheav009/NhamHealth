@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../controllers/wellness/ai_meal_auto_fill_controller.dart';
 
 class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
   const AiMealAutoFillView({super.key});
 
   static const green = Color(0xFF00A651);
-  static const background = Color(0xFFF7FAF6);
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: background,
+    backgroundColor: context.appBackground,
     appBar: AppBar(
-      backgroundColor: background,
-      surfaceTintColor: background,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       title: Text('AI Meal Auto-Fill'.tr),
     ),
     body: SafeArea(
@@ -38,7 +38,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                         'Example: 150 g chicken breast, 1 cup rice, banana'.tr,
                     alignLabelWithHint: true,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: context.appField,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -73,6 +73,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 if (controller.unresolved.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   _notice(
+                    context,
                     'Not found: ${controller.unresolved.join(', ')}. Try simpler or more specific catalog names.',
                   ),
                 ],
@@ -90,11 +91,11 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                     final food = controller.foods[index];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 9),
-                      color: Colors.white,
+                      color: context.appSurfaceLow,
                       child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFE8F7EA),
-                          child: Icon(Icons.restaurant, color: green),
+                        leading: CircleAvatar(
+                          backgroundColor: context.appSoftGreen,
+                          child: const Icon(Icons.restaurant, color: green),
                         ),
                         title: Text(
                           food.name.tr,
@@ -112,7 +113,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                     );
                   }),
                   const SizedBox(height: 8),
-                  _totals(),
+                  _totals(context),
                   const SizedBox(height: 14),
                   SizedBox(
                     height: 50,
@@ -133,6 +134,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 ],
                 const SizedBox(height: 16),
                 _notice(
+                  context,
                   'Food names are matched to NhamHealth’s nutrition catalog. Review quantities before saving; results are for general wellness only.'
                       .tr,
                 ),
@@ -173,23 +175,27 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
     ),
   );
 
-  Widget _totals() => Container(
+  Widget _totals(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFFE8F7EA),
+      color: context.appSoftGreen,
       borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _total('${controller.totalCalories.round()}', 'kcal'),
-        _total(controller.totalProtein.toStringAsFixed(1), 'g protein'),
-        _total('${controller.foods.length}', 'foods'),
+        _total(context, '${controller.totalCalories.round()}', 'kcal'),
+        _total(
+          context,
+          controller.totalProtein.toStringAsFixed(1),
+          'g protein',
+        ),
+        _total(context, '${controller.foods.length}', 'foods'),
       ],
     ),
   );
 
-  Widget _total(String value, String label) => Column(
+  Widget _total(BuildContext context, String value, String label) => Column(
     children: [
       Text(
         value,
@@ -197,19 +203,28 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
       ),
       Text(
         label.tr,
-        style: const TextStyle(fontSize: 12, color: Color(0xFF587064)),
+        style: TextStyle(fontSize: 12, color: context.appMutedText),
       ),
     ],
   );
 
-  Widget _notice(String text) => Container(
+  Widget _notice(BuildContext context, String text) => Container(
     padding: const EdgeInsets.all(13),
     decoration: BoxDecoration(
-      color: const Color(0xFFFFFBEB),
+      color: context.appWarningSurface,
       borderRadius: BorderRadius.circular(13),
-      border: Border.all(color: const Color(0xFFF3E4A7)),
+      border: Border.all(
+        color: context.appOnWarningSurface.withValues(alpha: .35),
+      ),
     ),
-    child: Text(text.tr, style: const TextStyle(fontSize: 12.5, height: 1.4)),
+    child: Text(
+      text.tr,
+      style: TextStyle(
+        color: context.appOnWarningSurface,
+        fontSize: 12.5,
+        height: 1.4,
+      ),
+    ),
   );
 
   static String _amount(double value) =>

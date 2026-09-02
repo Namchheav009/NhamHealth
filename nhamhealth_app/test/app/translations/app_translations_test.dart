@@ -32,6 +32,8 @@ void main() {
     expect(khmer['Password & Security'], 'ពាក្យសម្ងាត់ និងសុវត្ថិភាព');
     expect(khmer['Daily Wellness'], 'សុខុមាលភាពប្រចាំថ្ងៃ');
     expect(khmer['AI Food Check'], 'ពិនិត្យអាហារដោយ AI');
+    expect(khmer['Quick questions'], 'សំណួររហ័ស');
+    expect(khmer['Recipe details'], 'ព័ត៌មានលម្អិតរូបមន្ត');
   });
 
   testWidgets('changing the GetX locale updates visible page copy', (
@@ -49,6 +51,8 @@ void main() {
     expect(find.text('Recommended Meals'), findsOneWidget);
     expect(find.text('Daily Wellness'), findsOneWidget);
     expect(find.text('AI Food Check'), findsOneWidget);
+    expect(find.text('Quick questions'), findsOneWidget);
+    expect(find.text('Recipe details'), findsOneWidget);
     expect(find.text('Confirm the Food First'), findsOneWidget);
     expect(
       find.text(
@@ -63,6 +67,8 @@ void main() {
     expect(find.text('អាហារដែលបានណែនាំ'), findsOneWidget);
     expect(find.text('សុខុមាលភាពប្រចាំថ្ងៃ'), findsOneWidget);
     expect(find.text('ពិនិត្យអាហារដោយ AI'), findsOneWidget);
+    expect(find.text('សំណួររហ័ស'), findsOneWidget);
+    expect(find.text('ព័ត៌មានលម្អិតរូបមន្ត'), findsOneWidget);
     expect(find.text('បញ្ជាក់អាហារជាមុន'), findsOneWidget);
     expect(
       find.text(
@@ -84,6 +90,8 @@ class _LocalizedPageProbe extends StatelessWidget {
         Text('Recommended Meals'.tr),
         Text('Daily Wellness'.tr),
         Text('AI Food Check'.tr),
+        Text('Quick questions'.tr),
+        Text('Recipe details'.tr),
         Text('Confirm the Food First'.tr),
         Text(
           'Use @unit for @food so nutrition can be scaled safely.'.trParams({

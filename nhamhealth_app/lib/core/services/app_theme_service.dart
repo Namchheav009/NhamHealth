@@ -5,7 +5,7 @@ class AppThemeService {
   AppThemeService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
-  static const fallbackThemeMode = ThemeMode.light;
+  static const fallbackThemeMode = ThemeMode.system;
   static const _themeModeKey = 'app_theme_mode';
 
   final FlutterSecureStorage _storage;
@@ -33,6 +33,9 @@ class AppThemeService {
   }
 
   static ThemeMode themeModeForValue(String? value) {
-    return value == ThemeMode.dark.name ? ThemeMode.dark : fallbackThemeMode;
+    return ThemeMode.values.firstWhere(
+      (mode) => mode.name == value,
+      orElse: () => fallbackThemeMode,
+    );
   }
 }
