@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_post.dart';
@@ -15,7 +14,6 @@ import '../../models/community/community_tag.dart';
 import '../../models/community/ingredient_suggestion.dart';
 import '../../models/meals/meal_category_model.dart';
 import '../../repositories/community/community_repository.dart';
-import 'widgets/community_audience_picker.dart';
 
 class CommunityPostEditorPage extends StatefulWidget {
   const CommunityPostEditorPage({
@@ -58,6 +56,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Timer? _ingredientSearchDebounce;
   int _ingredientSearchVersion = 0;
   late List<TextEditingController> _steps;
+  final _newStep = TextEditingController();
   String _difficulty = 'EASY';
   Uint8List? _image;
   List<CommunityTag> _tags = const [];
@@ -98,10 +97,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         (post?.steps ?? const <MealPostStep>[])
             .map((item) => TextEditingController(text: item.instruction))
             .toList();
-    if (_steps.isEmpty) _steps.add(TextEditingController());
     _selectedTags = {...?post?.tagIds};
     _selectedCategoryId = post?.categoryId;
-    _currentStep = post == null ? 0 : 1;
+    _currentStep = 0;
     _visibility =
         post?.visibility == CommunityPostVisibility.followers
             ? CommunityPostVisibility.followers
@@ -160,6 +158,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     for (final item in _steps) {
       item.dispose();
     }
+    _newStep.dispose();
     super.dispose();
   }
 
@@ -330,6 +329,28 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       _ingredientSuggestions = const [];
     });
     FocusScope.of(context).unfocus();
+  }
+
+  void _addStep() {
+    final instruction = _newStep.text.trim();
+    if (instruction.isEmpty) {
+      Get.snackbar('Add cooking instructions', 'Describe the step first.');
+      return;
+    }
+    setState(() {
+      _steps.add(TextEditingController(text: instruction));
+      _newStep.clear();
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  void _moveStep(int index, int offset) {
+    final target = index + offset;
+    if (target < 0 || target >= _steps.length) return;
+    setState(() {
+      final step = _steps.removeAt(index);
+      _steps.insert(target, step);
+    });
   }
 
   void _searchIngredients(String rawQuery) {
@@ -549,100 +570,79 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     backgroundColor: Colors.transparent,
     body: AppBackground(
       child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: AppSpacing.topBarPagePadding,
-              child: _editorHeader(),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                autovalidateMode:
-                    _showValidation
-                        ? AutovalidateMode.onUserInteraction
-                        : AutovalidateMode.disabled,
-                child: ListView(
-                  key: ValueKey(_currentStep),
-                  physics: const BouncingScrollPhysics(),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                  children: [
-                    _progressHeader(),
-                    const SizedBox(height: 18),
-                    if (_currentStep == 0)
-                      ..._basicInfoFields()
-                    else
-                      ..._recipeFields(),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-    bottomNavigationBar: SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.appElevatedSurface,
-          border: Border(top: BorderSide(color: context.appBorder)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 430),
-            child: FilledButton(
-              onPressed:
-                  _submitting || (_currentStep == 0 && !_isBasicInfoComplete)
-                      ? null
-                      : _currentStep == 0
-                      ? _continueToRecipe
-                      : _submit,
-              style: FilledButton.styleFrom(
-                backgroundColor: green,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFE1E3E2),
-                disabledForegroundColor: const Color(0xFF98AAA1),
-                elevation: 0,
-                minimumSize: const Size.fromHeight(50),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(39),
-                ),
-              ),
-              child:
-                  _submitting
-                      ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _currentStep == 0
-                                ? 'Next: Ingredients'
-                                : widget.post == null
-                                ? 'Publish Meal'
-                                : 'Save Changes',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(width: 10),
-                          const Icon(Icons.arrow_forward_rounded, size: 20),
-                        ],
-                      ),
-            ),
+        child: Form(
+          key: _formKey,
+          autovalidateMode:
+              _showValidation
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
+          child: ListView(
+            key: ValueKey('community-post-editor-scroll-$_currentStep'),
+            physics: const BouncingScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            children: [
+              _editorHeader(),
+              const SizedBox(height: 12),
+              _progressHeader(),
+              const SizedBox(height: 18),
+              if (_currentStep == 0)
+                ..._basicInfoFields()
+              else
+                ..._recipeFields(),
+              const SizedBox(height: 20),
+              _navigationButton(),
+              const SizedBox(height: 8),
+            ],
           ),
         ),
       ),
+    ),
+  );
+
+  Widget _navigationButton() => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 50),
+    child: FilledButton(
+      onPressed:
+          _submitting || (_currentStep == 0 && !_isBasicInfoComplete)
+              ? null
+              : _currentStep == 0
+              ? _continueToRecipe
+              : _submit,
+      style: FilledButton.styleFrom(
+        backgroundColor: green,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: const Color(0xFFE1E3E2),
+        disabledForegroundColor: const Color(0xFF98AAA1),
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      child:
+          _submitting
+              ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+              : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _currentStep == 0
+                        ? 'Continue to ingredients'
+                        : widget.post == null
+                        ? 'Publish Meal'
+                        : 'Save Changes',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.arrow_forward_rounded, size: 20),
+                ],
+              ),
     ),
   );
 
@@ -1216,126 +1216,158 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   List<Widget> _recipeFields() => [
     _heading(
       'Ingredients',
-      'Optional — add ingredients if you want to share them.',
+      'Optional — add them if you want to share the full recipe.',
       Icons.shopping_basket_outlined,
     ),
     _ingredientComposer(),
-    const SizedBox(height: 16),
+    const SizedBox(height: 12),
     _ingredientList(),
     _heading(
-      'How to Cook',
+      'How to cook',
       'Optional — add steps only when they help explain your meal.',
       Icons.restaurant_menu_rounded,
     ),
-    ...List.generate(_steps.length, _stepCard),
-    _addButton(
-      'Add step',
-      () => setState(() {
-        _steps.add(TextEditingController());
-      }),
-    ),
+    _stepComposer(),
+    const SizedBox(height: 12),
+    _stepList(),
     _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
-    if (_tagsLoading)
-      const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      )
-    else if (_tagsError != null)
-      _inlineError('Tags could not be loaded.', _loadTags)
-    else ...[
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children:
-            _tags
-                .where((tag) => _selectedTags.contains(tag.id))
-                .map(
-                  (tag) => FilterChip(
-                    label: Text(tag.name),
-                    selected: true,
-                    selectedColor: const Color(0xFFDDF5E6),
-                    checkmarkColor: green,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                    side: const BorderSide(color: Color(0xFFB9DFC7)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    onSelected:
-                        (_) => setState(() => _selectedTags.remove(tag.id)),
-                  ),
-                )
-                .toList(),
-      ),
-      const SizedBox(height: 10),
-      _addButton('Add tags', _showTagPicker),
-    ],
+    _tagsField(),
     _heading(
-      'Post audience',
-      'Choose who can see your meal.',
+      'Who can see it',
+      'Choose the audience for this post.',
       Icons.visibility_outlined,
     ),
     _audienceField(),
   ];
 
-  Widget _audienceField() => Material(
-    color: context.appSubtleSurface,
-    borderRadius: BorderRadius.circular(16),
-    child: InkWell(
-      key: const ValueKey<String>('community-post-audience'),
-      borderRadius: BorderRadius.circular(16),
-      onTap:
-          _submitting
-              ? null
-              : () async {
-                final selected = await showCommunityAudiencePicker(
-                  context,
-                  selected: _visibility,
-                );
-                if (selected != null && mounted) {
-                  setState(() => _visibility = selected);
-                }
-              },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDDF4E5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(_visibility.icon, color: green),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _visibility.label,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _visibility.description,
-                    style: const TextStyle(
-                      color: Color(0xFF718078),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF718078)),
-          ],
+  Widget _tagsField() {
+    if (_tagsLoading) {
+      return const Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox.square(
+          dimension: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
-      ),
+      );
+    }
+    if (_tagsError != null) {
+      return _inlineError('Tags could not be loaded.', _loadTags);
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ..._tags.where((tag) => _selectedTags.contains(tag.id)).map((tag) {
+          return FilterChip(
+            label: Text(tag.name),
+            selected: true,
+            showCheckmark: false,
+            backgroundColor: context.appElevatedSurface,
+            selectedColor: const Color(0xFFDDF5E6),
+            labelStyle: const TextStyle(
+              color: Color(0xFF126638),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            side: const BorderSide(color: Color(0xFF8DCEAA)),
+            shape: const StadiumBorder(),
+            onSelected:
+                _submitting
+                    ? null
+                    : (_) => setState(() => _selectedTags.remove(tag.id)),
+          );
+        }),
+        ActionChip(
+          key: const ValueKey('community-add-tag'),
+          avatar: const Icon(Icons.add_rounded, size: 17, color: green),
+          label: const Text('Add tag'),
+          backgroundColor: context.appElevatedSurface,
+          side: const BorderSide(color: Color(0xFF8DCEAA)),
+          shape: const StadiumBorder(),
+          labelStyle: const TextStyle(
+            color: Color(0xFF126638),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+          onPressed: _submitting ? null : _showTagPicker,
+        ),
+      ],
+    );
+  }
+
+  Widget _audienceField() => Container(
+    key: const ValueKey<String>('community-post-audience'),
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appTileShadow,
+    ),
+    child: Column(
+      children: [
+        _audienceOption(CommunityPostVisibility.public),
+        Divider(height: 1, color: context.appBorder),
+        _audienceOption(CommunityPostVisibility.followers),
+      ],
     ),
   );
+
+  Widget _audienceOption(CommunityPostVisibility value) {
+    final selected = _visibility == value;
+    return Material(
+      color: selected ? const Color(0xFFF0F8F3) : Colors.transparent,
+      child: InkWell(
+        onTap: _submitting ? null : () => setState(() => _visibility = value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: selected ? green : const Color(0xFFEAF6EF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  value.icon,
+                  size: 19,
+                  color: selected ? Colors.white : green,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value.label,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      value.description,
+                      style: const TextStyle(
+                        color: Color(0xFF718078),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                color: selected ? green : const Color(0xFFD6DAD7),
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _field(
     TextEditingController controller,
@@ -1470,77 +1502,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ],
     ),
   );
-  Widget _addButton(String label, VoidCallback action) => Opacity(
-    opacity: _submitting ? .55 : 1,
-    child: Material(
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [context.appSubtleSurface, context.appSoftGreen],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFB8DEC6)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x12056E38),
-              blurRadius: 12,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: InkWell(
-          onTap: _submitting ? null : action,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.add_rounded, color: Colors.white),
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: Color(0xFF17643A),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Text(
-                        'Keep your recipe clear and easy to follow',
-                        style: TextStyle(
-                          color: Color(0xFF62816D),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Color(0xFF3B885B),
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
   Widget _difficultyCard(String value, IconData icon) {
     final selected = _difficulty == value;
     return Expanded(
@@ -1595,15 +1556,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         amount > 0;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [context.appSubtleSurface, context.appSoftGreen],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFCDE8D7)),
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D056E38),
@@ -1615,64 +1572,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: const BoxDecoration(
-                  color: green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 21,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Add an ingredient',
-                  style: TextStyle(
-                    color: Color(0xFF1E3E2A),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: context.appElevatedSurface.withValues(alpha: .90),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '1 of 3',
-                  style: TextStyle(
-                    color: Color(0xFF397051),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Ingredient',
-            style: TextStyle(
-              color: Color(0xFF53675A),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
           TextFormField(
             controller: _newIngredient.name,
             onChanged: _searchIngredients,
             decoration: _decoration(
-              hint: 'Search ingredient catalog',
+              hint: 'Search ingredient',
             ).copyWith(prefixIcon: const Icon(Icons.search_rounded, size: 20)),
             textInputAction: TextInputAction.next,
           ),
@@ -1684,97 +1588,57 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Amount',
-                      style: TextStyle(
-                        color: Color(0xFF53675A),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _newIngredient.amount,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: _decoration(hint: 'Amount'),
-                      textInputAction: TextInputAction.done,
-                      onChanged: (_) => setState(() {}),
-                      onFieldSubmitted: (_) {
-                        if (isReady) _addIngredient();
-                      },
-                    ),
-                  ],
+                child: TextFormField(
+                  controller: _newIngredient.amount,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: _decoration(hint: 'Amount'),
+                  textInputAction: TextInputAction.done,
+                  onChanged: (_) => setState(() {}),
+                  onFieldSubmitted: (_) {
+                    if (isReady) _addIngredient();
+                  },
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               SizedBox(
-                width: 104,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Unit',
-                      style: TextStyle(
-                        color: Color(0xFF53675A),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: _newIngredient.unit,
-                      items:
-                          _ingredientUnits
-                              .map(
-                                (unit) => DropdownMenuItem(
-                                  value: unit,
-                                  child: Text(unit),
-                                ),
-                              )
-                              .toList(),
-                      onChanged:
-                          (value) =>
-                              setState(() => _newIngredient.unit = value!),
-                      decoration: _decoration(),
-                    ),
-                  ],
+                width: 92,
+                child: DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  initialValue: _newIngredient.unit,
+                  items:
+                      _ingredientUnits
+                          .map(
+                            (unit) => DropdownMenuItem(
+                              value: unit,
+                              child: Text(unit),
+                            ),
+                          )
+                          .toList(),
+                  onChanged:
+                      (value) => setState(() => _newIngredient.unit = value!),
+                  decoration: _decoration(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                key: const ValueKey('community-add-ingredient'),
+                tooltip: 'Add ingredient to list',
+                onPressed: _submitting || !isReady ? null : _addIngredient,
+                icon: const Icon(Icons.add_rounded, size: 23),
+                style: IconButton.styleFrom(
+                  backgroundColor: green,
+                  disabledBackgroundColor: const Color(0xFFE1E3E2),
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: const Color(0xFF98AAA1),
+                  fixedSize: const Size.square(50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _submitting || !isReady ? null : _addIngredient,
-              icon: const Icon(Icons.playlist_add_rounded, size: 20),
-              label: const Text('Add ingredient to list'),
-              style: FilledButton.styleFrom(
-                backgroundColor: green,
-                disabledBackgroundColor: const Color(0xFFB9DCC5),
-                foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size.fromHeight(48),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Center(
-            child: Text(
-              'Search • set the amount • add to your recipe',
-              style: TextStyle(color: Color(0xFF688172), fontSize: 11),
-            ),
           ),
         ],
       ),
@@ -1821,34 +1685,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _ingredientList() {
     if (_ingredients.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        decoration: BoxDecoration(
-          color: context.appSubtleSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFDDE9E1)),
-        ),
-        child: const Row(
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
           children: [
-            Icon(Icons.format_list_bulleted_rounded, color: Color(0xFF76A187)),
-            SizedBox(width: 12),
+            Icon(Icons.checklist_rounded, color: Color(0xFF76A187), size: 16),
+            SizedBox(width: 8),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your ingredient list is empty',
-                    style: TextStyle(
-                      color: Color(0xFF46594D),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Search for an ingredient above to start your recipe.',
-                    style: TextStyle(color: Color(0xFF718078), fontSize: 12),
-                  ),
-                ],
+              child: Text(
+                'Nothing added yet — search above to start your list.',
+                style: TextStyle(color: Color(0xFF718078), fontSize: 11),
               ),
             ),
           ],
@@ -1958,86 +1804,210 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
   );
 
-  Widget _stepCard(int index) => Card(
-    color: context.appSurfaceLow,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18),
-      side: BorderSide(color: context.appBorder),
-    ),
-    margin: const EdgeInsets.only(bottom: 12),
-    child: Padding(
+  Widget _stepComposer() {
+    final isReady = _newStep.text.trim().isNotEmpty;
+    return Container(
       padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               CircleAvatar(
-                radius: 15,
-                backgroundColor: green,
+                radius: 12,
+                backgroundColor: const Color(0xFFE5F6EC),
                 child: Text(
-                  '${index + 1}',
+                  '${_steps.length + 1}',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: green,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 9),
               Text(
-                'Step ${index + 1}',
-                style: const TextStyle(
-                  color: Color(0xFF254330),
-                  fontWeight: FontWeight.w800,
-                ),
+                'Step ${_steps.length + 1}',
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EE),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Optional',
-                  style: TextStyle(
-                    color: Color(0xFF49805D),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              if (_steps.length > 1)
-                IconButton(
-                  tooltip: 'Remove step ${index + 1}',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    _steps[index].dispose();
-                    setState(() => _steps.removeAt(index));
-                  },
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: Color(0xFFB85050),
-                  ),
-                ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           TextFormField(
-            controller: _steps[index],
+            key: const ValueKey('community-new-cooking-step'),
+            controller: _newStep,
             minLines: 2,
             maxLines: 4,
+            onChanged: (_) => setState(() {}),
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) {
+              if (isReady) _addStep();
+            },
             decoration: _decoration(hint: 'Describe this cooking step'),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Leave blank to skip this step.',
-            style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const ValueKey('community-add-cooking-step'),
+              onPressed: _submitting || !isReady ? null : _addStep,
+              icon: const Icon(Icons.add_rounded, size: 19),
+              label: const Text('Add step to list'),
+              style: FilledButton.styleFrom(
+                backgroundColor: green,
+                disabledBackgroundColor: const Color(0xFFE1E3E2),
+                disabledForegroundColor: const Color(0xFF98AAA1),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size.fromHeight(44),
+                shape: const StadiumBorder(),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _stepList() {
+    if (_steps.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          children: [
+            Icon(Icons.checklist_rounded, color: Color(0xFF76A187), size: 16),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'No steps yet — write one above and add it to your recipe.',
+                style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Row(
+            children: [
+              const Text(
+                'Cooking steps',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F6EC),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_steps.length}',
+                  style: const TextStyle(
+                    color: Color(0xFF217344),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.appBorder),
+          ),
+          child: Column(
+            children: List.generate(_steps.length, (index) {
+              return Column(
+                children: [
+                  _stepListRow(index),
+                  if (index < _steps.length - 1)
+                    Divider(height: 1, color: context.appBorder),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepListRow(int index) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 7, 4, 7),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: 13,
+          backgroundColor: const Color(0xFFE5F6EC),
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(
+              color: green,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            _steps[index].text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ),
+        IconButton(
+          key: ValueKey('community-step-up-$index'),
+          tooltip: 'Move step ${index + 1} up',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+          padding: EdgeInsets.zero,
+          onPressed: index == 0 ? null : () => _moveStep(index, -1),
+          icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
+          color: green,
+          disabledColor: const Color(0xFFD5DDD8),
+        ),
+        IconButton(
+          key: ValueKey('community-step-down-$index'),
+          tooltip: 'Move step ${index + 1} down',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+          padding: EdgeInsets.zero,
+          onPressed:
+              index == _steps.length - 1 ? null : () => _moveStep(index, 1),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+          color: green,
+          disabledColor: const Color(0xFFD5DDD8),
+        ),
+        IconButton(
+          tooltip: 'Remove step ${index + 1}',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 38, height: 34),
+          padding: EdgeInsets.zero,
+          onPressed: () {
+            _steps[index].dispose();
+            setState(() => _steps.removeAt(index));
+          },
+          icon: const Icon(Icons.delete_outline_rounded, size: 18),
+          color: const Color(0xFF65716A),
+        ),
+      ],
     ),
   );
 }
@@ -2061,11 +2031,9 @@ class _IngredientInput {
 }
 
 class _DashedRoundedBorder extends CustomPainter {
-  const _DashedRoundedBorder({
-    required this.color,
-    required this.radius,
-  }) : dashLength = 4,
-       gapLength = 4;
+  const _DashedRoundedBorder({required this.color, required this.radius})
+    : dashLength = 4,
+      gapLength = 4;
 
   final Color color;
   final double radius;
