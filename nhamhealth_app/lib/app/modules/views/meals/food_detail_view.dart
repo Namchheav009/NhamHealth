@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../widgets/app_back_header.dart';
 import '../../bindings/meals/how_to_make_binding.dart';
 import '../../bindings/meals/ingredient_binding.dart';
 import '../../controllers/meals/food_detail_controller.dart';
@@ -26,21 +25,36 @@ class FoodDetailView extends GetView<FoodDetailController> {
       data: media.copyWith(textScaler: TextScaler.noScaling),
       child: Scaffold(
         backgroundColor: context.appBackground,
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          toolbarHeight: AppBackButton.appBarToolbarHeight,
-          leadingWidth: AppBackButton.appBarLeadingWidth,
-          leading: AppBackButton.appBar(onPressed: controller.goBack),
+          toolbarHeight: 72,
+          leadingWidth: 72,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: IconButton(
+              onPressed: controller.goBack,
+              tooltip: 'Back'.tr,
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerLeft,
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                size: 29,
+                color: Color(0xFF08783D),
+              ),
+            ),
+          ),
           titleSpacing: 0,
           title: Text(
             'Food Detail'.tr,
-            style: const TextStyle(
-              fontSize: 23,
+            style: TextStyle(
+              fontSize: 24,
+              height: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color: context.appIsDark ? Colors.white : Colors.black,
             ),
           ),
         ),
@@ -53,7 +67,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
                 bottom: false,
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 80, 24, 32),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 430),
