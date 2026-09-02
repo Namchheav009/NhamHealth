@@ -757,92 +757,112 @@ class CommunityPage extends GetView<CommunityController> {
       Icons.schedule_rounded,
     ];
 
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: context.appSurfaceLow.withValues(alpha: .92),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.appBorder),
-      ),
-      child: Row(
-        children: List.generate(CommunityFeedFilter.values.length, (index) {
-          final filter = CommunityFeedFilter.values[index];
-          final selected = controller.feedFilter.value == filter;
+    return Obx(() {
+      final selectedFilter = controller.feedFilter.value;
 
-          return Expanded(
-            child: Semantics(
-              selected: selected,
-              button: true,
-              label: '${labels[index]} feed filter',
-              child: InkWell(
-                key: ValueKey<String>('community-feed-filter-${filter.name}'),
-                onTap: () => controller.selectFeedFilter(filter),
-                borderRadius: BorderRadius.circular(11),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selected ? context.appSoftGreen : Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
-                    border:
-                        selected
-                            ? Border.all(color: green.withValues(alpha: .18))
-                            : null,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        icons[index],
-                        size: 15,
-                        color: selected ? green : context.appMutedText,
+      return Container(
+        // Keep every segment at least 48 px high so it is comfortable to tap
+        // on a phone, including around the label and icon.
+        height: 52,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: context.appSurfaceLow.withValues(alpha: .92),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Row(
+          children: List.generate(CommunityFeedFilter.values.length, (index) {
+            final filter = CommunityFeedFilter.values[index];
+            final selected = selectedFilter == filter;
+            final borderRadius = BorderRadius.circular(11);
+
+            return Expanded(
+              child: Semantics(
+                selected: selected,
+                button: true,
+                label: '${labels[index]} feed filter',
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: borderRadius,
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    key: ValueKey<String>(
+                      'community-feed-filter-${filter.name}',
+                    ),
+                    onTap: () => controller.selectFeedFilter(filter),
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        // Do not delay the selected state: switching filters
+                        // should be visible in the frame immediately after tap.
+                        color:
+                            selected
+                                ? context.appSoftGreen
+                                : Colors.transparent,
+                        borderRadius: borderRadius,
+                        border:
+                            selected
+                                ? Border.all(
+                                  color: green.withValues(alpha: .18),
+                                )
+                                : null,
                       ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          labels[index],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            icons[index],
+                            size: 16,
                             color: selected ? green : context.appMutedText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
                           ),
-                        ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              labels[index],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: selected ? green : context.appMutedText,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
-      ),
-    );
+            );
+          }),
+        ),
+      );
+    });
   }
 
   Widget _feedPosts(BuildContext context, {bool showError = true}) {
-    final visiblePosts = controller.visiblePosts;
+    return Obx(() {
+      final visiblePosts = controller.visiblePosts;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (showError && controller.errorMessage.value != null) ...[
-          _feedErrorBanner(context, controller.errorMessage.value!),
-          const SizedBox(height: 12),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showError && controller.errorMessage.value != null) ...[
+            _feedErrorBanner(context, controller.errorMessage.value!),
+            const SizedBox(height: 12),
+          ],
+          if (visiblePosts.isEmpty)
+            const CommunityEmptyState(
+              icon: Icons.dynamic_feed_outlined,
+              title: 'Nothing here yet',
+              message: 'Follow more people or try another feed filter.',
+            )
+          else
+            ...visiblePosts.map(_postCard),
         ],
-        if (visiblePosts.isEmpty)
-          const CommunityEmptyState(
-            icon: Icons.dynamic_feed_outlined,
-            title: 'Nothing here yet',
-            message: 'Follow more people or try another feed filter.',
-          )
-        else
-          ...visiblePosts.map(_postCard),
-      ],
-    );
+      );
+    });
   }
 
   Widget _feedErrorBanner(BuildContext context, String message) {

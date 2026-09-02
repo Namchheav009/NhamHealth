@@ -98,17 +98,19 @@ void main() {
     await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('community-feed-filter-following')),
-    );
-    await tester.pump();
-    expect(controller.feedFilter.value, CommunityFeedFilter.following);
+    final following = find.byKey(
+      const ValueKey<String>('community-feed-filter-following'));
+    final latest = find.byKey(
+      const ValueKey<String>('community-feed-filter-latest'));
+    expect(tester.getSize(following).height, greaterThanOrEqualTo(48));
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('community-feed-filter-latest')),
-    );
+    await tester.tap(following);
+    expect(controller.feedFilter.value, CommunityFeedFilter.following);
     await tester.pump();
+
+    await tester.tap(latest);
     expect(controller.feedFilter.value, CommunityFeedFilter.latest);
+    await tester.pump();
   });
 
   testWidgets(
