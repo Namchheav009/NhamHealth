@@ -20,6 +20,7 @@ class ProfilePostCard extends StatelessWidget {
     this.onViewDetails,
     this.onOptions,
     this.onAuthorTap,
+    this.onShowLikes,
     required this.onLike,
     this.isLiking = false,
     required this.onComment,
@@ -38,6 +39,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback? onViewDetails;
   final VoidCallback? onOptions;
   final VoidCallback? onAuthorTap;
+  final VoidCallback? onShowLikes;
   final VoidCallback onLike;
   final bool isLiking;
   final VoidCallback onComment;
@@ -246,7 +248,7 @@ class ProfilePostCard extends StatelessWidget {
 
             if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
               const SizedBox(height: 10),
-              _EngagementSummary(post: post),
+              _EngagementSummary(post: post, onTap: onShowLikes),
             ],
             Container(
               margin: const EdgeInsets.only(top: 6),
@@ -471,35 +473,56 @@ class _ProfileMetricDivider extends StatelessWidget {
 }
 
 class _EngagementSummary extends StatelessWidget {
-  const _EngagementSummary({required this.post});
+  const _EngagementSummary({required this.post, this.onTap});
 
   final CommunityPost post;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 2),
     child: Row(
       children: [
-        if (post.likes > 0) ...[
-          Container(
-            width: 20,
-            height: 20,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE64657),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.favorite_rounded,
-              size: 12,
-              color: Colors.white,
+        if (post.likes > 0)
+          Semantics(
+            button: onTap != null,
+            label:
+                '${_compactCount(post.likes)} likes. View people who liked this post.',
+            child: InkWell(
+              key: ValueKey<String>('post-likers-${post.id}'),
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE64657),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.favorite_rounded,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      _compactCount(post.likes),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: context.appMutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 5),
-          Text(
-            _compactCount(post.likes),
-            style: TextStyle(fontSize: 12.5, color: context.appMutedText),
-          ),
-        ],
         const Spacer(),
         if (post.comments > 0)
           Text(

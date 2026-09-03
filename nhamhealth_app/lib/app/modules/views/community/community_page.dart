@@ -14,6 +14,7 @@ import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/community/community_controller.dart';
+import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
@@ -21,6 +22,7 @@ import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
+import 'widgets/post_likers_sheet.dart';
 import 'widgets/community_tab_switcher.dart';
 
 class CommunityPage extends GetView<CommunityController> {
@@ -950,12 +952,19 @@ class CommunityPage extends GetView<CommunityController> {
         onRelationshipTap: () => _toggleAuthorRelationship(post),
         onViewDetails: () => _showComments(post),
         onLike: () => controller.togglePostLike(post),
+        onShowLikes: () => _showPostLikers(post),
         onComment: () => _showComments(post),
         onShare: () => _showShareOptions(post),
         onOptions: () => _showPostOptions(post),
       ),
     );
   }
+
+  Future<void> _showPostLikers(CommunityPost post) => showPostLikers(
+    Get.context!,
+    post: post,
+    repository: Get.find<CommunityRepository>(),
+  );
 
   String? _authorRelationshipLabel(CommunityPost post) {
     if (post.authorId <= 0) return null;

@@ -24,6 +24,9 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Integer> {
     boolean existsByUserUserIdAndPostPostId(Integer userId, Integer postId);
     Optional<PostLike> findByUserUserIdAndPostPostId(Integer userId, Integer postId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user"})
+    List<PostLike> findByPostPostIdOrderByCreatedAtDesc(Integer postId);
+
     interface PostCount {
         Integer getPostId();
         long getTotal();

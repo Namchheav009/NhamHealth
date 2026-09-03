@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_post.dart';
+import '../../repositories/community/community_repository.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
@@ -18,6 +19,7 @@ import '../community/community_comments_page.dart';
 import '../community/community_post_editor_page.dart';
 import '../community/community_share_actions.dart';
 import '../community/widgets/community_composer_card.dart';
+import '../community/widgets/post_likers_sheet.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -170,6 +172,12 @@ class ProfileView extends GetView<ProfileController> {
               onDelete: () => _confirmDeletePost(post),
               onViewDetails: () => _showComments(post),
               onLike: () => controller.togglePostLike(post),
+              onShowLikes:
+                  () => showPostLikers(
+                    context,
+                    post: post,
+                    repository: Get.find<CommunityRepository>(),
+                  ),
               isLiking: controller.likingPostIds.contains(post.id),
               onComment: () => _showComments(post),
               onShare: () => _showShare(post),

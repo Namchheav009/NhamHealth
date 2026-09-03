@@ -18,6 +18,7 @@ import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
+import 'widgets/post_likers_sheet.dart';
 
 /// Read-only public profile for a community member.
 class CommunityPersonProfileView extends StatefulWidget {
@@ -523,6 +524,12 @@ class _CommunityPersonProfileViewState
                   authorAvatarUrl: _profile?.avatarUrl,
                   membership: _roleLabel(_profile?.role ?? post.role),
                   onLike: () => _togglePostLike(post),
+                  onShowLikes:
+                      () => showPostLikers(
+                        context,
+                        post: post,
+                        repository: _repository,
+                      ),
                   isLiking: _likingPostIds.contains(post.id),
                   onComment: () => _showComments(post),
                   onShare: () => _showShare(post),

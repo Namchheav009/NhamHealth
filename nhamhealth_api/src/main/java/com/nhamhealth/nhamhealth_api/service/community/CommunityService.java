@@ -276,6 +276,19 @@ public class CommunityService {
         return response(post, userId, followedIds(userId));
     }
 
+    /** Returns the members who liked a post the viewer is permitted to see. */
+    @Transactional(readOnly = true)
+    public List<CommunityPersonResponse> postLikers(Integer viewerId, Integer postId) {
+        visiblePost(viewerId, postId);
+        Set<Integer> following = followedIds(viewerId);
+        Set<Integer> followers = followerIds(viewerId);
+        return likes.findByPostPostIdOrderByCreatedAtDesc(postId).stream()
+                .map(PostLike::getUser)
+                .map(user -> person(user, profiles.findByUser_UserId(user.getUserId()).orElse(null),
+                        following, followers))
+                .toList();
+    }
+
     /**
      * Community posts are a database view over published user meal posts. A
      * share therefore creates a separate meal-post copy owned by the sharer,

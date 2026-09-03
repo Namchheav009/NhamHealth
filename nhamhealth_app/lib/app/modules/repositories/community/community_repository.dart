@@ -58,6 +58,13 @@ class CommunityRepository {
     return CommunityPersonProfile.fromJson(json);
   }
 
+  Future<List<CommunityPerson>> getPostLikers(String postId) async {
+    final payload = await _getList('/api/v1/community/posts/$postId/likes');
+    return payload
+        .map((item) => _person(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
+  }
+
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {
     final results = await Future.wait(FriendsView.values.map(_getPeople));
     return {
@@ -442,23 +449,25 @@ class CommunityRepository {
       FriendsView.addFriends => 'discover',
     };
     final payload = await _getList('/api/v1/community/people?view=$apiView');
-    return payload.map((item) {
-      final json = Map<String, dynamic>.from(item as Map);
-      final detail = '${json['detail'] ?? ''}'.trim();
-      return CommunityPerson(
-        id: '${json['id']}',
-        name: '${json['name'] ?? 'Community member'}',
-        avatarUrl: _absoluteUrl('${json['avatarUrl'] ?? ''}'),
-        detail: detail.isEmpty ? null : detail,
-        tags:
-            (json['tags'] as List<dynamic>? ?? const [])
-                .map((tag) => '$tag')
-                .toList(),
-        mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
-        connectionStatus:
-            '${json['connectionStatus'] ?? 'NONE'}'.trim().toUpperCase(),
-      );
-    }).toList();
+    return payload
+        .map((item) => _person(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
+  }
+
+  CommunityPerson _person(Map<String, dynamic> json) {
+    final detail = '${json['detail'] ?? ''}'.trim();
+    return CommunityPerson(
+      id: '${json['id']}',
+      name: '${json['name'] ?? 'Community member'}',
+      avatarUrl: _absoluteUrl('${json['avatarUrl'] ?? ''}'),
+      detail: detail.isEmpty ? null : detail,
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .map((tag) => '$tag')
+          .toList(growable: false),
+      mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
+      connectionStatus:
+          '${json['connectionStatus'] ?? 'NONE'}'.trim().toUpperCase(),
+    );
   }
 
   Future<List<dynamic>> _getList(String path) async {

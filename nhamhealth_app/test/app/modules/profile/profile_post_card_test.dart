@@ -98,6 +98,37 @@ void main() {
     expect(find.text('Original healthy idea'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('tapping the like count opens the post likers action', (
+    tester,
+  ) async {
+    var didRequestLikers = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProfilePostCard(
+            post: CommunityPost(
+              id: '3',
+              description: 'A liked community post.',
+              imageUrl: '',
+              author: 'Profile Member',
+              role: 'Member',
+              likes: 4,
+            ),
+            onLike: _noop,
+            onShowLikes: () => didRequestLikers = true,
+            onComment: _noop,
+            onShare: _noop,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey<String>('post-likers-3')));
+
+    expect(didRequestLikers, isTrue);
+  });
 }
 
 void _noop() {}
