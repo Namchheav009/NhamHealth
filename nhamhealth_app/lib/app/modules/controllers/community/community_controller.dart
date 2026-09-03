@@ -134,7 +134,7 @@ class CommunityController extends GetxController {
     return people.where((person) {
       final matchesQuery =
           query.isEmpty ||
-          person.name.toLowerCase().contains(query) ||
+          person.displayName.toLowerCase().contains(query) ||
           person.tags.any((tag) => tag.toLowerCase().contains(query));
       final matchesFilter =
           peopleFilter.value == PeopleFilter.all || person.mutualFriends > 0;
