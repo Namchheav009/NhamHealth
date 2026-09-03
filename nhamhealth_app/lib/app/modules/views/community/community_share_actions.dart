@@ -61,14 +61,6 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
   bool _sharing = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
-    });
-  }
-
-  @override
   void dispose() {
     _message.dispose();
     _focusNode.dispose();
@@ -356,7 +348,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                     key: const ValueKey<String>('community-share-submit'),
                     onPressed: _sharing ? null : _share,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1877F2),
+                      backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
