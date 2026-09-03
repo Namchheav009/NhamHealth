@@ -321,38 +321,11 @@ class _FullProfileImageState extends State<_FullProfileImage> {
     super.dispose();
   }
 
-  void _zoom(double factor) {
-    final current = _transformation.value.getMaxScaleOnAxis();
-    final next = (current * factor).clamp(.8, 4.0);
-    _transformation.value = Matrix4.diagonal3Values(next, next, 1);
-  }
-
-  void _resetZoom() => _transformation.value = Matrix4.identity();
-
   Future<void> _deletePhoto() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('Delete profile photo?'),
-            content: const Text(
-              'Your current profile photo will be removed. You can add a new one later.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton.icon(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD94545),
-                ),
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('Delete'),
-              ),
-            ],
-          ),
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _DeleteProfilePhotoSheet(),
     );
     if (confirmed != true || !mounted) return;
     setState(() => _isDeleting = true);
@@ -381,58 +354,49 @@ class _FullProfileImageState extends State<_FullProfileImage> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: InteractiveViewer(
-              transformationController: _transformation,
-              minScale: .8,
-              maxScale: 4,
-              panEnabled: true,
-              scaleEnabled: true,
-              boundaryMargin: const EdgeInsets.all(80),
-              child: Center(child: _image()),
+            child: LayoutBuilder(
+              builder:
+                  (context, constraints) => InteractiveViewer(
+                    transformationController: _transformation,
+                    minScale: .8,
+                    maxScale: 4,
+                    panEnabled: true,
+                    scaleEnabled: true,
+                    boundaryMargin: const EdgeInsets.all(80),
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      child: _image(),
+                    ),
+                  ),
             ),
           ),
           Positioned(
             top: 12,
             right: 12,
-            child: IconButton.filled(
-              tooltip: 'Close',
-              onPressed: () => Navigator.of(context).pop(),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.black.withValues(alpha: .55),
-                foregroundColor: Colors.white,
-              ),
-              icon: const Icon(Icons.close_rounded),
-            ),
-          ),
-          Positioned(
-            left: 12,
-            bottom: 18,
-            child: FilledButton.icon(
-              onPressed: _isDeleting ? null : _deletePhoto,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFD94545),
-                foregroundColor: Colors.white,
-              ),
-              icon:
-                  _isDeleting
-                      ? const SizedBox.square(
-                        dimension: 17,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : const Icon(Icons.delete_outline_rounded, size: 19),
-              label: Text(_isDeleting ? 'Removing...' : 'Delete photo'),
-            ),
-          ),
-          Positioned(
-            right: 12,
-            bottom: 18,
-            child: _ZoomControls(
-              onZoomIn: () => _zoom(1.35),
-              onZoomOut: () => _zoom(1 / 1.35),
-              onReset: _resetZoom,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton.filled(
+                  tooltip: 'Photo options',
+                  onPressed: _isDeleting ? null : _showPhotoOptions,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: .55),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.more_horiz_rounded),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  tooltip: 'Close',
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: .55),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
             ),
           ),
         ],
@@ -440,12 +404,29 @@ class _FullProfileImageState extends State<_FullProfileImage> {
     ),
   );
 
+  Future<void> _showPhotoOptions() async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _ProfilePhotoOptionsSheet(),
+    );
+    if (!mounted || action != 'delete') return;
+    await _deletePhoto();
+  }
+
   Widget _image() {
     if (widget.localPath.isNotEmpty) {
-      return Image.file(File(widget.localPath), fit: BoxFit.contain);
+      return Image.file(
+        File(widget.localPath),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+      );
     }
     return CachedNetworkImage(
       imageUrl: widget.imageUrl!,
+      width: double.infinity,
+      height: double.infinity,
       fit: BoxFit.contain,
       placeholder:
           (_, _) => const Center(
@@ -463,43 +444,151 @@ class _FullProfileImageState extends State<_FullProfileImage> {
   }
 }
 
-class _ZoomControls extends StatelessWidget {
-  const _ZoomControls({
-    required this.onZoomIn,
-    required this.onZoomOut,
-    required this.onReset,
-  });
-
-  final VoidCallback onZoomIn;
-  final VoidCallback onZoomOut;
-  final VoidCallback onReset;
+class _ProfilePhotoOptionsSheet extends StatelessWidget {
+  const _ProfilePhotoOptionsSheet();
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.black.withValues(alpha: .58),
-    borderRadius: BorderRadius.circular(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          tooltip: 'Zoom in',
-          onPressed: onZoomIn,
-          color: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-        ),
-        IconButton(
-          tooltip: 'Reset zoom',
-          onPressed: onReset,
-          color: Colors.white,
-          icon: const Icon(Icons.center_focus_strong_rounded, size: 20),
-        ),
-        IconButton(
-          tooltip: 'Zoom out',
-          onPressed: onZoomOut,
-          color: Colors.white,
-          icon: const Icon(Icons.remove_rounded),
-        ),
-      ],
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: context.appMutedText.withValues(alpha: .35),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'Photo options',
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: context.appMutedSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.appBorder),
+            ),
+            child: ListTile(
+              onTap: () => Navigator.of(context).pop('delete'),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 3,
+              ),
+              leading: const Icon(
+                Icons.delete_outline_rounded,
+                color: Color(0xFFD94545),
+                size: 27,
+              ),
+              title: const Text(
+                'Delete photo',
+                style: TextStyle(
+                  color: Color(0xFFD94545),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _DeleteProfilePhotoSheet extends StatelessWidget {
+  const _DeleteProfilePhotoSheet();
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: context.appMutedText.withValues(alpha: .35),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Delete profile photo?',
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your current profile photo will be removed. You can add a new one later.',
+            style: TextStyle(color: context.appMutedText, height: 1.4),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFD94545),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Delete'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 }
