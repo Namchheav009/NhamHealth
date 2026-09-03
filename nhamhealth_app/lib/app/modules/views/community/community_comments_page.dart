@@ -19,6 +19,7 @@ import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_shared_post_card.dart';
+import 'widgets/post_likers_sheet.dart';
 import '../profile/widgets/profile_post_card.dart';
 
 /// A full post discussion screen. Replies are displayed below their parent and
@@ -145,6 +146,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (mounted) setState(() => _updatingPost = false);
     }
   }
+
+  Future<void> _showPostLikers() =>
+      showPostLikers(context, post: _post, repository: _repository);
 
   Future<void> _shareToFeed(
     String message,
@@ -905,26 +909,44 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Widget _engagementSummary() => Row(
     children: [
-      if (_post.likes > 0) ...[
-        Container(
-          width: 20,
-          height: 20,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE64657),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.favorite_rounded,
-            size: 12,
-            color: Colors.white,
+      if (_post.likes > 0)
+        Semantics(
+          button: true,
+          label: '${_post.likes} likes. View people who liked this post.',
+          child: InkWell(
+            onTap: _showPostLikers,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE64657),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '${_post.likes}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF69756D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 5),
-        Text(
-          '${_post.likes}',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
-        ),
-      ],
       const Spacer(),
       if (_post.comments > 0)
         Text(

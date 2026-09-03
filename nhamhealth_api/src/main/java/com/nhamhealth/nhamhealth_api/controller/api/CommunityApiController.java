@@ -113,6 +113,12 @@ public class CommunityApiController {
         return service.toggleLike(userId(jwt), postId);
     }
 
+    @GetMapping("/posts/{postId}/likes")
+    public List<CommunityPersonResponse> postLikers(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable Integer postId) {
+        return service.postLikers(userId(jwt), postId);
+    }
+
     @PostMapping("/posts/{postId}/share-to-feed")
     @ResponseStatus(HttpStatus.CREATED)
     public CommunityPostResponse shareToFeed(
