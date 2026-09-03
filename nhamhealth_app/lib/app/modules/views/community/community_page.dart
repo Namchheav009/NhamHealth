@@ -22,8 +22,8 @@ import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
-import 'widgets/post_likers_sheet.dart';
 import 'widgets/community_tab_switcher.dart';
+import 'widgets/post_likers_sheet.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
@@ -860,7 +860,9 @@ class CommunityPage extends GetView<CommunityController> {
                         decoration: BoxDecoration(
                           color:
                               selected
-                                  ? colors.primaryContainer.withValues(alpha: .42)
+                                  ? colors.primaryContainer.withValues(
+                                    alpha: .42,
+                                  )
                                   : Colors.transparent,
                           borderRadius: borderRadius,
                           border: Border.all(
@@ -933,11 +935,7 @@ class CommunityPage extends GetView<CommunityController> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: colors.error,
-            size: 20,
-          ),
+          Icon(Icons.cloud_off_rounded, color: colors.error, size: 20),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
@@ -1214,6 +1212,7 @@ class CommunityPage extends GetView<CommunityController> {
     final user = controller.authenticatedUser.value;
 
     await showCommunityShareComposer(
+      post: post,
       authorName: user?.displayName ?? 'Community member',
       authorAvatarUrl: user?.profileImageUrl ?? '',
       onShare:

@@ -21,37 +21,40 @@ class CommunityComposerCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: context.appBorder),
-              ),
-              child: ClipOval(
-                child:
-                    authorAvatarUrl.isEmpty
-                        ? Container(
-                          color: context.appSoftGreen,
-                          child: const Icon(
-                            Icons.person_outline_rounded,
-                            size: 22,
-                            color: AppColors.primaryGreen,
-                          ),
-                        )
-                        : Image.network(
-                          authorAvatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, _, _) => Container(
-                                color: context.appSoftGreen,
-                                child: const Icon(
-                                  Icons.person_outline_rounded,
-                                  size: 22,
-                                  color: AppColors.primaryGreen,
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.appBorder),
+                ),
+                child: ClipOval(
+                  child:
+                      authorAvatarUrl.isEmpty
+                          ? Container(
+                            color: context.appSoftGreen,
+                            child: const Icon(
+                              Icons.person_outline_rounded,
+                              size: 22,
+                              color: AppColors.primaryGreen,
+                            ),
+                          )
+                          : Image.network(
+                            authorAvatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, _, _) => Container(
+                                  color: context.appSoftGreen,
+                                  child: const Icon(
+                                    Icons.person_outline_rounded,
+                                    size: 22,
+                                    color: AppColors.primaryGreen,
+                                  ),
                                 ),
-                              ),
-                        ),
+                          ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -61,7 +64,10 @@ class CommunityComposerCard extends StatelessWidget {
                     context.appIsDark
                         ? context.appColorScheme.surfaceContainerHigh
                         : const Color(0xFFF3F6F3),
-                borderRadius: BorderRadius.circular(24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: BorderSide(color: context.appBorder),
+                ),
                 child: InkWell(
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(24),
@@ -69,17 +75,15 @@ class CommunityComposerCard extends StatelessWidget {
                     height: 46,
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: context.appBorder),
-                    ),
-                    child: Text(
-                      "What's on your healthy mind?".tr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: context.appMutedText,
+                    child: IgnorePointer(
+                      child: Text(
+                        "What's on your healthy mind?".tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: context.appMutedText,
+                        ),
                       ),
                     ),
                   ),

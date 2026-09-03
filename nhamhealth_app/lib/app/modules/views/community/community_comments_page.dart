@@ -1,29 +1,28 @@
 import 'dart:async';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
-import '../../../widgets/app_alert.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_reply_address.dart';
 import '../../repositories/community/community_repository.dart';
-import '../../../../core/services/auth_service.dart';
-import '../../../../core/services/notification_realtime_event.dart';
-import '../../../../core/services/push_notification_service.dart';
+import '../profile/widgets/profile_post_card.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_shared_post_card.dart';
 import 'widgets/post_likers_sheet.dart';
-import '../profile/widgets/profile_post_card.dart';
 
 /// A full post discussion screen. Replies are displayed below their parent and
 /// the composer switches context when a user chooses Reply.
@@ -219,6 +218,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     final user = await Get.find<AuthService>().restoreSession();
     if (!mounted) return;
     await showCommunityShareComposer(
+      post: _post,
       authorName: user?.displayName ?? 'Community member',
       authorAvatarUrl: user?.profileImageUrl ?? '',
       onShare: (message, visibility) async {

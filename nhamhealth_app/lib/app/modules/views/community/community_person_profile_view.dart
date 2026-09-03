@@ -9,8 +9,8 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
@@ -726,6 +726,7 @@ class _CommunityPersonProfileViewState
     final user = await Get.find<AuthService>().restoreSession();
     if (!mounted) return;
     await showCommunityShareComposer(
+      post: post,
       authorName: user?.displayName ?? 'Community member',
       authorAvatarUrl: user?.profileImageUrl ?? '',
       onShare:

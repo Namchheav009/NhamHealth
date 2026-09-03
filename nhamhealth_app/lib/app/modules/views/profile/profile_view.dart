@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/profile/profile_controller.dart';
-import '../../models/community/community_post.dart';
-import '../../repositories/community/community_repository.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
-import 'widgets/health_stats_card.dart';
-import 'widgets/insight_card.dart';
-import 'widgets/profile_header.dart';
-import 'widgets/profile_post_card.dart';
+import '../../controllers/profile/profile_controller.dart';
+import '../../models/community/community_post.dart';
+import '../../repositories/community/community_repository.dart';
 import '../community/community_comments_page.dart';
 import '../community/community_post_editor_page.dart';
 import '../community/community_share_actions.dart';
 import '../community/widgets/community_composer_card.dart';
 import '../community/widgets/post_likers_sheet.dart';
+import 'widgets/health_stats_card.dart';
+import 'widgets/insight_card.dart';
+import 'widgets/profile_header.dart';
+import 'widgets/profile_post_card.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -367,6 +367,7 @@ class ProfileView extends GetView<ProfileController> {
     }
     final user = controller.authenticatedUser.value;
     await showCommunityShareComposer(
+      post: post,
       authorName: user?.displayName ?? 'Community member',
       authorAvatarUrl: user?.profileImageUrl ?? '',
       onShare:
