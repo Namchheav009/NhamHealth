@@ -12,12 +12,12 @@ class HealthStatsCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(color: context.appBorder),
-        boxShadow: context.appCardShadow,
+        boxShadow: context.appTileShadow,
       ),
       child: Obx(
         () => Row(
@@ -66,6 +66,7 @@ class HealthStatsCard extends GetView<ProfileController> {
                         : '--',
                 unit: controller.bmiStatus,
                 unitColor: green,
+                alignment: MainAxisAlignment.center,
               ),
             ),
           ],
@@ -82,6 +83,7 @@ class _Stat extends StatelessWidget {
     required this.value,
     required this.unit,
     this.unitColor,
+    this.alignment = MainAxisAlignment.center,
   });
 
   final IconData icon;
@@ -89,65 +91,69 @@ class _Stat extends StatelessWidget {
   final String value;
   final String unit;
   final Color? unitColor;
+  final MainAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: context.appSoftGreen,
-            shape: BoxShape.circle,
-            border: Border.all(color: context.appBorder),
+    return Transform.translate(
+      offset: const Offset(-6, 0),
+      child: Row(
+        mainAxisAlignment: alignment,
+        children: [
+          Container(
+            width: 32,
+            height: 28,
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.appBorder),
+            ),
+            child: Icon(icon, color: HealthStatsCard.green, size: 15),
           ),
-          child: Icon(icon, color: HealthStatsCard.green, size: 17),
-        ),
-        const SizedBox(width: 5),
-        Flexible(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title.tr,
-                maxLines: 1,
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(
-                  color: context.appMutedText,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 4),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.tr,
+                  maxLines: 1,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Text(
-                unit.tr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(
-                  color: unitColor ?? context.appMutedText,
-                  fontSize: 8,
-                  fontWeight:
-                      unitColor == null ? FontWeight.w400 : FontWeight.w600,
+                Text(
+                  unit.tr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    color: unitColor ?? context.appMutedText,
+                    fontSize: 7,
+                    fontWeight:
+                        unitColor == null ? FontWeight.w400 : FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

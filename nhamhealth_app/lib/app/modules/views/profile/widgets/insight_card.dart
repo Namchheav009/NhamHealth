@@ -12,31 +12,40 @@ class InsightCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [context.appSoftGreen, context.appElevatedSurface],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [const Color(0xFFF5FBF3), const Color(0xFFFFFCE2)],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              color: context.appColorScheme.primaryContainer,
-              borderRadius: const BorderRadius.all(Radius.circular(15)),
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFDCEEE0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x263C6B4A),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.emoji_events_outlined,
               color: green,
-              size: 25,
+              size: 27,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           Expanded(
             child: Column(
@@ -45,7 +54,7 @@ class InsightCard extends GetView<ProfileController> {
                 Text(
                   "You're doing amazing!".tr,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: context.appText,
                   ),

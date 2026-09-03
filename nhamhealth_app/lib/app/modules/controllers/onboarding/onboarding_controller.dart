@@ -56,11 +56,7 @@ class OnboardingController extends GetxController {
   }
 
   Future<void> skipToLastPage() async {
-    await pageController.animateToPage(
-      items.length - 1,
-      duration: const Duration(milliseconds: 450),
-      curve: Curves.easeOutCubic,
-    );
+    Get.offAllNamed(AppRoutes.login);
   }
 
   void finishOnboarding() {

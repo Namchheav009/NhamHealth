@@ -15,52 +15,123 @@ class ProfileHeader extends GetView<ProfileController> {
 
   static const green = Color(0xFF009B3E);
 
+  Widget _editButton() => OutlinedButton.icon(
+    onPressed: controller.editProfile,
+    icon: const Icon(Icons.edit_outlined, size: 15),
+    label: const Text('Edit Profile'),
+    style: OutlinedButton.styleFrom(
+      backgroundColor: Colors.white,
+      foregroundColor: green,
+      minimumSize: const Size(0, 36),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: const StadiumBorder(),
+      side: const BorderSide(color: Color(0xFFBDE8C9)),
+      textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder.withValues(alpha: .8)),
-        boxShadow: context.appTileShadow,
+        color: context.appElevatedSurface.withValues(alpha: .82),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.appBorder.withValues(alpha: .7)),
+        boxShadow: context.appHomeTileShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Obx(
-                () => _ProfileAvatar(
-                  localPath: controller.profileImagePath.value,
-                  user: controller.authenticatedUser.value,
-                  onDelete: controller.deleteProfileImage,
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Obx(
+                  () => _ProfileAvatar(
+                    localPath: controller.profileImagePath.value,
+                    user: controller.authenticatedUser.value,
+                    onDelete: controller.deleteProfileImage,
+                  ),
                 ),
               ),
-
-              const SizedBox(width: 18),
-
+              const SizedBox(width: 10),
               Expanded(
-                child: Obx(
-                  () => Row(
+                child: SizedBox(
+                  height: 94,
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: _ProfileStat(
-                          value: '${controller.posts.length}',
-                          label: 'Posts',
-                        ),
-                      ),
-                      Expanded(
-                        child: _ProfileStat(
-                          value: '${controller.followerCount.value}',
-                          label: 'Followers',
-                        ),
-                      ),
-                      Expanded(
-                        child: _ProfileStat(
-                          value: '${controller.followingCount.value}',
-                          label: 'Following',
+                      Positioned(top: 0, right: 0, child: _editButton()),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Obx(
+                                () => Text(
+                                  controller.name.value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: context.appText,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Obx(
+                                () => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE4F8E9),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: green,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        controller.membership.value,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: green,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Obx(
+                                () => Text(
+                                  controller.email.value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: context.appMutedText,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -69,74 +140,35 @@ class ProfileHeader extends GetView<ProfileController> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Obx(
-                      () => Text(
-                        controller.name.value,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => Text(
-                        controller.membership.value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: green,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Obx(
-                      () => Text(
-                        controller.email.value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: controller.editProfile,
-                icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Edit'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: green,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(76, 42),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: const StadiumBorder(),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+          const SizedBox(height: 10),
+          Obx(
+            () => Row(
+              children: [
+                Expanded(
+                  child: _ProfileStat(
+                    icon: Icons.article_outlined,
+                    value: '${controller.posts.length}',
+                    label: 'Posts',
                   ),
                 ),
-              ),
-            ],
+                const _StatDivider(),
+                Expanded(
+                  child: _ProfileStat(
+                    icon: Icons.group_outlined,
+                    value: '${controller.followerCount.value}',
+                    label: 'Follower',
+                  ),
+                ),
+                const _StatDivider(),
+                Expanded(
+                  child: _ProfileStat(
+                    icon: Icons.person_outline,
+                    value: '${controller.followingCount.value}',
+                    label: 'Following',
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -145,34 +177,63 @@ class ProfileHeader extends GetView<ProfileController> {
 }
 
 class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.value, required this.label});
+  const _ProfileStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
+  final IconData icon;
   final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) => Semantics(
     label: '$value $label',
-    child: Column(
+    child: Row(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            height: 1,
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: context.appSoftGreen,
+            shape: BoxShape.circle,
           ),
+          child: Icon(icon, color: Colors.green, size: 18),
         ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(color: context.appMutedText, fontSize: 12),
+        const SizedBox(width: 5),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(color: context.appMutedText, fontSize: 8),
+            ),
+          ],
         ),
       ],
     ),
   );
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(width: 1, height: 30, color: context.appBorder);
 }
 
 class _ProfileAvatar extends StatelessWidget {

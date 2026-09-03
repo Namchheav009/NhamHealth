@@ -40,94 +40,99 @@ class OnboardingContent extends StatelessWidget {
     return Theme(
       data: AppTheme.light,
       child: Builder(
-        builder: (context) => AppBackground(
-      lightDecoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.backgroundMint, AppColors.backgroundCream],
-        ),
-      ),
-      child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxHeight < 720;
-                final imageHeight = (constraints.maxHeight *
-                        (item.titleAboveImage ? 0.45 : 0.34))
-                    .clamp(
-                      compact ? 170.0 : 220.0,
-                      item.titleAboveImage
-                          ? (compact ? 310.0 : 380.0)
-                          : (compact ? 250.0 : 290.0),
-                    );
-
-                return Padding(
-                  padding: AppSpacing.pagePadding,
-                  child: Column(
-                    children: [
-                      if (item.showBrandHeader)
-                        _BrandHeader(
-                          showBackButton: showBackButton,
-                          onBack: onBack,
-                        )
-                      else
-                        const SizedBox(height: 28),
-                      if (item.titleAboveImage) ...[
-                        const SizedBox(height: 8),
-                        _TitleBlock(item: item, centered: false),
-                      ],
-                      Expanded(
-                        child: Align(
-                          alignment:
+        builder:
+            (context) => AppBackground(
+              lightDecoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.backgroundMint, AppColors.backgroundCream],
+                ),
+              ),
+              child: SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxHeight < 720;
+                        final imageHeight = (constraints.maxHeight *
+                                (item.titleAboveImage ? 0.45 : 0.34))
+                            .clamp(
+                              compact ? 170.0 : 220.0,
                               item.titleAboveImage
-                                  ? Alignment.center
-                                  : const Alignment(0, -0.35),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: imageHeight,
-                            child: Image.asset(
-                              item.imagePath,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (_, _, _) => const Icon(
-                                    Icons.image_not_supported_outlined,
-                                    size: 70,
-                                    color: AppColors.mutedText,
+                                  ? (compact ? 310.0 : 380.0)
+                                  : (compact ? 250.0 : 290.0),
+                            );
+
+                        return Padding(
+                          padding: AppSpacing.pagePadding,
+                          child: Column(
+                            children: [
+                              if (item.showBrandHeader)
+                                _BrandHeader(
+                                  showBackButton: showBackButton,
+                                  onBack: onBack,
+                                )
+                              else
+                                const SizedBox(height: 28),
+                              if (item.titleAboveImage) ...[
+                                const SizedBox(height: 8),
+                                _TitleBlock(item: item, centered: false),
+                              ],
+                              Expanded(
+                                child: Align(
+                                  alignment:
+                                      item.titleAboveImage
+                                          ? Alignment.center
+                                          : const Alignment(0, -0.35),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    height: imageHeight,
+                                    child: Image.asset(
+                                      item.imagePath,
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (_, _, _) => const Icon(
+                                            Icons.image_not_supported_outlined,
+                                            size: 70,
+                                            color: AppColors.mutedText,
+                                          ),
+                                    ),
                                   ),
-                            ),
+                                ),
+                              ),
+                              if (!item.titleAboveImage) ...[
+                                _TitleBlock(item: item, centered: true),
+                                SizedBox(height: compact ? 16 : 24),
+                              ],
+                              OnboardingIndicator(
+                                activePage: activePage,
+                                pageCount: pageCount,
+                                onBack: onBack,
+                              ),
+                              const SizedBox(height: 18),
+                              OnboardingNextButton(
+                                text: buttonText,
+                                onPressed: onNext,
+                              ),
+                              const SizedBox(height: 4),
+                              Visibility(
+                                visible: showSkipButton,
+                                maintainSize: true,
+                                maintainAnimation: true,
+                                maintainState: true,
+                                child: OnboardingSkipButton(onPressed: onSkip),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      if (!item.titleAboveImage) ...[
-                        _TitleBlock(item: item, centered: true),
-                        SizedBox(height: compact ? 16 : 24),
-                      ],
-                      OnboardingIndicator(
-                        activePage: activePage,
-                        pageCount: pageCount,
-                      ),
-                      const SizedBox(height: 18),
-                      OnboardingNextButton(text: buttonText, onPressed: onNext),
-                      const SizedBox(height: 4),
-                      Visibility(
-                        visible: showSkipButton,
-                        maintainSize: true,
-                        maintainAnimation: true,
-                        maintainState: true,
-                        child: OnboardingSkipButton(onPressed: onSkip),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-        ),
       ),
     );
   }

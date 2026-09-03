@@ -173,12 +173,29 @@ class EditProfileView extends GetView<EditProfileController> {
 
                   const SizedBox(height: 3),
 
-                  Text(
-                    controller.membership.value.tr,
-                    style: const TextStyle(
-                      color: green,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE4F8E9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.check_circle, color: green, size: 14),
+                        const SizedBox(width: 3),
+                        Text(
+                          controller.membership.value.tr,
+                          style: const TextStyle(
+                            color: green,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -423,35 +440,38 @@ class EditProfileView extends GetView<EditProfileController> {
                     'Auto-calculate from height & weight'.tr,
                     style: const TextStyle(
                       color: Color(0xFF777777),
-                      fontSize: 9,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
 
-            Flexible(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF9AE8B0),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    controller.bmi > 0
-                        ? '${controller.bmi.toStringAsFixed(1)} '
-                            '${controller.bmiStatus.tr}'
-                        : 'Not set'.tr,
-                    maxLines: 1,
-                    style: const TextStyle(
-                      color: Color(0xFF008F42),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF9AE8B0),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      controller.bmi > 0
+                          ? '${controller.bmi.toStringAsFixed(1)} '
+                              '${controller.bmiStatus.tr}'
+                          : 'Not set'.tr,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Color(0xFF008F42),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

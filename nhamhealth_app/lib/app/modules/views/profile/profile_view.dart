@@ -57,7 +57,7 @@ class ProfileView extends GetView<ProfileController> {
                           onRetry: controller.loadProfile,
                         );
                       }),
-                      const SizedBox(height: AppSpacing.topBarBottom),
+                      const SizedBox(height: 8),
                       Obx(
                         () => LoadingContentTransition(
                           isLoading:
@@ -92,7 +92,7 @@ class ProfileView extends GetView<ProfileController> {
         return Column(
           children: [
             _profileOverview(),
-            const SizedBox(height: 22),
+            const SizedBox(height: 8),
             _profileFeed(context),
           ],
         );
