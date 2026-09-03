@@ -350,6 +350,8 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.primaryGreen,
+                      disabledForegroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -365,7 +367,9 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                               dimension: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                             : Text(

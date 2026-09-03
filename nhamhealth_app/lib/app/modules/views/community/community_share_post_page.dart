@@ -113,6 +113,8 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
             style: FilledButton.styleFrom(
               backgroundColor: _green,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: _green,
+              disabledForegroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -126,7 +128,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
                     : const Text(
