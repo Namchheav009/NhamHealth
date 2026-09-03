@@ -25,6 +25,7 @@ class AppearanceController extends GetxController {
   }
 
   void _selectTheme(ThemeMode themeMode) {
+    if (selectedTheme.value == themeMode.name) return;
     selectedTheme.value = themeMode.name;
     Get.changeThemeMode(themeMode);
     unawaited(_themeService.saveThemeMode(themeMode));

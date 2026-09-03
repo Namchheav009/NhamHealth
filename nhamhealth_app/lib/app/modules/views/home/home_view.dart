@@ -176,57 +176,90 @@ class _RecommendedMealsSection extends GetView<HomeController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: 20,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    'Recommended Meals'.tr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Recommended for You'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Picked for your mood and wellness goals'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (meals.isNotEmpty)
-                  TextButton(
+                  IconButton(
                     onPressed:
                         controller.isRecommendedMealsLoading.value
                             ? null
                             : controller.getRecommendation,
-                    style: TextButton.styleFrom(
+                    style: IconButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      minimumSize: const Size(0, 28),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      backgroundColor: context.appSoftGreen,
+                      disabledBackgroundColor: context.appMutedSurface,
+                      minimumSize: const Size(38, 38),
+                      maximumSize: const Size(38, 38),
                     ),
-                    child: Text(
-                      controller.isRecommendedMealsLoading.value
-                          ? 'Refreshing…'.tr
-                          : 'Refresh'.tr,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    tooltip: 'Refresh'.tr,
+                    icon:
+                        controller.isRecommendedMealsLoading.value
+                            ? const SizedBox.square(
+                              dimension: 17,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Icon(Icons.refresh_rounded, size: 20),
                   ),
               ],
             ),
             if (meals.isNotEmpty) ...[
-              const SizedBox(height: 7),
+              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final cardWidth =
                       constraints.maxWidth >= 600
-                          ? (constraints.maxWidth - 28) / 5
-                          : 100.0;
+                          ? (constraints.maxWidth - 36) / 4
+                          : 142.0;
                   return SizedBox(
-                    height: 148,
+                    height: 184,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
                       itemCount: meals.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 7),
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder:
                           (_, index) => SizedBox(
                             width: cardWidth,
@@ -247,14 +280,37 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                 },
               ),
             ] else ...[
-              const SizedBox(height: 6),
-              Text(
-                'Choose a mood, then tap Get Recommendation to see personalized meals.'
-                    .tr,
-                style: TextStyle(
-                  color: context.appMutedText,
-                  fontSize: 11,
-                  height: 1.35,
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: context.appSubtleSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: context.appBorder.withValues(alpha: 0.7),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Text(
+                        'Choose a mood, then tap Get Recommendation to see personalized meals.'
+                            .tr,
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

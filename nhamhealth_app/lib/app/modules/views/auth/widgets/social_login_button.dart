@@ -9,11 +9,13 @@ class AuthPrimaryButton extends StatelessWidget {
     required this.label,
     required this.loading,
     required this.onPressed,
+    this.enabled = true,
   });
 
   final String label;
   final bool loading;
   final VoidCallback onPressed;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,7 @@ class AuthPrimaryButton extends StatelessWidget {
       height: 48,
       width: double.infinity,
       child: FilledButton(
-        onPressed: loading ? null : onPressed,
+        onPressed: loading || !enabled ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           disabledBackgroundColor: AppColors.mutedText,

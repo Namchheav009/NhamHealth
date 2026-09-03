@@ -658,34 +658,40 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.transparent,
-    body: AppBackground(
-      child: SafeArea(
-        child: Form(
-          key: _formKey,
-          autovalidateMode:
-              _showValidation
-                  ? AutovalidateMode.onUserInteraction
-                  : AutovalidateMode.disabled,
-          child: ListView(
-            key: ValueKey('community-post-editor-scroll-$_currentStep'),
-            physics: const BouncingScrollPhysics(),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-            children: [
-              _editorHeader(),
-              const SizedBox(height: 12),
-              _progressHeader(),
-              const SizedBox(height: 18),
-              if (_currentStep == 0)
-                ..._basicInfoFields()
-              else
-                ..._recipeFields(),
-              const SizedBox(height: 20),
-              _navigationButton(),
-              const SizedBox(height: 8),
-            ],
+  Widget build(BuildContext context) => PopScope<void>(
+    canPop: _currentStep == 0 && !_submitting,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop && !_submitting) _handleBack();
+    },
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
+      body: AppBackground(
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode:
+                _showValidation
+                    ? AutovalidateMode.onUserInteraction
+                    : AutovalidateMode.disabled,
+            child: ListView(
+              key: ValueKey('community-post-editor-scroll-$_currentStep'),
+              physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              children: [
+                _editorHeader(),
+                const SizedBox(height: 12),
+                _progressHeader(),
+                const SizedBox(height: 18),
+                if (_currentStep == 0)
+                  ..._basicInfoFields()
+                else
+                  ..._recipeFields(),
+                const SizedBox(height: 20),
+                _navigationButton(),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),
@@ -704,8 +710,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       style: FilledButton.styleFrom(
         backgroundColor: green,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFE1E3E2),
-        disabledForegroundColor: const Color(0xFF98AAA1),
+        disabledBackgroundColor: context.appMutedSurface,
+        disabledForegroundColor: context.appMutedText,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -742,13 +748,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     height: AppBackButton.layoutSize,
     child: Row(
       children: [
-        AppBackButton(onPressed: _handleBack),
+        AppBackButton(onPressed: _submitting ? null : _handleBack),
         Expanded(
           child: Center(
             child: Text(
               widget.post == null ? 'New meal' : 'Edit meal',
-              style: const TextStyle(
-                color: Color(0xFF15211A),
+              style: TextStyle(
+                color: context.appText,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
@@ -785,7 +791,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           height: 1,
           margin: const EdgeInsets.symmetric(horizontal: 10),
           color:
-              _currentStep == 1 ? const Color(0xFF9BCFB0) : context.appBorder,
+              _currentStep == 1
+                  ? context.appColorScheme.primary
+                  : context.appBorder,
         ),
       ),
       _progressStep(2, 'Ingredients', isActive: _currentStep == 1),
@@ -829,7 +837,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       Text(
         label,
         style: TextStyle(
-          color: isActive ? const Color(0xFF2B6242) : const Color(0xFF7B847E),
+          color:
+              isActive ? context.appColorScheme.primary : context.appMutedText,
           fontSize: 11,
           fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
         ),
@@ -842,15 +851,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       onTap: _submitting ? null : _chooseImage,
       borderRadius: BorderRadius.circular(30),
       child: CustomPaint(
-        foregroundPainter: const _DashedRoundedBorder(
-          color: Color(0xFFB7DEC7),
+        foregroundPainter: _DashedRoundedBorder(
+          color:
+              context.appIsDark
+                  ? context.appColorScheme.primary.withValues(alpha: .48)
+                  : const Color(0xFFB7DEC7),
           radius: 30,
         ),
         child: Container(
           height: 206,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: const Color(0xFFF4FAF7),
+            color: context.appSubtleSurface,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Stack(
@@ -937,24 +949,24 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
       ],
     ),
-    const Row(
+    Row(
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: Color(0xFFEAF8EF),
+            color: context.appSoftGreen,
             shape: BoxShape.circle,
           ),
-          child: SizedBox(
+          child: const SizedBox(
             width: 22,
             height: 22,
             child: Icon(Icons.tune_rounded, color: green, size: 13),
           ),
         ),
-        SizedBox(width: 7),
+        const SizedBox(width: 7),
         Text(
           'Difficulty',
           style: TextStyle(
-            color: Color(0xFF334139),
+            color: context.appText,
             fontSize: 13,
             fontWeight: FontWeight.w800,
           ),
@@ -965,9 +977,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F7F4),
+        color: context.appMutedSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE1ECE5)),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         children: [
@@ -990,41 +1002,32 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Container(
           width: 50,
           height: 50,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x0F164E34),
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
+            boxShadow: context.appTileShadow,
           ),
           child: const Icon(Icons.add_a_photo_outlined, color: green, size: 26),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Add a cover photo',
-          style: TextStyle(
-            color: Color(0xFF265441),
-            fontWeight: FontWeight.w800,
-          ),
+          style: TextStyle(color: context.appText, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'A clear photo helps your meal stand out',
-          style: TextStyle(color: Color(0xFF718078), fontSize: 12),
+          style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
         const SizedBox(height: 10),
-        const Row(
+        Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.image_outlined, color: Color(0xFF91A79A), size: 14),
-            SizedBox(width: 5),
+            Icon(Icons.image_outlined, color: context.appMutedText, size: 14),
+            const SizedBox(width: 5),
             Text(
               'Recommended',
-              style: TextStyle(color: Color(0xFF91A79A), fontSize: 11),
+              style: TextStyle(color: context.appMutedText, fontSize: 11),
             ),
           ],
         ),
@@ -1072,10 +1075,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         : context.appSelectedSurface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color:
-                      selectedCategory == null
-                          ? const Color(0xFFDCE5DF)
-                          : green,
+                  color: selectedCategory == null ? context.appBorder : green,
                 ),
               ),
               child: InkWell(
@@ -1116,8 +1116,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                               style: TextStyle(
                                 color:
                                     selectedCategory == null
-                                        ? const Color(0xFF526158)
-                                        : const Color(0xFF145C35),
+                                        ? context.appText
+                                        : context.appColorScheme.primary,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1126,17 +1126,17 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                               selectedCategory == null
                                   ? 'Select where your meal belongs'
                                   : 'Tap to change',
-                              style: const TextStyle(
-                                color: Color(0xFF718078),
+                              style: TextStyle(
+                                color: context.appMutedText,
                                 fontSize: 12,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF526158),
+                        color: context.appMutedText,
                       ),
                     ],
                   ),
@@ -1200,9 +1200,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'This is where your meal will appear after approval.',
-                      style: TextStyle(color: Color(0xFF718078), fontSize: 13),
+                      style: TextStyle(
+                        color: sheetContext.appMutedText,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Flexible(
@@ -1355,13 +1358,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             selected: true,
             showCheckmark: false,
             backgroundColor: context.appElevatedSurface,
-            selectedColor: const Color(0xFFDDF5E6),
-            labelStyle: const TextStyle(
-              color: Color(0xFF126638),
+            selectedColor: context.appSelectedSurface,
+            labelStyle: TextStyle(
+              color: context.appColorScheme.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
-            side: const BorderSide(color: Color(0xFF8DCEAA)),
+            side: BorderSide(
+              color: context.appColorScheme.primary.withValues(alpha: .5),
+            ),
             shape: const StadiumBorder(),
             onSelected:
                 _submitting
@@ -1374,10 +1379,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           avatar: const Icon(Icons.add_rounded, size: 17, color: green),
           label: const Text('Add tag'),
           backgroundColor: context.appElevatedSurface,
-          side: const BorderSide(color: Color(0xFF8DCEAA)),
+          side: BorderSide(
+            color: context.appColorScheme.primary.withValues(alpha: .5),
+          ),
           shape: const StadiumBorder(),
-          labelStyle: const TextStyle(
-            color: Color(0xFF126638),
+          labelStyle: TextStyle(
+            color: context.appColorScheme.primary,
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -1408,7 +1415,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Widget _audienceOption(CommunityPostVisibility value) {
     final selected = _visibility == value;
     return Material(
-      color: selected ? const Color(0xFFF0F8F3) : Colors.transparent,
+      color: selected ? context.appSelectedSurface : Colors.transparent,
       child: InkWell(
         onTap: _submitting ? null : () => setState(() => _visibility = value),
         child: Padding(
@@ -1419,7 +1426,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: selected ? green : const Color(0xFFEAF6EF),
+                  color: selected ? green : context.appSoftGreen,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1439,8 +1446,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     ),
                     Text(
                       value.description,
-                      style: const TextStyle(
-                        color: Color(0xFF718078),
+                      style: TextStyle(
+                        color: context.appMutedText,
                         fontSize: 11,
                       ),
                     ),
@@ -1451,7 +1458,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 selected
                     ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_off_rounded,
-                color: selected ? green : const Color(0xFFD6DAD7),
+                color: selected ? green : context.appBorder,
                 size: 20,
               ),
             ],
@@ -1483,8 +1490,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 width: 22,
                 height: 22,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF6EF),
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: green, size: 13),
@@ -1493,8 +1500,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ],
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF334139),
+              style: TextStyle(
+                color: context.appText,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
@@ -1513,43 +1520,42 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ],
     ),
   );
-  InputDecoration _decoration({String? hint, String? suffix}) =>
-      InputDecoration(
-        hintText: hint,
-        suffixText: suffix,
-        filled: true,
-        fillColor: const Color(0xFFFFFFFF),
-        hintStyle: const TextStyle(color: Color(0xFF92A098)),
-        suffixStyle: const TextStyle(
-          color: Color(0xFF617068),
-          fontWeight: FontWeight.w600,
-        ),
-        counterStyle: TextStyle(color: context.appMutedText, fontSize: 11),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFEAF0EC)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFF8AC5A4), width: 1.25),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFCF3B3B)),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFCF3B3B), width: 1.5),
-        ),
-      );
+  InputDecoration _decoration({
+    String? hint,
+    String? suffix,
+  }) => InputDecoration(
+    hintText: hint,
+    suffixText: suffix,
+    filled: true,
+    fillColor: context.appField,
+    hintStyle: TextStyle(color: context.appMutedText),
+    suffixStyle: TextStyle(
+      color: context.appMutedText,
+      fontWeight: FontWeight.w600,
+    ),
+    counterStyle: TextStyle(color: context.appMutedText, fontSize: 11),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide(color: context.appBorder),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide(color: context.appBorder),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide(color: context.appColorScheme.primary, width: 1.4),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(15),
+      borderSide: const BorderSide(color: Color(0xFFCF3B3B)),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(15),
+      borderSide: const BorderSide(color: Color(0xFFCF3B3B), width: 1.5),
+    ),
+  );
 
   Widget _inlineError(String message, VoidCallback retry) => Container(
     padding: const EdgeInsets.all(14),
@@ -1559,7 +1565,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
     child: Row(
       children: [
-        const Icon(Icons.cloud_off_outlined, color: Color(0xFF8A5700)),
+        Icon(Icons.cloud_off_outlined, color: context.appOnWarningSurface),
         const SizedBox(width: 10),
         Expanded(child: Text(message)),
         TextButton(onPressed: retry, child: const Text('Retry')),
@@ -1576,8 +1582,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             Container(
               width: 30,
               height: 30,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE7F6EC),
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 17, color: green),
@@ -1590,7 +1596,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           ],
         ),
         const SizedBox(height: 2),
-        Text(subtitle, style: const TextStyle(color: Color(0xFF718078))),
+        Text(subtitle, style: TextStyle(color: context.appMutedText)),
       ],
     ),
   );
@@ -1623,13 +1629,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? Colors.white : const Color(0xFF728078),
+                color: selected ? Colors.white : context.appMutedText,
               ),
               const SizedBox(width: 5),
               Text(
                 value[0] + value.substring(1).toLowerCase(),
                 style: TextStyle(
-                  color: selected ? Colors.white : const Color(0xFF526158),
+                  color: selected ? Colors.white : context.appText,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -1653,13 +1659,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: context.appBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D056E38),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
+        boxShadow: context.appTileShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1734,9 +1734,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 icon: const Icon(Icons.add_rounded, size: 23),
                 style: IconButton.styleFrom(
                   backgroundColor: green,
-                  disabledBackgroundColor: const Color(0xFFE1E3E2),
+                  disabledBackgroundColor: context.appMutedSurface,
                   foregroundColor: Colors.white,
-                  disabledForegroundColor: const Color(0xFF98AAA1),
+                  disabledForegroundColor: context.appMutedText,
                   fixedSize: const Size.square(50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -1818,9 +1818,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color:
-                                    isSelected
-                                        ? green
-                                        : sheetContext.appBorder,
+                                    isSelected ? green : sheetContext.appBorder,
                                 width: isSelected ? 1.5 : 1,
                               ),
                             ),
@@ -1868,14 +1866,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     decoration: BoxDecoration(
       color: context.appElevatedSurface,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFB9DFC7)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x1600331B),
-          blurRadius: 12,
-          offset: Offset(0, 5),
-        ),
-      ],
+      border: Border.all(
+        color: context.appColorScheme.primary.withValues(alpha: .4),
+      ),
+      boxShadow: context.appTileShadow,
     ),
     child: ListView.separated(
       shrinkWrap: true,
@@ -1893,7 +1887,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ? null
                   : Text(
                     ingredient.defaultUnit,
-                    style: const TextStyle(color: Color(0xFF718078)),
+                    style: TextStyle(color: context.appMutedText),
                   ),
           onTap: () => _selectIngredient(ingredient),
         );
@@ -1903,16 +1897,20 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _ingredientList() {
     if (_ingredients.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Row(
           children: [
-            Icon(Icons.checklist_rounded, color: Color(0xFF76A187), size: 16),
-            SizedBox(width: 8),
+            Icon(
+              Icons.checklist_rounded,
+              color: context.appMutedText,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Nothing added yet — search above to start your list.',
-                style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+                style: TextStyle(color: context.appMutedText, fontSize: 11),
               ),
             ),
           ],
@@ -1934,13 +1932,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6F6EC),
+                  color: context.appSoftGreen,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${_ingredients.length}',
-                  style: const TextStyle(
-                    color: Color(0xFF217344),
+                  style: TextStyle(
+                    color: context.appColorScheme.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1953,7 +1951,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           decoration: BoxDecoration(
             color: context.appElevatedSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E9E4)),
+            border: Border.all(color: context.appBorder),
           ),
           child: Column(
             children: List.generate(_ingredients.length, (index) {
@@ -1962,7 +1960,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 children: [
                   _ingredientListRow(index, item),
                   if (index < _ingredients.length - 1)
-                    const Divider(height: 1, color: Color(0xFFEDF1EE)),
+                    Divider(height: 1, color: context.appBorder),
                 ],
               );
             }),
@@ -1977,10 +1975,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     child: Row(
       children: [
         const SizedBox(width: 10),
-        const Icon(
+        Icon(
           Icons.drag_indicator_rounded,
           size: 17,
-          color: Color(0xFFA5AFA8),
+          color: context.appMutedText,
         ),
         const SizedBox(width: 7),
         Expanded(
@@ -2004,7 +2002,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           child: Text(
             item.unit,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF637169)),
+            style: TextStyle(fontSize: 11, color: context.appMutedText),
           ),
         ),
         IconButton(
@@ -2015,7 +2013,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             setState(() => _ingredients.removeAt(index));
           },
           icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          color: const Color(0xFF65716A),
+          color: context.appMutedText,
         ),
         const SizedBox(width: 2),
       ],
@@ -2039,7 +2037,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             children: [
               CircleAvatar(
                 radius: 12,
-                backgroundColor: const Color(0xFFE5F6EC),
+                backgroundColor: context.appSoftGreen,
                 child: Text(
                   '${_steps.length + 1}',
                   style: const TextStyle(
@@ -2079,8 +2077,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               label: const Text('Add step to list'),
               style: FilledButton.styleFrom(
                 backgroundColor: green,
-                disabledBackgroundColor: const Color(0xFFE1E3E2),
-                disabledForegroundColor: const Color(0xFF98AAA1),
+                disabledBackgroundColor: context.appMutedSurface,
+                disabledForegroundColor: context.appMutedText,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 minimumSize: const Size.fromHeight(44),
@@ -2096,16 +2094,20 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _stepList() {
     if (_steps.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Row(
           children: [
-            Icon(Icons.checklist_rounded, color: Color(0xFF76A187), size: 16),
-            SizedBox(width: 8),
+            Icon(
+              Icons.checklist_rounded,
+              color: context.appMutedText,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'No steps yet — write one above and add it to your recipe.',
-                style: TextStyle(color: Color(0xFF718078), fontSize: 11),
+                style: TextStyle(color: context.appMutedText, fontSize: 11),
               ),
             ),
           ],
@@ -2127,13 +2129,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6F6EC),
+                  color: context.appSoftGreen,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${_steps.length}',
-                  style: const TextStyle(
-                    color: Color(0xFF217344),
+                  style: TextStyle(
+                    color: context.appColorScheme.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -2171,7 +2173,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       children: [
         CircleAvatar(
           radius: 13,
-          backgroundColor: const Color(0xFFE5F6EC),
+          backgroundColor: context.appSoftGreen,
           child: Text(
             '${index + 1}',
             style: const TextStyle(
@@ -2199,7 +2201,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           onPressed: index == 0 ? null : () => _moveStep(index, -1),
           icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
           color: green,
-          disabledColor: const Color(0xFFD5DDD8),
+          disabledColor: context.appMutedText.withValues(alpha: .4),
         ),
         IconButton(
           key: ValueKey('community-step-down-$index'),
@@ -2211,7 +2213,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               index == _steps.length - 1 ? null : () => _moveStep(index, 1),
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
           color: green,
-          disabledColor: const Color(0xFFD5DDD8),
+          disabledColor: context.appMutedText.withValues(alpha: .4),
         ),
         IconButton(
           tooltip: 'Remove step ${index + 1}',
@@ -2223,7 +2225,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             setState(() => _steps.removeAt(index));
           },
           icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          color: const Color(0xFF65716A),
+          color: context.appMutedText,
         ),
       ],
     ),

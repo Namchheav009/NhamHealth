@@ -273,11 +273,11 @@ class _SecurityViewState extends State<SecurityView> {
             Expanded(
               child: Text(
                 'Password & Security'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 21,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.35,
-                  color: Color(0xFF17211B),
+                  color: context.appText,
                 ),
               ),
             ),
@@ -333,10 +333,19 @@ class _SecurityViewState extends State<SecurityView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF007A43), Color(0xFF00A85A)],
+          colors:
+              context.appIsDark
+                  ? const [Color(0xFF0A3D28), Color(0xFF087B46)]
+                  : const [Color(0xFF007A43), Color(0xFF00A85A)],
+        ),
+        border: Border.all(
+          color:
+              context.appIsDark
+                  ? const Color(0xFF4ADE80).withValues(alpha: .28)
+                  : Colors.transparent,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -410,9 +419,9 @@ class _SecurityViewState extends State<SecurityView> {
             _hasPin
                 ? 'Your 6-digit backup PIN is active'
                 : 'Set a 6-digit unlock code',
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right_rounded,
-          color: Color(0xFF6E7B73),
+          color: context.appMutedText,
         ),
         onTap: _setOrChangePin,
       ),
@@ -450,9 +459,9 @@ class _SecurityViewState extends State<SecurityView> {
         icon: Icons.password_rounded,
         title: 'Change account password',
         subtitle: 'Update the password used to sign in',
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right_rounded,
-          color: Color(0xFF6E7B73),
+          color: context.appMutedText,
         ),
         onTap:
             () => Get.to<void>(
@@ -469,9 +478,9 @@ class _SecurityViewState extends State<SecurityView> {
       color: context.appElevatedSurface.withValues(alpha: .94),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: context.appBorder, width: 1.2),
-      boxShadow: const [
+      boxShadow: [
         BoxShadow(
-          color: Color(0x10002F1A),
+          color: context.appShadow,
           blurRadius: 18,
           offset: Offset(0, 6),
         ),
@@ -480,9 +489,9 @@ class _SecurityViewState extends State<SecurityView> {
     child: Column(children: children),
   );
 
-  Widget _divider() => const Padding(
-    padding: EdgeInsets.only(left: 76),
-    child: Divider(height: 1, color: Color(0xFFE7ECE8)),
+  Widget _divider() => Padding(
+    padding: const EdgeInsets.only(left: 76),
+    child: Divider(height: 1, color: context.appBorder),
   );
 
   Widget _disableButton() => OutlinedButton.icon(
@@ -512,16 +521,16 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Text(
           title.tr,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1B241E),
+            color: context.appText,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           subtitle.tr,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF7A827D)),
+          style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
       ],
     ),
@@ -567,7 +576,9 @@ class _SecurityTile extends StatelessWidget {
               child: Icon(
                 icon,
                 color:
-                    enabled ? const Color(0xFF00A651) : const Color(0xFFABB2AD),
+                    enabled
+                        ? context.appColorScheme.primary
+                        : context.appMutedText,
                 size: 24,
               ),
             ),
@@ -582,7 +593,9 @@ class _SecurityTile extends StatelessWidget {
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
                       color:
-                          enabled ? context.appText : const Color(0xFFA3AAA5),
+                          enabled
+                              ? context.appText
+                              : context.appMutedText.withValues(alpha: .62),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -591,10 +604,9 @@ class _SecurityTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.5,
                       height: 1.25,
-                      color:
-                          enabled
-                              ? const Color(0xFF7B847E)
-                              : const Color(0xFFB4BAB6),
+                      color: context.appMutedText.withValues(
+                        alpha: enabled ? 1 : .62,
+                      ),
                     ),
                   ),
                 ],

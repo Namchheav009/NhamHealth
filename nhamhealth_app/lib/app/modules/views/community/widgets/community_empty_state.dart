@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -38,7 +39,7 @@ class CommunityEmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          title,
+          title.tr,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17,
@@ -48,7 +49,7 @@ class CommunityEmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Text(
-          message,
+          message.tr,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,

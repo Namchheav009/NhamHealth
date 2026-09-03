@@ -69,7 +69,7 @@ abstract class AppTheme {
       inversePrimary: AppColors.primaryGreen,
     ),
     scaffoldBackground: _darkBackground,
-  );
+  ).copyWith(scaffoldBackgroundColor: Colors.transparent);
 
   static ThemeData _buildTheme({
     required Brightness brightness,

@@ -14,31 +14,69 @@ class AiRecommendationCard extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final animationSize = (constraints.maxWidth * 0.41).clamp(132.0, 154.0);
         return Container(
           height: 188,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: context.appElevatedSurface.withValues(alpha: 0.96),
+            color:
+                context.appIsDark
+                    ? null
+                    : context.appElevatedSurface.withValues(alpha: 0.96),
+            gradient:
+                context.appIsDark
+                    ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF071712),
+                        Color(0xFF0B2118),
+                        Color(0xFF102B1D),
+                      ],
+                      stops: [0, 0.56, 1],
+                    )
+                    : null,
             borderRadius: BorderRadius.circular(15),
             border:
-                context.appIsDark ? Border.all(color: context.appBorder) : null,
-            boxShadow: context.appHomeCardShadow,
+                context.appIsDark
+                    ? Border.all(
+                      color: const Color(0xFF4ADE80).withValues(alpha: 0.34),
+                    )
+                    : null,
+            boxShadow:
+                context.appIsDark
+                    ? [
+                      BoxShadow(
+                        color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        spreadRadius: -3,
+                        offset: const Offset(0, 8),
+                      ),
+                      const BoxShadow(
+                        color: Color(0x66000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 7),
+                      ),
+                    ]
+                    : context.appHomeCardShadow,
           ),
           child: InnerShadow(
             borderRadius: BorderRadius.circular(15),
             shadows: context.appIsDark ? context.appInnerShadow : const [],
             child: Stack(
               children: [
+                if (context.appIsDark) const _DarkRecommendationBackdrop(),
                 Positioned(
-                  right: 2,
-                  top: 24,
+                  right: -4,
+                  top: (188 - animationSize) / 2,
                   child: SizedBox(
-                    width: 140,
-                    height: 140,
+                    width: animationSize,
+                    height: animationSize,
                     child: RepaintBoundary(
                       child: Lottie.asset(
-                        'assets/animations/Anima Bot.json',
-                        fit: BoxFit.contain,
+                        'assets/animations/Healthy or Junk food.json',
+                        fit: BoxFit.cover,
+                        alignment: Alignment.center,
                         repeat: true,
                       ),
                     ),
@@ -65,10 +103,13 @@ class AiRecommendationCard extends GetView<HomeController> {
                               'AI Recommendation'.tr,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppColors.primaryGreen,
+                              style: TextStyle(
+                                color:
+                                    context.appIsDark
+                                        ? const Color(0xFF4ADE80)
+                                        : AppColors.primaryGreen,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -149,9 +190,14 @@ class AiRecommendationCard extends GetView<HomeController> {
                                       ? null
                                       : controller.getRecommendation,
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.primaryGreen,
+                                backgroundColor:
+                                    context.appIsDark
+                                        ? const Color(0xFF22C55E)
+                                        : AppColors.primaryGreen,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: AppColors.primaryGreen
+                                disabledBackgroundColor: (context.appIsDark
+                                        ? const Color(0xFF22C55E)
+                                        : AppColors.primaryGreen)
                                     .withValues(alpha: 0.55),
                                 elevation: selectedMood == null ? 3 : 6,
                                 shadowColor: AppColors.primaryGreen.withValues(
@@ -194,9 +240,10 @@ class AiRecommendationCard extends GetView<HomeController> {
                                             ? 'Generating…'.tr
                                             : selectedMood == null
                                             ? 'Suggest Meals'.tr
-                                            : 'Suggest Meals for @mood'.trParams({
-                                              'mood': selectedMood.name.tr,
-                                            }),
+                                            : 'Suggest Meals for @mood'
+                                                .trParams({
+                                                  'mood': selectedMood.name.tr,
+                                                }),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.center,
@@ -231,6 +278,53 @@ class AiRecommendationCard extends GetView<HomeController> {
       if (mood.id == selectedId) return mood;
     }
     return null;
+  }
+}
+
+class _DarkRecommendationBackdrop extends StatelessWidget {
+  const _DarkRecommendationBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned(
+            right: -46,
+            top: -66,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x3322C55E), Color(0x0016A34A)],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -58,
+            bottom: -100,
+            child: Container(
+              width: 230,
+              height: 180,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x2416A34A), Color(0x000B2118)],
+                ),
+              ),
+            ),
+          ),
+          const Positioned(
+            right: 118,
+            top: 17,
+            child: Icon(Icons.eco_rounded, size: 18, color: Color(0x334ADE80)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import '../../controllers/profile/language_controller.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/language_flag.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/forest_glow_background.dart';
 import '../../../theme/app_colors.dart';
 
 class LanguageView extends GetView<LanguageController> {
@@ -267,15 +268,20 @@ class _SettingsBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (context.appIsDark) {
+      return const Positioned.fill(
+        child: ForestGlowBackground(
+          force: true,
+          child: SizedBox.expand(),
+        ),
+      );
+    }
     return Positioned.fill(
-      child: Opacity(
-        opacity: context.appIsDark ? 0.12 : 1,
-        child: const DecoratedBox(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/background/bg.png'),
-              fit: BoxFit.cover,
-            ),
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background/bg.png'),
+            fit: BoxFit.cover,
           ),
         ),
       ),

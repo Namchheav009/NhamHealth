@@ -23,21 +23,26 @@ class RecommendedMealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 100,
+      width: 142,
       decoration: BoxDecoration(
-        color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(13),
-        border: context.appIsDark ? Border.all(color: context.appBorder) : null,
+        color: context.appElevatedSurface.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              context.appIsDark
+                  ? const Color(0xFF4ADE80).withValues(alpha: 0.23)
+                  : context.appBorder.withValues(alpha: 0.7),
+        ),
         boxShadow: context.appHomeTileShadow,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(16),
         shadows: context.appIsDark ? context.appInnerShadow : const [],
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -45,19 +50,19 @@ class RecommendedMealCard extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
+                        top: Radius.circular(15),
                       ),
                       child: _MealImage(path: meal.image),
                     ),
                     Positioned(
-                      right: 5,
-                      top: 5,
+                      right: 7,
+                      top: 7,
                       child: InkWell(
                         onTap: onFavorite,
                         customBorder: const CircleBorder(),
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
                             color: context.appElevatedSurface.withValues(
                               alpha: 0.94,
@@ -78,7 +83,7 @@ class RecommendedMealCard extends StatelessWidget {
                                   ? Icons.favorite_rounded
                                   : Icons.favorite_border_rounded,
                               key: ValueKey<bool>(isFavorite),
-                              size: 16,
+                              size: 17,
                               color:
                                   isFavorite
                                       ? AppColors.favoriteRed
@@ -92,7 +97,7 @@ class RecommendedMealCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 5),
+                    padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -103,25 +108,31 @@ class RecommendedMealCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: context.appText,
-                              fontSize: 9,
-                              height: 1.12,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                              height: 1.18,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
-                            Expanded(
-                              child: Text(
-                                '${meal.calories} kcal',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: context.appMutedText,
-                                  fontSize: 8,
-                                ),
+                            Icon(
+                              Icons.local_fire_department_rounded,
+                              color: AppColors.accentOrange,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${meal.calories} kcal',
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                            const Spacer(),
                             const Icon(
                               Icons.star_rounded,
                               color: Color(0xFFFFC107),
@@ -132,7 +143,8 @@ class RecommendedMealCard extends StatelessWidget {
                               meal.rating.toStringAsFixed(1),
                               style: TextStyle(
                                 color: context.appMutedText,
-                                fontSize: 8,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -161,14 +173,14 @@ class _MealImage extends StatelessWidget {
       return Image.asset(
         path.isEmpty ? 'assets/images/meals/healthy_salad.jpg' : path,
         width: double.infinity,
-        height: 82,
+        height: 96,
         fit: BoxFit.cover,
       );
     }
     return CachedNetworkImage(
       imageUrl: path,
       width: double.infinity,
-      height: 82,
+      height: 96,
       fit: BoxFit.cover,
       memCacheWidth: 300,
       fadeInDuration: const Duration(milliseconds: 120),

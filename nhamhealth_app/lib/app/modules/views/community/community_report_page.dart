@@ -123,7 +123,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Why are you reporting ${_subjectLabel}?',
+                              'Why are you reporting $_subjectLabel?',
                               style: TextStyle(
                                 color: context.appText,
                                 fontSize: 14,

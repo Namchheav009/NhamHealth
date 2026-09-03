@@ -65,26 +65,25 @@ abstract class AppPages {
       name: AppRoutes.splash,
       page: () => const SplashView(),
       binding: SplashBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.onboarding,
       page: () => const OnboardingView(),
       binding: OnboardingBinding(),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 400),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.login,
       page: () => const LoginScreen(),
       binding: LoginBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.register,
       page: () => const RegisterScreen(),
       binding: RegisterBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.accountCreated,
@@ -92,8 +91,7 @@ abstract class AppPages {
       binding: BindingsBuilder(
         () => Get.put<AccountCreatedController>(AccountCreatedController()),
       ),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 300),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.home,

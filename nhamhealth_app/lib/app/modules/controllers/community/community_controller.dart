@@ -67,6 +67,7 @@ class CommunityController extends GetxController {
   Map<FriendsView, List<CommunityPerson>> _people = const {};
 
   List<CommunityPost> get visiblePosts {
+    late final List<CommunityPost> filteredByFeed;
     switch (feedFilter.value) {
       case CommunityFeedFilter.forYou:
         final ranked = posts.toList(growable: false);
@@ -75,20 +76,40 @@ class CommunityController extends GetxController {
           if (engagement != 0) return engagement;
           return _newestFirst(a, b);
         });
-        return ranked;
+        filteredByFeed = ranked;
+        break;
       case CommunityFeedFilter.following:
         final currentUserId = authenticatedUser.value?.id;
-        return posts
+        filteredByFeed = posts
             .where(
               (post) =>
                   post.isFollowingAuthor && post.authorId != currentUserId,
             )
             .toList(growable: false);
+        break;
       case CommunityFeedFilter.latest:
         final latest = posts.toList(growable: false);
         latest.sort(_newestFirst);
-        return latest;
+        filteredByFeed = latest;
+        break;
     }
+
+    final query = searchQuery.value.trim().toLowerCase();
+    if (query.isEmpty) return filteredByFeed;
+    return filteredByFeed
+        .where(
+          (post) =>
+              post.mealName.toLowerCase().contains(query) ||
+              post.description.toLowerCase().contains(query) ||
+              post.author.toLowerCase().contains(query) ||
+              post.categoryName.toLowerCase().contains(query) ||
+              post.tags.any((tag) => tag.toLowerCase().contains(query)) ||
+              post.ingredients.any(
+                (ingredient) =>
+                    ingredient.ingredientName.toLowerCase().contains(query),
+              ),
+        )
+        .toList(growable: false);
   }
 
   int _engagementScore(CommunityPost post) =>
@@ -252,7 +273,12 @@ class CommunityController extends GetxController {
     }
   }
 
-  void selectSection(CommunitySection value) => section.value = value;
+  void selectSection(CommunitySection value) {
+    if (section.value == value) return;
+    section.value = value;
+    searchQuery.value = '';
+  }
+
   void selectFeedFilter(CommunityFeedFilter value) {
     if (feedFilter.value == value) return;
     feedFilter.value = value;
@@ -527,4 +553,3 @@ class CommunityController extends GetxController {
     super.onClose();
   }
 }
-

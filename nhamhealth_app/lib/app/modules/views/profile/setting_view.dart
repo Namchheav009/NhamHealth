@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/profile/setting_controller.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/app_back_header.dart';
@@ -24,17 +25,19 @@ class SettingsView extends GetView<SettingsController> {
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
       child: ScrollAwareScaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        // Let the shared forest background remain visible in dark mode.
+        // Painting an opaque scaffold here previously hid it completely.
+        backgroundColor:
+            isDark ? Colors.transparent : theme.scaffoldBackgroundColor,
         body: SizedBox.expand(
           child: Stack(
             children: [
               // --------------------------------------------
               // BACKGROUND
               // --------------------------------------------
-              Positioned.fill(
-                child: Opacity(
-                  opacity: isDark ? 0.12 : 1,
-                  child: const DecoratedBox(
+              if (!isDark)
+                const Positioned.fill(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/background/bg.png'),
@@ -43,103 +46,78 @@ class SettingsView extends GetView<SettingsController> {
                     ),
                   ),
                 ),
-              ),
 
-              if (isDark)
-                Positioned.fill(
-                  child: ColoredBox(
-                    color: Colors.black.withValues(alpha: 0.16),
-                  ),
-                ),
-
-              // Soft pink left background
-              Positioned(
-                left: -130,
-                top: -80,
-                child: Container(
-                  width: 390,
-                  height: 620,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        isDark
-                            ? const Color(0x203B1820)
-                            : const Color(0x55FFF0F3),
-                        isDark
-                            ? const Color(0x1027181C)
-                            : const Color(0x22FFF4F6),
-                        Colors.transparent,
-                      ],
+              if (!isDark)
+                Positioned(
+                  left: -130,
+                  top: -80,
+                  child: Container(
+                    width: 390,
+                    height: 620,
+                    decoration: const BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          Color(0x55FFF0F3),
+                          Color(0x22FFF4F6),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Soft green top-right
-              Positioned(
-                right: -130,
-                top: -100,
-                child: Container(
-                  width: 360,
-                  height: 420,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        isDark
-                            ? const Color(0x2039D879)
-                            : const Color(0x55E8FFD9),
-                        isDark
-                            ? const Color(0x101D4A2E)
-                            : const Color(0x22F4FFE9),
-                        Colors.transparent,
-                      ],
+              if (!isDark)
+                Positioned(
+                  right: -130,
+                  top: -100,
+                  child: Container(
+                    width: 360,
+                    height: 420,
+                    decoration: const BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          Color(0x55E8FFD9),
+                          Color(0x22F4FFE9),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Soft green bottom-right
-              Positioned(
-                right: -160,
-                bottom: -120,
-                child: Container(
-                  width: 430,
-                  height: 470,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        isDark
-                            ? const Color(0x2039D879)
-                            : const Color(0x55EEFFD8),
-                        isDark
-                            ? const Color(0x101D4A2E)
-                            : const Color(0x22F6FFE9),
-                        Colors.transparent,
-                      ],
+              if (!isDark)
+                Positioned(
+                  right: -160,
+                  bottom: -120,
+                  child: Container(
+                    width: 430,
+                    height: 470,
+                    decoration: const BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          Color(0x55EEFFD8),
+                          Color(0x22F6FFE9),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Soft pink bottom-left
-              Positioned(
-                left: -180,
-                bottom: -100,
-                child: Container(
-                  width: 400,
-                  height: 450,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        isDark
-                            ? const Color(0x203B1820)
-                            : const Color(0x44FFF0F2),
-                        Colors.transparent,
-                      ],
+              if (!isDark)
+                Positioned(
+                  left: -180,
+                  bottom: -100,
+                  child: Container(
+                    width: 400,
+                    height: 450,
+                    decoration: const BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [Color(0x44FFF0F2), Colors.transparent],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
               // --------------------------------------------
               // PAGE CONTENT
@@ -383,13 +361,7 @@ class SettingsView extends GetView<SettingsController> {
         ),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: colors.outline, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: context.appCardShadow,
       ),
       child: _SettingsItem(
         icon: Icons.logout_rounded,
@@ -410,15 +382,12 @@ class SettingsView extends GetView<SettingsController> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.92),
+        color: context.appElevatedSurface.withValues(
+          alpha: context.appIsDark ? 0.96 : 0.92,
+        ),
         borderRadius: BorderRadius.circular(13),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: colors.outlineVariant),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );

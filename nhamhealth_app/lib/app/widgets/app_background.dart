@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'forest_glow_background.dart';
+
 class AppBackground extends StatelessWidget {
   const AppBackground({
     super.key,
@@ -16,7 +18,6 @@ class AppBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final colors = theme.colorScheme;
     if (!isDark) {
       if (lightDecoration case final decoration?) {
         return DecoratedBox(decoration: decoration, child: child);
@@ -40,66 +41,6 @@ class AppBackground extends StatelessWidget {
         ),
       );
     }
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: const [
-            Color(0xFF08100B),
-            Color(0xFF101C14),
-            Color(0xFF111713),
-          ],
-          stops: const [0, 0.58, 1],
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(
-            top: -150,
-            right: -135,
-            child: _AmbientGlow(
-              color: colors.primary.withValues(alpha: 0.11),
-              size: 340,
-            ),
-          ),
-          Positioned(
-            bottom: -170,
-            left: -150,
-            child: _AmbientGlow(
-              color: colors.secondary.withValues(alpha: 0.08),
-              size: 380,
-            ),
-          ),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _AmbientGlow extends StatelessWidget {
-  const _AmbientGlow({required this.color, required this.size});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: SizedBox.square(
-        dimension: size,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [color, color.withValues(alpha: 0)],
-              stops: const [0, 1],
-            ),
-          ),
-        ),
-      ),
-    );
+    return ForestGlowBackground(force: true, child: child);
   }
 }

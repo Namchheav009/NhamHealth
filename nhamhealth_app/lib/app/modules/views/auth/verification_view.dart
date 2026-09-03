@@ -214,70 +214,121 @@ class VerificationView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'We sent a code to'.tr,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.appText,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: context.appBorder.withValues(alpha: .7)),
+              boxShadow: context.appCardShadow,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.mark_email_read_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'We sent a code to'.tr,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Obx(
+                  () => Text(
+                    controller.userEmail.value,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Obx(
+                  () => _VerificationCodeField(
+                    controller: controller,
+                    code: controller.code.value,
+                    hasFocus: controller.codeHasFocus.value,
+                    hasError: controller.hasError.value,
+                  ),
+                ),
+                Obx(
+                  () => AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child:
+                        controller.hasError.value
+                            ? Container(
+                              key: const ValueKey('verification-error'),
+                              margin: const EdgeInsets.only(top: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: context.appDangerSurface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 17,
+                                    color: context.appOnDangerSurface,
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Expanded(
+                                    child: Text(
+                                      controller.errorMessage.value.tr,
+                                      style: TextStyle(
+                                        color: context.appOnDangerSurface,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 13),
+                Obx(
+                  () => _ExpiryPill(
+                    time: controller.formattedCodeTime,
+                    expired: controller.isExpired,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Obx(
-            () => Text(
-              controller.userEmail.value,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Obx(
-            () => _ExpiryPill(
-              time: controller.formattedCodeTime,
-              expired: controller.isExpired,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Obx(
-            () => _VerificationCodeField(
-              controller: controller,
-              code: controller.code.value,
-              hasFocus: controller.codeHasFocus.value,
-              hasError: controller.hasError.value,
-            ),
-          ),
-          Obx(
-            () => AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child:
-                  controller.hasError.value
-                      ? Padding(
-                        key: const ValueKey('verification-error'),
-                        padding: const EdgeInsets.only(top: 9),
-                        child: Text(
-                          controller.errorMessage.value.tr,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.errorCoral,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
-            ),
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           Obx(
             () => AuthPrimaryButton(
               label: 'Verify code',
               loading: controller.isLoading.value,
+              enabled:
+                  controller.code.value.length == 4 &&
+                  !controller.isExpired &&
+                  !controller.isResending.value,
               onPressed: controller.verifyCode,
             ),
           ),
@@ -386,13 +437,13 @@ class _VerificationCodeField extends StatelessWidget {
       textField: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          const gap = 10.0;
+          const gap = 9.0;
           final boxSize = ((constraints.maxWidth - gap * 3) / 4).clamp(
-            48.0,
-            58.0,
+            46.0,
+            56.0,
           );
           return SizedBox(
-            height: 58,
+            height: 60,
             child: Stack(
               children: [
                 Align(
@@ -408,11 +459,11 @@ class _VerificationCodeField extends StatelessWidget {
                           key: ValueKey('verification-digit-$index'),
                           duration: const Duration(milliseconds: 160),
                           width: boxSize,
-                          height: 58,
+                          height: 60,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: context.appField,
-                            borderRadius: BorderRadius.circular(17),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color:
                                   hasError
@@ -422,12 +473,23 @@ class _VerificationCodeField extends StatelessWidget {
                                       : context.appBorder,
                               width: hasError || isActive ? 1.5 : 1.2,
                             ),
+                            boxShadow:
+                                isActive
+                                    ? [
+                                      BoxShadow(
+                                        color: AppColors.primaryGreen
+                                            .withValues(alpha: .12),
+                                        blurRadius: 10,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                    : null,
                           ),
                           child: Text(
                             digit,
                             style: TextStyle(
                               color: context.appText,
-                              fontSize: 20,
+                              fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
