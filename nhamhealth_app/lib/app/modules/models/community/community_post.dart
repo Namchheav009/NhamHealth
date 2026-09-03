@@ -68,6 +68,8 @@ class CommunityPost {
   bool isSaved;
   bool isFollowingAuthor;
 
+  bool get isShare => sharedPost != null;
+
   factory CommunityPost.fromJson(Map<String, dynamic> json) => CommunityPost(
     id: '${json['id'] ?? ''}',
     description: (json['description'] as String? ?? '').trim(),

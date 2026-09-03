@@ -189,6 +189,27 @@ class ProfileView extends GetView<ProfileController> {
 
   Future<void> _showEditPost(CommunityPost post) async {
     final user = controller.authenticatedUser.value;
+
+    if (post.isShare) {
+      await showCommunityShareComposer(
+        post: post,
+        authorName: user?.displayName ?? post.author,
+        authorAvatarUrl: user?.profileImageUrl ?? post.authorAvatarUrl,
+        initialMessage: post.description,
+        initialVisibility: post.visibility,
+        isEditing: true,
+        submitButtonText: 'Save',
+        onShare: (message, visibility) async {
+          await controller.updatePost(
+            post: post,
+            description: message,
+            visibility: visibility,
+          );
+        },
+      );
+      return;
+    }
+
     await Get.to<void>(
       () => CommunityPostEditorPage(
         post: post,

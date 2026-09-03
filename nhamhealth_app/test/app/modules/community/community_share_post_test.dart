@@ -216,4 +216,68 @@ void main() {
       expect(find.text('Open Share Modal'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'showCommunityShareComposer supports editing an existing shared post',
+    (tester) async {
+      String? updatedMessage;
+      CommunityPostVisibility? updatedVisibility;
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: Builder(
+            builder:
+                (context) => Scaffold(
+                  body: Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        showCommunityShareComposer(
+                          authorName: 'Feed Sharer',
+                          authorAvatarUrl: '',
+                          initialMessage: 'Original share message',
+                          initialVisibility: CommunityPostVisibility.friends,
+                          isEditing: true,
+                          submitButtonText: 'Save',
+                          onShare: (message, visibility) async {
+                            updatedMessage = message;
+                            updatedVisibility = visibility;
+                          },
+                        );
+                      },
+                      child: const Text('Edit Share Modal'),
+                    ),
+                  ),
+                ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Edit Share Modal'));
+      await tester.pumpAndSettle();
+
+      // Verify initial message, audience, and Save button
+      expect(find.text('Original share message'), findsOneWidget);
+      expect(find.text('Friends'), findsOneWidget);
+      expect(find.text('Save'), findsOneWidget);
+
+      final textFieldFinder = find.byKey(
+        const ValueKey<String>('community-share-message'),
+      );
+      await tester.enterText(textFieldFinder, 'Updated share message');
+      await tester.pump();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('community-share-submit')),
+      );
+      await tester.pump();
+
+      expect(updatedMessage, 'Updated share message');
+      expect(updatedVisibility, CommunityPostVisibility.friends);
+
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Share Modal'), findsOneWidget);
+    },
+  );
 }

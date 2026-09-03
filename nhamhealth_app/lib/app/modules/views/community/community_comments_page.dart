@@ -474,6 +474,41 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   Future<void> _editPost() async {
     final submit = widget.onEditPost;
     if (submit == null) return;
+
+    if (_post.isShare) {
+      final user = await Get.find<AuthService>().restoreSession();
+      if (!mounted) return;
+      await showCommunityShareComposer(
+        post: _post,
+        authorName: user?.displayName ?? _post.author,
+        authorAvatarUrl: user?.profileImageUrl ?? _post.authorAvatarUrl,
+        initialMessage: _post.description,
+        initialVisibility: _post.visibility,
+        isEditing: true,
+        submitButtonText: 'Save',
+        onShare: (message, visibility) async {
+          final updated = await _repository.updatePost(
+            postId: _post.id,
+            mealName: _post.mealName,
+            description: message,
+            cookingTimeMinutes: _post.cookingTimeMinutes ?? 0,
+            servings: _post.servings ?? 0,
+            difficulty: _post.difficulty,
+            ingredients: _post.ingredients,
+            steps: _post.steps,
+            visibility: visibility,
+            allowComments: _post.allowComments,
+            allowReplies: _post.allowReplies,
+            tagIds: _post.tagIds,
+            categoryId: _post.categoryId,
+          );
+          if (mounted) setState(() => _post = updated.copyWith());
+          widget.onPostChanged?.call();
+        },
+      );
+      return;
+    }
+
     final saved = await Get.to<bool>(
       () => CommunityPostEditorPage(
         post: _post,
@@ -1081,10 +1116,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 children: [
                   Text(
                     _commentAge(comment.createdAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.appMutedText,
-                    ),
+                    style: TextStyle(fontSize: 11, color: context.appMutedText),
                   ),
                   const SizedBox(width: 18),
                   if (_post.allowReplies)
@@ -1518,11 +1550,7 @@ class _CommentOptionsSheet extends StatelessWidget {
                     ),
                   ),
                   if (index < actions.length - 1)
-                    Divider(
-                      height: 1,
-                      indent: 64,
-                      color: context.appBorder,
-                    ),
+                    Divider(height: 1, indent: 64, color: context.appBorder),
                 ],
               ],
             ),

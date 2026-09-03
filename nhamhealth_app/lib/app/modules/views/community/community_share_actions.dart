@@ -19,6 +19,10 @@ Future<void> showCommunityShareComposer({
   )
   onShare,
   CommunityPost? post,
+  String initialMessage = '',
+  CommunityPostVisibility initialVisibility = CommunityPostVisibility.public,
+  String? submitButtonText,
+  bool isEditing = false,
 }) async {
   await Get.bottomSheet<void>(
     _CommunityShareComposer(
@@ -26,6 +30,10 @@ Future<void> showCommunityShareComposer({
       authorAvatarUrl: authorAvatarUrl,
       onShare: onShare,
       post: post,
+      initialMessage: initialMessage,
+      initialVisibility: initialVisibility,
+      submitButtonText: submitButtonText,
+      isEditing: isEditing,
     ),
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
@@ -38,6 +46,10 @@ class _CommunityShareComposer extends StatefulWidget {
     required this.authorAvatarUrl,
     required this.onShare,
     this.post,
+    this.initialMessage = '',
+    this.initialVisibility = CommunityPostVisibility.public,
+    this.submitButtonText,
+    this.isEditing = false,
   });
 
   final String authorName;
@@ -48,6 +60,10 @@ class _CommunityShareComposer extends StatefulWidget {
   )
   onShare;
   final CommunityPost? post;
+  final String initialMessage;
+  final CommunityPostVisibility initialVisibility;
+  final String? submitButtonText;
+  final bool isEditing;
 
   @override
   State<_CommunityShareComposer> createState() =>
@@ -55,10 +71,22 @@ class _CommunityShareComposer extends StatefulWidget {
 }
 
 class _CommunityShareComposerState extends State<_CommunityShareComposer> {
-  final _message = TextEditingController();
+  late final TextEditingController _message;
   final _focusNode = FocusNode();
-  CommunityPostVisibility _visibility = CommunityPostVisibility.public;
+  late CommunityPostVisibility _visibility;
   bool _sharing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _message = TextEditingController(text: widget.initialMessage);
+    _visibility = widget.initialVisibility;
+    if (widget.isEditing && widget.initialMessage.isNotEmpty) {
+      _message.selection = TextSelection.collapsed(
+        offset: widget.initialMessage.length,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -76,15 +104,21 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
       Get.back<void>();
       unawaited(
         AppAlert.success(
-          title: 'Post shared',
-          message: 'The post is now on your profile and Community feed.',
+          title: widget.isEditing ? 'Post updated' : 'Post shared',
+          message:
+              widget.isEditing
+                  ? 'Your changes have been saved.'
+                  : 'The post is now on your profile and Community feed.',
         ),
       );
     } on Object catch (error) {
       if (mounted) {
         unawaited(
           AppAlert.error(
-            title: 'Could not share post',
+            title:
+                widget.isEditing
+                    ? 'Could not update post'
+                    : 'Could not share post',
             message: error.toString(),
           ),
         );
@@ -373,7 +407,9 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                               ),
                             )
                             : Text(
-                              'Share now'.tr,
+                              (widget.submitButtonText ??
+                                      (widget.isEditing ? 'Save' : 'Share now'))
+                                  .tr,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
