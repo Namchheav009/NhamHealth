@@ -8,9 +8,9 @@ import '../../../widgets/app_alert.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../../routes/app_routes.dart';
 import 'widgets/auth_flow_scaffold.dart';
-import 'widgets/social_login_button.dart';
 import 'reset_password_view.dart';
 
 class VerificationController extends GetxController {
@@ -207,129 +207,74 @@ class VerificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(VerificationController());
 
-    return AuthFlowScaffold(
+    return Theme(
+      data: AppTheme.light,
+      child: Builder(
+        builder: (context) => AuthFlowScaffold(
       title: 'Verification',
       subtitle: 'Enter the four-digit code to continue.',
       illustrationAsset: 'assets/images/auth/verification.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-            decoration: BoxDecoration(
-              color: context.appElevatedSurface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: context.appBorder.withValues(alpha: .7)),
-              boxShadow: context.appCardShadow,
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: context.appSoftGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.mark_email_read_rounded,
-                    color: AppColors.primaryGreen,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'We sent a code to'.tr,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: context.appMutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Obx(
-                  () => Text(
-                    controller.userEmail.value,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Obx(
-                  () => _VerificationCodeField(
-                    controller: controller,
-                    code: controller.code.value,
-                    hasFocus: controller.codeHasFocus.value,
-                    hasError: controller.hasError.value,
-                  ),
-                ),
-                Obx(
-                  () => AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child:
-                        controller.hasError.value
-                            ? Container(
-                              key: const ValueKey('verification-error'),
-                              margin: const EdgeInsets.only(top: 12),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.appDangerSurface,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline_rounded,
-                                    size: 17,
-                                    color: context.appOnDangerSurface,
-                                  ),
-                                  const SizedBox(width: 7),
-                                  Expanded(
-                                    child: Text(
-                                      controller.errorMessage.value.tr,
-                                      style: TextStyle(
-                                        color: context.appOnDangerSurface,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : const SizedBox.shrink(),
-                  ),
-                ),
-                const SizedBox(height: 13),
-                Obx(
-                  () => _ExpiryPill(
-                    time: controller.formattedCodeTime,
-                    expired: controller.isExpired,
-                  ),
-                ),
-              ],
+          Text(
+            'We sent a code to'.tr,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 4),
           Obx(
-            () => AuthPrimaryButton(
-              label: 'Verify code',
-              loading: controller.isLoading.value,
-              enabled:
-                  controller.code.value.length == 4 &&
-                  !controller.isExpired &&
-                  !controller.isResending.value,
-              onPressed: controller.verifyCode,
+            () => Text(
+              controller.userEmail.value,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Obx(
+            () => _VerificationCodeField(
+              controller: controller,
+              code: controller.code.value,
+              hasFocus: controller.codeHasFocus.value,
+              hasError: controller.hasError.value,
+            ),
+          ),
+          Obx(
+            () => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child:
+                  controller.hasError.value
+                      ? Padding(
+                        key: const ValueKey('verification-error'),
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          controller.errorMessage.value.tr,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.errorCoral,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      )
+                      : const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Obx(
+            () => _ExpiryPill(
+              time: controller.formattedCodeTime,
+              expired: controller.isExpired,
             ),
           ),
           const SizedBox(height: 8),
@@ -371,6 +316,8 @@ class VerificationView extends StatelessWidget {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

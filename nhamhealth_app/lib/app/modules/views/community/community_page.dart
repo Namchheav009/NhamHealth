@@ -907,18 +907,21 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Widget _feedErrorBanner(BuildContext context, String message) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF5F3),
+        color: colors.errorContainer.withValues(
+          alpha: context.appIsDark ? .38 : .32,
+        ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFDAD4)),
+        border: Border.all(color: colors.error.withValues(alpha: .3)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_rounded,
-            color: Color(0xFFD85245),
+            color: colors.error,
             size: 20,
           ),
           const SizedBox(width: 9),
@@ -927,8 +930,8 @@ class CommunityPage extends GetView<CommunityController> {
               message,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFF78453F),
+              style: TextStyle(
+                color: colors.onErrorContainer,
                 fontSize: 12.5,
                 height: 1.3,
               ),
@@ -950,6 +953,7 @@ class CommunityPage extends GetView<CommunityController> {
         onRelationshipTap: () => _toggleAuthorRelationship(post),
         onViewDetails: () => _showComments(post),
         onLike: () => controller.togglePostLike(post),
+        onFavorite: () => controller.togglePostSaved(post),
         onComment: () => _showComments(post),
         onShare: () => _showShareOptions(post),
         onOptions: () => _showPostOptions(post),
@@ -1408,7 +1412,7 @@ class _PeopleSearchFieldState extends State<_PeopleSearchField> {
                   ),
                 ),
         filled: true,
-        fillColor: context.appSurfaceLow,
+        fillColor: context.appSearchSurface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 13,

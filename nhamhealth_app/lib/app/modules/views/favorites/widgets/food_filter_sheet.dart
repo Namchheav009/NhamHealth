@@ -74,14 +74,14 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                 Container(
                   width: 38,
                   height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEAF8EF),
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.filter_alt_outlined,
                     size: 21,
-                    color: Color(0xFF0AA653),
+                    color: context.appColorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -235,7 +235,9 @@ class _CategoryChip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color:
-                          selected ? const Color(0xFF087A42) : context.appText,
+                          selected
+                              ? context.appColorScheme.primary
+                              : context.appText,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     ),
                   ),

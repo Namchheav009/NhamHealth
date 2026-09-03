@@ -311,7 +311,7 @@ class _PasswordField extends StatelessWidget {
             ),
           ),
           filled: true,
-          fillColor: context.appMutedSurface,
+          fillColor: context.appField,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 17,

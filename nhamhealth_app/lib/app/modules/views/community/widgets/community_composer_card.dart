@@ -88,11 +88,16 @@ class CommunityComposerCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                _ComposerAction(icon: Icons.image_outlined, label: 'Photo'.tr),
+                _ComposerAction(
+                  icon: Icons.image_outlined,
+                  label: 'Photo'.tr,
+                  onTap: onTap,
+                ),
                 const SizedBox(width: 8),
                 _ComposerAction(
                   icon: Icons.forum_outlined,
                   label: 'Ask community'.tr,
+                  onTap: onTap,
                 ),
               ],
             ),
@@ -104,38 +109,47 @@ class CommunityComposerCard extends StatelessWidget {
 }
 
 class _ComposerAction extends StatelessWidget {
-  const _ComposerAction({required this.icon, required this.label});
+  const _ComposerAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 38,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color:
-          context.appIsDark
-              ? context.appColorScheme.surfaceContainer
-              : Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: context.appBorder),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(width: 1),
-        Icon(icon, size: 18, color: AppColors.primaryGreen),
-        const SizedBox(width: 7),
-        Text(
-          label,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) => Material(
+    color:
+        context.appIsDark
+            ? context.appColorScheme.surfaceContainer
+            : Colors.white,
+    shape: StadiumBorder(side: BorderSide(color: context.appBorder)),
+    child: InkWell(
+      onTap: onTap,
+      customBorder: const StadiumBorder(),
+      child: SizedBox(
+        height: 38,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: AppColors.primaryGreen),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     ),
   );
 }

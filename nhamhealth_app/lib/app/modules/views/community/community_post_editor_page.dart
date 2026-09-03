@@ -3,8 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
@@ -12,8 +14,11 @@ import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
 import '../../models/community/ingredient_suggestion.dart';
+import '../../models/favorites/favorite_food.dart';
 import '../../models/meals/meal_category_model.dart';
+import '../../providers/favorites/favorites_provider.dart';
 import '../../repositories/community/community_repository.dart';
+import '../../repositories/favorites/favorites_repository.dart';
 
 class CommunityPostEditorPage extends StatefulWidget {
   const CommunityPostEditorPage({
@@ -68,6 +73,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   bool _categoriesLoading = true;
   bool _showValidation = false;
   bool _creatingTag = false;
+  FavoriteFood? _selectedFavoriteFood;
   String? _tagsError;
   String? _categoriesError;
   late int _currentStep;
@@ -134,11 +140,176 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     }
     try {
       final value = await Get.find<CommunityRepository>().getMealCategories();
-      if (mounted) setState(() => _mealCategories = value);
+      if (mounted) {
+        setState(() {
+          _mealCategories = value;
+          _selectMatchingFavoriteCategory();
+        });
+      }
     } on Object catch (error) {
       if (mounted) setState(() => _categoriesError = error.toString());
     } finally {
       if (mounted) setState(() => _categoriesLoading = false);
+    }
+  }
+
+  Future<void> _chooseFavoriteFood() async {
+    final repository =
+        Get.isRegistered<FavoritesRepository>()
+            ? Get.find<FavoritesRepository>()
+            : FavoritesRepository(
+              provider: FavoritesProvider(
+                authService: Get.find<AuthService>(),
+              ),
+            );
+    final food = await showModalBottomSheet<FavoriteFood>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder:
+          (sheetContext) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.sizeOf(sheetContext).height * .62,
+              child: FutureBuilder<List<FavoriteFood>>(
+                future: repository.getFoods(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final foods = snapshot.data ?? const <FavoriteFood>[];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                        child: Text(
+                          'Choose a favorite food'.tr,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child:
+                            snapshot.hasError
+                                ? Center(
+                                  child: Text(
+                                    'Unable to load favorite foods.'.tr,
+                                    style: TextStyle(
+                                      color: context.appMutedText,
+                                    ),
+                                  ),
+                                )
+                                : foods.isEmpty
+                                ? Center(
+                                  child: Text(
+                                    'No favorite foods yet'.tr,
+                                    style: TextStyle(
+                                      color: context.appMutedText,
+                                    ),
+                                  ),
+                                )
+                                : ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    20,
+                                  ),
+                                  itemCount: foods.length,
+                                  separatorBuilder:
+                                      (_, _) => const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final item = foods[index];
+                                    return ListTile(
+                                      onTap:
+                                          () => Navigator.pop(context, item),
+                                      tileColor: context.appSubtleSurface,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: BorderSide(
+                                          color: context.appBorder,
+                                        ),
+                                      ),
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: SizedBox.square(
+                                          dimension: 48,
+                                          child:
+                                              item.image.isEmpty
+                                                  ? const Icon(
+                                                    Icons.restaurant_rounded,
+                                                    color: green,
+                                                  )
+                                                  : Image.network(
+                                                    item.image,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (_, _, _) => const Icon(
+                                                          Icons
+                                                              .restaurant_rounded,
+                                                          color: green,
+                                                        ),
+                                                  ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        item.name.tr,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      subtitle: Text('${item.calories} kcal'),
+                                      trailing: const Icon(
+                                        Icons.add_circle_rounded,
+                                        color: green,
+                                      ),
+                                    );
+                                  },
+                                ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+    );
+    if (food == null || !mounted) return;
+
+    Uint8List? imageBytes;
+    final imageUri = Uri.tryParse(food.image);
+    if (imageUri != null && imageUri.hasScheme) {
+      try {
+        final response = await http.get(imageUri);
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          imageBytes = response.bodyBytes;
+        }
+      } on Object {
+        // The food details can still be used if its image cannot be copied.
+      }
+    }
+    if (!mounted) return;
+    _name.text = food.name;
+    setState(() {
+      _selectedFavoriteFood = food;
+      if (imageBytes != null) _image = imageBytes;
+      _selectMatchingFavoriteCategory();
+    });
+  }
+
+  void _selectMatchingFavoriteCategory() {
+    final favorite = _selectedFavoriteFood;
+    if (favorite == null) return;
+    for (final category in _mealCategories) {
+      if (category.name.trim().toLowerCase() ==
+          favorite.category.trim().toLowerCase()) {
+        _selectedCategoryId = category.id;
+        return;
+      }
     }
   }
 
@@ -847,6 +1018,52 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   );
 
   List<Widget> _basicInfoFields() => [
+    Material(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: _submitting ? null : _chooseFavoriteFood,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.bookmark_rounded, color: green, size: 22),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _selectedFavoriteFood?.name ?? 'Choose from favorites',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedFavoriteFood == null
+                          ? 'Prefill this post with one of your saved foods'
+                          : 'Food details added — tap to choose another',
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: green),
+            ],
+          ),
+        ),
+      ),
+    ),
+    const SizedBox(height: 14),
     InkWell(
       onTap: _submitting ? null : _chooseImage,
       borderRadius: BorderRadius.circular(30),

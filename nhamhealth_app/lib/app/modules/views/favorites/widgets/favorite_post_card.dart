@@ -1,158 +1,160 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
-import '../../../models/favorites/favorite_post.dart';
+import '../../../models/recipes/community_recipe.dart';
 
 class FavoritePostCard extends StatelessWidget {
   const FavoritePostCard({
     super.key,
     required this.post,
+    required this.onOpen,
     required this.onRemove,
   });
 
-  final FavoritePost post;
+  final CommunityRecipe post;
+  final VoidCallback? onOpen;
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface.withValues(alpha: .94),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.appBorder),
-        boxShadow: context.appCardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _authorHeader(context),
-          Text(
-            post.title.tr,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: context.appText,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            post.body.tr,
-            style: TextStyle(
-              fontSize: 11,
-              color: context.appMutedText,
-              height: 1.25,
-            ),
-          ),
-          const SizedBox(height: 7),
-          const Wrap(
-            spacing: 7,
-            runSpacing: 4,
-            children: [_Tag('#HealthyMeal'), _Tag('#HighProtein')],
-          ),
-          const SizedBox(height: 9),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 1.75,
-              child: Image.asset(
-                post.image,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder:
-                    (_, _, _) => const ColoredBox(
-                      color: Color(0xFFEAF4EE),
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Colors.grey,
-                      ),
-                    ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _Metric(
-                Icons.favorite_rounded,
-                _short(post.likes),
-                const Color(0xFFFF5364),
-              ),
-              _Metric(
-                Icons.chat_bubble_outline_rounded,
-                '${post.comments}',
-                Colors.grey,
-              ),
-              _Metric(Icons.reply_rounded, '${post.shares}', Colors.grey),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _authorHeader(BuildContext context) {
-    return Row(
-      children: [
-        const CircleAvatar(
-          radius: 22,
-          backgroundImage: AssetImage('assets/images/profile/profile.jpg'),
+  Widget build(BuildContext context) => Material(
+    color: context.appElevatedSurface.withValues(alpha: .96),
+    borderRadius: BorderRadius.circular(18),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onOpen,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.appBorder),
         ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(context),
+            const SizedBox(height: 10),
+            Text(
+              post.name,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: context.appText,
+              ),
+            ),
+            if (post.description.trim().isNotEmpty) ...[
+              const SizedBox(height: 5),
               Text(
-                post.author,
-                maxLines: 1,
+                post.description,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: context.appText,
+                  fontSize: 11,
+                  height: 1.35,
+                  color: context.appMutedText,
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                '${post.timeAgo.tr}  •  ${post.role.tr}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ],
+            if (post.tags.isNotEmpty) ...[
+              const SizedBox(height: 9),
+              Wrap(
+                spacing: 7,
+                runSpacing: 5,
+                children: post.tags.map((tag) => _Tag(tag)).toList(),
               ),
             ],
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          'Following'.tr,
-          style: TextStyle(fontSize: 9, color: context.appMutedText),
-        ),
-        SizedBox(
-          width: 32,
-          height: 36,
-          child: PopupMenuButton<String>(
-            padding: EdgeInsets.zero,
-            iconSize: 20,
-            icon: Icon(Icons.more_vert, color: context.appMutedText),
-            onSelected: (_) => onRemove(),
-            itemBuilder:
-                (_) => [
-                  PopupMenuItem(
-                    value: 'remove',
-                    child: Text('Remove from favorites'.tr),
+            if (post.imageUrl.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 1.75,
+                  child: CachedNetworkImage(
+                    imageUrl: post.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder:
+                        (_, _) => ColoredBox(
+                          color: context.appMutedSurface,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                    errorWidget: (_, _, _) => const _ImageFallback(),
                   ),
-                ],
-          ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (post.cookingTimeMinutes != null)
+                  _Meta(Icons.schedule_rounded, '${post.cookingTimeMinutes} min'),
+                if (post.servings != null)
+                  _Meta(Icons.people_outline_rounded, '${post.servings}'),
+                if (post.difficulty.isNotEmpty)
+                  _Meta(Icons.signal_cellular_alt_rounded, post.difficulty.tr),
+              ],
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ),
+  );
 
-  static String _short(int value) =>
-      value >= 1000 ? '${value ~/ 1000}k' : '$value';
+  Widget _header(BuildContext context) => Row(
+    children: [
+      CircleAvatar(
+        radius: 20,
+        backgroundColor: context.appSoftGreen,
+        child: const Icon(
+          Icons.person_outline_rounded,
+          color: AppColors.primaryGreen,
+        ),
+      ),
+      const SizedBox(width: 9),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              post.authorName.isEmpty ? 'Community member'.tr : post.authorName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: context.appText,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _savedDate,
+              style: TextStyle(fontSize: 10, color: context.appMutedText),
+            ),
+          ],
+        ),
+      ),
+      IconButton(
+        tooltip: 'Remove from favorites'.tr,
+        onPressed: onRemove,
+        icon: const Icon(
+          Icons.bookmark_remove_rounded,
+          color: AppColors.primaryPink,
+        ),
+      ),
+    ],
+  );
+
+  String get _savedDate {
+    final date = post.updatedAt ?? post.publishedAt ?? post.createdAt;
+    if (date == null) return 'Saved post'.tr;
+    final local = date.toLocal();
+    return '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}/${local.year}';
+  }
 }
 
 class _Tag extends StatelessWidget {
@@ -160,39 +162,57 @@ class _Tag extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: context.appSoftGreen,
-        borderRadius: BorderRadius.circular(12),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      text.startsWith('#') ? text : '#$text',
+      style: TextStyle(
+        color: context.appColorScheme.primary,
+        fontSize: 9,
+        fontWeight: FontWeight.w600,
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFF0AA653),
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric(this.icon, this.text, this.color);
+class _Meta extends StatelessWidget {
+  const _Meta(this.icon, this.text);
   final IconData icon;
   final String text;
-  final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    decoration: BoxDecoration(
+      color: context.appSubtleSurface,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 5),
+        Icon(icon, size: 14, color: context.appMutedText),
+        const SizedBox(width: 4),
         Text(text, style: TextStyle(fontSize: 10, color: context.appMutedText)),
       ],
-    );
-  }
+    ),
+  );
+}
+
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback();
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: context.appMutedSurface,
+    child: Center(
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: context.appMutedText,
+      ),
+    ),
+  );
 }

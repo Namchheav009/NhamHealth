@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_background.dart';
 import '../../../../widgets/app_back_header.dart';
 import '../../../models/onboarding/onboarding_item.dart';
@@ -36,7 +37,10 @@ class OnboardingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBackground(
+    return Theme(
+      data: AppTheme.light,
+      child: Builder(
+        builder: (context) => AppBackground(
       lightDecoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -121,6 +125,8 @@ class OnboardingContent extends StatelessWidget {
               },
             ),
           ),
+        ),
+      ),
         ),
       ),
     );

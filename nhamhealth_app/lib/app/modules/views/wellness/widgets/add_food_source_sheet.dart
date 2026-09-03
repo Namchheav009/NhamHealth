@@ -37,7 +37,10 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
         MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       decoration: BoxDecoration(
-        color: context.appIsDark ? context.appSurfaceLow : Colors.white,
+        color: context.appElevatedSurface,
+        border: Border(
+          top: BorderSide(color: context.appBorder),
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(

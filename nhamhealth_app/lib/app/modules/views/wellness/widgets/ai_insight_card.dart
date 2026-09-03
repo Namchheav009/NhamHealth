@@ -21,19 +21,19 @@ class AiInsightCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Transform.translate(
-                offset: const Offset(-10, 0),
-                child: SizedBox(
-                  width: 130,
-                  height: 130,
+              SizedBox(
+                width: 104,
+                height: 112,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
                   child: Image.asset(
-                    'assets/images/wellness/ai_search.png',
-                    fit: BoxFit.cover,
+                    'assets/images/wellness/ai_robot.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
 
-              // const SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +59,15 @@ class AiInsightCard extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFEEE6),
+                            color:
+                                context.appIsDark
+                                    ? Color.alphaBlend(
+                                      const Color(
+                                        0xFFFF6A32,
+                                      ).withValues(alpha: .14),
+                                      context.appSurface,
+                                    )
+                                    : const Color(0xFFFFEEE6),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: const Color(0xFFFFC7AA)),
                           ),

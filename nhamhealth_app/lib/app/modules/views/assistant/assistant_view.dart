@@ -292,7 +292,7 @@ class AssistantView extends GetView<AssistantController> {
                                     color: AppColors.primaryGreen,
                                   ),
                                   filled: true,
-                                  fillColor: context.appMutedSurface,
+                                  fillColor: context.appField,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 12,

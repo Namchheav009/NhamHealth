@@ -2,7 +2,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../../../core/services/auth_service.dart';
+import '../../../theme/app_colors.dart';
 import '../../models/recipes/community_recipe.dart';
 import '../../repositories/recipes/recipe_repository.dart';
 
@@ -519,8 +521,8 @@ class _StatusChip extends StatelessWidget {
     label: Text(status == 'PUBLISHED' ? 'Published' : 'Draft'),
     backgroundColor:
         status == 'PUBLISHED'
-            ? const Color(0xFFE7F6EB)
-            : const Color(0xFFF1F3F2),
+            ? context.appSoftGreen
+            : context.appMutedSurface,
   );
 }
 

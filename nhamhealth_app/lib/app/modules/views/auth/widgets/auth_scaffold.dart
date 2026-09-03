@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
+import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_background.dart';
 import 'auth_header.dart';
 
@@ -12,7 +13,10 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+      data: AppTheme.light,
+      child: Builder(
+        builder: (context) => Scaffold(
       resizeToAvoidBottomInset: true,
       body: AppBackground(
         lightDecoration: const BoxDecoration(
@@ -82,6 +86,8 @@ class AuthScaffold extends StatelessWidget {
               );
             },
           ),
+        ),
+      ),
         ),
       ),
     );

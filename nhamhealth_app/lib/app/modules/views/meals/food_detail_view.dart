@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/meals/food_detail_controller.dart';
 import '../../models/meals/meal_model.dart';
 
@@ -11,16 +12,13 @@ class FoodDetailView extends GetView<FoodDetailController> {
 
   static const green = AppColors.primaryGreen;
   static const darkGreen = AppColors.darkGreen;
-  static const softGreen = Color(0xFFEFF9F3);
-  static const divider = Color(0xFFE3ECE6);
-  static const muted = Color(0xFF789087);
 
   @override
   Widget build(BuildContext context) => MediaQuery.withClampedTextScaling(
     maxScaleFactor: 1.15,
     child: Scaffold(
-      backgroundColor: context.appBackground,
-      body: Obx(() => _body(context)),
+      backgroundColor: Colors.transparent,
+      body: AppBackground(child: Obx(() => _body(context))),
     ),
   );
 
@@ -100,8 +98,13 @@ class _Hero extends StatelessWidget {
   final MealModel meal;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(32),
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(32),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appCardShadow,
+    ),
+    clipBehavior: Clip.antiAlias,
     child: SizedBox(
       height: 264,
       width: double.infinity,
@@ -181,7 +184,7 @@ class _HeaderFavorite extends StatelessWidget {
           customBorder: const CircleBorder(),
           child: Icon(
             selected ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-            color: selected ? FoodDetailView.green : context.appColorScheme.primary,
+            color: context.appColorScheme.primary,
             size: 22,
           ),
         ),
@@ -198,27 +201,31 @@ class _Category extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .94),
+      color:
+          context.appIsDark
+              ? context.appElevatedSurface.withValues(alpha: .94)
+              : Colors.white.withValues(alpha: .94),
       borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: context.appBorder.withValues(alpha: .7)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(category, style: const TextStyle(color: FoodDetailView.green, fontSize: 12, fontWeight: FontWeight.w700)),
-        const Padding(
+        Text(category, style: TextStyle(color: context.appColorScheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 9),
           child: SizedBox(
             width: 3,
             height: 3,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: FoodDetailView.muted,
+                color: context.appMutedText,
                 shape: BoxShape.circle,
               ),
             ),
           ),
         ),
-        const Text('Healthy recipe', style: TextStyle(color: FoodDetailView.muted, fontSize: 12)),
+        Text('Healthy recipe', style: TextStyle(color: context.appMutedText, fontSize: 12)),
       ],
     ),
   );
@@ -239,7 +246,7 @@ class _Introduction extends StatelessWidget {
       const SizedBox(height: 9),
       Text(
         meal.description.isEmpty ? 'A nourishing choice for your day'.tr : meal.description,
-        style: const TextStyle(color: FoodDetailView.muted, fontSize: 13, height: 1.4),
+        style: TextStyle(color: context.appMutedText, fontSize: 13, height: 1.4),
       ),
     ],
   );
@@ -261,11 +268,11 @@ class _Nutrition extends StatelessWidget {
           children: [
             Text(
               '${meal.calories}',
-              style: const TextStyle(color: FoodDetailView.darkGreen, fontSize: 46, height: .9, fontWeight: FontWeight.w800),
+              style: TextStyle(color: context.appIsDark ? context.appColorScheme.primary : FoodDetailView.darkGreen, fontSize: 46, height: .9, fontWeight: FontWeight.w800),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 95),
-              child: Text('kcal', style: TextStyle(color: FoodDetailView.muted, fontSize: 12)),
+              child: Text('kcal', style: TextStyle(color: context.appMutedText, fontSize: 12)),
             ),
           ],
         ),
@@ -298,7 +305,7 @@ class _NutritionRow extends StatelessWidget {
             item.name.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: FoodDetailView.muted, fontSize: 9.5, fontWeight: FontWeight.w700),
+            style: TextStyle(color: context.appMutedText, fontSize: 9.5, fontWeight: FontWeight.w700),
           ),
         ),
         Expanded(
@@ -307,8 +314,8 @@ class _NutritionRow extends StatelessWidget {
             child: LinearProgressIndicator(
               value: item.amount.toDouble() / maxAmount,
               minHeight: 6,
-              color: FoodDetailView.green,
-              backgroundColor: FoodDetailView.softGreen,
+              color: context.appColorScheme.primary,
+              backgroundColor: context.appSoftGreen,
             ),
           ),
         ),
@@ -333,7 +340,7 @@ class _Stats extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 16),
-    decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: FoodDetailView.divider))),
+    decoration: BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: context.appBorder))),
     child: Row(
       children: [
         _Stat(icon: Icons.schedule_rounded, label: 'Cook time', value: _withUnit(meal.cookingTimeMinutes, 'mins')),
@@ -356,9 +363,9 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
     child: Column(
       children: [
-        Icon(icon, color: FoodDetailView.green, size: 20),
+        Icon(icon, color: context.appColorScheme.primary, size: 20),
         const SizedBox(height: 7),
-        Text(label.tr, style: const TextStyle(color: FoodDetailView.muted, fontSize: 10)),
+        Text(label.tr, style: TextStyle(color: context.appMutedText, fontSize: 10)),
         const SizedBox(height: 5),
         Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: context.appText, fontSize: 12, fontWeight: FontWeight.w700)),
       ],
@@ -369,7 +376,7 @@ class _Stat extends StatelessWidget {
 class _StatDivider extends StatelessWidget {
   const _StatDivider();
   @override
-  Widget build(BuildContext context) => const SizedBox(height: 62, child: VerticalDivider(color: FoodDetailView.divider));
+  Widget build(BuildContext context) => SizedBox(height: 62, child: VerticalDivider(color: context.appBorder));
 }
 
 class _Tabs extends StatelessWidget {
@@ -382,7 +389,7 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(color: FoodDetailView.softGreen, borderRadius: BorderRadius.circular(26)),
+    decoration: BoxDecoration(color: context.appSoftGreen, borderRadius: BorderRadius.circular(26), border: Border.all(color: context.appBorder)),
     child: Row(
       children: [
         _Tab(label: 'Ingredients', count: ingredientCount, selected: selected == 0, onTap: () => onSelected(0)),
@@ -402,7 +409,7 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
     child: Material(
-      color: selected ? FoodDetailView.green : Colors.transparent,
+      color: selected ? context.appColorScheme.primary : Colors.transparent,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: onTap,
@@ -412,7 +419,7 @@ class _Tab extends StatelessWidget {
           child: Text(
             '${label.tr} - $count',
             textAlign: TextAlign.center,
-            style: TextStyle(color: selected ? Colors.white : FoodDetailView.green, fontSize: 13, fontWeight: FontWeight.w700),
+            style: TextStyle(color: selected ? context.appColorScheme.onPrimary : context.appColorScheme.primary, fontSize: 13, fontWeight: FontWeight.w700),
           ),
         ),
       ),
@@ -467,8 +474,8 @@ class _IngredientRow extends StatelessWidget {
               width: 26,
               height: 26,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(color: FoodDetailView.softGreen, shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: FoodDetailView.green, size: 15),
+              decoration: BoxDecoration(color: context.appSoftGreen, shape: BoxShape.circle),
+              child: Icon(Icons.check_rounded, color: context.appColorScheme.primary, size: 15),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -483,20 +490,20 @@ class _IngredientRow extends StatelessWidget {
             Container(
               constraints: const BoxConstraints(minWidth: 54),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(color: FoodDetailView.softGreen, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: context.appSoftGreen, borderRadius: BorderRadius.circular(10)),
               child: Text(
                 _ingredientAmount(item),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: FoodDetailView.darkGreen, fontSize: 12, fontWeight: FontWeight.w700),
+                style: TextStyle(color: context.appColorScheme.primary, fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
       ),
       if (showDivider)
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 53, right: 15),
-          child: Divider(height: 1, color: FoodDetailView.divider),
+          child: Divider(height: 1, color: context.appBorder),
         ),
     ],
   );
@@ -526,7 +533,7 @@ class _Step extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(bottom: 17),
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: FoodDetailView.divider))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.appBorder))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -534,8 +541,8 @@ class _Step extends StatelessWidget {
             width: 28,
             height: 28,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(color: FoodDetailView.softGreen, shape: BoxShape.circle),
-            child: Text('$number', style: const TextStyle(color: FoodDetailView.green, fontSize: 12, fontWeight: FontWeight.w700)),
+            decoration: BoxDecoration(color: context.appSoftGreen, shape: BoxShape.circle),
+            child: Text('$number', style: TextStyle(color: context.appColorScheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -566,11 +573,11 @@ class _ContentLoading extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 34),
     child: Center(
       child: error.isEmpty
-          ? const CircularProgressIndicator(color: FoodDetailView.green)
+          ? CircularProgressIndicator(color: context.appColorScheme.primary)
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(error, textAlign: TextAlign.center, style: const TextStyle(color: FoodDetailView.muted)),
+                Text(error, textAlign: TextAlign.center, style: TextStyle(color: context.appMutedText)),
                 TextButton(onPressed: onRetry, child: Text('Try again'.tr)),
               ],
             ),
@@ -584,7 +591,7 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 34),
-    child: Center(child: Text(message.tr, style: const TextStyle(color: FoodDetailView.muted, fontSize: 14))),
+    child: Center(child: Text(message.tr, style: TextStyle(color: context.appMutedText, fontSize: 14))),
   );
 }
 
@@ -598,7 +605,7 @@ class _LoadError extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.restaurant_menu_rounded, color: FoodDetailView.green, size: 42),
+        Icon(Icons.restaurant_menu_rounded, color: context.appColorScheme.primary, size: 42),
         const SizedBox(height: 12),
         Text(message.isEmpty ? 'Meal details are unavailable.' : message, textAlign: TextAlign.center, style: TextStyle(color: context.appMutedText, fontSize: 14)),
         TextButton(onPressed: onRetry, child: Text('Try again'.tr)),

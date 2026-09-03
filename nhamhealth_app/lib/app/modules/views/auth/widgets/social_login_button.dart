@@ -26,7 +26,9 @@ class AuthPrimaryButton extends StatelessWidget {
         onPressed: loading || !enabled ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
+          foregroundColor: context.appOnBrand,
           disabledBackgroundColor: AppColors.mutedText,
+          disabledForegroundColor: context.appOnBrand.withValues(alpha: .7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -35,11 +37,11 @@ class AuthPrimaryButton extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           child:
               loading
-                  ? const SizedBox.square(
+                  ? SizedBox.square(
                     key: ValueKey('auth-loading'),
                     dimension: 22,
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: context.appOnBrand,
                       strokeWidth: 2.4,
                     ),
                   )

@@ -37,6 +37,7 @@ class AuthTextField extends StatelessWidget {
       height: 48,
       child: TextField(
         controller: controller,
+        cursorColor: context.appColorScheme.primary,
         obscureText: obscureText,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
@@ -76,6 +77,10 @@ class AuthTextField extends StatelessWidget {
               color: hasError ? AppColors.errorCoral : AppColors.primaryGreen,
               width: 1.5,
             ),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide(color: context.appBorder),
           ),
         ),
       ),

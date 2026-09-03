@@ -92,7 +92,9 @@ abstract class AppTheme {
 
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: colorScheme.outline),
+      borderSide: BorderSide(
+        color: isDark ? colorScheme.outlineVariant : colorScheme.outline,
+      ),
     );
 
     return base.copyWith(
@@ -122,13 +124,15 @@ abstract class AppTheme {
         elevation: 0,
       ),
       cardTheme: CardThemeData(
-        color: colorScheme.surface,
+        color: isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outline),
+          side: BorderSide(
+            color: isDark ? colorScheme.outlineVariant : colorScheme.outline,
+          ),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -146,7 +150,10 @@ abstract class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest,
+        fillColor:
+            isDark
+                ? colorScheme.surfaceContainerHigh
+                : colorScheme.surfaceContainerHighest,
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(

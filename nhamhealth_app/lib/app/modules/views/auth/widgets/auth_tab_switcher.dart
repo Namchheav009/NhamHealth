@@ -78,7 +78,7 @@ class _Tab extends StatelessWidget {
             child: Text(
               label.tr,
               style: TextStyle(
-                color: selected ? Colors.white : context.appText,
+                color: selected ? context.appOnBrand : context.appText,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),

@@ -4,7 +4,7 @@ import '../../../widgets/favorite_removal_confirmation.dart';
 
 import '../home/home_controller.dart';
 import '../../models/favorites/favorite_food.dart';
-import '../../models/favorites/favorite_post.dart';
+import '../../models/recipes/community_recipe.dart';
 import '../../repositories/favorites/favorites_repository.dart';
 
 enum FavoritesTab { foods, posts }
@@ -16,47 +16,21 @@ class FavoritesController extends GetxController {
 
   final FavoritesRepository repository;
   final selectedTab = FavoritesTab.foods.obs;
-  final hiddenPostIds = <int>{}.obs;
   final selectedFoodCategories = <String>{}.obs;
   final postSort = FavoritePostSort.newest.obs;
   final foods = <FavoriteFood>[].obs;
   final foodCategories = <String>['All'].obs;
   final isLoading = false.obs;
 
-  final posts = const <FavoritePost>[
-    FavoritePost(
-      id: 1,
-      author: 'Sophia Martinez',
-      role: 'Nutritionist',
-      timeAgo: '2h ago',
-      title: 'Healthy breakfast idea!',
-      body:
-          'Avocado toast with poached egg and fresh fruits.\nSimple, quick and nutritious!',
-      image: 'assets/images/meals/healthy_salad.jpg',
-      likes: 1000,
-      comments: 200,
-      shares: 10,
-    ),
-    FavoritePost(
-      id: 2,
-      author: 'Sophia Martinez',
-      role: 'Nutritionist',
-      timeAgo: '6h ago',
-      title: 'A colorful snack for today!',
-      body:
-          'Fresh fruit is an easy way to add more fiber and vitamins to your day.',
-      image: 'assets/images/homepage/healthy_salad.png',
-      likes: 824,
-      comments: 96,
-      shares: 18,
-    ),
-  ];
+  final posts = <CommunityRecipe>[].obs;
+  final isPostsLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadFoods();
     loadFoodCategories();
+    loadPosts();
   }
 
   Future<void> loadFoods() async {
@@ -84,7 +58,27 @@ class FavoritesController extends GetxController {
     }
   }
 
-  void selectTab(FavoritesTab tab) => selectedTab.value = tab;
+  Future<void> loadPosts() async {
+    if (isPostsLoading.value) return;
+    isPostsLoading.value = true;
+    try {
+      posts.assignAll(await repository.getPosts());
+    } on Object catch (error) {
+      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+    } finally {
+      isPostsLoading.value = false;
+    }
+  }
+
+  Future<void> refresh() async {
+    await Future.wait([loadFoods(), loadFoodCategories(), loadPosts()]);
+  }
+
+  void selectTab(FavoritesTab tab) {
+    selectedTab.value = tab;
+    if (tab == FavoritesTab.posts && posts.isEmpty) loadPosts();
+  }
+
   void applyFoodCategories(Set<String> categories) {
     selectedFoodCategories.assignAll(categories.where(foodCategories.contains));
   }
@@ -109,5 +103,15 @@ class FavoritesController extends GetxController {
     }
   }
 
-  void removePost(int id) => hiddenPostIds.add(id);
+  Future<void> removePost(int id) async {
+    final index = posts.indexWhere((post) => post.id == id);
+    if (index < 0 || !await confirmFavoriteRemoval()) return;
+    final removed = posts.removeAt(index);
+    try {
+      await repository.removePost(id);
+    } on Object catch (error) {
+      posts.insert(index, removed);
+      AppAlert.error(title: 'Favorite not removed', message: error.toString());
+    }
+  }
 }

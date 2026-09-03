@@ -6,8 +6,11 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../routes/app_routes.dart';
 
 import '../../controllers/favorites/favorites_controller.dart';
+import '../../models/favorites/favorite_food.dart';
+import '../../models/meals/meal_model.dart';
 import 'widgets/favorite_food_card.dart';
 import 'widgets/favorite_post_card.dart';
 import 'widgets/favorites_tab_switcher.dart';
@@ -105,31 +108,37 @@ class FavoritesView extends GetView<FavoritesController> {
                       : 'No foods match these filters',
             );
           }
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = switch (constraints.maxWidth) {
-                < 330 => 2,
-                < AppSpacing.tabletBreakpoint => 3,
-                _ => 4,
-              };
-              final cardWidth =
-                  (constraints.maxWidth - ((columns - 1) * 8)) / columns;
-              return GridView.builder(
-                padding: const EdgeInsets.only(bottom: 24),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 10,
-                  mainAxisExtent: cardWidth * 1.48,
-                ),
-                itemCount: visible.length,
-                itemBuilder:
-                    (_, index) => FavoriteFoodCard(
-                      food: visible[index],
-                      onRemove: () => controller.removeFood(visible[index].id),
-                    ),
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: controller.refresh,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = switch (constraints.maxWidth) {
+                  < 330 => 2,
+                  < AppSpacing.tabletBreakpoint => 3,
+                  _ => 4,
+                };
+                final cardWidth =
+                    (constraints.maxWidth - ((columns - 1) * 8)) / columns;
+                return GridView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 24),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 10,
+                    mainAxisExtent: cardWidth * 1.48,
+                  ),
+                  itemCount: visible.length,
+                  itemBuilder:
+                      (_, index) => FavoriteFoodCard(
+                        food: visible[index],
+                        onOpen: () => _openFood(visible[index]),
+                        onRemove:
+                            () => controller.removeFood(visible[index].id),
+                      ),
+                );
+              },
+            ),
           );
         }),
       ),
@@ -148,28 +157,40 @@ class FavoritesView extends GetView<FavoritesController> {
       const SizedBox(height: 10),
       Expanded(
         child: Obx(() {
-          final visible =
-              controller.posts
-                  .where((post) => !controller.hiddenPostIds.contains(post.id))
-                  .toList()
-                ..sort(
-                  (a, b) =>
-                      controller.postSort.value == FavoritePostSort.newest
-                          ? a.id.compareTo(b.id)
-                          : b.id.compareTo(a.id),
-                );
+          final visible = controller.posts.toList()
+            ..sort((a, b) {
+              final aDate = a.updatedAt ?? a.publishedAt ?? a.createdAt;
+              final bDate = b.updatedAt ?? b.publishedAt ?? b.createdAt;
+              final comparison = (bDate ?? DateTime(1970)).compareTo(
+                aDate ?? DateTime(1970),
+              );
+              return controller.postSort.value == FavoritePostSort.newest
+                  ? comparison
+                  : -comparison;
+            });
+          if (controller.isPostsLoading.value && visible.isEmpty) {
+            return const PageSkeleton.favorites();
+          }
           if (visible.isEmpty) {
             return const _EmptyFavorites(message: 'No favorite posts yet');
           }
-          return ListView.separated(
-            padding: const EdgeInsets.only(bottom: 24),
-            itemCount: visible.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder:
-                (_, index) => FavoritePostCard(
-                  post: visible[index],
-                  onRemove: () => controller.removePost(visible[index].id),
-                ),
+          return RefreshIndicator(
+            onRefresh: controller.refresh,
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 24),
+              itemCount: visible.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder:
+                  (_, index) => FavoritePostCard(
+                    post: visible[index],
+                    onOpen:
+                        visible[index].postId == null
+                            ? null
+                            : () => _openPost(visible[index].postId!),
+                    onRemove: () => controller.removePost(visible[index].id),
+                  ),
+            ),
           );
         }),
       ),
@@ -285,6 +306,27 @@ class FavoritesView extends GetView<FavoritesController> {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black45,
     );
+  }
+
+  Future<void> _openFood(FavoriteFood food) async {
+    await Get.toNamed<void>(
+      AppRoutes.foodDetail,
+      arguments: MealModel(
+        id: food.id,
+        name: food.name,
+        calories: food.calories,
+        image: food.image,
+        category: food.category,
+        categoryId: 0,
+        isFavorite: true,
+      ),
+    );
+    await controller.loadFoods();
+  }
+
+  Future<void> _openPost(int postId) async {
+    await Get.toNamed<void>(AppRoutes.communityPostPath(postId));
+    await controller.loadPosts();
   }
 }
 

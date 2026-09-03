@@ -32,22 +32,18 @@ class AppSearchBar extends StatelessWidget {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.94),
+        color: context.appSearchSurface.withValues(alpha: isDark ? .97 : .94),
         borderRadius: BorderRadius.circular(18),
         border:
             useSoftHomeStyle && !isDark
                 ? null
-                : Border.all(color: colors.outline),
+                : Border.all(
+                  color: isDark ? colors.outlineVariant : colors.outline,
+                ),
         boxShadow:
             useSoftHomeStyle
                 ? context.appHomeCardShadow
-                : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                : context.appCardShadow,
       ),
       child: Row(
         children: [

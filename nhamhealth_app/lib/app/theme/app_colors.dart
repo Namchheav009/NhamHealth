@@ -53,7 +53,12 @@ extension AppColorContext on BuildContext {
 
   /// A quiet surface for inputs and controls nested inside a card.
   Color get appField =>
-      appIsDark ? appColorScheme.surfaceContainerHighest : AppColors.field;
+      appIsDark ? appColorScheme.surfaceContainerHigh : AppColors.field;
+
+  /// Surface used by search controls. It is slightly elevated from the page
+  /// in dark mode without becoming a bright grey block.
+  Color get appSearchSurface =>
+      appIsDark ? appColorScheme.surfaceContainerHigh : AppColors.cardSurface;
 
   /// A slightly tinted page section. This replaces fixed near-white fills
   /// that become glaring blocks when the rest of the app is dark.

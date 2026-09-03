@@ -9,20 +9,26 @@ class FavoriteFoodCard extends StatelessWidget {
   const FavoriteFoodCard({
     super.key,
     required this.food,
+    required this.onOpen,
     required this.onRemove,
   });
   final FavoriteFood food;
+  final VoidCallback onOpen;
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: context.appElevatedSurface.withValues(alpha: .94),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: context.appBorder),
-    ),
+  Widget build(BuildContext context) => Material(
+    color: context.appElevatedSurface.withValues(alpha: .94),
+    borderRadius: BorderRadius.circular(14),
     clipBehavior: Clip.antiAlias,
-    child: Column(
+    child: InkWell(
+      onTap: onOpen,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -110,7 +116,9 @@ class FavoriteFoodCard extends StatelessWidget {
             ],
           ),
         ),
-      ],
+          ],
+        ),
+      ),
     ),
   );
 }
@@ -118,10 +126,10 @@ class FavoriteFoodCard extends StatelessWidget {
 class _FoodFallback extends StatelessWidget {
   const _FoodFallback();
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-    color: Color(0xFFEAF4EE),
-    child: Center(
-      child: Icon(Icons.restaurant_rounded, color: Color(0xFF0AA653)),
+  Widget build(BuildContext context) => ColoredBox(
+    color: context.appSoftGreen,
+    child: const Center(
+      child: Icon(Icons.restaurant_rounded, color: AppColors.primaryGreen),
     ),
   );
 }

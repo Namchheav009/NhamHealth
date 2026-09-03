@@ -31,14 +31,14 @@ class CaloriesAiInsightCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Transform.translate(
-                offset: const Offset(-10, 0),
-                child: SizedBox(
-                  width: 130,
-                  height: 130,
+              SizedBox(
+                width: 104,
+                height: 112,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
                   child: Image.asset(
-                    'assets/images/wellness/ai_search.png',
-                    fit: BoxFit.cover,
+                    'assets/images/wellness/ai_robot.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),

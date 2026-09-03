@@ -24,6 +24,7 @@ class ProfilePostCard extends StatelessWidget {
     this.isLiking = false,
     required this.onComment,
     required this.onShare,
+    this.onFavorite,
     super.key,
   });
 
@@ -42,6 +43,7 @@ class ProfilePostCard extends StatelessWidget {
   final bool isLiking;
   final VoidCallback onComment;
   final VoidCallback onShare;
+  final VoidCallback? onFavorite;
 
   static const green = Color(0xFF009B46);
 
@@ -149,6 +151,25 @@ class ProfilePostCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                if (onFavorite != null)
+                  IconButton(
+                    tooltip:
+                        post.isSaved
+                            ? 'Remove from favorites'
+                            : 'Add to favorites',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onFavorite,
+                    icon: Icon(
+                      post.isSaved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 22,
+                      color:
+                          post.isSaved
+                              ? AppColors.primaryGreen
+                              : context.appMutedText,
                     ),
                   ),
                 if (onOptions != null || onEdit != null || onDelete != null)
