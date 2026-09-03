@@ -303,12 +303,13 @@ public class CommunityService {
             throw new ResponseStatusException(NOT_FOUND, "Post not found");
         }
 
+        User actor = user(userId);
         Recipe shared = new Recipe();
         LocalDateTime now = LocalDateTime.now();
         Recipe original = originalSharedSource(source);
         original.setShareCount(original.getShareCount() + 1);
         recipes.save(original);
-        shared.setAuthor(user(userId));
+        shared.setAuthor(actor);
         shared.setCategory(source.getCategory());
         shared.setSharedFrom(original);
         shared.setRecipeName(source.getRecipeName());
@@ -328,6 +329,7 @@ public class CommunityService {
         copyIngredients(source, shared);
         copySteps(source, shared);
         copyTags(source, shared);
+        communityNotifications.postShared(actor, sourcePost);
 
         Post sharedPost = posts.findByRecipeRecipeId(shared.getRecipeId())
                 .orElseThrow(() -> new IllegalStateException("The shared post could not be created."));

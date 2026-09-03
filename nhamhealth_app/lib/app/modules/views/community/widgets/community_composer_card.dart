@@ -14,61 +14,62 @@ class CommunityComposerCard extends StatelessWidget {
   final String authorAvatarUrl;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: context.appBorder),
-                  ),
-                  child: ClipOval(
-                    child:
-                        authorAvatarUrl.isEmpty
-                            ? Container(
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: context.appBorder),
+              ),
+              child: ClipOval(
+                child:
+                    authorAvatarUrl.isEmpty
+                        ? Container(
+                          color: context.appSoftGreen,
+                          child: const Icon(
+                            Icons.person_outline_rounded,
+                            size: 22,
+                            color: AppColors.primaryGreen,
+                          ),
+                        )
+                        : Image.network(
+                          authorAvatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, _, _) => Container(
                                 color: context.appSoftGreen,
                                 child: const Icon(
                                   Icons.person_outline_rounded,
                                   size: 22,
                                   color: AppColors.primaryGreen,
                                 ),
-                              )
-                            : Image.network(
-                                authorAvatarUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (_, _, _) => Container(
-                                      color: context.appSoftGreen,
-                                      child: const Icon(
-                                        Icons.person_outline_rounded,
-                                        size: 22,
-                                        color: AppColors.primaryGreen,
-                                      ),
-                                    ),
                               ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+                        ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Material(
+                color:
+                    context.appIsDark
+                        ? context.appColorScheme.surfaceContainerHigh
+                        : const Color(0xFFF3F6F3),
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(24),
                   child: Container(
                     height: 46,
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color:
-                          context.appIsDark
-                              ? context.appColorScheme.surfaceContainerHigh
-                              : const Color(0xFFF3F6F3),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: context.appBorder),
                     ),
@@ -83,31 +84,28 @@ class CommunityComposerCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _ComposerAction(
-                    icon: Icons.image_outlined,
-                    label: 'Photo'.tr,
-                    onTap: onTap,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ComposerAction(
-                    icon: Icons.forum_outlined,
-                    label: 'Ask community'.tr,
-                    onTap: onTap,
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ComposerAction(
+              icon: Icons.image_outlined,
+              label: 'Photo'.tr,
+              onTap: onTap,
+            ),
+            const SizedBox(width: 8),
+            _ComposerAction(
+              icon: Icons.forum_outlined,
+              label: 'Ask community'.tr,
+              onTap: onTap,
+            ),
+          ],
+        ),
+      ],
     ),
   );
 }
@@ -138,20 +136,18 @@ class _ComposerAction extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: AppColors.primaryGreen),
               const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],

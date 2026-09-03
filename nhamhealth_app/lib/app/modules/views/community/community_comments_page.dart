@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,6 +16,8 @@ import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_reply_address.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
+import '../../../../core/services/push_notification_service.dart';
 import 'community_post_editor_page.dart';
 import 'community_report_page.dart';
 import 'community_share_actions.dart';
@@ -63,6 +66,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   bool _updatingPost = false;
   bool _recipeDetailsExpanded = true;
   late CommunityPost _post;
+  StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
 
   @override
   void initState() {
@@ -70,6 +74,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     _post = widget.post.copyWith();
     _repository = Get.find<CommunityRepository>();
     _loadComments();
+    _realtimeSubscription = PushNotificationService.instance?.events.listen(
+      _handleRealtimeEvent,
+    );
   }
 
   @override
@@ -85,7 +92,33 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     _message.dispose();
     _composerFocus.dispose();
     _scrollController.dispose();
+    _realtimeSubscription?.cancel();
     super.dispose();
+  }
+
+  void _handleRealtimeEvent(NotificationRealtimeEvent event) {
+    if (event.referenceType != 'POST' ||
+        event.referenceId?.toString() != _post.id) {
+      return;
+    }
+    unawaited(_refreshDiscussion());
+  }
+
+  Future<void> _refreshDiscussion() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        _repository.getPost(_post.id),
+        _repository.getComments(_post.id),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _post = (results[0] as CommunityPost).copyWith();
+        _comments = results[1] as List<CommunityComment>;
+      });
+      widget.onPostChanged?.call();
+    } on Object {
+      // Keep the current discussion visible if a realtime refresh fails.
+    }
   }
 
   Future<void> _loadComments() async {
@@ -1018,26 +1051,26 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     bottomLeft: Radius.circular(17),
                     bottomRight: Radius.circular(17),
                   ),
-                  border: Border.all(color: const Color(0xFFE4ECE6)),
+                  border: Border.all(color: context.appBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       comment.author,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1D2922),
+                        color: context.appText,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       comment.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
-                        color: Color(0xFF505951),
+                        color: context.appText.withValues(alpha: .88),
                       ),
                     ),
                   ],
@@ -1048,9 +1081,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 children: [
                   Text(
                     _commentAge(comment.createdAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF8B938D),
+                      color: context.appMutedText,
                     ),
                   ),
                   const SizedBox(width: 18),
@@ -1087,7 +1120,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 color:
                     comment.isLiked
                         ? const Color(0xFFE2344A)
-                        : const Color(0xFF758078),
+                        : context.appMutedText,
               ),
               iconSize: 20,
               visualDensity: VisualDensity.compact,
@@ -1096,7 +1129,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             if (comment.likes > 0)
               Text(
                 '${comment.likes}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF758078)),
+                style: TextStyle(fontSize: 11, color: context.appMutedText),
               ),
             SizedBox(
               width: 36,
@@ -1105,10 +1138,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 onPressed: () => _showCommentOptions(comment),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(
+                icon: Icon(
                   Icons.more_horiz_rounded,
                   size: 20,
-                  color: Color(0xFF758078),
+                  color: context.appMutedText,
                 ),
                 tooltip: 'Comment options'.tr,
               ),
@@ -1230,7 +1263,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Widget _avatar(String url, {required double radius}) => CircleAvatar(
     radius: radius,
-    backgroundColor: const Color(0xFFEAF7EE),
+    backgroundColor: context.appSoftGreen,
     backgroundImage: url.isEmpty ? null : NetworkImage(url),
     child:
         url.isEmpty
@@ -1384,9 +1417,9 @@ class _DiscussionMetricDivider extends StatelessWidget {
   const _DiscussionMetricDivider();
 
   @override
-  Widget build(BuildContext context) => const SizedBox(
+  Widget build(BuildContext context) => SizedBox(
     height: 18,
-    child: VerticalDivider(width: 1, color: Color(0xFFDCE6DF)),
+    child: VerticalDivider(width: 1, color: context.appBorder),
   );
 }
 
@@ -1427,7 +1460,7 @@ class _CommentOptionsSheet extends StatelessWidget {
               width: 42,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFF9AA19C),
+                color: context.appMutedText.withValues(alpha: .55),
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -1440,9 +1473,10 @@ class _CommentOptionsSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
                   title!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
+                    color: context.appText,
                   ),
                 ),
               ),
@@ -1451,7 +1485,7 @@ class _CommentOptionsSheet extends StatelessWidget {
           ],
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F6F4),
+              color: context.appMutedSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -1468,7 +1502,7 @@ class _CommentOptionsSheet extends StatelessWidget {
                       color:
                           actions[index].isDestructive
                               ? const Color(0xFFD94545)
-                              : const Color(0xFF18231C),
+                              : context.appText,
                       size: 27,
                     ),
                     title: Text(
@@ -1477,17 +1511,17 @@ class _CommentOptionsSheet extends StatelessWidget {
                         color:
                             actions[index].isDestructive
                                 ? const Color(0xFFD94545)
-                                : const Color(0xFF18231C),
+                                : context.appText,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   if (index < actions.length - 1)
-                    const Divider(
+                    Divider(
                       height: 1,
                       indent: 64,
-                      color: Color(0xFFE0E5E1),
+                      color: context.appBorder,
                     ),
                 ],
               ],

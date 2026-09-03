@@ -146,7 +146,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
           TextField(
             key: const ValueKey<String>('community-share-message'),
             controller: _message,
-            autofocus: true,
+            autofocus: false,
             minLines: 3,
             maxLines: 7,
             textCapitalization: TextCapitalization.sentences,

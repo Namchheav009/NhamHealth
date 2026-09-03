@@ -6,6 +6,7 @@ enum NotificationAction {
   like,
   comment,
   reply,
+  share,
   follow,
   recommendation,
   wellness,
@@ -118,6 +119,7 @@ class NotificationItem {
     if (copy.contains('replied')) return NotificationAction.reply;
     if (copy.contains('commented')) return NotificationAction.comment;
     if (copy.contains('liked')) return NotificationAction.like;
+    if (copy.contains('shared')) return NotificationAction.share;
     if (copy.contains('following') || copy.contains('followed')) {
       return NotificationAction.follow;
     }
@@ -133,6 +135,7 @@ class NotificationItem {
     NotificationAction.like => Icons.favorite_rounded,
     NotificationAction.comment => Icons.chat_bubble_rounded,
     NotificationAction.reply => Icons.reply_rounded,
+    NotificationAction.share => Icons.share_rounded,
     NotificationAction.follow => Icons.person_add_rounded,
     NotificationAction.recommendation => Icons.auto_awesome_rounded,
     NotificationAction.wellness => Icons.favorite_rounded,
@@ -143,6 +146,7 @@ class NotificationItem {
     NotificationAction.like => const Color(0xFFFF3B5C),
     NotificationAction.comment => const Color(0xFF2E8BFF),
     NotificationAction.reply => const Color(0xFF8B5CF6),
+    NotificationAction.share => const Color(0xFF00A7A0),
     NotificationAction.follow => const Color(0xFF00A651),
     NotificationAction.recommendation => const Color(0xFFFF9800),
     NotificationAction.wellness => const Color(0xFF4396FF),
@@ -153,6 +157,7 @@ class NotificationItem {
     NotificationAction.like => 'Like',
     NotificationAction.comment => 'Comment',
     NotificationAction.reply => 'Reply',
+    NotificationAction.share => 'Share',
     NotificationAction.follow => 'New follower',
     NotificationAction.recommendation => 'For you',
     NotificationAction.wellness => 'Wellness',

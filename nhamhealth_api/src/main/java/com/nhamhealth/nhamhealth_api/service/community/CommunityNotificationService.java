@@ -49,6 +49,10 @@ public class CommunityNotificationService {
         send(actor, comment.getUser(), "POST", comment.getPost().getPostId(), "liked your comment.");
     }
 
+    public void postShared(User actor, Post post) {
+        send(actor, post.getUser(), "POST", post.getPostId(), "shared your post.");
+    }
+
     public void followed(User actor, User recipient) {
         send(actor, recipient, "USER", actor.getUserId(), "started following you.");
     }

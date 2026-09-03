@@ -826,21 +826,19 @@ class CommunityPage extends GetView<CommunityController> {
     return Obx(() {
       final selectedFilter = controller.feedFilter.value;
 
-      return Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          children: List.generate(CommunityFeedFilter.values.length, (index) {
-            final filter = CommunityFeedFilter.values[index];
-            final selected = selectedFilter == filter;
-            final borderRadius = BorderRadius.circular(24);
+      return SizedBox(
+        height: 42,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: List.generate(CommunityFeedFilter.values.length, (index) {
+              final filter = CommunityFeedFilter.values[index];
+              final selected = selectedFilter == filter;
+              final borderRadius = BorderRadius.circular(21);
 
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: index == 2 ? 0 : 6),
+              return Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
                 child: Semantics(
                   selected: selected,
                   button: true,
@@ -856,7 +854,8 @@ class CommunityPage extends GetView<CommunityController> {
                       onTap: () => controller.selectFeedFilter(filter),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 17),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color:
@@ -880,7 +879,7 @@ class CommunityPage extends GetView<CommunityController> {
                                 selected
                                     ? colors.primary
                                     : colors.onSurfaceVariant,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight:
                                 selected ? FontWeight.w800 : FontWeight.w600,
                           ),
@@ -889,9 +888,9 @@ class CommunityPage extends GetView<CommunityController> {
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       );
     });

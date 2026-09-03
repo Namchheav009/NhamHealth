@@ -178,6 +178,7 @@ class CommunityController extends GetxController {
     await Future.wait<void>([
       _refreshUnreadNotificationCount(),
       _refreshCommunityNotifications(showAlert: false),
+      if (event.referenceType == 'POST') _refreshPosts(),
       if (event.referenceType == 'USER') _refreshPeople(),
     ]);
   }
