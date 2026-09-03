@@ -955,11 +955,8 @@ class CommunityPage extends GetView<CommunityController> {
         onRelationshipTap: () => _toggleAuthorRelationship(post),
         onViewDetails: () => _showComments(post),
         onLike: () => controller.togglePostLike(post),
-<<<<<<< HEAD
         onFavorite: () => controller.togglePostSaved(post),
-=======
         onShowLikes: () => _showPostLikers(post),
->>>>>>> 053bcb91c1382e68504da9fe35b155f485474d46
         onComment: () => _showComments(post),
         onShare: () => _showShareOptions(post),
         onOptions: () => _showPostOptions(post),
