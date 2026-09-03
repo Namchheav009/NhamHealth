@@ -286,25 +286,30 @@ class _NotificationLeading extends StatelessWidget {
                             : AppColors.primaryGreen,
                   ),
         ),
-        if (notification.hasMessageBadge)
-          Positioned(
-            right: -2,
-            bottom: -1,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E8BFF),
-                shape: BoxShape.circle,
-                border: Border.all(color: context.appSurface, width: 2),
-              ),
-              child: const Icon(
-                Icons.chat_bubble_rounded,
-                size: 11,
-                color: Colors.white,
-              ),
+        Positioned(
+          right: -2,
+          bottom: -1,
+          child: Container(
+            width: 23,
+            height: 23,
+            decoration: BoxDecoration(
+              color: notification.actionColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.appSurface, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: notification.actionColor.withValues(alpha: 0.22),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Icon(
+              notification.actionIcon,
+              size: 12,
+              color: Colors.white,
             ),
           ),
+        ),
       ],
     );
   }
@@ -382,18 +387,45 @@ class _NotificationCopy extends StatelessWidget {
           style: const TextStyle(fontSize: 14, height: 1.25),
         ),
         const SizedBox(height: 5),
-        Text(
-          notification.time.tr,
-          style: TextStyle(
-            color:
-                notification.isUnread
-                    ? AppColors.primaryGreen
-                    : context.appMutedText,
-            fontSize: 12,
-            fontWeight:
-                notification.isUnread ? FontWeight.w700 : FontWeight.w500,
-            height: 1,
-          ),
+        Row(
+          children: [
+            Text(
+              notification.time.tr,
+              style: TextStyle(
+                color:
+                    notification.isUnread
+                        ? AppColors.primaryGreen
+                        : context.appMutedText,
+                fontSize: 12,
+                fontWeight:
+                    notification.isUnread ? FontWeight.w700 : FontWeight.w500,
+                height: 1,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              width: 3,
+              height: 3,
+              decoration: BoxDecoration(
+                color: context.appMutedText,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                notification.actionLabel.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: notification.actionColor,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

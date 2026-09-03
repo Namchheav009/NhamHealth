@@ -7,13 +7,13 @@ class MealSectionHeader extends StatelessWidget {
   const MealSectionHeader({
     super.key,
     required this.title,
-    required this.onSeeAll,
+    this.onSeeAll,
     this.actionLabel = 'See all',
     this.actionEnabled = true,
   });
 
   final String title;
-  final VoidCallback onSeeAll;
+  final VoidCallback? onSeeAll;
   final String actionLabel;
   final bool actionEnabled;
 
@@ -31,22 +31,23 @@ class MealSectionHeader extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(
-          onPressed: actionEnabled ? onSeeAll : null,
-          style: TextButton.styleFrom(
-            minimumSize: const Size(0, 32),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            actionLabel.tr,
-            style: const TextStyle(
-              color: AppColors.primaryGreen,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+        if (onSeeAll != null)
+          TextButton(
+            onPressed: actionEnabled ? onSeeAll : null,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              actionLabel.tr,
+              style: const TextStyle(
+                color: AppColors.primaryGreen,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
       ],
     );
   }

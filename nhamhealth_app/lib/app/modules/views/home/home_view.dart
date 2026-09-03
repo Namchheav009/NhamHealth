@@ -15,6 +15,7 @@ import 'widgets/home_bottom_navigation.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_search_bar.dart';
 import 'widgets/recommended_meal_card.dart';
+import 'widgets/time_greeting.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -113,6 +114,8 @@ class _HomeDashboardContent extends StatelessWidget {
           return const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              RepaintBoundary(child: TimeGreeting()),
+              SizedBox(height: 14),
               RepaintBoundary(child: HomeSearchBar()),
               SizedBox(height: 14),
               RepaintBoundary(child: GreetingSection()),
@@ -129,8 +132,6 @@ class _HomeDashboardContent extends StatelessWidget {
           key: ValueKey<String>('home-tablet-layout'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RepaintBoundary(child: HomeSearchBar()),
-            SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -138,6 +139,10 @@ class _HomeDashboardContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      RepaintBoundary(child: TimeGreeting()),
+                      SizedBox(height: 16),
+                      RepaintBoundary(child: HomeSearchBar()),
+                      SizedBox(height: 16),
                       RepaintBoundary(child: GreetingSection()),
                       SizedBox(height: 16),
                       RepaintBoundary(child: AiRecommendationCard()),
@@ -221,28 +226,6 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     ],
                   ),
                 ),
-                if (meals.isNotEmpty)
-                  IconButton(
-                    onPressed:
-                        controller.isRecommendedMealsLoading.value
-                            ? null
-                            : controller.getRecommendation,
-                    style: IconButton.styleFrom(
-                      foregroundColor: AppColors.primaryGreen,
-                      backgroundColor: context.appSoftGreen,
-                      disabledBackgroundColor: context.appMutedSurface,
-                      minimumSize: const Size(38, 38),
-                      maximumSize: const Size(38, 38),
-                    ),
-                    tooltip: 'Refresh'.tr,
-                    icon:
-                        controller.isRecommendedMealsLoading.value
-                            ? const SizedBox.square(
-                              dimension: 17,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Icon(Icons.refresh_rounded, size: 20),
-                  ),
               ],
             ),
             if (meals.isNotEmpty) ...[

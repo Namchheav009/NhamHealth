@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../modules/models/auth/authenticated_user_model.dart';
 import '../modules/views/home/widgets/authenticated_user_avatar.dart';
+import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
@@ -13,12 +14,14 @@ class NhamAppBar extends StatelessWidget {
     required this.unreadNotificationCount,
     required this.onNotifications,
     required this.onProfile,
+    this.onFavorites,
   });
 
   final AuthenticatedUser? user;
   final int unreadNotificationCount;
   final VoidCallback onNotifications;
   final VoidCallback onProfile;
+  final VoidCallback? onFavorites;
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +32,16 @@ class NhamAppBar extends StatelessWidget {
         width: double.infinity,
         height: AppSpacing.topBarHeight,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+          padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(
             children: [
               Image.asset(
                 'assets/icons/logo.png',
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
               const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +69,7 @@ class NhamAppBar extends StatelessWidget {
               const Spacer(),
               Container(
                 height: 46,
-                padding: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
                   color: colors.surface.withValues(alpha: 0.86),
                   borderRadius: BorderRadius.circular(24),
@@ -83,16 +86,53 @@ class NhamAppBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // const _ChatButton(),
+                    _FavoritesButton(
+                      onTap:
+                          onFavorites ??
+                          () => Get.toNamed<void>(AppRoutes.favorites),
+                    ),
+                    const SizedBox(width: 2),
                     _NotificationButton(
                       count: unreadNotificationCount,
                       onTap: onNotifications,
                     ),
+                    const SizedBox(width: 2),
                     _ProfileButton(user: user, onTap: onProfile),
                   ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FavoritesButton extends StatelessWidget {
+  const _FavoritesButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return _Button(
+      key: const ValueKey('favorites-button'),
+      tooltip: 'favorites'.tr,
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.favorite_outline_rounded,
+          size: 22,
+          color: AppColors.favoriteRed,
         ),
       ),
     );
@@ -130,27 +170,28 @@ class _NotificationButton extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          right: 1,
-          top: -1,
-          child: Container(
-            constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFD32F2F),
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              count > 99 ? '99+' : '${count.clamp(0, 99)}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
+        if (count > 0)
+          Positioned(
+            right: 1,
+            top: -1,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Color(0xFFD32F2F),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                count > 99 ? '99+' : '${count.clamp(1, 99)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

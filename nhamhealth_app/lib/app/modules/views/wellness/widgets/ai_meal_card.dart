@@ -36,10 +36,10 @@ class AiMealCard extends GetView<WellnessController> {
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: Image.asset(
-                'assets/images/wellness/ai_robot.png',
+                'assets/images/wellness/ai_search.png',
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
-                semanticLabel: 'AI food assistant',
+                semanticLabel: 'AI food search assistant',
               ),
             ),
           ),

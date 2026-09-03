@@ -12,6 +12,7 @@ class HomeHeader extends GetView<HomeController> {
     () => NhamAppBar(
       user: controller.authenticatedUser.value,
       unreadNotificationCount: controller.unreadNotificationCount.value,
+      onFavorites: controller.openFavorites,
       onNotifications: controller.openNotifications,
       onProfile: controller.openProfile,
     ),

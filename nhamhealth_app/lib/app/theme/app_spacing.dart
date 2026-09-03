@@ -15,11 +15,11 @@ abstract final class AppSpacing {
       maxWideContentWidth + (tabletPageHorizontal * 2);
   static const double maxPaddedContentWidth =
       maxContentWidth + (pageHorizontal * 2);
-  static const double topBarHeight = 60;
-  static const double topBarBottom = 16;
-  static const double navigationHorizontal = 25;
-  static const double navigationBottom = 14;
-  static const double navigationBarHeight = 84;
+  static const double topBarHeight = 64;
+  static const double topBarBottom = 14;
+  static const double navigationHorizontal = 16;
+  static const double navigationBottom = 10;
+  static const double navigationBarHeight = 82;
   static const double navigationContentGap = 16;
 
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(

@@ -49,23 +49,36 @@ class _Tab extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Material(
-      color: active ? const Color(0xFF0AA653) : Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
-        child: Center(
-          child: Text(
-            label.tr,
-            style: TextStyle(
-              color: active ? Colors.white : context.appText,
-              fontWeight: FontWeight.w600,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color:
+                  active
+                      ? colors.primaryContainer.withValues(alpha: 0.42)
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              label.tr,
+              style: TextStyle(
+                color: active ? colors.primary : colors.onSurfaceVariant,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

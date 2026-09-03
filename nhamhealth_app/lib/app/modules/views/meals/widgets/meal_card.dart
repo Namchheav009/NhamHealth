@@ -55,7 +55,7 @@ class MealCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           height: 1.15,
                           fontWeight: FontWeight.w600,
                           color: context.appText,
@@ -78,7 +78,7 @@ class MealCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.primaryGreen,
-                            fontSize: 10,
+                            fontSize: 10.5,
                             height: 1.15,
                             fontWeight: FontWeight.w500,
                           ),
@@ -99,7 +99,7 @@ class MealCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 color: context.appMutedText,
                               ),
                             ),
@@ -115,7 +115,7 @@ class MealCard extends StatelessWidget {
                             Text(
                               '$minutes min',
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 color: context.appMutedText,
                               ),
                             ),

@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 
-class AppSearchBar extends StatelessWidget {
+class AppSearchBar extends StatefulWidget {
   const AppSearchBar({
     super.key,
     required this.hintText,
@@ -26,43 +26,96 @@ class AppSearchBar extends StatelessWidget {
   final Widget? trailing;
 
   @override
+  State<AppSearchBar> createState() => _AppSearchBarState();
+}
+
+class _AppSearchBarState extends State<AppSearchBar> {
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  void _handleFocusChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 56,
+    final focused = _focusNode.hasFocus;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      height: 54,
       decoration: BoxDecoration(
         color: context.appSearchSurface.withValues(alpha: isDark ? .97 : .94),
         borderRadius: BorderRadius.circular(18),
         border:
-            useSoftHomeStyle && !isDark
+            widget.useSoftHomeStyle && !isDark && !focused
                 ? null
                 : Border.all(
-                  color: isDark ? colors.outlineVariant : colors.outline,
+                  color:
+                      focused
+                          ? colors.primary
+                          : isDark
+                          ? colors.outlineVariant
+                          : colors.outline,
+                  width: focused ? 1.5 : 1,
                 ),
         boxShadow:
-            useSoftHomeStyle
+            widget.useSoftHomeStyle
                 ? context.appHomeCardShadow
-                : context.appCardShadow,
+                : focused
+                ? [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: .12),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+                : context.appTileShadow,
       ),
       child: Row(
         children: [
-          const SizedBox(width: 18),
-          Icon(Icons.search_rounded, color: colors.onSurfaceVariant, size: 24),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            child: Icon(
+              Icons.search_rounded,
+              key: ValueKey(focused),
+              color: focused ? colors.primary : colors.onSurfaceVariant,
+              size: 23,
+            ),
+          ),
+          const SizedBox(width: 11),
           Expanded(
             child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
+              focusNode: _focusNode,
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
               textInputAction: TextInputAction.search,
               cursorColor: colors.primary,
-              style: TextStyle(color: colors.onSurface, fontSize: 14.5),
+              style: TextStyle(
+                color: colors.onSurface,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
-                hintText: hintText.tr,
+                hintText: widget.hintText.tr,
                 hintStyle: TextStyle(
                   color: colors.onSurfaceVariant,
-                  fontSize: 14,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w400,
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -71,21 +124,34 @@ class AppSearchBar extends StatelessWidget {
               ),
             ),
           ),
-          if (showClear)
-            IconButton(
-              key: const ValueKey('search-clear'),
-              tooltip: 'Clear search'.tr,
-              onPressed: onClear,
-              icon: Icon(
-                Icons.close_rounded,
-                size: 19,
-                color: colors.onSurfaceVariant,
+          if (widget.showClear)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: IconButton.filledTonal(
+                key: const ValueKey('search-clear'),
+                tooltip: 'Clear search'.tr,
+                visualDensity: VisualDensity.compact,
+                onPressed: widget.onClear,
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 17,
+                  color: colors.onSurfaceVariant,
+                ),
               ),
             )
-          else if (trailing == null)
-            const SizedBox(width: 48),
-          if (trailing case final trailing?)
-            Padding(padding: const EdgeInsets.only(right: 4), child: trailing),
+          else if (widget.trailing == null)
+            const SizedBox(width: 16),
+          if (widget.trailing case final trailing?) ...[
+            Container(
+              width: 1,
+              height: 26,
+              color: colors.outlineVariant,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 2, right: 4),
+              child: trailing,
+            ),
+          ],
         ],
       ),
     );

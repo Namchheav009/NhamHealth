@@ -383,7 +383,7 @@ class HomeController extends GetxController {
       );
       return;
     }
-    await loadRecommendedMeals(moodId: moodId, generate: true, refresh: true);
+    await loadRecommendedMeals(moodId: moodId, generateIfEmpty: true);
   }
 
   Future<void> refreshMeals() async {
@@ -404,16 +404,22 @@ class HomeController extends GetxController {
     int? moodId,
     bool generate = false,
     bool refresh = false,
+    bool generateIfEmpty = false,
   }) async {
     try {
       isRecommendedMealsLoading.value = true;
-      final meals =
-          generate && moodId != null
-              ? await repository.generateRecommendedMeals(
-                moodId: moodId,
-                refresh: refresh,
-              )
-              : await repository.getRecommendedMeals(moodId: moodId);
+      var meals = generate && moodId != null
+          ? await repository.generateRecommendedMeals(
+              moodId: moodId,
+              refresh: refresh,
+            )
+          : await repository.getRecommendedMeals(moodId: moodId);
+
+      // Existing recommendations return quickly. Only wait for the AI service
+      // when this mood does not have any saved suggestions yet.
+      if (meals.isEmpty && generateIfEmpty && moodId != null) {
+        meals = await repository.generateRecommendedMeals(moodId: moodId);
+      }
       final current = dashboard.value;
       if (current != null) {
         dashboard.value = HomeDashboardModel(

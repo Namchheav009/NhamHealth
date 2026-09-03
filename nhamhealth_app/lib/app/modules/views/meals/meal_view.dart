@@ -12,6 +12,7 @@ import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/meals/meal_controller.dart';
 import '../../models/meals/meal_model.dart';
+import 'all_meals_view.dart';
 import 'widgets/meal_card.dart';
 import 'widgets/meal_category.dart';
 import 'widgets/meal_filter_sheet.dart';
@@ -197,17 +198,19 @@ class MealView extends GetView<MealController> {
                 controller.searchQuery.value.isEmpty
                     ? 'Popular meals'
                     : 'Search results',
-            onSeeAll: controller.showAllMeals,
+            onSeeAll: () {
+              controller.showAllMeals();
+              Get.to<void>(
+                () => const AllMealsView(),
+                transition: Transition.rightToLeft,
+              );
+            },
           ),
           const SizedBox(height: 10),
           _buildPopularMeals(meals),
           const SizedBox(height: 24),
           MealSectionHeader(
             title: 'Ideas for you',
-            actionLabel:
-                controller.isIdeasLoading.value ? 'Refreshing…' : 'Refresh',
-            actionEnabled: !controller.isIdeasLoading.value,
-            onSeeAll: () => controller.loadPersonalizedIdeas(refresh: true),
           ),
           const SizedBox(height: 4),
           Row(

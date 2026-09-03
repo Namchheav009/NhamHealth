@@ -42,7 +42,7 @@ class AppBottomNavigation extends StatelessWidget {
               left: 0,
               right: 80,
               bottom: 0,
-              height: 72,
+              height: 70,
               child: IgnorePointer(
                 ignoring: !showNavigationItems,
                 child: AnimatedSlide(
@@ -83,7 +83,7 @@ class AppBottomNavigation extends StatelessWidget {
                             isDark: isDark,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Row(
                               children: [
                                 _NavSlot(
@@ -268,11 +268,11 @@ class _NavItem extends StatelessWidget {
             customBorder: const StadiumBorder(),
             child: SizedBox(
               width: double.infinity,
-              height: 72,
+              height: 70,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+                margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
                 decoration: BoxDecoration(
                   color:
                       selected
@@ -348,8 +348,8 @@ class _ChatbotButton extends StatelessWidget {
                 ),
             customBorder: const CircleBorder(),
             child: SizedBox(
-              width: 72,
-              height: 72,
+              width: 70,
+              height: 70,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [

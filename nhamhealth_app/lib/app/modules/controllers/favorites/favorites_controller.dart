@@ -70,6 +70,7 @@ class FavoritesController extends GetxController {
     }
   }
 
+  @override
   Future<void> refresh() async {
     await Future.wait([loadFoods(), loadFoodCategories(), loadPosts()]);
   }

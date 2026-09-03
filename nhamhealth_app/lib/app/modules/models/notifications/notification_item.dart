@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 
 enum NotificationKind { social, recommendation, wellness, system }
 
+enum NotificationAction {
+  like,
+  comment,
+  reply,
+  follow,
+  recommendation,
+  wellness,
+  system,
+}
+
 class NotificationItem {
   const NotificationItem({
     required this.id,
@@ -101,5 +111,51 @@ class NotificationItem {
     NotificationKind.recommendation => Icons.auto_awesome_rounded,
     NotificationKind.wellness => Icons.water_drop_rounded,
     NotificationKind.system => Icons.verified_rounded,
+  };
+
+  NotificationAction get action {
+    final copy = '$title $message'.toLowerCase();
+    if (copy.contains('replied')) return NotificationAction.reply;
+    if (copy.contains('commented')) return NotificationAction.comment;
+    if (copy.contains('liked')) return NotificationAction.like;
+    if (copy.contains('following') || copy.contains('followed')) {
+      return NotificationAction.follow;
+    }
+    return switch (kind) {
+      NotificationKind.social => NotificationAction.comment,
+      NotificationKind.recommendation => NotificationAction.recommendation,
+      NotificationKind.wellness => NotificationAction.wellness,
+      NotificationKind.system => NotificationAction.system,
+    };
+  }
+
+  IconData get actionIcon => switch (action) {
+    NotificationAction.like => Icons.favorite_rounded,
+    NotificationAction.comment => Icons.chat_bubble_rounded,
+    NotificationAction.reply => Icons.reply_rounded,
+    NotificationAction.follow => Icons.person_add_rounded,
+    NotificationAction.recommendation => Icons.auto_awesome_rounded,
+    NotificationAction.wellness => Icons.favorite_rounded,
+    NotificationAction.system => Icons.verified_rounded,
+  };
+
+  Color get actionColor => switch (action) {
+    NotificationAction.like => const Color(0xFFFF3B5C),
+    NotificationAction.comment => const Color(0xFF2E8BFF),
+    NotificationAction.reply => const Color(0xFF8B5CF6),
+    NotificationAction.follow => const Color(0xFF00A651),
+    NotificationAction.recommendation => const Color(0xFFFF9800),
+    NotificationAction.wellness => const Color(0xFF4396FF),
+    NotificationAction.system => const Color(0xFF00A651),
+  };
+
+  String get actionLabel => switch (action) {
+    NotificationAction.like => 'Like',
+    NotificationAction.comment => 'Comment',
+    NotificationAction.reply => 'Reply',
+    NotificationAction.follow => 'New follower',
+    NotificationAction.recommendation => 'For you',
+    NotificationAction.wellness => 'Wellness',
+    NotificationAction.system => 'Nham Health',
   };
 }

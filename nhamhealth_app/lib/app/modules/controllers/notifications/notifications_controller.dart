@@ -131,6 +131,12 @@ class NotificationsController extends GetxController {
     await markRead(item);
     if (item.referenceType == 'POST' && item.referenceId != null) {
       await Get.toNamed<void>(AppRoutes.communityPostPath(item.referenceId!));
+      return;
+    }
+    if (item.referenceType == 'USER' && item.referenceId != null) {
+      await Get.toNamed<void>(
+        AppRoutes.communityPersonProfilePath(item.referenceId!),
+      );
     }
   }
 
