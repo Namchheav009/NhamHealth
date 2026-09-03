@@ -15,4 +15,15 @@ void main() {
     expect(person.connectionStatus, 'FRIEND');
     expect(person.mutualFriends, 1);
   });
+
+  test('community person never exposes an email address as a public name', () {
+    final person = CommunityPerson.fromJson({
+      'id': 8,
+      'name': 'chunrattnakvisal2005@gmail.com',
+      'avatarUrl': '',
+    });
+
+    expect(person.displayName, 'Chunrattnakvisal 2005');
+    expect(person.displayName, isNot(contains('@')));
+  });
 }

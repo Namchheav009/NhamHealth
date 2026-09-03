@@ -88,16 +88,20 @@ class CommunityComposerCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                _ComposerAction(
-                  icon: Icons.image_outlined,
-                  label: 'Photo'.tr,
-                  onTap: onTap,
+                Expanded(
+                  child: _ComposerAction(
+                    icon: Icons.image_outlined,
+                    label: 'Photo'.tr,
+                    onTap: onTap,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                _ComposerAction(
-                  icon: Icons.forum_outlined,
-                  label: 'Ask community'.tr,
-                  onTap: onTap,
+                Expanded(
+                  child: _ComposerAction(
+                    icon: Icons.forum_outlined,
+                    label: 'Ask community'.tr,
+                    onTap: onTap,
+                  ),
                 ),
               ],
             ),
@@ -132,18 +136,22 @@ class _ComposerAction extends StatelessWidget {
       child: SizedBox(
         height: 38,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: AppColors.primaryGreen),
               const SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

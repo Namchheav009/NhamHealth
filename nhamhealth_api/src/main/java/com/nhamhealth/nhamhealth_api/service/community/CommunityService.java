@@ -130,7 +130,7 @@ public class CommunityService {
         long visiblePosts = personPosts(viewerId, targetUserId).size();
         return new CommunityProfileResponse(
                 targetUserId,
-                profile == null ? target.getName() : profile.getFullName(),
+                communityDisplayName(target, profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 target.getRoleLabel(),
                 profile == null ? "" : value(profile.getBio(), ""),
@@ -479,7 +479,7 @@ public class CommunityService {
                         .map(RecipeTag::getTag).toList();
         return new CommunityPostResponse(post.getPostId(), value(post.getCaption(), ""), imageUrl, imageUrls,
                 post.getUser().getUserId(),
-                profile == null ? post.getUser().getName() : profile.getFullName(),
+                communityDisplayName(post.getUser(), profile),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 (isShared ? List.<String>of() : assignedTags.stream().map(TagType::getTagName).toList()),
                 post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
@@ -520,7 +520,7 @@ public class CommunityService {
         if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
         return new CommunityPostResponse.SharedPost(
                 original.getRecipeId(), original.getAuthor().getUserId(),
-                profile == null ? original.getAuthor().getName() : profile.getFullName(),
+                communityDisplayName(original.getAuthor(), profile),
                 original.getAuthor().getRoleLabel(),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 value(original.getRecipeName(), ""), value(original.getDescription(), ""),
@@ -540,7 +540,7 @@ public class CommunityService {
     private CommunityCommentResponse commentResponse(PostComment comment, Integer viewerId) {
         UserProfile profile = profiles.findByUser_UserId(comment.getUser().getUserId()).orElse(null);
         return new CommunityCommentResponse(comment.getCommentId(),
-                profile == null ? comment.getUser().getName() : profile.getFullName(),
+                communityDisplayName(comment.getUser(), profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 comment.getCommentText(), comment.getCreatedAt(),
                 comment.getParentComment() == null ? null : comment.getParentComment().getCommentId(),
@@ -554,9 +554,28 @@ public class CommunityService {
         boolean mutual = following.contains(user.getUserId()) && followers.contains(user.getUserId());
         String status = mutual ? "FRIEND" : following.contains(user.getUserId()) ? "FOLLOWING" :
                 followers.contains(user.getUserId()) ? "FOLLOWS_YOU" : "NONE";
-        return new CommunityPersonResponse(user.getUserId(), profile == null ? user.getName() : profile.getFullName(),
+        return new CommunityPersonResponse(user.getUserId(), communityDisplayName(user, profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 profile == null ? "" : value(profile.getLocationText(), ""), List.of(), mutual ? 1 : 0, status);
+    }
+
+    /** A community response exposes a profile name, never an email address. */
+    private String communityDisplayName(User user, UserProfile profile) {
+        String profileName = profile == null ? "" : value(profile.getFullName(), "").trim();
+        if (!profileName.isBlank() && !profileName.contains("@")) return profileName;
+
+        String email = value(user.getEmail(), "").trim();
+        int atIndex = email.indexOf('@');
+        String localPart = (atIndex > 0 ? email.substring(0, atIndex) : email)
+                .replaceAll("[._-]+", " ")
+                .replaceAll("(?<=[A-Za-z])(?=\\d)", " ")
+                .trim();
+        if (localPart.isBlank()) return "Community member";
+
+        return Arrays.stream(localPart.split("\\s+"))
+                .filter(part -> !part.isBlank())
+                .map(part -> Character.toUpperCase(part.charAt(0)) + part.substring(1))
+                .collect(java.util.stream.Collectors.joining(" "));
     }
 
     private Set<Integer> followedIds(Integer userId) {

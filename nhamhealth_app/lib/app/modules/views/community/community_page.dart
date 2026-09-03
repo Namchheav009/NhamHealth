@@ -407,7 +407,7 @@ class CommunityPage extends GetView<CommunityController> {
       key: ValueKey<String>('people-card-${person.id}'),
       margin: EdgeInsets.only(bottom: addBottomMargin ? 10 : 0),
       decoration: BoxDecoration(
-        color: context.appSurfaceLow.withValues(alpha: .98),
+        color: context.appSurfaceLow,
         borderRadius: BorderRadius.circular(_cardRadius),
         border: Border.all(
           color:
@@ -422,7 +422,7 @@ class CommunityPage extends GetView<CommunityController> {
         borderRadius: BorderRadius.circular(_cardRadius),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          padding: const EdgeInsets.all(14),
           child: Column(
             children: [
               InkWell(
@@ -438,9 +438,7 @@ class CommunityPage extends GetView<CommunityController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            person.name.trim().isEmpty
-                                ? 'Community member'
-                                : person.name.trim(),
+                            person.displayName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -449,6 +447,19 @@ class CommunityPage extends GetView<CommunityController> {
                               color: context.appText,
                             ),
                           ),
+                          if (_personSummary(person).isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              _personSummary(person),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: context.appMutedText,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -491,7 +502,7 @@ class CommunityPage extends GetView<CommunityController> {
       color: context.appSoftGreen,
       alignment: Alignment.center,
       child: Text(
-        _initials(person.name),
+        _initials(person.displayName),
         style: const TextStyle(
           color: green,
           fontSize: 15,
@@ -502,7 +513,7 @@ class CommunityPage extends GetView<CommunityController> {
 
     return Semantics(
       image: true,
-      label: '${person.name} profile photo',
+      label: '${person.displayName} profile photo',
       child: Container(
         width: 50,
         height: 50,
@@ -816,7 +827,7 @@ class CommunityPage extends GetView<CommunityController> {
       final selectedFilter = controller.feedFilter.value;
 
       return Container(
-        height: 42,
+        height: 48,
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
@@ -827,50 +838,52 @@ class CommunityPage extends GetView<CommunityController> {
             final selected = selectedFilter == filter;
             final borderRadius = BorderRadius.circular(24);
 
-            return Padding(
-              padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
-              child: Semantics(
-                selected: selected,
-                button: true,
-                label: '${labels[index]} feed filter',
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: borderRadius,
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    key: ValueKey<String>(
-                      'community-feed-filter-${filter.name}',
-                    ),
-                    onTap: () => controller.selectFeedFilter(filter),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color:
-                            selected
-                                ? colors.primaryContainer.withValues(alpha: .42)
-                                : Colors.transparent,
-                        borderRadius: borderRadius,
-                        border: Border.all(
-                          color:
-                              selected
-                                  ? colors.primary.withValues(alpha: .22)
-                                  : colors.outlineVariant,
-                        ),
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : 6),
+                child: Semantics(
+                  selected: selected,
+                  button: true,
+                  label: '${labels[index]} feed filter',
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: borderRadius,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      key: ValueKey<String>(
+                        'community-feed-filter-${filter.name}',
                       ),
-                      child: Text(
-                        labels[index],
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                      onTap: () => controller.selectFeedFilter(filter),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
                           color:
                               selected
-                                  ? colors.primary
-                                  : colors.onSurfaceVariant,
-                          fontSize: 12.5,
-                          fontWeight:
-                              selected ? FontWeight.w800 : FontWeight.w600,
+                                  ? colors.primaryContainer.withValues(alpha: .42)
+                                  : Colors.transparent,
+                          borderRadius: borderRadius,
+                          border: Border.all(
+                            color:
+                                selected
+                                    ? colors.primary.withValues(alpha: .22)
+                                    : colors.outlineVariant,
+                          ),
+                        ),
+                        child: Text(
+                          labels[index],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color:
+                                selected
+                                    ? colors.primary
+                                    : colors.onSurfaceVariant,
+                            fontSize: 12.5,
+                            fontWeight:
+                                selected ? FontWeight.w800 : FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -1283,6 +1296,20 @@ class CommunityPage extends GetView<CommunityController> {
 
   String _resultLabel(FriendsView view) =>
       const ['friends', 'followers', 'people you follow', 'people'][view.index];
+
+  String _personSummary(CommunityPerson person) {
+    final details = <String>[];
+    final location = person.detail?.trim() ?? '';
+    if (location.isNotEmpty && !location.contains('@')) details.add(location);
+    if (person.mutualFriends > 0) {
+      details.add(
+        person.mutualFriends == 1
+            ? '1 mutual connection'
+            : '${person.mutualFriends} mutual connections',
+      );
+    }
+    return details.join(' • ');
+  }
 
   IconData _viewIcon(FriendsView view) =>
       const [

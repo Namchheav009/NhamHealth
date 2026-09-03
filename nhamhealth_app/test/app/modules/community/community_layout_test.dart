@@ -142,7 +142,7 @@ void main() {
       );
       expect(find.text('View profile'), findsWidgets);
       expect(find.text('2 people'), findsNothing);
-      expect(find.textContaining('mutual'), findsNothing);
+      expect(find.textContaining('mutual connection'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
 
       await tester.enterText(
