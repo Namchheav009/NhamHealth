@@ -36,7 +36,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
                     const SizedBox(height: 12),
 
-                    _buildProfileHeader(context),
+                    // _buildProfileHeader(context),
 
                     const SizedBox(height: 12),
 
@@ -93,154 +93,154 @@ class EditProfileView extends GetView<EditProfileController> {
   // PROFILE HEADER
   // -----------------------------------------
 
-  Widget _buildProfileHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: context.appBorder),
-        boxShadow: context.appCardShadow,
-      ),
-      child: Row(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: context.appSurface,
-                  shape: BoxShape.circle,
-                ),
-                child: Obx(() {
-                  final image = _editAvatarImage();
-                  return CircleAvatar(
-                    radius: 39,
-                    backgroundColor: context.appSoftGreen,
-                    backgroundImage: image,
-                    child:
-                        image == null
-                            ? const Icon(
-                              Icons.person_outline_rounded,
-                              size: 40,
-                              color: green,
-                            )
-                            : null,
-                  );
-                }),
-              ),
+  // Widget _buildProfileHeader(BuildContext context) {
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.all(10),
+  //     decoration: BoxDecoration(
+  //       color: context.appElevatedSurface.withValues(alpha: 0.94),
+  //       borderRadius: BorderRadius.circular(17),
+  //       border: Border.all(color: context.appBorder),
+  //       boxShadow: context.appCardShadow,
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Stack(
+  //           clipBehavior: Clip.none,
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(3),
+  //               decoration: BoxDecoration(
+  //                 color: context.appSurface,
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: Obx(() {
+  //                 final image = _editAvatarImage();
+  //                 return CircleAvatar(
+  //                   radius: 39,
+  //                   backgroundColor: context.appSoftGreen,
+  //                   backgroundImage: image,
+  //                   child:
+  //                       image == null
+  //                           ? const Icon(
+  //                             Icons.person_outline_rounded,
+  //                             size: 40,
+  //                             color: green,
+  //                           )
+  //                           : null,
+  //                 );
+  //               }),
+  //             ),
 
-              Positioned(
-                right: -2,
-                bottom: 0,
-                child: GestureDetector(
-                  onTap: controller.pickProfileImage,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: context.appSurface,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: green),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt_outlined,
-                      size: 17,
-                      color: green,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+  //             Positioned(
+  //               right: -2,
+  //               bottom: 0,
+  //               child: GestureDetector(
+  //                 onTap: controller.pickProfileImage,
+  //                 child: Container(
+  //                   width: 28,
+  //                   height: 28,
+  //                   decoration: BoxDecoration(
+  //                     color: context.appSurface,
+  //                     shape: BoxShape.circle,
+  //                     border: Border.all(color: green),
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.camera_alt_outlined,
+  //                     size: 17,
+  //                     color: green,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
 
-          const SizedBox(width: 15),
+  //         const SizedBox(width: 15),
 
-          Expanded(
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    controller.profileName.value,
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+  //         Expanded(
+  //           child: Obx(
+  //             () => Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   controller.profileName.value,
+  //                   style: const TextStyle(
+  //                     fontSize: 19,
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                 ),
 
-                  const SizedBox(height: 3),
+  //                 const SizedBox(height: 3),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE4F8E9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.check_circle, color: green, size: 14),
-                        const SizedBox(width: 3),
-                        Text(
-                          controller.membership.value.tr,
-                          style: const TextStyle(
-                            color: green,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  //                 Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 7,
+  //                     vertical: 3,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFE4F8E9),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                   ),
+  //                   child: Row(
+  //                     mainAxisSize: MainAxisSize.min,
+  //                     children: [
+  //                       const Icon(Icons.check_circle, color: green, size: 14),
+  //                       const SizedBox(width: 3),
+  //                       Text(
+  //                         controller.membership.value.tr,
+  //                         style: const TextStyle(
+  //                           color: green,
+  //                           fontSize: 10,
+  //                           fontWeight: FontWeight.w700,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
 
-                  const SizedBox(height: 8),
+  //                 const SizedBox(height: 8),
 
-                  Row(
-                    children: [
-                      const Icon(Icons.mail_outline, size: 17),
+  //                 Row(
+  //                   children: [
+  //                     const Icon(Icons.mail_outline, size: 17),
 
-                      const SizedBox(width: 7),
+  //                     const SizedBox(width: 7),
 
-                      Expanded(
-                        child: Text(
-                          controller.profileEmail.value,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  //                     Expanded(
+  //                       child: Text(
+  //                         controller.profileEmail.value,
+  //                         overflow: TextOverflow.ellipsis,
+  //                         style: const TextStyle(fontSize: 11),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  ImageProvider<Object>? _editAvatarImage() {
-    final localPath = controller.profileImagePath.value.trim();
-    if (localPath.isNotEmpty) return FileImage(File(localPath));
+  // ImageProvider<Object>? _editAvatarImage() {
+  //   final localPath = controller.profileImagePath.value.trim();
+  //   if (localPath.isNotEmpty) return FileImage(File(localPath));
 
-    final remotePath =
-        controller.profileController.authenticatedUser.value?.profileImageUrl
-            ?.trim();
-    if (remotePath != null && remotePath.isNotEmpty) {
-      final url =
-          remotePath.startsWith('http://') || remotePath.startsWith('https://')
-              ? remotePath
-              : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
-      return NetworkImage(url);
-    }
-    return null;
-  }
+  //   final remotePath =
+  //       controller.profileController.authenticatedUser.value?.profileImageUrl
+  //           ?.trim();
+  //   if (remotePath != null && remotePath.isNotEmpty) {
+  //     final url =
+  //         remotePath.startsWith('http://') || remotePath.startsWith('https://')
+  //             ? remotePath
+  //             : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+  //     return NetworkImage(url);
+  //   }
+  //   return null;
+  // }
 
   // -----------------------------------------
   // PERSONAL INFORMATION

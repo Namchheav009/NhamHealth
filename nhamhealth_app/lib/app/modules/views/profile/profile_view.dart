@@ -113,9 +113,9 @@ class ProfileView extends GetView<ProfileController> {
   Widget _profileOverview() => const Column(
     children: [
       ProfileHeader(),
-      SizedBox(height: 14),
+      SizedBox(height: 8),
       HealthStatsCard(),
-      SizedBox(height: 14),
+      SizedBox(height: 8),
       InsightCard(),
     ],
   );

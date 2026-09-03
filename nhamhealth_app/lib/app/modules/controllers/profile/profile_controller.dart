@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
@@ -36,6 +37,7 @@ class ProfileController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
   final Rxn<AuthenticatedUser> authenticatedUser = Rxn<AuthenticatedUser>();
+  final ImagePicker _imagePicker = ImagePicker();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
   final posts = <CommunityPost>[].obs;
   final followerCount = 0.obs;
@@ -437,6 +439,17 @@ class ProfileController extends GetxController {
     await _repository.deleteProfileImage();
     profileImagePath.value = '';
     _uploadedProfileImagePath = null;
+    _applyDashboard(await _repository.getDashboard());
+  }
+
+  Future<void> chooseProfileImage() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1200,
+    );
+    if (image == null) return;
+    await _repository.uploadProfileImage(image.path);
     _applyDashboard(await _repository.getDashboard());
   }
 

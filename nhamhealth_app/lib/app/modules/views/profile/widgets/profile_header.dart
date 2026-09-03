@@ -268,14 +268,13 @@ class _ProfileAvatar extends StatelessWidget {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap:
-              hasImage
-                  ? () => _openFullImage(
-                    context,
-                    localPath: selectedPath,
-                    imageUrl: imageUrl,
-                    onDelete: onDelete,
-                  )
-                  : null,
+              () => _showPhotoOptions(
+                context,
+                selectedPath: selectedPath,
+                imageUrl: imageUrl,
+                hasImage: hasImage,
+                onDelete: onDelete,
+              ),
           child: Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -289,6 +288,53 @@ class _ProfileAvatar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showPhotoOptions(
+    BuildContext context, {
+    required String selectedPath,
+    required String? imageUrl,
+    required bool hasImage,
+    required Future<void> Function() onDelete,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (_) => _ProfilePhotoOptionsSheet(
+            image: _avatar(selectedPath, imageUrl),
+            hasImage: hasImage,
+            onView: () async {
+              if (!hasImage) {
+                Get.snackbar('No profile photo', 'Choose a photo first.');
+                return;
+              }
+              _openFullImage(
+                context,
+                localPath: selectedPath,
+                imageUrl: imageUrl,
+                onDelete: onDelete,
+              );
+            },
+            onChoose: () => Get.find<ProfileController>().chooseProfileImage(),
+            onRemove: () async {
+              if (!hasImage) {
+                Get.snackbar(
+                  'No profile photo',
+                  'There is no photo to remove.',
+                );
+                return;
+              }
+              final confirmed = await showModalBottomSheet<bool>(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const _DeleteProfilePhotoSheet(),
+              );
+              if (confirmed == true) await onDelete();
+            },
+          ),
     );
   }
 
@@ -466,13 +512,19 @@ class _FullProfileImageState extends State<_FullProfileImage> {
   );
 
   Future<void> _showPhotoOptions() async {
-    final action = await showModalBottomSheet<String>(
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _ProfilePhotoOptionsSheet(),
+      isScrollControlled: true,
+      builder:
+          (_) => _ProfilePhotoOptionsSheet(
+            image: _image(),
+            hasImage: true,
+            onView: () async {},
+            onChoose: () => Get.find<ProfileController>().chooseProfileImage(),
+            onRemove: _deletePhoto,
+          ),
     );
-    if (!mounted || action != 'delete') return;
-    await _deletePhoto();
   }
 
   Widget _image() {
@@ -506,15 +558,27 @@ class _FullProfileImageState extends State<_FullProfileImage> {
 }
 
 class _ProfilePhotoOptionsSheet extends StatelessWidget {
-  const _ProfilePhotoOptionsSheet();
+  const _ProfilePhotoOptionsSheet({
+    required this.image,
+    required this.hasImage,
+    required this.onView,
+    required this.onChoose,
+    required this.onRemove,
+  });
+
+  final Widget image;
+  final bool hasImage;
+  final Future<void> Function() onView;
+  final Future<void> Function() onChoose;
+  final Future<void> Function() onRemove;
 
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
     child: Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 22),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
+        color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -532,54 +596,159 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+          Center(
             child: Text(
-              'Photo options',
+              'Profile photo',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.appText,
-                fontSize: 17,
+                fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: context.appMutedSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: context.appBorder),
-            ),
-            child: ListTile(
-              onTap: () => Navigator.of(context).pop('delete'),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 3,
-              ),
-              leading: const Icon(
-                Icons.delete_outline_rounded,
-                color: Color(0xFFD94545),
-                size: 27,
-              ),
-              title: const Text(
-                'Delete photo',
-                style: TextStyle(
-                  color: Color(0xFFD94545),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              'Manage your profile photo',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.appMutedText, fontSize: 14),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
+          Center(child: SizedBox(width: 92, height: 92, child: image)),
+          const SizedBox(height: 20),
+          _PhotoAction(
+            icon: Icons.visibility_outlined,
+            title: 'View photo',
+            subtitle: 'See your current profile photo',
+            color: const Color(0xFF5B2295),
+            background: const Color(0xFFF1ECFF),
+            enabled: true,
+            onTap: onView,
+          ),
+          const SizedBox(height: 10),
+          _PhotoAction(
+            icon: Icons.image_outlined,
+            title: 'Choose new photo',
+            subtitle: 'Select a new photo from your gallery',
+            color: const Color(0xFF1769E0),
+            background: const Color(0xFFEAF2FF),
+            onTap: onChoose,
+          ),
+          const SizedBox(height: 10),
+          _PhotoAction(
+            icon: Icons.delete_outline_rounded,
+            title: 'Remove current photo',
+            subtitle: 'Delete your current profile photo',
+            color: const Color(0xFFE3262E),
+            background: const Color(0xFFFFECEC),
+            enabled: true,
+            onTap: onRemove,
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
+            child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFF5F5F7),
+                foregroundColor: Colors.black87,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
+      ),
+    ),
+  );
+}
+
+class _PhotoAction extends StatelessWidget {
+  const _PhotoAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.background,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final Color background;
+  final Future<void> Function() onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: enabled ? 1 : .45,
+    child: Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE5E5E5)),
+      ),
+      child: InkWell(
+        onTap:
+            enabled
+                ? () async {
+                  Navigator.of(context).pop();
+                  await onTap();
+                }
+                : null,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: context.appMutedText, size: 30),
+            ],
+          ),
+        ),
       ),
     ),
   );

@@ -20,6 +20,7 @@ class InsightCard extends GetView<ProfileController> {
           colors: [const Color(0xFFF5FBF3), const Color(0xFFFFFCE2)],
         ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder.withValues(alpha: .7)),
       ),
       child: Row(
         children: [
