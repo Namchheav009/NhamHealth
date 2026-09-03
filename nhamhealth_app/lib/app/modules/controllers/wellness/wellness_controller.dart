@@ -198,6 +198,21 @@ class WellnessController extends GetxController {
   // NUTRIENT NAVIGATION
   // =========================
 
+  Future<void> openNutrientDetails(String nutrientName) async {
+    final route = switch (nutrientName) {
+      'Calories' => AppRoutes.calories,
+      'Protein' => AppRoutes.protein,
+      'Water' => AppRoutes.water,
+      'Fiber' => AppRoutes.fiber,
+      'Sugar' => AppRoutes.sugar,
+      _ => null,
+    };
+
+    if (route == null) return;
+    await Get.toNamed<void>(route);
+    await loadDailyWellness();
+  }
+
   // =========================
   // AI MEAL
   // =========================

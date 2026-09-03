@@ -50,6 +50,12 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: WellnessNutrientTile(
                     item: controller.nutrients[index],
+                    onTap:
+                        controller.nutrients[index].name == 'Fat'
+                            ? null
+                            : () => controller.openNutrientDetails(
+                              controller.nutrients[index].name,
+                            ),
                   ),
                 );
               }),

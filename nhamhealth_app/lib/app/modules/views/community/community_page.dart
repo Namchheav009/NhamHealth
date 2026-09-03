@@ -808,18 +808,13 @@ class CommunityPage extends GetView<CommunityController> {
 
   Widget _feedFilters(BuildContext context) {
     const labels = ['For You', 'Following', 'Latest'];
-    const icons = [
-      Icons.auto_awesome_rounded,
-      Icons.people_outline_rounded,
-      Icons.schedule_rounded,
-    ];
+    final colors = Theme.of(context).colorScheme;
 
     return Obx(() {
       final selectedFilter = controller.feedFilter.value;
 
       return Container(
-        height: 52,
-        padding: const EdgeInsets.all(2),
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
@@ -830,7 +825,8 @@ class CommunityPage extends GetView<CommunityController> {
             final selected = selectedFilter == filter;
             final borderRadius = BorderRadius.circular(24);
 
-            return Expanded(
+            return Padding(
+              padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
               child: Semantics(
                 selected: selected,
                 button: true,
@@ -844,41 +840,36 @@ class CommunityPage extends GetView<CommunityController> {
                       'community-feed-filter-${filter.name}',
                     ),
                     onTap: () => controller.selectFeedFilter(filter),
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.transparent,
+                        color:
+                            selected
+                                ? colors.primaryContainer.withValues(alpha: .42)
+                                : Colors.transparent,
                         borderRadius: borderRadius,
                         border: Border.all(
                           color:
                               selected
-                                  ? green.withValues(alpha: .35)
-                                  : context.appBorder,
-                          width: selected ? 1.5 : 1,
+                                  ? colors.primary.withValues(alpha: .22)
+                                  : colors.outlineVariant,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            icons[index],
-                            size: 16,
-                            color: selected ? green : context.appMutedText,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              labels[index],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: selected ? green : context.appMutedText,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        labels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color:
+                              selected
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                          fontSize: 12.5,
+                          fontWeight:
+                              selected ? FontWeight.w800 : FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

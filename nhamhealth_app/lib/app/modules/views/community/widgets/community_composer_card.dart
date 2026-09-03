@@ -18,116 +18,124 @@ class CommunityComposerCard extends StatelessWidget {
     color: Colors.transparent,
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.appElevatedSurface.withValues(alpha: .94),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: context.appBorder),
-          boxShadow: context.appTileShadow,
-        ),
-        child: Row(
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.16),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: context.appBorder),
                   ),
-                ],
-              ),
-              child: ClipOval(
-                child:
-                    authorAvatarUrl.isEmpty
-                        ? Container(
-                          color: context.appSoftGreen,
-                          child: const Icon(
-                            Icons.person_outline_rounded,
-                            size: 22,
-                            color: AppColors.primaryGreen,
-                          ),
-                        )
-                        : Image.network(
-                          authorAvatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, _, _) => Container(
+                  child: ClipOval(
+                    child:
+                        authorAvatarUrl.isEmpty
+                            ? Container(
                                 color: context.appSoftGreen,
                                 child: const Icon(
                                   Icons.person_outline_rounded,
                                   size: 22,
                                   color: AppColors.primaryGreen,
                                 ),
+                              )
+                            : Image.network(
+                                authorAvatarUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, _, _) => Container(
+                                      color: context.appSoftGreen,
+                                      child: const Icon(
+                                        Icons.person_outline_rounded,
+                                        size: 22,
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
                               ),
-                        ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Share a healthy meal'.tr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: context.appText,
-                    ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Post a new meal to the community'.tr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: context.appMutedText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.appSoftGreen,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: AppColors.primaryGreen.withValues(alpha: .25),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    height: 46,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color:
+                          context.appIsDark
+                              ? context.appColorScheme.surfaceContainerHigh
+                              : const Color(0xFFF3F6F3),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: Text(
+                      "What's on your healthy mind?".tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: context.appMutedText,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.add_rounded,
-                size: 21,
-                color: AppColors.primaryGreen,
-              ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _ComposerAction(icon: Icons.image_outlined, label: 'Photo'.tr),
+                const SizedBox(width: 8),
+                _ComposerAction(
+                  icon: Icons.forum_outlined,
+                  label: 'Ask community'.tr,
+                ),
+              ],
             ),
           ],
         ),
       ),
+    ),
+  );
+}
+
+class _ComposerAction extends StatelessWidget {
+  const _ComposerAction({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 38,
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      color:
+          context.appIsDark
+              ? context.appColorScheme.surfaceContainer
+              : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(width: 1),
+        Icon(icon, size: 18, color: AppColors.primaryGreen),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     ),
   );
 }
