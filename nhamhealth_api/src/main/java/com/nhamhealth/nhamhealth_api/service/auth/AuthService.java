@@ -6,20 +6,21 @@ import java.util.Locale;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
-import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
+import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
 import com.nhamhealth.nhamhealth_api.entity.AuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.exception.InvalidSessionException;
 import com.nhamhealth.nhamhealth_api.entity.UserAuthProvider;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
+import com.nhamhealth.nhamhealth_api.exception.InvalidSessionException;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.repository.auth.AuthProviderRepository;
 import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
@@ -28,7 +29,7 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.security.AppUserPrincipal;
 import com.nhamhealth.nhamhealth_api.security.JwtTokenService;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
 @Service
 public class AuthService {
@@ -43,6 +44,7 @@ public class AuthService {
     private final UserAuthProviderRepository userAuthProviderRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final RefreshTokenService refreshTokenService;
+    private final PlasgateSmsService smsService;
 
     public AuthService(
             AuthenticationManager authenticationManager,
@@ -54,7 +56,8 @@ public class AuthService {
             AuthProviderRepository authProviderRepository,
             UserAuthProviderRepository userAuthProviderRepository,
             GoogleTokenVerifier googleTokenVerifier,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            PlasgateSmsService smsService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtTokenService = jwtTokenService;
@@ -65,13 +68,18 @@ public class AuthService {
         this.userAuthProviderRepository = userAuthProviderRepository;
         this.googleTokenVerifier = googleTokenVerifier;
         this.refreshTokenService = refreshTokenService;
+        this.smsService = smsService;
     }
 
     @Transactional
     public MobileLoginResult loginMobileUser(LoginRequest request) {
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        String rawIdentifier = request.email().trim();
+        String identifier = rawIdentifier.contains("@")
+                ? rawIdentifier.toLowerCase(Locale.ROOT)
+                : smsService.normalizePhoneNumber(rawIdentifier);
+
         Authentication authentication = authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken.unauthenticated(email, request.password()));
+                UsernamePasswordAuthenticationToken.unauthenticated(identifier, request.password()));
         AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
 
         if (!"USER".equals(principal.role())) {
@@ -89,18 +97,42 @@ public class AuthService {
 
     @Transactional
     public User registerPendingMobileUser(RegisterRequest request) {
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-            throw new IllegalArgumentException("An account with this email already exists");
+        String rawIdentifier = request.email().trim();
+        boolean isPhone = !rawIdentifier.contains("@") && rawIdentifier.matches(".*\\d+.*");
+        String email = null;
+        String phone = null;
+
+        if (isPhone) {
+            phone = smsService.normalizePhoneNumber(rawIdentifier);
+            if (userRepository.findByPhoneNumber(phone).isPresent()
+                    || userProfileRepository.findFirstByPhoneNumber(rawIdentifier).isPresent()
+                    || userProfileRepository.findFirstByPhoneNumber(phone).isPresent()) {
+                throw new IllegalArgumentException("An account with this phone number already exists");
+            }
+        } else {
+            email = rawIdentifier.toLowerCase(Locale.ROOT);
+            if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
+                throw new IllegalArgumentException("An account with this email already exists");
+            }
         }
 
         User user = new User();
         user.setEmail(email);
+        user.setPhoneNumber(phone);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(requiredUserRole());
         user.setStatus("PENDING");
         user.setIsVerified(false);
         user = userRepository.save(user);
+
+        UserProfile profile = new UserProfile();
+        profile.setUser(user);
+        profile.setFullName(request.fullName().trim());
+        if (phone != null) {
+            profile.setPhoneNumber(rawIdentifier);
+            profile.setIsPhoneVerified(false);
+        }
+        userProfileRepository.save(profile);
 
         return user;
     }
@@ -113,6 +145,15 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         user.setLoginOtpRequired(false);
         userRepository.save(user);
+
+        if (user.getPhoneNumber() != null) {
+            userProfileRepository.findByUser_UserId(user.getUserId()).ifPresent(profile -> {
+                profile.setIsPhoneVerified(true);
+                profile.setPhoneVerifiedAt(LocalDateTime.now());
+                userProfileRepository.save(profile);
+            });
+        }
+
         return issueToken(AppUserPrincipal.from(user));
     }
 
@@ -138,6 +179,7 @@ public class AuthService {
                 ? LocalDateTime.now()
                 : user.getVerifiedAt());
         userRepository.save(user);
+
         return issueToken(AppUserPrincipal.from(user));
     }
 
@@ -238,9 +280,13 @@ public class AuthService {
             String role) {
         User user = requireActiveUser(userId);
         UserProfile profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
+        String userEmail = user.getEmail() != null && !user.getEmail().isBlank()
+                ? user.getEmail()
+                : (user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
+
         return new AuthenticatedUserResponse(
                 userId,
-                user.getEmail(),
+                userEmail,
                 user.getRoleLabel(),
                 profile == null ? null : profile.getFullName(),
                 profile == null ? null : profile.getProfileImageUrl(),

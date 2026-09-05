@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
@@ -184,7 +185,12 @@ class AiFoodView extends GetView<AiFoodController> {
   Widget _resultsPanel(BuildContext context, {bool wide = false}) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (wide && !controller.hasCompleteResult)
+      if (controller.isAnalyzing.value)
+        Padding(
+          padding: EdgeInsets.only(top: wide ? 0 : 14),
+          child: const PageSkeleton.aiFoodAnalysis(),
+        )
+      else if (wide && !controller.hasCompleteResult)
         const _TabletAnalysisPlaceholder(),
       if (controller.errorMessage.value != null)
         _message(

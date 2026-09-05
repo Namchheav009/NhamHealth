@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
 import '../../repositories/profile/profile_repository.dart';
 import 'profile_controller.dart';
@@ -25,6 +27,7 @@ class EditProfileController extends GetxController {
   final fullName = ''.obs;
   final email = ''.obs;
   final phone = ''.obs;
+  final isPhoneVerified = false.obs;
 
   final Rxn<DateTime> dateOfBirth = Rxn<DateTime>();
   final gender = ''.obs;
@@ -100,6 +103,7 @@ class EditProfileController extends GetxController {
     final dashboard = profileController.dashboard.value;
     if (dashboard != null) {
       phone.value = dashboard.phone ?? '';
+      isPhoneVerified.value = dashboard.phoneVerified;
       dateOfBirth.value = dashboard.dateOfBirth;
       gender.value =
           dashboard.gender?.trim().isNotEmpty == true
@@ -212,8 +216,182 @@ class EditProfileController extends GetxController {
       keyboardType: TextInputType.phone,
       onSaved: (value) {
         phone.value = value;
+        final trimmed = value.trim();
+        if (phone.value != trimmed) {
+          phone.value = trimmed;
+          isPhoneVerified.value = false;
+        }
       },
     );
+  }
+
+  Future<void> verifyPhone() async {
+    final phoneNumber = phone.value.trim();
+    if (phoneNumber.isEmpty) {
+      await AppAlert.error(
+        title: 'Phone Number Required'.tr,
+        message: 'Please enter your phone number first.'.tr,
+      );
+      return;
+    }
+
+    try {
+      final authService = Get.find<AuthService>();
+      await authService.sendPhoneVerificationCode(phoneNumber);
+      await _showPhoneOtpDialog(phoneNumber);
+    } on AuthException catch (e) {
+      await AppAlert.error(title: 'Verification Error'.tr, message: e.message);
+    } catch (_) {
+      await AppAlert.error(
+        title: 'Verification Error'.tr,
+        message: 'Could not send verification code. Please try again.'.tr,
+      );
+    }
+  }
+
+  Future<void> _showPhoneOtpDialog(String phoneNumber) async {
+    final authService = Get.find<AuthService>();
+    final codeController = TextEditingController();
+    final codeFocusNode = FocusNode();
+    final code = ''.obs;
+    final isSubmitting = false.obs;
+    final errorText = ''.obs;
+
+    try {
+      await Get.dialog<void>(
+        AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE9F8EC),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.phonelink_ring_rounded,
+                color: Color(0xFF00A651),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Verify Phone Number'.tr,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${'Enter the 6-digit code sent to your phone.'.tr}\n($phoneNumber)',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            const SizedBox(height: 16),
+            Obx(
+              () => _PhoneOtpCodeField(
+                controller: codeController,
+                focusNode: codeFocusNode,
+                code: code.value,
+                hasError: errorText.value.isNotEmpty,
+                onChanged: (value) {
+                  code.value = value;
+                  if (errorText.value.isNotEmpty) errorText.value = '';
+                },
+              ),
+            ),
+            Obx(
+              () =>
+                  errorText.value.isEmpty
+                      ? const SizedBox.shrink()
+                      : Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          errorText.value.tr,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel'.tr,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          Obx(
+            () =>
+                isSubmitting.value
+                    ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                    : TextButton(
+                      onPressed: () async {
+                        final enteredCode = codeController.text.trim();
+                        if (enteredCode.length != 6) {
+                          errorText.value =
+                              'Please enter a valid 6-digit code.';
+                          codeFocusNode.requestFocus();
+                          return;
+                        }
+                        try {
+                          isSubmitting.value = true;
+                          await authService.verifyPhoneVerificationCode(
+                            phone: phoneNumber,
+                            code: enteredCode,
+                          );
+                          isSubmitting.value = false;
+                          isPhoneVerified.value = true;
+                          Get.back();
+                          unawaited(profileController.loadProfile());
+                          await AppAlert.success(
+                            title: 'Verified'.tr,
+                            message: 'Phone verified successfully!'.tr,
+                          );
+                        } on AuthException catch (e) {
+                          isSubmitting.value = false;
+                          errorText.value = e.message;
+                        } catch (_) {
+                          isSubmitting.value = false;
+                          errorText.value =
+                              'The verification code is incorrect';
+                        }
+                      },
+                      child: Text(
+                        'Verify'.tr,
+                        style: const TextStyle(
+                          color: Color(0xFF00A651),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+          ),
+        ],
+        ),
+      );
+    } finally {
+      codeFocusNode.dispose();
+      codeController.dispose();
+    }
   }
 
   Future<void> editHeight() async {
@@ -357,6 +535,96 @@ class EditProfileController extends GetxController {
     );
 
     if (value != null && value.isNotEmpty) onSaved(value);
+  }
+}
+
+class _PhoneOtpCodeField extends StatelessWidget {
+  const _PhoneOtpCodeField({
+    required this.controller,
+    required this.focusNode,
+    required this.code,
+    required this.hasError,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String code;
+  final bool hasError;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const codeLength = 6;
+    const gap = 6.0;
+    return Semantics(
+      label: 'Six digit verification code'.tr,
+      textField: true,
+      child: SizedBox(
+        height: 52,
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(codeLength, (index) {
+                final digit = index < code.length ? code[index] : '';
+                final isActive = index == code.length && code.length < codeLength;
+                return Padding(
+                  padding: EdgeInsets.only(right: index == codeLength - 1 ? 0 : gap),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    width: 36,
+                    height: 52,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FBF9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasError
+                            ? Colors.red
+                            : isActive
+                                ? const Color(0xFF00A651)
+                                : const Color(0xFFD7E3DB),
+                        width: hasError || isActive ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(digit, style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                    )),
+                  ),
+                );
+              }),
+            ),
+            Positioned.fill(
+              child: Opacity(
+                opacity: .01,
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  showCursor: false,
+                  maxLength: codeLength,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(codeLength),
+                  ],
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    counterText: '',
+                  ),
+                  onChanged: onChanged,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

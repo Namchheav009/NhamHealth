@@ -9,6 +9,7 @@ public record ProfileDashboardResponse(
         String profileImageUrl,
         String membership,
         String phone,
+        Boolean phoneVerified,
         java.time.LocalDate dateOfBirth,
         String gender,
         Integer age,
@@ -23,5 +24,6 @@ public record ProfileDashboardResponse(
         String insight) {
 
     public record Progress(BigDecimal current, BigDecimal goal) {
+
     }
 }

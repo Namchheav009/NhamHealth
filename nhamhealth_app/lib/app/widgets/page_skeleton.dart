@@ -6,12 +6,20 @@ import '../theme/app_spacing.dart';
 enum PageSkeletonType {
   home,
   meals,
+  allMeals,
+  foodDetail,
+  foodDetailContent,
   profile,
   wellness,
   notifications,
   favorites,
   community,
+  communityPost,
+  comments,
+  communityPeople,
+  recipes,
   settings,
+  aiFoodAnalysis,
 }
 
 class PageSkeleton extends StatefulWidget {
@@ -36,6 +44,21 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.meals;
 
+  const PageSkeleton.allMeals({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.allMeals;
+
+  const PageSkeleton.foodDetail({
+    super.key,
+    this.duration = const Duration(milliseconds: 1600),
+  }) : type = PageSkeletonType.foodDetail;
+
+  const PageSkeleton.foodDetailContent({
+    super.key,
+    this.duration = const Duration(milliseconds: 1400),
+  }) : type = PageSkeletonType.foodDetailContent;
+
   const PageSkeleton.wellness({
     super.key,
     this.duration = const Duration(milliseconds: 1650),
@@ -56,10 +79,35 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1600),
   }) : type = PageSkeletonType.community;
 
+  const PageSkeleton.communityPost({
+    super.key,
+    this.duration = const Duration(milliseconds: 1600),
+  }) : type = PageSkeletonType.communityPost;
+
+  const PageSkeleton.comments({
+    super.key,
+    this.duration = const Duration(milliseconds: 1500),
+  }) : type = PageSkeletonType.comments;
+
+  const PageSkeleton.communityPeople({
+    super.key,
+    this.duration = const Duration(milliseconds: 1500),
+  }) : type = PageSkeletonType.communityPeople;
+
+  const PageSkeleton.recipes({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.recipes;
+
   const PageSkeleton.settings({
     super.key,
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.settings;
+
+  const PageSkeleton.aiFoodAnalysis({
+    super.key,
+    this.duration = const Duration(milliseconds: 1600),
+  }) : type = PageSkeletonType.aiFoodAnalysis;
 
   final PageSkeletonType type;
   final Duration duration;
@@ -127,12 +175,20 @@ class _PageSkeletonState extends State<PageSkeleton>
         _MealGridPlaceholder(),
       ],
     ),
+    PageSkeletonType.allMeals => const _MealGridPlaceholder(),
+    PageSkeletonType.foodDetail => const _FoodDetailPlaceholder(),
+    PageSkeletonType.foodDetailContent => const _FoodDetailContentPlaceholder(),
     PageSkeletonType.profile => const _ProfilePlaceholder(),
     PageSkeletonType.wellness => const _WellnessPlaceholder(),
     PageSkeletonType.notifications => const _NotificationsPlaceholder(),
     PageSkeletonType.favorites => const _FavoritesPlaceholder(),
     PageSkeletonType.community => const _CommunityPlaceholder(),
+    PageSkeletonType.communityPost => const _CommunityPostDetailPlaceholder(),
+    PageSkeletonType.comments => const _CommentsPlaceholder(),
+    PageSkeletonType.communityPeople => const _CommunityPeoplePlaceholder(),
+    PageSkeletonType.recipes => const _RecipesPlaceholder(),
     PageSkeletonType.settings => const _SettingsPlaceholder(),
+    PageSkeletonType.aiFoodAnalysis => const _AiFoodAnalysisPlaceholder(),
   };
 }
 
@@ -653,5 +709,253 @@ class _CommunityPostPlaceholder extends StatelessWidget {
         _SkeletonBox(height: 34, radius: 17),
       ],
     ),
+  );
+}
+
+class _FoodDetailPlaceholder extends StatelessWidget {
+  const _FoodDetailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _SkeletonBox(width: 42, height: 42, radius: 21),
+          _SkeletonBox(width: 42, height: 42, radius: 21),
+        ],
+      ),
+      SizedBox(height: 14),
+      _SkeletonBox(height: 220, radius: 24),
+      SizedBox(height: 20),
+      _SkeletonBox(width: 180, height: 22, radius: 11),
+      SizedBox(height: 10),
+      Row(
+        children: [
+          _SkeletonBox(width: 65, height: 28, radius: 14),
+          SizedBox(width: 8),
+          _SkeletonBox(width: 85, height: 28, radius: 14),
+        ],
+      ),
+      SizedBox(height: 18),
+      _TextLines(widths: [.94, .82, .6]),
+      SizedBox(height: 20),
+      Row(
+        children: [
+          Expanded(child: _SkeletonBox(height: 72, radius: 16)),
+          SizedBox(width: 10),
+          Expanded(child: _SkeletonBox(height: 72, radius: 16)),
+          SizedBox(width: 10),
+          Expanded(child: _SkeletonBox(height: 72, radius: 16)),
+        ],
+      ),
+      SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(child: _SkeletonBox(height: 52, radius: 14)),
+          SizedBox(width: 10),
+          Expanded(child: _SkeletonBox(height: 52, radius: 14)),
+        ],
+      ),
+      SizedBox(height: 22),
+      _SkeletonBox(height: 44, radius: 22),
+      SizedBox(height: 18),
+      _FoodDetailContentPlaceholder(),
+    ],
+  );
+}
+
+class _FoodDetailContentPlaceholder extends StatelessWidget {
+  const _FoodDetailContentPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var i = 0; i < 4; i++) ...[
+        Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: context.appSurface.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Row(
+            children: [
+              _SkeletonBox(width: 34, height: 34, radius: 17),
+              SizedBox(width: 12),
+              Expanded(child: _TextLines(widths: [.72, .38])),
+            ],
+          ),
+        ),
+        if (i < 3) const SizedBox(height: 10),
+      ],
+    ],
+  );
+}
+
+class _CommunityPostDetailPlaceholder extends StatelessWidget {
+  const _CommunityPostDetailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _CommunityPostPlaceholder(),
+      SizedBox(height: 22),
+      _SkeletonBox(width: 120, height: 16, radius: 8),
+      SizedBox(height: 14),
+      _CommentItemPlaceholder(),
+      SizedBox(height: 12),
+      _CommentItemPlaceholder(),
+      SizedBox(height: 12),
+      _CommentItemPlaceholder(),
+    ],
+  );
+}
+
+class _CommentsPlaceholder extends StatelessWidget {
+  const _CommentsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonCard(height: 110),
+      SizedBox(height: 20),
+      _SkeletonBox(width: 110, height: 16, radius: 8),
+      SizedBox(height: 14),
+      _CommentItemPlaceholder(),
+      SizedBox(height: 12),
+      _CommentItemPlaceholder(),
+      SizedBox(height: 12),
+      _CommentItemPlaceholder(),
+    ],
+  );
+}
+
+class _CommentItemPlaceholder extends StatelessWidget {
+  const _CommentItemPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: context.appSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SkeletonBox(width: 38, height: 38, radius: 19),
+        SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SkeletonBox(width: 90, height: 12, radius: 6),
+              SizedBox(height: 8),
+              _TextLines(widths: [.92, .6]),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _CommunityPeoplePlaceholder extends StatelessWidget {
+  const _CommunityPeoplePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var i = 0; i < 5; i++) ...[
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: context.appSurface.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: context.appBorder),
+          ),
+          child: const Row(
+            children: [
+              _SkeletonBox(width: 48, height: 48, radius: 24),
+              SizedBox(width: 12),
+              Expanded(child: _TextLines(widths: [.52, .32])),
+              SizedBox(width: 10),
+              _SkeletonBox(width: 78, height: 34, radius: 17),
+            ],
+          ),
+        ),
+        if (i < 4) const SizedBox(height: 10),
+      ],
+    ],
+  );
+}
+
+class _RecipesPlaceholder extends StatelessWidget {
+  const _RecipesPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var i = 0; i < 3; i++) ...[
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.appSurface.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.appBorder),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _SkeletonBox(width: 38, height: 38, radius: 19),
+                  SizedBox(width: 10),
+                  Expanded(child: _TextLines(widths: [.45, .28])),
+                  Spacer(),
+                  _SkeletonBox(width: 24, height: 24, radius: 12),
+                ],
+              ),
+              SizedBox(height: 12),
+              _SkeletonBox(height: 150, radius: 16),
+              SizedBox(height: 12),
+              _TextLines(widths: [.88, .62]),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  _SkeletonBox(width: 80, height: 32, radius: 16),
+                  SizedBox(width: 8),
+                  _SkeletonBox(width: 70, height: 32, radius: 16),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (i < 2) const SizedBox(height: 14),
+      ],
+    ],
+  );
+}
+
+class _AiFoodAnalysisPlaceholder extends StatelessWidget {
+  const _AiFoodAnalysisPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _SkeletonBox(width: 140, height: 16, radius: 8),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 130),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 160),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 110),
+    ],
   );
 }

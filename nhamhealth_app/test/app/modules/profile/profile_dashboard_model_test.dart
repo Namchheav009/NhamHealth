@@ -14,5 +14,18 @@ void main() {
     expect(dashboard.fiber?.goal, 25);
     expect(dashboard.sugar?.current, 21);
     expect(dashboard.sugar?.goal, 50);
+    expect(dashboard.phoneVerified, isFalse);
+  });
+
+  test('parses phoneVerified when true', () {
+    final dashboard = ProfileDashboardModel.fromJson({
+      'userId': 7,
+      'email': 'user@example.com',
+      'phone': '012345678',
+      'phoneVerified': true,
+    });
+
+    expect(dashboard.phone, '012345678');
+    expect(dashboard.phoneVerified, isTrue);
   });
 }

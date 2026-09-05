@@ -41,7 +41,7 @@ import jakarta.mail.internet.MimeMessage;
 @AutoConfigureMockMvc
 class PasswordResetFlowTests {
 
-    private static final Pattern CODE_PATTERN = Pattern.compile("code is (\\d{4})");
+    private static final Pattern CODE_PATTERN = Pattern.compile("code is (\\d{6})");
 
     @Autowired
     private MockMvc mockMvc;
@@ -91,7 +91,7 @@ class PasswordResetFlowTests {
         assertTrue(emailContent.contains("Keep your account safe"));
         String code = codeMatcher.group(1);
 
-        String wrongCode = "0000".equals(code) ? "0001" : "0000";
+        String wrongCode = "000000".equals(code) ? "000001" : "000000";
         mockMvc.perform(post("/api/v1/auth/verify-reset-code")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

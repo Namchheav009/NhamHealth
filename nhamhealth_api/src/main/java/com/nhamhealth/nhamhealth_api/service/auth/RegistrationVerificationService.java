@@ -18,10 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.entity.VerificationCode;
 import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
-import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -32,9 +35,11 @@ public class RegistrationVerificationService {
 
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final VerificationCodeRepository codes;
     private final PasswordEncoder passwordEncoder;
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final PlasgateSmsService smsService;
     private final SecureRandom random = new SecureRandom();
     private final String mailFrom;
     private final Duration codeTtl;
@@ -44,18 +49,22 @@ public class RegistrationVerificationService {
     public RegistrationVerificationService(
             AuthService authService,
             UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
+            PlasgateSmsService smsService,
             @Value("${app.mail.from:}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
             @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
             @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts) {
         this.authService = authService;
         this.userRepository = userRepository;
+        this.userProfileRepository = userProfileRepository;
         this.codes = codes;
         this.passwordEncoder = passwordEncoder;
         this.mailSenderProvider = mailSenderProvider;
+        this.smsService = smsService;
         this.mailFrom = mailFrom;
         this.codeTtl = codeTtl;
         this.resendCooldown = resendCooldown;
@@ -69,8 +78,8 @@ public class RegistrationVerificationService {
     }
 
     @Transactional
-    public void resend(String requestedEmail) {
-        User user = requiredPendingUser(requestedEmail);
+    public void resend(String requestedIdentity) {
+        User user = requiredPendingUser(requestedIdentity);
         sendCode(user, true, PURPOSE);
     }
 
@@ -80,34 +89,53 @@ public class RegistrationVerificationService {
     }
 
     @Transactional
-    public void resendLoginCode(String requestedEmail) {
-        User user = userRepository.findByEmailIgnoreCase(normalize(requestedEmail))
-                .filter(candidate -> Boolean.TRUE.equals(candidate.getLoginOtpRequired()))
-                .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
-                .orElse(null);
+    public void resendLoginCode(String requestedIdentity) {
+        String raw = requestedIdentity == null ? "" : requestedIdentity.trim();
+        boolean isPhone = !raw.contains("@") && raw.matches(".*\\d+.*");
+        User user;
+        if (isPhone) {
+            String normalized = smsService.normalizePhoneNumber(raw);
+            user = userRepository.findByPhoneNumber(normalized)
+                    .or(() -> userRepository.findByPhoneNumber(raw))
+                    .or(() -> userProfileRepository.findFirstByPhoneNumber(raw)
+                            .or(() -> userProfileRepository.findFirstByPhoneNumber(normalized))
+                            .map(UserProfile::getUser))
+                    .filter(candidate -> Boolean.TRUE.equals(candidate.getLoginOtpRequired()))
+                    .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
+                    .orElse(null);
+        } else {
+            user = userRepository.findByEmailIgnoreCase(normalize(raw))
+                    .filter(candidate -> Boolean.TRUE.equals(candidate.getLoginOtpRequired()))
+                    .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
+                    .orElse(null);
+        }
+
         if (user == null) {
-            passwordEncoder.encode(String.format(Locale.ROOT, "%04d", random.nextInt(10_000)));
+            passwordEncoder.encode(String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000)));
             return;
         }
         sendCode(user, true, LOGIN_PURPOSE);
     }
 
     @Transactional(noRollbackFor = PasswordResetException.class)
-    public AuthResponse verify(String requestedEmail, String rawCode) {
-        return authService.activateVerifiedUser(verifyCode(requestedEmail, rawCode, PURPOSE));
+    public AuthResponse verify(String requestedIdentity, String rawCode) {
+        return authService.activateVerifiedUser(verifyCode(requestedIdentity, rawCode, PURPOSE));
     }
 
     @Transactional(noRollbackFor = PasswordResetException.class)
-    public AuthResponse verifyLogin(String requestedEmail, String rawCode) {
-        User user = verifyCode(requestedEmail, rawCode, LOGIN_PURPOSE);
+    public AuthResponse verifyLogin(String requestedIdentity, String rawCode) {
+        User user = verifyCode(requestedIdentity, rawCode, LOGIN_PURPOSE);
         if (!Boolean.TRUE.equals(user.getLoginOtpRequired())) throw invalidCode();
         return authService.completeLoginOtp(user);
     }
 
-    private User verifyCode(String requestedEmail, String rawCode, String purpose) {
-        String email = normalize(requestedEmail);
+    private User verifyCode(String requestedIdentity, String rawCode, String purpose) {
+        String raw = requestedIdentity == null ? "" : requestedIdentity.trim();
+        boolean isPhone = !raw.contains("@") && raw.matches(".*\\d+.*");
+        String destination = isPhone ? smsService.normalizePhoneNumber(raw) : normalize(raw);
+
         VerificationCode code = codes
-                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, purpose)
+                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, purpose)
                 .orElseThrow(this::invalidCode);
         LocalDateTime now = LocalDateTime.now();
         if (!"PENDING".equals(code.getStatus())) throw invalidCode();
@@ -119,10 +147,14 @@ public class RegistrationVerificationService {
         if (code.getAttemptCount() >= maximumAttempts) {
             throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Request a new code");
         }
-        if (!passwordEncoder.matches(rawCode, code.getCodeHash())) {
-            code.setAttemptCount(code.getAttemptCount() + 1);
-            if (code.getAttemptCount() >= maximumAttempts) code.setStatus("LOCKED");
+        if (!passwordEncoder.matches(rawCode.trim(), code.getCodeHash())) {
+            int attempts = code.getAttemptCount() + 1;
+            code.setAttemptCount(attempts);
+            if (attempts >= maximumAttempts) code.setStatus("LOCKED");
             codes.save(code);
+            if (attempts >= maximumAttempts) {
+                throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Request a new code");
+            }
             throw invalidCode();
         }
         code.setStatus("VERIFIED");
@@ -132,20 +164,44 @@ public class RegistrationVerificationService {
     }
 
     private void sendCode(User user, boolean enforceCooldown, String purpose) {
-        String email = user.getEmail();
+        String destination;
+        String deliveryMethod;
+
+        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+            destination = smsService.normalizePhoneNumber(user.getPhoneNumber());
+            deliveryMethod = "SMS";
+        } else if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            destination = normalize(user.getEmail());
+            deliveryMethod = "EMAIL";
+        } else {
+            UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId()).orElse(null);
+            if (profile != null && profile.getPhoneNumber() != null && !profile.getPhoneNumber().isBlank()) {
+                destination = smsService.normalizePhoneNumber(profile.getPhoneNumber());
+                deliveryMethod = "SMS";
+            } else {
+                throw new IllegalStateException("User does not have an email or phone number for verification");
+            }
+        }
+
         LocalDateTime now = LocalDateTime.now();
         if (enforceCooldown) {
-            codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, purpose)
+            codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, purpose)
+                    .filter(latest -> "PENDING".equals(latest.getStatus()))
                     .filter(latest -> latest.getCreatedAt().isAfter(now.minus(resendCooldown)))
-                    .ifPresent(latest -> { throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Please wait before requesting another code"); });
+                    .ifPresent(latest -> {
+                        throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS,
+                                "Please wait before requesting another code");
+                    });
         }
-        codes.findByDestinationIgnoreCaseAndPurposeAndStatus(email, purpose, "PENDING")
+
+        codes.findByDestinationIgnoreCaseAndPurposeAndStatus(destination, purpose, "PENDING")
                 .forEach(existing -> existing.setStatus("SUPERSEDED"));
-        String rawCode = String.format(Locale.ROOT, "%04d", random.nextInt(10_000));
+
+        String rawCode = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));
         VerificationCode code = new VerificationCode();
         code.setUser(user);
-        code.setDestination(email);
-        code.setDeliveryMethod("EMAIL");
+        code.setDestination(destination);
+        code.setDeliveryMethod(deliveryMethod);
         code.setPurpose(purpose);
         code.setCodeHash(passwordEncoder.encode(rawCode));
         code.setExpiresAt(now.plus(codeTtl));
@@ -153,7 +209,18 @@ public class RegistrationVerificationService {
         code.setStatus("PENDING");
         code.setCreatedAt(now);
         codes.save(code);
-        deliver(email, rawCode);
+
+        if ("SMS".equals(deliveryMethod)) {
+            String message = String.format(Locale.ROOT,
+                    "Your NhamHealth verification code is %s. It expires in 5 minutes.", rawCode);
+            if (!smsService.sendSms(destination, message)) {
+                throw new PasswordResetException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "We could not send the SMS verification code. Please try again shortly");
+            }
+        } else {
+            deliver(destination, rawCode);
+        }
     }
 
     private void deliver(String email, String code) {
@@ -172,10 +239,26 @@ public class RegistrationVerificationService {
         }
     }
 
-    private User requiredPendingUser(String email) {
-        return userRepository.findByEmailIgnoreCase(normalize(email))
-                .filter(user -> !Boolean.TRUE.equals(user.getIsVerified()))
-                .orElseThrow(() -> new PasswordResetException(HttpStatus.BAD_REQUEST, "This account does not require verification"));
+    private User requiredPendingUser(String requestedIdentity) {
+        String raw = requestedIdentity == null ? "" : requestedIdentity.trim();
+        boolean isPhone = !raw.contains("@") && raw.matches(".*\\d+.*");
+        User user;
+        if (isPhone) {
+            String normalized = smsService.normalizePhoneNumber(raw);
+            user = userRepository.findByPhoneNumber(normalized)
+                    .or(() -> userRepository.findByPhoneNumber(raw))
+                    .or(() -> userProfileRepository.findFirstByPhoneNumber(raw)
+                            .or(() -> userProfileRepository.findFirstByPhoneNumber(normalized))
+                            .map(UserProfile::getUser))
+                    .orElse(null);
+        } else {
+            user = userRepository.findByEmailIgnoreCase(normalize(raw)).orElse(null);
+        }
+
+        if (user == null || Boolean.TRUE.equals(user.getIsVerified())) {
+            throw new PasswordResetException(HttpStatus.BAD_REQUEST, "This account does not require verification");
+        }
+        return user;
     }
 
     private PasswordResetException invalidCode() {

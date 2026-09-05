@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
-import '../../../routes/app_routes.dart';
+import '../../../../core/services/app_security_service.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
+import '../../models/auth/authenticated_user_model.dart';
 import '../../models/auth/google_login_request.dart';
 import '../../models/auth/login_request.dart';
-import '../../models/auth/authenticated_user_model.dart';
 import '../../services/auth/google_auth_service.dart';
-import '../../../../core/services/app_security_service.dart';
 import '../../views/auth/verification_view.dart';
 
 class LoginController extends GetxController {
@@ -40,9 +40,13 @@ class LoginController extends GetxController {
   }
 
   Future<void> login(String email, String password) async {
-    final normalizedEmail = email.trim();
-    if (!GetUtils.isEmail(normalizedEmail)) {
-      _showError('Please enter a valid email address.');
+    final normalized = email.trim();
+    final isEmail = GetUtils.isEmail(normalized);
+    final isPhone = RegExp(
+      r'^\+?[0-9]{8,15}$',
+    ).hasMatch(normalized.replaceAll(RegExp(r'[\s-]'), ''));
+    if (!isEmail && !isPhone) {
+      _showError('Please enter a valid email or phone number.');
       return;
     }
     if (password.isEmpty) {
@@ -53,7 +57,7 @@ class LoginController extends GetxController {
     await _run(() async {
       try {
         final response = await _authService.login(
-          LoginRequest(email: normalizedEmail, password: password),
+          LoginRequest(email: normalized, password: password),
         );
         await _finishLogin(response.user);
       } on LoginOtpRequiredException catch (challenge) {
@@ -61,8 +65,7 @@ class LoginController extends GetxController {
         Get.to(
           () => const VerificationView(),
           arguments: {
-            'email':
-                challenge.email.isEmpty ? normalizedEmail : challenge.email,
+            'email': challenge.email.isEmpty ? normalized : challenge.email,
             'purpose': 'login',
           },
           transition: Transition.rightToLeft,
@@ -109,6 +112,6 @@ class LoginController extends GetxController {
   }
 
   void _showError(String message) {
-    AppAlert.error(title: 'Sign in failed', message: message);
+    AppAlert.error(title: 'Sign in failed'.tr, message: message.tr);
   }
 }

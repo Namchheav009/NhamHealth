@@ -2,30 +2,34 @@ package com.nhamhealth.nhamhealth_api.controller.api;
 
 import java.time.LocalDate;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.nhamhealth.nhamhealth_api.dto.response.ProfileImageResponse;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileDashboardService;
-import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.DailyNutritionUpdateRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.SendPhoneCodeRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.VerifyPhoneCodeRequest;
+import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
+import com.nhamhealth.nhamhealth_api.service.auth.PhoneVerificationService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileDashboardService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.user.UserProfileService;
 import com.nhamhealth.nhamhealth_api.service.wellness.DailyNutritionService;
 
 import jakarta.validation.Valid;
-import com.nhamhealth.nhamhealth_api.service.user.UserProfileService;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -35,16 +39,19 @@ public class UserApiController {
     private final ProfileImageStorageService profileImageStorageService;
     private final ProfileDashboardService profileDashboardService;
     private final DailyNutritionService dailyNutritionService;
+    private final PhoneVerificationService phoneVerificationService;
 
     public UserApiController(
             UserProfileService userProfileService,
             ProfileImageStorageService profileImageStorageService,
             ProfileDashboardService profileDashboardService,
-            DailyNutritionService dailyNutritionService) {
+            DailyNutritionService dailyNutritionService,
+            PhoneVerificationService phoneVerificationService) {
         this.userProfileService = userProfileService;
         this.profileImageStorageService = profileImageStorageService;
         this.profileDashboardService = profileDashboardService;
         this.dailyNutritionService = dailyNutritionService;
+        this.phoneVerificationService = phoneVerificationService;
     }
 
     @PostMapping("/me/daily-wellness/nutrients")
@@ -100,5 +107,27 @@ public class UserApiController {
         Number userId = jwt.getClaim("userId");
         userProfileService.updateProfileImage(userId.intValue(), null);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/me/phone/send-code")
+    public ResponseEntity<?> sendPhoneVerificationCode(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody SendPhoneCodeRequest request) {
+        Number userId = jwt.getClaim("userId");
+        return ResponseEntity.ok(phoneVerificationService.sendVerificationCode(userId.intValue(), request.phone()));
+    }
+
+    @PostMapping("/me/phone/verify-code")
+    public ResponseEntity<?> verifyPhoneCode(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody VerifyPhoneCodeRequest request) {
+        Number userId = jwt.getClaim("userId");
+        return ResponseEntity.ok(phoneVerificationService.verifyCode(userId.intValue(), request.phone(), request.code()));
+    }
+
+    @ExceptionHandler(PasswordResetException.class)
+    public ResponseEntity<?> handlePasswordResetException(PasswordResetException exception) {
+        return ResponseEntity.status(exception.getStatus())
+                .body(java.util.Map.of("message", exception.getMessage()));
     }
 }

@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../app/modules/models/auth/google_login_request.dart';
 import '../../app/modules/models/auth/authenticated_user_model.dart';
+import '../../app/modules/models/auth/google_login_request.dart';
 import '../../app/modules/models/auth/login_request.dart';
 import '../../app/modules/models/auth/login_response.dart';
 import '../../app/modules/models/auth/register_request.dart';
@@ -123,6 +123,22 @@ class AuthService {
 
   Future<void> disableAppPin() async {
     await _authenticatedPost('/api/v1/auth/pin/disable', const {});
+  }
+
+  Future<Map<String, dynamic>> sendPhoneVerificationCode(String phone) async {
+    return _authenticatedPost('/api/v1/users/me/phone/send-code', {
+      'phone': phone.trim(),
+    });
+  }
+
+  Future<Map<String, dynamic>> verifyPhoneVerificationCode({
+    required String phone,
+    required String code,
+  }) async {
+    return _authenticatedPost('/api/v1/users/me/phone/verify-code', {
+      'phone': phone.trim(),
+      'code': code.trim(),
+    });
   }
 
   Future<Map<String, dynamic>> _authenticatedPost(

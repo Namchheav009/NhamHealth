@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
-import '../../../routes/app_routes.dart';
-import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/auth/google_login_request.dart';
 import '../../models/auth/register_request.dart';
 import '../../services/auth/google_auth_service.dart';
@@ -58,8 +58,13 @@ class RegisterController extends GetxController {
       _showError('Please enter your full name.');
       return;
     }
-    if (!GetUtils.isEmail(email.trim())) {
-      _showError('Please enter a valid email address.');
+    final normalized = email.trim();
+    final isEmail = GetUtils.isEmail(normalized);
+    final isPhone = RegExp(
+      r'^\+?[0-9]{8,15}$',
+    ).hasMatch(normalized.replaceAll(RegExp(r'[\s-]'), ''));
+    if (!isEmail && !isPhone) {
+      _showError('Please enter a valid email or phone number.');
       return;
     }
     if (password.length < 8) {
@@ -73,14 +78,15 @@ class RegisterController extends GetxController {
 
     await _run(() async {
       await _authService.register(
-        RegisterRequest(fullName: fullName, email: email, password: password),
+        RegisterRequest(
+          fullName: fullName,
+          email: normalized,
+          password: password,
+        ),
       );
       Get.to(
         () => const VerificationView(),
-        arguments: {
-          'email': email.trim().toLowerCase(),
-          'purpose': 'registration',
-        },
+        arguments: {'email': normalized, 'purpose': 'registration'},
         transition: Transition.rightToLeft,
       );
     });
@@ -120,6 +126,6 @@ class RegisterController extends GetxController {
   }
 
   void _showError(String message) {
-    AppAlert.error(title: 'Sign up failed', message: message);
+    AppAlert.error(title: 'Sign up failed'.tr, message: message.tr);
   }
 }

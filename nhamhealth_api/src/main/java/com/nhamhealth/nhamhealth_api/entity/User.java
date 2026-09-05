@@ -30,6 +30,9 @@ public class User {
     @Column(name = "email", unique = true, length = 150)
     private String email;
 
+    @Column(name = "phone_number", unique = true, length = 30)
+    private String phoneNumber;
+
     @Column(name = "password_hash")
     private String passwordHash;
 
@@ -81,6 +84,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getPasswordHash() {
@@ -173,7 +184,10 @@ public class User {
     }
 
     public String getName() {
-        return email != null ? email : "Unknown";
+        if (email != null && !email.isBlank()) {
+            return email;
+        }
+        return phoneNumber != null ? phoneNumber : "Unknown";
     }
 
     public String getRoleLabel() {
@@ -186,7 +200,7 @@ public class User {
             return "NA";
         }
 
-        String[] parts = name.split("[\s@._-]+");
+        String[] parts = name.split("[\\s@._-]+");
         if (parts.length == 0) {
             return name.substring(0, Math.min(2, name.length())).toUpperCase();
         }

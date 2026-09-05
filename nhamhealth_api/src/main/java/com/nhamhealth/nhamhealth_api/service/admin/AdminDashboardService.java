@@ -1,5 +1,6 @@
 package com.nhamhealth.nhamhealth_api.service.admin;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -7,14 +8,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
-import java.math.BigDecimal;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.Cacheable;
 
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -22,16 +22,16 @@ import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodAnalysisRepository;
 import com.nhamhealth.nhamhealth_api.repository.ai.AiFoodSuggestionRepository;
 import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -83,14 +83,14 @@ public class AdminDashboardService {
         this.notificationRepository = notificationRepository;
     }
 
-        @Cacheable("adminDashboard")
-        public DashboardSnapshot loadDashboard() {
+    @Cacheable("adminDashboard")
+    public DashboardSnapshot loadDashboard() {
         LocalDate today = LocalDate.now();
         LocalDate startDate = today.minusDays(6);
 
         return new DashboardSnapshot(
-                userRepository.count(),
-                userRepository.countByIsVerifiedTrue(),
+                userRepository.countByStatusNot("DELETED"),
+                userRepository.countByIsVerifiedTrueAndStatusNot("DELETED"),
                 mealRepository.count(),
                 mealRepository.countByIsPublishedTrue(),
                 0,
@@ -118,7 +118,7 @@ public class AdminDashboardService {
                 .map(name -> {
                     List<Object[]> matching = todayTotals.stream()
                             .filter(total -> String.valueOf(total[0]).toLowerCase()
-                                    .contains(name.toLowerCase().replace("s", "")))
+                            .contains(name.toLowerCase().replace("s", "")))
                             .toList();
                     BigDecimal consumed = matching.stream().map(total -> (BigDecimal) total[2])
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -131,16 +131,20 @@ public class AdminDashboardService {
     }
 
     private String defaultUnit(String name) {
-        if ("Calories".equals(name)) return "kcal";
-        if ("Water".equals(name)) return "glasses";
+        if ("Calories".equals(name)) {
+            return "kcal";
+        }
+        if ("Water".equals(name)) {
+            return "glasses";
+        }
         return "g";
     }
 
     private List<RecentRecommendation> buildRecentRecommendations() {
         return aiRecommendationRepository.findTop5ByOrderByCreatedAtDesc().stream()
                 .map(item -> new RecentRecommendation(
-                        item.getUser() == null ? "Unknown user" : item.getUser().getEmail(),
-                        item.getResponseText(), item.getStatus(), item.getCreatedAt()))
+                item.getUser() == null ? "Unknown user" : item.getUser().getEmail(),
+                item.getResponseText(), item.getStatus(), item.getCreatedAt()))
                 .toList();
     }
 
@@ -150,7 +154,8 @@ public class AdminDashboardService {
                     LocalDate date = startDate.plusDays(offset);
                     LocalDateTime dayStart = date.atStartOfDay();
                     LocalDateTime dayEnd = dayStart.plusDays(1);
-                    long newUsers = userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(dayStart, dayEnd);
+                    long newUsers = userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndStatusNot(
+                            dayStart, dayEnd, "DELETED");
                     return new ActivityPoint(date.format(DAY_LABEL), newUsers);
                 })
                 .toList();
@@ -172,17 +177,18 @@ public class AdminDashboardService {
     }
 
     private List<RecentUser> buildRecentUsers() {
-        List<User> users = userRepository.findTop5ByOrderByCreatedAtDesc();
+        List<User> users = userRepository.findTop5ByStatusNotOrderByCreatedAtDesc("DELETED");
         Map<Integer, UserProfile> profiles = userProfileRepository.findByUser_UserIdIn(
                 users.stream().map(User::getUserId).toList()).stream()
                 .collect(Collectors.toMap(profile -> profile.getUser().getUserId(), Function.identity()));
         return users.stream()
                 .map(user -> new RecentUser(
-                        user.getInitials(),
-                        user.getEmail(),
-                        profiles.containsKey(user.getUserId()) ? profiles.get(user.getUserId()).getProfileImageUrl() : null,
-                        user.getStatus(),
-                        user.getCreatedAt()))
+                user.getUserId(),
+                user.getInitials(),
+                user.getName(),
+                profiles.containsKey(user.getUserId()) ? profiles.get(user.getUserId()).getProfileImageUrl() : null,
+                user.getStatus(),
+                user.getCreatedAt()))
                 .toList();
     }
 
@@ -201,31 +207,40 @@ public class AdminDashboardService {
             List<NutrientMetric> nutrients,
             List<RecentRecommendation> recentRecommendations,
             List<ModuleMetric> modules) {
+
     }
 
     public record ActivityPoint(String label, long newUsers) {
+
     }
 
     public record CategoryMetric(String name, long count) {
+
     }
 
     public record RecentUser(
+            Integer id,
             String initials,
             String email,
             String profileImageUrl,
             String status,
             LocalDateTime createdAt) {
+
     }
 
     public record RecentReview(String mealName, String userEmail, Integer rating, LocalDateTime createdAt) {
+
     }
 
     public record NutrientMetric(String name, BigDecimal consumed, BigDecimal goal, String unit, long users) {
+
     }
 
     public record RecentRecommendation(String userEmail, String text, String status, LocalDateTime createdAt) {
+
     }
 
     public record ModuleMetric(String label, long count, String icon, String href) {
+
     }
 }

@@ -12,6 +12,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
@@ -596,8 +597,15 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 onRefresh: _loadComments,
                 child:
                     _loading
-                        ? const Center(
-                          child: CircularProgressIndicator(color: _green),
+                        ? const SingleChildScrollView(
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.pageHorizontal,
+                            4,
+                            AppSpacing.pageHorizontal,
+                            24,
+                          ),
+                          child: PageSkeleton.comments(),
                         )
                         : ListView(
                           controller: _scrollController,

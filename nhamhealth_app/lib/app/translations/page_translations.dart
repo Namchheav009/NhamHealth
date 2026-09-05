@@ -28,6 +28,10 @@ const Map<String, String> englishPageTranslations = {
   'Start building healthier habits with NhamHealth.':
       'Start building healthier habits with NhamHealth.',
   'Email address': 'Email address',
+  'Email or Phone Number': 'Email or Phone Number',
+  'Please enter a valid email or phone number.':
+      'Please enter a valid email or phone number.',
+  'We sent an SMS code to': 'We sent an SMS code to',
   'Full name': 'Full name',
   'Password': 'Password',
   'New password': 'New password',
@@ -67,8 +71,8 @@ const Map<String, String> englishPageTranslations = {
   'Your password has been reset successfully.':
       'Your password has been reset successfully.',
   'Verification': 'Verification',
-  'Enter the four-digit code to continue.':
-      'Enter the four-digit code to continue.',
+  'Enter the six-digit code to continue.':
+      'Enter the six-digit code to continue.',
   'We sent a code to': 'We sent a code to',
   'Sending...': 'Sending...',
   'Code expired': 'Code expired',
@@ -83,7 +87,8 @@ const Map<String, String> englishPageTranslations = {
   "Didn't receive the code?": "Didn't receive the code?",
   'Send again': 'Send again',
   'Send again in @seconds': 'Send again in @seconds',
-  'Four digit verification code': 'Four digit verification code',
+  'Six digit verification code': 'Six digit verification code',
+  'Enter the complete six-digit code.': 'Enter the complete six-digit code.',
   'Google sign in failed': 'Google sign in failed',
   'Google sign in is unavailable': 'Google sign in is unavailable',
   'Account created!': 'Account created!',
@@ -723,6 +728,32 @@ const Map<String, String> englishPageTranslations = {
   'Write a comment...': 'Write a comment...',
   'Write a reply...': 'Write a reply...',
   'Send': 'Send',
+
+  // Phone verification
+  'Verified': 'Verified',
+  'Unverified': 'Unverified',
+  'Phone Verification': 'Phone Verification',
+  'Verify Phone Number': 'Verify Phone Number',
+  'Enter the 6-digit code sent to your phone.':
+      'Enter the 6-digit code sent to your phone.',
+  'Verification code sent to your phone.':
+      'Verification code sent to your phone.',
+  'Phone verified successfully!': 'Phone verified successfully!',
+  'Please enter your phone number first.':
+      'Please enter your phone number first.',
+  'Please enter a valid 6-digit code.': 'Please enter a valid 6-digit code.',
+  'Phone Number Required': 'Phone Number Required',
+  'Verification Error': 'Verification Error',
+  'Sending verification code...': 'Sending verification code...',
+  'Could not send verification code. Please try again.':
+      'Could not send verification code. Please try again.',
+  'The verification code is incorrect': 'The verification code is incorrect',
+  'Check your messages': 'Check your messages',
+  'If an account exists for this phone number, the code is on its way.':
+      'If an account exists for this phone number, the code is on its way.',
+  'Email address or phone number': 'Email address or phone number',
+  'Enter your email address or phone number to receive a code.':
+      'Enter your email address or phone number to receive a code.',
 };
 
 const Map<String, String> khmerPageTranslations = {
@@ -755,6 +786,10 @@ const Map<String, String> khmerPageTranslations = {
   'Start building healthier habits with NhamHealth.':
       'ចាប់ផ្តើមបង្កើតទម្លាប់ល្អសម្រាប់សុខភាពជាមួយ NhamHealth។',
   'Email address': 'អាសយដ្ឋានអ៊ីមែល',
+  'Email or Phone Number': 'អ៊ីមែល ឬលេខទូរស័ព្ទ',
+  'Please enter a valid email or phone number.':
+      'សូមបញ្ចូលអ៊ីមែល ឬលេខទូរស័ព្ទដែលត្រឹមត្រូវ',
+  'We sent an SMS code to': 'យើងបានផ្ញើកូដ SMS ទៅកាន់',
   'Full name': 'ឈ្មោះពេញ',
   'Password': 'ពាក្យសម្ងាត់',
   'New password': 'ពាក្យសម្ងាត់ថ្មី',
@@ -794,7 +829,7 @@ const Map<String, String> khmerPageTranslations = {
   'Your password has been reset successfully.':
       'ពាក្យសម្ងាត់របស់អ្នកត្រូវបានកំណត់ឡើងវិញដោយជោគជ័យ។',
   'Verification': 'ការផ្ទៀងផ្ទាត់',
-  'Enter the four-digit code to continue.': 'បញ្ចូលលេខកូដ ៤ ខ្ទង់ដើម្បីបន្ត។',
+  'Enter the six-digit code to continue.': 'បញ្ចូលលេខកូដ ៦ ខ្ទង់ដើម្បីបន្ត។',
   'We sent a code to': 'យើងបានផ្ញើលេខកូដទៅ',
   'Sending...': 'កំពុងផ្ញើ...',
   'Code expired': 'លេខកូដបានផុតកំណត់',
@@ -809,7 +844,8 @@ const Map<String, String> khmerPageTranslations = {
   "Didn't receive the code?": 'មិនបានទទួលលេខកូដ?',
   'Send again': 'ផ្ញើម្តងទៀត',
   'Send again in @seconds': 'ផ្ញើម្តងទៀតក្នុង @seconds',
-  'Four digit verification code': 'លេខកូដផ្ទៀងផ្ទាត់ ៤ ខ្ទង់',
+  'Six digit verification code': 'លេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់',
+  'Enter the complete six-digit code.': 'សូមបញ្ចូលលេខកូដ ៦ ខ្ទង់ឱ្យបានពេញលេញ។',
   'Google sign in failed': 'ចូលជាមួយ Google មិនបាន',
   'Google sign in is unavailable': 'មិនអាចប្រើការចូលជាមួយ Google បានទេ',
   'Account created!': 'បានបង្កើតគណនី!',
@@ -1450,4 +1486,31 @@ const Map<String, String> khmerPageTranslations = {
   'Write a comment...': 'សរសេរមតិ...',
   'Write a reply...': 'សរសេរការឆ្លើយតប...',
   'Send': 'ផ្ញើ',
+
+  // ការផ្ទៀងផ្ទាត់លេខទូរស័ព្ទ
+  'Verified': 'បានផ្ទៀងផ្ទាត់',
+  'Unverified': 'មិនទាន់ផ្ទៀងផ្ទាត់',
+  'Phone Verification': 'ការផ្ទៀងផ្ទាត់លេខទូរស័ព្ទ',
+  'Verify Phone Number': 'ផ្ទៀងផ្ទាត់លេខទូរស័ព្ទ',
+  'Enter the 6-digit code sent to your phone.':
+      'បញ្ចូលលេខកូដ ៦ ខ្ទង់ដែលបានផ្ញើទៅទូរស័ព្ទរបស់អ្នក។',
+  'Verification code sent to your phone.':
+      'លេខកូដផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើទៅកាន់ទូរស័ព្ទរបស់អ្នក។',
+  'Phone verified successfully!': 'លេខទូរស័ព្ទត្រូវបានផ្ទៀងផ្ទាត់ដោយជោគជ័យ!',
+  'Please enter your phone number first.':
+      'សូមបញ្ចូលលេខទូរស័ព្ទរបស់អ្នកជាមុនសិន។',
+  'Please enter a valid 6-digit code.':
+      'សូមបញ្ចូលលេខកូដ ៦ ខ្ទង់ឱ្យបានត្រឹមត្រូវ។',
+  'Phone Number Required': 'ត្រូវការលេខទូរស័ព្ទ',
+  'Verification Error': 'បញ្ហាក្នុងការផ្ទៀងផ្ទាត់',
+  'Sending verification code...': 'កំពុងផ្ញើលេខកូដផ្ទៀងផ្ទាត់...',
+  'Could not send verification code. Please try again.':
+      'មិនអាចផ្ញើលេខកូដផ្ទៀងផ្ទាត់បានទេ។ សូមព្យាយាមម្តងទៀត។',
+  'The verification code is incorrect': 'លេខកូដផ្ទៀងផ្ទាត់មិនត្រឹមត្រូវទេ',
+  'Check your messages': 'ពិនិត្យសាររបស់អ្នក',
+  'If an account exists for this phone number, the code is on its way.':
+      'ប្រសិនបើគណនីមានភ្ជាប់ជាមួយលេខនេះ លេខកូដនឹងត្រូវផ្ញើជូនភ្លាមៗ។',
+  'Email address or phone number': 'អ៊ីមែល ឬលេខទូរស័ព្ទ',
+  'Enter your email address or phone number to receive a code.':
+      'បញ្ចូលអ៊ីមែល ឬលេខទូរស័ព្ទរបស់អ្នកដើម្បីទទួលលេខកូដ។',
 };

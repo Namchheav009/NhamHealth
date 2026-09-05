@@ -292,7 +292,7 @@ void main() {
         }
         if (step == 2) {
           expect(request.url.path, '/api/v1/auth/verify-reset-code');
-          expect(body, {'email': 'user@example.com', 'code': '1234'});
+          expect(body, {'email': 'user@example.com', 'code': '123456'});
           return http.Response(
             jsonEncode({'resetToken': 'one-time-token', 'expiresIn': 900}),
             200,
@@ -314,7 +314,7 @@ void main() {
     await service.requestPasswordReset(' USER@example.com ');
     final resetToken = await service.verifyPasswordResetCode(
       email: 'user@example.com',
-      code: '1234',
+      code: '123456',
     );
     await service.resetPassword(
       resetToken: resetToken,
@@ -337,7 +337,10 @@ void main() {
     );
 
     await expectLater(
-      service.verifyPasswordResetCode(email: 'user@example.com', code: '0000'),
+      service.verifyPasswordResetCode(
+        email: 'user@example.com',
+        code: '000000',
+      ),
       throwsA(
         isA<AuthException>()
             .having((error) => error.statusCode, 'statusCode', 400)

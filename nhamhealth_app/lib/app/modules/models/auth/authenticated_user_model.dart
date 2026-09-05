@@ -18,7 +18,10 @@ class AuthenticatedUser {
   String get displayName {
     final name = fullName?.trim();
     if (name != null && name.isNotEmpty) return name;
-    return email.split('@').first;
+    if (email.contains('@')) {
+      return email.split('@').first;
+    }
+    return email.isNotEmpty ? email : 'User';
   }
 
   String get initials {
@@ -36,10 +39,15 @@ class AuthenticatedUser {
 
   factory AuthenticatedUser.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'] ?? json['userId'];
+    final emailValue =
+        (json['email'] as String?) ??
+        (json['phone'] as String?) ??
+        (json['phoneNumber'] as String?) ??
+        '';
     return AuthenticatedUser(
       id: (rawId as num).toInt(),
-      email: json['email'] as String,
-      role: json['role'] as String,
+      email: emailValue,
+      role: (json['role'] as String?) ?? 'USER',
       fullName: json['fullName'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
       hasPin: json['hasPin'] as bool? ?? false,

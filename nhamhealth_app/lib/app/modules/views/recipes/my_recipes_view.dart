@@ -1,10 +1,12 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../models/recipes/community_recipe.dart';
 import '../../repositories/recipes/recipe_repository.dart';
 
@@ -115,7 +117,11 @@ class _MyRecipesViewState extends State<MyRecipesView> {
     ),
     body:
         _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const SingleChildScrollView(
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              child: PageSkeleton.recipes(),
+            )
             : RefreshIndicator(
               onRefresh: _load,
               child:
@@ -520,9 +526,7 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) => Chip(
     label: Text(status == 'PUBLISHED' ? 'Published' : 'Draft'),
     backgroundColor:
-        status == 'PUBLISHED'
-            ? context.appSoftGreen
-            : context.appMutedSurface,
+        status == 'PUBLISHED' ? context.appSoftGreen : context.appMutedSurface,
   );
 }
 

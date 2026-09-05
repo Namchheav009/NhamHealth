@@ -14,10 +14,10 @@ import com.nhamhealth.nhamhealth_api.entity.DailyWellnessSummary;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.entity.WellnessProfile;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
 
 @Service
@@ -67,6 +67,7 @@ public class ProfileDashboardService {
                 identity == null ? null : identity.getProfileImageUrl(),
                 identity == null ? null : identity.getMembershipType(),
                 identity == null ? null : identity.getPhoneNumber(),
+                identity != null && Boolean.TRUE.equals(identity.getIsPhoneVerified()),
                 identity == null ? null : identity.getDateOfBirth(),
                 identity == null ? null : identity.getGender(),
                 resolveAge(identity, wellness),
@@ -82,7 +83,9 @@ public class ProfileDashboardService {
     }
 
     private Progress progress(DailyWellnessSummary summary, String nutrientName) {
-        if (summary == null) return null;
+        if (summary == null) {
+            return null;
+        }
         return nutrientTotalRepository
                 .findByDailyWellnessSummaryDailySummaryId(summary.getDailySummaryId())
                 .stream()
@@ -93,7 +96,9 @@ public class ProfileDashboardService {
     }
 
     private boolean matches(DailyNutrientTotal total, String expected) {
-        if (total.getNutrient() == null || total.getNutrient().getNutrientName() == null) return false;
+        if (total.getNutrient() == null || total.getNutrient().getNutrientName() == null) {
+            return false;
+        }
         return total.getNutrient().getNutrientName().toLowerCase(Locale.ROOT).contains(expected);
     }
 

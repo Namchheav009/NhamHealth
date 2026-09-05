@@ -1,175 +1,346 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle + ' | Nham Health Admin'}">Dashboard | Nham Health Admin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" th:href="@{/css/admin-layout.css}">
-    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
-</head>
-<body>
-<div class="app-shell">
-    <div th:replace="~{layouts/sidebar :: sidebar('dashboard')}"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">
+      Dashboard | Nham Health Admin
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div th:replace="~{layouts/sidebar :: sidebar('dashboard')}"></div>
 
-    <main class="main-area">
+      <main class="main-area">
         <div th:replace="~{layouts/topbar :: topbar}"></div>
 
         <section class="page-content">
-            <div class="page-heading dashboard-heading">
+          <div class="page-heading dashboard-heading">
+            <div>
+              <div class="title-line">
+                <h1>Dashboard</h1>
+                <span>Live platform overview</span>
+              </div>
+              <p>
+                Key activity, content, and community signals from the Nham
+                Health platform.
+              </p>
+            </div>
+            <div class="dashboard-period" aria-label="Reporting period">
+              <i class="bi bi-calendar3"></i>
+              <span th:text="${dashboard.periodLabel()}"
+                >May 14, 2026 – May 20, 2026</span
+              >
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <a class="stat-card stat-link" th:href="@{/admin/users}">
+              <div class="stat-icon green">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Total users</span>
+                <strong
+                  th:text="${#numbers.formatInteger(dashboard.totalUsers(), 1, 'COMMA')}"
+                  >0</strong
+                >
+                <small
+                  ><b
+                    th:text="${#numbers.formatInteger(dashboard.verifiedUsers(), 1, 'COMMA')}"
+                    >0</b
+                  >
+                  verified accounts</small
+                >
+              </div>
+              <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
+            </a>
+
+            <a class="stat-card stat-link" th:href="@{/admin/meals}">
+              <div class="stat-icon orange">
+                <i class="bi bi-egg-fried"></i>
+              </div>
+              <div class="stat-content">
+                <span>Meals</span>
+                <strong
+                  th:text="${#numbers.formatInteger(dashboard.totalMeals(), 1, 'COMMA')}"
+                  >0</strong
+                >
+                <small
+                  ><b
+                    th:text="${#numbers.formatInteger(dashboard.publishedMeals(), 1, 'COMMA')}"
+                    >0</b
+                  >
+                  published</small
+                >
+              </div>
+              <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
+            </a>
+
+            <a class="stat-card stat-link" th:href="@{/admin/reviews}">
+              <div class="stat-icon teal"><i class="bi bi-star-fill"></i></div>
+              <div class="stat-content">
+                <span>Meal reviews</span>
+                <strong
+                  th:text="${#numbers.formatInteger(dashboard.totalReviews(), 1, 'COMMA')}"
+                  >0</strong
+                >
+                <small
+                  ><b
+                    th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}"
+                    >0</b
+                  >
+                  unread notifications</small
+                >
+              </div>
+              <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
+            </a>
+          </div>
+
+          <div class="dashboard-grid dashboard-grid-main">
+            <article class="panel activity-panel">
+              <div class="panel-header">
                 <div>
-                    <div class="title-line">
-                        <h1>Dashboard</h1>
-                        <span>Live platform overview</span>
-                    </div>
-                    <p>Key activity, content, and community signals from the Nham Health platform.</p>
+                  <h2>Activity over the last 7 days</h2>
+                  <div class="legend">
+                    <span><i class="dot green-dot"></i>New users</span>
+                  </div>
                 </div>
-                <div class="dashboard-period" aria-label="Reporting period">
-                    <i class="bi bi-calendar3"></i>
-                    <span th:text="${dashboard.periodLabel()}">May 14, 2026 – May 20, 2026</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas
+                  id="activityChart"
+                  aria-label="New users over seven days"
+                ></canvas>
+              </div>
+            </article>
+
+            <article class="panel category-panel">
+              <div class="panel-header">
+                <h2>Meal categories</h2>
+                <a th:href="@{/admin/meal-categories}"
+                  >Manage <i class="bi bi-arrow-right"></i
+                ></a>
+              </div>
+              <div
+                class="category-content"
+                th:if="${!#lists.isEmpty(dashboard.categories())}"
+              >
+                <div class="donut-wrap">
+                  <canvas
+                    id="categoryChart"
+                    aria-label="Meal count by category"
+                  ></canvas>
+                  <div class="donut-center">
+                    <strong
+                      th:text="${#numbers.formatInteger(dashboard.totalMeals(), 1, 'COMMA')}"
+                      >0</strong
+                    ><span>Total meals</span>
+                  </div>
                 </div>
-            </div>
-
-            <div class="stats-grid">
-                <a class="stat-card stat-link" th:href="@{/admin/users}">
-                    <div class="stat-icon green"><i class="bi bi-people-fill"></i></div>
-                    <div class="stat-content">
-                        <span>Total users</span>
-                        <strong th:text="${#numbers.formatInteger(dashboard.totalUsers(), 1, 'COMMA')}">0</strong>
-                        <small><b th:text="${#numbers.formatInteger(dashboard.verifiedUsers(), 1, 'COMMA')}">0</b> verified accounts</small>
-                    </div>
-                    <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
-                </a>
-
-                <a class="stat-card stat-link" th:href="@{/admin/meals}">
-                    <div class="stat-icon orange"><i class="bi bi-egg-fried"></i></div>
-                    <div class="stat-content">
-                        <span>Meals</span>
-                        <strong th:text="${#numbers.formatInteger(dashboard.totalMeals(), 1, 'COMMA')}">0</strong>
-                        <small><b th:text="${#numbers.formatInteger(dashboard.publishedMeals(), 1, 'COMMA')}">0</b> published</small>
-                    </div>
-                    <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
-                </a>
-
-                <a class="stat-card stat-link" th:href="@{/admin/reviews}">
-                    <div class="stat-icon teal"><i class="bi bi-star-fill"></i></div>
-                    <div class="stat-content">
-                        <span>Meal reviews</span>
-                        <strong th:text="${#numbers.formatInteger(dashboard.totalReviews(), 1, 'COMMA')}">0</strong>
-                        <small><b th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}">0</b> unread notifications</small>
-                    </div>
-                    <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
-                </a>
-            </div>
-
-            <div class="dashboard-grid dashboard-grid-main">
-                <article class="panel activity-panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2>Activity over the last 7 days</h2>
-                            <div class="legend"><span><i class="dot green-dot"></i>New users</span></div>
-                        </div>
-                    </div>
-                    <div class="chart-wrap"><canvas id="activityChart" aria-label="New users over seven days"></canvas></div>
-                </article>
-
-                <article class="panel category-panel">
-                    <div class="panel-header"><h2>Meal categories</h2><a th:href="@{/admin/meal-categories}">Manage <i class="bi bi-arrow-right"></i></a></div>
-                    <div class="category-content" th:if="${!#lists.isEmpty(dashboard.categories())}">
-                        <div class="donut-wrap">
-                            <canvas id="categoryChart" aria-label="Meal count by category"></canvas>
-                            <div class="donut-center"><strong th:text="${#numbers.formatInteger(dashboard.totalMeals(), 1, 'COMMA')}">0</strong><span>Total meals</span></div>
-                        </div>
-                            <div class="category-list">
-                                <div th:each="category : ${dashboard.categories()}">
-                                <span><i class="dot green-dot"></i><span th:text="${category.name()}">Breakfast</span></span>
-                                <b th:text="${#numbers.formatInteger(category.count(), 1, 'COMMA')}">0</b>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="empty-state" th:if="${#lists.isEmpty(dashboard.categories())}">No meal categories have been added yet.</div>
-                </article>
-            </div>
-
-            <section class="module-section" aria-labelledby="module-overview-title">
-                <div class="section-heading">
-                    <div>
-                        <h2 id="module-overview-title">Platform modules</h2>
-                        <p>Current records across the connected admin areas.</p>
-                    </div>
+                <div class="category-list">
+                  <div th:each="category : ${dashboard.categories()}">
+                    <span
+                      ><i class="dot green-dot"></i
+                      ><span th:text="${category.name()}">Breakfast</span></span
+                    >
+                    <b
+                      th:text="${#numbers.formatInteger(category.count(), 1, 'COMMA')}"
+                      >0</b
+                    >
+                  </div>
                 </div>
-                <div class="module-grid">
-                    <a class="module-card" th:each="module : ${dashboard.modules()}" th:href="${module.href()}">
-                        <i th:class="${'bi ' + module.icon()}" aria-hidden="true"></i>
-                        <span th:text="${module.label()}">Wellness entries</span>
-                        <strong th:text="${#numbers.formatInteger(module.count(), 1, 'COMMA')}">0</strong>
-                    </a>
-                </div>
-            </section>
+              </div>
+              <div
+                class="empty-state"
+                th:if="${#lists.isEmpty(dashboard.categories())}"
+              >
+                No meal categories have been added yet.
+              </div>
+            </article>
+          </div>
 
-            <div class="dashboard-grid dashboard-grid-bottom">
-                <article class="panel table-panel">
-                    <div class="panel-header"><h2>Newest users</h2><a th:href="@{/admin/users}">View users <i class="bi bi-arrow-right"></i></a></div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead><tr><th>User</th><th>Status</th><th>Joined</th></tr></thead>
-                            <tbody>
-                            <tr th:if="${#lists.isEmpty(dashboard.recentUsers())}"><td colspan="3" class="table-empty">No users yet.</td></tr>
-                            <tr th:each="user : ${dashboard.recentUsers()}">
-                                <td class="user-cell">
-                                    <span class="mini-avatar">
-                                        <img th:if="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}" th:src="${user.profileImageUrl()}" th:alt="${user.email()}">
-                                        <span th:unless="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}" th:text="${user.initials()}">NH</span>
-                                    </span>
-                                    <span th:text="${user.email()}">user@example.com</span>
-                                </td>
-                                <td><span class="status-badge" th:classappend="${user.status() != null && user.status().equalsIgnoreCase('ACTIVE')} ? ' active-status' : ' pending-status'" th:text="${user.status() ?: 'Unknown'}">ACTIVE</span></td>
-                                <td th:text="${user.createdAt() != null ? #temporals.format(user.createdAt(), 'MMM d, yyyy') : '—'}">—</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </article>
-
-                <article class="panel reviews-panel">
-                    <div class="panel-header"><h2>Latest meal reviews</h2><a th:href="@{/admin/reviews}">View reviews <i class="bi bi-arrow-right"></i></a></div>
-                    <div class="review-list" th:if="${!#lists.isEmpty(dashboard.recentReviews())}">
-                        <div class="review-item" th:each="review : ${dashboard.recentReviews()}">
-                            <div class="meal-thumb"><i class="bi bi-egg-fried"></i></div>
-                            <div class="review-main">
-                                <strong th:text="${review.mealName()}">Meal</strong>
-                                <span th:text="${review.userEmail()}">user@example.com</span>
-                            </div>
-                            <div class="rating"><i class="bi bi-star-fill"></i><b th:text="${review.rating() ?: '—'}">—</b><span>/ 5</span></div>
-                            <time th:text="${review.createdAt() != null ? #temporals.format(review.createdAt(), 'MMM d') : '—'}">—</time>
-                        </div>
-                    </div>
-                    <div class="empty-state" th:if="${#lists.isEmpty(dashboard.recentReviews())}">No meal reviews yet.</div>
-                </article>
+          <section
+            class="module-section"
+            aria-labelledby="module-overview-title"
+          >
+            <div class="section-heading">
+              <div>
+                <h2 id="module-overview-title">Platform modules</h2>
+                <p>Current records across the connected admin areas.</p>
+              </div>
             </div>
+            <div class="module-grid">
+              <a
+                class="module-card"
+                th:each="module : ${dashboard.modules()}"
+                th:href="${module.href()}"
+              >
+                <i th:class="${'bi ' + module.icon()}" aria-hidden="true"></i>
+                <span th:text="${module.label()}">Wellness entries</span>
+                <strong
+                  th:text="${#numbers.formatInteger(module.count(), 1, 'COMMA')}"
+                  >0</strong
+                >
+              </a>
+            </div>
+          </section>
+
+          <div class="dashboard-grid dashboard-grid-bottom">
+            <article class="panel table-panel">
+              <div class="panel-header">
+                <h2>Newest users</h2>
+                <a th:href="@{/admin/users}"
+                  >View users <i class="bi bi-arrow-right"></i
+                ></a>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Status</th>
+                      <th>Joined</th>
+                      <th class="actions-column">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${#lists.isEmpty(dashboard.recentUsers())}">
+                      <td colspan="4" class="table-empty">No users yet.</td>
+                    </tr>
+                    <tr
+                      th:each="user : ${dashboard.recentUsers()}"
+                      th:attr="data-id=${user.id()},data-name=${user.email()}"
+                    >
+                      <td class="user-cell">
+                        <span class="mini-avatar">
+                          <img
+                            th:if="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}"
+                            th:src="${user.profileImageUrl()}"
+                            th:alt="${user.email()}"
+                          />
+                          <span
+                            th:unless="${user.profileImageUrl() != null && !#strings.isEmpty(user.profileImageUrl())}"
+                            th:text="${user.initials()}"
+                            >NH</span
+                          >
+                        </span>
+                        <span th:text="${user.email()}">user@example.com</span>
+                      </td>
+                      <td>
+                        <span
+                          class="status-badge"
+                          th:classappend="${user.status() != null && user.status().equalsIgnoreCase('ACTIVE')} ? ' active-status' : ' pending-status'"
+                          th:text="${user.status() ?: 'Unknown'}"
+                          >ACTIVE</span
+                        >
+                      </td>
+                      <td
+                        th:text="${user.createdAt() != null ? #temporals.format(user.createdAt(), 'MMM d, yyyy') : '—'}"
+                      >
+                        —
+                      </td>
+                      <td class="actions-column">
+                        <div class="user-actions">
+                          <a
+                            class="details-link"
+                            th:href="@{/admin/users}"
+                            title="Manage users"
+                            ><i class="bi bi-people"></i
+                            ><span class="sr-only">Manage users</span></a
+                          >
+                          <button
+                            class="details-link delete-user"
+                            type="button"
+                            title="Delete user"
+                            th:attr="data-id=${user.id()},data-name=${user.email()}"
+                          >
+                            <i class="bi bi-trash"></i
+                            ><span class="sr-only">Delete user</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel reviews-panel">
+              <div class="panel-header">
+                <h2>Latest meal reviews</h2>
+                <a th:href="@{/admin/reviews}"
+                  >View reviews <i class="bi bi-arrow-right"></i
+                ></a>
+              </div>
+              <div
+                class="review-list"
+                th:if="${!#lists.isEmpty(dashboard.recentReviews())}"
+              >
+                <div
+                  class="review-item"
+                  th:each="review : ${dashboard.recentReviews()}"
+                >
+                  <div class="meal-thumb"><i class="bi bi-egg-fried"></i></div>
+                  <div class="review-main">
+                    <strong th:text="${review.mealName()}">Meal</strong>
+                    <span th:text="${review.userEmail()}"
+                      >user@example.com</span
+                    >
+                  </div>
+                  <div class="rating">
+                    <i class="bi bi-star-fill"></i
+                    ><b th:text="${review.rating() ?: '—'}">—</b
+                    ><span>/ 5</span>
+                  </div>
+                  <time
+                    th:text="${review.createdAt() != null ? #temporals.format(review.createdAt(), 'MMM d') : '—'}"
+                    >—</time
+                  >
+                </div>
+              </div>
+              <div
+                class="empty-state"
+                th:if="${#lists.isEmpty(dashboard.recentReviews())}"
+              >
+                No meal reviews yet.
+              </div>
+            </article>
+          </div>
         </section>
 
         <footer class="page-footer">
-            <span>© 2026 Nham Health. All rights reserved.</span>
-            <span>Dashboard data updates when this page is refreshed.</span>
+          <span>© 2026 Nham Health. All rights reserved.</span>
+          <span>Dashboard data updates when this page is refreshed.</span>
         </footer>
-    </main>
-</div>
+      </main>
+    </div>
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script th:inline="javascript">
-    window.adminDashboardChartData = {
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script th:inline="javascript">
+      window.adminDashboardChartData = {
         activityLabels: /*[[${activityLabels}]]*/ [],
         activityUsers: /*[[${activityUsers}]]*/ [],
         categoryLabels: /*[[${categoryLabels}]]*/ [],
-        categoryValues: /*[[${categoryValues}]]*/ []
-    };
-</script>
-<script th:src="@{/js/admin-layout.js}"></script>
-<script th:src="@{/js/admin-dashboard.js}"></script>
-</body>
+        categoryValues: /*[[${categoryValues}]]*/ [],
+      };
+    </script>
+    <script th:src="@{/js/admin-layout.js}"></script>
+    <script th:src="@{/js/admin-dashboard.js}"></script>
+  </body>
 </html>

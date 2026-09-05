@@ -11,6 +11,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
@@ -182,8 +183,8 @@ class _CommunityPersonProfileViewState
                       _topBar(context),
                       if (_isLoading)
                         const Padding(
-                          padding: EdgeInsets.only(top: 120),
-                          child: Center(child: CircularProgressIndicator()),
+                          padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                          child: PageSkeleton.profile(),
                         )
                       else if (_error != null)
                         _ProfileMessage(

@@ -60,11 +60,15 @@ class RegisterForm extends StatelessWidget {
           const SizedBox(height: 10),
           AuthTextField(
             controller: emailController,
-            hintText: 'Email address',
-            prefixIcon: Icons.mail_outline_rounded,
+            hintText: 'Email or Phone Number'.tr,
+            prefixIcon: Icons.account_circle_outlined,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.email],
+            autofillHints: const [
+              AutofillHints.username,
+              AutofillHints.email,
+              AutofillHints.telephoneNumber,
+            ],
           ),
           const SizedBox(height: 10),
           PasswordField(

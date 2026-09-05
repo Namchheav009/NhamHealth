@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/meal_controller.dart';
 import 'widgets/meal_card.dart';
 import 'widgets/meal_category.dart';
@@ -117,9 +118,18 @@ class AllMealsView extends GetView<MealController> {
   Widget _mealContent(BuildContext context) {
     final meals = controller.filteredMeals;
     if (controller.isLoading.value && controller.meals.isEmpty) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
+      return SliverToBoxAdapter(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontalFor(context),
+              ),
+              child: const PageSkeleton.allMeals(),
+            ),
+          ),
+        ),
       );
     }
     if (controller.errorMessage.value != null && controller.meals.isEmpty) {
@@ -153,7 +163,12 @@ class AllMealsView extends GetView<MealController> {
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.crossAxisExtent;
-        final columns = width >= 900 ? 4 : width >= 650 ? 3 : 2;
+        final columns =
+            width >= 900
+                ? 4
+                : width >= 650
+                ? 3
+                : 2;
         return SliverPadding(
           padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.pageHorizontalFor(context),

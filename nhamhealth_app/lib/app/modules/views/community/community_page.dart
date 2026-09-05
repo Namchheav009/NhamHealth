@@ -61,7 +61,8 @@ class CommunityPage extends GetView<CommunityController> {
                   () => LoadingContentTransition(
                     isLoading:
                         controller.isLoading.value &&
-                        !controller.hasLoaded.value,
+                        (controller.posts.isEmpty ||
+                            !controller.hasLoaded.value),
                     loading: SingleChildScrollView(
                       physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
@@ -357,6 +358,9 @@ class CommunityPage extends GetView<CommunityController> {
     final hasQuery = controller.searchQuery.value.trim().isNotEmpty;
 
     if (people.isEmpty) {
+      if (controller.isLoading.value) {
+        return const PageSkeleton.communityPeople();
+      }
       return CommunityEmptyState(
         icon: hasQuery ? Icons.search_off_rounded : _viewIcon(view),
         title: hasQuery ? 'No matching people' : _emptyTitle(view),

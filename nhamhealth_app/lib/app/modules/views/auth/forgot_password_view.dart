@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../widgets/app_alert.dart';
+import 'verification_view.dart';
 import 'widgets/auth_flow_scaffold.dart';
 import 'widgets/password_field.dart';
 import 'widgets/social_login_button.dart';
-import 'verification_view.dart';
 
 class ForgotPasswordController extends GetxController {
   ForgotPasswordController({AuthService? authService})
@@ -20,10 +20,14 @@ class ForgotPasswordController extends GetxController {
     FocusManager.instance.primaryFocus?.unfocus();
     final value = emailOrPhoneController.text.trim();
 
-    if (!GetUtils.isEmail(value)) {
+    final isEmail = GetUtils.isEmail(value);
+    final isPhone =
+        !value.contains('@') && RegExp(r'^\+?[0-9\s\-]{8,15}$').hasMatch(value);
+
+    if (!isEmail && !isPhone) {
       AppAlert.error(
-        title: 'Invalid email',
-        message: 'Please enter a valid email address.',
+        title: 'Invalid input',
+        message: 'Please enter a valid email address or phone number.',
       );
       return;
     }
@@ -32,8 +36,11 @@ class ForgotPasswordController extends GetxController {
       isLoading.value = true;
       await _authService.requestPasswordReset(value);
       AppAlert.success(
-        title: 'Check your email',
-        message: 'If an account exists for this email, the code is on its way.',
+        title: isPhone ? 'Check your messages' : 'Check your email',
+        message:
+            isPhone
+                ? 'If an account exists for this phone number, the code is on its way.'
+                : 'If an account exists for this email, the code is on its way.',
       );
       Get.to(
         () => const VerificationView(),
@@ -66,14 +73,14 @@ class ForgotPasswordPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthFlowScaffold(
       title: 'Forgot password?',
-      subtitle: 'Enter your email address to receive a code.',
+      subtitle: 'Enter your email address or phone number to receive a code.',
       illustrationAsset: 'assets/images/auth/forgot_password.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthTextField(
             controller: controller.emailOrPhoneController,
-            hintText: 'Email address',
+            hintText: 'Email address or phone number',
             autofillHints: const [AutofillHints.email],
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,

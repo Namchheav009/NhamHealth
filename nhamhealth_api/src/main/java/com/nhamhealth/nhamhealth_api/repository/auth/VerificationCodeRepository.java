@@ -17,4 +17,9 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
             String destination,
             String purpose,
             String status);
+
+    List<VerificationCode> findByUserAndPurposeAndStatus(
+            com.nhamhealth.nhamhealth_api.entity.User user,
+            String purpose,
+            String status);
 }

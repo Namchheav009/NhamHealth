@@ -11,6 +11,7 @@ class EditInfoRow extends StatelessWidget {
   final String value;
   final VoidCallback? onTap;
   final bool showDivider;
+  final Widget? trailing;
 
   const EditInfoRow({
     super.key,
@@ -21,6 +22,7 @@ class EditInfoRow extends StatelessWidget {
     required this.value,
     this.onTap,
     this.showDivider = true,
+    this.trailing,
   });
 
   @override
@@ -69,6 +71,11 @@ class EditInfoRow extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  if (trailing != null) ...[
+                    const SizedBox(width: 8),
+                    trailing!,
+                  ],
 
                   const SizedBox(width: 5),
 

@@ -35,10 +35,14 @@ public final class AppUserPrincipal implements UserDetails {
         String role = normalizeRole(user.getRole().getRoleName());
         boolean active = "ACTIVE".equalsIgnoreCase(user.getStatus());
         boolean verified = Boolean.TRUE.equals(user.getIsVerified());
+        String username = user.getEmail();
+        if (username == null || username.isBlank()) {
+            username = user.getPhoneNumber() != null ? user.getPhoneNumber() : String.valueOf(user.getUserId());
+        }
 
         return new AppUserPrincipal(
                 user.getUserId(),
-                user.getEmail(),
+                username,
                 user.getPasswordHash(),
                 role,
                 active && verified);

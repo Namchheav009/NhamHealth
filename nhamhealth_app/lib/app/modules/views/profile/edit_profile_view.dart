@@ -1,14 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../widgets/app_back_header.dart';
 import '../../../theme/app_colors.dart';
-
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/profile/edit_profile_controller.dart';
 import 'widgets/edit_info_row.dart';
-import '../../../widgets/app_background.dart';
 
 class EditProfileView extends GetView<EditProfileController> {
   const EditProfileView({super.key});
@@ -35,7 +33,6 @@ class EditProfileView extends GetView<EditProfileController> {
                     const SizedBox(height: 12),
 
                     // _buildProfileHeader(context),
-
                     const SizedBox(height: 12),
 
                     _buildPersonalInformation(context),
@@ -274,8 +271,83 @@ class EditProfileView extends GetView<EditProfileController> {
               iconColor: green,
               iconBackground: const Color(0xFFE9F8EC),
               label: 'Phone',
-              value: controller.phone.value,
+              value:
+                  controller.phone.value.isEmpty
+                      ? 'Not set'
+                      : controller.phone.value,
               onTap: controller.editPhone,
+              trailing:
+                  controller.phone.value.isEmpty
+                      ? null
+                      : controller.isPhoneVerified.value
+                      ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE4F8E9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF00A651,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 12,
+                              color: Color(0xFF00A651),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Verified'.tr,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF00A651),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      : InkWell(
+                        onTap: controller.verifyPhone,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF4E5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFF9800)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified_outlined,
+                                size: 12,
+                                color: Color(0xFFE65100),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Verify'.tr,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFE65100),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
             ),
 
             EditInfoRow(

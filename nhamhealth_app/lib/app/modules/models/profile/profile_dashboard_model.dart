@@ -6,6 +6,7 @@ class ProfileDashboardModel {
     this.profileImageUrl,
     this.membership,
     this.phone,
+    this.phoneVerified = false,
     this.dateOfBirth,
     this.gender,
     this.age,
@@ -26,6 +27,7 @@ class ProfileDashboardModel {
   final String? profileImageUrl;
   final String? membership;
   final String? phone;
+  final bool phoneVerified;
   final DateTime? dateOfBirth;
   final String? gender;
   final int? age;
@@ -47,6 +49,7 @@ class ProfileDashboardModel {
       profileImageUrl: json['profileImageUrl'] as String?,
       membership: json['membership'] as String?,
       phone: json['phone'] as String?,
+      phoneVerified: json['phoneVerified'] as bool? ?? false,
       dateOfBirth: DateTime.tryParse(json['dateOfBirth'] as String? ?? ''),
       gender: json['gender'] as String?,
       age: (json['age'] as num?)?.toInt(),

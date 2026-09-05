@@ -60,7 +60,7 @@ final class PasswordResetEmailTemplate {
                             <td style="padding:38px 34px 32px;">
                               <div style="font-size:13px;line-height:18px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#00a651;">Password reset</div>
                               <h1 style="margin:10px 0 12px;font-size:28px;line-height:35px;letter-spacing:-0.6px;color:#075e2d;">Here is your verification code</h1>
-                              <p style="margin:0;font-size:15px;line-height:24px;color:#52705e;">Enter this four-digit code in the NhamHealth app to choose a new password.</p>
+                              <p style="margin:0;font-size:15px;line-height:24px;color:#52705e;">Enter this six-digit code in the NhamHealth app to choose a new password.</p>
 
                               <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="margin:28px 0 18px;width:100%%;background-color:#f1fff2;border:1px solid #bce6ca;border-radius:18px;">
                                 <tr>

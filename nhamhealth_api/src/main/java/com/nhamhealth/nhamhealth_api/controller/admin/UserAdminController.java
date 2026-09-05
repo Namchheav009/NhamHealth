@@ -2,30 +2,31 @@ package com.nhamhealth.nhamhealth_api.controller.admin;
 
 import java.util.Map;
 
-import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminCreateUserRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.AdminWellnessProfileRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminUpdateUserRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AdminWellnessProfileRequest;
 import com.nhamhealth.nhamhealth_api.service.admin.AdminUserService;
 import com.nhamhealth.nhamhealth_api.service.admin.AdminUserService.UserPageData;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 import com.nhamhealth.nhamhealth_api.service.wellness.AdminWellnessProfileService;
 import com.nhamhealth.nhamhealth_api.service.wellness.AdminWellnessProfileService.WellnessPageData;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+
+import jakarta.validation.Valid;
 
 @Controller
 public class UserAdminController {
@@ -79,10 +80,14 @@ public class UserAdminController {
     @ResponseBody
     public ResponseEntity<?> deleteUser(@PathVariable Integer userId, Authentication authentication) {
         try {
-            adminUserService.deleteUser(userId, authentication.getName());
+            String adminIdentifier = authentication != null ? authentication.getName() : null;
+            adminUserService.deleteUser(userId, adminIdentifier);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unable to delete user: " + exception.getMessage()));
         }
     }
 

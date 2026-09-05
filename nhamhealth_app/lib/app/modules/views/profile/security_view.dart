@@ -10,6 +10,7 @@ import 'change_password_view.dart';
 import '../../bindings/profile/change_password_binding.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 
@@ -206,7 +207,16 @@ class _SecurityViewState extends State<SecurityView> {
             Expanded(
               child:
                   _loading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontalFor(context),
+                          12,
+                          AppSpacing.pageHorizontalFor(context),
+                          36,
+                        ),
+                        child: const PageSkeleton.settings(),
+                      )
                       : LayoutBuilder(
                         builder: (context, constraints) {
                           final wide = constraints.maxWidth >= 820;

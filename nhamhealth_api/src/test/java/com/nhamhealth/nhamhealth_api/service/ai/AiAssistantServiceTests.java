@@ -1,10 +1,9 @@
 package com.nhamhealth.nhamhealth_api.service.ai;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import com.nhamhealth.nhamhealth_api.dto.response.ProfileDashboardResponse;
@@ -14,8 +13,9 @@ class AiAssistantServiceTests {
     @Test
     void fallbackExplainsTheNutritionDashboardWhenTheProviderIsUnavailable() {
         ProfileDashboardResponse dashboard = new ProfileDashboardResponse(
-                1, "user@example.com", "Nham", null, null, null, null, null, null, null,
-                null, progress("650", "2000"), progress("28", "120"), progress("18", "78"),
+                1, "user@example.com", "Nham", null, null, null, false,
+                null, null, null, null, null,
+                progress("650", "2000"), progress("28", "120"), progress("18", "78"),
                 progress("3", "8"), progress("9", "25"), progress("12", "50"), null);
 
         String reply = AiAssistantService.fallbackReply(

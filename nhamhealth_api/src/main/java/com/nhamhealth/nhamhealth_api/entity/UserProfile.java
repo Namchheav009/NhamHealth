@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.entity;
 
-import com.nhamhealth.nhamhealth_api.entity.User;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,10 +10,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_profiles")
@@ -42,6 +42,12 @@ public class UserProfile {
     @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
+    @Column(name = "is_phone_verified", nullable = false)
+    private Boolean isPhoneVerified = false;
+
+    @Column(name = "phone_verified_at")
+    private LocalDateTime phoneVerifiedAt;
+
     @Column(name = "membership_type", length = 50)
     private String membershipType;
 
@@ -58,6 +64,20 @@ public class UserProfile {
     private LocalDateTime updatedAt;
 
     public UserProfile() {
+    }
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Integer getUserProfileId() {
@@ -110,6 +130,22 @@ public class UserProfile {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Boolean getIsPhoneVerified() {
+        return isPhoneVerified != null && isPhoneVerified;
+    }
+
+    public void setIsPhoneVerified(Boolean isPhoneVerified) {
+        this.isPhoneVerified = isPhoneVerified != null && isPhoneVerified;
+    }
+
+    public LocalDateTime getPhoneVerifiedAt() {
+        return phoneVerifiedAt;
+    }
+
+    public void setPhoneVerifiedAt(LocalDateTime phoneVerifiedAt) {
+        this.phoneVerifiedAt = phoneVerifiedAt;
     }
 
     public String getMembershipType() {

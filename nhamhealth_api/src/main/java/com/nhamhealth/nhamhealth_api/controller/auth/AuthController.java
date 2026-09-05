@@ -5,35 +5,35 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nhamhealth.nhamhealth_api.dto.response.AuthErrorResponse;
-import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
-import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.GoogleLoginRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AppPinRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ForgotPasswordRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.GoogleLoginRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.LoginRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.RefreshTokenRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.RegisterRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.ChangePasswordRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.AppPinRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyRegistrationRequest;
-import com.nhamhealth.nhamhealth_api.dto.request.RefreshTokenRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthErrorResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.LoginChallengeResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PasswordResetVerificationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.PinVerificationResponse;
-import com.nhamhealth.nhamhealth_api.dto.response.LoginChallengeResponse;
 import com.nhamhealth.nhamhealth_api.exception.MobileLoginNotAllowedException;
 import com.nhamhealth.nhamhealth_api.service.auth.AuthService;
+import com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService;
 import com.nhamhealth.nhamhealth_api.service.auth.PasswordResetService;
 import com.nhamhealth.nhamhealth_api.service.auth.RegistrationVerificationService;
-import com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService;
 
 import jakarta.validation.Valid;
 
@@ -63,9 +63,11 @@ public class AuthController {
             loginAttemptService.recordSuccess(request.email());
             if (result.otpRequired()) {
                 registrationVerificationService.sendLoginCode(result.otpUser(), true);
+                boolean isPhone = result.otpUser().getPhoneNumber() != null && !result.otpUser().getPhoneNumber().isBlank();
+                String dest = isPhone ? result.otpUser().getPhoneNumber() : result.otpUser().getEmail();
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-                        new LoginChallengeResponse(true, result.otpUser().getEmail(),
-                                "A login verification code was sent to your email"));
+                        new LoginChallengeResponse(true, dest,
+                                "A login verification code was sent to your " + (isPhone ? "phone" : "email")));
             }
             return ResponseEntity.ok(result.response());
         } catch (MobileLoginNotAllowedException exception) {
@@ -74,7 +76,7 @@ public class AuthController {
         } catch (AuthenticationException exception) {
             loginAttemptService.recordFailure(request.email());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthErrorResponse("Invalid email or password"));
+                    .body(new AuthErrorResponse("Invalid email, phone number, or password"));
         }
     }
 
@@ -82,8 +84,9 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
             registrationVerificationService.register(request);
+            boolean isPhone = !request.email().contains("@") && request.email().matches(".*\\d+.*");
             return ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(new MessageResponse("Verification code sent to your email"));
+                    .body(new MessageResponse("Verification code sent to your " + (isPhone ? "phone" : "email")));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new AuthErrorResponse(exception.getMessage()));
@@ -138,7 +141,7 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequest request) {
         passwordResetService.sendCode(request.email());
         return ResponseEntity.accepted().body(new MessageResponse(
-                "If an account exists for this email, a verification code has been sent"));
+                "If an account exists, a verification code has been sent"));
     }
 
     @PostMapping("/verify-reset-code")

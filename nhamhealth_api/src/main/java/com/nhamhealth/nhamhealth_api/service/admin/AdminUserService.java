@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
+import com.nhamhealth.nhamhealth_api.service.auth.RefreshTokenService;
 
 @Service
 public class AdminUserService {
@@ -31,18 +33,21 @@ public class AdminUserService {
     private final WellnessProfileRepository wellnessProfileRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     public AdminUserService(
             UserRepository userRepository,
             UserProfileRepository userProfileRepository,
             WellnessProfileRepository wellnessProfileRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.wellnessProfileRepository = wellnessProfileRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +73,7 @@ public class AdminUserService {
     }
 
     @Transactional
+    @CacheEvict(value = "adminDashboard", allEntries = true)
     public UserRow createUser(AdminCreateUserRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
@@ -100,10 +106,12 @@ public class AdminUserService {
     }
 
     @Transactional
+    @CacheEvict(value = "adminDashboard", allEntries = true)
     public UserRow updateUser(Integer userId, AdminUpdateUserRequest request, String currentAdminEmail) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
-        boolean editingSelf = user.getEmail().equalsIgnoreCase(currentAdminEmail);
+        boolean editingSelf = currentAdminEmail != null && ((user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentAdminEmail))
+                || (user.getPhoneNumber() != null && user.getPhoneNumber().equalsIgnoreCase(currentAdminEmail)));
         String email = request.email().trim().toLowerCase(Locale.ROOT);
 
         userRepository.findByEmailIgnoreCase(email)
@@ -144,10 +152,13 @@ public class AdminUserService {
     }
 
     @Transactional
-    public void deleteUser(Integer userId, String currentAdminEmail) {
+    @CacheEvict(value = "adminDashboard", allEntries = true)
+    public void deleteUser(Integer userId, String currentAdminIdentifier) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
-        if (user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
+        boolean isSelf = currentAdminIdentifier != null && ((user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentAdminIdentifier))
+                || (user.getPhoneNumber() != null && user.getPhoneNumber().equalsIgnoreCase(currentAdminIdentifier)));
+        if (isSelf) {
             throw new IllegalArgumentException("You cannot delete your own account");
         }
 
@@ -159,6 +170,7 @@ public class AdminUserService {
         user.setIsVerified(false);
         user.setVerifiedAt(null);
         userRepository.saveAndFlush(user);
+        refreshTokenService.revokeAll(user);
     }
 
     private UserProfile createProfile(User user, LocalDateTime now) {
@@ -184,12 +196,17 @@ public class AdminUserService {
     private UserRow toRow(User user, UserProfile profile, WellnessProfile wellnessProfile) {
         String name = profile != null && profile.getFullName() != null && !profile.getFullName().isBlank()
                 ? profile.getFullName()
-                : user.getEmail();
+                : (user.getEmail() != null && !user.getEmail().isBlank()
+                ? user.getEmail()
+                : (user.getPhoneNumber() != null ? user.getPhoneNumber() : "Unknown"));
+        String email = user.getEmail() != null && !user.getEmail().isBlank()
+                ? user.getEmail()
+                : (user.getPhoneNumber() != null ? user.getPhoneNumber() : "No email");
         return new UserRow(
                 user.getUserId(),
                 name,
                 initials(name),
-                user.getEmail(),
+                email,
                 profile != null ? profile.getProfileImageUrl() : null,
                 user.getRole() != null ? user.getRole().getRoleName() : "USER",
                 user.getStatus() == null ? "UNKNOWN" : user.getStatus(),
@@ -226,6 +243,7 @@ public class AdminUserService {
             long verifiedUsers,
             long completeProfiles,
             long activeUsers) {
+
     }
 
     public record UserRow(
@@ -240,5 +258,6 @@ public class AdminUserService {
             boolean profileComplete,
             LocalDateTime createdAt,
             LocalDateTime lastLoginAt) {
+
     }
 }
