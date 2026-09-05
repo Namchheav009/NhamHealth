@@ -17,7 +17,10 @@ class InsightCard extends GetView<ProfileController> {
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [const Color(0xFFF5FBF3), const Color(0xFFFFFCE2)],
+          colors:
+              context.appIsDark
+                  ? [context.appSoftGreen, context.appElevatedSurface]
+                  : [const Color(0xFFF5FBF3), const Color(0xFFFFFCE2)],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.appBorder.withValues(alpha: .7)),
@@ -28,9 +31,15 @@ class InsightCard extends GetView<ProfileController> {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color:
+                  context.appIsDark ? context.appSelectedSurface : Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFDCEEE0)),
+              border: Border.all(
+                color:
+                    context.appIsDark
+                        ? context.appColorScheme.outlineVariant
+                        : const Color(0xFFDCEEE0),
+              ),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x263C6B4A),
@@ -39,9 +48,9 @@ class InsightCard extends GetView<ProfileController> {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.emoji_events_outlined,
-              color: green,
+              color: context.appIsDark ? context.appColorScheme.primary : green,
               size: 27,
             ),
           ),
