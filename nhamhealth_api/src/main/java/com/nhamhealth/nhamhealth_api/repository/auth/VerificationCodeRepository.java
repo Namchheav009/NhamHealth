@@ -6,10 +6,16 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nhamhealth.nhamhealth_api.entity.VerificationCode;
+import com.nhamhealth.nhamhealth_api.entity.User;
 
 public interface VerificationCodeRepository extends JpaRepository<VerificationCode, Integer> {
 
     Optional<VerificationCode> findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
+            String destination,
+            String purpose);
+
+    Optional<VerificationCode> findFirstByUserAndDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
+            User user,
             String destination,
             String purpose);
 

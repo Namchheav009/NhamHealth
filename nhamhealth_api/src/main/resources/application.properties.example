@@ -125,8 +125,9 @@ nhamhealth.push.enabled=${NHAMHEALTH_PUSH_ENABLED:false}
 
 # PlasGate SMS Gateway
 app.sms.plasgate.enabled=${PLASGATE_SMS_ENABLED:true}
+app.sms.plasgate.fallback-to-console=${PLASGATE_SMS_FALLBACK_TO_CONSOLE:false}
 app.sms.plasgate.base-url=${PLASGATE_BASE_URL:https://cloudapi.plasgate.com}
 app.sms.plasgate.private-key=${PLASGATE_PRIVATE_KEY:}
 app.sms.plasgate.secret-key=${PLASGATE_SECRET_KEY:}
-app.sms.plasgate.sender-id=${PLASGATE_SENDER_ID:Nham Health}
-app.sms.plasgate.fallback-sender-id=SMS Info
+app.sms.plasgate.sender-id=${PLASGATE_SENDER_ID:SMS Info}
+app.sms.plasgate.fallback-sender-id=${PLASGATE_FALLBACK_SENDER_ID:}

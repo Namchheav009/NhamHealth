@@ -61,6 +61,7 @@ public class PhoneVerificationService {
         String normalized = smsService.normalizePhoneNumber(rawPhone);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        ensurePhoneAvailable(userId, rawPhone.trim(), normalized);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -106,9 +107,12 @@ public class PhoneVerificationService {
     public PhoneVerificationResponse verifyCode(Integer userId, String rawPhone, String rawCode) {
         String normalized = smsService.normalizePhoneNumber(rawPhone);
         LocalDateTime now = LocalDateTime.now();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         VerificationCode code = verificationCodeRepository
-                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(normalized, PURPOSE)
+                .findFirstByUserAndDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
+                        user, normalized, PURPOSE)
                 .orElseThrow(this::invalidCode);
 
         if (!"PENDING".equals(code.getStatus())) {
@@ -139,21 +143,22 @@ public class PhoneVerificationService {
         code.setVerifiedAt(now);
         verificationCodeRepository.save(code);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        ensurePhoneAvailable(userId, rawPhone.trim(), normalized);
         UserProfile profile = userProfileRepository.findByUser_UserId(userId)
                 .orElseGet(() -> {
                     UserProfile created = new UserProfile();
                     created.setUser(user);
-                    created.setFullName("User");
+                    created.setFullName(defaultName(user));
                     created.setCreatedAt(now);
                     return created;
                 });
 
-        profile.setPhoneNumber(rawPhone.trim());
+        user.setPhoneNumber(normalized);
+        profile.setPhoneNumber(normalized);
         profile.setIsPhoneVerified(true);
         profile.setPhoneVerifiedAt(now);
         profile.setUpdatedAt(now);
+        userRepository.save(user);
         userProfileRepository.save(profile);
 
         return new PhoneVerificationResponse(true, "Phone number verified successfully", normalized, true);
@@ -161,5 +166,34 @@ public class PhoneVerificationService {
 
     private PasswordResetException invalidCode() {
         return new PasswordResetException(HttpStatus.BAD_REQUEST, "The verification code is incorrect");
+    }
+
+    private void ensurePhoneAvailable(Integer userId, String rawPhone, String normalizedPhone) {
+        userRepository.findByPhoneNumber(normalizedPhone)
+                .filter(existing -> !existing.getUserId().equals(userId))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("That phone number is already in use");
+                });
+        ensureProfilePhoneAvailable(userId, normalizedPhone);
+        if (!normalizedPhone.equals(rawPhone)) {
+            ensureProfilePhoneAvailable(userId, rawPhone);
+        }
+    }
+
+    private void ensureProfilePhoneAvailable(Integer userId, String phone) {
+        userProfileRepository.findFirstByPhoneNumber(phone)
+                .filter(existing -> !existing.getUser().getUserId().equals(userId))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("That phone number is already in use");
+                });
+    }
+
+    private String defaultName(User user) {
+        String email = user.getEmail();
+        if (email != null && !email.isBlank()) {
+            int at = email.indexOf('@');
+            return at > 0 ? email.substring(0, at) : email;
+        }
+        return "Nham Health user";
     }
 }

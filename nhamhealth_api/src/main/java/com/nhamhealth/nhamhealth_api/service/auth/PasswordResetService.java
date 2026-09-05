@@ -101,10 +101,12 @@ public class PasswordResetService {
         if (isPhone) {
             destination = smsService.normalizePhoneNumber(requestedIdentity);
             deliveryMethod = "SMS";
-            UserProfile profile = userProfileRepository.findFirstByPhoneNumber(requestedIdentity.trim())
-                    .or(() -> userProfileRepository.findFirstByPhoneNumber(destination))
+            user = userRepository.findByPhoneNumber(destination)
+                    .or(() -> userProfileRepository.findFirstByPhoneNumber(requestedIdentity.trim())
+                            .or(() -> userProfileRepository.findFirstByPhoneNumber(destination))
+                            .filter(profile -> Boolean.TRUE.equals(profile.getIsPhoneVerified()))
+                            .map(UserProfile::getUser))
                     .orElse(null);
-            user = profile == null ? null : profile.getUser();
         } else {
             destination = normalizeEmail(requestedIdentity);
             deliveryMethod = "EMAIL";

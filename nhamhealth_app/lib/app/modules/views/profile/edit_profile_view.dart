@@ -60,9 +60,9 @@ class EditProfileView extends GetView<EditProfileController> {
       onBack: controller.goBack,
       trailing: Obx(
         () => TextButton(
-          onPressed: controller.isSaving.value ? null : controller.saveProfile,
+          onPressed: controller.isBusy ? null : controller.saveProfile,
           child:
-              controller.isSaving.value
+              controller.isBusy
                   ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -263,7 +263,22 @@ class EditProfileView extends GetView<EditProfileController> {
               iconBackground: const Color(0xFFEEF1FF),
               label: 'Email',
               value: controller.email.value,
-              onTap: controller.editEmail,
+              onTap:
+                  controller.isContactVerificationBusy.value
+                      ? null
+                      : controller.editEmail,
+              trailing:
+                  controller.isContactVerificationBusy.value &&
+                          controller.verifyingContactType.value == 'email'
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : controller.email.value.isNotEmpty &&
+                          controller.isEmailVerified.value
+                      ? _verifiedBadge()
+                      : null,
             ),
 
             EditInfoRow(
@@ -275,45 +290,22 @@ class EditProfileView extends GetView<EditProfileController> {
                   controller.phone.value.isEmpty
                       ? 'Not set'
                       : controller.phone.value,
-              onTap: controller.editPhone,
+              onTap:
+                  controller.isContactVerificationBusy.value
+                      ? null
+                      : controller.editPhone,
               trailing:
-                  controller.phone.value.isEmpty
+                  controller.isContactVerificationBusy.value &&
+                          controller.verifyingContactType.value == 'phone'
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : controller.phone.value.isEmpty
                       ? null
                       : controller.isPhoneVerified.value
-                      ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE4F8E9),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(
-                              0xFF00A651,
-                            ).withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              size: 12,
-                              color: Color(0xFF00A651),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Verified'.tr,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF00A651),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                      ? _verifiedBadge()
                       : InkWell(
                         onTap: controller.verifyPhone,
                         borderRadius: BorderRadius.circular(10),
@@ -350,6 +342,43 @@ class EditProfileView extends GetView<EditProfileController> {
                       ),
             ),
 
+            if (controller.verificationDetail.value.isNotEmpty)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F8F3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: green.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      controller.isContactVerificationBusy.value
+                          ? Icons.hourglass_top_rounded
+                          : Icons.info_outline_rounded,
+                      color: green,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        controller.verificationDetail.value,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: Color(0xFF3E5B48),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             EditInfoRow(
               icon: Icons.calendar_month_outlined,
               iconColor: const Color(0xFFD958FF),
@@ -375,6 +404,36 @@ class EditProfileView extends GetView<EditProfileController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _verifiedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4F8E9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: green.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 12,
+            color: green,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Verified'.tr,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: green,
+            ),
+          ),
+        ],
       ),
     );
   }

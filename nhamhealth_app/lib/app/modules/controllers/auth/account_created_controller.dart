@@ -7,6 +7,7 @@ import '../../providers/home/home_provider.dart';
 import '../../repositories/home/home_repository.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../../../core/services/app_security_service.dart';
+import '../../views/profile/security_view.dart';
 
 class AccountCreatedController extends GetxController {
   AccountCreatedController({
@@ -35,7 +36,8 @@ class AccountCreatedController extends GetxController {
       return;
     }
 
-    Get.find<AppSecurityService>().syncPinState(user.hasPin);
+    final security = Get.find<AppSecurityService>();
+    security.syncPinState(user.hasPin);
 
     HomeDashboardModel? dashboard;
     try {
@@ -47,9 +49,26 @@ class AccountCreatedController extends GetxController {
     }
 
     if (isClosed) return;
-    Get.offAllNamed(
-      AppRoutes.home,
-      arguments: HomeRouteArguments(user: user, initialDashboard: dashboard),
+    final homeArguments = HomeRouteArguments(
+      user: user,
+      initialDashboard: dashboard,
+    );
+    if (user.hasPin) {
+      Get.offAllNamed(AppRoutes.home, arguments: homeArguments);
+      return;
+    }
+
+    Get.offAll<void>(
+      () => SecurityView(
+        promptCreatePin: true,
+        requirePinCreation: true,
+        onPinCreated:
+            () => Get.offAllNamed(
+              AppRoutes.home,
+              arguments: homeArguments,
+            ),
+      ),
+      transition: Transition.rightToLeft,
     );
   }
 }

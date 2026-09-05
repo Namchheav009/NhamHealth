@@ -141,6 +141,22 @@ class AuthService {
     });
   }
 
+  Future<Map<String, dynamic>> sendEmailVerificationCode(String email) async {
+    return _authenticatedPost('/api/v1/users/me/email/send-code', {
+      'email': email.trim().toLowerCase(),
+    });
+  }
+
+  Future<Map<String, dynamic>> verifyEmailVerificationCode({
+    required String email,
+    required String code,
+  }) async {
+    return _authenticatedPost('/api/v1/users/me/email/verify-code', {
+      'email': email.trim().toLowerCase(),
+      'code': code.trim(),
+    });
+  }
+
   Future<Map<String, dynamic>> _authenticatedPost(
     String path,
     Map<String, dynamic> body,

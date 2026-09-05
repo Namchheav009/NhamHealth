@@ -44,7 +44,7 @@ class ProfileDashboardModel {
   factory ProfileDashboardModel.fromJson(Map<String, dynamic> json) {
     return ProfileDashboardModel(
       userId: (json['userId'] as num).toInt(),
-      email: json['email'] as String,
+      email: json['email'] as String? ?? '',
       fullName: json['fullName'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
       membership: json['membership'] as String?,

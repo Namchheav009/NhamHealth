@@ -83,7 +83,7 @@ void main() {
         final normalized = input.trim();
         final isEmail = GetUtils.isEmail(normalized);
         final isPhone = phoneRegex.hasMatch(
-          normalized.replaceAll(RegExp(r'[\s-]'), ''),
+          normalized.replaceAll(RegExp(r'[\s()-]'), ''),
         );
         return isEmail || isPhone;
       }
@@ -98,6 +98,7 @@ void main() {
       expect(isValid('+85512345678'), isTrue);
       expect(isValid('012-345-678'), isTrue);
       expect(isValid('855 12 345 678'), isTrue);
+      expect(isValid('(012) 345-678'), isTrue);
 
       // Invalid inputs
       expect(isValid('notanemail'), isFalse);

@@ -84,8 +84,18 @@ public class RegistrationVerificationService {
     }
 
     @Transactional
-    public void sendLoginCode(User user, boolean enforceCooldown) {
-        sendCode(user, enforceCooldown, LOGIN_PURPOSE);
+    public VerificationDestination sendLoginCode(
+            User user,
+            String requestedIdentity,
+            boolean enforceCooldown) {
+        VerificationDestination destination = loginDestination(user, requestedIdentity);
+        sendCode(
+                user,
+                enforceCooldown,
+                LOGIN_PURPOSE,
+                destination.value(),
+                destination.deliveryMethod());
+        return destination;
     }
 
     @Transactional
@@ -97,9 +107,6 @@ public class RegistrationVerificationService {
             String normalized = smsService.normalizePhoneNumber(raw);
             user = userRepository.findByPhoneNumber(normalized)
                     .or(() -> userRepository.findByPhoneNumber(raw))
-                    .or(() -> userProfileRepository.findFirstByPhoneNumber(raw)
-                            .or(() -> userProfileRepository.findFirstByPhoneNumber(normalized))
-                            .map(UserProfile::getUser))
                     .filter(candidate -> Boolean.TRUE.equals(candidate.getLoginOtpRequired()))
                     .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()))
                     .orElse(null);
@@ -114,7 +121,13 @@ public class RegistrationVerificationService {
             passwordEncoder.encode(String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000)));
             return;
         }
-        sendCode(user, true, LOGIN_PURPOSE);
+        VerificationDestination destination = loginDestination(user, raw);
+        sendCode(
+                user,
+                true,
+                LOGIN_PURPOSE,
+                destination.value(),
+                destination.deliveryMethod());
     }
 
     @Transactional(noRollbackFor = PasswordResetException.class)
@@ -183,6 +196,15 @@ public class RegistrationVerificationService {
             }
         }
 
+        sendCode(user, enforceCooldown, purpose, destination, deliveryMethod);
+    }
+
+    private void sendCode(
+            User user,
+            boolean enforceCooldown,
+            String purpose,
+            String destination,
+            String deliveryMethod) {
         LocalDateTime now = LocalDateTime.now();
         if (enforceCooldown) {
             codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, purpose)
@@ -247,9 +269,6 @@ public class RegistrationVerificationService {
             String normalized = smsService.normalizePhoneNumber(raw);
             user = userRepository.findByPhoneNumber(normalized)
                     .or(() -> userRepository.findByPhoneNumber(raw))
-                    .or(() -> userProfileRepository.findFirstByPhoneNumber(raw)
-                            .or(() -> userProfileRepository.findFirstByPhoneNumber(normalized))
-                            .map(UserProfile::getUser))
                     .orElse(null);
         } else {
             user = userRepository.findByEmailIgnoreCase(normalize(raw)).orElse(null);
@@ -265,5 +284,27 @@ public class RegistrationVerificationService {
         return new PasswordResetException(HttpStatus.BAD_REQUEST, "The verification code is incorrect");
     }
 
+    private VerificationDestination loginDestination(User user, String requestedIdentity) {
+        String raw = requestedIdentity == null ? "" : requestedIdentity.trim();
+        if (raw.contains("@")) {
+            String email = normalize(raw);
+            if (user.getEmail() == null || !user.getEmail().equalsIgnoreCase(email)) {
+                throw invalidCode();
+            }
+            return new VerificationDestination(email, "EMAIL");
+        }
+
+        String phone = smsService.normalizePhoneNumber(raw);
+        String accountPhone = user.getPhoneNumber() == null
+                ? ""
+                : smsService.normalizePhoneNumber(user.getPhoneNumber());
+        if (!phone.equals(accountPhone)) {
+            throw invalidCode();
+        }
+        return new VerificationDestination(phone, "SMS");
+    }
+
     private String normalize(String email) { return email.trim().toLowerCase(Locale.ROOT); }
+
+    public record VerificationDestination(String value, String deliveryMethod) { }
 }

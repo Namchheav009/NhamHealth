@@ -62,11 +62,11 @@ public class ProfileDashboardService {
 
         return new ProfileDashboardResponse(
                 userId,
-                user.getEmail(),
+                user.getEmail() == null ? "" : user.getEmail(),
                 identity == null ? null : identity.getFullName(),
                 identity == null ? null : identity.getProfileImageUrl(),
                 identity == null ? null : identity.getMembershipType(),
-                identity == null ? null : identity.getPhoneNumber(),
+                identity == null ? user.getPhoneNumber() : identity.getPhoneNumber(),
                 identity != null && Boolean.TRUE.equals(identity.getIsPhoneVerified()),
                 identity == null ? null : identity.getDateOfBirth(),
                 identity == null ? null : identity.getGender(),

@@ -1,11 +1,13 @@
 package com.nhamhealth.nhamhealth_api.service.sms;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,14 +31,15 @@ public class PlasgateSmsService {
     private final boolean enabled;
     private final boolean fallbackToConsole;
 
+    @Autowired
     public PlasgateSmsService(
             @Value("${app.sms.plasgate.base-url:https://cloudapi.plasgate.com}") String baseUrl,
             @Value("${app.sms.plasgate.private-key:}") String privateKey,
             @Value("${app.sms.plasgate.secret-key:}") String secretKey,
-            @Value("${app.sms.plasgate.sender-id:Nham Health}") String defaultSenderId,
-            @Value("${app.sms.plasgate.fallback-sender-id:SMS Info}") String fallbackSenderId,
+            @Value("${app.sms.plasgate.sender-id:}") String defaultSenderId,
+            @Value("${app.sms.plasgate.fallback-sender-id:}") String fallbackSenderId,
             @Value("${app.sms.plasgate.enabled:true}") boolean enabled,
-            @Value("${app.sms.plasgate.fallback-to-console:true}") boolean fallbackToConsole) {
+            @Value("${app.sms.plasgate.fallback-to-console:false}") boolean fallbackToConsole) {
         this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.privateKey = privateKey.trim();
         this.secretKey = secretKey.trim();
@@ -75,7 +78,6 @@ public class PlasgateSmsService {
      */
     public boolean sendSms(String rawPhone, String content) {
         if (!enabled) {
-            log.info("PlasGate SMS is disabled by configuration. SMS to {} skipped: {}", maskPhone(rawPhone), content);
             log.info("PlasGate SMS is disabled by configuration. SMS to {} simulated: {}", maskPhone(rawPhone), content);
             return true;
         }
@@ -90,24 +92,36 @@ public class PlasgateSmsService {
         }
 
         String recipient = normalizePhoneNumber(rawPhone);
-        String sender = defaultSenderId.isBlank() ? "SMS Info" : defaultSenderId;
+        if (!isValidSenderId(defaultSenderId)) {
+            String problem = defaultSenderId.isBlank()
+                    ? "PlasGate sender ID is missing. Set PLASGATE_SENDER_ID to an approved sender."
+                    : "PlasGate sender ID must contain at most 11 characters.";
+            if (fallbackToConsole) {
+                log.warn("{} Simulated SMS delivery to {}: {}", problem, maskPhone(recipient), content);
+                return true;
+            }
+            throw new IllegalStateException(problem);
+        }
+        String sender = defaultSenderId;
 
-        boolean success = executeSend(sender, recipient, content);
-        if (!success && !sender.equalsIgnoreCase(fallbackSenderId) && !fallbackSenderId.isBlank()) {
+        SendResult result = executeSend(sender, recipient, content);
+        if (result == SendResult.INVALID_SENDER
+                && isValidSenderId(fallbackSenderId)
+                && !sender.equalsIgnoreCase(fallbackSenderId)) {
             log.info("Retrying SMS delivery with fallback sender '{}' for recipient {}", fallbackSenderId, maskPhone(recipient));
-            success = executeSend(fallbackSenderId, recipient, content);
+            result = executeSend(fallbackSenderId, recipient, content);
         }
 
-        if (!success && fallbackToConsole) {
-            log.warn("PlasGate SMS delivery failed (e.g. sender '{}' not yet registered/approved on PlasGate). Falling back to console delivery for {}: {}",
+        if (result != SendResult.SENT && fallbackToConsole) {
+            log.warn("PlasGate SMS delivery failed for sender '{}'. Falling back to console delivery for {}: {}",
                     sender, maskPhone(recipient), content);
             return true;
         }
 
-        return success;
+        return result == SendResult.SENT;
     }
 
-    private boolean executeSend(String sender, String recipient, String content) {
+    private SendResult executeSend(String sender, String recipient, String content) {
         try {
             Map<String, Object> payload = Map.of(
                     "sender", sender,
@@ -127,15 +141,25 @@ public class PlasgateSmsService {
                     .body(String.class);
 
             log.info("PlasGate SMS dispatched to {} via sender '{}'. Response: {}", maskPhone(recipient), sender, response);
-            return true;
+            return SendResult.SENT;
         } catch (RestClientResponseException error) {
+            String responseBody = error.getResponseBodyAsString();
+            if (error.getStatusCode().value() == 400
+                    && responseBody.toLowerCase(Locale.ROOT).contains("invalid sender")) {
+                log.warn("PlasGate rejected unapproved sender '{}' for recipient {}", sender, maskPhone(recipient));
+                return SendResult.INVALID_SENDER;
+            }
             log.error("PlasGate SMS HTTP error {} when sending to {}: {}",
-                    error.getStatusCode(), maskPhone(recipient), error.getResponseBodyAsString());
-            return false;
+                    error.getStatusCode(), maskPhone(recipient), responseBody);
+            return SendResult.FAILED;
         } catch (Exception error) {
             log.error("Failed to send PlasGate SMS to {}: {}", maskPhone(recipient), error.getMessage());
-            return false;
+            return SendResult.FAILED;
         }
+    }
+
+    private boolean isValidSenderId(String senderId) {
+        return senderId != null && !senderId.isBlank() && senderId.length() <= 11;
     }
 
     /**
@@ -148,6 +172,9 @@ public class PlasgateSmsService {
         }
 
         String trimmed = rawPhone.trim();
+        if (!trimmed.matches("^\\+?[0-9()\\s-]+$")) {
+            throw new IllegalArgumentException("Invalid phone number format.");
+        }
         if (trimmed.startsWith("+")) {
             trimmed = trimmed.substring(1);
         }
@@ -180,5 +207,11 @@ public class PlasgateSmsService {
         }
         int len = phone.length();
         return phone.substring(0, 3) + "****" + phone.substring(len - 3);
+    }
+
+    private enum SendResult {
+        SENT,
+        INVALID_SENDER,
+        FAILED
     }
 }

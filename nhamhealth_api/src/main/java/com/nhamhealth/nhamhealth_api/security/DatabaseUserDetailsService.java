@@ -6,8 +6,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.entity.UserProfile;
-import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
@@ -15,15 +13,12 @@ import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 public class DatabaseUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final UserProfileRepository userProfileRepository;
     private final PlasgateSmsService smsService;
 
     public DatabaseUserDetailsService(
             UserRepository userRepository,
-            UserProfileRepository userProfileRepository,
             PlasgateSmsService smsService) {
         this.userRepository = userRepository;
-        this.userProfileRepository = userProfileRepository;
         this.smsService = smsService;
     }
 
@@ -46,10 +41,6 @@ public class DatabaseUserDetailsService implements UserDetailsService {
             user = userRepository.findByPhoneNumber(normalized)
                     .or(() -> userRepository.findByPhoneNumber(raw))
                     .filter(this::isEligible)
-                    .or(() -> userProfileRepository.findFirstByPhoneNumber(raw)
-                            .or(() -> userProfileRepository.findFirstByPhoneNumber(normalized))
-                            .map(UserProfile::getUser)
-                            .filter(this::isEligible))
                     .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
         }
 

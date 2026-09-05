@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/notification_realtime_event.dart';
+import '../../../../core/services/app_security_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_post.dart';
@@ -16,6 +17,7 @@ import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../views/profile/edit_profile_view.dart';
+import '../../views/profile/security_view.dart';
 import 'edit_profile_controller.dart';
 import 'setting_controller.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
@@ -58,6 +60,12 @@ class ProfileController extends GetxController {
   final age = 0.obs;
   final height = 0.obs;
   final weight = 0.obs;
+
+  String get contact {
+    final savedEmail = email.value.trim();
+    if (savedEmail.isNotEmpty) return savedEmail;
+    return dashboard.value?.phone?.trim() ?? '';
+  }
 
   double get bmi {
     final heightInMeters = height.value / 100;
@@ -307,7 +315,11 @@ class ProfileController extends GetxController {
     final fullName = dashboard.fullName?.trim();
     name.value =
         fullName == null || fullName.isEmpty
-            ? dashboard.email.split('@').first
+            ? (dashboard.email.trim().isNotEmpty
+                ? dashboard.email.split('@').first
+                : dashboard.phone?.trim().isNotEmpty == true
+                ? dashboard.phone!.trim()
+                : 'My Profile')
             : fullName;
     email.value = dashboard.email;
     membership.value =
@@ -420,6 +432,21 @@ class ProfileController extends GetxController {
   }
 
   Future<void> editProfile() async {
+    final security = Get.find<AppSecurityService>();
+    if (!await security.hasPin) {
+      Get.to<void>(
+        () => SecurityView(
+          promptCreatePin: true,
+          requirePinCreation: true,
+          onPinCreated: () {
+            Get.back<void>();
+            unawaited(editProfile());
+          },
+        ),
+        transition: Transition.rightToLeft,
+      );
+      return;
+    }
     if (!await PrivacyAuth.require(
       reason: 'Unlock to edit your personal profile.',
     )) {

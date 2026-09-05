@@ -133,7 +133,7 @@ class ProfileHeader extends GetView<ProfileController> {
                               const SizedBox(height: 3),
                               Obx(
                                 () => Text(
-                                  controller.email.value,
+                                  controller.contact,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

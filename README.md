@@ -181,6 +181,25 @@ exchanges it for a short-lived one-time token through
 `POST /api/v1/auth/reset-password`. Codes expire after 3 minutes, reset tokens
 after 15 minutes, and resend is limited to once every 30 seconds.
 
+### Configure PlasGate SMS
+
+PlasGate requires an account-approved sender ID (maximum 11 characters). Do not
+use `Nham Health`, `SMS Info`, or another sender unless PlasGate has enabled it
+for your account. Configure the approved value in the terminal that starts the
+API:
+
+```powershell
+$env:PLASGATE_PRIVATE_KEY="your-private-key"
+$env:PLASGATE_SECRET_KEY="your-secret-key"
+$env:PLASGATE_SENDER_ID="approved-id"
+$env:PLASGATE_SMS_FALLBACK_TO_CONSOLE="false" # production
+.\mvnw.cmd spring-boot:run
+```
+
+`PLASGATE_FALLBACK_SENDER_ID` is optional and must also be approved. When no
+sender is configured in local development, the default console fallback avoids
+calling the gateway and prints the simulated verification message instead.
+
 ### Configure Google sign-in
 
 Google sign-in requires OAuth credentials from the Google Cloud Console; no

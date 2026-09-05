@@ -103,4 +103,34 @@ class PlasgateSmsServiceTests {
         assertThatThrownBy(() -> strictService.sendSms("012345678", "Test verification code"))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void fallsBackToConsoleWithoutCallingGatewayWhenSenderIsMissing() {
+        PlasgateSmsService fallbackService = new PlasgateSmsService(
+                "https://cloudapi.plasgate.com",
+                "key",
+                "secret",
+                "",
+                "",
+                true,
+                true);
+
+        assertThat(fallbackService.sendSms("012345678", "Test verification code")).isTrue();
+    }
+
+    @Test
+    void throwsWithoutCallingGatewayWhenSenderIsMissingAndFallbackDisabled() {
+        PlasgateSmsService strictService = new PlasgateSmsService(
+                "https://cloudapi.plasgate.com",
+                "key",
+                "secret",
+                "",
+                "",
+                true,
+                false);
+
+        assertThatThrownBy(() -> strictService.sendSms("012345678", "Test verification code"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("PLASGATE_SENDER_ID");
+    }
 }

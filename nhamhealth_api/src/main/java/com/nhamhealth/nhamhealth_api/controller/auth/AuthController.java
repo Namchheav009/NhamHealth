@@ -62,11 +62,11 @@ public class AuthController {
             var result = authService.loginMobileUser(request);
             loginAttemptService.recordSuccess(request.email());
             if (result.otpRequired()) {
-                registrationVerificationService.sendLoginCode(result.otpUser(), true);
-                boolean isPhone = result.otpUser().getPhoneNumber() != null && !result.otpUser().getPhoneNumber().isBlank();
-                String dest = isPhone ? result.otpUser().getPhoneNumber() : result.otpUser().getEmail();
+                var destination = registrationVerificationService.sendLoginCode(
+                        result.otpUser(), request.email(), true);
+                boolean isPhone = "SMS".equals(destination.deliveryMethod());
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-                        new LoginChallengeResponse(true, dest,
+                        new LoginChallengeResponse(true, destination.value(),
                                 "A login verification code was sent to your " + (isPhone ? "phone" : "email")));
             }
             return ResponseEntity.ok(result.response());
@@ -74,6 +74,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new AuthErrorResponse(exception.getMessage()));
         } catch (AuthenticationException exception) {
+            loginAttemptService.recordFailure(request.email());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthErrorResponse("Invalid email, phone number, or password"));
+        } catch (IllegalArgumentException exception) {
             loginAttemptService.recordFailure(request.email());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthErrorResponse("Invalid email, phone number, or password"));
@@ -88,7 +92,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.ACCEPTED)
                     .body(new MessageResponse("Verification code sent to your " + (isPhone ? "phone" : "email")));
         } catch (IllegalArgumentException exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
+            HttpStatus status = exception.getMessage() != null
+                    && exception.getMessage().startsWith("An account with")
+                            ? HttpStatus.CONFLICT
+                            : HttpStatus.BAD_REQUEST;
+            return ResponseEntity.status(status)
                     .body(new AuthErrorResponse(exception.getMessage()));
         }
     }

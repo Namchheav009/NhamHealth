@@ -107,9 +107,21 @@ class _SecurityViewState extends State<SecurityView> {
     try {
       await _security.setPin(pin);
       await _load();
-      AppAlert.success(
-        title: 'App PIN saved',
-        message: 'Your app PIN was saved securely.',
+      if (widget.requirePinCreation && _canUseBiometrics && !_biometrics) {
+        final enabled = await _security.confirmDeviceBiometrics(
+          'Use your fingerprint or biometrics to protect private features',
+        );
+        if (enabled) {
+          await _security.setBiometricsEnabled(true);
+          await _load();
+        }
+      }
+      await AppAlert.success(
+        title: 'App protection enabled',
+        message:
+            _biometrics
+                ? 'Your PIN and biometric unlock are ready.'
+                : 'Your app PIN is ready. You can enable fingerprint or biometrics from Security.',
       );
       widget.onPinCreated?.call();
     } on AuthException catch (error) {

@@ -178,7 +178,7 @@ class AuthenticationFlowTests {
                                 {"email":"user@nhamhealth.local","password":"wrong"}
                                 """))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+                .andExpect(jsonPath("$.message").value("Invalid email, phone number, or password"));
     }
 
     @Test
@@ -206,7 +206,7 @@ class AuthenticationFlowTests {
                 .andExpect(jsonPath("$.otpRequired").value(true))
                 .andExpect(jsonPath("$.email").value("user@nhamhealth.local"));
 
-        String code = emailMessage.getSubject().substring(0, 4);
+        String code = emailMessage.getSubject().substring(0, 6);
         mockMvc.perform(post("/api/v1/auth/verify-login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"user@nhamhealth.local\",\"code\":\"" + code + "\"}"))

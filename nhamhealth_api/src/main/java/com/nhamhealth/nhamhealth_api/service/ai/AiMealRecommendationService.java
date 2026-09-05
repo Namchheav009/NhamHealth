@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -106,7 +107,7 @@ public class AiMealRecommendationService {
     }
 
     @Transactional
-    public AiRecommendation generate(Integer userId, Integer moodId, boolean refresh) {
+    public Optional<AiRecommendation> generate(Integer userId, Integer moodId, boolean refresh) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
         Mood mood = moodId == null
@@ -123,11 +124,14 @@ public class AiMealRecommendationService {
                     : recommendationRepository
                             .findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
                                     userId, moodId, "ready", LocalDate.now().atStartOfDay());
-            if (existing.isPresent()) return existing.get();
+            if (existing.isPresent()) return existing;
         }
 
         List<Meal> catalog = mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc();
-        if (catalog.isEmpty()) throw new IllegalStateException("No published meals are available.");
+        if (catalog.isEmpty()) {
+            log.info("No published meals are available; returning an empty recommendation list for user {}", userId);
+            return Optional.empty();
+        }
 
         RecommendationContext context = recommendationContext(userId);
         ModelDecision decision = askModel(mood, catalog, context);
@@ -177,7 +181,7 @@ public class AiMealRecommendationService {
             itemRepository.save(item);
         }
         itemRepository.flush();
-        return recommendation;
+        return Optional.of(recommendation);
     }
 
     private ModelDecision askModel(Mood mood, List<Meal> meals, RecommendationContext context) {

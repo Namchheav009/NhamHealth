@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 
 public record ProfileUpdateRequest(
         @NotBlank @Size(max = 150) String fullName,
-        @NotBlank @Email @Size(max = 150) String email,
+        @Email(message = "Email must be valid") @Size(max = 150) String email,
         @Size(max = 30) String phone,
         @Past LocalDate dateOfBirth,
         @Size(max = 30) String gender,

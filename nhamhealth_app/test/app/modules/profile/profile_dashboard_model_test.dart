@@ -28,4 +28,18 @@ void main() {
     expect(dashboard.phone, '012345678');
     expect(dashboard.phoneVerified, isTrue);
   });
+
+  test('parses a phone-only dashboard when email is null', () {
+    final dashboard = ProfileDashboardModel.fromJson({
+      'userId': 8,
+      'email': null,
+      'fullName': 'Phone User',
+      'phone': '85512345678',
+      'phoneVerified': true,
+    });
+
+    expect(dashboard.email, isEmpty);
+    expect(dashboard.phone, '85512345678');
+    expect(dashboard.phoneVerified, isTrue);
+  });
 }

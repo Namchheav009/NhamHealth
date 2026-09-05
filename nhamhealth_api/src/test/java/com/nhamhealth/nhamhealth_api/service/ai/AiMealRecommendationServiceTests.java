@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +37,37 @@ import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 class AiMealRecommendationServiceTests {
+
+    @Test
+    void emptyPublishedCatalogReturnsNoRecommendationWithoutWritingData() {
+        AiRecommendationRepository recommendationRepository = mock(AiRecommendationRepository.class);
+        AiRecommendationItemRepository itemRepository = mock(AiRecommendationItemRepository.class);
+        MealRepository mealRepository = mock(MealRepository.class);
+        MoodRepository moodRepository = mock(MoodRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        MealFavoriteRepository favoriteRepository = mock(MealFavoriteRepository.class);
+        DailyWellnessSummaryRepository dailySummaryRepository = mock(DailyWellnessSummaryRepository.class);
+        DailyNutrientTotalRepository dailyNutrientRepository = mock(DailyNutrientTotalRepository.class);
+        AiUserHealthProfileService userHealthProfileService = mock(AiUserHealthProfileService.class);
+
+        when(userRepository.findById(9)).thenReturn(Optional.of(new User()));
+        when(mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc()).thenReturn(List.of());
+
+        AiMealRecommendationService service = service(
+                recommendationRepository,
+                itemRepository,
+                mealRepository,
+                moodRepository,
+                userRepository,
+                favoriteRepository,
+                dailySummaryRepository,
+                dailyNutrientRepository,
+                userHealthProfileService);
+
+        assertTrue(service.generate(9, null, true).isEmpty());
+        verify(recommendationRepository, never()).saveAndFlush(any());
+        verify(itemRepository, never()).save(any());
+    }
 
     @Test
     void profileOnlyRecommendationUsesHeightWeightAndBmiContext() {

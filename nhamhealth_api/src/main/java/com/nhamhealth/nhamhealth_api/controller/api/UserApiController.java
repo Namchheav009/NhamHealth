@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.request.DailyNutritionUpdateRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.SendEmailCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.SendPhoneCodeRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.VerifyEmailCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPhoneCodeRequest;
 import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
+import com.nhamhealth.nhamhealth_api.service.auth.EmailChangeVerificationService;
 import com.nhamhealth.nhamhealth_api.service.auth.PhoneVerificationService;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileDashboardService;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
@@ -40,18 +43,21 @@ public class UserApiController {
     private final ProfileDashboardService profileDashboardService;
     private final DailyNutritionService dailyNutritionService;
     private final PhoneVerificationService phoneVerificationService;
+    private final EmailChangeVerificationService emailChangeVerificationService;
 
     public UserApiController(
             UserProfileService userProfileService,
             ProfileImageStorageService profileImageStorageService,
             ProfileDashboardService profileDashboardService,
             DailyNutritionService dailyNutritionService,
-            PhoneVerificationService phoneVerificationService) {
+            PhoneVerificationService phoneVerificationService,
+            EmailChangeVerificationService emailChangeVerificationService) {
         this.userProfileService = userProfileService;
         this.profileImageStorageService = profileImageStorageService;
         this.profileDashboardService = profileDashboardService;
         this.dailyNutritionService = dailyNutritionService;
         this.phoneVerificationService = phoneVerificationService;
+        this.emailChangeVerificationService = emailChangeVerificationService;
     }
 
     @PostMapping("/me/daily-wellness/nutrients")
@@ -117,6 +123,24 @@ public class UserApiController {
         return ResponseEntity.ok(phoneVerificationService.sendVerificationCode(userId.intValue(), request.phone()));
     }
 
+    @PostMapping("/me/email/send-code")
+    public ResponseEntity<?> sendEmailVerificationCode(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody SendEmailCodeRequest request) {
+        Number userId = jwt.getClaim("userId");
+        return ResponseEntity.ok(emailChangeVerificationService.sendVerificationCode(
+                userId.intValue(), request.email()));
+    }
+
+    @PostMapping("/me/email/verify-code")
+    public ResponseEntity<?> verifyEmailCode(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody VerifyEmailCodeRequest request) {
+        Number userId = jwt.getClaim("userId");
+        return ResponseEntity.ok(emailChangeVerificationService.verifyCode(
+                userId.intValue(), request.email(), request.code()));
+    }
+
     @PostMapping("/me/phone/verify-code")
     public ResponseEntity<?> verifyPhoneCode(
             @AuthenticationPrincipal Jwt jwt,
@@ -128,6 +152,12 @@ public class UserApiController {
     @ExceptionHandler(PasswordResetException.class)
     public ResponseEntity<?> handlePasswordResetException(PasswordResetException exception) {
         return ResponseEntity.status(exception.getStatus())
+                .body(java.util.Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
                 .body(java.util.Map.of("message", exception.getMessage()));
     }
 }

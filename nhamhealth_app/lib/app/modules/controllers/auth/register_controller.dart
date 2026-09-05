@@ -62,7 +62,7 @@ class RegisterController extends GetxController {
     final isEmail = GetUtils.isEmail(normalized);
     final isPhone = RegExp(
       r'^\+?[0-9]{8,15}$',
-    ).hasMatch(normalized.replaceAll(RegExp(r'[\s-]'), ''));
+    ).hasMatch(normalized.replaceAll(RegExp(r'[\s()-]'), ''));
     if (!isEmail && !isPhone) {
       _showError('Please enter a valid email or phone number.');
       return;

@@ -90,13 +90,14 @@ class PhoneVerificationServiceTests {
         profile.setUser(user);
 
         VerificationCode code = new VerificationCode();
+        code.setUser(user);
         code.setStatus("PENDING");
         code.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         code.setAttemptCount(0);
         code.setCodeHash("hashed-123456");
 
-        when(verificationCodeRepository.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
-                eq("85512345678"), eq(PhoneVerificationService.PURPOSE)))
+        when(verificationCodeRepository.findFirstByUserAndDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
+                eq(user), eq("85512345678"), eq(PhoneVerificationService.PURPOSE)))
                 .thenReturn(Optional.of(code));
         when(passwordEncoder.matches("123456", "hashed-123456")).thenReturn(true);
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
@@ -107,21 +108,27 @@ class PhoneVerificationServiceTests {
         assertThat(response.success()).isTrue();
         assertThat(response.verified()).isTrue();
         assertThat(profile.getIsPhoneVerified()).isTrue();
+        assertThat(profile.getPhoneNumber()).isEqualTo("85512345678");
+        assertThat(user.getPhoneNumber()).isEqualTo("85512345678");
         assertThat(code.getStatus()).isEqualTo("VERIFIED");
 
+        verify(userRepository).save(user);
         verify(userProfileRepository).save(profile);
     }
 
     @Test
     void verifyCodeThrowsOnIncorrectCode() {
         VerificationCode code = new VerificationCode();
+        User user = new User();
+        code.setUser(user);
         code.setStatus("PENDING");
         code.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         code.setAttemptCount(0);
         code.setCodeHash("hashed-123456");
 
-        when(verificationCodeRepository.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
-                eq("85512345678"), eq(PhoneVerificationService.PURPOSE)))
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(verificationCodeRepository.findFirstByUserAndDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(
+                eq(user), eq("85512345678"), eq(PhoneVerificationService.PURPOSE)))
                 .thenReturn(Optional.of(code));
         when(passwordEncoder.matches("999999", "hashed-123456")).thenReturn(false);
 

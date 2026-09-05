@@ -111,6 +111,9 @@ public class AuthService {
             }
         } else {
             email = rawIdentifier.toLowerCase(Locale.ROOT);
+            if (!isValidEmail(email)) {
+                throw new IllegalArgumentException("Please enter a valid email or phone number");
+            }
             if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
                 throw new IllegalArgumentException("An account with this email already exists");
             }
@@ -129,7 +132,7 @@ public class AuthService {
         profile.setUser(user);
         profile.setFullName(request.fullName().trim());
         if (phone != null) {
-            profile.setPhoneNumber(rawIdentifier);
+            profile.setPhoneNumber(phone);
             profile.setIsPhoneVerified(false);
         }
         userProfileRepository.save(profile);
@@ -370,5 +373,14 @@ public class AuthService {
             throw new InvalidSessionException();
         }
         return user;
+    }
+
+    private boolean isValidEmail(String email) {
+        int at = email.indexOf('@');
+        return at > 0
+                && at == email.lastIndexOf('@')
+                && at < email.length() - 3
+                && email.indexOf('.', at + 2) > at + 1
+                && email.chars().noneMatch(Character::isWhitespace);
     }
 }

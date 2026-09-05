@@ -61,8 +61,9 @@ public class AiRecommendationApiController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) Integer moodId,
             @RequestParam(defaultValue = "false") boolean refresh) {
-        AiRecommendation recommendation = recommendationService.generate(authenticatedUserId(jwt), moodId, refresh);
-        return ResponseEntity.ok(toMealResponses(recommendation));
+        return recommendationService.generate(authenticatedUserId(jwt), moodId, refresh)
+                .map(recommendation -> ResponseEntity.ok(toMealResponses(recommendation)))
+                .orElseGet(() -> ResponseEntity.ok(List.of()));
     }
 
     private Integer authenticatedUserId(Jwt jwt) {

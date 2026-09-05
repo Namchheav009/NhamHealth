@@ -194,6 +194,42 @@ void main() {
     expect(dashboard.fat?.current, 14);
     expect(dashboard.water?.current, 2);
   });
+
+  test('sends separate optional email and phone profile fields', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'userId': 7,
+          'email': '',
+          'fullName': 'Phone User',
+          'phone': '85512345678',
+          'phoneVerified': true,
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final repository = ProfileRepository(
+      authService: _AuthenticatedAuthService(),
+      client: client,
+    );
+
+    final dashboard = await repository.updateProfile(
+      fullName: ' Phone User ',
+      email: '',
+      phone: ' 012345678 ',
+    );
+    final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
+
+    expect(capturedRequest.method, 'PUT');
+    expect(body['fullName'], 'Phone User');
+    expect(body['email'], '');
+    expect(body['phone'], '012345678');
+    expect(dashboard.email, isEmpty);
+    expect(dashboard.phoneVerified, isTrue);
+  });
 }
 
 class _AuthenticatedAuthService extends AuthService {
