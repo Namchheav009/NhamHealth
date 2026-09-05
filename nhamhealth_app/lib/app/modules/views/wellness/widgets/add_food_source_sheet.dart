@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../widgets/app_alert.dart';
+import 'package:nhamhealth_flutter/app/theme/app_colors.dart';
 
+import '../../../../widgets/app_alert.dart';
 import '../../../controllers/wellness/calories_controller.dart';
-import '../../../../theme/app_colors.dart';
 
 class AddFoodSourceSheet extends StatefulWidget {
   const AddFoodSourceSheet({super.key});
@@ -38,9 +38,7 @@ class _AddFoodSourceSheetState extends State<AddFoodSourceSheet> {
       ),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        border: Border(
-          top: BorderSide(color: context.appBorder),
-        ),
+        border: Border(top: BorderSide(color: context.appBorder)),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(

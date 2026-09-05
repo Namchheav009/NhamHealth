@@ -1,32 +1,36 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../config/api_config.dart';
-import '../../../models/auth/authenticated_user_model.dart';
-import '../../../controllers/profile/profile_controller.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/app_alert.dart';
+import '../../../controllers/profile/profile_controller.dart';
+import '../../../models/auth/authenticated_user_model.dart';
 
 class ProfileHeader extends GetView<ProfileController> {
   const ProfileHeader({super.key});
 
   static const green = Color(0xFF009B3E);
 
-  Widget _editButton() => OutlinedButton.icon(
+  Widget _editButton(BuildContext context) => OutlinedButton.icon(
     onPressed: controller.editProfile,
     icon: const Icon(Icons.edit_outlined, size: 15),
     label: const Text('Edit Profile'),
     style: OutlinedButton.styleFrom(
-      backgroundColor: Colors.white,
-      foregroundColor: green,
+      backgroundColor:
+          context.appIsDark ? context.appElevatedSurface : Colors.white,
+      foregroundColor:
+          context.appIsDark ? context.appColorScheme.primary : green,
       minimumSize: const Size(0, 36),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       shape: const StadiumBorder(),
-      side: const BorderSide(color: Color(0xFFBDE8C9)),
+      side: BorderSide(
+        color: context.appIsDark ? context.appBorder : const Color(0xFFBDE8C9),
+      ),
       textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
     ),
   );
@@ -63,7 +67,7 @@ class ProfileHeader extends GetView<ProfileController> {
                   height: 94,
                   child: Stack(
                     children: [
-                      Positioned(top: 0, right: 0, child: _editButton()),
+                      Positioned(top: 0, right: 0, child: _editButton(context)),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(
@@ -92,15 +96,18 @@ class ProfileHeader extends GetView<ProfileController> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE4F8E9),
+                                    color: context.appSoftGreen,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.check_circle,
-                                        color: green,
+                                        color:
+                                            context.appIsDark
+                                                ? context.appColorScheme.primary
+                                                : green,
                                         size: 14,
                                       ),
                                       const SizedBox(width: 3),
@@ -108,9 +115,14 @@ class ProfileHeader extends GetView<ProfileController> {
                                         controller.membership.value,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 10,
-                                          color: green,
+                                          color:
+                                              context.appIsDark
+                                                  ? context
+                                                      .appColorScheme
+                                                      .primary
+                                                  : green,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -578,7 +590,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appElevatedSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -652,8 +664,12 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFF5F5F7),
-                foregroundColor: Colors.black87,
+                backgroundColor:
+                    context.appIsDark
+                        ? context.appColorScheme.surfaceContainerHighest
+                        : const Color(0xFFF5F5F7),
+                foregroundColor:
+                    context.appIsDark ? context.appText : Colors.black87,
                 minimumSize: const Size.fromHeight(56),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -694,10 +710,13 @@ class _PhotoAction extends StatelessWidget {
   Widget build(BuildContext context) => Opacity(
     opacity: enabled ? 1 : .45,
     child: Material(
-      color: Colors.white,
+      color: context.appIsDark ? context.appElevatedSurface : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Color(0xFFE5E5E5)),
+        side: BorderSide(
+          color:
+              context.appIsDark ? context.appBorder : const Color(0xFFE5E5E5),
+        ),
       ),
       child: InkWell(
         onTap:

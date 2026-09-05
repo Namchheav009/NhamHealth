@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/wellness/calories_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../controllers/wellness/calories_controller.dart';
 
 class CalorieIntakeEditor extends GetView<CaloriesController> {
   const CalorieIntakeEditor({super.key});
@@ -129,7 +129,12 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
                   )
                   : const Color(0xFFFFF4EF),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFFBE9D)),
+          border: Border.all(
+            color:
+                context.appIsDark
+                    ? const Color(0xFF5E3523)
+                    : const Color(0xFFFFBE9D),
+          ),
         ),
         child: Icon(icon, color: const Color(0xFFFF641E)),
       ),
@@ -151,7 +156,12 @@ class CalorieIntakeEditor extends GetView<CaloriesController> {
                   )
                   : const Color(0xFFFFF2EC),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFFC9AE)),
+          border: Border.all(
+            color:
+                context.appIsDark
+                    ? const Color(0xFF5E3523)
+                    : const Color(0xFFFFC9AE),
+          ),
         ),
         child: Text(
           text,

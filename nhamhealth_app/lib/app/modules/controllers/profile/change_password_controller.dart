@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../widgets/app_alert.dart';
+import '../../../widgets/privacy_auth_dialog.dart';
 import '../../views/auth/forgot_password_view.dart';
 
 class ChangePasswordController extends GetxController {
+  ChangePasswordController({
+    AuthService? authService,
+    Future<bool> Function(String reason)? authorize,
+  }) : _authService = authService,
+       _authorize =
+           authorize ?? ((reason) => PrivacyAuth.require(reason: reason));
+
+  final AuthService? _authService;
+  final Future<bool> Function(String reason) _authorize;
+
   final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
@@ -33,6 +44,8 @@ class ChangePasswordController extends GetxController {
   }
 
   Future<void> updatePassword() async {
+    if (isLoading.value) return;
+
     final currentPassword = currentPasswordController.text;
 
     final newPassword = newPasswordController.text;
@@ -74,10 +87,11 @@ class ChangePasswordController extends GetxController {
       return;
     }
 
+    isLoading.value = true;
     try {
-      isLoading.value = true;
+      if (!await _authorize('Unlock to update your account password.')) return;
 
-      await Get.find<AuthService>().changePassword(
+      await (_authService ?? Get.find<AuthService>()).changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
       );

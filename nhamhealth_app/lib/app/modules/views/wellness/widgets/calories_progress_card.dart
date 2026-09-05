@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/wellness/calories_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../controllers/wellness/calories_controller.dart';
 
 class CalorieProgressCard extends GetView<CaloriesController> {
   const CalorieProgressCard({super.key});
@@ -20,8 +20,11 @@ class CalorieProgressCard extends GetView<CaloriesController> {
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFF0E8),
+                  decoration: BoxDecoration(
+                    color:
+                        context.appIsDark
+                            ? const Color(0xFF381F15)
+                            : const Color(0xFFFFF0E8),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

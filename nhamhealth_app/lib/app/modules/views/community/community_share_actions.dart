@@ -153,10 +153,13 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
   Widget build(BuildContext context) {
     final isDark = context.appIsDark;
 
-    final sheetBg = isDark ? const Color(0xFF242526) : Colors.white;
-    final pillBg = isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB);
+    final sheetBg = isDark ? context.appElevatedSurface : Colors.white;
+    final pillBg =
+        isDark
+            ? context.appColorScheme.surfaceContainerHighest
+            : const Color(0xFFE4E6EB);
     final handleColor =
-        isDark ? const Color(0xFF65676B) : const Color(0xFFCED0D4);
+        isDark ? context.appColorScheme.outline : const Color(0xFFCED0D4);
 
     return SafeArea(
       top: false,

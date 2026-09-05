@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
 
 import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
-import '../../community/widgets/community_shared_post_card.dart';
 import '../../community/widgets/ai_status_badge.dart';
+import '../../community/widgets/community_shared_post_card.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -589,7 +590,10 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
               width: 42,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFF9AA19C),
+                color:
+                    context.appIsDark
+                        ? context.appBorder
+                        : const Color(0xFF9AA19C),
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -617,11 +621,7 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
                     icon: Icons.edit_outlined,
                   ),
                 if (canEdit && canDelete)
-                  const Divider(
-                    height: 1,
-                    indent: 64,
-                    color: Color(0xFFE0E5E1),
-                  ),
+                  Divider(height: 1, indent: 64, color: context.appBorder),
                 if (canDelete)
                   const _ProfilePostOption(
                     value: 'delete',
@@ -811,8 +811,12 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
                       decoration: BoxDecoration(
                         color:
                             _currentPage == index
-                                ? const Color(0xFF1F2937)
-                                : const Color(0xFFD1D5DB),
+                                ? (context.appIsDark
+                                    ? Colors.white
+                                    : const Color(0xFF1F2937))
+                                : (context.appIsDark
+                                    ? context.appBorder
+                                    : const Color(0xFFD1D5DB)),
                         shape: BoxShape.circle,
                       ),
                     ),

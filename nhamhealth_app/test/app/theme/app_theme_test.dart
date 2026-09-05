@@ -29,11 +29,8 @@ void main() {
       colors.onSurface.computeLuminance(),
       greaterThan(colors.surface.computeLuminance()),
     );
-    expect(theme.cardTheme.color, colors.surface);
-    expect(
-      theme.inputDecorationTheme.fillColor,
-      colors.surfaceContainerHighest,
-    );
+    expect(theme.cardTheme.color, colors.surfaceContainerHigh);
+    expect(theme.inputDecorationTheme.fillColor, colors.surfaceContainerHigh);
     expect(
       theme.filledButtonTheme.style?.backgroundColor?.resolve({}),
       colors.primary,

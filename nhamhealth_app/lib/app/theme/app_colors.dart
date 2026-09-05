@@ -43,6 +43,13 @@ extension AppColorContext on BuildContext {
 
   Color get appBackground => Theme.of(this).scaffoldBackgroundColor;
 
+  /// An opaque background color for dialogs, pinned headers, or views that
+  /// require a solid surface rather than the transparent Scaffold background.
+  Color get appOpaqueBackground =>
+      appIsDark
+          ? appColorScheme.surfaceDim
+          : Theme.of(this).scaffoldBackgroundColor;
+
   Color get appSurface => appColorScheme.surface;
 
   Color get appSurfaceLow =>

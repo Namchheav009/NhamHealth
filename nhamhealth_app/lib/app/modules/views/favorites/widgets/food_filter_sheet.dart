@@ -150,7 +150,8 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                   Navigator.of(context).pop();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0AA653),
+                  backgroundColor: context.appColorScheme.primary,
+                  foregroundColor: context.appColorScheme.onPrimary,
                   shape: const StadiumBorder(),
                 ),
                 child: Text(
@@ -179,7 +180,7 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = const Color(0xFF0AA653);
+    final accent = context.appColorScheme.primary;
     return Semantics(
       button: true,
       selected: selected,
@@ -220,9 +221,9 @@ class _CategoryChip extends StatelessWidget {
                   width: 18,
                   child:
                       selected
-                          ? const Icon(
+                          ? Icon(
                             Icons.check_circle_rounded,
-                            color: Color(0xFF0AA653),
+                            color: accent,
                             size: 18,
                           )
                           : null,

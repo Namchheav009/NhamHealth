@@ -287,8 +287,11 @@ class _CommunityPersonProfileViewState
                               : CachedNetworkImageProvider(profile.avatarUrl),
                       child: Text(
                         _initials(profile.name),
-                        style: const TextStyle(
-                          color: Color(0xFF00A857),
+                        style: TextStyle(
+                          color:
+                              context.appIsDark
+                                  ? context.appColorScheme.primary
+                                  : const Color(0xFF00A857),
                           fontSize: 21,
                           fontWeight: FontWeight.w800,
                         ),
@@ -323,15 +326,21 @@ class _CommunityPersonProfileViewState
                 color: context.appSoftGreen,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF329342).withValues(alpha: .12),
+                  color: (context.appIsDark
+                          ? context.appColorScheme.primary
+                          : const Color(0xFF329342))
+                      .withValues(alpha: context.appIsDark ? .3 : .12),
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.person_outline_rounded,
-                    color: Color(0xFF329342),
+                    color:
+                        context.appIsDark
+                            ? context.appColorScheme.primary
+                            : const Color(0xFF329342),
                     size: 13,
                   ),
                   const SizedBox(width: 7),
@@ -339,8 +348,11 @@ class _CommunityPersonProfileViewState
                     child: Text(
                       _roleLabel(profile.role),
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF329342),
+                      style: TextStyle(
+                        color:
+                            context.appIsDark
+                                ? context.appColorScheme.primary
+                                : const Color(0xFF329342),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -448,7 +460,9 @@ class _CommunityPersonProfileViewState
                   strokeWidth: 2,
                   color:
                       profile.isFollowing
-                          ? const Color(0xFF278A3A)
+                          ? (context.appIsDark
+                              ? context.appColorScheme.primary
+                              : const Color(0xFF278A3A))
                           : Colors.white,
                 ),
               )
@@ -461,10 +475,16 @@ class _CommunityPersonProfileViewState
       style: ElevatedButton.styleFrom(
         backgroundColor:
             profile.isFollowing
-                ? const Color(0xFFEAF7EB)
+                ? (context.appIsDark
+                    ? context.appElevatedSurface
+                    : const Color(0xFFEAF7EB))
                 : const Color(0xFF359B46),
         foregroundColor:
-            profile.isFollowing ? const Color(0xFF278A3A) : Colors.white,
+            profile.isFollowing
+                ? (context.appIsDark
+                    ? context.appColorScheme.primary
+                    : const Color(0xFF278A3A))
+                : Colors.white,
         elevation: 0,
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

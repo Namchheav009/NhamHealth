@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/wellness/ai_food_controller.dart';
-import '../../models/wellness/food_nutrition_model.dart';
-import '../../models/wellness/food_recommendation_model.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../controllers/wellness/ai_food_controller.dart';
+import '../../models/wellness/food_nutrition_model.dart';
+import '../../models/wellness/food_recommendation_model.dart';
 import 'widgets/animated_reveal_text.dart';
 
 /// -----------------------------------------------------------------------
@@ -135,6 +135,7 @@ class AiFoodView extends GetView<AiFoodController> {
         children: [
           Expanded(
             child: _button(
+              context: context,
               icon: Icons.photo_camera_outlined,
               text: 'Take Photo',
               action: controller.takePhoto,
@@ -144,6 +145,7 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(width: 12),
           Expanded(
             child: _button(
+              context: context,
               icon: Icons.photo_library_outlined,
               text: 'Gallery',
               action: controller.pickImageFromGallery,
@@ -160,6 +162,7 @@ class AiFoodView extends GetView<AiFoodController> {
                 ? Padding(
                   padding: const EdgeInsets.only(top: 14),
                   child: _button(
+                    context: context,
                     icon: Icons.auto_awesome,
                     text:
                         controller.isAnalyzing.value
@@ -233,6 +236,7 @@ class AiFoodView extends GetView<AiFoodController> {
                       ),
                       const SizedBox(height: 14),
                       _button(
+                        context: context,
                         icon:
                             controller.wasAdded.value
                                 ? Icons.check_circle
@@ -434,12 +438,14 @@ class AiFoodView extends GetView<AiFoodController> {
   // ---- Buttons -----------------------------------------------------------
 
   Widget _button({
+    required BuildContext context,
     required IconData icon,
     required String text,
     required VoidCallback? action,
     _ButtonStyle style = _ButtonStyle.primary,
     bool loading = false,
   }) {
+    final isDark = context.appIsDark;
     final child =
         loading
             ? Row(
@@ -483,14 +489,21 @@ class AiFoodView extends GetView<AiFoodController> {
             icon: Icon(icon),
             label: Text(text.tr),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE8F7EA),
-              foregroundColor: greenDark,
+              backgroundColor:
+                  isDark
+                      ? context.appColorScheme.primaryContainer
+                      : const Color(0xFFE8F7EA),
+              foregroundColor:
+                  isDark
+                      ? context.appColorScheme.onPrimaryContainer
+                      : greenDark,
               shape: const StadiumBorder(),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         );
       case _ButtonStyle.outlined:
+        final outlineColor = isDark ? context.appColorScheme.primary : green;
         return SizedBox(
           height: 48,
           child: OutlinedButton.icon(
@@ -498,8 +511,8 @@ class AiFoodView extends GetView<AiFoodController> {
             icon: Icon(icon, size: 20),
             label: Text(text.tr),
             style: OutlinedButton.styleFrom(
-              foregroundColor: green,
-              side: const BorderSide(color: green),
+              foregroundColor: outlineColor,
+              side: BorderSide(color: outlineColor),
               shape: const StadiumBorder(),
               textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -622,6 +635,7 @@ class AiFoodView extends GetView<AiFoodController> {
   );
 
   Widget _hydrationCard(BuildContext context, FoodNutritionModel food) {
+    final isDark = context.appIsDark;
     final total = food.drinkVolumeMl.round();
     final water = food.plainWaterVolumeMl.round();
     final glasses = water / 250;
@@ -631,13 +645,13 @@ class AiFoodView extends GetView<AiFoodController> {
         children: [
           Container(
             padding: const EdgeInsets.all(11),
-            decoration: const BoxDecoration(
-              color: Color(0xFFE7F7FF),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0E2738) : const Color(0xFFE7F7FF),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.water_drop_rounded,
-              color: Color(0xFF1689C9),
+              color: isDark ? const Color(0xFF5EC5FF) : const Color(0xFF1689C9),
             ),
           ),
           const SizedBox(width: 12),
@@ -670,13 +684,15 @@ class AiFoodView extends GetView<AiFoodController> {
       value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
 
   Widget _confidenceLine(BuildContext context) {
+    final isDark = context.appIsDark;
     final confidence = (controller.prediction.value?.confidence ?? 0).clamp(
       0.0,
       1.0,
     );
     final percentage = (confidence * 100).round();
     final low = confidence < AiFoodController.lowConfidenceThreshold;
-    final color = low ? warn : green;
+    final color =
+        low ? warn : (isDark ? context.appColorScheme.primary : green);
 
     return _card(
       context,
@@ -693,7 +709,10 @@ class AiFoodView extends GetView<AiFoodController> {
               child: LinearProgressIndicator(
                 value: confidence,
                 minHeight: 7,
-                backgroundColor: const Color(0xFFEFF3EE),
+                backgroundColor:
+                    isDark
+                        ? context.appColorScheme.surfaceContainerHighest
+                        : const Color(0xFFEFF3EE),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),
@@ -758,13 +777,22 @@ class AiFoodView extends GetView<AiFoodController> {
                               food,
                               initialName: candidate.name,
                             ),
-                    backgroundColor: warn.withValues(alpha: .08),
-                    side: BorderSide(color: warn.withValues(alpha: .22)),
+                    backgroundColor: warn.withValues(
+                      alpha: context.appIsDark ? .18 : .08,
+                    ),
+                    side: BorderSide(
+                      color: warn.withValues(
+                        alpha: context.appIsDark ? .42 : .22,
+                      ),
+                    ),
                     visualDensity: VisualDensity.compact,
                     label: Text(
                       '${candidate.name} ${(candidate.confidence * 100).round()}%',
-                      style: const TextStyle(
-                        color: Color(0xFFA94A20),
+                      style: TextStyle(
+                        color:
+                            context.appIsDark
+                                ? const Color(0xFFFFB388)
+                                : const Color(0xFFA94A20),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -786,8 +814,16 @@ class AiFoodView extends GetView<AiFoodController> {
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: Text('Correct'.tr),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: greenDark,
-                  side: const BorderSide(color: green),
+                  foregroundColor:
+                      context.appIsDark
+                          ? context.appColorScheme.primary
+                          : greenDark,
+                  side: BorderSide(
+                    color:
+                        context.appIsDark
+                            ? context.appColorScheme.primary
+                            : green,
+                  ),
                 ),
               ),
             ),
@@ -987,7 +1023,14 @@ class AiFoodView extends GetView<AiFoodController> {
               child: Text(
                 food.nutritionSourceLabel.tr,
                 style: TextStyle(
-                  color: food.isDatabaseCalculated ? greenDark : warn,
+                  color:
+                      food.isDatabaseCalculated
+                          ? (context.appIsDark
+                              ? context.appColorScheme.primary
+                              : greenDark)
+                          : (context.appIsDark
+                              ? const Color(0xFFFFB388)
+                              : warn),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1352,9 +1395,13 @@ class _ModelLoadingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(8),
-    child: const LinearProgressIndicator(
-      color: AiFoodView.green,
-      backgroundColor: Color(0xFFE8F7EA),
+    child: LinearProgressIndicator(
+      color:
+          context.appIsDark ? context.appColorScheme.primary : AiFoodView.green,
+      backgroundColor:
+          context.appIsDark
+              ? context.appColorScheme.surfaceContainerHighest
+              : const Color(0xFFE8F7EA),
       minHeight: 6,
     ),
   );

@@ -261,17 +261,13 @@ public class CommunityService {
     @Transactional
     public CommunityPostResponse toggleLike(Integer userId, Integer postId) {
         Post post = visiblePost(userId, postId);
-        Optional<PostLike> existing = likes.findByUserUserIdAndPostPostId(userId, postId);
-        if (existing.isPresent()) {
-            likes.delete(existing.get());
-        } else {
+        int deleted = likes.deleteByUserUserIdAndPostPostId(userId, postId);
+        if (deleted == 0) {
             User actor = user(userId);
-            PostLike like = new PostLike();
-            like.setUser(actor);
-            like.setPost(post);
-            like.setCreatedAt(LocalDateTime.now());
-            likes.save(like);
-            communityNotifications.postLiked(actor, post);
+            int inserted = likes.insertIgnoreConflict(userId, postId, LocalDateTime.now());
+            if (inserted > 0) {
+                communityNotifications.postLiked(actor, post);
+            }
         }
         return response(post, userId, followedIds(userId));
     }

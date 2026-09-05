@@ -106,7 +106,6 @@ class VerificationController extends GetxController {
         );
         final security = Get.find<AppSecurityService>();
         security.syncPinState(response.user.hasPin);
-        await security.markSetupPendingFor(response.user.id);
         _countdownTimer?.cancel();
         Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
       } else if (isLogin.value) {

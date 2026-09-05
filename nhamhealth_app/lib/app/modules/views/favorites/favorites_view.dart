@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../widgets/page_skeleton.dart';
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
-import '../../../routes/app_routes.dart';
-
+import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/favorites/favorites_controller.dart';
 import '../../models/favorites/favorite_food.dart';
 import '../../models/meals/meal_model.dart';
@@ -157,17 +156,17 @@ class FavoritesView extends GetView<FavoritesController> {
       const SizedBox(height: 10),
       Expanded(
         child: Obx(() {
-          final visible = controller.posts.toList()
-            ..sort((a, b) {
-              final aDate = a.updatedAt ?? a.publishedAt ?? a.createdAt;
-              final bDate = b.updatedAt ?? b.publishedAt ?? b.createdAt;
-              final comparison = (bDate ?? DateTime(1970)).compareTo(
-                aDate ?? DateTime(1970),
-              );
-              return controller.postSort.value == FavoritePostSort.newest
-                  ? comparison
-                  : -comparison;
-            });
+          final visible =
+              controller.posts.toList()..sort((a, b) {
+                final aDate = a.updatedAt ?? a.publishedAt ?? a.createdAt;
+                final bDate = b.updatedAt ?? b.publishedAt ?? b.createdAt;
+                final comparison = (bDate ?? DateTime(1970)).compareTo(
+                  aDate ?? DateTime(1970),
+                );
+                return controller.postSort.value == FavoritePostSort.newest
+                    ? comparison
+                    : -comparison;
+              });
           if (controller.isPostsLoading.value && visible.isEmpty) {
             return const PageSkeleton.favorites();
           }
@@ -225,47 +224,50 @@ class FavoritesView extends GetView<FavoritesController> {
           itemBuilder:
               (_) => [
                 _sortMenuItem(
+                  context,
                   FavoritePostSort.newest,
                   'Newest',
                   Icons.access_time_rounded,
                 ),
                 _sortMenuItem(
+                  context,
                   FavoritePostSort.oldest,
                   'Oldest',
                   Icons.schedule_rounded,
                 ),
               ],
-          child: _filterButton(icon),
+          child: _filterButton(context, icon),
         )
       else
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
-          child: _filterButton(icon),
+          child: _filterButton(context, icon),
         ),
     ],
   );
 
   PopupMenuItem<FavoritePostSort> _sortMenuItem(
+    BuildContext context,
     FavoritePostSort value,
     String label,
     IconData icon,
   ) {
     final selected = controller.postSort.value == value;
+    final primary =
+        context.appIsDark
+            ? context.appColorScheme.primary
+            : const Color(0xFF0AA653);
     return PopupMenuItem(
       value: value,
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: selected ? const Color(0xFF0AA653) : Colors.grey,
-            size: 21,
-          ),
+          Icon(icon, color: selected ? primary : Colors.grey, size: 21),
           const SizedBox(width: 10),
           Text(
             label.tr,
             style: TextStyle(
-              color: selected ? const Color(0xFF0AA653) : Colors.grey,
+              color: selected ? primary : Colors.grey,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -274,20 +276,30 @@ class FavoritesView extends GetView<FavoritesController> {
     );
   }
 
-  Widget _filterButton(IconData icon) => Container(
+  Widget _filterButton(BuildContext context, IconData icon) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     decoration: BoxDecoration(
-      color: const Color(0xFFEAF8EF),
+      color: context.appSoftGreen,
       borderRadius: BorderRadius.circular(18),
     ),
     child: Row(
       children: [
-        Icon(icon, color: const Color(0xFF0AA653), size: 19),
+        Icon(
+          icon,
+          color:
+              context.appIsDark
+                  ? context.appColorScheme.primary
+                  : const Color(0xFF0AA653),
+          size: 19,
+        ),
         const SizedBox(width: 5),
         Text(
           'Filter'.tr,
-          style: const TextStyle(
-            color: Color(0xFF0AA653),
+          style: TextStyle(
+            color:
+                context.appIsDark
+                    ? context.appColorScheme.primary
+                    : const Color(0xFF0AA653),
             fontWeight: FontWeight.w600,
           ),
         ),

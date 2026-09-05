@@ -8,8 +8,8 @@ import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
-import '../../models/community/community_person.dart';
 import '../../models/community/community_comment.dart';
+import '../../models/community/community_person.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
 import '../../models/notifications/notification_item.dart';
@@ -60,6 +60,7 @@ class CommunityController extends GetxController {
   final unreadNotificationCount = 0.obs;
   final connectionStatuses = <String, String>{}.obs;
   final updatingConnectionIds = <String>{}.obs;
+  final likingPostIds = <String>{}.obs;
   final errorMessage = RxnString();
 
   final posts = <CommunityPost>[].obs;
@@ -294,9 +295,16 @@ class CommunityController extends GetxController {
   void selectPeopleFilter(PeopleFilter value) => peopleFilter.value = value;
   void updateSearch(String value) => searchQuery.value = value;
   Future<void> togglePostLike(CommunityPost post) async {
-    final updated = await _repository.toggleLike(post.id);
-    final index = posts.indexWhere((item) => item.id == post.id);
-    if (index >= 0) posts[index] = updated;
+    if (!likingPostIds.add(post.id)) return;
+    try {
+      final updated = await _repository.toggleLike(post.id);
+      final index = posts.indexWhere((item) => item.id == post.id);
+      if (index >= 0) posts[index] = updated;
+    } on Object catch (error) {
+      Get.snackbar('Could not update like', error.toString());
+    } finally {
+      likingPostIds.remove(post.id);
+    }
   }
 
   Future<void> togglePostSaved(CommunityPost post) async {

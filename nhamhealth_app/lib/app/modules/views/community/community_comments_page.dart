@@ -849,28 +849,19 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   const SizedBox(height: 2),
                   Text(
                     _post.role,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF778078),
-                    ),
+                    style: TextStyle(fontSize: 12, color: context.appMutedText),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     _post.ageLabel,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF778078),
-                    ),
+                    style: TextStyle(fontSize: 12, color: context.appMutedText),
                   ),
                 ],
               ),
             ),
             IconButton(
               onPressed: _showPostOptions,
-              icon: const Icon(
-                Icons.more_horiz_rounded,
-                color: Color(0xFF768178),
-              ),
+              icon: Icon(Icons.more_horiz_rounded, color: context.appMutedText),
               tooltip: 'More options'.tr,
             ),
           ],
@@ -879,10 +870,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           const SizedBox(height: 15),
           Text(
             _post.description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.35,
-              color: Color(0xFF505951),
+              color: context.appText,
             ),
           ),
         ],
@@ -904,8 +895,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         Container(
           margin: const EdgeInsets.only(top: 7),
           padding: const EdgeInsets.only(top: 4),
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Color(0xFFEAF0EC))),
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: context.appBorder)),
           ),
           child: Row(
             children: [
@@ -918,7 +909,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   color:
                       _post.isLiked
                           ? const Color(0xFFE64657)
-                          : const Color(0xFF69756D),
+                          : context.appMutedText,
                   onTap: _togglePostLike,
                 ),
               ),
@@ -948,32 +939,35 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   Widget _postMetric(
     IconData icon,
     String label, {
-    Color color = const Color(0xFF69756D),
+    Color? color,
     required VoidCallback onTap,
-  }) => InkWell(
-    onTap: _updatingPost ? null : onTap,
-    borderRadius: BorderRadius.circular(12),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 7),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontWeight: FontWeight.w700,
+  }) {
+    final effectiveColor = color ?? context.appMutedText;
+    return InkWell(
+      onTap: _updatingPost ? null : onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: effectiveColor, size: 20),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: effectiveColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _engagementSummary() => Row(
     children: [
@@ -1005,10 +999,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   const SizedBox(width: 5),
                   Text(
                     '${_post.likes}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF69756D),
-                    ),
+                    style: TextStyle(fontSize: 12, color: context.appMutedText),
                   ),
                 ],
               ),
@@ -1019,14 +1010,14 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (_post.comments > 0)
         Text(
           '${_post.comments} ${_post.comments == 1 ? 'comment' : 'comments'}',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
       if (_post.comments > 0 && _post.shares > 0)
-        const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
+        Text('  ·  ', style: TextStyle(color: context.appMutedText)),
       if (_post.shares > 0)
         Text(
           '${_post.shares} ${_post.shares == 1 ? 'share' : 'shares'}',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF69756D)),
+          style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
     ],
   );
@@ -1370,8 +1361,11 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                               url,
                               fit: BoxFit.cover,
                               errorBuilder:
-                                  (_, _, _) => const ColoredBox(
-                                    color: Color(0xFFEAF7EE),
+                                  (_, _, _) => ColoredBox(
+                                    color:
+                                        context.appIsDark
+                                            ? context.appElevatedSurface
+                                            : const Color(0xFFEAF7EE),
                                   ),
                             ),
                           )
@@ -1429,8 +1423,12 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                   decoration: BoxDecoration(
                     color:
                         _currentPage == index
-                            ? const Color(0xFF1F2937)
-                            : const Color(0xFFD1D5DB),
+                            ? (context.appIsDark
+                                ? Colors.white
+                                : const Color(0xFF1F2937))
+                            : (context.appIsDark
+                                ? context.appBorder
+                                : const Color(0xFFD1D5DB)),
                     shape: BoxShape.circle,
                   ),
                 ),

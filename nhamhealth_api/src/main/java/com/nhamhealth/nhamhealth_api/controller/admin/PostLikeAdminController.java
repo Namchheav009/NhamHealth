@@ -8,6 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.entity.PostLike;
 import com.nhamhealth.nhamhealth_api.repository.community.PostLikeRepository;
@@ -16,6 +22,7 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Controller
 public class PostLikeAdminController {
+
     private final PostLikeRepository likes;
     private final UserRepository users;
     private final PostRepository posts;
@@ -46,16 +53,23 @@ public class PostLikeAdminController {
             int userId = Integer.parseInt(String.valueOf(body.get("userId")));
             int postId = Integer.parseInt(String.valueOf(body.get("postId")));
             if (likes.existsByUserUserIdAndPostPostId(userId, postId))
+            if (likes.existsByUserUserIdAndPostPostId(userId, postId)) {
                 return ResponseEntity.badRequest().body(Map.of("message", "This user already likes this post."));
+            }
             var user = users.findById(userId).orElse(null);
             var post = posts.findById(postId).orElse(null);
             if (user == null || post == null) return ResponseEntity.badRequest().body(Map.of("message", "Select a valid user and post."));
+            if (user == null || post == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Select a valid user and post."));
+            }
             var like = new PostLike();
             like.setUser(user);
             like.setPost(post);
             like.setCreatedAt(LocalDateTime.now());
             var saved = likes.save(like);
             return ResponseEntity.ok(Map.of("message", "Post like added successfully.", "likeId", saved.getPostLikeId()));
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", "This user already likes this post."));
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid post-like data."));
         }
@@ -65,6 +79,9 @@ public class PostLikeAdminController {
     @ResponseBody
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         if (!likes.existsById(id)) return ResponseEntity.notFound().build();
+        if (!likes.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         likes.deleteById(id);
         return ResponseEntity.noContent().build();
     }

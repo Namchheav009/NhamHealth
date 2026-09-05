@@ -6,10 +6,7 @@ import 'package:get/get.dart';
 import '../../../../core/services/app_security_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
-import '../../../widgets/pin_setup_prompt.dart';
-import '../../../widgets/privacy_auth_dialog.dart';
 import '../../models/auth/authenticated_user_model.dart';
-import '../../views/profile/security_view.dart';
 
 class SplashController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -152,49 +149,7 @@ class SplashController extends GetxController
     final security = Get.find<AppSecurityService>();
 
     security.syncPinState(user.hasPin);
-
-    if (!user.hasPin) {
-      await _handleMissingPin(user);
-      return;
-    }
-
-    await _unlockApplication(user);
-  }
-
-  Future<void> _handleMissingPin(AuthenticatedUser user) async {
-    final context = Get.context;
-
-    if (context != null && !isClosed) {
-      await showPinSetupPrompt(context);
-    }
-
     if (isClosed) return;
-
-    Get.offAll<void>(
-      () => SecurityView(
-        promptCreatePin: true,
-        requirePinCreation: true,
-        onPinCreated: () {
-          if (isClosed) return;
-
-          Get.offAllNamed(AppRoutes.home, arguments: user);
-        },
-      ),
-    );
-  }
-
-  Future<void> _unlockApplication(AuthenticatedUser user) async {
-    if (isClosed) return;
-
-    final unlocked = await PrivacyAuth.require(
-      reason: 'Enter your PIN to open NhamHealth.',
-      allowCancel: false,
-    );
-
-    if (!unlocked || isClosed) {
-      return;
-    }
-
     Get.offAllNamed(AppRoutes.home, arguments: user);
   }
 

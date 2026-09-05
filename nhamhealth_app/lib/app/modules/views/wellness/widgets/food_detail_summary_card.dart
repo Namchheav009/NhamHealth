@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/wellness/food_source_detail_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../controllers/wellness/food_source_detail_controller.dart';
 
 class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
   const FoodDetailSummaryCard({super.key});
@@ -22,8 +22,14 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                   width: 46,
                   height: 46,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFF3ED),
+                  decoration: BoxDecoration(
+                    color:
+                        isDark
+                            ? Color.alphaBlend(
+                              const Color(0xFFFF641E).withValues(alpha: 0.14),
+                              context.appSurfaceLow,
+                            )
+                            : const Color(0xFFFFF3ED),
                     shape: BoxShape.circle,
                   ),
                   child: Text(

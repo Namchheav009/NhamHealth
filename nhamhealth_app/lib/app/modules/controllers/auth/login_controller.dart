@@ -9,8 +9,6 @@ import '../../models/auth/login_request.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../services/auth/google_auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
-import '../../views/profile/security_view.dart';
-import '../../../widgets/pin_setup_prompt.dart';
 import '../../views/auth/verification_view.dart';
 
 class LoginController extends GetxController {
@@ -94,21 +92,7 @@ class LoginController extends GetxController {
   Future<void> _finishLogin(AuthenticatedUser user) async {
     final security = Get.find<AppSecurityService>();
     security.syncPinState(user.hasPin);
-    if (user.hasPin) {
-      Get.offAllNamed(AppRoutes.home, arguments: user);
-      return;
-    }
-    if (Get.context != null) {
-      await showPinSetupPrompt(Get.context!);
-    }
-    Get.offAll<void>(
-      () => SecurityView(
-        promptCreatePin: true,
-        requirePinCreation: true,
-        onPinCreated: () => Get.offAllNamed(AppRoutes.home, arguments: user),
-      ),
-      transition: Transition.rightToLeft,
-    );
+    Get.offAllNamed(AppRoutes.home, arguments: user);
   }
 
   Future<void> _run(Future<void> Function() action) async {

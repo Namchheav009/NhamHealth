@@ -103,9 +103,6 @@ class RegisterController extends GetxController {
     );
     final security = Get.find<AppSecurityService>();
     security.syncPinState(response.user.hasPin);
-    if (!response.user.hasPin) {
-      await security.markSetupPendingFor(response.user.id);
-    }
     Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
   }
 
