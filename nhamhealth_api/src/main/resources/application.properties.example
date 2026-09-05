@@ -37,11 +37,18 @@ app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
 app.storage.supabase.service-key=${APP_STORAGE_SUPABASE_SERVICE_KEY:}
 app.storage.supabase.bucket=nhamhealth-images
 
-# NVIDIA AI. Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
+# Google Gemini AI hosted models (primary food vision and nutrition engine)
+app.ai.gemini.api-key=${APP_AI_GEMINI_API_KEY:}
+app.ai.gemini.base-url=https://generativelanguage.googleapis.com/v1beta
+app.ai.gemini.model=gemini-3.8-flash
+app.ai.gemini.fallback-model=gemini-3.7-flash
+app.ai.gemini.text-max-tokens=4096
+
+# NVIDIA AI (secondary fallback). Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
 app.ai.nvidia.api-key=${APP_AI_NVIDIA_API_KEY:}
 app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
-app.ai.nvidia.model=nvidia/nemotron-nano-12b-v2-vl
-app.ai.nvidia.fallback-vision-model=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+app.ai.nvidia.model=meta/llama-3.2-11b-vision-instruct
+app.ai.nvidia.fallback-vision-model=meta/muse-glimmer-30b
 app.ai.nvidia.nutrition-model=nvidia/nemotron-3.5-lightning-30b-a3b
 app.ai.nvidia.recommendation-model=nvidia/nemotron-3.5-lightning-30b-a3b
 app.ai.nvidia.assistant-model=nvidia/nemotron-3.5-lightning-30b-a3b

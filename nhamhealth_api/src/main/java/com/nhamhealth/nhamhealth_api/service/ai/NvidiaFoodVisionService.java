@@ -1,12 +1,7 @@
 package com.nhamhealth.nhamhealth_api.service.ai;
-import com.nhamhealth.nhamhealth_api.service.wellness.UserNutritionContext;
-
-import static org.springframework.http.HttpStatus.BAD_GATEWAY;
-import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
-
-import java.util.Base64;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,15 +10,16 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Value;
+import static org.springframework.http.HttpStatus.BAD_GATEWAY;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -32,9 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodCandidate;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
+import com.nhamhealth.nhamhealth_api.service.wellness.UserNutritionContext;
 
 @Service
-@Primary
 public class NvidiaFoodVisionService implements FoodVisionProvider {
     private static final Logger log = LoggerFactory.getLogger(NvidiaFoodVisionService.class);
     private static final Pattern QUOTED_MEAL_NAME = Pattern.compile(

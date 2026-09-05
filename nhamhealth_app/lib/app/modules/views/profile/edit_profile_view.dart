@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../theme/app_colors.dart';
 
-import '../../../../config/api_config.dart';
 import '../../../theme/app_spacing.dart';
 import '../../controllers/profile/edit_profile_controller.dart';
 import 'widgets/edit_info_row.dart';
