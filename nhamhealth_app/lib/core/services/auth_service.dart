@@ -13,6 +13,8 @@ import '../storage/token_storage.dart';
 import 'push_notification_service.dart';
 
 class AuthService {
+  static const _emailDeliveryTimeout = Duration(seconds: 30);
+
   AuthService({http.Client? client, TokenStorage? tokenStorage})
     : _client = client ?? http.Client(),
       _tokenStorage = tokenStorage ?? TokenStorage();
@@ -21,8 +23,11 @@ class AuthService {
   final TokenStorage _tokenStorage;
   Future<LoginResponse>? _refreshInFlight;
 
-  Future<LoginResponse> login(LoginRequest request) =>
-      _authenticate('/api/v1/auth/login', request.toJson());
+  Future<LoginResponse> login(LoginRequest request) => _authenticate(
+    '/api/v1/auth/login',
+    request.toJson(),
+    timeout: _emailDeliveryTimeout,
+  );
 
   Future<void> register(RegisterRequest request) async {
     await _postJson(
@@ -61,12 +66,16 @@ class AuthService {
   }
 
   Future<LoginResponse> loginWithGoogle(GoogleLoginRequest request) =>
-      _authenticate('/api/v1/auth/google', request.toJson());
+      _authenticate(
+        '/api/v1/auth/google',
+        request.toJson(),
+        timeout: _emailDeliveryTimeout,
+      );
 
   Future<void> requestPasswordReset(String email) async {
     await _postJson('/api/v1/auth/forgot-password', {
       'email': email.trim().toLowerCase(),
-    });
+    }, timeout: _emailDeliveryTimeout);
   }
 
   Future<String> verifyPasswordResetCode({
@@ -246,12 +255,16 @@ class AuthService {
 
   Future<LoginResponse> _authenticate(
     String path,
-    Map<String, dynamic> body,
-  ) async {
-    final payload = await _postJson(path, body);
+    Map<String, dynamic> body, {
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    final payload = await _postJson(path, body, timeout: timeout);
 
     if (payload['otpRequired'] == true) {
       final email = payload['email'];
+      if (payload['purpose'] == 'registration') {
+        throw RegistrationOtpRequiredException(email is String ? email : '');
+      }
       throw LoginOtpRequiredException(email is String ? email : '');
     }
 
@@ -308,11 +321,24 @@ class AuthService {
                   : {'Authorization': 'Bearer $accessToken'},
             )
             ..body = jsonEncode(body);
-      final streamedResponse = await _client.send(request).timeout(timeout);
-      response = await http.Response.fromStream(streamedResponse);
+      response = await _client
+          .send(request)
+          .then(http.Response.fromStream)
+          .timeout(timeout);
     } on TimeoutException {
-      throw const AuthException(
-        'Could not reach the NhamHealth server in time. Check that the API is running and that this phone is on the same network.',
+      final sendsEmail =
+          path == '/api/v1/auth/login' ||
+          path == '/api/v1/auth/google' ||
+          path == '/api/v1/auth/register' ||
+          path == '/api/v1/auth/resend-login-code' ||
+          path == '/api/v1/auth/resend-registration-code' ||
+          path == '/api/v1/auth/forgot-password';
+      throw AuthException(
+        sendsEmail
+            ? 'The server took too long while sending the verification email. '
+                'The code may still arrive; wait a moment, then try again.'
+            : 'The server did not respond in time. Check that the API is '
+                'running and try again.',
       );
     } on http.ClientException {
       throw const AuthException(
@@ -437,6 +463,13 @@ class AuthException implements Exception {
 class LoginOtpRequiredException extends AuthException {
   const LoginOtpRequiredException(this.email)
     : super('A login verification code was sent to your email.');
+
+  final String email;
+}
+
+class RegistrationOtpRequiredException extends AuthException {
+  const RegistrationOtpRequiredException(this.email)
+    : super('A verification code was sent to your email.');
 
   final String email;
 }

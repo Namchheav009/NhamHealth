@@ -1,3 +1,4 @@
+import 'package:nhamhealth_flutter/app/modules/models/auth/google_login_request.dart';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,41 @@ import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 import 'package:nhamhealth_flutter/core/storage/token_storage.dart';
 
 void main() {
+  test(
+    'new Google user requires registration OTP without storing tokens',
+    () async {
+      final storage = _MemoryTokenStorage();
+      final service = AuthService(
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/v1/auth/google');
+          return http.Response(
+            jsonEncode({
+              'otpRequired': true,
+              'purpose': 'registration',
+              'email': 'new@example.com',
+            }),
+            202,
+          );
+        }),
+        tokenStorage: storage,
+      );
+      await expectLater(
+        service.loginWithGoogle(
+          const GoogleLoginRequest(idToken: 'google-token'),
+        ),
+        throwsA(
+          isA<RegistrationOtpRequiredException>().having(
+            (error) => error.email,
+            'email',
+            'new@example.com',
+          ),
+        ),
+      );
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+    },
+  );
+
   test('login stores the access token returned by the API', () async {
     final storage = _MemoryTokenStorage();
     final service = AuthService(

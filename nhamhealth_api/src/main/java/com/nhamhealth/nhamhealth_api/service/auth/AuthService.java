@@ -161,7 +161,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse loginWithGoogle(String idToken) {
+    public MobileLoginResult loginWithGoogle(String idToken) {
         GoogleTokenVerifier.GoogleIdentity identity = googleTokenVerifier.verify(idToken);
         String email = identity.email().trim().toLowerCase(Locale.ROOT);
 
@@ -175,6 +175,13 @@ public class AuthService {
             throw new MobileLoginNotAllowedException();
         }
 
+        if ("PENDING".equalsIgnoreCase(user.getStatus())) {
+            return new MobileLoginResult(null, user);
+        }
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())
+                || !Boolean.TRUE.equals(user.getIsVerified())) {
+            throw new MobileLoginNotAllowedException();
+        }
         user.setLastLoginAt(LocalDateTime.now());
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
@@ -183,7 +190,7 @@ public class AuthService {
                 : user.getVerifiedAt());
         userRepository.save(user);
 
-        return issueToken(AppUserPrincipal.from(user));
+        return new MobileLoginResult(issueToken(AppUserPrincipal.from(user)), null);
     }
 
     private User linkGoogleIdentity(
@@ -220,9 +227,8 @@ public class AuthService {
         User created = new User();
         created.setEmail(email);
         created.setRole(requiredUserRole());
-        created.setStatus("ACTIVE");
-        created.setIsVerified(true);
-        created.setVerifiedAt(LocalDateTime.now());
+        created.setStatus("PENDING");
+        created.setIsVerified(false);
         return userRepository.save(created);
     }
 

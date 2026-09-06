@@ -78,6 +78,23 @@ public class RegistrationVerificationService {
     }
 
     @Transactional
+    public AuthService.MobileLoginResult loginWithGoogle(String idToken) {
+        var result = authService.loginWithGoogle(idToken);
+        if (result.otpRequired()) {
+            String email = normalize(result.otpUser().getEmail());
+            boolean hasUsableCode = codes
+                    .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(email, PURPOSE)
+                    .filter(latest -> "PENDING".equals(latest.getStatus()))
+                    .filter(latest -> latest.getExpiresAt().isAfter(LocalDateTime.now()))
+                    .isPresent();
+            if (!hasUsableCode) {
+                sendCode(result.otpUser(), false, PURPOSE, email, "EMAIL");
+            }
+        }
+        return result;
+    }
+
+    @Transactional
     public void resend(String requestedIdentity) {
         User user = requiredPendingUser(requestedIdentity);
         sendCode(user, true, PURPOSE);

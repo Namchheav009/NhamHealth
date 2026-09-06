@@ -415,10 +415,45 @@ class AuthenticationFlowTests {
                         .content("""
                                 {"idToken":"new-google-token"}
                                 """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.otpRequired").value(true))
+                .andExpect(jsonPath("$.purpose").value("registration"))
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist());
+
+        User pendingGoogleUser = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+        assertEquals("PENDING", pendingGoogleUser.getStatus());
+        assertEquals(false, pendingGoogleUser.getIsVerified());
+        String code = emailMessage.getSubject().substring(0, 6);
+        assertEquals(email, emailMessage.getAllRecipients()[0].toString());
+
+        // Repeating Google authentication must not activate the pending account.
+        mockMvc.perform(post("/api/v1/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"idToken\":\"new-google-token\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.otpRequired").value(true))
+                .andExpect(jsonPath("$.purpose").value("registration"))
+                .andExpect(jsonPath("$.accessToken").doesNotExist());
+
+        mockMvc.perform(post("/api/v1/auth/verify-registration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value(email))
-                .andExpect(jsonPath("$.user.fullName").value(googleName))
-                .andExpect(jsonPath("$.user.profileImageUrl").value(googlePicture));
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.user.fullName").value(googleName));
+
+        mockMvc.perform(post("/api/v1/auth/verify-registration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/v1/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"idToken\":\"new-google-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
         User user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
         UserProfile profile = userProfileRepository.findByUser_UserId(user.getUserId()).orElseThrow();

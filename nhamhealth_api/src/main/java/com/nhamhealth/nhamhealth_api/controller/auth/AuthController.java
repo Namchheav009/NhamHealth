@@ -104,7 +104,15 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<?> google(@Valid @RequestBody GoogleLoginRequest request) {
         try {
-            return ResponseEntity.ok(authService.loginWithGoogle(request.idToken()));
+            var result = registrationVerificationService.loginWithGoogle(request.idToken());
+            if (result.otpRequired()) {
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(java.util.Map.of(
+                        "otpRequired", true,
+                        "purpose", "registration",
+                        "email", result.otpUser().getEmail(),
+                        "message", "A verification code was sent to your email"));
+            }
+            return ResponseEntity.ok(result.response());
         } catch (MobileLoginNotAllowedException exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new AuthErrorResponse(exception.getMessage()));

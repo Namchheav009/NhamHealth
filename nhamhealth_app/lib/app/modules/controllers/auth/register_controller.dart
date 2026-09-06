@@ -97,6 +97,12 @@ class RegisterController extends GetxController {
     isLoading.value = true;
     try {
       await action();
+    } on RegistrationOtpRequiredException catch (challenge) {
+      Get.to(
+        () => const VerificationView(),
+        arguments: {'email': challenge.email, 'purpose': 'registration'},
+        transition: Transition.rightToLeft,
+      );
     } catch (error) {
       _showError(error.toString());
     } finally {
