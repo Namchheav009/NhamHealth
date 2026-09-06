@@ -190,7 +190,7 @@ class AiFoodAnalysisServiceTests {
         assertEquals("Thai Iced Tea", analysis.getCorrectedFoodName());
         assertFalse(Boolean.TRUE.equals(analysis.getUserConfirmed()));
         verify(correctionService).recordCorrection(analysis, correction);
-        verify(analysisRepository).save(analysis);
+        verify(analysisRepository).saveAndFlush(analysis);
     }
 
     private FoodNutrition food() {

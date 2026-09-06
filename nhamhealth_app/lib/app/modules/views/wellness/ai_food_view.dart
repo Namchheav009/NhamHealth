@@ -103,7 +103,8 @@ class AiFoodView extends GetView<AiFoodController> {
             onPressed: Get.back,
           ),
           Expanded(
-            child: Center(
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: Text(
                 'AI Food Check'.tr,
                 style: TextStyle(
@@ -600,7 +601,9 @@ class AiFoodView extends GetView<AiFoodController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          component.name,
+                          food.components.length == 1
+                              ? food.mealName
+                              : component.name,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 2),
@@ -871,128 +874,179 @@ class AiFoodView extends GetView<AiFoodController> {
     final unitController = TextEditingController(text: food.servingUnit);
     String? validationError;
     var saving = false;
-    await showDialog<void>(
+    final dialogRoute = DialogRoute<void>(
       context: context,
+      barrierDismissible: false,
       builder:
           (dialogContext) => StatefulBuilder(
             builder:
-                (context, updateDialog) => AlertDialog(
-                  title: Text('Correct AI result'.tr),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: nameController,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: InputDecoration(
-                            labelText: 'Food name'.tr,
+                (context, updateDialog) => PopScope(
+                  canPop: !saving,
+                  child: AlertDialog(
+                    title: Text('Correct AI result'.tr),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: nameController,
+                            textCapitalization: TextCapitalization.words,
+                            maxLength: 150,
+                            decoration: InputDecoration(
+                              labelText: 'Food name'.tr,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: amountController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                                decoration: InputDecoration(
-                                  labelText: 'Amount'.tr,
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: amountController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Amount'.tr,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextField(
-                                controller: unitController,
-                                decoration: InputDecoration(
-                                  labelText: 'Unit'.tr,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextField(
+                                  controller: unitController,
+                                  maxLength: 40,
+                                  decoration: InputDecoration(
+                                    labelText: 'Unit'.tr,
+                                    counterText: '',
+                                  ),
                                 ),
+                              ),
+                            ],
+                          ),
+                          if (validationError != null) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              validationError!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                                fontSize: 12,
                               ),
                             ),
                           ],
-                        ),
-                        if (validationError != null) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            validationError!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
+                        ],
+                      ),
+                    ),
+                    actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    actions: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed:
+                                  saving
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(),
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(0, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text('Cancel'.tr),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: FilledButton(
+                              onPressed:
+                                  saving
+                                      ? null
+                                      : () async {
+                                        final amount = double.tryParse(
+                                          amountController.text.trim(),
+                                        );
+                                        if (nameController.text
+                                                .trim()
+                                                .isEmpty ||
+                                            nameController.text.trim().length >
+                                                150 ||
+                                            unitController.text
+                                                .trim()
+                                                .isEmpty ||
+                                            unitController.text.trim().length >
+                                                40 ||
+                                            amount == null ||
+                                            amount <= 0 ||
+                                            amount > 10000) {
+                                          updateDialog(
+                                            () =>
+                                                validationError =
+                                                    'Enter a valid food, amount, and unit.',
+                                          );
+                                          return;
+                                        }
+                                        updateDialog(() {
+                                          saving = true;
+                                          validationError = null;
+                                        });
+                                        await controller.correctFood(
+                                          foodName: nameController.text,
+                                          servingSize: amount,
+                                          servingUnit: unitController.text,
+                                        );
+                                        if (!dialogContext.mounted) return;
+                                        if (controller.isUserConfirmed.value) {
+                                          Navigator.of(dialogContext).pop();
+                                          return;
+                                        }
+                                        updateDialog(() {
+                                          saving = false;
+                                          validationError =
+                                              controller.errorMessage.value ??
+                                              'The correction could not be saved.';
+                                        });
+                                      },
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child:
+                                  saving
+                                      ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : Text(
+                                        'Save correction'.tr,
+                                        textAlign: TextAlign.center,
+                                      ),
                             ),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed:
-                          saving
-                              ? null
-                              : () => Navigator.of(dialogContext).pop(),
-                      child: Text('Cancel'.tr),
-                    ),
-                    FilledButton(
-                      onPressed:
-                          saving
-                              ? null
-                              : () async {
-                                final amount = double.tryParse(
-                                  amountController.text.trim(),
-                                );
-                                if (nameController.text.trim().isEmpty ||
-                                    unitController.text.trim().isEmpty ||
-                                    amount == null ||
-                                    amount <= 0) {
-                                  updateDialog(
-                                    () =>
-                                        validationError =
-                                            'Enter a valid food, amount, and unit.',
-                                  );
-                                  return;
-                                }
-                                updateDialog(() {
-                                  saving = true;
-                                  validationError = null;
-                                });
-                                await controller.correctFood(
-                                  foodName: nameController.text,
-                                  servingSize: amount,
-                                  servingUnit: unitController.text,
-                                );
-                                if (!dialogContext.mounted) return;
-                                if (controller.isUserConfirmed.value) {
-                                  Navigator.of(dialogContext).pop();
-                                  return;
-                                }
-                                updateDialog(() {
-                                  saving = false;
-                                  validationError =
-                                      controller.errorMessage.value ??
-                                      'The correction could not be saved.';
-                                });
-                              },
-                      child:
-                          saving
-                              ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                              : Text('Save correction'.tr),
-                    ),
-                  ],
                 ),
           ),
     );
+    await Navigator.of(context).push(dialogRoute);
+    // The pop future completes before the closing animation removes the fields.
+    await dialogRoute.completed;
     nameController.dispose();
     amountController.dispose();
     unitController.dispose();

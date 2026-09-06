@@ -10,6 +10,15 @@ allprojects {
 // plugin's Java target (tflite_flutter declares Java 11). Keep every Android
 // Java and Kotlin task on the same JVM target as the application.
 subprojects { subproject ->
+    // google_sign_in_android 7.2.17 expects built-in Kotlin. While this app
+    // still uses legacy KGP, explicitly compile that plugin's Kotlin helpers.
+    if (subproject.name == "google_sign_in_android" &&
+            providers.gradleProperty("android.builtInKotlin").orNull == "false") {
+        subproject.plugins.withId("com.android.library") {
+            subproject.pluginManager.apply("org.jetbrains.kotlin.android")
+        }
+    }
+
     subproject.afterEvaluate {
         if (subproject.plugins.hasPlugin("com.android.library")) {
             subproject.android.compileOptions {

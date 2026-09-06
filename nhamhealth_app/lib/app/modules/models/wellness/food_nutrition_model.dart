@@ -235,6 +235,57 @@ class FoodNutritionModel {
     );
   }
 
+  FoodNutritionModel withCorrection({
+    required String correctedName,
+    required double size,
+    required String unit,
+  }) => FoodNutritionModel(
+    id: id,
+    analysisId: analysisId,
+    name: correctedName.trim(),
+    analysis: analysis,
+    calories: calories,
+    protein: protein,
+    carbs: carbs,
+    fat: fat,
+    sugar: sugar,
+    fiber: fiber,
+    sodium: sodium,
+    servingSize: size,
+    servingUnit: unit.trim(),
+    confidence: confidence,
+    recommendationTitle: recommendationTitle,
+    recommendation: recommendation,
+    databaseMatched: databaseMatched,
+    databaseMatchConfidence: databaseMatchConfidence,
+    needsUserConfirmation: false,
+    dataSource: dataSource,
+    disclaimer: disclaimer,
+    privacyNotice: privacyNotice,
+    foodDetected: foodDetected,
+    reason: reason,
+    mealName: correctedName.trim(),
+    cuisine: cuisine,
+    mealType: mealType,
+    requiresDrinkDetails: requiresDrinkDetails,
+    mealIdentityConfidence: mealIdentityConfidence,
+    portionConfidence: portionConfidence,
+    preparationConfidence: preparationConfidence,
+    components:
+        components.length == 1
+            ? [
+              DetectedFoodComponentModel.fromJson({
+                ...components.single.toJson(),
+                'name': correctedName.trim(),
+                'visibleEvidence':
+                    'Food name corrected to ${correctedName.trim()}.',
+              }),
+            ]
+            : components,
+    candidates: candidates,
+    nutritionComplete: nutritionComplete,
+  );
+
   FoodNutritionModel withAnalysisId(int? value) => FoodNutritionModel(
     id: id,
     analysisId: value,

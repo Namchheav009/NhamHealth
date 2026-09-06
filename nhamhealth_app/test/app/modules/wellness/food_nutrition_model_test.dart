@@ -49,6 +49,59 @@ void main() {
     expect(food.name, 'Iced coffee');
   });
 
+  test('shows the user correction while preserving nutrition values', () {
+    final food = FoodNutritionModel(
+      analysisId: 42,
+      name: 'AI detected food',
+      calories: 320,
+      protein: 12,
+      carbs: 40,
+      fat: 8,
+      sugar: 5,
+      servingSize: 1,
+      servingUnit: 'bowl',
+    );
+
+    final corrected = food.withCorrection(
+      correctedName: '  User corrected food  ',
+      size: 2,
+      unit: 'bowls',
+    );
+
+    expect(corrected.name, 'User corrected food');
+    expect(corrected.mealName, 'User corrected food');
+    expect(corrected.calories, 320);
+    expect(corrected.servingSize, 2);
+    expect(corrected.servingUnit, 'bowls');
+    expect(corrected.analysisId, 42);
+  });
+
+  test('correction replaces stale single-food name and description', () {
+    final food = FoodNutritionModel.fromJson({
+      'name': 'Beef yellow curry',
+      'components': [
+        {
+          'name': 'Beef yellow curry soup with vegetables',
+          'visibleEvidence': 'yellow curry broth with chunks of beef',
+          'calories': 320,
+        },
+      ],
+    });
+    final corrected = food.withCorrection(
+      correctedName: ' Mchu Kroeung Beef ',
+      size: 500,
+      unit: 'g',
+    );
+    final restored = FoodNutritionModel.fromJson(corrected.toJson());
+    expect(restored.components.single.name, 'Mchu Kroeung Beef');
+    expect(
+      restored.components.single.visibleEvidence,
+      'Food name corrected to Mchu Kroeung Beef.',
+    );
+    expect(restored.components.single.calories, 320);
+    expect(food.components.single.name, 'Beef yellow curry soup with vegetables');
+  });
+
   test('parses structured components, candidates, and database nutrition', () {
     final food = FoodNutritionModel.fromJson({
       'analysisId': 123,

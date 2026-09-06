@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
+import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -252,7 +253,9 @@ class AiFoodController extends GetxController {
     isSaving.value = true;
     try {
       final waterGlasses = food.plainWaterVolumeMl / 250;
-      await profileRepository.addDailyNutrition(
+      final today = DateTime.now();
+      final savedDashboard = await profileRepository.addDailyNutrition(
+        date: today,
         calories: food.calories,
         protein: food.protein,
         carbs: food.carbs,
@@ -274,15 +277,7 @@ class AiFoodController extends GetxController {
           showMessage: false,
         );
       }
-      wellnessController.addNutrition(
-        calories: food.calories.round(),
-        protein: food.protein,
-        carbs: food.carbs,
-        fat: food.fat,
-        sugar: food.sugar,
-        water: waterGlasses,
-        fiber: food.fiber,
-      );
+      wellnessController.showSavedNutrition(savedDashboard, date: today);
       if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().addNutritionToToday(
           calories: food.calories.round(),
@@ -294,6 +289,11 @@ class AiFoodController extends GetxController {
         );
       }
       wasAdded.value = true;
+      if (Get.previousRoute == AppRoutes.wellness) {
+        Get.back<void>();
+      } else {
+        Get.offNamed<void>(AppRoutes.wellness);
+      }
       AppAlert.success(
         title: food.isPlainWaterOnly ? 'Water added' : 'Food added',
         message: '${food.name} added successfully.',
@@ -360,19 +360,38 @@ class AiFoodController extends GetxController {
           'Enter a food, a serving amount, and a serving unit.';
       return;
     }
+    if (current.analysisId == null) {
+      errorMessage.value =
+          'This result cannot be corrected because its analysis session has expired. Analyze the photo again.';
+      return;
+    }
     isFeedbackSaving.value = true;
     try {
-      if (current.analysisId != null) {
-        await nutritionRepository.submitFeedback(
-          analysisId: current.analysisId!,
-          confirmed: false,
-          foodName: cleanName,
-          servingSize: servingSize,
-          servingUnit: cleanUnit,
-        );
+      await nutritionRepository.submitFeedback(
+        analysisId: current.analysisId!,
+        confirmed: false,
+        foodName: cleanName,
+        servingSize: servingSize,
+        servingUnit: cleanUnit,
+      );
+      FoodNutritionModel? databaseFood;
+      try {
+        databaseFood = await nutritionRepository.searchFood(cleanName);
+      } on FoodNutritionException {
+        // Feedback is already saved; catalog enrichment is optional.
       }
-      final databaseFood = await nutritionRepository.searchFood(cleanName);
       if (databaseFood == null) {
+        final corrected = current.withCorrection(
+          correctedName: cleanName,
+          size: servingSize,
+          unit: cleanUnit,
+        );
+        nutrition.value = corrected;
+        prediction.value = FoodPredictionModel(
+          foodName: cleanName,
+          confidence: 1,
+          classIndex: -1,
+        );
         isUserConfirmed.value = true;
         errorMessage.value = null;
         AppAlert.success(
@@ -395,7 +414,12 @@ class AiFoodController extends GetxController {
       }
       final corrected = databaseFood
           .withAnalysisId(current.analysisId)
-          .withServing(size: servingSize, unit: cleanUnit);
+          .withServing(size: servingSize, unit: cleanUnit)
+          .withCorrection(
+            correctedName: cleanName,
+            size: servingSize,
+            unit: cleanUnit,
+          );
       nutrition.value = corrected;
       prediction.value = FoodPredictionModel(
         foodName: corrected.name,
@@ -415,6 +439,9 @@ class AiFoodController extends GetxController {
       );
     } on FoodNutritionException catch (error) {
       errorMessage.value = error.message;
+    } on Object {
+      errorMessage.value =
+          'The correction could not be saved. Please try again.';
     } finally {
       isFeedbackSaving.value = false;
     }

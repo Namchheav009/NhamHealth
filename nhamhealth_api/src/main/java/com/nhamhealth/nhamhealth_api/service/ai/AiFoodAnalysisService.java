@@ -297,7 +297,7 @@ public class AiFoodAnalysisService {
                 analysis, request);
         analysis.setUserConfirmed(!correctionRecorded && Boolean.TRUE.equals(request.confirmed()));
         analysis.setStatus(correctionRecorded ? "CORRECTED" : "CONFIRMED");
-        analysisRepository.save(analysis);
+        analysisRepository.saveAndFlush(analysis);
     }
 
     private void saveNutrient(

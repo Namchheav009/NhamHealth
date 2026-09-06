@@ -137,9 +137,26 @@ class FoodNutritionRepository {
     try {
       final payload = jsonDecode(responseBody);
       if (payload is! Map<String, dynamic>) return null;
-      for (final key in const ['message', 'detail']) {
+      for (final key in const ['message', 'detail', 'error']) {
         final value = payload[key];
         if (value is String && value.trim().isNotEmpty) return value.trim();
+      }
+      final errors = payload['errors'];
+      if (errors is List) {
+        final messages = errors
+            .map((entry) {
+              if (entry is String) return entry.trim();
+              if (entry is Map) {
+                return entry['defaultMessage']?.toString().trim();
+              }
+              return null;
+            })
+            .whereType<String>()
+            .where((message) => message.isNotEmpty)
+            .toList(growable: false);
+        if (messages.isNotEmpty) {
+          return messages.join(' ');
+        }
       }
     } catch (_) {
       // Older API versions may return an empty or non-JSON error body.

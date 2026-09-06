@@ -4,6 +4,7 @@ import '../../../widgets/app_alert.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../models/wellness/wellness_summary_model.dart';
+import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/profile/profile_repository.dart';
 
 class WellnessController extends GetxController {
@@ -12,6 +13,7 @@ class WellnessController extends GetxController {
 
   final ProfileRepository? _profileRepository;
   final isLoading = false.obs;
+  int _loadVersion = 0;
   // Selected date
   final selectedDate = DateTime.now().obs;
 
@@ -91,53 +93,67 @@ class WellnessController extends GetxController {
 
   Future<void> loadDailyWellness() async {
     final repository = _profileRepository;
-    if (repository == null || isLoading.value) return;
+    if (repository == null) return;
+    final version = ++_loadVersion;
     isLoading.value = true;
     try {
       final dashboard = await repository.getDashboard(date: selectedDate.value);
-      _setNutrient(
-        'Calories',
-        dashboard.calories?.current ?? 0,
-        dashboard.calories?.goal ?? 2000,
-      );
-      _setNutrient(
-        'Protein',
-        dashboard.protein?.current ?? 0,
-        dashboard.protein?.goal ?? 120,
-      );
-      _setNutrient(
-        'Carbohydrates',
-        dashboard.carbs?.current ?? 0,
-        dashboard.carbs?.goal ?? 205,
-      );
-      _setNutrient(
-        'Fat',
-        dashboard.fat?.current ?? 0,
-        dashboard.fat?.goal ?? 78,
-      );
-      _setNutrient(
-        'Water',
-        dashboard.water?.current ?? 0,
-        dashboard.water?.goal ?? 8,
-      );
-      _setNutrient(
-        'Fiber',
-        dashboard.fiber?.current ?? 0,
-        dashboard.fiber?.goal ?? 25,
-      );
-      _setNutrient(
-        'Sugar',
-        dashboard.sugar?.current ?? 0,
-        dashboard.sugar?.goal ?? 50,
-      );
+      if (version != _loadVersion) return;
+      _applyDashboard(dashboard);
     } on Object {
+      if (version != _loadVersion) return;
       AppAlert.error(
         title: 'Wellness unavailable',
         message: 'Unable to load your daily wellness data.',
       );
     } finally {
-      isLoading.value = false;
+      if (version == _loadVersion) isLoading.value = false;
     }
+  }
+
+  void showSavedNutrition(
+    ProfileDashboardModel dashboard, {
+    required DateTime date,
+  }) {
+    // Ignore any dashboard request that started before this successful save.
+    _loadVersion++;
+    selectedDate.value = DateTime(date.year, date.month, date.day);
+    isLoading.value = false;
+    _applyDashboard(dashboard);
+  }
+
+  void _applyDashboard(ProfileDashboardModel dashboard) {
+    _setNutrient(
+      'Calories',
+      dashboard.calories?.current ?? 0,
+      dashboard.calories?.goal ?? 2000,
+    );
+    _setNutrient(
+      'Protein',
+      dashboard.protein?.current ?? 0,
+      dashboard.protein?.goal ?? 120,
+    );
+    _setNutrient(
+      'Carbohydrates',
+      dashboard.carbs?.current ?? 0,
+      dashboard.carbs?.goal ?? 205,
+    );
+    _setNutrient('Fat', dashboard.fat?.current ?? 0, dashboard.fat?.goal ?? 78);
+    _setNutrient(
+      'Water',
+      dashboard.water?.current ?? 0,
+      dashboard.water?.goal ?? 8,
+    );
+    _setNutrient(
+      'Fiber',
+      dashboard.fiber?.current ?? 0,
+      dashboard.fiber?.goal ?? 25,
+    );
+    _setNutrient(
+      'Sugar',
+      dashboard.sugar?.current ?? 0,
+      dashboard.sugar?.goal ?? 50,
+    );
   }
 
   void _setNutrient(String name, double current, double target) {
@@ -237,6 +253,7 @@ class WellnessController extends GetxController {
 
   Future<void> openMealAutoFill() async {
     await Get.toNamed<void>(AppRoutes.aiFood);
+    await loadDailyWellness();
   }
 
   void addNutrition({

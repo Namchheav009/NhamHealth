@@ -229,8 +229,8 @@ class VerificationView extends StatelessWidget {
                   ? 'We sent a code to'.tr
                   : 'We sent an SMS code to'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.appText,
+              style: const TextStyle(
+                color: AppColors.darkGreen,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
