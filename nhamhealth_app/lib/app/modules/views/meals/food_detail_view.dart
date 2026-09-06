@@ -11,7 +11,6 @@ import '../../models/meals/meal_model.dart';
 class FoodDetailView extends GetView<FoodDetailController> {
   const FoodDetailView({super.key});
 
-  static const green = AppColors.primaryGreen;
   static const darkGreen = AppColors.darkGreen;
 
   @override
@@ -50,58 +49,49 @@ class FoodDetailView extends GetView<FoodDetailController> {
     }
     return SafeArea(
       bottom: false,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(14, 4, 14, 34),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _DetailHeader(
-                      onBack: controller.goBack,
-                      isFavorite: controller.isFavorite.value,
-                      onFavorite: controller.toggleFavorite,
-                    ),
-                    const SizedBox(height: 12),
-                    _Hero(meal: meal),
-                    const SizedBox(height: 22),
-                    _Introduction(meal: meal),
-                    const SizedBox(height: 22),
-                    _Nutrition(meal: meal),
-                    const SizedBox(height: 22),
-                    _Stats(meal: meal),
-                    const SizedBox(height: 24),
-                    _Tabs(
-                      selected: controller.selectedContentTab.value,
-                      ingredientCount: meal.ingredients.length,
-                      stepCount: meal.steps.length,
-                      onSelected: controller.selectContentTab,
-                    ),
-                    const SizedBox(height: 18),
-                    if (!controller.isDetailLoaded.value)
-                      _ContentLoading(
-                        error: controller.errorMessage.value,
-                        onRetry: controller.loadDetail,
-                      )
-                    else if (controller.selectedContentTab.value == 0)
-                      _Ingredients(items: meal.ingredients)
-                    else
-                      _Steps(items: meal.steps),
-                  ],
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 34),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DetailHeader(
+                  onBack: controller.goBack,
+                  isFavorite: controller.isFavorite.value,
+                  onFavorite: controller.toggleFavorite,
                 ),
-              ),
+                const SizedBox(height: 12),
+                _Hero(meal: meal),
+                const SizedBox(height: 22),
+                _Introduction(meal: meal),
+                const SizedBox(height: 22),
+                _Nutrition(meal: meal),
+                const SizedBox(height: 22),
+                _Stats(meal: meal),
+                const SizedBox(height: 24),
+                _Tabs(
+                  selected: controller.selectedContentTab.value,
+                  ingredientCount: meal.ingredients.length,
+                  stepCount: meal.steps.length,
+                  onSelected: controller.selectContentTab,
+                ),
+                const SizedBox(height: 18),
+                if (!controller.isDetailLoaded.value)
+                  _ContentLoading(
+                    error: controller.errorMessage.value,
+                    onRetry: controller.loadDetail,
+                  )
+                else if (controller.selectedContentTab.value == 0)
+                  _Ingredients(items: meal.ingredients)
+                else
+                  _Steps(items: meal.steps),
+              ],
             ),
           ),
-          if (controller.isLoading.value)
-            const Align(
-              alignment: Alignment.topCenter,
-              child: LinearProgressIndicator(minHeight: 2, color: green),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -134,11 +124,6 @@ class _Hero extends StatelessWidget {
                 colors: [Color(0x66002716), Colors.transparent],
               ),
             ),
-          ),
-          Positioned(
-            left: 18,
-            bottom: 18,
-            child: _Category(category: meal.category),
           ),
           Positioned(
             left: 18,
@@ -239,14 +224,6 @@ class _Category extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        Text(
-          category,
-          style: TextStyle(
-            color: context.appColorScheme.primary,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 9),
           child: SizedBox(
@@ -259,10 +236,6 @@ class _Category extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        Text(
-          'Healthy recipe',
-          style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
         Text(
           'Healthy recipe',
@@ -357,7 +330,6 @@ class _Nutrition extends StatelessWidget {
                         )
                         .toList(growable: false),
                   ),
-          
         ),
       ],
     );
@@ -431,28 +403,13 @@ class _Stats extends StatelessWidget {
           label: 'Cook time',
           value: _withUnit(meal.cookingTimeMinutes, 'mins'),
         ),
-        _Stat(
-          icon: Icons.schedule_rounded,
-          label: 'Cook time',
-          value: _withUnit(meal.cookingTimeMinutes, 'mins'),
-        ),
         const _StatDivider(),
         _Stat(
           icon: Icons.local_fire_department_outlined,
           label: 'Difficulty',
           value: meal.difficulty.isEmpty ? 'Not specified' : meal.difficulty,
         ),
-        _Stat(
-          icon: Icons.local_fire_department_outlined,
-          label: 'Difficulty',
-          value: meal.difficulty.isEmpty ? 'Not specified' : meal.difficulty,
-        ),
         const _StatDivider(),
-        _Stat(
-          icon: Icons.people_outline_rounded,
-          label: 'Servings',
-          value: _withUnit(meal.servings, 'people'),
-        ),
         _Stat(
           icon: Icons.people_outline_rounded,
           label: 'Servings',
@@ -479,21 +436,7 @@ class _Stat extends StatelessWidget {
           label.tr,
           style: TextStyle(color: context.appMutedText, fontSize: 10),
         ),
-        Text(
-          label.tr,
-          style: TextStyle(color: context.appMutedText, fontSize: 10),
-        ),
         const SizedBox(height: 5),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
         Text(
           value,
           maxLines: 1,
@@ -538,18 +481,6 @@ class _Tabs extends StatelessWidget {
     ),
     child: Row(
       children: [
-        _Tab(
-          label: 'Ingredients',
-          count: ingredientCount,
-          selected: selected == 0,
-          onTap: () => onSelected(0),
-        ),
-        _Tab(
-          label: 'How to make',
-          count: stepCount,
-          selected: selected == 1,
-          onTap: () => onSelected(1),
-        ),
         _Tab(
           label: 'Ingredients',
           count: ingredientCount,
@@ -782,7 +713,7 @@ class _Step extends StatelessWidget {
           ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -844,17 +775,7 @@ class _LoadError extends StatelessWidget {
           color: context.appColorScheme.primary,
           size: 42,
         ),
-        Icon(
-          Icons.restaurant_menu_rounded,
-          color: context.appColorScheme.primary,
-          size: 42,
-        ),
         const SizedBox(height: 12),
-        Text(
-          message.isEmpty ? 'Meal details are unavailable.' : message,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: context.appMutedText, fontSize: 14),
-        ),
         Text(
           message.isEmpty ? 'Meal details are unavailable.' : message,
           textAlign: TextAlign.center,

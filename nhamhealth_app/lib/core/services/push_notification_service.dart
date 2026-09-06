@@ -99,7 +99,7 @@ class PushNotificationService {
           'referenceId': message.data['referenceId'] ?? '',
         });
       } on Object {
-        AppAlert.success(title: title, message: body);
+        AppAlert.notification(title: title, message: body);
       }
     });
     _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen((message) {

@@ -101,6 +101,14 @@ class MealIdeaCard extends StatelessWidget {
                             iconColor: AppColors.accentOrange,
                             label: '${meal.calories} kcal',
                           ),
+                          if (meal.proteinGrams case final protein?)
+                            if (protein > 0)
+                              _Metric(
+                                icon: Icons.fitness_center_rounded,
+                                iconColor: AppColors.primaryGreen,
+                                label:
+                                    '${'Protein'.tr} ${_formatNutrition(protein)}g',
+                              ),
                           if (meal.cookingTimeMinutes case final minutes?)
                             _Metric(
                               icon: Icons.schedule_rounded,
@@ -120,6 +128,11 @@ class MealIdeaCard extends StatelessWidget {
     );
   }
 }
+
+String _formatNutrition(num value) =>
+    value.toDouble() == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toStringAsFixed(1);
 
 class _Metric extends StatelessWidget {
   const _Metric({

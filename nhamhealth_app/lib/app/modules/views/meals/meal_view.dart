@@ -91,7 +91,10 @@ class MealView extends GetView<MealController> {
                                       controller: controller.searchController,
                                       onChanged: controller.updateSearch,
                                       showClear:
-                                          controller.searchQuery.value.isNotEmpty,
+                                          controller
+                                              .searchQuery
+                                              .value
+                                              .isNotEmpty,
                                       onClear: controller.clearSearch,
                                       trailing: const MealFilterButton(),
                                     ),
@@ -209,9 +212,7 @@ class MealView extends GetView<MealController> {
           const SizedBox(height: 10),
           _buildPopularMeals(meals),
           const SizedBox(height: 24),
-          MealSectionHeader(
-            title: 'Ideas for you',
-          ),
+          MealSectionHeader(title: 'Ideas for you'),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

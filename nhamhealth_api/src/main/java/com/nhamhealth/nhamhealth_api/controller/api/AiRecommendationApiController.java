@@ -88,6 +88,7 @@ public class AiRecommendationApiController {
         return new RecommendedMealResponse(
                 meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
                 meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),
+                meal.getProteinGramsCached(),
                 meal.getCookingTimeMinutes(), rating, recommendation.getRecommendationId(),
                 recommendation.getMood() == null ? null : recommendation.getMood().getMoodId(),
                 item.getReasonText());

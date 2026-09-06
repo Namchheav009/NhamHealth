@@ -97,7 +97,8 @@ flutter:
     - assets/images/wellness/ai_search.png
     - assets/animations/chatbot.json
     - assets/animations/live_chatbot.json
-    - assets/animations/Healthy or Junk food.json
+    - assets/animations/food.json
+    - assets/animations/Cybersecurity.json
     - assets/ai/
     - assets/images/profile/profile.jpg
 flutter_icons:

@@ -7,6 +7,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/forest_glow_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
@@ -32,6 +33,14 @@ class SettingsView extends GetView<SettingsController> {
         body: SizedBox.expand(
           child: Stack(
             children: [
+              if (isDark)
+                const Positioned.fill(
+                  child: ForestGlowBackground(
+                    force: true,
+                    child: SizedBox.expand(),
+                  ),
+                ),
+
               // --------------------------------------------
               // BACKGROUND
               // --------------------------------------------
@@ -352,7 +361,11 @@ class SettingsView extends GetView<SettingsController> {
           end: Alignment.centerRight,
           colors:
               isDark
-                  ? [colors.surface, colors.surfaceContainer, colors.surface]
+                  ? [
+                    colors.surface.withValues(alpha: .9),
+                    colors.surfaceContainer.withValues(alpha: .86),
+                    colors.surface.withValues(alpha: .9),
+                  ]
                   : const [
                     Color(0xFFFFF6F7),
                     Color(0xFFFFFFFF),
@@ -383,7 +396,7 @@ class SettingsView extends GetView<SettingsController> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(
-          alpha: context.appIsDark ? 0.96 : 0.92,
+          alpha: context.appIsDark ? 0.88 : 0.92,
         ),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: colors.outlineVariant),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/app_alert.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
@@ -435,6 +436,10 @@ class _SecurityViewState extends State<SecurityView> {
 
   Widget _statusCard() {
     final protected = _hasPin;
+    const securityNavy = Color(0xFF0B2239);
+    const brandForest = Color(0xFF08724A);
+    const brandGreen = Color(0xFF0A9660);
+    const securityMint = Color(0xFF72E6B4);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -443,39 +448,75 @@ class _SecurityViewState extends State<SecurityView> {
           end: Alignment.bottomRight,
           colors:
               context.appIsDark
-                  ? const [Color(0xFF0A3D28), Color(0xFF087B46)]
-                  : const [Color(0xFF007A43), Color(0xFF00A85A)],
+                  ? const [Color(0xFF071A20), securityNavy, Color(0xFF07513C)]
+                  : const [securityNavy, brandForest, brandGreen],
+          stops: const [0, 0.58, 1],
         ),
         border: Border.all(
-          color:
-              context.appIsDark
-                  ? const Color(0xFF4ADE80).withValues(alpha: .28)
-                  : Colors.transparent,
+          color: securityMint.withValues(alpha: context.appIsDark ? .38 : .24),
+          width: 1.2,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF007A43).withValues(alpha: .22),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: securityNavy.withValues(
+              alpha: context.appIsDark ? .36 : .24,
+            ),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: brandGreen.withValues(alpha: .12),
+            blurRadius: 18,
+            spreadRadius: -5,
+            offset: const Offset(-8, 4),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 68,
+            height: 68,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .17),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: .16),
+                  securityMint.withValues(alpha: .12),
+                ],
+              ),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: .25)),
+              border: Border.all(color: securityMint.withValues(alpha: .48)),
+              boxShadow: [
+                BoxShadow(
+                  color: securityMint.withValues(alpha: .16),
+                  blurRadius: 14,
+                ),
+              ],
             ),
-            child: Icon(
-              protected ? Icons.verified_user_rounded : Icons.shield_outlined,
-              color: Colors.white,
-              size: 30,
-            ),
+            child:
+                protected
+                    ? Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Lottie.asset(
+                        'assets/animations/Cybersecurity.json',
+                        fit: BoxFit.contain,
+                        repeat: true,
+                        errorBuilder:
+                            (context, error, stackTrace) => const Icon(
+                              Icons.verified_user_rounded,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                      ),
+                    )
+                    : const Icon(
+                      Icons.shield_outlined,
+                      color: Colors.white,
+                      size: 30,
+                    ),
           ),
           const SizedBox(width: 16),
           Expanded(

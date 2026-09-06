@@ -25,7 +25,7 @@ void main() {
       ),
     );
 
-    await AppAlert.success(
+    await AppAlert.notification(
       title: 'Profile saved',
       message: 'Your photo is available on your dashboard.',
     );
@@ -44,7 +44,7 @@ void main() {
       findsOneWidget,
     );
 
-    final replacement = AppAlert.success(
+    final replacement = AppAlert.notification(
       title: 'Latest alert',
       message: 'This message should remain visible.',
     );

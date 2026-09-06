@@ -14,10 +14,17 @@ abstract final class AppAlert {
   static Future<void> success({
     required String title,
     required String message,
-  }) => _show(title: title, message: message, tone: _AppAlertTone.success);
+  }) => Future<void>.value();
 
   static Future<void> error({required String title, required String message}) =>
-      _show(title: title, message: message, tone: _AppAlertTone.error);
+      Future<void>.value();
+
+  /// Notifications intentionally keep their in-app banner. General success
+  /// and error feedback is silent so it does not interrupt the current task.
+  static Future<void> notification({
+    required String title,
+    required String message,
+  }) => _show(title: title, message: message, tone: _AppAlertTone.success);
 
   static Future<void> _show({
     required String title,
@@ -116,7 +123,7 @@ abstract final class AppAlert {
   }
 }
 
-enum _AppAlertTone { success, error }
+enum _AppAlertTone { success }
 
 class _AppAlertCard extends StatelessWidget {
   const _AppAlertCard({

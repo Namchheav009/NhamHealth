@@ -32,18 +32,7 @@ class SplashView extends GetView<SplashController> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final isSmallScreen = constraints.maxHeight < 650;
-
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          _buildContent(
-                            context,
-                            isSmallScreen: isSmallScreen,
-                          ),
-
-                          _buildLoadingIndicator(context),
-                        ],
-                      );
+                      return _buildContent(isSmallScreen: isSmallScreen);
                     },
                   ),
                 ),
@@ -53,7 +42,7 @@ class SplashView extends GetView<SplashController> {
     );
   }
 
-  Widget _buildContent(BuildContext context, {required bool isSmallScreen}) {
+  Widget _buildContent({required bool isSmallScreen}) {
     return Center(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
@@ -68,10 +57,6 @@ class SplashView extends GetView<SplashController> {
               SizedBox(height: isSmallScreen ? 18 : 24),
 
               _buildAnimatedAppName(),
-
-              const SizedBox(height: 10),
-
-              _buildSubtitle(context),
             ],
           ),
         ),
@@ -176,83 +161,6 @@ class SplashView extends GetView<SplashController> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSubtitle(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller.animationController,
-      builder: (_, _) {
-        final progress = ((controller.animationController.value - 0.62) / 0.38)
-            .clamp(0.0, 1.0);
-
-        final curvedValue = Curves.easeOutCubic.transform(progress);
-
-        return Opacity(
-          opacity: curvedValue,
-          child: Transform.translate(
-            offset: Offset(0, 12 * (1 - curvedValue)),
-            child: Text(
-              'Healthy choices, made simpler.'.tr,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.appMutedText,
-                fontSize: 14,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.15,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLoadingIndicator(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 36,
-      child: AnimatedBuilder(
-        animation: controller.animationController,
-        builder: (_, _) {
-          final progress = ((controller.animationController.value - 0.75) /
-                  0.25)
-              .clamp(0.0, 1.0);
-
-          return Opacity(
-            opacity: progress,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    strokeCap: StrokeCap.round,
-                    color: context.appColorScheme.primary,
-                    backgroundColor: context.appColorScheme.outlineVariant
-                        .withValues(alpha: 0.45),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  'Getting things ready...'.tr,
-                  style: TextStyle(
-                    color: context.appMutedText.withValues(alpha: 0.75),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 }

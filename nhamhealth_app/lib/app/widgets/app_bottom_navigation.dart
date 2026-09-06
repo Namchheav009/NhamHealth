@@ -235,7 +235,7 @@ class _NavigationInnerShadowPainter extends CustomPainter {
       oldDelegate.isDark != isDark;
 }
 
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   const _NavItem({
     required this.id,
     required this.icon,
@@ -253,74 +253,128 @@ class _NavItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _isPressed = false;
+
+  void _setPressed(bool value) {
+    if (_isPressed == value || !mounted) return;
+    setState(() => _isPressed = value);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final selectionDuration =
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 280);
+    final pressDuration =
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 120);
     return Semantics(
       button: true,
-      selected: selected,
-      label: label,
+      selected: widget.selected,
+      label: widget.label,
       child: Tooltip(
-        message: label,
+        message: widget.label,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            key: ValueKey<String>('nav-$id'),
-            onTap: onTap,
+            key: ValueKey<String>('nav-${widget.id}'),
+            onTapDown: (_) => _setPressed(true),
+            onTapCancel: () => _setPressed(false),
+            onTap: () {
+              _setPressed(false);
+              widget.onTap();
+            },
             customBorder: const StadiumBorder(),
-            child: SizedBox(
-              width: double.infinity,
-              height: 70,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                margin: EdgeInsets.fromLTRB(
-                  selected ? 0 : 8,
-                  6,
-                  selected ? 0 : 8,
-                  6,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      selected
-                          ? colors.primaryContainer.withValues(alpha: 0.42)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(31),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox.square(
-                      dimension: selected ? 30 : 27,
-                      child: Center(
-                        child: Icon(
-                          selected ? selectedIcon ?? icon : icon,
-                          color:
-                              selected
-                                  ? colors.primary
-                                  : colors.onSurfaceVariant,
-                          size: selected ? 30 : 27,
+            child: AnimatedScale(
+              scale: _isPressed ? .92 : 1,
+              duration: pressDuration,
+              curve: _isPressed ? Curves.easeOutCubic : Curves.easeOutBack,
+              child: SizedBox(
+                width: double.infinity,
+                height: 70,
+                child: AnimatedContainer(
+                  duration: selectionDuration,
+                  curve: Curves.easeOutCubic,
+                  margin: EdgeInsets.fromLTRB(
+                    widget.selected ? 0 : 8,
+                    6,
+                    widget.selected ? 0 : 8,
+                    6,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        widget.selected
+                            ? colors.primaryContainer.withValues(alpha: 0.42)
+                            : Colors.transparent,
+                    borderRadius: BorderRadius.circular(31),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox.square(
+                        dimension: 30,
+                        child: Center(
+                          child: AnimatedSwitcher(
+                            duration: selectionDuration,
+                            switchInCurve: Curves.easeOutBack,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder:
+                                (child, animation) => FadeTransition(
+                                  opacity: animation,
+                                  child: ScaleTransition(
+                                    scale: Tween<double>(
+                                      begin: .78,
+                                      end: 1,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                            child: Icon(
+                              widget.selected
+                                  ? widget.selectedIcon ?? widget.icon
+                                  : widget.icon,
+                              key: ValueKey<bool>(widget.selected),
+                              color:
+                                  widget.selected
+                                      ? colors.primary
+                                      : colors.onSurfaceVariant,
+                              size: widget.selected ? 30 : 27,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      textScaler: TextScaler.noScaling,
-                      style: TextStyle(
-                        color:
-                            selected ? colors.primary : colors.onSurfaceVariant,
-                        fontSize: selected ? 12 : 11,
-                        height: 1,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w500,
-                        letterSpacing: 0.05,
+                      const SizedBox(height: 4),
+                      AnimatedDefaultTextStyle(
+                        duration: selectionDuration,
+                        curve: Curves.easeOutCubic,
+                        style: TextStyle(
+                          color:
+                              widget.selected
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                          fontSize: widget.selected ? 12 : 11,
+                          height: 1,
+                          fontWeight:
+                              widget.selected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                          letterSpacing: 0.05,
+                        ),
+                        child: Text(
+                          widget.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          textScaler: TextScaler.noScaling,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -331,12 +385,28 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _ChatbotButton extends StatelessWidget {
+class _ChatbotButton extends StatefulWidget {
   const _ChatbotButton();
+
+  @override
+  State<_ChatbotButton> createState() => _ChatbotButtonState();
+}
+
+class _ChatbotButtonState extends State<_ChatbotButton> {
+  bool _isPressed = false;
+
+  void _setPressed(bool value) {
+    if (_isPressed == value || !mounted) return;
+    setState(() => _isPressed = value);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final duration =
+        MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 140);
     return Semantics(
       button: true,
       label: 'Open AI Assistant'.tr,
@@ -346,76 +416,86 @@ class _ChatbotButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             key: const ValueKey<String>('nav-chatbot'),
-            onTap:
-                () => Get.to<void>(
-                  () => const AssistantView(),
-                  binding: AssistantBinding(),
-                  transition: Transition.rightToLeft,
-                ),
+            onTapDown: (_) => _setPressed(true),
+            onTapCancel: () => _setPressed(false),
+            onTap: () {
+              _setPressed(false);
+              Get.to<void>(
+                () => const AssistantView(),
+                binding: AssistantBinding(),
+                transition: Transition.cupertino,
+                duration: const Duration(milliseconds: 300),
+              );
+            },
             customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: 70,
-              height: 70,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Transform.scale(
-                        scale: 1.25,
-                        child: RepaintBoundary(
-                          child: Lottie.asset(
-                            'assets/animations/chatbot.json',
-                            fit: BoxFit.contain,
-                            repeat: true,
+            child: AnimatedScale(
+              scale: _isPressed ? .9 : 1,
+              duration: duration,
+              curve: _isPressed ? Curves.easeOutCubic : Curves.easeOutBack,
+              child: SizedBox(
+                width: 70,
+                height: 70,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Transform.scale(
+                          scale: 1.25,
+                          child: RepaintBoundary(
+                            child: Lottie.asset(
+                              'assets/animations/chatbot.json',
+                              fit: BoxFit.contain,
+                              repeat: true,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 7,
-                    right: 8,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF39D879),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: colors.surface, width: 2),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x4439D879), blurRadius: 5),
-                        ],
+                    Positioned(
+                      top: 7,
+                      right: 8,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF39D879),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.surface, width: 2),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x4439D879), blurRadius: 5),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: -2,
-                    bottom: -2,
-                    child: Container(
-                      width: 25,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: colors.surface, width: 2),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x33075E2D),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.chat_bubble_rounded,
-                        color: Colors.white,
-                        size: 13,
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 25,
+                        height: 25,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.surface, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x33075E2D),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.chat_bubble_rounded,
+                          color: Colors.white,
+                          size: 13,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

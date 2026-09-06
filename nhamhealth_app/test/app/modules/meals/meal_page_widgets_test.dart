@@ -18,6 +18,7 @@ void main() {
         image: fallbackImage,
         category: 'High Protein',
         categoryId: 2,
+        proteinGrams: 32,
         cookingTimeMinutes: 15,
         difficulty: 'Easy',
         recommendationReason: recommendationReason,
@@ -139,12 +140,14 @@ void main() {
       'name': 'Balanced Bowl',
       'imageUrl': '/uploads/bowl.jpg',
       'calories': 420,
+      'proteinGrams': 28,
       'cookingTimeMinutes': 25,
       'reason': 'Fits the saved BMI context and remaining protein goal.',
     }, baseUrl: 'http://localhost:8080');
 
     expect(result.image, 'http://localhost:8080/uploads/bowl.jpg');
     expect(result.cookingTimeMinutes, 25);
+    expect(result.proteinGrams, 28);
     expect(result.recommendationReason, contains('BMI'));
   });
 }

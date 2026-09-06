@@ -3,6 +3,7 @@ class RecommendedMealModel {
   final String name;
   final String image;
   final int calories;
+  final num? proteinGrams;
   final String cookingTime;
   final double rating;
   final String reason;
@@ -12,6 +13,7 @@ class RecommendedMealModel {
     required this.name,
     required this.image,
     required this.calories,
+    this.proteinGrams,
     required this.cookingTime,
     required this.rating,
     this.reason = '',
@@ -32,6 +34,7 @@ class RecommendedMealModel {
       name: name.trim(),
       image: (json['imageUrl'] as String? ?? '').trim(),
       calories: calories is num ? calories.round() : 0,
+      proteinGrams: json['proteinGrams'] as num?,
       cookingTime: cookingTime is num ? '${cookingTime.toInt()} min' : '',
       rating: rating is num ? rating.toDouble() : 0,
       reason: (json['reason'] as String? ?? '').trim(),

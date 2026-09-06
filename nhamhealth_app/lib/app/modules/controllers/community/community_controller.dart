@@ -221,7 +221,7 @@ class CommunityController extends GetxController {
         if (showAlert) {
           final newest = newNotifications.first;
           unawaited(
-            AppAlert.success(title: newest.title, message: newest.message),
+            AppAlert.notification(title: newest.title, message: newest.message),
           );
         }
       }

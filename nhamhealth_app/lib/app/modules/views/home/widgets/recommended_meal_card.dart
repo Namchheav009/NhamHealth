@@ -132,6 +132,32 @@ class RecommendedMealCard extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                            if (meal.proteinGrams case final protein?)
+                              if (protein > 0) ...[
+                                const Spacer(),
+                                Tooltip(
+                                  message: 'Protein'.tr,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.fitness_center_rounded,
+                                        color: AppColors.primaryGreen,
+                                        size: 12,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        '${_formatNutrition(protein)}g',
+                                        style: TextStyle(
+                                          color: context.appMutedText,
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             const Spacer(),
                             const Icon(
                               Icons.star_rounded,
@@ -161,6 +187,11 @@ class RecommendedMealCard extends StatelessWidget {
     );
   }
 }
+
+String _formatNutrition(num value) =>
+    value.toDouble() == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toStringAsFixed(1);
 
 class _MealImage extends StatelessWidget {
   const _MealImage({required this.path});

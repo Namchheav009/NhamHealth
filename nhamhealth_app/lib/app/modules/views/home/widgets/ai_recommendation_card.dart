@@ -74,7 +74,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                     height: animationSize,
                     child: RepaintBoundary(
                       child: Lottie.asset(
-                        'assets/animations/Healthy or Junk food.json',
+                        'assets/animations/food.json',
                         fit: BoxFit.cover,
                         alignment: Alignment.center,
                         repeat: true,

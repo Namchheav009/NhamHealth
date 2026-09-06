@@ -5,10 +5,12 @@ import 'package:get/get.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/inner_shadow.dart';
 
-class MoodCard extends StatelessWidget {
+class MoodCard extends StatefulWidget {
   final String emoji;
   final String label;
   final bool selected;
+  final bool invalid;
+  final int validationPulse;
   final VoidCallback onTap;
 
   const MoodCard({
@@ -16,8 +18,64 @@ class MoodCard extends StatelessWidget {
     required this.emoji,
     required this.label,
     required this.selected,
+    this.invalid = false,
+    this.validationPulse = 0,
     required this.onTap,
   });
+
+  @override
+  State<MoodCard> createState() => _MoodCardState();
+}
+
+class _MoodCardState extends State<MoodCard>
+    with SingleTickerProviderStateMixin {
+  static const _errorRed = Color(0xFFE54855);
+  late final AnimationController _validationController;
+  late final Animation<double> _shake;
+
+  @override
+  void initState() {
+    super.initState();
+    _validationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
+    _shake = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -7), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -7, end: 7), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 7, end: -5), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -5, end: 5), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 5, end: 0), weight: 1),
+    ]).animate(
+      CurvedAnimation(parent: _validationController, curve: Curves.easeOut),
+    );
+    if (widget.invalid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _playValidation());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MoodCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.invalid &&
+        (!oldWidget.invalid ||
+            widget.validationPulse != oldWidget.validationPulse)) {
+      _playValidation();
+    } else if (!widget.invalid && oldWidget.invalid) {
+      _validationController.stop();
+    }
+  }
+
+  void _playValidation() {
+    if (!mounted) return;
+    _validationController.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _validationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +108,18 @@ class MoodCard extends StatelessWidget {
                         ),
                       ),
                   child: Center(
-                    key: ValueKey('$emoji-$selected'),
+                    key: ValueKey(
+                      '${widget.emoji}-${widget.selected}-${widget.invalid}',
+                    ),
                     child:
-                        emoji.isEmpty
-                            ? const Icon(
+                        widget.emoji.isEmpty
+                            ? Icon(
                               Icons.mood_rounded,
-                              color: Color(0xFFFFB02E),
+                              color: const Color(0xFFFFB02E),
                               size: 28,
                             )
                             : Text(
-                              emoji,
+                              widget.emoji,
                               textScaler: TextScaler.noScaling,
                               style: const TextStyle(fontSize: 28, height: 1),
                             ),
@@ -72,15 +132,18 @@ class MoodCard extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    label.tr,
+                    widget.label.tr,
                     maxLines: 1,
                     style: TextStyle(
                       fontSize: 10.5,
                       color:
-                          selected
+                          widget.selected
                               ? context.appColorScheme.primary
                               : context.appColorScheme.secondary,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight:
+                          widget.selected || widget.invalid
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -92,32 +155,35 @@ class MoodCard extends StatelessWidget {
     );
 
     final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration:
+          widget.invalid ? Duration.zero : const Duration(milliseconds: 200),
       width: 70,
       decoration: BoxDecoration(
         gradient:
-            selected
+            widget.selected
                 ? LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [context.appSoftGreen, context.appSoftPink],
                 )
                 : null,
-        color: selected ? null : context.appElevatedSurface,
+        color: widget.selected ? null : context.appElevatedSurface,
         borderRadius: BorderRadius.circular(12),
         border:
-            isDark
+            widget.invalid
+                ? Border.all(color: _errorRed, width: 1.8)
+                : isDark
                 ? Border.all(
                   color:
-                      selected
+                      widget.selected
                           ? context.appColorScheme.primary
                           : context.appBorder,
-                  width: selected ? 1.6 : 1,
+                  width: widget.selected ? 1.6 : 1,
                 )
                 : null,
         boxShadow:
             !isDark
-                ? selected
+                ? widget.selected
                     ? [
                       BoxShadow(
                         color: context.appColorScheme.primary.withValues(
@@ -128,7 +194,7 @@ class MoodCard extends StatelessWidget {
                       ),
                     ]
                     : context.appHomeTileShadow
-                : selected
+                : widget.selected
                 ? [
                   BoxShadow(
                     color: context.appColorScheme.primary.withValues(
@@ -145,7 +211,7 @@ class MoodCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.selectionClick();
-            onTap();
+            widget.onTap();
           },
           borderRadius: BorderRadius.circular(12),
           child: InnerShadow(
@@ -159,13 +225,24 @@ class MoodCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      selected: selected,
-      label: '@mood mood'.trParams({'mood': label.tr}),
-      child: AnimatedScale(
-        scale: selected ? 1.02 : 1,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutBack,
-        child: card,
+      selected: widget.selected,
+      label:
+          widget.invalid
+              ? 'Choose a mood. ${widget.label.tr}'.tr
+              : '@mood mood'.trParams({'mood': widget.label.tr}),
+      child: AnimatedBuilder(
+        animation: _shake,
+        child: AnimatedScale(
+          scale: widget.selected ? 1.02 : 1,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutBack,
+          child: card,
+        ),
+        builder:
+            (context, child) => Transform.translate(
+              offset: Offset(_shake.value, 0),
+              child: child,
+            ),
       ),
     );
   }

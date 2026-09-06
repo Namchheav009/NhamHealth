@@ -208,9 +208,9 @@ public class AiFoodAnalysisService {
             recommendation = "Review the meal identity and component portions before saving.";
         } else if (healthProfile.hasHeightAndWeight()) {
             recommendationTitle = "Personalized nutrition check";
-            recommendation = "Using your saved height "
-                    + decimal(healthProfile.heightCm()) + " cm and weight "
-                    + decimal(healthProfile.weightKg()) + " kg, compare this meal's "
+            recommendation = "Using your saved BMI "
+                    + decimal(healthProfile.bmi())
+                    + " as general wellness context, compare this meal's "
                     + wholeNumber(nutrition.calories()) + " kcal and "
                     + wholeNumber(nutrition.protein())
                     + " g protein with your daily wellness goals.";

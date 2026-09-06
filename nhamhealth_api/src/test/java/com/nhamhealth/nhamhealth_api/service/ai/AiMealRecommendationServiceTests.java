@@ -115,7 +115,7 @@ class AiMealRecommendationServiceTests {
         ArgumentCaptor<AiRecommendationItem> items = ArgumentCaptor.forClass(AiRecommendationItem.class);
         verify(itemRepository, times(4)).save(items.capture());
         assertTrue(items.getAllValues().stream()
-                .allMatch(item -> item.getReasonText().contains("height 165 cm, weight 60 kg")));
+                .allMatch(item -> item.getReasonText().contains("saved BMI and activity context")));
     }
 
     @Test
@@ -172,7 +172,7 @@ class AiMealRecommendationServiceTests {
         assertTrue(items.getAllValues().stream()
                 .allMatch(item -> item.getReasonText() != null && !item.getReasonText().isBlank()));
         assertTrue(items.getAllValues().stream()
-                .allMatch(item -> item.getReasonText().contains("height 172 cm, weight 68 kg")));
+                .allMatch(item -> item.getReasonText().contains("saved BMI context")));
         verify(userHealthProfileService).load(7);
     }
 

@@ -6,6 +6,7 @@ class MealModel {
     required this.image,
     required this.category,
     required this.categoryId,
+    this.proteinGrams,
     this.description = '',
     this.cookingTimeMinutes,
     this.difficulty = '',
@@ -23,6 +24,7 @@ class MealModel {
   final String image;
   final String category;
   final int categoryId;
+  final num? proteinGrams;
   final String description;
   final int? cookingTimeMinutes;
   final String difficulty;
@@ -50,6 +52,7 @@ class MealModel {
       image: _resolveImageUrl(rawImage, baseUrl),
       category: (json['category'] as String? ?? 'Uncategorized').trim(),
       categoryId: (json['categoryId'] as num?)?.toInt() ?? 0,
+      proteinGrams: json['proteinGrams'] as num?,
       description: (json['description'] as String? ?? '').trim(),
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
       difficulty: (json['difficulty'] as String? ?? '').trim(),
@@ -62,6 +65,13 @@ class MealModel {
     required String baseUrl,
   }) {
     final meal = MealModel.fromJson(json, baseUrl: baseUrl);
+    final nutrition = (json['nutrition'] as List<dynamic>? ?? const [])
+        .map(
+          (item) => MealNutritionModel.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList(growable: false);
     return MealModel(
       id: meal.id,
       name: meal.name,
@@ -69,6 +79,7 @@ class MealModel {
       image: meal.image,
       category: meal.category,
       categoryId: meal.categoryId,
+      proteinGrams: meal.proteinGrams ?? _nutritionAmount(nutrition, 'protein'),
       description: meal.description,
       cookingTimeMinutes: meal.cookingTimeMinutes,
       difficulty: meal.difficulty,
@@ -81,13 +92,7 @@ class MealModel {
             ),
           )
           .toList(growable: false),
-      nutrition: (json['nutrition'] as List<dynamic>? ?? const [])
-          .map(
-            (item) => MealNutritionModel.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          )
-          .toList(growable: false),
+      nutrition: nutrition,
       steps: (json['steps'] as List<dynamic>? ?? const [])
           .map(
             (item) => MealStepModel.fromJson(
@@ -114,8 +119,9 @@ class MealModel {
       name: name,
       calories: (json['calories'] as num?)?.round() ?? 0,
       image: _resolveImageUrl(rawImage, baseUrl),
-      category: 'AI Pick',
+      category: 'Recommended',
       categoryId: 0,
+      proteinGrams: json['proteinGrams'] as num?,
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
       recommendationReason: (json['reason'] as String? ?? '').trim(),
     );
@@ -131,6 +137,13 @@ class MealModel {
     final separator = image.startsWith('/') ? '' : '/';
     return '$baseUrl$separator$image';
   }
+}
+
+num? _nutritionAmount(List<MealNutritionModel> nutrition, String nutrient) {
+  for (final item in nutrition) {
+    if (item.name.toLowerCase().contains(nutrient)) return item.amount;
+  }
+  return null;
 }
 
 class MealIngredientModel {
@@ -197,10 +210,7 @@ class MealNutritionModel {
 }
 
 class MealStepModel {
-  const MealStepModel({
-    required this.number,
-    required this.instruction,
-  });
+  const MealStepModel({required this.number, required this.instruction});
   final int number;
   final String instruction;
   factory MealStepModel.fromJson(

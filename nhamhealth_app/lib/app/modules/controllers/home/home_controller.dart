@@ -24,6 +24,7 @@ class HomeController extends GetxController {
   final isLoading = false.obs;
   final Rxn<HomeDashboardModel> dashboard = Rxn<HomeDashboardModel>();
   final selectedMoodId = RxnInt();
+  final moodValidationPulse = 0.obs;
   final selectedBottomIndex = 0.obs;
   final selectedDay = DateTime.now().obs;
   final isLoggingOut = false.obs;
@@ -285,6 +286,7 @@ class HomeController extends GetxController {
 
   void selectMood(int moodId) {
     selectedMoodId.value = moodId;
+    moodValidationPulse.value = 0;
     _clearRecommendedMeals();
   }
 
@@ -376,11 +378,7 @@ class HomeController extends GetxController {
     if (isRecommendedMealsLoading.value) return;
     final moodId = selectedMoodId.value;
     if (moodId == null) {
-      AppAlert.error(
-        title: 'Choose your mood',
-        message:
-            'Select how you are feeling so AI can recommend suitable meals.',
-      );
+      moodValidationPulse.value++;
       return;
     }
     await loadRecommendedMeals(moodId: moodId, generateIfEmpty: true);
@@ -408,12 +406,13 @@ class HomeController extends GetxController {
   }) async {
     try {
       isRecommendedMealsLoading.value = true;
-      var meals = generate && moodId != null
-          ? await repository.generateRecommendedMeals(
-              moodId: moodId,
-              refresh: refresh,
-            )
-          : await repository.getRecommendedMeals(moodId: moodId);
+      var meals =
+          generate && moodId != null
+              ? await repository.generateRecommendedMeals(
+                moodId: moodId,
+                refresh: refresh,
+              )
+              : await repository.getRecommendedMeals(moodId: moodId);
 
       // Existing recommendations return quickly. Only wait for the AI service
       // when this mood does not have any saved suggestions yet.

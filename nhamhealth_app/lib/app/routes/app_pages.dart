@@ -98,7 +98,8 @@ abstract class AppPages {
       name: AppRoutes.home,
       page: () => const HomeView(),
       binding: HomeBinding(),
-      transition: Transition.noTransition,
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 220),
     ),
     GetPage<dynamic>(
       name: AppRoutes.assistant,
@@ -110,7 +111,8 @@ abstract class AppPages {
       name: AppRoutes.meals,
       page: () => const MealView(),
       binding: MealBinding(),
-      transition: Transition.noTransition,
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 220),
     ),
     GetPage<dynamic>(
       name: AppRoutes.foodDetail,
@@ -148,7 +150,8 @@ abstract class AppPages {
       binding: BindingsBuilder(
         () => Get.lazyPut<SettingsController>(() => SettingsController()),
       ),
-      transition: Transition.noTransition,
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 220),
     ),
     GetPage<dynamic>(
       name: AppRoutes.language,
@@ -229,7 +232,8 @@ abstract class AppPages {
       name: AppRoutes.community,
       page: () => const CommunityPage(),
       binding: CommunityBinding(),
-      transition: Transition.noTransition,
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 220),
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityPost,

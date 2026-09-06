@@ -46,6 +46,8 @@ class GreetingSection extends GetView<HomeController> {
               const SizedBox(height: 10),
               Obx(() {
                 final moods = controller.moods;
+                final validationPulse = controller.moodValidationPulse.value;
+                final moodMissing = controller.selectedMoodId.value == null;
                 if (controller.isMoodsLoading.value && moods.isEmpty) {
                   return const SizedBox(
                     height: 78,
@@ -66,6 +68,7 @@ class GreetingSection extends GetView<HomeController> {
                   );
                 }
                 return SizedBox(
+                  key: ValueKey('mood-validation-$validationPulse'),
                   height: 88,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
@@ -81,6 +84,8 @@ class GreetingSection extends GetView<HomeController> {
                         emoji: mood.emoji,
                         label: mood.name,
                         selected: controller.selectedMoodId.value == mood.id,
+                        invalid: moodMissing && validationPulse > 0,
+                        validationPulse: validationPulse,
                         onTap: () => controller.selectMood(mood.id),
                       );
                     },

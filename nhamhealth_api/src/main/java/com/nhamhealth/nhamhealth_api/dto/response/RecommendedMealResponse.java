@@ -7,6 +7,7 @@ public record RecommendedMealResponse(
         String name,
         String imageUrl,
         BigDecimal calories,
+        BigDecimal proteinGrams,
         Integer cookingTimeMinutes,
         double rating,
         Integer recommendationId,

@@ -68,7 +68,7 @@ class NotificationsController extends GetxController {
       _hasLoaded = true;
       if (silent && announceNew && newItems.isNotEmpty) {
         final newest = newItems.first;
-        AppAlert.success(title: newest.title, message: newest.message);
+        AppAlert.notification(title: newest.title, message: newest.message);
       }
     } on Object catch (error) {
       if (!silent) {
