@@ -19,7 +19,7 @@ class VerificationController extends GetxController {
 
   static const int codeLifetimeSeconds = 3 * 60;
   static const int resendCooldownSeconds = 30;
-  static const int codeLength = 6;
+  static const int codeLength = 4;
 
   final AuthService _authService;
   final TextEditingController codeController = TextEditingController();
@@ -91,7 +91,7 @@ class VerificationController extends GetxController {
       return;
     }
     if (code.value.length != codeLength) {
-      _showCodeError('Enter the complete six-digit code.');
+      _showCodeError('Enter the complete four-digit code.');
       codeFocusNode.requestFocus();
       return;
     }
@@ -218,7 +218,7 @@ class VerificationView extends StatelessWidget {
         builder:
             (context) => AuthFlowScaffold(
               title: 'Verification',
-              subtitle: 'Enter the six-digit code to continue.',
+              subtitle: 'Enter the four-digit code to continue.',
               illustrationAsset: 'assets/images/auth/verification.png',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -394,15 +394,15 @@ class _VerificationCodeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Six digit verification code'.tr,
+      label: 'Four digit verification code'.tr,
       textField: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
           const gap = 7.0;
-          final boxSize = ((constraints.maxWidth - gap * 5) / 6).clamp(
-            36.0,
-            52.0,
-          );
+          final boxSize = ((constraints.maxWidth -
+                      gap * (VerificationController.codeLength - 1)) /
+                  VerificationController.codeLength)
+              .clamp(36.0, 52.0);
           return SizedBox(
             height: 60,
             child: Stack(
