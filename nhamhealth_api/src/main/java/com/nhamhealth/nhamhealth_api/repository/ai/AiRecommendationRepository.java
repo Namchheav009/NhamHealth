@@ -11,6 +11,10 @@ import com.nhamhealth.nhamhealth_api.entity.AiRecommendation;
 
 public interface AiRecommendationRepository extends JpaRepository<AiRecommendation, Integer> {
 
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from AiRecommendation r where r.createdAt <= :cutoff")
+    int deleteExpired(@org.springframework.data.repository.query.Param("cutoff") LocalDateTime cutoff);
+
     @EntityGraph(attributePaths = {"user", "mood"})
     List<AiRecommendation> findAllByOrderByCreatedAtDesc();
 
