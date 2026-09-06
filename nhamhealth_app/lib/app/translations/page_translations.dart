@@ -230,6 +230,8 @@ const Map<String, String> englishPageTranslations = {
   'View Details': 'View Details',
   'Calories': 'Calories',
   'Protein': 'Protein',
+  'Carbohydrates': 'Carbohydrates',
+  'Carbohydrates Detail Page': 'Carbohydrates Detail Page',
   'Water': 'Water',
   'App protection': 'App protection',
   'Choose how you unlock private features':
@@ -987,6 +989,8 @@ const Map<String, String> khmerPageTranslations = {
   'View Details': 'មើលព័ត៌មានលម្អិត',
   'Calories': 'កាឡូរី',
   'Protein': 'ប្រូតេអ៊ីន',
+  'Carbohydrates': 'កាបូអ៊ីដ្រាត',
+  'Carbohydrates Detail Page': 'ព័ត៌មានកាបូអ៊ីដ្រាត',
   'Water': 'ទឹក',
   'App protection': 'ការពារកម្មវិធី',
   'Choose how you unlock private features': 'ជ្រើសវិធីដោះសោមុខងារឯកជន',

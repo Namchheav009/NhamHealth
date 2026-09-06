@@ -121,7 +121,11 @@
         event.preventDefault();
         if (!form.checkValidity()) { const invalid = form.querySelector(':invalid'); await alerts.error(invalid?.validationMessage || 'Complete all required fields.', 'Missing analysis information'); invalid?.focus(); return; }
         const label = saveButton.innerHTML; saveButton.disabled = true; saveButton.textContent = 'Saving...'; formError.hidden = true;
-        try { const analysis = await createRequest(new FormData(form)); addAnalysis(analysis); hideModal(); await alerts.success('Analysis added', `${analysis.userName}'s food analysis has been added.`); }
+        try {
+            const analysis = await createRequest(new FormData(form));
+            await alerts.success('Analysis added', `${analysis.userName}'s food analysis has been added.`);
+            window.location.assign('/admin/ai-food-analyses');
+        }
         catch (error) { formError.textContent = error.message; formError.hidden = false; await alerts.error(error.message || 'The analysis could not be saved.'); }
         finally { saveButton.disabled = false; saveButton.innerHTML = label; }
     }

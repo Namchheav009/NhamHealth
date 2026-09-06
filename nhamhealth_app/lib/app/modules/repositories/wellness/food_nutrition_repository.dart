@@ -261,8 +261,9 @@ class FoodNutritionRepository {
           )
           .timeout(const Duration(seconds: 15));
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw const FoodNutritionException(
-          'Could not save your AI correction.',
+        throw FoodNutritionException(
+          _serverErrorMessage(response.body) ??
+              'Could not save your AI correction.',
         );
       }
     } on FoodNutritionException {

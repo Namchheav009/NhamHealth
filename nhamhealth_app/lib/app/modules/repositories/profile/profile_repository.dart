@@ -160,6 +160,7 @@ class ProfileRepository {
   Future<ProfileDashboardModel> addDailyNutrition({
     double? calories,
     double? protein,
+    double? carbs,
     double? fat,
     double? water,
     double? fiber,
@@ -182,6 +183,7 @@ class ProfileRepository {
             if (date != null) 'date': _dateOnly(date),
             if (calories != null) 'calories': calories,
             if (protein != null) 'protein': protein,
+            if (carbs != null) 'carbs': carbs,
             if (fat != null) 'fat': fat,
             if (water != null) 'water': water,
             if (fiber != null) 'fiber': fiber,

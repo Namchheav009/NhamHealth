@@ -75,6 +75,7 @@ public class ProfileDashboardService {
                 wellness == null ? null : wellness.getWeightKg(),
                 calories,
                 protein,
+                progress(summary, "carbohydrate"),
                 progress(summary, "fat"),
                 progress(summary, "water"),
                 progress(summary, "fiber"),

@@ -20,6 +20,7 @@ abstract class AppRoutes {
   static const String wellness = '/wellness';
   static const String calories = '/wellness/calories';
   static const String protein = '/wellness/protein';
+  static const String carbs = '/wellness/carbohydrates';
   static const String fat = '/wellness/fat';
   static const String water = '/wellness/water';
   static const String fiber = '/wellness/fiber';

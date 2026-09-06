@@ -167,6 +167,7 @@ public class AiAssistantService {
             return "Here is your Daily Wellness progress for " + date + ":\n"
                     + "- Calories: " + progress(dashboard.calories()) + "\n"
                     + "- Protein: " + progress(dashboard.protein()) + "\n"
+                    + "- Carbohydrates: " + progress(dashboard.carbs()) + "\n"
                     + "- Fat: " + progress(dashboard.fat()) + "\n"
                     + "- Water: " + progress(dashboard.water()) + "\n"
                     + "Use View Details on the Wellness page to see fiber and sugar too.";

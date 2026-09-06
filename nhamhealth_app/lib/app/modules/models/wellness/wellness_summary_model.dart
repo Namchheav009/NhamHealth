@@ -8,6 +8,7 @@ class WellnessSummaryModel {
   final int percentage;
   final IconData icon;
   final Color color;
+  final bool isLimit;
 
   const WellnessSummaryModel({
     required this.name,
@@ -17,7 +18,8 @@ class WellnessSummaryModel {
     required this.percentage,
     required this.icon,
     required this.color,
+    this.isLimit = false,
   });
 
-  double get progress => percentage / 100;
+  double get progress => (percentage / 100).clamp(0.0, 1.0).toDouble();
 }

@@ -65,7 +65,10 @@ class WellnessNutrientTile extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: '/${item.target} ${item.unit.tr}',
+                              text:
+                                  item.isLimit
+                                      ? ' / ${item.target} ${item.unit.tr} max'
+                                      : '/${item.target} ${item.unit.tr}',
                               style: TextStyle(color: context.appMutedText),
                             ),
                           ],
@@ -87,7 +90,9 @@ class WellnessNutrientTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${item.percentage}%',
+                  item.isLimit && item.percentage <= 100
+                      ? '${100 - item.percentage}% left'
+                      : '${item.percentage}%',
                   style: TextStyle(
                     color: item.color,
                     fontSize: 10,

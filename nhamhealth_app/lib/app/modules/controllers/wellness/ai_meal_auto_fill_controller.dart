@@ -91,6 +91,7 @@ class AiMealAutoFillController extends GetxController {
       await profileRepository.addDailyNutrition(
         calories: totalCalories,
         protein: totalProtein,
+        carbs: foods.fold<double>(0, (sum, food) => sum + food.carbs),
         fat: totalFat,
         sugar: totalSugar,
         aiRecommendation:
@@ -108,6 +109,7 @@ class AiMealAutoFillController extends GetxController {
       wellnessController.addNutrition(
         calories: totalCalories.round(),
         protein: totalProtein,
+        carbs: foods.fold<double>(0, (sum, food) => sum + food.carbs),
         fat: totalFat,
         sugar: totalSugar,
       );

@@ -15,7 +15,7 @@ class AiAssistantServiceTests {
         ProfileDashboardResponse dashboard = new ProfileDashboardResponse(
                 1, "user@example.com", "Nham", null, null, null, false,
                 null, null, null, null, null,
-                progress("650", "2000"), progress("28", "120"), progress("18", "78"),
+                progress("650", "2000"), progress("28", "120"), progress("90", "205"), progress("18", "78"),
                 progress("3", "8"), progress("9", "25"), progress("12", "50"), null);
 
         String reply = AiAssistantService.fallbackReply(

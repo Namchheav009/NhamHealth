@@ -36,6 +36,15 @@ class WellnessController extends GetxController {
           color: Color(0xFF00A651),
         ),
         const WellnessSummaryModel(
+          name: 'Carbohydrates',
+          current: '0',
+          target: '205',
+          unit: 'g',
+          percentage: 0,
+          icon: Icons.grain_rounded,
+          color: Color(0xFFF59E0B),
+        ),
+        const WellnessSummaryModel(
           name: 'Fat',
           current: '0',
           target: '78',
@@ -70,6 +79,7 @@ class WellnessController extends GetxController {
           percentage: 0,
           icon: Icons.hexagon_rounded,
           color: Color(0xFFFF5CB8),
+          isLimit: true,
         ),
       ].obs;
 
@@ -94,6 +104,11 @@ class WellnessController extends GetxController {
         'Protein',
         dashboard.protein?.current ?? 0,
         dashboard.protein?.goal ?? 120,
+      );
+      _setNutrient(
+        'Carbohydrates',
+        dashboard.carbs?.current ?? 0,
+        dashboard.carbs?.goal ?? 205,
       );
       _setNutrient(
         'Fat',
@@ -137,6 +152,7 @@ class WellnessController extends GetxController {
       percentage: target <= 0 ? 0 : ((current / target) * 100).round(),
       icon: item.icon,
       color: item.color,
+      isLimit: item.isLimit,
     );
   }
 
@@ -202,6 +218,7 @@ class WellnessController extends GetxController {
     final route = switch (nutrientName) {
       'Calories' => AppRoutes.calories,
       'Protein' => AppRoutes.protein,
+      'Carbohydrates' => AppRoutes.carbs,
       'Fat' => AppRoutes.fat,
       'Water' => AppRoutes.water,
       'Fiber' => AppRoutes.fiber,
@@ -225,6 +242,7 @@ class WellnessController extends GetxController {
   void addNutrition({
     required int calories,
     required double protein,
+    required double carbs,
     required double fat,
     required double sugar,
     double water = 0,
@@ -232,6 +250,7 @@ class WellnessController extends GetxController {
   }) {
     _incrementNutrient('Calories', calories.toDouble());
     _incrementNutrient('Protein', protein);
+    _incrementNutrient('Carbohydrates', carbs);
     _incrementNutrient('Fat', fat);
     _incrementNutrient('Sugar', sugar);
     _incrementNutrient('Water', water);
@@ -255,6 +274,7 @@ class WellnessController extends GetxController {
       percentage: ((current / target) * 100).round(),
       icon: item.icon,
       color: item.color,
+      isLimit: item.isLimit,
     );
   }
 }

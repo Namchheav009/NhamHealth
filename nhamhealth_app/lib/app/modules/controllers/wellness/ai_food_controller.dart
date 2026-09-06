@@ -255,6 +255,7 @@ class AiFoodController extends GetxController {
       await profileRepository.addDailyNutrition(
         calories: food.calories,
         protein: food.protein,
+        carbs: food.carbs,
         fat: food.fat,
         water: waterGlasses > 0 ? waterGlasses : null,
         fiber: food.fiber,
@@ -276,6 +277,7 @@ class AiFoodController extends GetxController {
       wellnessController.addNutrition(
         calories: food.calories.round(),
         protein: food.protein,
+        carbs: food.carbs,
         fat: food.fat,
         sugar: food.sugar,
         water: waterGlasses,
@@ -360,34 +362,40 @@ class AiFoodController extends GetxController {
     }
     isFeedbackSaving.value = true;
     try {
-      final databaseFood = await nutritionRepository.searchFood(cleanName);
-      if (databaseFood == null) {
-        throw const FoodNutritionException(
-          'That food is not in the nutrition database yet. Try a more specific name.',
-        );
-      }
-      if (cleanUnit.toLowerCase() !=
-          databaseFood.servingUnit.trim().toLowerCase()) {
-        errorMessageParams.assignAll({
-          'unit': databaseFood.servingUnit,
-          'food': databaseFood.name,
-        });
-        throw FoodNutritionException(
-          'Use @unit for @food so nutrition can be scaled safely.',
-        );
-      }
-      final corrected = databaseFood
-          .withAnalysisId(current.analysisId)
-          .withServing(size: servingSize, unit: cleanUnit);
       if (current.analysisId != null) {
         await nutritionRepository.submitFeedback(
           analysisId: current.analysisId!,
           confirmed: false,
-          foodName: corrected.name,
-          servingSize: corrected.servingSize,
-          servingUnit: corrected.servingUnit,
+          foodName: cleanName,
+          servingSize: servingSize,
+          servingUnit: cleanUnit,
         );
       }
+      final databaseFood = await nutritionRepository.searchFood(cleanName);
+      if (databaseFood == null) {
+        isUserConfirmed.value = true;
+        errorMessage.value = null;
+        AppAlert.success(
+          title: 'Correction saved',
+          message:
+              'Your correction was sent for admin review. Nutrition remains an AI estimate until the food is added to the database.',
+        );
+        return;
+      }
+      if (cleanUnit.toLowerCase() !=
+          databaseFood.servingUnit.trim().toLowerCase()) {
+        isUserConfirmed.value = true;
+        errorMessage.value = null;
+        AppAlert.success(
+          title: 'Correction saved',
+          message:
+              'Your correction was sent for admin review. Use ${databaseFood.servingUnit} to recalculate nutrition safely.',
+        );
+        return;
+      }
+      final corrected = databaseFood
+          .withAnalysisId(current.analysisId)
+          .withServing(size: servingSize, unit: cleanUnit);
       nutrition.value = corrected;
       prediction.value = FoodPredictionModel(
         foodName: corrected.name,
