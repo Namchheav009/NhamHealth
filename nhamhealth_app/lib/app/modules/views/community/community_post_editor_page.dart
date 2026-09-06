@@ -600,7 +600,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   void _selectIngredient(IngredientSuggestion ingredient) {
     setState(() {
       _newIngredient.name.text = ingredient.name;
-      if (_ingredientUnits.contains(ingredient.defaultUnit)) {
+      if (ingredient.defaultUnit.isNotEmpty) {
         _newIngredient.unit = ingredient.defaultUnit;
       }
       _ingredientSuggestions = const [];
@@ -1969,6 +1969,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Future<void> _showIngredientUnitPicker() async {
     FocusScope.of(context).unfocus();
+    final availableUnits = <String>{
+      ..._ingredientUnits,
+      if (_newIngredient.unit.trim().isNotEmpty) _newIngredient.unit.trim(),
+    }.toList();
     final selected = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: false,
@@ -2016,9 +2020,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                           crossAxisSpacing: 10,
                           childAspectRatio: 2.25,
                         ),
-                    itemCount: _ingredientUnits.length,
+                    itemCount: availableUnits.length,
                     itemBuilder: (context, index) {
-                      final unit = _ingredientUnits[index];
+                      final unit = availableUnits[index];
                       final isSelected = unit == _newIngredient.unit;
                       return Material(
                         color:
@@ -2463,34 +2467,37 @@ class _PhotoSourceTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    onTap: onTap,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-    leading: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: context.appSoftGreen,
-        shape: BoxShape.circle,
+  Widget build(BuildContext context) => Material(
+    type: MaterialType.transparency,
+    child: ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: context.appSoftGreen,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: _CommunityPostEditorPageState.green, size: 21),
       ),
-      child: Icon(icon, color: _CommunityPostEditorPageState.green, size: 21),
-    ),
-    title: Text(
-      title,
-      style: TextStyle(
-        color: context.appText,
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
+      title: Text(
+        title,
+        style: TextStyle(
+          color: context.appText,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
       ),
-    ),
-    subtitle: Text(
-      subtitle,
-      style: TextStyle(color: context.appMutedText, fontSize: 12),
-    ),
-    trailing: Icon(
-      Icons.chevron_right_rounded,
-      color: context.appMutedText,
-      size: 22,
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: context.appMutedText, fontSize: 12),
+      ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: context.appMutedText,
+        size: 22,
+      ),
     ),
   );
 }

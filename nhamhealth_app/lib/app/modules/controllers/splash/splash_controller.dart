@@ -137,26 +137,22 @@ class SplashController extends GetxController
 
     if (isClosed) return;
 
-    if (user == null) {
-      _goToOnboarding();
-      return;
+    if (user != null) {
+      Get.find<AppSecurityService>().syncPinState(user.hasPin);
     }
 
-    await _handleAuthenticatedUser(user);
-  }
-
-  Future<void> _handleAuthenticatedUser(AuthenticatedUser user) async {
-    final security = Get.find<AppSecurityService>();
-
-    security.syncPinState(user.hasPin);
-    if (isClosed) return;
-    Get.offAllNamed(AppRoutes.home, arguments: user);
-  }
-
-  void _goToOnboarding() {
+    // Session restoration may finish during any scheduler phase. Waiting here,
+    // immediately before navigation, guarantees Flutter has finished the
+    // current frame before GetX deactivates the splash inherited-widget tree.
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(Duration.zero);
     if (isClosed) return;
 
-    Get.offAllNamed(AppRoutes.onboarding);
+    if (user == null) {
+      Get.offAllNamed(AppRoutes.onboarding);
+    } else {
+      Get.offAllNamed(AppRoutes.home, arguments: user);
+    }
   }
 
   @override

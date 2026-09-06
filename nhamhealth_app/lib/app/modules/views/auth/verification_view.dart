@@ -32,6 +32,7 @@ class VerificationController extends GetxController {
   final RxBool isResending = false.obs;
   final RxBool isRegistration = false.obs;
   final RxBool isLogin = false.obs;
+  final RxBool deliveryPending = false.obs;
   final RxInt codeSeconds = codeLifetimeSeconds.obs;
   final RxInt resendSeconds = resendCooldownSeconds.obs;
   Timer? _countdownTimer;
@@ -52,6 +53,7 @@ class VerificationController extends GetxController {
       userEmail.value = args['email'] as String;
       isRegistration.value = args['purpose'] == 'registration';
       isLogin.value = args['purpose'] == 'login';
+      deliveryPending.value = args['deliveryPending'] == true;
     }
     codeSeconds.value = isRegistration.value ? 5 * 60 : codeLifetimeSeconds;
     codeFocusNode.addListener(_syncFocusState);
@@ -213,118 +215,117 @@ class VerificationView extends StatelessWidget {
 
     return AuthFlowScaffold(
       title: 'Verification',
-      subtitle: 'Enter the six-digit code to continue.',
+      subtitle:
+          controller.deliveryPending.value
+              ? 'Delivery is taking longer than usual. Enter the code when it arrives.'
+              : 'Enter the six-digit code to continue.',
       illustrationAsset: 'assets/images/auth/verification.png',
       child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Obx(
-                    () => Text(
-                      controller.userEmail.value.contains('@')
-                          ? 'We sent a code to'.tr
-                          : 'We sent an SMS code to'.tr,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Obx(
-                    () => Text(
-                      controller.userEmail.value,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Obx(
-                    () => _VerificationCodeField(
-                      controller: controller,
-                      code: controller.code.value,
-                      hasFocus: controller.codeHasFocus.value,
-                      hasError: controller.hasError.value,
-                    ),
-                  ),
-                  Obx(
-                    () => AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      child:
-                          controller.hasError.value
-                              ? Padding(
-                                key: const ValueKey('verification-error'),
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Text(
-                                  controller.errorMessage.value.tr,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppColors.errorCoral,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              )
-                              : const SizedBox.shrink(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Obx(
-                    () => _ExpiryPill(
-                      time: controller.formattedCodeTime,
-                      expired: controller.isExpired,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Obx(
-                    () => Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          "Didn't receive the code?".tr,
-                          style: TextStyle(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Obx(
+            () => Text(
+              controller.userEmail.value.contains('@')
+                  ? 'We sent a code to'.tr
+                  : 'We sent an SMS code to'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Obx(
+            () => Text(
+              controller.userEmail.value,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Obx(
+            () => _VerificationCodeField(
+              controller: controller,
+              code: controller.code.value,
+              hasFocus: controller.codeHasFocus.value,
+              hasError: controller.hasError.value,
+            ),
+          ),
+          Obx(
+            () => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child:
+                  controller.hasError.value
+                      ? Padding(
+                        key: const ValueKey('verification-error'),
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          controller.errorMessage.value.tr,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.errorCoral,
                             fontSize: 11,
-                            color: context.appText,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        TextButton(
-                          onPressed:
-                              controller.resendSeconds.value == 0 &&
-                                      !controller.isResending.value &&
-                                      !controller.isLoading.value
-                                  ? controller.resendCode
-                                  : null,
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(48, 44),
-                            foregroundColor: AppColors.accentOrange,
-                          ),
-                          child: Text(
-                            controller.isResending.value
-                                ? 'Sending...'.tr
-                                : controller.resendSeconds.value > 0
-                                ? 'Send again in @seconds'.trParams({
-                                  'seconds':
-                                      '${controller.resendSeconds.value}s',
-                                })
-                                : 'Send again'.tr,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ],
+                      )
+                      : const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Obx(
+            () => _ExpiryPill(
+              time: controller.formattedCodeTime,
+              expired: controller.isExpired,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(
+            () => Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  "Didn't receive the code?".tr,
+                  style: TextStyle(fontSize: 11, color: context.appText),
+                ),
+                TextButton(
+                  onPressed:
+                      controller.resendSeconds.value == 0 &&
+                              !controller.isResending.value &&
+                              !controller.isLoading.value
+                          ? controller.resendCode
+                          : null,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(48, 44),
+                    foregroundColor: AppColors.accentOrange,
+                  ),
+                  child: Text(
+                    controller.isResending.value
+                        ? 'Sending...'.tr
+                        : controller.resendSeconds.value > 0
+                        ? 'Send again in @seconds'.trParams({
+                          'seconds': '${controller.resendSeconds.value}s',
+                        })
+                        : 'Send again'.tr,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

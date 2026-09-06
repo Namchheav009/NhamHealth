@@ -101,18 +101,30 @@ public class RegistrationVerificationService {
     }
 
     @Transactional
-    public VerificationDestination sendLoginCode(
+    public PendingLoginCode prepareLoginCode(
             User user,
             String requestedIdentity,
             boolean enforceCooldown) {
         VerificationDestination destination = loginDestination(user, requestedIdentity);
-        sendCode(
+        PendingCode pending = createCode(
                 user,
                 enforceCooldown,
                 LOGIN_PURPOSE,
                 destination.value(),
                 destination.deliveryMethod());
-        return destination;
+        return new PendingLoginCode(destination, pending.rawCode());
+    }
+
+    /**
+     * Delivers a login challenge after {@link #prepareLoginCode} has returned,
+     * allowing its transaction to commit before a potentially slow SMTP/SMS
+     * network call begins.
+     */
+    public void deliverLoginCode(PendingLoginCode pending) {
+        deliverPending(new PendingCode(
+                pending.destination().value(),
+                pending.destination().deliveryMethod(),
+                pending.rawCode()));
     }
 
     @Transactional
@@ -222,6 +234,15 @@ public class RegistrationVerificationService {
             String purpose,
             String destination,
             String deliveryMethod) {
+        deliverPending(createCode(user, enforceCooldown, purpose, destination, deliveryMethod));
+    }
+
+    private PendingCode createCode(
+            User user,
+            boolean enforceCooldown,
+            String purpose,
+            String destination,
+            String deliveryMethod) {
         LocalDateTime now = LocalDateTime.now();
         if (enforceCooldown) {
             codes.findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, purpose)
@@ -249,16 +270,20 @@ public class RegistrationVerificationService {
         code.setCreatedAt(now);
         codes.save(code);
 
-        if ("SMS".equals(deliveryMethod)) {
+        return new PendingCode(destination, deliveryMethod, rawCode);
+    }
+
+    private void deliverPending(PendingCode pending) {
+        if ("SMS".equals(pending.deliveryMethod())) {
             String message = String.format(Locale.ROOT,
-                    "Your NhamHealth verification code is %s. It expires in 5 minutes.", rawCode);
-            if (!smsService.sendSms(destination, message)) {
+                    "Your NhamHealth verification code is %s. It expires in 5 minutes.", pending.rawCode());
+            if (!smsService.sendSms(pending.destination(), message)) {
                 throw new PasswordResetException(
                         HttpStatus.SERVICE_UNAVAILABLE,
                         "We could not send the SMS verification code. Please try again shortly");
             }
         } else {
-            deliver(destination, rawCode);
+            deliver(pending.destination(), pending.rawCode());
         }
     }
 
@@ -324,4 +349,8 @@ public class RegistrationVerificationService {
     private String normalize(String email) { return email.trim().toLowerCase(Locale.ROOT); }
 
     public record VerificationDestination(String value, String deliveryMethod) { }
+
+    public record PendingLoginCode(VerificationDestination destination, String rawCode) { }
+
+    private record PendingCode(String destination, String deliveryMethod, String rawCode) { }
 }

@@ -326,8 +326,13 @@ class AuthService {
           .then(http.Response.fromStream)
           .timeout(timeout);
     } on TimeoutException {
+      if (path == '/api/v1/auth/login') {
+        final identity = body['email'];
+        throw LoginOtpDeliveryPendingException(
+          identity is String ? identity.trim() : '',
+        );
+      }
       final sendsEmail =
-          path == '/api/v1/auth/login' ||
           path == '/api/v1/auth/google' ||
           path == '/api/v1/auth/register' ||
           path == '/api/v1/auth/resend-login-code' ||
@@ -463,6 +468,18 @@ class AuthException implements Exception {
 class LoginOtpRequiredException extends AuthException {
   const LoginOtpRequiredException(this.email)
     : super('A login verification code was sent to your email.');
+
+  final String email;
+}
+
+/// The credentials were submitted, but the server was still completing the
+/// login-code delivery when the client timeout elapsed. The verification
+/// screen remains safe to open because no session is issued without the code.
+class LoginOtpDeliveryPendingException extends AuthException {
+  const LoginOtpDeliveryPendingException(this.email)
+    : super(
+        'The verification email is taking longer than expected. Enter the code when it arrives, or request a new one.',
+      );
 
   final String email;
 }

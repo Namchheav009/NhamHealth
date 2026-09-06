@@ -45,6 +45,7 @@ let ingredientSearchMatches = [];
 let selectedIngredients = [];
 let ingredientSearchTimer = null;
 let mealFilterTimer = null;
+let measurementUnits = Array.isArray(window.mealMeasurementUnits) ? window.mealMeasurementUnits : [];
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;"
@@ -242,14 +243,23 @@ function renderSelectedIngredients() {
         selectedMealIngredients.innerHTML = '<p class="no-selected-ingredients">No ingredients selected yet.</p>';
         return;
     }
-    selectedMealIngredients.innerHTML = selectedIngredients.map((ingredient, index) => `
+    selectedMealIngredients.innerHTML = selectedIngredients.map((ingredient, index) => {
+        const currentUnit = ingredient.unit ?? ingredient.defaultUnit ?? "";
+        const availableUnits = currentUnit && !measurementUnits.includes(currentUnit)
+            ? [currentUnit, ...measurementUnits]
+            : measurementUnits;
+        const unitOptions = availableUnits.map(unit =>
+            `<option value="${escapeHtml(unit)}" ${unit === currentUnit ? "selected" : ""}>${escapeHtml(unit)}</option>`
+        ).join("");
+        return `
         <article class="selected-ingredient" data-ingredient-id="${ingredient.ingredientId}">
-            <div class="selected-ingredient-name"><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>${escapeHtml(ingredient.ingredientType || "Ingredient")}</span></div>
+            <div class="selected-ingredient-name"><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>Type: ${escapeHtml(ingredient.ingredientType || "General")}</span><span>Default unit: ${escapeHtml(ingredient.defaultUnit || "Not set")}</span></div>
             <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
-            <label>Unit<input data-ingredient-unit type="text" maxlength="30" value="${escapeHtml(ingredient.unit ?? ingredient.defaultUnit ?? "")}" placeholder="e.g. g"></label>
+            <label>Measurement unit<select data-ingredient-unit required><option value="">Select unit</option>${unitOptions}</select></label>
             <label class="ingredient-note">Preparation note<input data-ingredient-note type="text" maxlength="150" value="${escapeHtml(ingredient.preparationNote ?? "")}" placeholder="e.g. finely chopped"></label>
             <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="bi bi-trash3"></i></button>
-        </article>`).join("");
+        </article>`;
+    }).join("");
 }
 
 function renderIngredientSearchResults() {
@@ -283,6 +293,16 @@ function resetMealIngredients() {
     loadIngredientSearchResults();
 }
 
+async function refreshMeasurementUnits() {
+    try {
+        const response = await fetch("/admin/ingredients/default-units");
+        if (!response.ok) throw new Error("Unable to load default units");
+        measurementUnits = await response.json();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 function selectedIngredientPayload() {
     return [...selectedMealIngredients.querySelectorAll(".selected-ingredient")].map(row => ({
         ingredientId: Number(row.dataset.ingredientId),
@@ -292,7 +312,8 @@ function selectedIngredientPayload() {
     }));
 }
 
-function openCreateModal() {
+async function openCreateModal() {
+    await refreshMeasurementUnits();
     editingMealId = null;
     currentMainImageUrl = null;
     form.reset();
@@ -311,6 +332,7 @@ function openCreateModal() {
 
 async function openEditModal(mealId) {
     try {
+        await refreshMeasurementUnits();
         const response = await fetch(`/admin/meals/${mealId}`);
         if (!response.ok) throw new Error("Unable to load this meal");
         const meal = await response.json();
@@ -505,7 +527,10 @@ ingredientSearchResults.addEventListener("click", event => {
     if (!button || button.disabled) return;
     const ingredient = ingredientSearchMatches.find(item => String(item.ingredientId) === button.dataset.ingredientId);
     if (!ingredient || selectedIngredients.some(item => item.ingredientId === ingredient.ingredientId)) return;
-    selectedIngredients.push(ingredient);
+    selectedIngredients.push({
+        ...ingredient,
+        unit: ingredient.defaultUnit || ""
+    });
     renderSelectedIngredients();
     renderIngredientSearchResults();
     ingredientSearchInput.focus();

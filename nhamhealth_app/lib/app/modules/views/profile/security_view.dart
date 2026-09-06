@@ -37,6 +37,7 @@ class _SecurityViewState extends State<SecurityView> {
   bool _biometrics = false;
   bool _canUseBiometrics = false;
   AppBiometricKind _biometricKind = AppBiometricKind.generic;
+  bool _biometricBusy = false;
   bool _didAutoPrompt = false;
 
   @override
@@ -137,19 +138,34 @@ class _SecurityViewState extends State<SecurityView> {
   }
 
   Future<void> _toggleBiometrics(bool enabled) async {
+    if (_biometricBusy) return;
     if (!_hasPin) {
       await _setOrChangePin();
       if (!_hasPin) return;
     }
+    if (enabled &&
+        _biometricKind == AppBiometricKind.face &&
+        !await _showFaceScanAlert()) {
+      return;
+    }
+    if (mounted) setState(() => _biometricBusy = true);
     try {
       if (enabled &&
-          !await _security.confirmDeviceBiometrics(
-            'Confirm biometrics for NhamHealth',
-          )) {
+          !await _security.confirmDeviceBiometrics(_biometricPrompt)) {
         return;
       }
       await _security.setBiometricsEnabled(enabled);
       await _load();
+      if (mounted) {
+        await AppAlert.success(
+          title:
+              enabled ? '$_biometricName enabled' : '$_biometricName disabled',
+          message:
+              enabled
+                  ? 'NhamHealth will use the biometric sensor secured by this phone.'
+                  : 'Your 6-digit PIN remains available as a backup.',
+        );
+      }
     } on Object {
       if (mounted) {
         AppAlert.error(
@@ -157,8 +173,75 @@ class _SecurityViewState extends State<SecurityView> {
           message: 'Biometrics could not be enabled.',
         );
       }
+    } finally {
+      if (mounted) setState(() => _biometricBusy = false);
     }
   }
+
+  Future<bool> _showFaceScanAlert() async {
+    if (!mounted) return false;
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (dialogContext) => AlertDialog(
+                icon: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: dialogContext.appSelectedSurface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: SizedBox.square(
+                      dimension: 40,
+                      child: _BiometricMark(kind: AppBiometricKind.face),
+                    ),
+                  ),
+                ),
+                title: Text('Ready to scan your face?'.tr),
+                content: Text(
+                  'Hold your phone at eye level and keep your face inside the frame. Your face data stays secured by this device.'
+                      .tr,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: dialogContext.appMutedText,
+                    height: 1.45,
+                  ),
+                ),
+                actionsAlignment: MainAxisAlignment.spaceBetween,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: Text('Cancel'.tr),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    icon: const Icon(
+                      Icons.center_focus_strong_rounded,
+                      size: 19,
+                    ),
+                    label: Text('Scan face'.tr),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+  }
+
+  String get _biometricName => switch (_biometricKind) {
+    AppBiometricKind.face => 'Face ID',
+    AppBiometricKind.fingerprint => 'Fingerprint',
+    AppBiometricKind.generic => 'Biometric unlock',
+  };
+
+  String get _biometricPrompt => switch (_biometricKind) {
+    AppBiometricKind.face => 'Use Face ID to protect your NhamHealth data',
+    AppBiometricKind.fingerprint =>
+      'Touch the fingerprint sensor to protect your NhamHealth data',
+    AppBiometricKind.generic =>
+      'Use your device biometrics to protect your NhamHealth data',
+  };
 
   Future<void> _disableLock() async {
     if (!await _verifyCurrentPin()) return;
@@ -435,7 +518,7 @@ class _SecurityViewState extends State<SecurityView> {
   Widget _settingsCard() => _card(
     children: [
       _SecurityTile(
-        icon: Icons.pin_rounded,
+        leading: const Icon(Icons.pin_rounded),
         title: _hasPin ? 'Change app PIN' : 'Create app PIN',
         subtitle:
             _hasPin
@@ -449,28 +532,30 @@ class _SecurityViewState extends State<SecurityView> {
       ),
       _divider(),
       _SecurityTile(
-        icon:
-            _biometricKind == AppBiometricKind.face
-                ? Icons.face_rounded
-                : Icons.fingerprint_rounded,
-        title: switch (_biometricKind) {
-          AppBiometricKind.face => 'Face ID',
-          AppBiometricKind.fingerprint => 'Fingerprint',
-          AppBiometricKind.generic => 'Biometric unlock',
-        },
+        leading: _BiometricMark(kind: _biometricKind),
+        title: _biometricName,
         subtitle:
             _canUseBiometrics
                 ? (_biometrics
-                    ? 'Quick unlock is enabled'
-                    : 'Unlock quickly with your device')
+                    ? 'Protected by this phone • PIN backup available'
+                    : 'Use the biometric sensor enrolled on this phone')
                 : 'No biometrics enrolled on this device',
-        enabled: _canUseBiometrics,
-        trailing: Switch.adaptive(
-          value: _biometrics && _canUseBiometrics,
-          activeTrackColor: const Color(0xFF00A651),
-          onChanged: _canUseBiometrics ? _toggleBiometrics : null,
-        ),
-        onTap: _canUseBiometrics ? () => _toggleBiometrics(!_biometrics) : null,
+        enabled: _canUseBiometrics && !_biometricBusy,
+        trailing:
+            _biometricBusy
+                ? const SizedBox.square(
+                  dimension: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                )
+                : Switch.adaptive(
+                  value: _biometrics && _canUseBiometrics,
+                  activeTrackColor: const Color(0xFF00A651),
+                  onChanged: _canUseBiometrics ? _toggleBiometrics : null,
+                ),
+        onTap:
+            _canUseBiometrics && !_biometricBusy
+                ? () => _toggleBiometrics(!_biometrics)
+                : null,
       ),
     ],
   );
@@ -478,7 +563,7 @@ class _SecurityViewState extends State<SecurityView> {
   Widget _accountCard() => _card(
     children: [
       _SecurityTile(
-        icon: Icons.password_rounded,
+        leading: const Icon(Icons.password_rounded),
         title: 'Change account password',
         subtitle: 'Update the password used to sign in',
         trailing: Icon(
@@ -561,7 +646,7 @@ class _SectionTitle extends StatelessWidget {
 
 class _SecurityTile extends StatelessWidget {
   const _SecurityTile({
-    required this.icon,
+    required this.leading,
     required this.title,
     required this.subtitle,
     required this.trailing,
@@ -569,7 +654,7 @@ class _SecurityTile extends StatelessWidget {
     this.enabled = true,
   });
 
-  final IconData icon;
+  final Widget leading;
   final String title;
   final String subtitle;
   final Widget trailing;
@@ -595,13 +680,15 @@ class _SecurityTile extends StatelessWidget {
                         : context.appMutedSurface,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                icon,
-                color:
-                    enabled
-                        ? context.appColorScheme.primary
-                        : context.appMutedText,
-                size: 24,
+              child: IconTheme(
+                data: IconThemeData(
+                  color:
+                      enabled
+                          ? context.appColorScheme.primary
+                          : context.appMutedText,
+                  size: 24,
+                ),
+                child: leading,
               ),
             ),
             const SizedBox(width: 14),
@@ -641,4 +728,26 @@ class _SecurityTile extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A platform-neutral biometric mark: enrolled face sensors use a scan frame,
+/// while fingerprint devices retain the familiar system fingerprint glyph.
+class _BiometricMark extends StatelessWidget {
+  const _BiometricMark({required this.kind});
+
+  final AppBiometricKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    if (kind != AppBiometricKind.face) {
+      return const Icon(Icons.fingerprint_rounded, size: 28);
+    }
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        const Icon(Icons.crop_free_rounded, size: 29),
+        Icon(Icons.face_rounded, size: 18, color: IconTheme.of(context).color),
+      ],
+    );
+  }
 }

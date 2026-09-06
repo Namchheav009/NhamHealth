@@ -50,16 +50,28 @@ class LoginController extends GetxController {
         );
         await _finishLogin(response.user);
       } on LoginOtpRequiredException catch (challenge) {
-        Get.to(
-          () => const VerificationView(),
-          arguments: {
-            'email': challenge.email.isEmpty ? normalized : challenge.email,
-            'purpose': 'login',
-          },
-          transition: Transition.rightToLeft,
+        _openLoginVerification(
+          challenge.email.isEmpty ? normalized : challenge.email,
+        );
+      } on LoginOtpDeliveryPendingException catch (pending) {
+        _openLoginVerification(
+          pending.email.isEmpty ? normalized : pending.email,
+          deliveryPending: true,
         );
       }
     });
+  }
+
+  void _openLoginVerification(String email, {bool deliveryPending = false}) {
+    Get.to(
+      () => const VerificationView(),
+      arguments: {
+        'email': email,
+        'purpose': 'login',
+        'deliveryPending': deliveryPending,
+      },
+      transition: Transition.rightToLeft,
+    );
   }
 
   Future<void> loginWithGoogle() async {

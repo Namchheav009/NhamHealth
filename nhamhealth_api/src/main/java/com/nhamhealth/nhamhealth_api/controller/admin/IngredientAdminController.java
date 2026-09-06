@@ -61,6 +61,12 @@ public class IngredientAdminController {
         return ResponseEntity.ok(ingredientAdminService.search(query));
     }
 
+    @GetMapping("/admin/ingredients/default-units")
+    @ResponseBody
+    public ResponseEntity<List<String>> defaultUnits() {
+        return ResponseEntity.ok(ingredientAdminService.getDefaultUnits());
+    }
+
     @PostMapping("/admin/ingredients")
     @ResponseBody
     public ResponseEntity<?> createIngredient(@Valid @RequestBody AdminIngredientRequest request) {

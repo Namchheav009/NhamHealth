@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,16 +24,20 @@ import com.nhamhealth.nhamhealth_api.dto.response.PageResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
 import com.nhamhealth.nhamhealth_api.service.meal.MealAdminService;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
 
 @Controller
 public class MealAdminController {
 
     private final MealAdminService mealAdminService;
     private final ProfileImageStorageService profileImageStorageService;
+    private final IngredientRepository ingredientRepository;
 
-    public MealAdminController(MealAdminService mealAdminService, ProfileImageStorageService profileImageStorageService) {
+    public MealAdminController(MealAdminService mealAdminService, ProfileImageStorageService profileImageStorageService,
+            IngredientRepository ingredientRepository) {
         this.mealAdminService = mealAdminService;
         this.profileImageStorageService = profileImageStorageService;
+        this.ingredientRepository = ingredientRepository;
     }
 
     @GetMapping("/admin/meals")
@@ -43,6 +48,14 @@ public class MealAdminController {
         model.addAttribute("mealCategories", mealAdminService.getActiveCategories());
         model.addAttribute("mealTags", mealAdminService.getMealTags());
         model.addAttribute("mealTotal", mealAdminService.getMealCount());
+        model.addAttribute("measurementUnits", ingredientRepository.findAllByOrderByIngredientNameAsc().stream()
+                .map(ingredient -> ingredient.getDefaultUnit())
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(unit -> !unit.isEmpty())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
         return "admin/meals";
     }
 

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.EntityManager;
 
@@ -65,6 +66,18 @@ public class IngredientAdminService {
                 ? ingredientRepository.findAllByOrderByIngredientNameAsc().stream().limit(20).toList()
                 : ingredientRepository.findTop20ByIngredientNameContainingIgnoreCaseOrderByIngredientNameAsc(normalizedQuery);
         return ingredients.stream().map(this::toDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getDefaultUnits() {
+        return ingredientRepository.findAllByOrderByIngredientNameAsc().stream()
+                .map(Ingredient::getDefaultUnit)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(unit -> !unit.isEmpty())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
     }
 
     private Ingredient findIngredient(Integer ingredientId) {
