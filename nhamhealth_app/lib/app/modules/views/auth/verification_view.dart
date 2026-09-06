@@ -8,7 +8,6 @@ import '../../../../core/services/app_security_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_theme.dart';
 import '../../../widgets/app_alert.dart';
 import 'reset_password_view.dart';
 import 'widgets/auth_flow_scaffold.dart';
@@ -19,7 +18,7 @@ class VerificationController extends GetxController {
 
   static const int codeLifetimeSeconds = 3 * 60;
   static const int resendCooldownSeconds = 30;
-  static const int codeLength = 4;
+  static const int codeLength = 6;
 
   final AuthService _authService;
   final TextEditingController codeController = TextEditingController();
@@ -91,7 +90,7 @@ class VerificationController extends GetxController {
       return;
     }
     if (code.value.length != codeLength) {
-      _showCodeError('Enter the complete four-digit code.');
+      _showCodeError('Enter the complete six-digit code.');
       codeFocusNode.requestFocus();
       return;
     }
@@ -212,15 +211,11 @@ class VerificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(VerificationController());
 
-    return Theme(
-      data: AppTheme.light,
-      child: Builder(
-        builder:
-            (context) => AuthFlowScaffold(
-              title: 'Verification',
-              subtitle: 'Enter the four-digit code to continue.',
-              illustrationAsset: 'assets/images/auth/verification.png',
-              child: Column(
+    return AuthFlowScaffold(
+      title: 'Verification',
+      subtitle: 'Enter the six-digit code to continue.',
+      illustrationAsset: 'assets/images/auth/verification.png',
+      child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Obx(
@@ -330,8 +325,6 @@ class VerificationView extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
       ),
     );
   }
@@ -394,7 +387,7 @@ class _VerificationCodeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Four digit verification code'.tr,
+      label: 'Six digit verification code'.tr,
       textField: true,
       child: LayoutBuilder(
         builder: (context, constraints) {

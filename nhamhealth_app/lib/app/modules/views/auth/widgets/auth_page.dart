@@ -19,6 +19,12 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> {
   late int _selectedIndex;
+  final _loginEmailController = TextEditingController();
+  final _loginPasswordController = TextEditingController();
+  final _registerFullNameController = TextEditingController();
+  final _registerEmailController = TextEditingController();
+  final _registerPasswordController = TextEditingController();
+  final _registerConfirmPasswordController = TextEditingController();
 
   LoginController get _login => Get.find<LoginController>();
   RegisterController get _register => Get.find<RegisterController>();
@@ -27,6 +33,17 @@ class _AuthPageState extends State<AuthPage> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+  }
+
+  @override
+  void dispose() {
+    _loginEmailController.dispose();
+    _loginPasswordController.dispose();
+    _registerFullNameController.dispose();
+    _registerEmailController.dispose();
+    _registerPasswordController.dispose();
+    _registerConfirmPasswordController.dispose();
+    super.dispose();
   }
 
   void _select(int index) {
@@ -44,10 +61,14 @@ class _AuthPageState extends State<AuthPage> {
           sizing: StackFit.loose,
           children: [
             LoginForm(
-              emailController: _login.emailController,
-              passwordController: _login.passwordController,
+              emailController: _loginEmailController,
+              passwordController: _loginPasswordController,
               loading: _login.isLoading.value,
-              onLogin: _login.submit,
+              onLogin:
+                  () => _login.login(
+                    _loginEmailController.text,
+                    _loginPasswordController.text,
+                  ),
               onGoogle: _login.loginWithGoogle,
               onGoogleAuthenticated: _login.loginWithGoogleToken,
               onForgotPassword:
@@ -58,12 +79,18 @@ class _AuthPageState extends State<AuthPage> {
               onRegister: () => _select(1),
             ),
             RegisterForm(
-              fullNameController: _register.fullNameController,
-              emailController: _register.emailController,
-              passwordController: _register.passwordController,
-              confirmPasswordController: _register.confirmPasswordController,
+              fullNameController: _registerFullNameController,
+              emailController: _registerEmailController,
+              passwordController: _registerPasswordController,
+              confirmPasswordController: _registerConfirmPasswordController,
               loading: _register.isLoading.value,
-              onRegister: _register.submit,
+              onRegister:
+                  () => _register.register(
+                    fullName: _registerFullNameController.text,
+                    email: _registerEmailController.text,
+                    password: _registerPasswordController.text,
+                    confirmPassword: _registerConfirmPasswordController.text,
+                  ),
               onGoogle: _register.registerWithGoogle,
               onGoogleAuthenticated: _register.registerWithGoogleToken,
               onLogin: () => _select(0),
