@@ -123,7 +123,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     }
     try {
       final value = await Get.find<CommunityRepository>().getTags();
-      if (mounted) setState(() => _tags = value);
+      if (mounted) {
+        setState(() {
+          final loadedIds = value.map((item) => item.id).toSet();
+          final locallyAdded = _tags.where(
+            (item) => !loadedIds.contains(item.id),
+          );
+          _tags = [...value, ...locallyAdded]
+            ..sort((a, b) => a.name.compareTo(b.name));
+        });
+      }
     } on Object catch (error) {
       if (mounted) setState(() => _tagsError = error.toString());
     } finally {
@@ -158,9 +167,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Get.isRegistered<FavoritesRepository>()
             ? Get.find<FavoritesRepository>()
             : FavoritesRepository(
-              provider: FavoritesProvider(
-                authService: Get.find<AuthService>(),
-              ),
+              provider: FavoritesProvider(authService: Get.find<AuthService>()),
             );
     final food = await showModalBottomSheet<FavoriteFood>(
       context: context,
@@ -223,8 +230,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                   itemBuilder: (context, index) {
                                     final item = foods[index];
                                     return ListTile(
-                                      onTap:
-                                          () => Navigator.pop(context, item),
+                                      onTap: () => Navigator.pop(context, item),
                                       tileColor: context.appSubtleSurface,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
@@ -623,7 +629,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       });
       updateSheet(() {});
     } on Object catch (error) {
-      Get.snackbar('Could not create tag', error.toString());
+      if (mounted) Get.snackbar('Could not create tag', error.toString());
     } finally {
       _creatingTag = false;
       updateSheet(() {});
@@ -631,7 +637,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }
 
   Future<void> _showTagPicker() async {
-    final search = TextEditingController();
+    var search = '';
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -639,8 +645,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       backgroundColor: Colors.transparent,
       builder:
           (sheetContext) => StatefulBuilder(
-            builder: (context, updateSheet) {
-              final query = search.text.trim().toLowerCase();
+            builder: (context, setSheetState) {
+              // A tag request may finish after this sheet has been dismissed.
+              void updateSheet(VoidCallback update) {
+                if (context.mounted) setSheetState(update);
+              }
+
+              final query = search.trim().toLowerCase();
               final visible = _tags
                   .where((tag) => tag.name.toLowerCase().contains(query))
                   .toList(growable: false);
@@ -692,9 +703,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         ),
                         const SizedBox(height: 18),
                         TextField(
-                          controller: search,
                           autofocus: true,
-                          onChanged: (_) => updateSheet(() {}),
+                          onChanged:
+                              (value) => updateSheet(() => search = value),
                           decoration: InputDecoration(
                             hintText: 'Search tags',
                             prefixIcon: const Icon(Icons.search_rounded),
@@ -781,13 +792,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                               if (query.isNotEmpty && !exactMatch)
                                 _TagCreateTile(
                                   icon: Icons.add_rounded,
-                                  title: 'Create "${search.text.trim()}"',
+                                  title: 'Create "${search.trim()}"',
                                   loading: _creatingTag,
                                   onTap:
                                       _creatingTag
                                           ? null
                                           : () => _createAndSelectTag(
-                                            search.text,
+                                            search,
                                             updateSheet,
                                           ),
                                 ),
@@ -825,7 +836,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             },
           ),
     );
-    search.dispose();
   }
 
   @override
@@ -1969,10 +1979,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Future<void> _showIngredientUnitPicker() async {
     FocusScope.of(context).unfocus();
-    final availableUnits = <String>{
-      ..._ingredientUnits,
-      if (_newIngredient.unit.trim().isNotEmpty) _newIngredient.unit.trim(),
-    }.toList();
+    final availableUnits =
+        <String>{
+          ..._ingredientUnits,
+          if (_newIngredient.unit.trim().isNotEmpty) _newIngredient.unit.trim(),
+        }.toList();
     final selected = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: false,

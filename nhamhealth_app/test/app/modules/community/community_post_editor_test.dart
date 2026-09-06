@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -18,6 +20,80 @@ void main() {
   });
 
   tearDown(Get.reset);
+
+  for (final dismissBeforeResponse in [false, true]) {
+    testWidgets(
+      'tag creation survives picker dismissal: $dismissBeforeResponse',
+      (tester) async {
+        final repository =
+            Get.find<CommunityRepository>() as _ComposerRepository;
+        repository.tagResult = Completer<CommunityTag>();
+        await tester.pumpWidget(
+          GetMaterialApp(
+            home: CommunityPostEditorPage(
+              post: CommunityPost(
+                id: '7',
+                mealName: 'Fish',
+                cookingTimeMinutes: 20,
+                servings: 2,
+                categoryId: 1,
+                description: '',
+                imageUrl: '',
+                author: 'Member',
+                role: 'Member',
+              ),
+              authorName: 'Member',
+              authorAvatarUrl: '',
+              onSubmit: (_) async {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.text('Continue to ingredients'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.text('Continue to ingredients'));
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('community-add-tag')),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.byKey(const ValueKey('community-add-tag')));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Search tags'),
+          'Fresh',
+        );
+        await tester.pump();
+        await tester.tap(find.text('Create "Fresh"'));
+        await tester.pump();
+        if (dismissBeforeResponse) {
+          await tester.tap(find.text('Done'));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
+        repository.tagResult!.complete(
+          const CommunityTag(id: 4, name: 'Fresh', scope: 'LIFESTYLE'),
+        );
+        await tester.pumpAndSettle();
+        if (!dismissBeforeResponse) {
+          await tester.tap(find.text('Done (1)'));
+          await tester.pumpAndSettle();
+        }
+        expect(find.widgetWithText(FilterChip, 'Fresh'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.byKey(const ValueKey('community-add-tag')));
+        await tester.pumpAndSettle();
+        expect(find.text('Create "Fresh"'), findsNothing);
+        await tester.tap(find.text('Done (1)'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('new meal composer validates and submits a recipe', (
     tester,
@@ -160,6 +236,11 @@ void main() {
 }
 
 class _ComposerRepository extends CommunityRepository {
+  Completer<CommunityTag>? tagResult;
+
+  @override
+  Future<CommunityTag> createTag(String name) => tagResult!.future;
+
   _ComposerRepository(AuthService authService)
     : super(authService: authService);
 
