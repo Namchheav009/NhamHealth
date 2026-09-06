@@ -25,8 +25,10 @@ class PushNotificationService {
   PushNotificationService({
     required AuthService authService,
     http.Client? client,
+    FirebaseMessaging? messaging,
   }) : _authService = authService,
-       _client = client ?? http.Client();
+       _client = client ?? http.Client(),
+       _messaging = messaging;
 
   static PushNotificationService? instance;
   static const _androidNotifications = MethodChannel(
@@ -35,6 +37,9 @@ class PushNotificationService {
 
   final AuthService _authService;
   final http.Client _client;
+  final FirebaseMessaging? _messaging;
+  FirebaseMessaging get _firebaseMessaging =>
+      _messaging ?? FirebaseMessaging.instance;
   final StreamController<NotificationRealtimeEvent> _events =
       StreamController<NotificationRealtimeEvent>.broadcast(sync: true);
   StreamSubscription<String>? _tokenSubscription;
@@ -45,7 +50,8 @@ class PushNotificationService {
 
   Stream<NotificationRealtimeEvent> get events => _events.stream;
 
-  static bool get isSupported => !kIsWeb && Platform.isAndroid;
+  static bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   Future<void> initialize() async {
     if (!isSupported || _initialized) return;
@@ -53,7 +59,7 @@ class PushNotificationService {
     instance = this;
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    final messaging = FirebaseMessaging.instance;
+    final messaging = _firebaseMessaging;
     final permission = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -72,7 +78,12 @@ class PushNotificationService {
         (_) => _openNativeNotification(initialNativeNotification),
       );
     }
-    _tokenSubscription = messaging.onTokenRefresh.listen(_registerToken);
+    _tokenSubscription = messaging.onTokenRefresh.listen(
+      _registerToken,
+      onError: (Object error) {
+        debugPrint('Push token refresh unavailable: $error');
+      },
+    );
     _messageSubscription = FirebaseMessaging.onMessage.listen((message) async {
       _publish(message);
       final notification = message.notification;
@@ -95,9 +106,6 @@ class PushNotificationService {
       _publish(message);
       _open(message);
     });
-    _token = await messaging.getToken();
-    await syncToken();
-
     final initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,6 +113,8 @@ class PushNotificationService {
         _open(initialMessage);
       });
     }
+    // Token retrieval can require the network. Do not delay notification taps.
+    await syncToken();
   }
 
   void _publish(RemoteMessage message) {
@@ -123,10 +133,15 @@ class PushNotificationService {
 
   Future<void> syncToken() async {
     if (!isSupported) return;
-    final token = _token ?? await FirebaseMessaging.instance.getToken();
-    if (token == null || token.isEmpty) return;
-    _token = token;
-    await _registerToken(token);
+    try {
+      final token = _token ?? await _firebaseMessaging.getToken();
+      if (token == null || token.isEmpty) return;
+      _token = token;
+      await _registerToken(token);
+    } on Object catch (error) {
+      // Retry on the next login, app start, or token refresh.
+      debugPrint('Push token registration unavailable: $error');
+    }
   }
 
   Future<void> unregister() async {
@@ -138,9 +153,9 @@ class PushNotificationService {
 
   Future<void> _registerToken(String token) async {
     _token = token;
-    final accessToken = await _authService.readAccessToken();
-    if (accessToken == null || accessToken.isEmpty) return;
     try {
+      final accessToken = await _authService.readAccessToken();
+      if (accessToken == null || accessToken.isEmpty) return;
       await _sendDeviceRequest('PUT', token, accessToken);
     } on Object {
       // Registration retries at the next login, app start, or token refresh.

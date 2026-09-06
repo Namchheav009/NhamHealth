@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,9 +15,6 @@ import 'core/services/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (PushNotificationService.isSupported) {
-    await Firebase.initializeApp();
-  }
   final localeService = AppLocaleService();
   final initialLocale = await localeService.loadLocale();
   final themeService = AppThemeService();
@@ -24,11 +23,21 @@ Future<void> main() async {
     localeService: localeService,
     themeService: themeService,
   );
-  if (PushNotificationService.isSupported) {
-    await PushNotificationService(authService: Get.find()).initialize();
-  }
-
   runApp(NhamHealthApp(initialLocale: initialLocale));
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_initializePushNotifications());
+  });
+}
+
+Future<void> _initializePushNotifications() async {
+  if (!PushNotificationService.isSupported) return;
+  try {
+    await Firebase.initializeApp();
+    await PushNotificationService(authService: Get.find()).initialize();
+  } on Object catch (error) {
+    // Notifications are optional; an unavailable service must not block startup.
+    debugPrint('Push notification initialization unavailable: $error');
+  }
 }
 
 class NhamHealthApp extends StatelessWidget {
