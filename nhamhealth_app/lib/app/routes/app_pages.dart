@@ -35,6 +35,7 @@ import '../modules/bindings/wellness/wellness_binding.dart';
 import '../modules/views/wellness/wellness_view.dart';
 import '../modules/views/wellness/calories_view.dart';
 import '../modules/views/wellness/protein_view.dart';
+import '../modules/views/wellness/fat_view.dart';
 import '../modules/bindings/wellness/water_binding.dart';
 import '../modules/views/wellness/water_view.dart';
 import '../modules/views/wellness/fiber_view.dart';
@@ -171,6 +172,12 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.protein,
       page: () => const ProteinView(),
+      binding: WellnessBinding(),
+    ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.fat,
+      page: () => const FatView(),
       binding: WellnessBinding(),
     ),
 

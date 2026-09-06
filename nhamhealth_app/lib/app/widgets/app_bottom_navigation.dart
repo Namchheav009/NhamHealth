@@ -83,7 +83,8 @@ class AppBottomNavigation extends StatelessWidget {
                             isDark: isDark,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            // padding: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: EdgeInsets.zero,
                             child: Row(
                               children: [
                                 _NavSlot(
@@ -272,7 +273,12 @@ class _NavItem extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
+                margin: EdgeInsets.fromLTRB(
+                  selected ? 0 : 8,
+                  6,
+                  selected ? 0 : 8,
+                  6,
+                ),
                 decoration: BoxDecoration(
                   color:
                       selected
@@ -285,7 +291,7 @@ class _NavItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox.square(
-                      dimension: 27,
+                      dimension: selected ? 30 : 27,
                       child: Center(
                         child: Icon(
                           selected ? selectedIcon ?? icon : icon,
@@ -293,7 +299,7 @@ class _NavItem extends StatelessWidget {
                               selected
                                   ? colors.primary
                                   : colors.onSurfaceVariant,
-                          size: 27,
+                          size: selected ? 30 : 27,
                         ),
                       ),
                     ),
@@ -307,7 +313,7 @@ class _NavItem extends StatelessWidget {
                       style: TextStyle(
                         color:
                             selected ? colors.primary : colors.onSurfaceVariant,
-                        fontSize: 11,
+                        fontSize: selected ? 12 : 11,
                         height: 1,
                         fontWeight:
                             selected ? FontWeight.w600 : FontWeight.w500,

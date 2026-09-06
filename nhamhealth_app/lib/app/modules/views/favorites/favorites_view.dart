@@ -42,9 +42,9 @@ class FavoritesView extends GetView<FavoritesController> {
                       AppBackButton(onPressed: Get.back),
                       const SizedBox(width: AppBackButton.headerGap),
                       Text(
-                        'favorites'.tr,
+                        'Favorites'.tr,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

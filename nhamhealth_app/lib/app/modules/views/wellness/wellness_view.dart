@@ -90,7 +90,6 @@ class WellnessView extends GetView<WellnessController> {
 
           // Page title
           Expanded(
-            child: Center(
               child: Text(
                 'Daily Wellness'.tr,
                 style: TextStyle(
@@ -100,7 +99,6 @@ class WellnessView extends GetView<WellnessController> {
                 ),
               ),
             ),
-          ),
 
           // Calendar / Today button
           Obx(

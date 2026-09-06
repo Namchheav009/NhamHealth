@@ -202,6 +202,7 @@ class WellnessController extends GetxController {
     final route = switch (nutrientName) {
       'Calories' => AppRoutes.calories,
       'Protein' => AppRoutes.protein,
+      'Fat' => AppRoutes.fat,
       'Water' => AppRoutes.water,
       'Fiber' => AppRoutes.fiber,
       'Sugar' => AppRoutes.sugar,

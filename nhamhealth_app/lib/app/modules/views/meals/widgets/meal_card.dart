@@ -21,126 +21,128 @@ class MealCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
         boxShadow: context.appTileShadow,
       ),
       child: Material(
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: double.infinity,
-                height: 126,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(17),
-                  ),
-                  child: _MealImage(path: meal.image),
-                ),
-              ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        meal.name.tr,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.15,
-                          fontWeight: FontWeight.w600,
-                          color: context.appText,
+                flex: 6,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _MealImage(path: meal.image),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.68),
+                          ],
+                          stops: const [0.5, 1],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 112),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.appSoftGreen,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          meal.category.tr,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.primaryGreen,
-                            fontSize: 10.5,
-                            height: 1.15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                    ),
+                    Positioned(
+                      left: 12,
+                      top: 12,
+                      child: _MealBadge(label: meal.category.tr),
+                    ),
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: _FavoriteButton(
+                        isFavorite: meal.isFavorite,
+                        onTap: onFavorite,
                       ),
-                      const Spacer(),
-                      Row(
+                    ),
+                    Positioned(
+                      left: 4,
+                      right: 2,
+                      bottom: 6,
+                      child: Row(
                         children: [
                           const Icon(
                             Icons.local_fire_department_rounded,
-                            color: AppColors.accentOrange,
-                            size: 15,
+                            color: Colors.white,
+                            size: 18,
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
                           Flexible(
                             child: Text(
                               '${meal.calories} kcal',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: context.appMutedText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          if (meal.cookingTimeMinutes case final minutes?) ...[
-                            const SizedBox(width: 5),
-                            Icon(
-                              Icons.schedule_rounded,
-                              color: context.appMutedText,
-                              size: 14,
+                          if (meal.servings case final servings?) ...[
+                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.people_outline_rounded,
+                              color: Colors.white,
+                              size: 16,
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: 4),
                             Text(
-                              '$minutes min',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: context.appMutedText,
+                              '$servings servings',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
-                          const Spacer(),
-                          Tooltip(
-                            message:
-                                meal.isFavorite
-                                    ? 'Remove from favorites'.tr
-                                    : 'Add to favorites'.tr,
-                            child: InkResponse(
-                              onTap: onFavorite,
-                              radius: 17,
-                              child: Icon(
-                                meal.isFavorite
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                size: 20,
-                                color:
-                                    meal.isFavorite
-                                        ? AppColors.favoriteRed
-                                        : context.appMutedText,
-                              ),
-                            ),
-                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        meal.name.tr,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1,
+                          fontWeight: FontWeight.w700,
+                          color: context.appText,
+                        ),
+                      ),
+                      // const SizedBox(height: 8),
+                      const Spacer(),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _MealTag(label: meal.category.tr),
+                          if (meal.cookingTimeMinutes case final minutes?) ...[
+                            const SizedBox(width: 6),
+                            _MealTag(label: '$minutes min'),
+                          ],
                         ],
                       ),
                     ],
@@ -153,6 +155,86 @@ class MealCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MealBadge extends StatelessWidget {
+  const _MealBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(maxWidth: 120),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.96),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: AppColors.accentOrange,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
+class _FavoriteButton extends StatelessWidget {
+  const _FavoriteButton({required this.isFavorite, required this.onTap});
+
+  final bool isFavorite;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: isFavorite ? 'Remove from favorites'.tr : 'Add to favorites'.tr,
+    child: Material(
+      color: Colors.white.withValues(alpha: 0.95),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            size: 20,
+            color: isFavorite ? AppColors.favoriteRed : const Color(0xFF8A8D8B),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MealTag extends StatelessWidget {
+  const _MealTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(maxWidth: 116),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: AppColors.primaryGreen,
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 class _MealImage extends StatelessWidget {

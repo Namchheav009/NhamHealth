@@ -140,6 +140,11 @@ class _Hero extends StatelessWidget {
             bottom: 18,
             child: _Category(category: meal.category),
           ),
+          Positioned(
+            left: 18,
+            bottom: 18,
+            child: _Category(category: meal.category),
+          ),
         ],
       ),
     ),
@@ -163,15 +168,14 @@ class _DetailHeader extends StatelessWidget {
     child: Row(
       children: [
         AppBackButton(onPressed: onBack),
+        const SizedBox(width: 4),
         Expanded(
-          child: Center(
-            child: Text(
-              'Food Detail'.tr,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+          child: Text(
+            'Food Detail'.tr,
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -193,17 +197,15 @@ class _HeaderFavorite extends StatelessWidget {
     child: Padding(
       padding: AppBackButton.outerMargin,
       child: Material(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: .9),
+        color: Colors.white.withValues(alpha: .95),
         shape: const CircleBorder(),
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: .16),
         child: InkWell(
           onTap: onPressed,
           customBorder: const CircleBorder(),
           child: Icon(
-            selected ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-            color: context.appColorScheme.primary,
-            size: 22,
+            selected ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            color: selected ? AppColors.favoriteRed : const Color(0xFF8A8D8B),
+            size: 20,
           ),
         ),
       ),
@@ -237,6 +239,14 @@ class _Category extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        Text(
+          category,
+          style: TextStyle(
+            color: context.appColorScheme.primary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 9),
           child: SizedBox(
@@ -249,6 +259,10 @@ class _Category extends StatelessWidget {
               ),
             ),
           ),
+        ),
+        Text(
+          'Healthy recipe',
+          style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
         Text(
           'Healthy recipe',
@@ -275,9 +289,23 @@ class _Introduction extends StatelessWidget {
           height: 1.08,
           fontWeight: FontWeight.w800,
         ),
+        style: TextStyle(
+          color: context.appText,
+          fontSize: 27,
+          height: 1.08,
+          fontWeight: FontWeight.w800,
+        ),
       ),
       const SizedBox(height: 9),
       Text(
+        meal.description.isEmpty
+            ? 'A nourishing choice for your day'.tr
+            : meal.description,
+        style: TextStyle(
+          color: context.appMutedText,
+          fontSize: 13,
+          height: 1.4,
+        ),
         meal.description.isEmpty
             ? 'A nourishing choice for your day'.tr
             : meal.description,
@@ -303,6 +331,11 @@ class _Nutrition extends StatelessWidget {
       (max, item) =>
           item.amount.toDouble() > max ? item.amount.toDouble() : max,
     );
+    final maxAmount = nutrition.fold<double>(
+      1,
+      (max, item) =>
+          item.amount.toDouble() > max ? item.amount.toDouble() : max,
+    );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -320,9 +353,22 @@ class _Nutrition extends StatelessWidget {
                 height: .9,
                 fontWeight: FontWeight.w800,
               ),
+              style: TextStyle(
+                color:
+                    context.appIsDark
+                        ? context.appColorScheme.primary
+                        : FoodDetailView.darkGreen,
+                fontSize: 46,
+                height: .9,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             Padding(
               padding: EdgeInsets.only(left: 95),
+              child: Text(
+                'kcal',
+                style: TextStyle(color: context.appMutedText, fontSize: 12),
+              ),
               child: Text(
                 'kcal',
                 style: TextStyle(color: context.appMutedText, fontSize: 12),
@@ -332,6 +378,17 @@ class _Nutrition extends StatelessWidget {
         ),
         const SizedBox(width: 26),
         Expanded(
+          child:
+              nutrition.isEmpty
+                  ? const SizedBox(height: 58)
+                  : Column(
+                    children: nutrition
+                        .map(
+                          (item) =>
+                              _NutritionRow(item: item, maxAmount: maxAmount),
+                        )
+                        .toList(growable: false),
+                  ),
           child:
               nutrition.isEmpty
                   ? const SizedBox(height: 58)
@@ -365,6 +422,11 @@ class _NutritionRow extends StatelessWidget {
             item.name.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+            ),
             style: TextStyle(
               color: context.appMutedText,
               fontSize: 9.5,
@@ -409,8 +471,18 @@ class _Stats extends StatelessWidget {
         horizontal: BorderSide(color: context.appBorder),
       ),
     ),
+    decoration: BoxDecoration(
+      border: Border.symmetric(
+        horizontal: BorderSide(color: context.appBorder),
+      ),
+    ),
     child: Row(
       children: [
+        _Stat(
+          icon: Icons.schedule_rounded,
+          label: 'Cook time',
+          value: _withUnit(meal.cookingTimeMinutes, 'mins'),
+        ),
         _Stat(
           icon: Icons.schedule_rounded,
           label: 'Cook time',
@@ -422,7 +494,17 @@ class _Stats extends StatelessWidget {
           label: 'Difficulty',
           value: meal.difficulty.isEmpty ? 'Not specified' : meal.difficulty,
         ),
+        _Stat(
+          icon: Icons.local_fire_department_outlined,
+          label: 'Difficulty',
+          value: meal.difficulty.isEmpty ? 'Not specified' : meal.difficulty,
+        ),
         const _StatDivider(),
+        _Stat(
+          icon: Icons.people_outline_rounded,
+          label: 'Servings',
+          value: _withUnit(meal.servings, 'people'),
+        ),
         _Stat(
           icon: Icons.people_outline_rounded,
           label: 'Servings',
@@ -449,7 +531,21 @@ class _Stat extends StatelessWidget {
           label.tr,
           style: TextStyle(color: context.appMutedText, fontSize: 10),
         ),
+        Text(
+          label.tr,
+          style: TextStyle(color: context.appMutedText, fontSize: 10),
+        ),
         const SizedBox(height: 5),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         Text(
           value,
           maxLines: 1,
@@ -470,9 +566,17 @@ class _StatDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       SizedBox(height: 62, child: VerticalDivider(color: context.appBorder));
+  Widget build(BuildContext context) =>
+      SizedBox(height: 62, child: VerticalDivider(color: context.appBorder));
 }
 
 class _Tabs extends StatelessWidget {
+  const _Tabs({
+    required this.selected,
+    required this.ingredientCount,
+    required this.stepCount,
+    required this.onSelected,
+  });
   const _Tabs({
     required this.selected,
     required this.ingredientCount,
@@ -492,8 +596,25 @@ class _Tabs extends StatelessWidget {
       borderRadius: BorderRadius.circular(26),
       border: Border.all(color: context.appBorder),
     ),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(26),
+      border: Border.all(color: context.appBorder),
+    ),
     child: Row(
       children: [
+        _Tab(
+          label: 'Ingredients',
+          count: ingredientCount,
+          selected: selected == 0,
+          onTap: () => onSelected(0),
+        ),
+        _Tab(
+          label: 'How to make',
+          count: stepCount,
+          selected: selected == 1,
+          onTap: () => onSelected(1),
+        ),
         _Tab(
           label: 'Ingredients',
           count: ingredientCount,
@@ -518,6 +639,12 @@ class _Tab extends StatelessWidget {
     required this.selected,
     required this.onTap,
   });
+  const _Tab({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
   final String label;
   final int count;
   final bool selected;
@@ -536,6 +663,14 @@ class _Tab extends StatelessWidget {
           child: Text(
             '${label.tr} - $count',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              color:
+                  selected
+                      ? context.appColorScheme.onPrimary
+                      : context.appColorScheme.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
             style: TextStyle(
               color:
                   selected
@@ -607,6 +742,15 @@ class _IngredientRow extends StatelessWidget {
                 color: context.appColorScheme.primary,
                 size: 15,
               ),
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_rounded,
+                color: context.appColorScheme.primary,
+                size: 15,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -614,8 +758,16 @@ class _IngredientRow extends StatelessWidget {
                 item.preparationNote.isEmpty
                     ? item.name
                     : '${item.name}, ${item.preparationNote}',
+                item.preparationNote.isEmpty
+                    ? item.name
+                    : '${item.name}, ${item.preparationNote}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
                 style: TextStyle(
                   color: context.appText,
                   fontSize: 13.5,
@@ -631,9 +783,18 @@ class _IngredientRow extends StatelessWidget {
                 color: context.appSoftGreen,
                 borderRadius: BorderRadius.circular(10),
               ),
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Text(
                 _ingredientAmount(item),
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.appColorScheme.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
                 style: TextStyle(
                   color: context.appColorScheme.primary,
                   fontSize: 12,
@@ -670,6 +831,13 @@ class _Steps extends StatelessWidget {
             (entry) => _Step(step: entry.value, fallbackNumber: entry.key + 1),
           )
           .toList(growable: false),
+      children: items
+          .asMap()
+          .entries
+          .map(
+            (entry) => _Step(step: entry.value, fallbackNumber: entry.key + 1),
+          )
+          .toList(growable: false),
     );
   }
 }
@@ -685,6 +853,9 @@ class _Step extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(bottom: 17),
       margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: context.appBorder)),
+      ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: context.appBorder)),
       ),
@@ -707,6 +878,18 @@ class _Step extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$number',
+              style: TextStyle(
+                color: context.appColorScheme.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -715,6 +898,11 @@ class _Step extends StatelessWidget {
               children: [
                 Text(
                   step.instruction,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
                   style: TextStyle(
                     color: context.appText,
                     fontSize: 14,
@@ -770,6 +958,12 @@ class _Empty extends StatelessWidget {
         style: TextStyle(color: context.appMutedText, fontSize: 14),
       ),
     ),
+    child: Center(
+      child: Text(
+        message.tr,
+        style: TextStyle(color: context.appMutedText, fontSize: 14),
+      ),
+    ),
   );
 }
 
@@ -788,7 +982,17 @@ class _LoadError extends StatelessWidget {
           color: context.appColorScheme.primary,
           size: 42,
         ),
+        Icon(
+          Icons.restaurant_menu_rounded,
+          color: context.appColorScheme.primary,
+          size: 42,
+        ),
         const SizedBox(height: 12),
+        Text(
+          message.isEmpty ? 'Meal details are unavailable.' : message,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.appMutedText, fontSize: 14),
+        ),
         Text(
           message.isEmpty ? 'Meal details are unavailable.' : message,
           textAlign: TextAlign.center,
@@ -813,8 +1017,18 @@ class _HeroImage extends StatelessWidget {
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _fallbackImage(),
       );
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _fallbackImage(),
+      );
     }
     if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _fallbackImage(),
+      );
       return Image.asset(
         imageUrl,
         fit: BoxFit.cover,
@@ -834,6 +1048,8 @@ List<MealNutritionModel> _keyNutrition(List<MealNutritionModel> source) {
     for (final item in source) {
       if (item.name.toLowerCase().contains(keyword) &&
           !selected.contains(item)) {
+      if (item.name.toLowerCase().contains(keyword) &&
+          !selected.contains(item)) {
         selected.add(item);
         break;
       }
@@ -846,6 +1062,16 @@ List<MealNutritionModel> _keyNutrition(List<MealNutritionModel> source) {
   return selected;
 }
 
+String _withUnit(int? value, String unit) =>
+    value == null ? 'Not specified' : '$value $unit';
+String _ingredientAmount(MealIngredientModel item) =>
+    item.quantity == null
+        ? (item.description.isEmpty ? '—' : item.description)
+        : '${_format(item.quantity!)} ${item.unit}'.trim();
+String _format(num value) =>
+    value.toDouble() == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toStringAsFixed(1);
 String _withUnit(int? value, String unit) =>
     value == null ? 'Not specified' : '$value $unit';
 String _ingredientAmount(MealIngredientModel item) =>

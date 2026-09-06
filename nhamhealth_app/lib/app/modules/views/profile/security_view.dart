@@ -296,7 +296,7 @@ class _SecurityViewState extends State<SecurityView> {
               child: Text(
                 'Password & Security'.tr,
                 style: TextStyle(
-                  fontSize: 21,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.35,
                   color: context.appText,

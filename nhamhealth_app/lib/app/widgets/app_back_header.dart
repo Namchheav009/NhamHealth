@@ -41,10 +41,7 @@ class AppBackButton extends StatelessWidget {
           child: Tooltip(
             message: 'Back'.tr,
             child: Material(
-              color: colors.surface.withValues(alpha: enabled ? 0.9 : 0.55),
-              shape: const CircleBorder(),
-              elevation: enabled ? 1 : 0,
-              shadowColor: Colors.black.withValues(alpha: 0.16),
+              color: Colors.transparent,
               child: InkWell(
                 key: buttonKey,
                 onTap: onPressed,

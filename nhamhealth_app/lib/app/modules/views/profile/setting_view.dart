@@ -228,7 +228,7 @@ class SettingsView extends GetView<SettingsController> {
 
   Widget _buildHeader() {
     return AppBackHeader(
-      title: 'settings'.tr,
+      title: 'Settings'.tr,
       backButtonKey: const ValueKey('settings-back-button'),
       onBack: controller.goBack,
     );
@@ -244,7 +244,7 @@ class SettingsView extends GetView<SettingsController> {
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           height: 1.1,
           fontWeight: FontWeight.w600,
           color: Theme.of(context).colorScheme.onSurface,
