@@ -243,7 +243,7 @@ class WellnessController extends GetxController {
     };
 
     if (route == null) return;
-    await Get.toNamed<void>(route);
+    await Get.toNamed<void>(route, arguments: selectedDate.value);
     await loadDailyWellness();
   }
 

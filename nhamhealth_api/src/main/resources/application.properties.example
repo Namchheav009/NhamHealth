@@ -45,6 +45,7 @@ app.ai.gemini.base-url=https://generativelanguage.googleapis.com/v1beta
 app.ai.gemini.model=gemini-3.8-flash
 app.ai.gemini.fallback-model=gemini-3.7-flash
 app.ai.gemini.text-max-tokens=4096
+app.ai.gemini.rate-limit-cooldown=PT10M
 
 # NVIDIA AI (secondary fallback). Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
 app.ai.nvidia.api-key=${APP_AI_NVIDIA_API_KEY:}

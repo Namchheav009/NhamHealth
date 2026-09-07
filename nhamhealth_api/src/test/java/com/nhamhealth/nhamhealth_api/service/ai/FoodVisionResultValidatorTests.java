@@ -108,6 +108,21 @@ class FoodVisionResultValidatorTests {
     }
 
     @Test
+    void preservesPlainWaterClassificationForARecognizedBottleBrand() {
+        FoodVisionComponent water = new FoodVisionComponent(
+                "Vital bottled water", 400, "ml", 0.80, 0.76,
+                "bottled", "Vital label and clear bottled water are visible",
+                "drink", 400, "plain_water");
+        FoodVisionResult normalized = validator.validateAndNormalize(new FoodVisionResult(
+                true, "", "Vital bottled water", "Unknown", "drink",
+                0.80, 0.76, 0.70, List.of(water),
+                List.of(new FoodCandidate("Vital bottled water", 0.80))));
+
+        assertEquals(400, normalized.components().getFirst().liquidVolumeMl());
+        assertEquals("plain_water", normalized.components().getFirst().beverageType());
+    }
+
+    @Test
     void rejectsMealConfidenceThatDisagreesWithTopCandidate() {
         FoodVisionResult invalid = new FoodVisionResult(
                 true, "", "Milk Tea", "Unknown", "drink",

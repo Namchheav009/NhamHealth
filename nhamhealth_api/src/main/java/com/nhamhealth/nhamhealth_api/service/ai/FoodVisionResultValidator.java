@@ -24,6 +24,9 @@ public class FoodVisionResultValidator {
     private static final Set<String> BEVERAGE_TYPES = Set.of(
             "plain_water", "coffee_tea", "juice_smoothie", "dairy",
             "soft_drink", "alcohol", "other", "none");
+    private static final Set<String> NON_PLAIN_WATER_TERMS = Set.of(
+            "coconut", "tonic", "flavored", "flavoured", "vitamin",
+            "sugar", "lemon", "lime", "fruit", "rose", "barley");
 
     public FoodVisionResult validateAndNormalize(FoodVisionResult value) {
         if (value == null) throw invalid("The vision response was empty.");
@@ -214,8 +217,18 @@ public class FoodVisionResultValidator {
     }
 
     private boolean isWaterName(String value) {
-        String name = value.toLowerCase(Locale.ROOT).replace('-', ' ').trim();
-        return name.matches("(plain |drinking |still |sparkling |mineral |bottled )*water");
+        String name = value.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", " ")
+                .trim();
+        if (!name.equals("water") && !name.endsWith(" water")) return false;
+        for (String word : name.split("\\s+")) {
+            if (NON_PLAIN_WATER_TERMS.contains(word)) return false;
+        }
+        if (name.matches("(plain |drinking |still |sparkling |mineral |bottled )*water")) {
+            return true;
+        }
+        return name.matches(
+                ".*\\b(bottled|drinking|mineral|spring|still|sparkling|purified|filtered|alkaline) water");
     }
 
     private double confidence(double value, String field) {

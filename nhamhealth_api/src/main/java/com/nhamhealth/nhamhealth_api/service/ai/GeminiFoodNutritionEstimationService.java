@@ -71,6 +71,7 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
     private final String fallbackModel;
     private final int maxTokens;
     private final NvidiaFoodNutritionEstimationService nvidiaFallback;
+    private final GeminiRateLimitGuard rateLimitGuard;
 
     @Autowired
     public GeminiFoodNutritionEstimationService(
@@ -79,8 +80,21 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             @Value("${app.ai.gemini.model:gemini-3.8-flash}") String model,
             @Value("${app.ai.gemini.fallback-model:gemini-3.7-flash}") String fallbackModel,
             @Value("${app.ai.gemini.text-max-tokens:4096}") int maxTokens,
-            @Autowired(required = false) NvidiaFoodNutritionEstimationService nvidiaFallback) {
-        this(baseUrl, apiKey, model, fallbackModel, maxTokens, new ObjectMapper(), nvidiaFallback);
+            @Autowired(required = false) NvidiaFoodNutritionEstimationService nvidiaFallback,
+            GeminiRateLimitGuard rateLimitGuard) {
+        this(baseUrl, apiKey, model, fallbackModel, maxTokens, new ObjectMapper(),
+                nvidiaFallback, rateLimitGuard);
+    }
+
+    public GeminiFoodNutritionEstimationService(
+            String baseUrl,
+            String apiKey,
+            String model,
+            String fallbackModel,
+            int maxTokens,
+            NvidiaFoodNutritionEstimationService nvidiaFallback) {
+        this(baseUrl, apiKey, model, fallbackModel, maxTokens,
+                new ObjectMapper(), nvidiaFallback);
     }
 
     public GeminiFoodNutritionEstimationService(
@@ -91,6 +105,19 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             int maxTokens,
             ObjectMapper mapper,
             NvidiaFoodNutritionEstimationService nvidiaFallback) {
+        this(baseUrl, apiKey, model, fallbackModel, maxTokens, mapper, nvidiaFallback,
+                new GeminiRateLimitGuard(Duration.ofMinutes(10), System::nanoTime));
+    }
+
+    GeminiFoodNutritionEstimationService(
+            String baseUrl,
+            String apiKey,
+            String model,
+            String fallbackModel,
+            int maxTokens,
+            ObjectMapper mapper,
+            NvidiaFoodNutritionEstimationService nvidiaFallback,
+            GeminiRateLimitGuard rateLimitGuard) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
         requestFactory.setReadTimeout(Duration.ofSeconds(30));
@@ -103,6 +130,7 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
         this.maxTokens = Math.max(800, Math.min(maxTokens, 4_096));
         this.mapper = mapper;
         this.nvidiaFallback = nvidiaFallback;
+        this.rateLimitGuard = rateLimitGuard;
     }
 
     @Override
@@ -117,6 +145,14 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             }
             throw new IllegalStateException("The nutrition estimation provider is not configured.");
         }
+        if (!rateLimitGuard.isCallAllowed()) {
+            if (nvidiaFallback != null) {
+                log.info("Gemini is in rate-limit cooldown ({}s remaining); using NVIDIA nutrition fallback",
+                        rateLimitGuard.remainingSeconds());
+                return nvidiaFallback.estimate(components);
+            }
+            throw new IllegalStateException("The nutrition estimation provider is temporarily rate-limited.");
+        }
 
         long startedAt = System.nanoTime();
         try {
@@ -127,11 +163,22 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             for (String currentModel : candidateModels) {
                 for (int attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        return callGemini(currentModel, componentJson, components.size(), startedAt);
+                        FoodNutritionEstimationResult result = callGemini(
+                                currentModel, componentJson, components.size(), startedAt);
+                        return result;
                     } catch (RestClientResponseException error) {
                         lastError = error;
                         int status = error.getStatusCode().value();
-                        if (status == 429 || status >= 500) {
+                        if (status == 429) {
+                            rateLimitGuard.recordRateLimit();
+                            log.warn("Gemini nutrition model {} reached its quota; enabling provider cooldown for {}s",
+                                    currentModel, rateLimitGuard.remainingSeconds());
+                            if (nvidiaFallback != null) {
+                                return nvidiaFallback.estimate(components);
+                            }
+                            throw error;
+                        }
+                        if (status >= 500) {
                             log.warn("Gemini nutrition model {} returned HTTP {}; retrying", currentModel, status);
                             if (attempt == 1) {
                                 pauseBeforeRetry(1, error);
@@ -155,7 +202,7 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
 
             if (nvidiaFallback != null) {
                 log.warn("Gemini nutrition estimation failed; trying NVIDIA fallback: {}",
-                        lastError != null ? lastError.getMessage() : "unknown error");
+                        lastError != null ? safeMessage(lastError) : "unknown error");
                 return nvidiaFallback.estimate(components);
             }
 
@@ -273,5 +320,12 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             Thread.currentThread().interrupt();
             throw originalError;
         }
+    }
+
+    private String safeMessage(Throwable error) {
+        String message = error.getMessage();
+        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        message = message.replaceAll("[\\r\\n\\t]+", " ");
+        return message.length() <= 200 ? message : message.substring(0, 200);
     }
 }

@@ -152,6 +152,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
     private final String promptVersion;
     private final int maxTokens;
     private final NvidiaFoodVisionService nvidiaFallback;
+    private final GeminiRateLimitGuard rateLimitGuard;
 
     @Autowired
     public GeminiFoodVisionService(
@@ -161,7 +162,21 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             @Value("${app.ai.gemini.fallback-model:gemini-3.7-flash}") String fallbackModel,
             @Value("${app.ai.prompt-version:food-drink-vision-v7}") String promptVersion,
             @Value("${app.ai.gemini.text-max-tokens:4096}") int maxTokens,
-            @Autowired(required = false) NvidiaFoodVisionService nvidiaFallback) {
+            @Autowired(required = false) NvidiaFoodVisionService nvidiaFallback,
+            GeminiRateLimitGuard rateLimitGuard) {
+        this(baseUrl, apiKey, model, fallbackModel, promptVersion, maxTokens,
+                new ObjectMapper(), new FoodVisionResultValidator(), nvidiaFallback,
+                rateLimitGuard);
+    }
+
+    public GeminiFoodVisionService(
+            String baseUrl,
+            String apiKey,
+            String model,
+            String fallbackModel,
+            String promptVersion,
+            int maxTokens,
+            NvidiaFoodVisionService nvidiaFallback) {
         this(baseUrl, apiKey, model, fallbackModel, promptVersion, maxTokens,
                 new ObjectMapper(), new FoodVisionResultValidator(), nvidiaFallback);
     }
@@ -176,6 +191,22 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             ObjectMapper mapper,
             FoodVisionResultValidator validator,
             NvidiaFoodVisionService nvidiaFallback) {
+        this(baseUrl, apiKey, model, fallbackModel, promptVersion, maxTokens,
+                mapper, validator, nvidiaFallback,
+                new GeminiRateLimitGuard(Duration.ofMinutes(10), System::nanoTime));
+    }
+
+    GeminiFoodVisionService(
+            String baseUrl,
+            String apiKey,
+            String model,
+            String fallbackModel,
+            String promptVersion,
+            int maxTokens,
+            ObjectMapper mapper,
+            FoodVisionResultValidator validator,
+            NvidiaFoodVisionService nvidiaFallback,
+            GeminiRateLimitGuard rateLimitGuard) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
         requestFactory.setReadTimeout(Duration.ofSeconds(30));
@@ -190,6 +221,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         this.mapper = mapper;
         this.validator = validator;
         this.nvidiaFallback = nvidiaFallback;
+        this.rateLimitGuard = rateLimitGuard;
     }
 
     @Override
@@ -202,6 +234,15 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             }
             throw new ResponseStatusException(SERVICE_UNAVAILABLE,
                     "The food recognition provider is not configured on the API server.");
+        }
+        if (!rateLimitGuard.isCallAllowed()) {
+            if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
+                log.info("Gemini is in rate-limit cooldown ({}s remaining); using NVIDIA vision fallback",
+                        rateLimitGuard.remainingSeconds());
+                return nvidiaFallback.analyze(image, contentType);
+            }
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE,
+                    "The food recognition provider is temporarily rate-limited.");
         }
 
         String mime = contentType != null && contentType.startsWith("image/")
@@ -221,7 +262,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         } catch (ResponseStatusException error) {
             throw error;
         } catch (Exception error) {
-            log.warn("Gemini vision analysis failed: {}", error.getMessage());
+            log.warn("Gemini vision analysis failed: {}", safeMessage(error));
             if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
                 log.info("Attempting secondary fallback to NVIDIA vision provider");
                 try {
@@ -256,7 +297,13 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                                 "The Gemini provider rejected its API credentials. Check app.ai.gemini.api-key.",
                                 error);
                     }
-                    if (status == 429 || status >= 500) {
+                    if (status == 429) {
+                        rateLimitGuard.recordRateLimit();
+                        log.warn("Gemini model {} reached its quota; enabling provider cooldown for {}s",
+                                currentModel, rateLimitGuard.remainingSeconds());
+                        throw error;
+                    }
+                    if (status >= 500) {
                         log.warn("Gemini model {} returned HTTP {}; attempt {}/2", currentModel, status, attempt);
                         if (attempt == 1) {
                             pauseBeforeRetry(1, error);
@@ -362,6 +409,17 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         message = message.replaceAll("[\\r\\n\\t]+", " ");
         if (message.length() > 300) message = message.substring(0, 300);
         log.error("Gemini food vision request failed at {}: {}", root.getClass().getSimpleName(), message);
+    }
+
+    private String safeMessage(Throwable error) {
+        if (error instanceof RestClientResponseException providerError) {
+            return "HTTP " + providerError.getStatusCode().value()
+                    + " " + providerError.getStatusText();
+        }
+        String message = error.getMessage();
+        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        message = message.replaceAll("[\\r\\n\\t]+", " ");
+        return message.length() <= 200 ? message : message.substring(0, 200);
     }
 
     private record GeminiPassResult(
