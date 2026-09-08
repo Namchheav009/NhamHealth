@@ -172,10 +172,24 @@ Password, not the account's normal password:
 ```powershell
 $env:GMAIL_USERNAME="your-account@gmail.com"
 $env:GMAIL_APP_PASSWORD="your-16-character-app-password"
+$env:APP_MAIL_FALLBACK_TO_CONSOLE="false"
 .\mvnw.cmd spring-boot:run
 ```
 
-The app requests a four-digit code from `POST /api/v1/auth/forgot-password`,
+From Git Bash/MINGW, use `export` instead:
+
+```bash
+export GMAIL_USERNAME='your-account@gmail.com'
+export GMAIL_APP_PASSWORD='your-16-character-app-password'
+export APP_MAIL_FALLBACK_TO_CONSOLE='false'
+./mvnw spring-boot:run
+```
+
+Set these variables in the same terminal that starts the API, then restart the
+API after changing them. The Gmail address must own the App Password; a normal
+account password will be rejected by Gmail.
+
+The app requests a six-digit code from `POST /api/v1/auth/forgot-password`,
 exchanges it for a short-lived one-time token through
 `POST /api/v1/auth/verify-reset-code`, and changes the BCrypt password through
 `POST /api/v1/auth/reset-password`. Codes expire after 3 minutes, reset tokens

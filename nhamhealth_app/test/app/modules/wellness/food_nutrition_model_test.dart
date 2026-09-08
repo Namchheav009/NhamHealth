@@ -99,7 +99,10 @@ void main() {
       'Food name corrected to Mchu Kroeung Beef.',
     );
     expect(restored.components.single.calories, 320);
-    expect(food.components.single.name, 'Beef yellow curry soup with vegetables');
+    expect(
+      food.components.single.name,
+      'Beef yellow curry soup with vegetables',
+    );
   });
 
   test('parses structured components, candidates, and database nutrition', () {
@@ -221,5 +224,22 @@ void main() {
     expect(food.hasNutritionEstimate, isTrue);
     expect(food.isDatabaseCalculated, isFalse);
     expect(food.nutritionSourceLabel, 'Database + AI estimate');
+  });
+
+  test('provides clear per-serving sugar context', () {
+    final food = FoodNutritionModel.fromJson({
+      'name': 'Sweet iced tea',
+      'sugar': 20,
+      'carbs': 25,
+      'nutrition': {
+        'sugar': 20,
+        'carbohydrates': 25,
+        'source': 'AI_ESTIMATED',
+        'complete': true,
+      },
+    });
+
+    expect(food.sugarTeaspoons, 5);
+    expect(food.sugarShareOfCarbs, 80);
   });
 }

@@ -2,6 +2,8 @@ package com.nhamhealth.nhamhealth_api.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodComponentNutritionEstimate;
@@ -27,7 +30,7 @@ import com.sun.net.httpserver.HttpServer;
 class GeminiRateLimitFallbackTests {
 
     @Test
-    void oneQuotaResponseMakesBothStagesUseFallbackDuringCooldown() throws Exception {
+    void quotaResponsesTryAllGeminiModelsBeforeSharedCooldownFallback() throws Exception {
         AtomicInteger geminiRequests = new AtomicInteger();
         HttpServer server = rateLimitedServer(geminiRequests);
 
@@ -53,8 +56,8 @@ class GeminiRateLimitFallbackTests {
                     guard);
 
             assertSame(expectedVision, visionService.analyze(jpeg(), "image/jpeg"));
-            assertEquals(1, geminiRequests.get(),
-                    "A quota response must not be retried against more Gemini models");
+            assertEquals(3, geminiRequests.get(),
+                    "Each distinct Gemini model should get one chance before cooldown");
 
             NvidiaFoodNutritionEstimationService nutritionFallback =
                     mock(NvidiaFoodNutritionEstimationService.class);
@@ -78,10 +81,53 @@ class GeminiRateLimitFallbackTests {
                             guard);
 
             assertSame(expectedNutrition, nutritionService.estimate(List.of(component)));
-            assertEquals(1, geminiRequests.get(),
+            assertEquals(3, geminiRequests.get(),
                     "Nutrition should reuse the rate-limit state learned by vision");
             verify(visionFallback).analyze(any(), any());
             verify(nutritionFallback, times(1)).estimate(List.of(component));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void incompleteBackupResultReturnsActionableGeminiQuotaMessage() throws Exception {
+        AtomicInteger geminiRequests = new AtomicInteger();
+        HttpServer server = rateLimitedServer(geminiRequests);
+
+        try {
+            GeminiRateLimitGuard guard = new GeminiRateLimitGuard(
+                    Duration.ofMinutes(1), System::nanoTime);
+            NvidiaFoodVisionService visionFallback = mock(NvidiaFoodVisionService.class);
+            when(visionFallback.isConfigured()).thenReturn(true);
+            when(visionFallback.analyze(any(), any())).thenReturn(new AiFoodModelResult(
+                    new FoodVisionResult(
+                            false,
+                            "The AI provider could not return a complete result. Please try again.",
+                            "Unknown food", "Unknown", "food", 0, 0, 0,
+                            List.of(), List.of()),
+                    "nvidia-vision", "prompt-v1", false, 0, 0, 25));
+
+            GeminiFoodVisionService service = new GeminiFoodVisionService(
+                    "http://localhost:" + server.getAddress().getPort(),
+                    "test-key",
+                    "gemini-3.8-flash",
+                    "gemini-3.7-flash",
+                    "prompt-v1",
+                    4096,
+                    new ObjectMapper(),
+                    new FoodVisionResultValidator(),
+                    visionFallback,
+                    guard);
+
+            ResponseStatusException error = assertThrows(
+                    ResponseStatusException.class,
+                    () -> service.analyze(jpeg(), "image/jpeg"));
+
+            assertEquals(503, error.getStatusCode().value());
+            assertTrue(error.getReason().contains("Gemini 3.8 Flash"));
+            assertTrue(error.getReason().contains("one minute"));
+            assertEquals(3, geminiRequests.get());
         } finally {
             server.stop(0);
         }

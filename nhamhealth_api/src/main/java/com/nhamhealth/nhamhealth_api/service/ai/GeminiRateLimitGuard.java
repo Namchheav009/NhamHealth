@@ -23,13 +23,13 @@ public class GeminiRateLimitGuard {
 
     @Autowired
     public GeminiRateLimitGuard(
-            @Value("${app.ai.gemini.rate-limit-cooldown:PT10M}") Duration cooldown) {
+            @Value("${app.ai.gemini.rate-limit-cooldown:PT1M}") Duration cooldown) {
         this(cooldown, System::nanoTime);
     }
 
     GeminiRateLimitGuard(Duration cooldown, LongSupplier nanoTime) {
         Duration safeCooldown = cooldown == null || cooldown.isNegative() || cooldown.isZero()
-                ? Duration.ofMinutes(10) : cooldown;
+                ? Duration.ofMinutes(1) : cooldown;
         this.cooldownNanos = safeCooldown.toNanos();
         this.nanoTime = nanoTime;
     }

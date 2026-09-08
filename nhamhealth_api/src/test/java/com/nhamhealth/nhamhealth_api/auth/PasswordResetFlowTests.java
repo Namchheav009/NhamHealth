@@ -35,6 +35,7 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 @SpringBootTest
@@ -82,6 +83,8 @@ class PasswordResetFlowTests {
 
         verify(mailSender).send(emailMessage);
         assertTrue(email.equals(emailMessage.getAllRecipients()[0].toString()));
+        assertTrue("no-reply@nhamhealth.local".equals(
+                ((InternetAddress) emailMessage.getFrom()[0]).getAddress()));
         String emailContent = readContent(emailMessage);
         Matcher codeMatcher = CODE_PATTERN.matcher(emailContent);
         assertTrue(codeMatcher.find());

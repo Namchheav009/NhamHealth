@@ -71,6 +71,31 @@ class NvidiaFoodVisionServiceTests {
     }
 
     @Test
+    void replacesLegacyMuseFallbackWithStructuredVisionModel() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        AtomicInteger requests = new AtomicInteger();
+        List<String> requestBodies = new ArrayList<>();
+        HttpServer server = server(List.of(
+                completion(mapper, "{\"mealName\":\"Rice", "length"),
+                completion(mapper, VALID_VISION_JSON, "stop")), requests, requestBodies);
+
+        try {
+            NvidiaFoodVisionService service = new NvidiaFoodVisionService(
+                    "http://127.0.0.1:" + server.getAddress().getPort(),
+                    "test-key", "meta/llama-3.2-11b-vision-instruct",
+                    "meta/muse-glimmer-30b", "test-prompt", 4096);
+
+            AiFoodModelResult result = service.analyze(jpeg(), "image/jpeg");
+
+            assertEquals("Egg fried rice", result.response().mealName());
+            assertEquals("nvidia/nemotron-nano-12b-v2-vl",
+                    mapper.readTree(requestBodies.get(1)).path("model").asText());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void recoversLowConfidenceFoodNameWhenFallbackJsonIsMalformed() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         List<String> responses = List.of(

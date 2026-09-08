@@ -86,6 +86,7 @@ public class AiMealRecommendationService {
     private final String model;
     private final String fallbackModel;
     private final int textMaxTokens;
+    private final GeminiRateLimitGuard rateLimitGuard;
 
     @Autowired
     public AiMealRecommendationService(
@@ -102,7 +103,8 @@ public class AiMealRecommendationService {
             @Value("${app.ai.gemini.api-key:}") String apiKey,
             @Value("${app.ai.gemini.model:gemini-3.8-flash}") String model,
             @Value("${app.ai.gemini.fallback-model:gemini-flash-latest}") String fallbackModel,
-            @Value("${app.ai.gemini.text-max-tokens:4096}") int textMaxTokens) {
+            @Value("${app.ai.gemini.text-max-tokens:4096}") int textMaxTokens,
+            GeminiRateLimitGuard rateLimitGuard) {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
         this.mealRepository = mealRepository;
@@ -123,6 +125,7 @@ public class AiMealRecommendationService {
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
                 ? "gemini-flash-latest" : fallbackModel.trim();
         this.textMaxTokens = Math.max(1_200, Math.min(textMaxTokens, 8_192));
+        this.rateLimitGuard = rateLimitGuard;
     }
 
     /** Test-compatible constructor retained for callers that supplied the old reasoning budget. */
@@ -144,7 +147,8 @@ public class AiMealRecommendationService {
         this(recommendationRepository, itemRepository, mealRepository, moodRepository,
                 userRepository, favoriteRepository, dailySummaryRepository,
                 dailyNutrientRepository, userHealthProfileService, baseUrl, apiKey,
-                model, "gemini-flash-latest", textMaxTokens);
+                model, "gemini-flash-latest", textMaxTokens,
+                new GeminiRateLimitGuard(Duration.ofMinutes(1), System::nanoTime));
     }
 
     @Transactional
@@ -227,6 +231,11 @@ public class AiMealRecommendationService {
 
     private ModelDecision askModel(Mood mood, List<Meal> meals, RecommendationContext context) {
         if (apiKey == null || apiKey.isBlank()) return null;
+        if (!rateLimitGuard.isCallAllowed()) {
+            log.info("Skipping Gemini meal ranking during rate-limit cooldown ({}s remaining); "
+                    + "using deterministic fallback", rateLimitGuard.remainingSeconds());
+            return null;
+        }
         try {
             int targetCount = Math.min(MAX_RECOMMENDATIONS, meals.size());
             List<Map<String, Object>> catalog = meals.stream().map(meal -> Map.<String, Object>of(
@@ -256,7 +265,13 @@ public class AiMealRecommendationService {
                             return null;
                         }
                         int status = error.getStatusCode().value();
-                        if ((status == 429 || status >= 500) && attempt == 1) continue;
+                        if (status == 429) {
+                            rateLimitGuard.recordRateLimit();
+                            log.warn("Gemini meal ranking is rate-limited (HTTP 429); using "
+                                    + "deterministic fallback");
+                            return null;
+                        }
+                        if (status >= 500 && attempt == 1) continue;
                         break;
                     } catch (ResourceAccessException error) {
                         lastError = error;
@@ -275,9 +290,20 @@ public class AiMealRecommendationService {
             }
             throw lastError == null ? new IllegalStateException("AI meal ranking failed.") : lastError;
         } catch (Exception error) {
-            log.warn("AI meal ranking failed; using deterministic fallback: {}", error.getMessage());
+            log.warn("AI meal ranking failed; using deterministic fallback: {}",
+                    conciseFailure(error));
             return null;
         }
+    }
+
+    private String conciseFailure(Exception error) {
+        if (error instanceof RestClientResponseException responseError) {
+            return "HTTP " + responseError.getStatusCode().value() + " "
+                    + responseError.getStatusText();
+        }
+        String message = error.getMessage();
+        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        return message.length() <= 180 ? message : message.substring(0, 180) + "...";
     }
 
     private ModelDecision requestModelDecision(String input, String targetModel, int attempt) throws Exception {

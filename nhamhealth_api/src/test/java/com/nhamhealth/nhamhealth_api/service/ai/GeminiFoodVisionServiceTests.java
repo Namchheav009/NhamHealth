@@ -6,9 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,7 +36,8 @@ class GeminiFoodVisionServiceTests {
         ObjectMapper mapper = new ObjectMapper();
         List<String> responses = List.of(geminiResponse(mapper, VALID_VISION_JSON));
         AtomicInteger requests = new AtomicInteger();
-        HttpServer server = server(responses, requests);
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        HttpServer server = server(responses, requests, requestBody);
 
         try {
             GeminiFoodVisionService service = new GeminiFoodVisionService(
@@ -55,6 +58,41 @@ class GeminiFoodVisionServiceTests {
             assertEquals(1, result.response().components().size());
             assertEquals("gemini-3.8-flash", result.modelName());
             assertFalse(result.nutritionFallbackUsed());
+            assertTrue(requestBody.get().contains("\"responseMimeType\":\"application/json\""));
+            assertTrue(requestBody.get().contains("\"responseJsonSchema\""));
+            assertTrue(requestBody.get().contains("\"thinkingLevel\":\"low\""));
+            assertFalse(requestBody.get().contains("\"temperature\""));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void repairsInvalidStructuredOutputOnTheSamePrimaryModel() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> responses = List.of(
+                geminiResponse(mapper, "{\"foodDetected\":true"),
+                geminiResponse(mapper, VALID_VISION_JSON));
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = server(responses, requests);
+
+        try {
+            GeminiFoodVisionService service = new GeminiFoodVisionService(
+                    "http://localhost:" + server.getAddress().getPort(),
+                    "test-key",
+                    "gemini-3.8-flash",
+                    "gemini-3.7-flash",
+                    "prompt-v1",
+                    4096,
+                    mapper,
+                    new FoodVisionResultValidator(),
+                    null);
+
+            AiFoodModelResult result = service.analyze(jpeg(), "image/jpeg");
+
+            assertEquals(2, requests.get());
+            assertEquals("gemini-3.8-flash", result.modelName());
+            assertEquals("Egg fried rice", result.response().mealName());
         } finally {
             server.stop(0);
         }
@@ -89,8 +127,15 @@ class GeminiFoodVisionServiceTests {
     }
 
     private static HttpServer server(List<String> responses, AtomicInteger counter) throws IOException {
+        return server(responses, counter, new AtomicReference<>());
+    }
+
+    private static HttpServer server(
+            List<String> responses, AtomicInteger counter,
+            AtomicReference<String> requestBody) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/", exchange -> {
+            requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             int requestIndex = counter.getAndIncrement();
             if (requestIndex >= responses.size()) {
                 send(exchange, 500, "{\"error\":\"Unexpected request\"}");

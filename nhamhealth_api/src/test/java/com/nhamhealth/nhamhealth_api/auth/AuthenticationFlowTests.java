@@ -28,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.ArgumentMatchers.any;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockMultipartFile;
@@ -53,12 +57,14 @@ import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
 import com.nhamhealth.nhamhealth_api.service.auth.GoogleTokenVerifier;
 import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 @SpringBootTest
@@ -73,6 +79,9 @@ class AuthenticationFlowTests {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private VerificationCodeRepository verificationCodeRepository;
 
     @Autowired
     private UserProfileRepository userProfileRepository;
@@ -206,6 +215,8 @@ class AuthenticationFlowTests {
                 .andExpect(jsonPath("$.otpRequired").value(true))
                 .andExpect(jsonPath("$.email").value("user@nhamhealth.local"));
 
+        assertEquals("no-reply@nhamhealth.local",
+                ((InternetAddress) emailMessage.getFrom()[0]).getAddress());
         String code = emailMessage.getSubject().substring(0, 6);
         mockMvc.perform(post("/api/v1/auth/verify-login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -220,6 +231,51 @@ class AuthenticationFlowTests {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.otpRequired").doesNotExist());
+    }
+
+    @Test
+    void failedLoginOtpDeliveryDoesNotLeaveAResendCooldown() throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = JsonPath.read(login.getResponse().getContentAsString(), "$.refreshToken");
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isOk());
+
+        doThrow(new MailAuthenticationException("Authentication failed"))
+                .when(mailSender).send(any(MimeMessage.class));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message")
+                        .value("We could not send the verification email. Please try again shortly"));
+
+        assertTrue(verificationCodeRepository
+                .findByDestinationIgnoreCaseAndPurposeAndStatus(
+                        "user@nhamhealth.local", "LOGIN_VERIFICATION", "PENDING")
+                .isEmpty());
+
+        reset(mailSender);
+        when(mailSender.createMimeMessage()).thenReturn(emailMessage);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@nhamhealth.local","password":"User123!"}
+                                """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.otpRequired").value(true));
     }
 
     @Test
@@ -349,6 +405,8 @@ class AuthenticationFlowTests {
         User pending = userRepository.findByEmailIgnoreCase(email).orElseThrow();
         assertEquals(false, pending.getIsVerified());
         assertEquals("PENDING", pending.getStatus());
+        assertEquals("no-reply@nhamhealth.local",
+                ((InternetAddress) emailMessage.getFrom()[0]).getAddress());
     }
 
     @Test

@@ -44,14 +44,14 @@ app.ai.gemini.api-key=${APP_AI_GEMINI_API_KEY:}
 app.ai.gemini.base-url=https://generativelanguage.googleapis.com/v1beta
 app.ai.gemini.model=gemini-3.8-flash
 app.ai.gemini.fallback-model=gemini-3.7-flash
-app.ai.gemini.text-max-tokens=4096
-app.ai.gemini.rate-limit-cooldown=PT10M
+app.ai.gemini.text-max-tokens=8192
+app.ai.gemini.rate-limit-cooldown=PT1M
 
 # NVIDIA AI (secondary fallback). Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
 app.ai.nvidia.api-key=${APP_AI_NVIDIA_API_KEY:}
 app.ai.nvidia.base-url=https://integrate.api.nvidia.com/v1
 app.ai.nvidia.model=meta/llama-3.2-11b-vision-instruct
-app.ai.nvidia.fallback-vision-model=meta/muse-glimmer-30b
+app.ai.nvidia.fallback-vision-model=nvidia/nemotron-nano-12b-v2-vl
 app.ai.nvidia.nutrition-model=nvidia/nemotron-3.5-lightning-30b-a3b
 app.ai.nvidia.recommendation-model=nvidia/nemotron-3.5-lightning-30b-a3b
 app.ai.nvidia.assistant-model=nvidia/nemotron-3.5-lightning-30b-a3b
@@ -61,7 +61,7 @@ app.ai.nvidia.nutrition-max-tokens=1200
 app.ai.nvidia.recommendation-reasoning-budget=1024
 
 # Food image recognition and nutrition confidence thresholds.
-app.ai.prompt-version=food-drink-vision-v7
+app.ai.prompt-version=food-drink-vision-v8
 app.ai.food.confirmation-threshold=0.75
 app.ai.food.candidate-margin-threshold=0.15
 app.ai.food.portion-confirmation-threshold=0.70
@@ -121,7 +121,8 @@ spring.mail.properties.mail.smtp.connectiontimeout=5000
 spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
 spring.mail.default-encoding=UTF-8
-app.mail.from=${GMAIL_USERNAME:}
+app.mail.from=${APP_MAIL_FROM:${spring.mail.username:}}
+app.mail.fallback-to-console=${APP_MAIL_FALLBACK_TO_CONSOLE:false}
 # Firebase Cloud Messaging. Point GOOGLE_APPLICATION_CREDENTIALS to the
 # downloaded service-account JSON file; never commit that private file.
 nhamhealth.push.enabled=${NHAMHEALTH_PUSH_ENABLED:false}

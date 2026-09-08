@@ -47,7 +47,12 @@ public class NvidiaFoodNutritionEstimationService implements FoodNutritionEstima
             nutrients in grams.
 
             Use the component name, preparationMethod, visibleEvidence, estimatedAmount, and unit
-            together. Convert household units using a typical serving for that specific food, and
+            together. Treat clearly transcribed standard nutrition-label values in visibleEvidence
+            as the strongest evidence and scale them to the visible consumed amount. Never treat
+            promotional sugar claims such as "healthy", "light", or "no added sugar" as a numeric
+            total-sugar value. Total sugar includes naturally occurring and added sugar; do not
+            pretend to distinguish them when the label or identity does not support it.
+            Convert household units using a typical serving for that specific food, and
             distinguish cooked portions from raw ingredient weights when the preparation evidence
             supports it. Keep confidence at or below 0.60 when a household unit, recipe composition,
             or hidden ingredients require assumptions. Round estimates to practical nutrition-label

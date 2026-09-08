@@ -25,7 +25,7 @@ spring:
   mail:
     host: localhost
     port: 2525
-    username: ""
+    username: no-reply@nhamhealth.local
     password: ""
 
 server:
@@ -72,8 +72,6 @@ app:
       text-max-tokens: 4096
       nutrition-max-tokens: 1200
       recommendation-reasoning-budget: 1024
-  mail:
-    from: no-reply@nhamhealth.local
 nhamhealth:
   push:
     enabled: false

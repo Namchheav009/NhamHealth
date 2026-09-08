@@ -6,7 +6,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,6 +30,7 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class EmailChangeVerificationService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailChangeVerificationService.class);
     public static final String PURPOSE = "EMAIL_CHANGE";
 
     private final UserRepository users;
@@ -38,16 +42,19 @@ public class EmailChangeVerificationService {
     private final Duration codeTtl;
     private final Duration resendCooldown;
     private final int maximumAttempts;
+    private final boolean fallbackToConsole;
 
+    @Autowired
     public EmailChangeVerificationService(
             UserRepository users,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
             @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
-            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts) {
+            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts,
+            @Value("${app.mail.fallback-to-console:false}") boolean fallbackToConsole) {
         this.users = users;
         this.codes = codes;
         this.passwordEncoder = passwordEncoder;
@@ -56,6 +63,20 @@ public class EmailChangeVerificationService {
         this.codeTtl = codeTtl;
         this.resendCooldown = resendCooldown;
         this.maximumAttempts = maximumAttempts;
+        this.fallbackToConsole = fallbackToConsole;
+    }
+
+    public EmailChangeVerificationService(
+            UserRepository users,
+            VerificationCodeRepository codes,
+            PasswordEncoder passwordEncoder,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            String mailFrom,
+            Duration codeTtl,
+            Duration resendCooldown,
+            int maximumAttempts) {
+        this(users, codes, passwordEncoder, mailSenderProvider, mailFrom, codeTtl, resendCooldown, maximumAttempts,
+                false);
     }
 
     @Transactional
@@ -98,7 +119,8 @@ public class EmailChangeVerificationService {
         VerificationCode code = codes
                 .findFirstByUserAndDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(user, email, PURPOSE)
                 .orElseThrow(this::invalidCode);
-        if (!"PENDING".equals(code.getStatus())) throw invalidCode();
+        if (!"PENDING".equals(code.getStatus()))
+            throw invalidCode();
         if (code.getExpiresAt().isBefore(now)) {
             code.setStatus("EXPIRED");
             codes.save(code);
@@ -110,7 +132,8 @@ public class EmailChangeVerificationService {
         }
         if (!passwordEncoder.matches(rawCode.trim(), code.getCodeHash())) {
             code.setAttemptCount(code.getAttemptCount() + 1);
-            if (code.getAttemptCount() >= maximumAttempts) code.setStatus("LOCKED");
+            if (code.getAttemptCount() >= maximumAttempts)
+                code.setStatus("LOCKED");
             codes.save(code);
             throw invalidCode();
         }
@@ -139,19 +162,35 @@ public class EmailChangeVerificationService {
 
     private void deliver(String email, String code) {
         JavaMailSender sender = mailSenderProvider.getIfAvailable();
-        if (sender == null) {
+        if (sender == null || mailFrom.isBlank()) {
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Email change code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
             throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "Email delivery is not configured");
         }
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            if (!mailFrom.isBlank()) helper.setFrom(mailFrom, "NhamHealth");
+            if (!mailFrom.isBlank()) {
+                helper.setFrom(mailFrom, "NhamHealth");
+            }
             helper.setTo(email);
             helper.setSubject("%s is your NhamHealth verification code".formatted(code));
             helper.setText("Your NhamHealth email-change verification code is %s. It expires in 5 minutes."
                     .formatted(code));
             sender.send(message);
+            LOGGER.info("Email change verification code successfully sent to {}", email);
         } catch (Exception exception) {
+            LOGGER.error("Could not deliver an email-change verification code to {}", email, exception);
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Email change code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
             throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
                     "We could not send the verification email. Please try again shortly");
         }

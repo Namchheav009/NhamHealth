@@ -3,6 +3,8 @@ package com.nhamhealth.nhamhealth_api.service.ai;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,11 @@ import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
 @Primary
 public class GeminiFoodNutritionEstimationService implements FoodNutritionEstimationProvider {
     private static final Logger log = LoggerFactory.getLogger(GeminiFoodNutritionEstimationService.class);
+    private static final Map<String, Object> NUTRITION_RESPONSE_SCHEMA = nutritionResponseSchema();
+    private static final String REPAIR_INSTRUCTION = """
+            Your previous response was incomplete or invalid. Return one complete JSON object
+            matching the supplied schema, with exactly one component for every input index.
+            """;
 
     private static final String SYSTEM_PROMPT = """
             Estimate nutrition only for the supplied food components that could not be calculated
@@ -47,7 +54,19 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             nutrients in grams.
 
             Use the component name, preparationMethod, visibleEvidence, estimatedAmount, and unit
-            together. Convert household units using a typical serving for that specific food, and
+            together. Treat clearly transcribed standard nutrition-label values in visibleEvidence
+            as the strongest evidence and scale them to the visible consumed amount. Never treat
+            promotional sugar claims such as "healthy", "light", or "no added sugar" as a numeric
+            total-sugar value. Total sugar includes naturally occurring and added sugar; do not
+            pretend to distinguish them when the label or identity does not support it.
+            For sugar, estimate total sugar rather than total carbohydrate. Prefer a clearly
+            readable total-sugars label and scale it by the servings actually consumed. When no
+            label is readable, use the component identity and preparation evidence: plain water
+            and visibly unsweetened staples may be zero or near zero, while sweetened drinks,
+            desserts, syrups, and sauces require a typical conservative midpoint. Keep confidence
+            at or below 0.50 when recipe sweetener is hidden. Never assume every carbohydrate gram
+            is sugar, infer sweetness from color, or invent an added-sugar value.
+            Convert household units using a typical serving for that specific food, and
             distinguish cooked portions from raw ingredient weights when the preparation evidence
             supports it. Keep confidence at or below 0.60 when a household unit, recipe composition,
             or hidden ingredients require assumptions. Round estimates to practical nutrition-label
@@ -79,7 +98,7 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             @Value("${app.ai.gemini.api-key:}") String apiKey,
             @Value("${app.ai.gemini.model:gemini-3.8-flash}") String model,
             @Value("${app.ai.gemini.fallback-model:gemini-3.7-flash}") String fallbackModel,
-            @Value("${app.ai.gemini.text-max-tokens:4096}") int maxTokens,
+            @Value("${app.ai.gemini.text-max-tokens:8192}") int maxTokens,
             @Autowired(required = false) NvidiaFoodNutritionEstimationService nvidiaFallback,
             GeminiRateLimitGuard rateLimitGuard) {
         this(baseUrl, apiKey, model, fallbackModel, maxTokens, new ObjectMapper(),
@@ -120,14 +139,14 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             GeminiRateLimitGuard rateLimitGuard) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
-        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+        requestFactory.setReadTimeout(Duration.ofSeconds(45));
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.client = RestClient.builder().requestFactory(requestFactory).build();
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model == null || model.isBlank() ? "gemini-3.8-flash" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
                 ? "gemini-3.7-flash" : fallbackModel.trim();
-        this.maxTokens = Math.max(800, Math.min(maxTokens, 4_096));
+        this.maxTokens = Math.max(1_200, Math.min(maxTokens, 8_192));
         this.mapper = mapper;
         this.nvidiaFallback = nvidiaFallback;
         this.rateLimitGuard = rateLimitGuard;
@@ -157,48 +176,57 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
         long startedAt = System.nanoTime();
         try {
             String componentJson = mapper.writeValueAsString(components);
-            String[] candidateModels = {model, fallbackModel, "gemini-flash-latest"};
+            List<String> candidateModels = List.copyOf(new LinkedHashSet<>(List.of(
+                    model, fallbackModel, "gemini-flash-latest")));
             Exception lastError = null;
+            boolean quotaLimited = false;
 
             for (String currentModel : candidateModels) {
-                for (int attempt = 1; attempt <= 2; attempt++) {
+                for (int attempt = 1; attempt <= 3; attempt++) {
                     try {
                         FoodNutritionEstimationResult result = callGemini(
-                                currentModel, componentJson, components.size(), startedAt);
+                                currentModel, componentJson, components.size(), startedAt,
+                                attempt > 1);
                         return result;
                     } catch (RestClientResponseException error) {
                         lastError = error;
                         int status = error.getStatusCode().value();
                         if (status == 429) {
-                            rateLimitGuard.recordRateLimit();
-                            log.warn("Gemini nutrition model {} reached its quota; enabling provider cooldown for {}s",
-                                    currentModel, rateLimitGuard.remainingSeconds());
-                            if (nvidiaFallback != null) {
-                                return nvidiaFallback.estimate(components);
-                            }
-                            throw error;
+                            quotaLimited = true;
+                            log.warn("Gemini nutrition model {} is rate-limited; trying the next Gemini model",
+                                    currentModel);
+                            break;
                         }
                         if (status >= 500) {
-                            log.warn("Gemini nutrition model {} returned HTTP {}; retrying", currentModel, status);
-                            if (attempt == 1) {
-                                pauseBeforeRetry(1, error);
+                            log.warn("Gemini nutrition model {} returned HTTP {}; attempt {}/3",
+                                    currentModel, status, attempt);
+                            if (attempt < 3) {
+                                pauseBeforeRetry(attempt, error);
                                 continue;
                             }
                         }
                         break;
                     } catch (ResourceAccessException error) {
                         lastError = error;
-                        if (attempt == 1) {
-                            pauseBeforeRetry(1, error);
+                        if (attempt < 3) {
+                            pauseBeforeRetry(attempt, error);
                             continue;
                         }
                         break;
                     } catch (Exception error) {
                         lastError = error;
+                        log.warn("Gemini nutrition structured response error on {}; attempt {}/3: {}",
+                                currentModel, attempt, safeMessage(error));
+                        if (attempt < 3) {
+                            pauseBeforeRetry(attempt, error);
+                            continue;
+                        }
                         break;
                     }
                 }
             }
+
+            if (quotaLimited) rateLimitGuard.recordRateLimit();
 
             if (nvidiaFallback != null) {
                 log.warn("Gemini nutrition estimation failed; trying NVIDIA fallback: {}",
@@ -220,18 +248,21 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
     }
 
     private FoodNutritionEstimationResult callGemini(
-            String targetModel, String componentJson, int expectedCount, long startedAt) throws Exception {
-        String url = baseUrl + "/models/" + targetModel + ":generateContent?key=" + apiKey;
+            String targetModel, String componentJson, int expectedCount, long startedAt,
+            boolean repair) throws Exception {
+        String url = baseUrl + "/models/" + targetModel + ":generateContent";
 
-        String prompt = SYSTEM_PROMPT + "\n\nComponents to estimate (JSON data):\n" + componentJson;
+        String prompt = SYSTEM_PROMPT + "\n\nComponents to estimate (JSON data):\n" + componentJson
+                + (repair ? "\n\n" + REPAIR_INSTRUCTION : "");
 
         Map<String, Object> content = Map.of(
                 "parts", List.of(Map.of("text", prompt)));
 
-        Map<String, Object> generationConfig = Map.of(
-                "responseMimeType", "application/json",
-                "temperature", 0.1,
-                "maxOutputTokens", maxTokens);
+        Map<String, Object> generationConfig = new LinkedHashMap<>();
+        generationConfig.put("maxOutputTokens", maxTokens);
+        generationConfig.put("thinkingConfig", Map.of("thinkingLevel", "low"));
+        generationConfig.put("responseMimeType", "application/json");
+        generationConfig.put("responseJsonSchema", NUTRITION_RESPONSE_SCHEMA);
 
         Map<String, Object> requestPayload = Map.of(
                 "contents", List.of(content),
@@ -239,6 +270,7 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
 
         String responseBody = client.post()
                 .uri(url)
+                .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(requestPayload)
@@ -282,6 +314,30 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
                 (System.nanoTime() - startedAt) / 1_000_000);
     }
 
+    private static Map<String, Object> nutritionResponseSchema() {
+        Map<String, Object> nutrient = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "index", Map.of("type", "integer"),
+                        "calories", Map.of("type", "number"),
+                        "protein", Map.of("type", "number"),
+                        "carbohydrates", Map.of("type", "number"),
+                        "fat", Map.of("type", "number"),
+                        "sugar", Map.of("type", "number"),
+                        "fiber", Map.of("type", "number"),
+                        "sodium", Map.of("type", "number"),
+                        "confidence", Map.of("type", "number")),
+                "required", List.of(
+                        "index", "calories", "protein", "carbohydrates", "fat",
+                        "sugar", "fiber", "sodium", "confidence"));
+        Map<String, Object> schema = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "components", Map.of("type", "array", "items", nutrient)),
+                "required", List.of("components"));
+        return schema;
+    }
+
     private List<FoodComponentNutritionEstimate> validate(
             List<FoodComponentNutritionEstimate> estimates, int componentCount) {
         if (estimates == null || estimates.size() != componentCount) return List.of();
@@ -313,12 +369,13 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
         return estimate.confidence() <= 1.0 && estimate.sugar() <= estimate.carbohydrates() + 2.0;
     }
 
-    private void pauseBeforeRetry(int attempt, RuntimeException originalError) {
+    private void pauseBeforeRetry(int attempt, Exception originalError) {
         try {
-            Thread.sleep(400L * attempt);
+            Thread.sleep(750L * (1L << Math.min(attempt - 1, 2)));
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            throw originalError;
+            if (originalError instanceof RuntimeException runtime) throw runtime;
+            throw new IllegalStateException(originalError);
         }
     }
 

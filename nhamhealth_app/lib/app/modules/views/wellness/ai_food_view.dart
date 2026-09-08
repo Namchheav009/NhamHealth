@@ -165,16 +165,12 @@ class AiFoodView extends GetView<AiFoodController> {
                   child: _button(
                     context: context,
                     icon: Icons.auto_awesome,
-                    text:
-                        controller.isAnalyzing.value
-                            ? 'Analyzing food or drink...'
-                            : 'Analyze Food or Drink',
+                    text: 'Analyze Food or Drink',
                     action:
                         controller.isAnalyzing.value
                             ? null
                             : controller.analyzeFood,
                     style: _ButtonStyle.primary,
-                    loading: controller.isAnalyzing.value,
                   ),
                 )
                 : const SizedBox(width: double.infinity),
@@ -188,7 +184,13 @@ class AiFoodView extends GetView<AiFoodController> {
       if (controller.isAnalyzing.value)
         Padding(
           padding: EdgeInsets.only(top: wide ? 0 : 14),
-          child: const PageSkeleton.aiFoodAnalysis(),
+          child: Column(
+            children: [
+              _liveAnalysisCard(context),
+              const SizedBox(height: 12),
+              const PageSkeleton.aiFoodAnalysis(),
+            ],
+          ),
         )
       else if (wide && !controller.hasCompleteResult)
         const _TabletAnalysisPlaceholder(),
@@ -218,6 +220,13 @@ class AiFoodView extends GetView<AiFoodController> {
                       ],
                       const SizedBox(height: 14),
                       _nutritionCard(context, controller.nutrition.value!),
+                      if (controller.nutrition.value!.hasNutritionEstimate) ...[
+                        const SizedBox(height: 14),
+                        _sugarAnalysisCard(
+                          context,
+                          controller.nutrition.value!,
+                        ),
+                      ],
                       if (controller.nutrition.value!.hasDrink) ...[
                         const SizedBox(height: 14),
                         _hydrationCard(context, controller.nutrition.value!),
@@ -525,6 +534,46 @@ class AiFoodView extends GetView<AiFoodController> {
   }
 
   // ---- Nutrition ---------------------------------------------------------
+
+  Widget _liveAnalysisCard(BuildContext context) => _card(
+    context,
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                controller.analysisStageLabel.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: controller.analysisProgress,
+            minHeight: 7,
+            backgroundColor: context.appSubtleSurface,
+            color: green,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Results update when the full food and drink check is complete.'.tr,
+          style: TextStyle(color: context.appMutedText, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 
   Widget _analysisCard(BuildContext context, FoodNutritionModel food) => _card(
     context,
@@ -839,17 +888,7 @@ class AiFoodView extends GetView<AiFoodController> {
                     controller.isFeedbackSaving.value
                         ? null
                         : controller.confirmFood,
-                icon:
-                    controller.isFeedbackSaving.value
-                        ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : const Icon(Icons.check_rounded, size: 18),
+                icon: const Icon(Icons.check_rounded, size: 18),
                 label: Text('Confirm'.tr),
                 style: FilledButton.styleFrom(backgroundColor: green),
               ),
@@ -874,6 +913,7 @@ class AiFoodView extends GetView<AiFoodController> {
     final unitController = TextEditingController(text: food.servingUnit);
     String? validationError;
     var saving = false;
+    var saved = false;
     final dialogRoute = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
@@ -883,21 +923,58 @@ class AiFoodView extends GetView<AiFoodController> {
                 (context, updateDialog) => PopScope(
                   canPop: !saving,
                   child: AlertDialog(
-                    title: Text('Correct AI result'.tr),
+                    title: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: green.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          child: const Icon(
+                            Icons.edit_note_rounded,
+                            color: green,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text('Correct AI result'.tr)),
+                      ],
+                    ),
                     content: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            'Correct the food name and serving so nutrition can be recalculated.'
+                                .tr,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
                           TextField(
                             controller: nameController,
                             textCapitalization: TextCapitalization.words,
                             maxLength: 150,
                             decoration: InputDecoration(
                               labelText: 'Food name'.tr,
+                              prefixIcon: const Icon(Icons.restaurant_rounded),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Serving details'.tr,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
@@ -909,6 +986,9 @@ class AiFoodView extends GetView<AiFoodController> {
                                       ),
                                   decoration: InputDecoration(
                                     labelText: 'Amount'.tr,
+                                    prefixIcon: const Icon(
+                                      Icons.scale_outlined,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -919,11 +999,26 @@ class AiFoodView extends GetView<AiFoodController> {
                                   maxLength: 40,
                                   decoration: InputDecoration(
                                     labelText: 'Unit'.tr,
+                                    prefixIcon: const Icon(
+                                      Icons.straighten_rounded,
+                                    ),
                                     counterText: '',
                                   ),
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Examples: g, ml, bowl, cup or serving'.tr,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           if (validationError != null) ...[
                             const SizedBox(height: 10),
@@ -935,6 +1030,61 @@ class AiFoodView extends GetView<AiFoodController> {
                               ),
                             ),
                           ],
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 260),
+                            child:
+                                saving || saved
+                                    ? Container(
+                                      key: ValueKey(saved),
+                                      margin: const EdgeInsets.only(top: 14),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: green.withValues(alpha: .1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                              milliseconds: 220,
+                                            ),
+                                            child:
+                                                saved
+                                                    ? const Icon(
+                                                      Icons
+                                                          .check_circle_rounded,
+                                                      key: ValueKey('saved'),
+                                                      color: green,
+                                                    )
+                                                    : const SizedBox(
+                                                      key: ValueKey('saving'),
+                                                      width: 22,
+                                                      height: 22,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2.4,
+                                                            color: green,
+                                                          ),
+                                                    ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              saved
+                                                  ? 'Correction saved'.tr
+                                                  : 'Saving correction and recalculating nutrition...'
+                                                      .tr,
+                                              style: const TextStyle(
+                                                color: greenDark,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
+                          ),
                         ],
                       ),
                     ),
@@ -945,7 +1095,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           Expanded(
                             child: TextButton(
                               onPressed:
-                                  saving
+                                  saving || saved
                                       ? null
                                       : () => Navigator.of(dialogContext).pop(),
                               style: TextButton.styleFrom(
@@ -965,7 +1115,7 @@ class AiFoodView extends GetView<AiFoodController> {
                             flex: 2,
                             child: FilledButton(
                               onPressed:
-                                  saving
+                                  saving || saved
                                       ? null
                                       : () async {
                                         final amount = double.tryParse(
@@ -1002,6 +1152,14 @@ class AiFoodView extends GetView<AiFoodController> {
                                         );
                                         if (!dialogContext.mounted) return;
                                         if (controller.isUserConfirmed.value) {
+                                          updateDialog(() {
+                                            saving = false;
+                                            saved = true;
+                                          });
+                                          await Future<void>.delayed(
+                                            const Duration(milliseconds: 550),
+                                          );
+                                          if (!dialogContext.mounted) return;
                                           Navigator.of(dialogContext).pop();
                                           return;
                                         }
@@ -1021,20 +1179,10 @@ class AiFoodView extends GetView<AiFoodController> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child:
-                                  saving
-                                      ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                      : Text(
-                                        'Save correction'.tr,
-                                        textAlign: TextAlign.center,
-                                      ),
+                              child: Text(
+                                'Save correction'.tr,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
                         ],
@@ -1150,6 +1298,15 @@ class AiFoodView extends GetView<AiFoodController> {
             ),
             _metric(
               context,
+              Icons.eco_rounded,
+              const Color(0xFF16A34A),
+              food.hasNutritionEstimate
+                  ? '${food.fiber.toStringAsFixed(1)}g'
+                  : '--',
+              'Fiber',
+            ),
+            _metric(
+              context,
               Icons.water_drop_rounded,
               const Color(0xFF1689C9),
               food.plainWaterVolumeMl > 0
@@ -1169,6 +1326,121 @@ class AiFoodView extends GetView<AiFoodController> {
       ],
     ),
   );
+
+  Widget _sugarAnalysisCard(BuildContext context, FoodNutritionModel food) {
+    const color = Color(0xFFA855F7);
+    final sugarShare = food.sugarShareOfCarbs;
+    return _card(
+      context,
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.icecream_rounded, color: color, size: 19),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Sugar analysis'.tr,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Estimate'.tr,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _sugarValue(
+                  context,
+                  '${food.sugar.toStringAsFixed(1)} g',
+                  'Estimated total sugar',
+                ),
+              ),
+              Expanded(
+                child: _sugarValue(
+                  context,
+                  '${food.sugarTeaspoons.toStringAsFixed(1)} tsp',
+                  'About teaspoons',
+                ),
+              ),
+              Expanded(
+                child: _sugarValue(
+                  context,
+                  '${sugarShare.round()}%',
+                  'Sugar share of carbs',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: sugarShare / 100,
+              minHeight: 8,
+              backgroundColor: context.appSubtleSurface,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'This is estimated total sugar. A photo cannot reliably separate added sugar from naturally occurring sugar, so it is not a daily-value percentage. Check the package label or recipe when available.'
+                .tr,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 11.5,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sugarValue(BuildContext context, String value, String label) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label.tr,
+            style: TextStyle(color: context.appMutedText, fontSize: 10.5),
+          ),
+        ],
+      );
 
   Widget _metric(
     BuildContext context,

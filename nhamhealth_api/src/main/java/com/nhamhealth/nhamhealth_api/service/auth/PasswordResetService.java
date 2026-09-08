@@ -13,6 +13,7 @@ import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
@@ -57,7 +58,9 @@ public class PasswordResetService {
     private final Duration resendCooldown;
     private final int maximumAttempts;
     private final RefreshTokenService refreshTokenService;
+    private final boolean fallbackToConsole;
 
+    @Autowired
     public PasswordResetService(
             UserRepository userRepository,
             UserProfileRepository userProfileRepository,
@@ -66,12 +69,13 @@ public class PasswordResetService {
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
             PlasgateSmsService smsService,
-            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
             @Value("${app.auth.password-reset.token-expiration:PT15M}") Duration tokenTtl,
             @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
             @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            @Value("${app.mail.fallback-to-console:false}") boolean fallbackToConsole) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.verificationCodeRepository = verificationCodeRepository;
@@ -85,6 +89,27 @@ public class PasswordResetService {
         this.resendCooldown = resendCooldown;
         this.maximumAttempts = maximumAttempts;
         this.refreshTokenService = refreshTokenService;
+        this.fallbackToConsole = fallbackToConsole;
+    }
+
+    public PasswordResetService(
+            UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
+            VerificationCodeRepository verificationCodeRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            PasswordEncoder passwordEncoder,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            PlasgateSmsService smsService,
+            String mailFrom,
+            Duration codeTtl,
+            Duration tokenTtl,
+            Duration resendCooldown,
+            int maximumAttempts,
+            RefreshTokenService refreshTokenService) {
+        this(userRepository, userProfileRepository, verificationCodeRepository,
+                passwordResetTokenRepository, passwordEncoder, mailSenderProvider,
+                smsService, mailFrom, codeTtl, tokenTtl, resendCooldown, maximumAttempts,
+                refreshTokenService, false);
     }
 
     @Transactional
@@ -161,8 +186,10 @@ public class PasswordResetService {
 
     @Transactional(noRollbackFor = PasswordResetException.class)
     public PasswordResetVerificationResponse verifyCode(String requestedIdentity, String rawCode) {
-        boolean isPhone = requestedIdentity != null && !requestedIdentity.contains("@") && requestedIdentity.matches(".*\\d+.*");
-        String destination = isPhone ? smsService.normalizePhoneNumber(requestedIdentity) : normalizeEmail(requestedIdentity);
+        boolean isPhone = requestedIdentity != null && !requestedIdentity.contains("@")
+                && requestedIdentity.matches(".*\\d+.*");
+        String destination = isPhone ? smsService.normalizePhoneNumber(requestedIdentity)
+                : normalizeEmail(requestedIdentity);
 
         VerificationCode verificationCode = verificationCodeRepository
                 .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, PURPOSE)
@@ -254,7 +281,13 @@ public class PasswordResetService {
 
     private void sendResetEmail(String email, String code) {
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null) {
+        if (mailSender == null || mailFrom.isBlank()) {
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Password reset code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
             throw new PasswordResetException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Email delivery is not configured on the server");
@@ -273,8 +306,15 @@ public class PasswordResetService {
                     PasswordResetEmailTemplate.plainText(code),
                     PasswordResetEmailTemplate.html(code));
             mailSender.send(message);
+            LOGGER.info("Password reset email successfully sent to {}", email);
         } catch (MailException | MessagingException | UnsupportedEncodingException exception) {
             LOGGER.error("Could not deliver a password reset email to {}", email, exception);
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Password reset code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
             throw new PasswordResetException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "We could not send the verification email. Please try again shortly");

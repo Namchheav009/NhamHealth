@@ -62,10 +62,8 @@ public class AuthController {
             var result = authService.loginMobileUser(request);
             loginAttemptService.recordSuccess(request.email());
             if (result.otpRequired()) {
-                var pendingCode = registrationVerificationService.prepareLoginCode(
+                var destination = registrationVerificationService.sendLoginCode(
                         result.otpUser(), request.email(), true);
-                registrationVerificationService.deliverLoginCode(pendingCode);
-                var destination = pendingCode.destination();
                 boolean isPhone = "SMS".equals(destination.deliveryMethod());
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(
                         new LoginChallengeResponse(true, destination.value(),

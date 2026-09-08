@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -42,6 +43,7 @@ class AiFoodController extends GetxController {
   final isNutritionLoading = false.obs;
   final isSaving = false.obs;
   final isFeedbackSaving = false.obs;
+  final analysisStage = 0.obs;
   final isUserConfirmed = false.obs;
   final selectedImage = Rxn<File>();
   final prediction = Rxn<FoodPredictionModel>();
@@ -99,6 +101,10 @@ class AiFoodController extends GetxController {
       return;
     }
     isAnalyzing.value = true;
+    analysisStage.value = 0;
+    final stageTimer = Timer.periodic(const Duration(milliseconds: 1100), (_) {
+      if (analysisStage.value < 3) analysisStage.value++;
+    });
     final generation = ++_scanGeneration;
     errorMessage.value = null;
     clearResult();
@@ -113,9 +119,25 @@ class AiFoodController extends GetxController {
     } catch (_) {
       errorMessage.value = 'Food analysis failed. Please try another photo.';
     } finally {
+      stageTimer.cancel();
       isAnalyzing.value = false;
+      analysisStage.value = 0;
     }
   }
+
+  String get analysisStageLabel => switch (analysisStage.value) {
+    0 => 'Checking image quality',
+    1 => 'Recognizing food and drinks',
+    2 => 'Estimating portions',
+    _ => 'Calculating nutrition and sugar',
+  };
+
+  double get analysisProgress => switch (analysisStage.value) {
+    0 => .18,
+    1 => .42,
+    2 => .68,
+    _ => .88,
+  };
 
   Future<void> _analyzeWithCloud(
     List<int> bytes, {

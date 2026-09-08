@@ -6,7 +6,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,6 +33,7 @@ import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class RegistrationVerificationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegistrationVerificationService.class);
     private static final String PURPOSE = "EMAIL_VERIFICATION";
     private static final String LOGIN_PURPOSE = "LOGIN_VERIFICATION";
 
@@ -45,7 +49,9 @@ public class RegistrationVerificationService {
     private final Duration codeTtl;
     private final Duration resendCooldown;
     private final int maximumAttempts;
+    private final boolean fallbackToConsole;
 
+    @Autowired
     public RegistrationVerificationService(
             AuthService authService,
             UserRepository userRepository,
@@ -54,10 +60,11 @@ public class RegistrationVerificationService {
             PasswordEncoder passwordEncoder,
             ObjectProvider<JavaMailSender> mailSenderProvider,
             PlasgateSmsService smsService,
-            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
             @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
-            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts) {
+            @Value("${app.auth.otp.maximum-attempts:5}") int maximumAttempts,
+            @Value("${app.mail.fallback-to-console:false}") boolean fallbackToConsole) {
         this.authService = authService;
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -69,12 +76,35 @@ public class RegistrationVerificationService {
         this.codeTtl = codeTtl;
         this.resendCooldown = resendCooldown;
         this.maximumAttempts = maximumAttempts;
+        this.fallbackToConsole = fallbackToConsole;
+    }
+
+    public RegistrationVerificationService(
+            AuthService authService,
+            UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
+            VerificationCodeRepository codes,
+            PasswordEncoder passwordEncoder,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            PlasgateSmsService smsService,
+            String mailFrom,
+            Duration codeTtl,
+            Duration resendCooldown,
+            int maximumAttempts) {
+        this(authService, userRepository, userProfileRepository, codes, passwordEncoder,
+                mailSenderProvider, smsService, mailFrom, codeTtl, resendCooldown, maximumAttempts, false);
     }
 
     @Transactional
     public void register(RegisterRequest request) {
         User user = authService.registerPendingMobileUser(request);
-        sendCode(user, false, PURPOSE);
+        String raw = request.email() == null ? "" : request.email().trim();
+        boolean isPhone = !raw.contains("@") && raw.matches(".*\\d+.*");
+        if (isPhone) {
+            sendCode(user, false, PURPOSE, smsService.normalizePhoneNumber(raw), "SMS");
+        } else {
+            sendCode(user, false, PURPOSE, normalize(raw), "EMAIL");
+        }
     }
 
     @Transactional
@@ -97,34 +127,28 @@ public class RegistrationVerificationService {
     @Transactional
     public void resend(String requestedIdentity) {
         User user = requiredPendingUser(requestedIdentity);
-        sendCode(user, true, PURPOSE);
+        String raw = requestedIdentity == null ? "" : requestedIdentity.trim();
+        boolean isPhone = !raw.contains("@") && raw.matches(".*\\d+.*");
+        if (isPhone) {
+            sendCode(user, true, PURPOSE, smsService.normalizePhoneNumber(raw), "SMS");
+        } else {
+            sendCode(user, true, PURPOSE, normalize(raw), "EMAIL");
+        }
     }
 
     @Transactional
-    public PendingLoginCode prepareLoginCode(
+    public VerificationDestination sendLoginCode(
             User user,
             String requestedIdentity,
             boolean enforceCooldown) {
         VerificationDestination destination = loginDestination(user, requestedIdentity);
-        PendingCode pending = createCode(
+        sendCode(
                 user,
                 enforceCooldown,
                 LOGIN_PURPOSE,
                 destination.value(),
                 destination.deliveryMethod());
-        return new PendingLoginCode(destination, pending.rawCode());
-    }
-
-    /**
-     * Delivers a login challenge after {@link #prepareLoginCode} has returned,
-     * allowing its transaction to commit before a potentially slow SMTP/SMS
-     * network call begins.
-     */
-    public void deliverLoginCode(PendingLoginCode pending) {
-        deliverPending(new PendingCode(
-                pending.destination().value(),
-                pending.destination().deliveryMethod(),
-                pending.rawCode()));
+        return destination;
     }
 
     @Transactional
@@ -167,7 +191,8 @@ public class RegistrationVerificationService {
     @Transactional(noRollbackFor = PasswordResetException.class)
     public AuthResponse verifyLogin(String requestedIdentity, String rawCode) {
         User user = verifyCode(requestedIdentity, rawCode, LOGIN_PURPOSE);
-        if (!Boolean.TRUE.equals(user.getLoginOtpRequired())) throw invalidCode();
+        if (!Boolean.TRUE.equals(user.getLoginOtpRequired()))
+            throw invalidCode();
         return authService.completeLoginOtp(user);
     }
 
@@ -180,7 +205,8 @@ public class RegistrationVerificationService {
                 .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, purpose)
                 .orElseThrow(this::invalidCode);
         LocalDateTime now = LocalDateTime.now();
-        if (!"PENDING".equals(code.getStatus())) throw invalidCode();
+        if (!"PENDING".equals(code.getStatus()))
+            throw invalidCode();
         if (code.getExpiresAt().isBefore(now)) {
             code.setStatus("EXPIRED");
             codes.save(code);
@@ -192,7 +218,8 @@ public class RegistrationVerificationService {
         if (!passwordEncoder.matches(rawCode.trim(), code.getCodeHash())) {
             int attempts = code.getAttemptCount() + 1;
             code.setAttemptCount(attempts);
-            if (attempts >= maximumAttempts) code.setStatus("LOCKED");
+            if (attempts >= maximumAttempts)
+                code.setStatus("LOCKED");
             codes.save(code);
             if (attempts >= maximumAttempts) {
                 throw new PasswordResetException(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Request a new code");
@@ -270,7 +297,7 @@ public class RegistrationVerificationService {
         code.setCreatedAt(now);
         codes.save(code);
 
-        return new PendingCode(destination, deliveryMethod, rawCode);
+        return new PendingCode(destination, deliveryMethod, rawCode, purpose);
     }
 
     private void deliverPending(PendingCode pending) {
@@ -283,23 +310,44 @@ public class RegistrationVerificationService {
                         "We could not send the SMS verification code. Please try again shortly");
             }
         } else {
-            deliver(pending.destination(), pending.rawCode());
+            deliver(pending.destination(), pending.rawCode(), LOGIN_PURPOSE.equals(pending.purpose()));
         }
     }
 
-    private void deliver(String email, String code) {
+    private void deliver(String email, String code, boolean isLogin) {
         JavaMailSender sender = mailSenderProvider.getIfAvailable();
-        if (sender == null) throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "Email delivery is not configured");
+        if (sender == null || mailFrom.isBlank()) {
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Verification code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
+            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "Email delivery is not configured");
+        }
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            if (!mailFrom.isBlank()) helper.setFrom(mailFrom, "NhamHealth");
+            if (!mailFrom.isBlank()) {
+                helper.setFrom(mailFrom, "NhamHealth");
+            }
             helper.setTo(email);
-            helper.setSubject("%s is your NhamHealth verification code".formatted(code));
-            helper.setText("Your NhamHealth email verification code is %s. It expires in 5 minutes.".formatted(code));
+            helper.setSubject(EmailVerificationTemplate.subject(code, isLogin));
+            helper.setText(
+                    EmailVerificationTemplate.plainText(code, isLogin),
+                    EmailVerificationTemplate.html(code, isLogin));
             sender.send(message);
+            LOGGER.info("Verification code email successfully sent to {}", email);
         } catch (Exception exception) {
-            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "We could not send the verification email. Please try again shortly");
+            LOGGER.error("Could not deliver a verification code email to {}", email, exception);
+            if (fallbackToConsole) {
+                LOGGER.warn("==================================================================");
+                LOGGER.warn(" [EMAIL FALLBACK OTP] Verification code for {}: {}", email, code);
+                LOGGER.warn("==================================================================");
+                return;
+            }
+            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "We could not send the verification email. Please try again shortly");
         }
     }
 
@@ -346,11 +394,13 @@ public class RegistrationVerificationService {
         return new VerificationDestination(phone, "SMS");
     }
 
-    private String normalize(String email) { return email.trim().toLowerCase(Locale.ROOT); }
+    private String normalize(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
 
-    public record VerificationDestination(String value, String deliveryMethod) { }
+    public record VerificationDestination(String value, String deliveryMethod) {
+    }
 
-    public record PendingLoginCode(VerificationDestination destination, String rawCode) { }
-
-    private record PendingCode(String destination, String deliveryMethod, String rawCode) { }
+    private record PendingCode(String destination, String deliveryMethod, String rawCode, String purpose) {
+    }
 }

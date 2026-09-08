@@ -377,6 +377,11 @@ class FoodNutritionModel {
       .where((item) => item.beverageType == 'plain_water')
       .fold(0, (total, item) => total + item.liquidVolumeMl);
 
+  double get sugarTeaspoons => sugar / 4;
+
+  double get sugarShareOfCarbs =>
+      carbs <= 0 ? 0 : (sugar / carbs * 100).clamp(0, 100).toDouble();
+
   bool get isPlainWaterOnly =>
       components.isNotEmpty &&
       components.every((item) => item.beverageType == 'plain_water');
