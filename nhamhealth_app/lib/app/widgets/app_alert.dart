@@ -8,8 +8,10 @@ import '../theme/app_colors.dart';
 
 abstract final class AppAlert {
   static Future<void> _transition = Future<void>.value();
+  static Future<void> _actionTransition = Future<void>.value();
   static int _latestRequest = 0;
   static SnackbarController? _activeController;
+  static BuildContext? _activeDialogContext;
 
   static Future<void> success({
     required String title,
@@ -18,6 +20,107 @@ abstract final class AppAlert {
 
   static Future<void> error({required String title, required String message}) =>
       Future<void>.value();
+
+  /// Presents blocking feedback for a completed user action.
+  ///
+  /// This intentionally remains separate from [success] and [error], which are
+  /// quiet by default, so only high-value actions interrupt the current flow.
+  static Future<void> actionSuccess({
+    required String title,
+    required String message,
+    String confirmText = 'OK',
+  }) => _showActionDialog(
+    title: title,
+    message: message,
+    tone: _AppActionAlertTone.success,
+    confirmText: confirmText,
+  );
+
+  static Future<void> actionError({
+    required String title,
+    required String message,
+    String confirmText = 'OK',
+  }) => _showActionDialog(
+    title: title,
+    message: message,
+    tone: _AppActionAlertTone.error,
+    confirmText: confirmText,
+  );
+
+  static Future<void> _showActionDialog({
+    required String title,
+    required String message,
+    required _AppActionAlertTone tone,
+    required String confirmText,
+  }) {
+    final operation = _actionTransition.then<void>(
+      (_) => _presentActionDialog(
+        title: title,
+        message: message,
+        tone: tone,
+        confirmText: confirmText,
+      ),
+      onError:
+          (_, _) => _presentActionDialog(
+            title: title,
+            message: message,
+            tone: tone,
+            confirmText: confirmText,
+          ),
+    );
+    _actionTransition = operation.then<void>((_) {}, onError: (_, _) {});
+    return operation;
+  }
+
+  static Future<void> _presentActionDialog({
+    required String title,
+    required String message,
+    required _AppActionAlertTone tone,
+    required String confirmText,
+  }) async {
+    await _closeActiveAlert();
+    final context = Get.overlayContext ?? Get.context;
+    if (context == null || !context.mounted) return;
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    try {
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Alert dialog'.tr,
+        barrierColor: Colors.black.withValues(alpha: 0.48),
+        transitionDuration:
+            disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 260),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          _activeDialogContext = context;
+          return _AppActionAlertOverlay(
+            title: title,
+            message: message,
+            tone: tone,
+            confirmText: confirmText,
+          );
+        },
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.9, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      );
+    } finally {
+      _activeDialogContext = null;
+    }
+  }
 
   /// Notifications intentionally keep their in-app banner. General success
   /// and error feedback is silent so it does not interrupt the current task.
@@ -102,6 +205,11 @@ abstract final class AppAlert {
 
   static Future<void> dismiss() async {
     _latestRequest++;
+    final dialogContext = _activeDialogContext;
+    if (dialogContext != null && dialogContext.mounted) {
+      Navigator.of(dialogContext).pop();
+      _activeDialogContext = null;
+    }
     await _closeActiveAlert();
   }
 
@@ -124,6 +232,153 @@ abstract final class AppAlert {
 }
 
 enum _AppAlertTone { success }
+
+enum _AppActionAlertTone { success, error }
+
+class _AppActionAlertOverlay extends StatelessWidget {
+  const _AppActionAlertOverlay({
+    required this.title,
+    required this.message,
+    required this.tone,
+    required this.confirmText,
+  });
+
+  final String title;
+  final String message;
+  final _AppActionAlertTone tone;
+  final String confirmText;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSuccess = tone == _AppActionAlertTone.success;
+    final iconColor = isSuccess ? AppColors.primaryGreen : AppColors.errorCoral;
+    final icon = isSuccess ? Icons.check_rounded : Icons.close_rounded;
+    final localizedTitle = title.tr;
+    final localizedMessage = message.tr;
+    final buttonColor = context.appColorScheme.primary;
+    final buttonForeground = context.appOnBrand;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: const SizedBox.expand(),
+          ),
+          SafeArea(
+            minimum: const EdgeInsets.all(22),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Semantics(
+                  container: true,
+                  scopesRoute: true,
+                  namesRoute: true,
+                  explicitChildNodes: true,
+                  label:
+                      '${isSuccess ? 'Success' : 'Error'}: '
+                      '$localizedTitle. $localizedMessage',
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 424),
+                    child: Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(minHeight: 250),
+                      padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
+                      decoration: BoxDecoration(
+                        color: context.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 32,
+                            offset: const Offset(0, 16),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: context.appElevatedSurface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.16),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Icon(icon, color: iconColor, size: 34),
+                          ),
+                          const SizedBox(height: 29),
+                          Text(
+                            localizedTitle,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: context.appText,
+                              fontSize: 20,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (localizedMessage.trim().isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              localizedMessage,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 14,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 27),
+                          SizedBox(
+                            width: 160,
+                            height: 53,
+                            child: FilledButton(
+                              key: const ValueKey<String>(
+                                'app-action-alert-confirm',
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: buttonColor,
+                                foregroundColor: buttonForeground,
+                                elevation: 5,
+                                shadowColor: buttonColor.withValues(
+                                  alpha: 0.38,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(21),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: Text(confirmText.tr),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _AppAlertCard extends StatelessWidget {
   const _AppAlertCard({

@@ -55,7 +55,7 @@ class ChangePasswordController extends GetxController {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Required',
         message: 'Please complete all password fields.',
       );
@@ -63,7 +63,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword != confirmPassword) {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Password does not match',
         message: 'Please confirm your new password correctly.',
       );
@@ -71,7 +71,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword.length < 8) {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Password too short',
         message: 'Use at least 8 characters.',
       );
@@ -79,7 +79,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword == currentPassword) {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Choose a new password',
         message:
             'Your new password must be different from your current password.',
@@ -100,17 +100,17 @@ class ChangePasswordController extends GetxController {
       newPasswordController.clear();
       confirmPasswordController.clear();
 
-      AppAlert.success(
+      await AppAlert.actionSuccess(
         title: 'Password updated',
         message: 'Your password has been updated.',
       );
     } on AuthException catch (error) {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Could not update password',
         message: error.message,
       );
     } on Object {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Could not update password',
         message: 'Something went wrong. Please try again.',
       );

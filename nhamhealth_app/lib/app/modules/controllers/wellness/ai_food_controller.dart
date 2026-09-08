@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
-import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -311,17 +310,12 @@ class AiFoodController extends GetxController {
         );
       }
       wasAdded.value = true;
-      if (Get.previousRoute == AppRoutes.wellness) {
-        Get.back<void>();
-      } else {
-        Get.offNamed<void>(AppRoutes.wellness);
-      }
-      AppAlert.success(
+      await AppAlert.actionSuccess(
         title: food.isPlainWaterOnly ? 'Water added' : 'Food added',
         message: '${food.name} added successfully.',
       );
     } on Object {
-      AppAlert.error(
+      await AppAlert.actionError(
         title: 'Could not save food',
         message:
             'Your nutrition was not stored. Please check the server and try again.',
