@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
@@ -34,58 +35,61 @@ class AiFoodView extends GetView<AiFoodController> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: context.appBackground,
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppSpacing.maxWideContentWidth,
-          ),
-          child: Column(
-            children: [
-              _header(context),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= 820;
-                    return Obx(
-                      () => ListView(
-                        padding: EdgeInsets.fromLTRB(
-                          wide
-                              ? AppSpacing.tabletPageHorizontal
-                              : pageHorizontalPadding,
-                          8,
-                          wide
-                              ? AppSpacing.tabletPageHorizontal
-                              : pageHorizontalPadding,
-                          40,
-                        ),
-                        children: [
-                          if (wide)
-                            Row(
-                              key: const ValueKey<String>(
-                                'ai-food-tablet-layout',
-                              ),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: _capturePanel(context)),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: _resultsPanel(context, wide: true),
+    backgroundColor: Colors.transparent,
+    body: AppBackground(
+      lightDecoration: BoxDecoration(color: context.appBackground),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxWideContentWidth,
+            ),
+            child: Column(
+              children: [
+                _header(context),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= 820;
+                      return Obx(
+                        () => ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            wide
+                                ? AppSpacing.tabletPageHorizontal
+                                : pageHorizontalPadding,
+                            8,
+                            wide
+                                ? AppSpacing.tabletPageHorizontal
+                                : pageHorizontalPadding,
+                            40,
+                          ),
+                          children: [
+                            if (wide)
+                              Row(
+                                key: const ValueKey<String>(
+                                  'ai-food-tablet-layout',
                                 ),
-                              ],
-                            )
-                          else ...[
-                            _capturePanel(context),
-                            _resultsPanel(context),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: _capturePanel(context)),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _resultsPanel(context, wide: true),
+                                  ),
+                                ],
+                              )
+                            else ...[
+                              _capturePanel(context),
+                              _resultsPanel(context),
+                            ],
                           ],
-                        ],
-                      ),
-                    );
-                  },
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -27,39 +27,61 @@ class LoginController extends GetxController {
   final AuthService _authService;
   final GoogleAuthService _googleAuth;
   final RxBool isLoading = false.obs;
+  final RxnString identifierError = RxnString();
+  final RxnString passwordError = RxnString();
+  final RxnString submitError = RxnString();
+  final RxBool credentialsInvalid = false.obs;
 
-  Future<void> login(String email, String password) async {
-    final normalized = email.trim();
+  Future<void> login(String identifier, String password) async {
+    _clearErrors();
+    final normalized = identifier.trim();
     final isEmail = GetUtils.isEmail(normalized);
     final isPhone = RegExp(
       r'^\+?[0-9]{8,15}$',
     ).hasMatch(normalized.replaceAll(RegExp(r'[\s()-]'), ''));
     if (!isEmail && !isPhone) {
-      _showError('Please enter a valid email or phone number.');
-      return;
+      identifierError.value =
+          normalized.isEmpty
+              ? 'Enter your email or phone number.'
+              : 'Please enter a valid email or phone number.';
     }
     if (password.isEmpty) {
-      _showError('Please enter your password.');
+      passwordError.value = 'Enter your password.';
+    }
+    if (identifierError.value != null || passwordError.value != null) {
       return;
     }
 
-    await _run(() async {
-      try {
+    await _run(
+      () async {
         final response = await _authService.login(
           LoginRequest(email: normalized, password: password),
         );
         await _finishLogin(response.user);
-      } on LoginOtpRequiredException catch (challenge) {
-        _openLoginVerification(
-          challenge.email.isEmpty ? normalized : challenge.email,
-        );
-      } on LoginOtpDeliveryPendingException catch (pending) {
-        _openLoginVerification(
-          pending.email.isEmpty ? normalized : pending.email,
-          deliveryPending: true,
-        );
-      }
-    });
+      },
+      onLoginOtpRequired:
+          (challenge) => _openLoginVerification(
+            challenge.email.isEmpty ? normalized : challenge.email,
+          ),
+      onLoginOtpDeliveryPending:
+          (pending) => _openLoginVerification(
+            pending.email.isEmpty ? normalized : pending.email,
+            deliveryPending: true,
+          ),
+      onError: _handleLoginError,
+    );
+  }
+
+  void clearIdentifierError(String _) {
+    identifierError.value = null;
+    credentialsInvalid.value = false;
+    submitError.value = null;
+  }
+
+  void clearPasswordError(String _) {
+    passwordError.value = null;
+    credentialsInvalid.value = false;
+    submitError.value = null;
   }
 
   void _openLoginVerification(String email, {bool deliveryPending = false}) {
@@ -98,12 +120,29 @@ class LoginController extends GetxController {
     Get.offAllNamed(AppRoutes.home, arguments: user);
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    ValueChanged<LoginOtpRequiredException>? onLoginOtpRequired,
+    ValueChanged<LoginOtpDeliveryPendingException>? onLoginOtpDeliveryPending,
+    ValueChanged<Object>? onError,
+  }) async {
     if (isLoading.value) return;
     FocusManager.instance.primaryFocus?.unfocus();
     isLoading.value = true;
     try {
       await action();
+    } on LoginOtpRequiredException catch (challenge) {
+      if (onLoginOtpRequired != null) {
+        onLoginOtpRequired(challenge);
+      } else {
+        _showError(challenge.message);
+      }
+    } on LoginOtpDeliveryPendingException catch (pending) {
+      if (onLoginOtpDeliveryPending != null) {
+        onLoginOtpDeliveryPending(pending);
+      } else {
+        _showError(pending.message);
+      }
     } on RegistrationOtpRequiredException catch (challenge) {
       Get.to(
         () => const VerificationView(),
@@ -111,10 +150,31 @@ class LoginController extends GetxController {
         transition: Transition.rightToLeft,
       );
     } catch (error) {
-      _showError(error.toString());
+      if (onError != null) {
+        onError(error);
+      } else {
+        _showError(error.toString());
+      }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handleLoginError(Object error) {
+    if (error is AuthException && error.statusCode == 401) {
+      credentialsInvalid.value = true;
+      submitError.value = 'The email/phone number or password is incorrect.';
+      return;
+    }
+    submitError.value =
+        error is AuthException ? error.message : error.toString();
+  }
+
+  void _clearErrors() {
+    identifierError.value = null;
+    passwordError.value = null;
+    submitError.value = null;
+    credentialsInvalid.value = false;
   }
 
   void _showError(String message) {

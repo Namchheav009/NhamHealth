@@ -13,7 +13,13 @@ class LoginForm extends StatelessWidget {
     required this.emailController,
     required this.passwordController,
     required this.loading,
+    required this.identifierError,
+    required this.passwordError,
+    required this.submitError,
+    required this.credentialsInvalid,
     required this.onLogin,
+    required this.onIdentifierChanged,
+    required this.onPasswordChanged,
     required this.onGoogle,
     required this.onGoogleAuthenticated,
     required this.onForgotPassword,
@@ -23,7 +29,13 @@ class LoginForm extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final bool loading;
+  final String? identifierError;
+  final String? passwordError;
+  final String? submitError;
+  final bool credentialsInvalid;
   final VoidCallback onLogin;
+  final ValueChanged<String> onIdentifierChanged;
+  final ValueChanged<String> onPasswordChanged;
   final VoidCallback onGoogle;
   final ValueChanged<String> onGoogleAuthenticated;
   final VoidCallback onForgotPassword;
@@ -49,6 +61,7 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           AuthTextField(
+            key: const ValueKey<String>('login-identifier-field'),
             controller: emailController,
             hintText: 'Email or Phone Number'.tr,
             prefixIcon: Icons.account_circle_outlined,
@@ -59,15 +72,23 @@ class LoginForm extends StatelessWidget {
               AutofillHints.email,
               AutofillHints.telephoneNumber,
             ],
+            hasError: credentialsInvalid,
+            errorText: identifierError,
+            onChanged: onIdentifierChanged,
           ),
           const SizedBox(height: 10),
           PasswordField(
+            key: const ValueKey<String>('login-password-field'),
             controller: passwordController,
             hintText: 'Password',
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.password],
+            hasError: credentialsInvalid,
+            errorText: passwordError,
+            onChanged: onPasswordChanged,
             onSubmitted: (_) => onLogin(),
           ),
+          AuthInlineError(message: submitError),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(

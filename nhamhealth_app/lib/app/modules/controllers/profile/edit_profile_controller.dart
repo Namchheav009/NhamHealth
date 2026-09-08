@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../repositories/profile/profile_repository.dart';
 import 'profile_controller.dart';
@@ -769,42 +770,52 @@ class EditProfileController extends GetxController {
 
   void selectGender() {
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select Gender',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+      Builder(
+        builder:
+            (context) => Container(
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+              decoration: BoxDecoration(
+                color: context.appElevatedSurface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(25),
+                ),
               ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Gender'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
 
-              const SizedBox(height: 15),
+                    const SizedBox(height: 15),
 
-              _genderOption('Male'),
-              _genderOption('Female'),
-              _genderOption('Prefer not to say'),
-            ],
-          ),
-        ),
+                    _genderOption(context, 'Male'),
+                    _genderOption(context, 'Female'),
+                    _genderOption(context, 'Prefer not to say'),
+                  ],
+                ),
+              ),
+            ),
       ),
+      backgroundColor: Colors.transparent,
     );
   }
 
-  Widget _genderOption(String value) {
+  Widget _genderOption(BuildContext context, String value) {
     return Obx(
       () => ListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(value),
+        title: Text(value.tr, style: TextStyle(color: context.appText)),
         trailing:
             gender.value == value
-                ? const Icon(Icons.check_circle, color: Color(0xFF00A651))
+                ? const Icon(Icons.check_circle, color: AppColors.primaryGreen)
                 : null,
         onTap: () {
           gender.value = value;

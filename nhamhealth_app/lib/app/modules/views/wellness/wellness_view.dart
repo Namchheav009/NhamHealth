@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/wellness/wellness_controller.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/app_back_header.dart';
@@ -17,8 +18,9 @@ class WellnessView extends GetView<WellnessController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
+      backgroundColor: Colors.transparent,
+      body: AppBackground(
+        lightDecoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -90,15 +92,15 @@ class WellnessView extends GetView<WellnessController> {
 
           // Page title
           Expanded(
-              child: Text(
-                'Daily Wellness'.tr,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: context.appText,
-                ),
+            child: Text(
+              'Daily Wellness'.tr,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: context.appText,
               ),
             ),
+          ),
 
           // Calendar / Today button
           Obx(

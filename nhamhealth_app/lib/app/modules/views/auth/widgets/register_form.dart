@@ -15,7 +15,16 @@ class RegisterForm extends StatelessWidget {
     required this.passwordController,
     required this.confirmPasswordController,
     required this.loading,
+    required this.fullNameError,
+    required this.identifierError,
+    required this.passwordError,
+    required this.confirmPasswordError,
+    required this.submitError,
     required this.onRegister,
+    required this.onFullNameChanged,
+    required this.onIdentifierChanged,
+    required this.onPasswordChanged,
+    required this.onConfirmPasswordChanged,
     required this.onGoogle,
     required this.onGoogleAuthenticated,
     required this.onLogin,
@@ -26,7 +35,16 @@ class RegisterForm extends StatelessWidget {
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final bool loading;
+  final String? fullNameError;
+  final String? identifierError;
+  final String? passwordError;
+  final String? confirmPasswordError;
+  final String? submitError;
   final VoidCallback onRegister;
+  final ValueChanged<String> onFullNameChanged;
+  final ValueChanged<String> onIdentifierChanged;
+  final ValueChanged<String> onPasswordChanged;
+  final ValueChanged<String> onConfirmPasswordChanged;
   final VoidCallback onGoogle;
   final ValueChanged<String> onGoogleAuthenticated;
   final VoidCallback onLogin;
@@ -51,14 +69,18 @@ class RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           AuthTextField(
+            key: const ValueKey<String>('register-full-name-field'),
             controller: fullNameController,
             hintText: 'Full name',
             prefixIcon: Icons.person_outline_rounded,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.name],
+            errorText: fullNameError,
+            onChanged: onFullNameChanged,
           ),
           const SizedBox(height: 10),
           AuthTextField(
+            key: const ValueKey<String>('register-identifier-field'),
             controller: emailController,
             hintText: 'Email or Phone Number'.tr,
             prefixIcon: Icons.account_circle_outlined,
@@ -69,22 +91,31 @@ class RegisterForm extends StatelessWidget {
               AutofillHints.email,
               AutofillHints.telephoneNumber,
             ],
+            errorText: identifierError,
+            onChanged: onIdentifierChanged,
           ),
           const SizedBox(height: 10),
           PasswordField(
+            key: const ValueKey<String>('register-password-field'),
             controller: passwordController,
             hintText: 'Password',
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.newPassword],
+            errorText: passwordError,
+            onChanged: onPasswordChanged,
           ),
           const SizedBox(height: 10),
           PasswordField(
+            key: const ValueKey<String>('register-confirm-password-field'),
             controller: confirmPasswordController,
             hintText: 'Confirm password',
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
+            errorText: confirmPasswordError,
+            onChanged: onConfirmPasswordChanged,
             onSubmitted: (_) => onRegister(),
           ),
+          AuthInlineError(message: submitError),
           const SizedBox(height: 13),
           AuthPrimaryButton(
             label: 'Sign Up',

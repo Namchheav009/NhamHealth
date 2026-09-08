@@ -11,7 +11,7 @@ import 'scroll_aware_scaffold.dart';
 ///
 /// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
 /// AI assistant is a separate action positioned to the right of the bar.
-class AppBottomNavigation extends StatelessWidget {
+class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
     super.key,
     required this.selectedIndex,
@@ -20,6 +20,34 @@ class AppBottomNavigation extends StatelessWidget {
 
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+
+  @override
+  State<AppBottomNavigation> createState() => _AppBottomNavigationState();
+}
+
+class _AppBottomNavigationState extends State<AppBottomNavigation> {
+  late int _visualSelectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _visualSelectedIndex = widget.selectedIndex;
+  }
+
+  @override
+  void didUpdateWidget(covariant AppBottomNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _visualSelectedIndex = widget.selectedIndex;
+    }
+  }
+
+  void _select(int index) {
+    if (_visualSelectedIndex != index) {
+      setState(() => _visualSelectedIndex = index);
+    }
+    widget.onSelect(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +120,8 @@ class AppBottomNavigation extends StatelessWidget {
                                     id: 'home',
                                     icon: Icons.home_rounded,
                                     label: 'home'.tr,
-                                    selected: selectedIndex == 0,
-                                    onTap: () => onSelect(0),
+                                    selected: _visualSelectedIndex == 0,
+                                    onTap: () => _select(0),
                                   ),
                                 ),
                                 _NavSlot(
@@ -101,8 +129,8 @@ class AppBottomNavigation extends StatelessWidget {
                                     id: 'meals',
                                     icon: Icons.restaurant_menu_rounded,
                                     label: 'meals'.tr,
-                                    selected: selectedIndex == 1,
-                                    onTap: () => onSelect(1),
+                                    selected: _visualSelectedIndex == 1,
+                                    onTap: () => _select(1),
                                   ),
                                 ),
                                 _NavSlot(
@@ -111,8 +139,8 @@ class AppBottomNavigation extends StatelessWidget {
                                     icon: Icons.people_outline_rounded,
                                     selectedIcon: Icons.people_rounded,
                                     label: 'community'.tr,
-                                    selected: selectedIndex == 2,
-                                    onTap: () => onSelect(2),
+                                    selected: _visualSelectedIndex == 2,
+                                    onTap: () => _select(2),
                                   ),
                                 ),
                                 _NavSlot(
@@ -121,8 +149,8 @@ class AppBottomNavigation extends StatelessWidget {
                                     icon: Icons.settings_outlined,
                                     selectedIcon: Icons.settings_rounded,
                                     label: 'settings'.tr,
-                                    selected: selectedIndex == 4,
-                                    onTap: () => onSelect(4),
+                                    selected: _visualSelectedIndex == 4,
+                                    onTap: () => _select(4),
                                   ),
                                 ),
                               ],
@@ -269,9 +297,9 @@ class _NavItemState extends State<_NavItem> {
     final colors = Theme.of(context).colorScheme;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final selectionDuration =
-        reduceMotion ? Duration.zero : const Duration(milliseconds: 280);
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 160);
     final pressDuration =
-        reduceMotion ? Duration.zero : const Duration(milliseconds: 120);
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 80);
     return Semantics(
       button: true,
       selected: widget.selected,

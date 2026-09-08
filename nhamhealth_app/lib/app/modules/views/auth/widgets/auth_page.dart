@@ -64,11 +64,17 @@ class _AuthPageState extends State<AuthPage> {
               emailController: _loginEmailController,
               passwordController: _loginPasswordController,
               loading: _login.isLoading.value,
+              identifierError: _login.identifierError.value,
+              passwordError: _login.passwordError.value,
+              submitError: _login.submitError.value,
+              credentialsInvalid: _login.credentialsInvalid.value,
               onLogin:
                   () => _login.login(
                     _loginEmailController.text,
                     _loginPasswordController.text,
                   ),
+              onIdentifierChanged: _login.clearIdentifierError,
+              onPasswordChanged: _login.clearPasswordError,
               onGoogle: _login.loginWithGoogle,
               onGoogleAuthenticated: _login.loginWithGoogleToken,
               onForgotPassword:
@@ -84,6 +90,11 @@ class _AuthPageState extends State<AuthPage> {
               passwordController: _registerPasswordController,
               confirmPasswordController: _registerConfirmPasswordController,
               loading: _register.isLoading.value,
+              fullNameError: _register.fullNameError.value,
+              identifierError: _register.identifierError.value,
+              passwordError: _register.passwordError.value,
+              confirmPasswordError: _register.confirmPasswordError.value,
+              submitError: _register.submitError.value,
               onRegister:
                   () => _register.register(
                     fullName: _registerFullNameController.text,
@@ -91,6 +102,10 @@ class _AuthPageState extends State<AuthPage> {
                     password: _registerPasswordController.text,
                     confirmPassword: _registerConfirmPasswordController.text,
                   ),
+              onFullNameChanged: _register.clearFullNameError,
+              onIdentifierChanged: _register.clearIdentifierError,
+              onPasswordChanged: _register.clearPasswordError,
+              onConfirmPasswordChanged: _register.clearConfirmPasswordError,
               onGoogle: _register.registerWithGoogle,
               onGoogleAuthenticated: _register.registerWithGoogleToken,
               onLogin: () => _select(0),

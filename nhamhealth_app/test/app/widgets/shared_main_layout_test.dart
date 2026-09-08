@@ -105,6 +105,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('bottom navigation updates selection without a parent rebuild', (
+    tester,
+  ) async {
+    var selected = 0;
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          bottomNavigationBar: AppBottomNavigation(
+            selectedIndex: 0,
+            onSelect: (index) => selected = index,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey<String>('nav-meals')));
+    expect(selected, 1);
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 180));
+
+    final context = tester.element(find.byType(AppBottomNavigation));
+    final mealsIcon = tester.widget<Icon>(
+      find.byIcon(Icons.restaurant_menu_rounded),
+    );
+    expect(mealsIcon.color, Theme.of(context).colorScheme.primary);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Community control keeps its size across page text scales', (
     tester,
   ) async {
