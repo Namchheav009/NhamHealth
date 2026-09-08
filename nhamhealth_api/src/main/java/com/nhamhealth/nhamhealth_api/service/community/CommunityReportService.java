@@ -1,30 +1,28 @@
 package com.nhamhealth.nhamhealth_api.service.community;
-import com.nhamhealth.nhamhealth_api.service.notification.PushNotificationService;
-
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityReportReasonResponse;
+import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.entity.Post;
 import com.nhamhealth.nhamhealth_api.entity.PostComment;
 import com.nhamhealth.nhamhealth_api.entity.PostReport;
 import com.nhamhealth.nhamhealth_api.entity.ReportReason;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfileReport;
-import com.nhamhealth.nhamhealth_api.entity.Notification;
-import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.UserProfileReportRepository;
+import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.notification.PushNotificationService;
 
 @Service
 public class CommunityReportService {
@@ -80,7 +78,8 @@ public class CommunityReportService {
         report.setStatus("pending");
         report.setTargetType("POST");
         report.setCreatedAt(LocalDateTime.now());
-        reports.save(report);
+        PostReport savedReport = reports.saveAndFlush(report);
+        notifyAdmins(savedReport, reporter, reason.getReasonName(), "post");
     }
 
     @Transactional
@@ -101,7 +100,8 @@ public class CommunityReportService {
         report.setReportReason(requiredReason(reasonId));
         report.setStatus("pending");
         report.setCreatedAt(LocalDateTime.now());
-        reports.save(report);
+        PostReport savedReport = reports.saveAndFlush(report);
+        notifyAdmins(savedReport, report.getReportedByUser(), reasonName(report), "comment");
     }
 
     @Transactional
@@ -115,7 +115,8 @@ public class CommunityReportService {
         report.setReportReason(requiredReason(reasonId));
         report.setStatus("pending");
         report.setCreatedAt(LocalDateTime.now());
-        profileReports.save(report);
+        UserProfileReport savedReport = profileReports.saveAndFlush(report);
+        notifyAdmins(savedReport.getProfileReportId(), report.getReportedByUser(), report.getReportReason().getReasonName(), "profile");
     }
 
     /** Applies an intentional moderation decision and notifies only affected users. */
@@ -194,6 +195,34 @@ public class CommunityReportService {
 
     private void notifyReporter(PostReport report, String title, String message) {
         notify(report.getReportedByUser(), report.getReviewedByUser(), title, message, report);
+    }
+
+    private void notifyAdmins(PostReport report, User reporter, String reason, String target) {
+        users.findAllByRole_RoleNameIgnoreCaseAndStatusIgnoreCase("ADMIN", "ACTIVE")
+                .forEach(admin -> notifyAdmin(admin, reporter, report.getReportId(), reason, target));
+    }
+
+    private void notifyAdmins(Integer reportId, User reporter, String reason, String target) {
+        users.findAllByRole_RoleNameIgnoreCaseAndStatusIgnoreCase("ADMIN", "ACTIVE")
+                .forEach(admin -> notifyAdmin(admin, reporter, reportId, reason, target));
+    }
+
+    private void notifyAdmin(User admin, User reporter, Integer reportId, String reason, String target) {
+        Notification notification = new Notification();
+        notification.setUser(admin);
+        notification.setActorUser(reporter);
+        notification.setNotificationType("REPORT");
+        notification.setReferenceType("REPORT");
+        notification.setReferenceId(reportId);
+        notification.setTitle("New community report");
+        notification.setMessage("A user reported a " + target + " for " + reason + ". Review it in the admin reports queue.");
+        notification.setIsRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        pushNotifications.send(notifications.saveAndFlush(notification));
+    }
+
+    private String reasonName(PostReport report) {
+        return report.getReportReason().getReasonName();
     }
 
     private void notifyReportedUser(PostReport report, String action) {

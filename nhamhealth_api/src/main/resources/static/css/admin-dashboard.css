@@ -458,6 +458,18 @@
     background: #fff0ee;
 }
 
+.details-link.status-control,
+.details-link.revoke-sessions {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.details-link.status-control:hover,
+.details-link.revoke-sessions:hover {
+    background: #eaf8f0;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;

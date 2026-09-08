@@ -231,6 +231,44 @@
     }
   });
 
+  document.querySelectorAll(".revoke-sessions").forEach((button) =>
+    button.addEventListener("click", async () => {
+      const row = button.closest("tr");
+      const name = row?.dataset.fullName || "this user";
+      const userId = row?.dataset.id;
+      if (!userId) return;
+      const confirmed = await alerts.confirmDelete({
+        title: "Force sign out?",
+        text: `Sign ${name} out of every Flutter device? They can sign in again if the account remains active.`,
+        confirmButtonText: "Force sign out",
+      });
+      if (!confirmed) return;
+
+      button.disabled = true;
+      try {
+        const response = await fetch(
+          `/admin/users/${userId}/revoke-sessions`,
+          {
+            method: "POST",
+            headers: requestHeaders(),
+          },
+        );
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.message || "Unable to revoke user sessions.");
+        }
+        await alerts.success(
+          "Sessions revoked",
+          `${name} has been signed out on all Flutter devices.`,
+        );
+      } catch (error) {
+        await alerts.error(error.message || "Unable to revoke user sessions.");
+      } finally {
+        button.disabled = false;
+      }
+    }),
+  );
+
   document.querySelectorAll(".delete-user").forEach((button) =>
     button.addEventListener("click", async () => {
       const row = button.closest("tr");
@@ -239,7 +277,7 @@
       if (!userId) return;
       const confirmed = await alerts.confirmDelete({
         title: "Delete user?",
-        text: `Permanently delete ${name}? Their account and profile will be removed from the database. This cannot be undone.`,
+        text: `Disable and remove ${name} from user management? Their historical activity will be retained for audit integrity.`,
         confirmButtonText: "Yes, delete user!",
       });
       if (!confirmed) return;

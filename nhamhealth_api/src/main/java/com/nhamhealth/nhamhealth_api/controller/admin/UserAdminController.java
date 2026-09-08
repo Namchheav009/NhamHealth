@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -88,6 +89,31 @@ public class UserAdminController {
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Unable to delete user: " + exception.getMessage()));
+        }
+    }
+
+    @PostMapping("/admin/users/{userId}/revoke-sessions")
+    @ResponseBody
+    public ResponseEntity<?> revokeUserSessions(@PathVariable Integer userId) {
+        try {
+            adminUserService.revokeSessions(userId);
+            return ResponseEntity.ok(Map.of("message", "All Flutter sessions were revoked"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
+    }
+
+    @PatchMapping("/admin/users/{userId}/status")
+    @ResponseBody
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Integer userId,
+            @RequestParam String status,
+            Authentication authentication) {
+        try {
+            return ResponseEntity.ok(adminUserService.updateStatus(userId, status,
+                    authentication != null ? authentication.getName() : null));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
     }
 

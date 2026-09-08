@@ -17,18 +17,21 @@ public final class AppUserPrincipal implements UserDetails {
     private final String passwordHash;
     private final String role;
     private final boolean enabled;
+    private final int authVersion;
 
     private AppUserPrincipal(
             Integer userId,
             String email,
             String passwordHash,
             String role,
-            boolean enabled) {
+            boolean enabled,
+            int authVersion) {
         this.userId = userId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
         this.enabled = enabled;
+        this.authVersion = authVersion;
     }
 
     public static AppUserPrincipal from(User user) {
@@ -45,7 +48,8 @@ public final class AppUserPrincipal implements UserDetails {
                 username,
                 user.getPasswordHash(),
                 role,
-                active && verified);
+                active && verified,
+                user.getAuthVersion() == null ? 0 : user.getAuthVersion());
     }
 
     private static String normalizeRole(String roleName) {
@@ -59,6 +63,10 @@ public final class AppUserPrincipal implements UserDetails {
 
     public String role() {
         return role;
+    }
+
+    public int authVersion() {
+        return authVersion;
     }
 
     @Override

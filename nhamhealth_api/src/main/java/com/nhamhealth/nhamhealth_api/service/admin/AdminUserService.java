@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
 import com.nhamhealth.nhamhealth_api.service.auth.RefreshTokenService;
+import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
 @Service
 public class AdminUserService {
@@ -34,6 +36,7 @@ public class AdminUserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final PlasgateSmsService smsService;
 
     public AdminUserService(
             UserRepository userRepository,
@@ -41,13 +44,15 @@ public class AdminUserService {
             WellnessProfileRepository wellnessProfileRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            PlasgateSmsService smsService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.wellnessProfileRepository = wellnessProfileRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+        this.smsService = smsService;
     }
 
     @Transactional(readOnly = true)
@@ -75,13 +80,12 @@ public class AdminUserService {
     @Transactional
     @CacheEvict(value = "adminDashboard", allEntries = true)
     public UserRow createUser(AdminCreateUserRequest request) {
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-            throw new IllegalArgumentException("An account with this email already exists");
-        }
+        AccountIdentity identity = accountIdentity(request.email());
+        ensureIdentityAvailable(identity, null);
 
         User user = new User();
-        user.setEmail(email);
+        user.setEmail(identity.email());
+        user.setPhoneNumber(identity.phoneNumber());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(requiredRole(request.role()));
         String status = request.status() == null || request.status().isBlank()
@@ -98,6 +102,11 @@ public class AdminUserService {
         profile.setUser(user);
         profile.setFullName(request.fullName().trim());
         profile.setProfileImageUrl(normalizeImageUrl(request.profileImageUrl()));
+        if (identity.phoneNumber() != null) {
+            profile.setPhoneNumber(identity.phoneNumber());
+            profile.setIsPhoneVerified(verified);
+            profile.setPhoneVerifiedAt(verified ? now : null);
+        }
         profile.setCreatedAt(now);
         profile.setUpdatedAt(now);
         userProfileRepository.save(profile);
@@ -112,13 +121,8 @@ public class AdminUserService {
                 .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
         boolean editingSelf = currentAdminEmail != null && ((user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentAdminEmail))
                 || (user.getPhoneNumber() != null && user.getPhoneNumber().equalsIgnoreCase(currentAdminEmail)));
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-
-        userRepository.findByEmailIgnoreCase(email)
-                .filter(existing -> !existing.getUserId().equals(userId))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("An account with this email already exists");
-                });
+        AccountIdentity identity = accountIdentity(request.email());
+        ensureIdentityAvailable(identity, userId);
 
         String role = request.role().trim().toUpperCase(Locale.ROOT);
         String status = request.status().trim().toUpperCase(Locale.ROOT);
@@ -126,12 +130,25 @@ public class AdminUserService {
             throw new IllegalArgumentException("You cannot remove your own administrator access");
         }
 
-        user.setEmail(email);
+        boolean passwordChanged = request.password() != null && !request.password().isBlank();
+        boolean securityChanged = !Objects.equals(user.getEmail(), identity.email())
+                || !Objects.equals(user.getPhoneNumber(), identity.phoneNumber())
+                || !role.equalsIgnoreCase(user.getRoleLabel())
+                || !status.equalsIgnoreCase(user.getStatus())
+                || request.verified() != Boolean.TRUE.equals(user.getIsVerified())
+                || passwordChanged;
+
+        user.setEmail(identity.email());
+        user.setPhoneNumber(identity.phoneNumber());
         user.setRole(requiredRole(role));
         user.setStatus(status);
         user.setIsVerified(request.verified());
-        user.setVerifiedAt(request.verified() ? LocalDateTime.now() : null);
-        if (request.password() != null && !request.password().isBlank()) {
+        if (!request.verified()) {
+            user.setVerifiedAt(null);
+        } else if (user.getVerifiedAt() == null) {
+            user.setVerifiedAt(LocalDateTime.now());
+        }
+        if (passwordChanged) {
             user.setPasswordHash(passwordEncoder.encode(request.password()));
         }
         user = userRepository.save(user);
@@ -144,8 +161,17 @@ public class AdminUserService {
         if (request.profileImageUrl() != null) {
             profile.setProfileImageUrl(normalizeImageUrl(request.profileImageUrl()));
         }
+        if (identity.phoneNumber() != null) {
+            profile.setPhoneNumber(identity.phoneNumber());
+            profile.setIsPhoneVerified(request.verified());
+            profile.setPhoneVerifiedAt(request.verified() ? LocalDateTime.now() : null);
+        }
         profile.setUpdatedAt(now);
         userProfileRepository.save(profile);
+
+        if (securityChanged) {
+            refreshTokenService.revokeAll(user);
+        }
 
         WellnessProfile wellnessProfile = wellnessProfileRepository.findByUser_UserId(userId).orElse(null);
         return toRow(user, profile, wellnessProfile);
@@ -171,6 +197,42 @@ public class AdminUserService {
         user.setVerifiedAt(null);
         userRepository.saveAndFlush(user);
         refreshTokenService.revokeAll(user);
+    }
+
+    @Transactional
+    public void revokeSessions(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        if ("DELETED".equalsIgnoreCase(user.getStatus())) {
+            throw new IllegalArgumentException("Deleted accounts do not have active sessions");
+        }
+        refreshTokenService.revokeAll(user);
+        userRepository.saveAndFlush(user);
+    }
+
+    @Transactional
+    @CacheEvict(value = "adminDashboard", allEntries = true)
+    public UserRow updateStatus(Integer userId, String requestedStatus, String currentAdminIdentifier) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
+        String status = requestedStatus == null ? "" : requestedStatus.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("ACTIVE", "PENDING", "SUSPENDED", "BANNED").contains(status)) {
+            throw new IllegalArgumentException("Status must be ACTIVE, PENDING, SUSPENDED, or BANNED");
+        }
+        boolean isSelf = currentAdminIdentifier != null && ((user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentAdminIdentifier))
+                || (user.getPhoneNumber() != null && user.getPhoneNumber().equalsIgnoreCase(currentAdminIdentifier)));
+        if (isSelf && !"ACTIVE".equals(status)) {
+            throw new IllegalArgumentException("You cannot suspend your own administrator account");
+        }
+
+        user.setStatus(status);
+        userRepository.saveAndFlush(user);
+        if (!"ACTIVE".equals(status)) {
+            refreshTokenService.revokeAll(user);
+        }
+        UserProfile profile = userProfileRepository.findByUser_UserId(userId).orElse(null);
+        WellnessProfile wellnessProfile = wellnessProfileRepository.findByUser_UserId(userId).orElse(null);
+        return toRow(user, profile, wellnessProfile);
     }
 
     private UserProfile createProfile(User user, LocalDateTime now) {
@@ -234,6 +296,45 @@ public class AdminUserService {
     private String defaultName(String email) {
         int at = email == null ? -1 : email.indexOf('@');
         return at > 0 ? email.substring(0, at) : "Nham Health user";
+    }
+
+    private AccountIdentity accountIdentity(String rawIdentifier) {
+        String identifier = rawIdentifier == null ? "" : rawIdentifier.trim();
+        if (identifier.contains("@")) {
+            String email = identifier.toLowerCase(Locale.ROOT);
+            int at = email.indexOf('@');
+            boolean valid = at > 0
+                    && at == email.lastIndexOf('@')
+                    && at < email.length() - 3
+                    && email.indexOf('.', at + 2) > at + 1
+                    && email.chars().noneMatch(Character::isWhitespace);
+            if (!valid) {
+                throw new IllegalArgumentException("Please enter a valid email or phone number");
+            }
+            return new AccountIdentity(email, null);
+        }
+
+        return new AccountIdentity(null, smsService.normalizePhoneNumber(identifier));
+    }
+
+    private void ensureIdentityAvailable(AccountIdentity identity, Integer currentUserId) {
+        if (identity.email() != null) {
+            userRepository.findByEmailIgnoreCase(identity.email())
+                    .filter(existing -> !existing.getUserId().equals(currentUserId))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("An account with this email already exists");
+                    });
+            return;
+        }
+
+        userRepository.findByPhoneNumber(identity.phoneNumber())
+                .filter(existing -> !existing.getUserId().equals(currentUserId))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("An account with this phone number already exists");
+                });
+    }
+
+    private record AccountIdentity(String email, String phoneNumber) {
     }
 
     public record UserPageData(

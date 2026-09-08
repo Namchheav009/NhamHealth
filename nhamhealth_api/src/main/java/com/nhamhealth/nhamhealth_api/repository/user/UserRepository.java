@@ -34,4 +34,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findTop5ByOrderByCreatedAtDesc();
 
     List<User> findTop5ByStatusNotOrderByCreatedAtDesc(String status);
+
+    List<User> findAllByRole_RoleNameIgnoreCaseAndStatusIgnoreCase(String roleName, String status);
 }

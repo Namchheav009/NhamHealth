@@ -94,6 +94,70 @@
     ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
   });
 
+  document.querySelectorAll(".panel.table-panel .status-control").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const row = button.closest("tr");
+      const userId = button.dataset.id || row?.dataset.id;
+      const name = button.dataset.name || row?.dataset.name || "this user";
+      const active = (button.dataset.status || row?.dataset.status || "").toUpperCase() === "ACTIVE";
+      if (!userId) return;
+      const nextStatus = active ? "SUSPENDED" : "ACTIVE";
+      const confirmed = await alerts.confirmDelete({
+        title: `${active ? "Suspend" : "Activate"} Flutter access?`,
+        text: `${active ? "Block" : "Restore"} ${name}'s Flutter app access?`,
+        confirmButtonText: active ? "Suspend access" : "Activate access",
+      });
+      if (!confirmed) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(`/admin/users/${userId}/status?status=${nextStatus}`, {
+          method: "PATCH",
+          headers: requestHeaders(),
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.message || "Unable to update user access.");
+        }
+        await alerts.success(active ? "Access suspended" : "Access activated",
+          `${name} can ${active ? "no longer" : "now"} use the Flutter app.`);
+        window.location.reload();
+      } catch (error) {
+        await alerts.error(error.message || "Unable to update user access.");
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.querySelectorAll(".panel.table-panel .revoke-sessions").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const row = button.closest("tr");
+      const userId = button.dataset.id || row?.dataset.id;
+      const name = button.dataset.name || row?.dataset.name || "this user";
+      if (!userId) return;
+      const confirmed = await alerts.confirmDelete({
+        title: "Force sign out?",
+        text: `Sign ${name} out of every Flutter device?`,
+        confirmButtonText: "Force sign out",
+      });
+      if (!confirmed) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(`/admin/users/${userId}/revoke-sessions`, {
+          method: "POST",
+          headers: requestHeaders(),
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.message || "Unable to revoke user sessions.");
+        }
+        await alerts.success("Sessions revoked", `${name} has been signed out on all Flutter devices.`);
+      } catch (error) {
+        await alerts.error(error.message || "Unable to revoke user sessions.");
+        button.disabled = false;
+      }
+    });
+  });
+
   document
     .querySelectorAll(".panel.table-panel .delete-user")
     .forEach((button) => {

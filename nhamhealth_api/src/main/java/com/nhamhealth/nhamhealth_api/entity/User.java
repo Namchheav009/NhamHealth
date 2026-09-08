@@ -57,6 +57,9 @@ public class User {
     @Column(name = "login_otp_required", nullable = false)
     private Boolean loginOtpRequired = false;
 
+    @Column(name = "auth_version", nullable = false)
+    private Integer authVersion = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -160,6 +163,18 @@ public class User {
         this.loginOtpRequired = loginOtpRequired;
     }
 
+    public Integer getAuthVersion() {
+        return authVersion;
+    }
+
+    public void setAuthVersion(Integer authVersion) {
+        this.authVersion = authVersion;
+    }
+
+    public void invalidateSessions() {
+        authVersion = authVersion == null ? 1 : authVersion + 1;
+    }
+
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -167,6 +182,7 @@ public class User {
             createdAt = now;
         }
         if (loginOtpRequired == null) loginOtpRequired = false;
+        if (authVersion == null) authVersion = 0;
         updatedAt = now;
     }
 

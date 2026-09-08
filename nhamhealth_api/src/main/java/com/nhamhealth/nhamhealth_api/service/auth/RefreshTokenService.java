@@ -41,6 +41,7 @@ public class RefreshTokenService {
         RefreshToken current = tokens.findByTokenHash(hash(rawToken)).orElseThrow(this::invalid);
         LocalDateTime now = LocalDateTime.now();
         if (current.getRevokedAt() != null) {
+            current.getUser().invalidateSessions();
             revokeAll(current.getUser(), now);
             throw invalid();
         }
@@ -67,12 +68,14 @@ public class RefreshTokenService {
             LocalDateTime now = LocalDateTime.now();
             if (token.getRevokedAt() == null) token.setRevokedAt(now);
             token.getUser().setLoginOtpRequired(true);
+            token.getUser().invalidateSessions();
             revokeAll(token.getUser(), now);
         });
     }
 
     @Transactional
     public void revokeAll(User user) {
+        user.invalidateSessions();
         revokeAll(user, LocalDateTime.now());
     }
 

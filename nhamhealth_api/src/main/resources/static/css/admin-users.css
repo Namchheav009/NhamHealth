@@ -117,12 +117,14 @@ tbody tr:hover { background: #fbfdfc; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .user-cell strong { color: #25313f; font-size: 11px; }
 .user-cell span { margin-top: 2px; color: #98a2b3; font-size: 9px; }
-.actions-column { width: 118px; text-align: center; }
+.actions-column { width: 152px; text-align: center; }
 .user-actions { display: inline-flex; align-items: center; gap: 2px; }
 .details-link { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: var(--primary); }
 .details-link:hover { background: var(--green-soft); }
 .details-link.delete-user { color: #b42318; border: 0; background: transparent; cursor: pointer; }
 .details-link.delete-user:hover { background: #fff0ee; }
+.details-link.revoke-sessions { color: #b54708; border: 0; background: transparent; cursor: pointer; }
+.details-link.revoke-sessions:hover { background: #fff7ed; }
 .role-label { display: inline-flex; padding: 4px 7px; border-radius: 5px; color: #536273; background: #f1f5f9; font-size: 9px; font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .more-button { width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; cursor: pointer; }
@@ -131,7 +133,7 @@ tbody tr:hover { background: #fbfdfc; }
 .badge { display: inline-flex; align-items: center; justify-content: center; min-height: 22px; padding: 0 8px; border-radius: 5px; font-size: 9px; font-weight: 700; }
 .badge-active, .badge-verified, .badge-complete { color: #07833d; background: var(--green-soft); border: 1px solid #c9f0d7; }
 .badge-pending, .badge-unverified, .badge-incomplete { color: #e17b00; background: var(--orange-soft); border: 1px solid #ffe1ac; }
-.badge-suspended { color: #d92d20; background: var(--red-soft); border: 1px solid #ffd1cf; }
+.badge-suspended, .badge-banned { color: #d92d20; background: var(--red-soft); border: 1px solid #ffd1cf; }
 
 .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 18px; color: var(--muted); font-size: 10px; }
 .pagination { display: flex; gap: 5px; }

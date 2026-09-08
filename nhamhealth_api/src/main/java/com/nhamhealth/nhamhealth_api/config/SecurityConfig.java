@@ -20,6 +20,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
@@ -36,6 +37,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.nhamhealth.nhamhealth_api.security.DatabaseUserDetailsService;
+import com.nhamhealth.nhamhealth_api.security.ActiveUserJwtValidator;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Configuration
@@ -124,11 +126,14 @@ public class SecurityConfig {
     @Bean
     JwtDecoder jwtDecoder(
             @Value("${app.auth.jwt.secret}") String secret,
-            @Value("${app.auth.jwt.issuer:nhamhealth-api}") String issuer) {
+            @Value("${app.auth.jwt.issuer:nhamhealth-api}") String issuer,
+            ActiveUserJwtValidator activeUserJwtValidator) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey(secret))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer),
+                activeUserJwtValidator));
         return decoder;
     }
 

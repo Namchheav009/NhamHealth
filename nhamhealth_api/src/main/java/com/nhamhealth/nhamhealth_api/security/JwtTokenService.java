@@ -40,6 +40,7 @@ public class JwtTokenService {
                 .id(UUID.randomUUID().toString())
                 .claim("userId", principal.userId())
                 .claim("roles", List.of(principal.role()))
+                .claim("authVersion", principal.authVersion())
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         String value = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

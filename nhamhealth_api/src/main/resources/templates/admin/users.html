@@ -36,7 +36,7 @@
                 <span>Account directory</span>
               </div>
               <p>
-                Review account access, verification, and profile completeness.
+                Control Flutter app access, roles, verification, and active sessions.
               </p>
             </div>
             <div class="heading-actions">
@@ -254,6 +254,13 @@
                             >Open wellness profiles</span
                           ></a
                         ><button
+                          class="details-link revoke-sessions"
+                          type="button"
+                          title="Force sign out on all Flutter devices"
+                        >
+                          <i class="bi bi-box-arrow-right"></i
+                          ><span class="sr-only">Force sign out</span></button
+                        ><button
                           class="details-link delete-user"
                           type="button"
                           title="Delete user"
@@ -372,12 +379,12 @@
               placeholder="Enter full name"
           /></label>
           <label
-            >Email<input
+            >Email or phone number<input
               required
-              type="email"
+              type="text"
               name="email"
-              autocomplete="email"
-              placeholder="name@example.com"
+              autocomplete="username"
+              placeholder="name@example.com or 012 345 678"
           /></label>
           <label
             >Profile image<input
