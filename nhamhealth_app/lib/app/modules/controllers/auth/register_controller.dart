@@ -26,6 +26,11 @@ class RegisterController extends GetxController {
   final AuthService _authService;
   final GoogleAuthService _googleAuth;
   final RxBool isLoading = false.obs;
+  final RxnString fullNameError = RxnString();
+  final RxnString identifierError = RxnString();
+  final RxnString passwordError = RxnString();
+  final RxnString confirmPasswordError = RxnString();
+  final RxnString submitError = RxnString();
 
   Future<void> register({
     required String fullName,
@@ -33,9 +38,9 @@ class RegisterController extends GetxController {
     required String password,
     required String confirmPassword,
   }) async {
+    _clearErrors();
     if (fullName.trim().length < 2) {
-      _showError('Please enter your full name.');
-      return;
+      fullNameError.value = 'Please enter your full name.';
     }
     final normalized = email.trim();
     final isEmail = GetUtils.isEmail(normalized);
@@ -43,15 +48,23 @@ class RegisterController extends GetxController {
       r'^\+?[0-9]{8,15}$',
     ).hasMatch(normalized.replaceAll(RegExp(r'[\s()-]'), ''));
     if (!isEmail && !isPhone) {
-      _showError('Please enter a valid email or phone number.');
-      return;
+      identifierError.value =
+          normalized.isEmpty
+              ? 'Enter your email or phone number.'
+              : 'Please enter a valid email or phone number.';
     }
     if (password.length < 8) {
-      _showError('Password must contain at least 8 characters.');
-      return;
+      passwordError.value = 'Password must contain at least 8 characters.';
     }
-    if (password != confirmPassword) {
-      _showError('The passwords do not match.');
+    if (confirmPassword.isEmpty) {
+      confirmPasswordError.value = 'Confirm your password.';
+    } else if (password != confirmPassword) {
+      confirmPasswordError.value = 'The passwords do not match.';
+    }
+    if (fullNameError.value != null ||
+        identifierError.value != null ||
+        passwordError.value != null ||
+        confirmPasswordError.value != null) {
       return;
     }
 
@@ -68,7 +81,30 @@ class RegisterController extends GetxController {
         arguments: {'email': normalized, 'purpose': 'registration'},
         transition: Transition.rightToLeft,
       );
-    });
+    }, onError: _handleRegistrationError);
+  }
+
+  void clearFullNameError(String _) {
+    fullNameError.value = null;
+    submitError.value = null;
+  }
+
+  void clearIdentifierError(String _) {
+    identifierError.value = null;
+    submitError.value = null;
+  }
+
+  void clearPasswordError(String _) {
+    passwordError.value = null;
+    if (confirmPasswordError.value == 'The passwords do not match.') {
+      confirmPasswordError.value = null;
+    }
+    submitError.value = null;
+  }
+
+  void clearConfirmPasswordError(String _) {
+    confirmPasswordError.value = null;
+    submitError.value = null;
   }
 
   Future<void> registerWithGoogle() async {
@@ -91,7 +127,10 @@ class RegisterController extends GetxController {
     Get.offAllNamed(AppRoutes.accountCreated, arguments: response.user);
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    ValueChanged<Object>? onError,
+  }) async {
     if (isLoading.value) return;
     FocusManager.instance.primaryFocus?.unfocus();
     isLoading.value = true;
@@ -104,10 +143,31 @@ class RegisterController extends GetxController {
         transition: Transition.rightToLeft,
       );
     } catch (error) {
-      _showError(error.toString());
+      if (onError != null) {
+        onError(error);
+      } else {
+        _showError(error.toString());
+      }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handleRegistrationError(Object error) {
+    final message = error is AuthException ? error.message : error.toString();
+    if (error is AuthException && error.statusCode == 409) {
+      identifierError.value = message;
+      return;
+    }
+    submitError.value = message;
+  }
+
+  void _clearErrors() {
+    fullNameError.value = null;
+    identifierError.value = null;
+    passwordError.value = null;
+    confirmPasswordError.value = null;
+    submitError.value = null;
   }
 
   void _showError(String message) {

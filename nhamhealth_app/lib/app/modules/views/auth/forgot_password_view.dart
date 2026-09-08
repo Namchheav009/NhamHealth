@@ -15,9 +15,13 @@ class ForgotPasswordController extends GetxController {
   final AuthService _authService;
   final TextEditingController emailOrPhoneController = TextEditingController();
   final RxBool isLoading = false.obs;
+  final RxnString identifierError = RxnString();
+  final RxnString submitError = RxnString();
 
   Future<void> sendCode() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    identifierError.value = null;
+    submitError.value = null;
     final value = emailOrPhoneController.text.trim();
 
     final isEmail = GetUtils.isEmail(value);
@@ -25,10 +29,10 @@ class ForgotPasswordController extends GetxController {
         !value.contains('@') && RegExp(r'^\+?[0-9\s\-]{8,15}$').hasMatch(value);
 
     if (!isEmail && !isPhone) {
-      AppAlert.error(
-        title: 'Invalid input',
-        message: 'Please enter a valid email address or phone number.',
-      );
+      identifierError.value =
+          value.isEmpty
+              ? 'Enter your email or phone number.'
+              : 'Please enter a valid email or phone number.';
       return;
     }
 
@@ -49,10 +53,15 @@ class ForgotPasswordController extends GetxController {
         duration: const Duration(milliseconds: 300),
       );
     } on AuthException catch (error) {
-      AppAlert.error(title: 'Could not send code', message: error.message);
+      submitError.value = error.message;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void clearIdentifierError(String _) {
+    identifierError.value = null;
+    submitError.value = null;
   }
 
   @override
@@ -78,14 +87,25 @@ class ForgotPasswordPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthTextField(
-            controller: controller.emailOrPhoneController,
-            hintText: 'Email address or phone number',
-            autofillHints: const [AutofillHints.email],
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => controller.sendCode(),
+          Obx(
+            () => AuthTextField(
+              key: const ValueKey<String>('forgot-password-identifier-field'),
+              controller: controller.emailOrPhoneController,
+              hintText: 'Email address or phone number',
+              prefixIcon: Icons.account_circle_outlined,
+              autofillHints: const [
+                AutofillHints.username,
+                AutofillHints.email,
+                AutofillHints.telephoneNumber,
+              ],
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              errorText: controller.identifierError.value,
+              onChanged: controller.clearIdentifierError,
+              onSubmitted: (_) => controller.sendCode(),
+            ),
           ),
+          Obx(() => AuthInlineError(message: controller.submitError.value)),
           const SizedBox(height: 16),
           Obx(
             () => AuthPrimaryButton(

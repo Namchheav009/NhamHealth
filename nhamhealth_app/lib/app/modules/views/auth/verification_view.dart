@@ -306,7 +306,8 @@ class VerificationView extends StatelessWidget {
                           : null,
                   style: TextButton.styleFrom(
                     minimumSize: const Size(48, 44),
-                    foregroundColor: AppColors.accentOrange,
+                    foregroundColor: AppColors.darkGreen,
+                    disabledForegroundColor: AppColors.mutedText,
                   ),
                   child: Text(
                     controller.isResending.value

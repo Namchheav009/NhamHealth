@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
@@ -34,58 +35,61 @@ class AiFoodView extends GetView<AiFoodController> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: context.appBackground,
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppSpacing.maxWideContentWidth,
-          ),
-          child: Column(
-            children: [
-              _header(context),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= 820;
-                    return Obx(
-                      () => ListView(
-                        padding: EdgeInsets.fromLTRB(
-                          wide
-                              ? AppSpacing.tabletPageHorizontal
-                              : pageHorizontalPadding,
-                          8,
-                          wide
-                              ? AppSpacing.tabletPageHorizontal
-                              : pageHorizontalPadding,
-                          40,
-                        ),
-                        children: [
-                          if (wide)
-                            Row(
-                              key: const ValueKey<String>(
-                                'ai-food-tablet-layout',
-                              ),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: _capturePanel(context)),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: _resultsPanel(context, wide: true),
+    backgroundColor: Colors.transparent,
+    body: AppBackground(
+      lightDecoration: BoxDecoration(color: context.appBackground),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxWideContentWidth,
+            ),
+            child: Column(
+              children: [
+                _header(context),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= 820;
+                      return Obx(
+                        () => ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            wide
+                                ? AppSpacing.tabletPageHorizontal
+                                : pageHorizontalPadding,
+                            8,
+                            wide
+                                ? AppSpacing.tabletPageHorizontal
+                                : pageHorizontalPadding,
+                            40,
+                          ),
+                          children: [
+                            if (wide)
+                              Row(
+                                key: const ValueKey<String>(
+                                  'ai-food-tablet-layout',
                                 ),
-                              ],
-                            )
-                          else ...[
-                            _capturePanel(context),
-                            _resultsPanel(context),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: _capturePanel(context)),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _resultsPanel(context, wide: true),
+                                  ),
+                                ],
+                              )
+                            else ...[
+                              _capturePanel(context),
+                              _resultsPanel(context),
+                            ],
                           ],
-                        ],
-                      ),
-                    );
-                  },
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -913,7 +917,6 @@ class AiFoodView extends GetView<AiFoodController> {
     final unitController = TextEditingController(text: food.servingUnit);
     String? validationError;
     var saving = false;
-    var saved = false;
     final dialogRoute = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
@@ -923,14 +926,24 @@ class AiFoodView extends GetView<AiFoodController> {
                 (context, updateDialog) => PopScope(
                   canPop: !saving,
                   child: AlertDialog(
+                    backgroundColor: context.appElevatedSurface,
+                    surfaceTintColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
                     title: Row(
                       children: [
                         Container(
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: green.withValues(alpha: .12),
-                            borderRadius: BorderRadius.circular(13),
+                            color: context.appSoftGreen,
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
                             Icons.edit_note_rounded,
@@ -938,7 +951,15 @@ class AiFoodView extends GetView<AiFoodController> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text('Correct AI result'.tr)),
+                        Expanded(
+                          child: Text(
+                            'Correct AI result'.tr,
+                            style: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     content: SingleChildScrollView(
@@ -961,6 +982,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           const SizedBox(height: 18),
                           TextField(
                             controller: nameController,
+                            enabled: !saving,
                             textCapitalization: TextCapitalization.words,
                             maxLength: 150,
                             decoration: InputDecoration(
@@ -980,6 +1002,7 @@ class AiFoodView extends GetView<AiFoodController> {
                               Expanded(
                                 child: TextField(
                                   controller: amountController,
+                                  enabled: !saving,
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
                                         decimal: true,
@@ -996,6 +1019,7 @@ class AiFoodView extends GetView<AiFoodController> {
                               Expanded(
                                 child: TextField(
                                   controller: unitController,
+                                  enabled: !saving,
                                   maxLength: 40,
                                   decoration: InputDecoration(
                                     labelText: 'Unit'.tr,
@@ -1022,69 +1046,27 @@ class AiFoodView extends GetView<AiFoodController> {
                           ),
                           if (validationError != null) ...[
                             const SizedBox(height: 10),
-                            Text(
-                              validationError!,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                                fontSize: 12,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: context.appDangerSurface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                validationError!,
+                                style: TextStyle(
+                                  color: context.appOnDangerSurface,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 260),
-                            child:
-                                saving || saved
-                                    ? Container(
-                                      key: ValueKey(saved),
-                                      margin: const EdgeInsets.only(top: 14),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: green.withValues(alpha: .1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          AnimatedSwitcher(
-                                            duration: const Duration(
-                                              milliseconds: 220,
-                                            ),
-                                            child:
-                                                saved
-                                                    ? const Icon(
-                                                      Icons
-                                                          .check_circle_rounded,
-                                                      key: ValueKey('saved'),
-                                                      color: green,
-                                                    )
-                                                    : const SizedBox(
-                                                      key: ValueKey('saving'),
-                                                      width: 22,
-                                                      height: 22,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2.4,
-                                                            color: green,
-                                                          ),
-                                                    ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              saved
-                                                  ? 'Correction saved'.tr
-                                                  : 'Saving correction and recalculating nutrition...'
-                                                      .tr,
-                                              style: const TextStyle(
-                                                color: greenDark,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                    : const SizedBox.shrink(),
-                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -1095,7 +1077,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           Expanded(
                             child: TextButton(
                               onPressed:
-                                  saving || saved
+                                  saving
                                       ? null
                                       : () => Navigator.of(dialogContext).pop(),
                               style: TextButton.styleFrom(
@@ -1115,7 +1097,7 @@ class AiFoodView extends GetView<AiFoodController> {
                             flex: 2,
                             child: FilledButton(
                               onPressed:
-                                  saving || saved
+                                  saving
                                       ? null
                                       : () async {
                                         final amount = double.tryParse(
@@ -1152,14 +1134,6 @@ class AiFoodView extends GetView<AiFoodController> {
                                         );
                                         if (!dialogContext.mounted) return;
                                         if (controller.isUserConfirmed.value) {
-                                          updateDialog(() {
-                                            saving = false;
-                                            saved = true;
-                                          });
-                                          await Future<void>.delayed(
-                                            const Duration(milliseconds: 550),
-                                          );
-                                          if (!dialogContext.mounted) return;
                                           Navigator.of(dialogContext).pop();
                                           return;
                                         }
@@ -1172,6 +1146,13 @@ class AiFoodView extends GetView<AiFoodController> {
                                       },
                               style: FilledButton.styleFrom(
                                 minimumSize: const Size(0, 48),
+                                backgroundColor: context.appColorScheme.primary,
+                                foregroundColor: context.appOnBrand,
+                                disabledBackgroundColor: context
+                                    .appColorScheme
+                                    .primary
+                                    .withValues(alpha: .55),
+                                disabledForegroundColor: context.appOnBrand,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                 ),
@@ -1179,9 +1160,36 @@ class AiFoodView extends GetView<AiFoodController> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: Text(
-                                'Save correction'.tr,
-                                textAlign: TextAlign.center,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                child:
+                                    saving
+                                        ? Row(
+                                          key: const ValueKey(
+                                            'saving-correction',
+                                          ),
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: context.appOnBrand,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 9),
+                                            Text('Saving...'.tr),
+                                          ],
+                                        )
+                                        : Text(
+                                          'Save correction'.tr,
+                                          key: const ValueKey(
+                                            'save-correction',
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                               ),
                             ),
                           ),

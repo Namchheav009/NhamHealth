@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
-import '../../../theme/app_colors.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import 'widgets/auth_flow_scaffold.dart';
@@ -18,7 +16,9 @@ class ResetPasswordController extends GetxController {
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  final RxBool confirmPasswordHasError = false.obs;
+  final RxnString newPasswordError = RxnString();
+  final RxnString confirmPasswordError = RxnString();
+  final RxnString submitError = RxnString();
   final RxBool isLoading = false.obs;
   late final String resetToken;
 
@@ -42,34 +42,27 @@ class ResetPasswordController extends GetxController {
   Future<void> resetPassword() async {
     final newPassword = newPasswordController.text;
     final confirmPassword = confirmPasswordController.text;
-    confirmPasswordHasError.value = false;
+    newPasswordError.value = null;
+    confirmPasswordError.value = null;
+    submitError.value = null;
 
-    if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      AppAlert.error(
-        title: 'Required',
-        message: 'Please fill in both password fields.',
-      );
-      return;
+    if (newPassword.isEmpty) {
+      newPasswordError.value = 'Enter a new password.';
+    } else if (newPassword.length < 8) {
+      newPasswordError.value =
+          'Use at least 8 characters for your new password.';
     }
-
-    if (newPassword.length < 8) {
-      AppAlert.error(
-        title: 'Password too short',
-        message: 'Use at least 8 characters for your new password.',
-      );
-      return;
+    if (confirmPassword.isEmpty) {
+      confirmPasswordError.value = 'Confirm your password.';
+    } else if (newPassword != confirmPassword) {
+      confirmPasswordError.value = 'Passwords do not match. Try again.';
     }
-
-    if (newPassword != confirmPassword) {
-      confirmPasswordHasError.value = true;
+    if (newPasswordError.value != null || confirmPasswordError.value != null) {
       return;
     }
 
     if (resetToken.isEmpty) {
-      AppAlert.error(
-        title: 'Reset session expired',
-        message: 'Request a new verification code and try again.',
-      );
+      submitError.value = 'Request a new verification code and try again.';
       return;
     }
 
@@ -86,16 +79,23 @@ class ResetPasswordController extends GetxController {
         duration: const Duration(milliseconds: 300),
       );
     } on AuthException catch (error) {
-      AppAlert.error(title: 'Could not reset password', message: error.message);
+      submitError.value = error.message;
     } finally {
       isLoading.value = false;
     }
   }
 
-  void clearConfirmError(String _) {
-    if (confirmPasswordHasError.value) {
-      confirmPasswordHasError.value = false;
+  void clearNewPasswordError(String _) {
+    newPasswordError.value = null;
+    if (confirmPasswordError.value == 'Passwords do not match. Try again.') {
+      confirmPasswordError.value = null;
     }
+    submitError.value = null;
+  }
+
+  void clearConfirmPasswordError(String _) {
+    confirmPasswordError.value = null;
+    submitError.value = null;
   }
 
   void skip() {
@@ -117,44 +117,31 @@ class ResetPasswordView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PasswordField(
-            controller: controller.newPasswordController,
-            hintText: 'New password',
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.newPassword],
+          Obx(
+            () => PasswordField(
+              key: const ValueKey<String>('reset-new-password-field'),
+              controller: controller.newPasswordController,
+              hintText: 'New password',
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+              errorText: controller.newPasswordError.value,
+              onChanged: controller.clearNewPasswordError,
+            ),
           ),
           const SizedBox(height: 10),
           Obx(
             () => PasswordField(
+              key: const ValueKey<String>('reset-confirm-password-field'),
               controller: controller.confirmPasswordController,
               hintText: 'Confirm password',
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.newPassword],
-              hasError: controller.confirmPasswordHasError.value,
-              onChanged: controller.clearConfirmError,
+              errorText: controller.confirmPasswordError.value,
+              onChanged: controller.clearConfirmPasswordError,
               onSubmitted: (_) => controller.resetPassword(),
             ),
           ),
-          Obx(
-            () => AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child:
-                  controller.confirmPasswordHasError.value
-                      ? Padding(
-                        key: const ValueKey('confirm-password-error'),
-                        padding: const EdgeInsets.only(top: 6, left: 16),
-                        child: Text(
-                          'Passwords do not match. Try again.'.tr,
-                          style: const TextStyle(
-                            color: AppColors.errorCoral,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
-            ),
-          ),
+          Obx(() => AuthInlineError(message: controller.submitError.value)),
           const SizedBox(height: 18),
           Obx(
             () => AuthPrimaryButton(

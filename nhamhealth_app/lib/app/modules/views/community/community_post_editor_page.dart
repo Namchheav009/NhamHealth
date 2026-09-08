@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../models/community/community_post.dart';
@@ -451,9 +452,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      Get.snackbar(
-        'Select a category',
-        'Choose a meal category before publishing.',
+      await AppAlert.actionError(
+        title: 'Select a category',
+        message: 'Choose a meal category before publishing.',
       );
       return;
     }
@@ -470,9 +471,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             .toList();
     final steps = _steps.where((item) => item.text.trim().isNotEmpty).toList();
     if (ingredients.any((item) => item.amount == null || item.amount! <= 0)) {
-      Get.snackbar(
-        'Recipe incomplete',
-        'Every ingredient needs a valid amount.',
+      await AppAlert.actionError(
+        title: 'Recipe incomplete',
+        message: 'Every ingredient needs a valid amount.',
       );
       return;
     }
@@ -502,9 +503,23 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           categoryId: _selectedCategoryId,
         ),
       );
-      if (mounted) Get.back(result: true);
+      if (mounted) {
+        final isEditing = widget.post != null;
+        Get.back(result: true);
+        await WidgetsBinding.instance.endOfFrame;
+        await AppAlert.actionSuccess(
+          title: isEditing ? 'Meal updated' : 'Meal published',
+          message:
+              isEditing
+                  ? 'Your changes have been saved.'
+                  : 'Your new meal is now available in Community.',
+        );
+      }
     } on Object catch (error) {
-      Get.snackbar('Could not publish meal', error.toString());
+      await AppAlert.actionError(
+        title: 'Could not publish meal',
+        message: error.toString(),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

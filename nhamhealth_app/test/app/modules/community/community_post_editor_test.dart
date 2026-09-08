@@ -170,6 +170,13 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(find.text('Publish Meal'));
     await tester.tap(find.text('Publish Meal'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Meal published'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('app-action-alert-confirm')),
+    );
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
@@ -226,6 +233,13 @@ void main() {
 
     await tester.ensureVisible(find.text('Save Changes'));
     await tester.tap(find.text('Save Changes'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Meal updated'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('app-action-alert-confirm')),
+    );
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
