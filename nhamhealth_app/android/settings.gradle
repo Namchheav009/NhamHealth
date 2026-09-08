@@ -19,7 +19,7 @@ pluginManagement {
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
     id "com.android.application" version "9.1.1" apply false
-    // Override AGP 9.1.1's bundled Kotlin 2.2.10; Flutter 3.47 requires 2.2.20+.
+    // Explicit Kotlin version for legacy Kotlin compatibility mode.
     id "org.jetbrains.kotlin.android" version "2.3.20" apply false
     id("com.google.gms.google-services") version "4.5.0" apply false
 }
