@@ -7,6 +7,7 @@ import '../../../theme/app_colors.dart';
 
 import '../../controllers/profile/help_support_controller.dart';
 import '../../../theme/app_spacing.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class HelpSupportView extends GetView<HelpSupportController> {
   const HelpSupportView({super.key});
@@ -42,7 +43,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
                       Padding(
                         padding: const EdgeInsets.only(left: 15),
                         child: Text(
-                          'Contact Support'.tr,
+                          'profile.contact_support'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -60,7 +61,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
                       Padding(
                         padding: const EdgeInsets.only(left: 15),
                         child: Text(
-                          'Frequently Asked Questions'.tr,
+                          'profile.frequently_asked_questions'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -88,7 +89,10 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // ============================================================
 
   Widget _buildHeader() {
-    return AppBackHeader(title: 'Help & Support', onBack: controller.goBack);
+    return AppBackHeader(
+      title: 'profile.help_support'.tr,
+      onBack: controller.goBack,
+    );
   }
 
   // ============================================================
@@ -109,7 +113,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
         children: [
           _ContactItem(
             icon: Icons.mail_outline_rounded,
-            title: 'Email Us',
+            title: 'profile.email_us',
             subtitle: 'NhamHealth@gmail.com',
             onTap: controller.emailSupport,
           ),
@@ -121,7 +125,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
           _ContactItem(
             icon: Icons.phone_outlined,
-            title: 'Call Us',
+            title: 'profile.call_us',
             subtitle: '+855 81814451',
             onTap: controller.callSupport,
           ),
@@ -196,7 +200,7 @@ class _SupportHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'How can we help?'.tr,
+                'profile.how_can_we_help'.tr,
                 style: TextStyle(
                   color: context.appText,
                   fontSize: 17,
@@ -205,7 +209,7 @@ class _SupportHero extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Contact us or find quick answers below.'.tr,
+                'profile.contact_us_or_find_quick_answers_below'.tr,
                 style: TextStyle(
                   color: context.appMutedText,
                   fontSize: 12.5,
@@ -268,7 +272,7 @@ class _ContactItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title.tr,
+                        title.trOrSelf,
                         style: TextStyle(
                           fontSize: 14,
                           height: 1,
@@ -372,7 +376,7 @@ class _FaqItem extends StatelessWidget {
 
                     Expanded(
                       child: Text(
-                        question.tr,
+                        question.trOrSelf,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -420,7 +424,7 @@ class _FaqItem extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      answer.tr,
+                      answer.trOrSelf,
                       style: TextStyle(
                         fontSize: 11,
                         height: 1.45,

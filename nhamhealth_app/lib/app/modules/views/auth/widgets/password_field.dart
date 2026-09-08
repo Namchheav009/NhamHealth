@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
@@ -56,7 +57,7 @@ class AuthTextField extends StatelessWidget {
               color: context.appText,
             ),
             decoration: InputDecoration(
-              hintText: hintText.tr,
+              hintText: hintText.trOrSelf,
               hintStyle: TextStyle(
                 color: context.appMutedText,
                 fontSize: 13,
@@ -109,7 +110,7 @@ class AuthTextField extends StatelessWidget {
                     child: Semantics(
                       liveRegion: true,
                       child: Text(
-                        errorText!.tr,
+                        errorText!.trOrSelf,
                         style: const TextStyle(
                           color: AppColors.errorCoral,
                           fontSize: 10.5,
@@ -172,7 +173,8 @@ class _PasswordFieldState extends State<PasswordField> {
       errorText: widget.errorText,
       prefixIcon: widget.prefixIcon,
       suffixIcon: IconButton(
-        tooltip: (_obscure ? 'Show password' : 'Hide password').tr,
+        tooltip:
+            (_obscure ? 'common.show_password' : 'common.hide_password').tr,
         onPressed: () => setState(() => _obscure = !_obscure),
         icon: Icon(
           _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -218,7 +220,7 @@ class AuthInlineError extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        message!.tr,
+                        message!.trOrSelf,
                         style: const TextStyle(
                           color: AppColors.errorCoral,
                           fontSize: 11.5,

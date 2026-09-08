@@ -111,8 +111,8 @@ class ResetPasswordView extends StatelessWidget {
     final controller = Get.put(ResetPasswordController());
 
     return AuthFlowScaffold(
-      title: 'Set new password',
-      subtitle: 'Choose a strong password for your account.',
+      title: 'auth.set_new_password',
+      subtitle: 'auth.choose_a_strong_password_for_your_account',
       illustrationAsset: 'assets/images/auth/reset.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,7 +121,7 @@ class ResetPasswordView extends StatelessWidget {
             () => PasswordField(
               key: const ValueKey<String>('reset-new-password-field'),
               controller: controller.newPasswordController,
-              hintText: 'New password',
+              hintText: 'common.new_password',
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.newPassword],
               errorText: controller.newPasswordError.value,
@@ -133,7 +133,7 @@ class ResetPasswordView extends StatelessWidget {
             () => PasswordField(
               key: const ValueKey<String>('reset-confirm-password-field'),
               controller: controller.confirmPasswordController,
-              hintText: 'Confirm password',
+              hintText: 'auth.confirm_password',
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.newPassword],
               errorText: controller.confirmPasswordError.value,
@@ -145,14 +145,14 @@ class ResetPasswordView extends StatelessWidget {
           const SizedBox(height: 18),
           Obx(
             () => AuthPrimaryButton(
-              label: 'Reset password',
+              label: 'auth.reset_password',
               loading: controller.isLoading.value,
               onPressed: controller.resetPassword,
             ),
           ),
           const SizedBox(height: 10),
           AuthSecondaryButton(
-            label: 'Back to sign in',
+            label: 'auth.back_to_sign_in',
             onPressed: controller.skip,
           ),
         ],

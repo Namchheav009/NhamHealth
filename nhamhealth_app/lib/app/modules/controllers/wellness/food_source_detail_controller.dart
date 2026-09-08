@@ -36,8 +36,8 @@ class FoodSourceDetailController extends GetxController {
         Get.offNamed(AppRoutes.calories);
 
         AppAlert.error(
-          title: 'Food not found',
-          message: 'Please select a food source again.',
+          title: 'wellness.food_not_found',
+          message: 'wellness.please_select_a_food_source_again',
         );
       });
     }
@@ -150,15 +150,15 @@ class FoodSourceDetailController extends GetxController {
 
   void reanalyzeWithAi() {
     AppAlert.success(
-      title: 'AI Re-analysis',
-      message: 'Re-analyzing your food amount...',
+      title: 'wellness.ai_re_analysis',
+      message: 'wellness.re_analyzing_your_food_amount',
     );
   }
 
   void saveChanges() {
     AppAlert.success(
-      title: 'Saved',
-      message: 'Food detail changes saved successfully.',
+      title: 'common.saved',
+      message: 'wellness.food_detail_changes_saved_successfully',
     );
   }
 

@@ -145,7 +145,8 @@ class ProfileController extends GetxController {
     } on ProfileException catch (error) {
       errorMessage.value = error.message;
     } on Object {
-      errorMessage.value = 'Unable to load your profile. Pull down to retry.';
+      errorMessage.value =
+          'profile.unable_to_load_your_profile_pull_down_to_retry';
     } finally {
       isLoading.value = false;
     }
@@ -206,7 +207,7 @@ class ProfileController extends GetxController {
       _replacePost(updated);
       posts.refresh();
     } on Object catch (error) {
-      Get.snackbar('Could not update like', error.toString());
+      Get.snackbar('community.could_not_update_like'.tr, error.toString());
     } finally {
       likingPostIds.remove(post.id);
     }

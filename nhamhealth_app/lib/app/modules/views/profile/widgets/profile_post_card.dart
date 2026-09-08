@@ -7,6 +7,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
 import '../../community/widgets/ai_status_badge.dart';
 import '../../community/widgets/community_shared_post_card.dart';
+import 'package:get/get.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -159,9 +160,10 @@ class ProfilePostCard extends StatelessWidget {
                 if (onFavorite != null)
                   IconButton(
                     tooltip:
-                        post.isSaved
-                            ? 'Remove from favorites'
-                            : 'Add to favorites',
+                        (post.isSaved
+                                ? 'common.remove_from_favorites'
+                                : 'common.add_to_favorites')
+                            .tr,
                     visualDensity: VisualDensity.compact,
                     onPressed: onFavorite,
                     icon: Icon(
@@ -177,7 +179,7 @@ class ProfilePostCard extends StatelessWidget {
                   ),
                 if (onOptions != null || onEdit != null || onDelete != null)
                   IconButton(
-                    tooltip: 'Post options',
+                    tooltip: 'common.post_options'.tr,
                     visualDensity: VisualDensity.compact,
                     style: IconButton.styleFrom(
                       backgroundColor: context.appMutedSurface,
@@ -230,7 +232,9 @@ class ProfilePostCard extends StatelessWidget {
                   if (post.servings != null)
                     _PostInfoPill(
                       icon: Icons.people_outline_rounded,
-                      label: '${post.servings} servings',
+                      label: 'meals.servings_count'.trParams({
+                        'count': '${post.servings}',
+                      }),
                     ),
                   if (post.difficulty.isNotEmpty)
                     _PostInfoPill(
@@ -386,7 +390,7 @@ class ProfilePostCard extends StatelessWidget {
                     color: Colors.black54,
                     shape: const CircleBorder(),
                     child: IconButton(
-                      tooltip: 'Close image',
+                      tooltip: 'profile.close_image'.tr,
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       icon: const Icon(
                         Icons.close_rounded,
@@ -508,8 +512,9 @@ class _EngagementSummary extends StatelessWidget {
         if (post.likes > 0)
           Semantics(
             button: onTap != null,
-            label:
-                '${_compactCount(post.likes)} likes. View people who liked this post.',
+            label: 'community.likes_a11y'.trParams({
+              'count': _compactCount(post.likes),
+            }),
             child: InkWell(
               key: ValueKey<String>('post-likers-${post.id}'),
               onTap: onTap,
@@ -548,14 +553,20 @@ class _EngagementSummary extends StatelessWidget {
         const Spacer(),
         if (post.comments > 0)
           Text(
-            '${_compactCount(post.comments)} ${post.comments == 1 ? 'comment' : 'comments'}',
+            (post.comments == 1
+                    ? 'community.comment_count_one'
+                    : 'community.comment_count_many')
+                .trParams({'count': _compactCount(post.comments)}),
             style: TextStyle(fontSize: 12.5, color: context.appMutedText),
           ),
         if (post.comments > 0 && post.shares > 0)
           const Text('  ·  ', style: TextStyle(color: Color(0xFF98A19A))),
         if (post.shares > 0)
           Text(
-            '${_compactCount(post.shares)} ${post.shares == 1 ? 'share' : 'shares'}',
+            (post.shares == 1
+                    ? 'community.share_count_one'
+                    : 'community.share_count_many')
+                .trParams({'count': _compactCount(post.shares)}),
             style: TextStyle(fontSize: 12.5, color: context.appMutedText),
           ),
       ],
@@ -599,10 +610,10 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              'Post options',
+              'common.post_options'.tr,
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
             ),
           ),
@@ -615,17 +626,17 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
             child: Column(
               children: [
                 if (canEdit)
-                  const _ProfilePostOption(
+                  _ProfilePostOption(
                     value: 'edit',
-                    label: 'Edit post',
+                    label: 'profile.edit_post'.tr,
                     icon: Icons.edit_outlined,
                   ),
                 if (canEdit && canDelete)
                   Divider(height: 1, indent: 64, color: context.appBorder),
                 if (canDelete)
-                  const _ProfilePostOption(
+                  _ProfilePostOption(
                     value: 'delete',
-                    label: 'Delete post',
+                    label: 'profile.delete_post'.tr,
                     icon: Icons.delete_outline_rounded,
                     isDestructive: true,
                   ),
@@ -713,7 +724,7 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
 
     return Semantics(
       button: true,
-      label: 'View post image full screen',
+      label: 'profile.view_post_image'.tr,
       child: InkWell(
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(16),

@@ -7,8 +7,8 @@ class CarbohydratesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Carbohydrates'.tr)),
-      body: Center(child: Text('Carbohydrates Detail Page'.tr)),
+      appBar: AppBar(title: Text('wellness.carbohydrates'.tr)),
+      body: Center(child: Text('wellness.carbohydrates_detail_page'.tr)),
     );
   }
 }

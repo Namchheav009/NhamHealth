@@ -103,7 +103,7 @@ class RecommendedMealCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            meal.name.tr,
+                            meal.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -136,7 +136,7 @@ class RecommendedMealCard extends StatelessWidget {
                               if (protein > 0) ...[
                                 const Spacer(),
                                 Tooltip(
-                                  message: 'Protein'.tr,
+                                  message: 'common.protein'.tr,
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

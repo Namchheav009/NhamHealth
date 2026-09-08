@@ -92,21 +92,23 @@ class _CommunityPersonProfileViewState
     if (profile.isFollowing) {
       final confirmed = await Get.dialog<bool>(
         AlertDialog(
-          title: const Text('Unfollow this member?'),
+          title: Text('community.unfollow_member_question'.tr),
           content: Text(
-            'You will stop seeing posts from ${profile.name} in your following feed.',
+            'community.unfollow_member_warning'.trParams({
+              'name': profile.name,
+            }),
           ),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel'),
+              child: Text('common.cancel'.tr),
             ),
             FilledButton(
               onPressed: () => Get.back(result: true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF278A3A),
               ),
-              child: const Text('Unfollow'),
+              child: Text('community.unfollow'.tr),
             ),
           ],
         ),
@@ -134,7 +136,7 @@ class _CommunityPersonProfileViewState
       });
       unawaited(
         AppAlert.error(
-          title: 'Could not update follow',
+          title: 'community.could_not_update_follow',
           message: error.toString(),
         ),
       );
@@ -189,7 +191,7 @@ class _CommunityPersonProfileViewState
                       else if (_error != null)
                         _ProfileMessage(
                           message: _error!,
-                          actionLabel: 'Retry',
+                          actionLabel: 'common.retry',
                           onTap: _loadProfile,
                         )
                       else if (_profile != null) ...[
@@ -260,13 +262,17 @@ class _CommunityPersonProfileViewState
               button: profile.avatarUrl.isNotEmpty,
               label:
                   profile.avatarUrl.isEmpty
-                      ? '${profile.name} profile photo'
-                      : 'View ${profile.name} full profile photo',
+                      ? 'profile.photo_with_name'.trParams({
+                        'name': profile.name,
+                      })
+                      : 'profile.view_full_photo_with_name'.trParams({
+                        'name': profile.name,
+                      }),
               child: Tooltip(
                 message:
                     profile.avatarUrl.isEmpty
-                        ? 'Profile photo'
-                        : 'View profile photo',
+                        ? 'profile.photo'.tr
+                        : 'profile.view_photo'.tr,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap:
@@ -374,7 +380,9 @@ class _CommunityPersonProfileViewState
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'Member since ${profile.joinedLabel}',
+                    'community.member_since'.trParams({
+                      'date': profile.joinedLabel,
+                    }),
                     style: TextStyle(color: context.appMutedText, fontSize: 11),
                   ),
                 ],
@@ -472,7 +480,9 @@ class _CommunityPersonProfileViewState
                     ? Icons.check_rounded
                     : Icons.person_add_alt_1_rounded,
               ),
-      label: Text(profile.isFollowing ? 'Following' : 'Follow'),
+      label: Text(
+        (profile.isFollowing ? 'community.following' : 'community.follow').tr,
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor:
             profile.isFollowing
@@ -498,7 +508,7 @@ class _CommunityPersonProfileViewState
     child: Row(
       children: [
         Text(
-          'POSTS',
+          'community.posts'.tr,
           style: TextStyle(
             color: context.appText,
             fontSize: 11,
@@ -527,9 +537,9 @@ class _CommunityPersonProfileViewState
 
   Widget _postGrid(BuildContext context) {
     if (_posts.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(36),
-        child: Center(child: Text('No posts are visible to you yet.')),
+      return Padding(
+        padding: const EdgeInsets.all(36),
+        child: Center(child: Text('community.no_visible_posts'.tr)),
       );
     }
     return Padding(
@@ -579,7 +589,7 @@ class _CommunityPersonProfileViewState
       setState(() => _likingPostIds.remove(post.id));
       unawaited(
         AppAlert.error(
-          title: 'Could not update like',
+          title: 'community.could_not_update_like',
           message: error.toString(),
         ),
       );
@@ -592,7 +602,7 @@ class _CommunityPersonProfileViewState
         opaque: false,
         barrierColor: Colors.black,
         barrierDismissible: true,
-        barrierLabel: 'Close profile photo',
+        barrierLabel: 'profile.close_photo'.tr,
         transitionDuration: const Duration(milliseconds: 220),
         reverseTransitionDuration: const Duration(milliseconds: 180),
         pageBuilder:
@@ -676,7 +686,7 @@ class _CommunityPersonProfileViewState
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      'More options',
+                      'common.more_options'.tr,
                       style: TextStyle(
                         color: sheetContext.appText,
                         fontSize: 17,
@@ -714,8 +724,8 @@ class _CommunityPersonProfileViewState
                         color: Color(0xFFD94545),
                         size: 24,
                       ),
-                      title: const Text(
-                        'Report profile',
+                      title: Text(
+                        'community.report_profile'.tr,
                         style: TextStyle(
                           color: Color(0xFFD94545),
                           fontSize: 15,
@@ -738,8 +748,8 @@ class _CommunityPersonProfileViewState
     if (!canShare) {
       unawaited(
         AppAlert.error(
-          title: 'Cannot share this post',
-          message: 'Only public posts can be shared to your feed.',
+          title: 'community.cannot_share_post',
+          message: 'community.public_posts_only',
         ),
       );
       return;
@@ -748,7 +758,7 @@ class _CommunityPersonProfileViewState
     if (!mounted) return;
     await showCommunityShareComposer(
       post: post,
-      authorName: user?.displayName ?? 'Community member',
+      authorName: user?.displayName ?? 'community.member'.tr,
       authorAvatarUrl: user?.profileImageUrl ?? '',
       onShare:
           (message, visibility) => _repository.sharePostToFeed(
@@ -811,7 +821,7 @@ class _PersonPostOptionsSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              'More options',
+              'common.more_options'.tr,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 17,
@@ -830,13 +840,13 @@ class _PersonPostOptionsSheet extends StatelessWidget {
               children: [
                 _PersonPostOptionTile(
                   icon: Icons.article_outlined,
-                  label: 'View details',
+                  label: 'community.view_details'.tr,
                   onTap: () => Get.back(result: 'details'),
                 ),
                 Divider(height: 1, indent: 58, color: context.appBorder),
                 _PersonPostOptionTile(
                   icon: Icons.flag_outlined,
-                  label: 'Report post',
+                  label: 'community.report_post'.tr,
                   destructive: true,
                   onTap: () => Get.back(result: 'report'),
                 ),
@@ -935,7 +945,7 @@ class _CommunityFullProfileImageState
             top: 4,
             right: 12,
             child: IconButton.filled(
-              tooltip: 'Close',
+              tooltip: 'common.close'.tr,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.black.withValues(alpha: .55),
@@ -978,19 +988,19 @@ class _CommunityZoomControls extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          tooltip: 'Zoom in',
+          tooltip: 'community.zoom_in'.tr,
           onPressed: onZoomIn,
           color: Colors.white,
           icon: const Icon(Icons.add_rounded),
         ),
         IconButton(
-          tooltip: 'Reset zoom',
+          tooltip: 'community.reset_zoom'.tr,
           onPressed: onReset,
           color: Colors.white,
           icon: const Icon(Icons.center_focus_strong_rounded, size: 20),
         ),
         IconButton(
-          tooltip: 'Zoom out',
+          tooltip: 'community.zoom_out'.tr,
           onPressed: onZoomOut,
           color: Colors.white,
           icon: const Icon(Icons.remove_rounded),

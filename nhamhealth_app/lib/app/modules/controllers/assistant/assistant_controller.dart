@@ -16,7 +16,7 @@ class AssistantController extends GetxController {
         AssistantMessage(
           role: 'assistant',
           content:
-              "Hi! I'm your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today."
+              'assistant.hi_im_your_nhamhealth_ai_assistant_ask_me_about_the_app_or_your_wellness_dashboard_today'
                   .tr,
         ),
       ].obs;
@@ -75,7 +75,7 @@ class AssistantController extends GetxController {
       messages.add(
         AssistantMessage(
           role: 'assistant',
-          content: '${error.message} ${'Tap reload below to try again.'.tr}',
+          content: '${error.message}\n${'assistant.reload_hint'.tr}',
           isError: true,
         ),
       );

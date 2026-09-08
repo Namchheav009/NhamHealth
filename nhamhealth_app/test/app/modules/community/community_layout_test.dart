@@ -99,9 +99,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final following = find.byKey(
-      const ValueKey<String>('community-feed-filter-following'));
+      const ValueKey<String>('community-feed-filter-following'),
+    );
     final latest = find.byKey(
-      const ValueKey<String>('community-feed-filter-latest'));
+      const ValueKey<String>('community-feed-filter-latest'),
+    );
     expect(tester.getSize(following).height, greaterThanOrEqualTo(48));
 
     await tester.tap(following);

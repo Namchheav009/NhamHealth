@@ -20,6 +20,7 @@ import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -80,7 +81,7 @@ class ProfileView extends GetView<ProfileController> {
 
   Widget _buildTopBar() {
     return AppBackHeader(
-      title: 'Profile',
+      title: 'profile.title'.tr,
       backButtonKey: const ValueKey('profile-back-button'),
       onBack: controller.goBack,
     );
@@ -130,7 +131,7 @@ class ProfileView extends GetView<ProfileController> {
       Row(
         children: [
           Text(
-            'My posts',
+            'profile.my_posts'.tr,
             style: TextStyle(
               color: context.appText,
               fontSize: 18,
@@ -145,7 +146,10 @@ class ProfileView extends GetView<ProfileController> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${controller.posts.length} ${controller.posts.length == 1 ? 'post' : 'posts'}',
+              (controller.posts.length == 1
+                      ? 'profile.post_count_one'
+                      : 'profile.post_count_many')
+                  .trParams({'count': '${controller.posts.length}'}),
               style: const TextStyle(
                 color: Color(0xFF178344),
                 fontSize: 11,
@@ -198,7 +202,7 @@ class ProfileView extends GetView<ProfileController> {
         initialMessage: post.description,
         initialVisibility: post.visibility,
         isEditing: true,
-        submitButtonText: 'Save',
+        submitButtonText: 'common.save'.tr,
         onShare: (message, visibility) async {
           await controller.updatePost(
             post: post,
@@ -244,13 +248,16 @@ class ProfileView extends GetView<ProfileController> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.edit_rounded, color: Color(0xFF009B46)),
-                  SizedBox(width: 10),
+                  const Icon(Icons.edit_rounded, color: Color(0xFF009B46)),
+                  const SizedBox(width: 10),
                   Text(
-                    'Edit post',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    'profile.edit_post'.tr,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
@@ -269,14 +276,17 @@ class ProfileView extends GetView<ProfileController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: Get.back, child: const Text('Cancel')),
+                  TextButton(
+                    onPressed: Get.back,
+                    child: Text('common.cancel'.tr),
+                  ),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () async {
                       if (description.text.trim().isEmpty) {
                         Get.snackbar(
-                          'Add your message',
-                          'A post needs a message.',
+                          'profile.add_post_message'.tr,
+                          'profile.post_message_required'.tr,
                         );
                         return;
                       }
@@ -287,17 +297,20 @@ class ProfileView extends GetView<ProfileController> {
                         );
                         Get.back<void>();
                         Get.snackbar(
-                          'Post updated',
-                          'Your changes have been saved.',
+                          'profile.post_updated'.tr,
+                          'profile.changes_saved'.tr,
                         );
                       } on Object catch (error) {
-                        Get.snackbar('Could not update post', error.toString());
+                        Get.snackbar(
+                          'profile.could_not_update_post'.tr,
+                          error.toString(),
+                        );
                       }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF009B46),
                     ),
-                    child: const Text('Save changes'),
+                    child: Text('common.save_changes'.tr),
                   ),
                 ],
               ),
@@ -312,21 +325,19 @@ class ProfileView extends GetView<ProfileController> {
   Future<void> _confirmDeletePost(CommunityPost post) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete this post?'),
-        content: const Text(
-          'This will remove the post from your profile and Community. You cannot undo this action.',
-        ),
+        title: Text('community.delete_post_question'.tr),
+        content: Text('profile.delete_post_warning'.tr),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD94545),
             ),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr),
           ),
         ],
       ),
@@ -334,9 +345,9 @@ class ProfileView extends GetView<ProfileController> {
     if (confirmed != true) return;
     try {
       await controller.deletePost(post);
-      Get.snackbar('Post deleted', 'Your post has been removed.');
+      Get.snackbar('profile.post_deleted'.tr, 'profile.post_removed'.tr);
     } on Object catch (error) {
-      Get.snackbar('Could not delete post', error.toString());
+      Get.snackbar('profile.could_not_delete_post'.tr, error.toString());
     }
   }
 
@@ -381,8 +392,8 @@ class ProfileView extends GetView<ProfileController> {
         post.visibility == CommunityPostVisibility.public;
     if (!canShare) {
       AppAlert.error(
-        title: 'Cannot share this post',
-        message: 'Only public posts can be shared to your feed.',
+        title: 'community.cannot_share_post',
+        message: 'community.public_posts_only',
       );
       return;
     }
@@ -452,11 +463,11 @@ class _EmptyPosts extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       border: Border.all(color: context.appBorder),
     ),
-    child: const Column(
+    child: Column(
       children: [
-        Icon(Icons.post_add_outlined, color: Color(0xFF009B46)),
-        SizedBox(height: 8),
-        Text('You have not shared any posts yet.'),
+        const Icon(Icons.post_add_outlined, color: Color(0xFF009B46)),
+        const SizedBox(height: 8),
+        Text('profile.no_shared_posts'.tr),
       ],
     ),
   );
@@ -482,9 +493,9 @@ class _ProfileErrorBanner extends StatelessWidget {
           const Icon(Icons.info_outline, color: Color(0xFFD84A4A), size: 20),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message.tr, style: const TextStyle(fontSize: 12)),
+            child: Text(message.trOrSelf, style: const TextStyle(fontSize: 12)),
           ),
-          TextButton(onPressed: onRetry, child: Text('Retry'.tr)),
+          TextButton(onPressed: onRetry, child: Text('common.retry'.tr)),
         ],
       ),
     );

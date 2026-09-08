@@ -32,7 +32,7 @@ class FoodContributionCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Contribution today'.tr,
+                'wellness.contribution_today'.tr,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -59,7 +59,7 @@ class FoodContributionCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'This drink added a lot of sugar with little fiber or protein.\n• Main source of sugar today\n• Pairs better with water or fruit'
+                  'wellness.this_drink_added_a_lot_of_sugar_with_little_fiber_or_protein_main_source_of_sugar_today_pairs_better_with_water_or_fruit'
                       .tr,
                   style: TextStyle(
                     fontSize: 11,

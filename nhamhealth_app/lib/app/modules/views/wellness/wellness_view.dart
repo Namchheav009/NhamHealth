@@ -11,6 +11,7 @@ import '../../../widgets/app_back_header.dart';
 import 'widgets/ai_insight_card.dart';
 import 'widgets/ai_meal_card.dart';
 import 'widgets/wellness_daily_summary_card.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class WellnessView extends GetView<WellnessController> {
   const WellnessView({super.key});
@@ -93,7 +94,7 @@ class WellnessView extends GetView<WellnessController> {
           // Page title
           Expanded(
             child: Text(
-              'Daily Wellness'.tr,
+              'wellness.daily_title'.tr,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
@@ -132,7 +133,7 @@ class WellnessView extends GetView<WellnessController> {
                       const SizedBox(width: 6),
 
                       Text(
-                        controller.selectedDateText.tr,
+                        controller.selectedDateText.trOrSelf,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

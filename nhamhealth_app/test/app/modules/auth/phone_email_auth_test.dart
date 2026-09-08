@@ -112,20 +112,20 @@ void main() {
       final en = translations['en_US']!;
       final km = translations['km_KH']!;
 
-      expect(en['Email or Phone Number'], 'Email or Phone Number');
-      expect(km['Email or Phone Number'], 'អ៊ីមែល ឬលេខទូរស័ព្ទ');
+      expect(en['auth.email_or_phone_number'], 'Email or Phone Number');
+      expect(km['auth.email_or_phone_number'], 'អ៊ីមែល ឬលេខទូរស័ព្ទ');
 
       expect(
-        en['Please enter a valid email or phone number.'],
+        en['auth.please_enter_a_valid_email_or_phone_number'],
         'Please enter a valid email or phone number.',
       );
       expect(
-        km['Please enter a valid email or phone number.'],
+        km['auth.please_enter_a_valid_email_or_phone_number'],
         'សូមបញ្ចូលអ៊ីមែល ឬលេខទូរស័ព្ទដែលត្រឹមត្រូវ',
       );
 
-      expect(en['We sent an SMS code to'], 'We sent an SMS code to');
-      expect(km['We sent an SMS code to'], 'យើងបានផ្ញើកូដ SMS ទៅកាន់');
+      expect(en['auth.we_sent_an_sms_code_to'], 'We sent an SMS code to');
+      expect(km['auth.we_sent_an_sms_code_to'], 'យើងបានផ្ញើកូដ SMS ទៅកាន់');
     });
   });
 }

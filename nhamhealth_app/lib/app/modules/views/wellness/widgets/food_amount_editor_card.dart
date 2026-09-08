@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/wellness/food_source_detail_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
   const FoodAmountEditorCard({super.key});
@@ -17,7 +18,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Edit amount'.tr,
+              'wellness.edit_amount'.tr,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -53,7 +54,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                       ),
                     ),
                     label: Text(
-                      'Re-analyze with AI'.tr,
+                      'wellness.re_analyze_with_ai'.tr,
                       style: const TextStyle(fontSize: 11),
                     ),
                   ),
@@ -72,8 +73,8 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
                     ),
                     label: Text(
                       controller.showManualEditor.value
-                          ? 'Hide manual edit'.tr
-                          : 'Edit manually'.tr,
+                          ? 'wellness.hide_manual_edit'.tr
+                          : 'wellness.edit_manually'.tr,
                       style: const TextStyle(fontSize: 11),
                     ),
                   ),
@@ -116,7 +117,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label.tr,
+              label.trOrSelf,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -149,7 +150,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Edit amount manually'.tr,
+            'wellness.edit_amount_manually'.tr,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
@@ -190,7 +191,7 @@ class FoodAmountEditorCard extends GetView<FoodSourceDetailController> {
 
               const SizedBox(width: 8),
               Text(
-                'ml'.tr,
+                'common.ml'.tr,
                 style: TextStyle(fontSize: 11, color: context.appMutedText),
               ),
               const SizedBox(width: 8),

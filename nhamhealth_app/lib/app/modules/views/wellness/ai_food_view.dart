@@ -9,6 +9,7 @@ import '../../../widgets/page_skeleton.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 /// -----------------------------------------------------------------------
 /// AiFoodView — restyled
@@ -110,7 +111,7 @@ class AiFoodView extends GetView<AiFoodController> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'AI Food Check'.tr,
+                'wellness.ai_food_check'.tr,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -331,7 +332,7 @@ class AiFoodView extends GetView<AiFoodController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Know what you eat or drink'.tr,
+                'wellness.know_what_you_eat_or_drink'.tr,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -341,7 +342,7 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
               const SizedBox(height: 5),
               Text(
-                'Snap a clear photo for instant nutrition insights.'.tr,
+                'wellness.snap_a_clear_photo_for_instant_nutrition_insights'.tr,
                 style: const TextStyle(color: Color(0xDFFFFFFF), height: 1.35),
               ),
             ],
@@ -400,12 +401,12 @@ class AiFoodView extends GetView<AiFoodController> {
       ),
       const SizedBox(height: 12),
       Text(
-        'Add a meal photo'.tr,
+        'common.add_a_meal_photo'.tr,
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
       ),
       const SizedBox(height: 4),
       Text(
-        'Use camera or choose from gallery'.tr,
+        'wellness.use_camera_or_choose_from_gallery'.tr,
         style: TextStyle(color: context.appMutedText, fontSize: 13),
       ),
     ],
@@ -476,7 +477,7 @@ class AiFoodView extends GetView<AiFoodController> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(text.tr),
+                Text(text.trOrSelf),
               ],
             )
             : null;
@@ -488,7 +489,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: FilledButton.icon(
             onPressed: action,
             icon: loading ? const SizedBox.shrink() : Icon(icon),
-            label: child ?? Text(text.tr),
+            label: child ?? Text(text.trOrSelf),
             style: FilledButton.styleFrom(
               backgroundColor: green,
               disabledBackgroundColor: green.withValues(alpha: .5),
@@ -503,7 +504,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: FilledButton.icon(
             onPressed: action,
             icon: Icon(icon),
-            label: Text(text.tr),
+            label: Text(text.trOrSelf),
             style: FilledButton.styleFrom(
               backgroundColor:
                   isDark
@@ -525,7 +526,7 @@ class AiFoodView extends GetView<AiFoodController> {
           child: OutlinedButton.icon(
             onPressed: action,
             icon: Icon(icon, size: 20),
-            label: Text(text.tr),
+            label: Text(text.trOrSelf),
             style: OutlinedButton.styleFrom(
               foregroundColor: outlineColor,
               side: BorderSide(color: outlineColor),
@@ -554,7 +555,7 @@ class AiFoodView extends GetView<AiFoodController> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                controller.analysisStageLabel.tr,
+                controller.analysisStageLabel.trOrSelf,
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -572,7 +573,8 @@ class AiFoodView extends GetView<AiFoodController> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Results update when the full food and drink check is complete.'.tr,
+          'wellness.results_update_when_the_full_food_and_drink_check_is_complete'
+              .tr,
           style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
       ],
@@ -618,10 +620,10 @@ class AiFoodView extends GetView<AiFoodController> {
                   Text(
                     [
                       food.mealType == 'mixed'
-                          ? 'Food + drink'.tr
+                          ? 'wellness.food_and_drink'.tr
                           : food.mealType == 'drink'
                           ? 'Drink'
-                          : 'Food'.tr,
+                          : 'wellness.food'.tr,
                       if (food.cuisine != 'Unknown') food.cuisine,
                     ].join(' • '),
                     style: TextStyle(color: context.appMutedText, fontSize: 13),
@@ -718,15 +720,22 @@ class AiFoodView extends GetView<AiFoodController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  water > 0 ? 'Plain water detected'.tr : 'Drink volume'.tr,
+                  water > 0
+                      ? 'wellness.plain_water_detected'.tr
+                      : 'wellness.drink_volume'.tr,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   water > 0
-                      ? '$water ml • ${glasses.toStringAsFixed(glasses % 1 == 0 ? 0 : 1)} × 250 ml glasses'
+                      ? 'wellness.water_glass_summary'.trParams({
+                        'water': '$water',
+                        'glasses': glasses.toStringAsFixed(
+                          glasses % 1 == 0 ? 0 : 1,
+                        ),
+                      })
                       : total > 0
-                      ? 'About $total ml, excluding visible ice and foam'
+                      ? 'wellness.about_total_ml'.trParams({'total': '$total'})
                       : 'Volume could not be estimated reliably',
                   style: TextStyle(color: context.appMutedText, fontSize: 12.5),
                 ),
@@ -757,7 +766,7 @@ class AiFoodView extends GetView<AiFoodController> {
       Row(
         children: [
           Text(
-            'Confidence'.tr,
+            'wellness.confidence'.tr,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 12),
@@ -798,21 +807,24 @@ class AiFoodView extends GetView<AiFoodController> {
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.fact_check_outlined, color: warn, size: 22),
-            SizedBox(width: 9),
+            const Icon(Icons.fact_check_outlined, color: warn, size: 22),
+            const SizedBox(width: 9),
             Expanded(
               child: Text(
-                'Please review this result',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                'wellness.review_result'.tr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          'The AI is not fully certain about the food or portion. Confirm it or correct the result before adding it to today.',
+          'wellness.uncertain_result_help'.tr,
           style: TextStyle(
             color: context.appMutedText,
             fontSize: 12.5,
@@ -870,7 +882,7 @@ class AiFoodView extends GetView<AiFoodController> {
                         ? null
                         : () => _showCorrectionDialog(context, food),
                 icon: const Icon(Icons.edit_outlined, size: 18),
-                label: Text('Correct'.tr),
+                label: Text('wellness.correct'.tr),
                 style: OutlinedButton.styleFrom(
                   foregroundColor:
                       context.appIsDark
@@ -893,7 +905,7 @@ class AiFoodView extends GetView<AiFoodController> {
                         ? null
                         : controller.confirmFood,
                 icon: const Icon(Icons.check_rounded, size: 18),
-                label: Text('Confirm'.tr),
+                label: Text('common.confirm'.tr),
                 style: FilledButton.styleFrom(backgroundColor: green),
               ),
             ),
@@ -953,7 +965,7 @@ class AiFoodView extends GetView<AiFoodController> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Correct AI result'.tr,
+                            'wellness.correct_ai_result'.tr,
                             style: const TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.w800,
@@ -968,8 +980,7 @@ class AiFoodView extends GetView<AiFoodController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Correct the food name and serving so nutrition can be recalculated.'
-                                .tr,
+                            'wellness.correction_description'.tr,
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
@@ -986,13 +997,13 @@ class AiFoodView extends GetView<AiFoodController> {
                             textCapitalization: TextCapitalization.words,
                             maxLength: 150,
                             decoration: InputDecoration(
-                              labelText: 'Food name'.tr,
+                              labelText: 'wellness.food_name'.tr,
                               prefixIcon: const Icon(Icons.restaurant_rounded),
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Serving details'.tr,
+                            'wellness.serving_details'.tr,
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -1008,7 +1019,7 @@ class AiFoodView extends GetView<AiFoodController> {
                                         decimal: true,
                                       ),
                                   decoration: InputDecoration(
-                                    labelText: 'Amount'.tr,
+                                    labelText: 'wellness.amount'.tr,
                                     prefixIcon: const Icon(
                                       Icons.scale_outlined,
                                     ),
@@ -1022,7 +1033,7 @@ class AiFoodView extends GetView<AiFoodController> {
                                   enabled: !saving,
                                   maxLength: 40,
                                   decoration: InputDecoration(
-                                    labelText: 'Unit'.tr,
+                                    labelText: 'wellness.unit'.tr,
                                     prefixIcon: const Icon(
                                       Icons.straighten_rounded,
                                     ),
@@ -1034,7 +1045,7 @@ class AiFoodView extends GetView<AiFoodController> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Examples: g, ml, bowl, cup or serving'.tr,
+                            'wellness.unit_examples'.tr,
                             style: Theme.of(
                               context,
                             ).textTheme.bodySmall?.copyWith(
@@ -1089,7 +1100,7 @@ class AiFoodView extends GetView<AiFoodController> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: Text('Cancel'.tr),
+                              child: Text('common.cancel'.tr),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1180,11 +1191,11 @@ class AiFoodView extends GetView<AiFoodController> {
                                               ),
                                             ),
                                             const SizedBox(width: 9),
-                                            Text('Saving...'.tr),
+                                            Text('common.saving'.tr),
                                           ],
                                         )
                                         : Text(
-                                          'Save correction'.tr,
+                                          'wellness.save_correction'.tr,
                                           key: const ValueKey(
                                             'save-correction',
                                           ),
@@ -1217,7 +1228,7 @@ class AiFoodView extends GetView<AiFoodController> {
           children: [
             Expanded(
               child: Text(
-                'Nutrition estimate'.tr,
+                'wellness.nutrition_estimate'.tr,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -1233,7 +1244,7 @@ class AiFoodView extends GetView<AiFoodController> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                food.nutritionSourceLabel.tr,
+                food.nutritionSourceLabel.trOrSelf,
                 style: TextStyle(
                   color:
                       food.isDatabaseCalculated
@@ -1356,7 +1367,7 @@ class AiFoodView extends GetView<AiFoodController> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Sugar analysis'.tr,
+                  'wellness.sugar_analysis'.tr,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -1373,7 +1384,7 @@ class AiFoodView extends GetView<AiFoodController> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Estimate'.tr,
+                  'wellness.estimate'.tr,
                   style: TextStyle(
                     color: color,
                     fontSize: 11,
@@ -1421,7 +1432,7 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
           const SizedBox(height: 10),
           Text(
-            'This is estimated total sugar. A photo cannot reliably separate added sugar from naturally occurring sugar, so it is not a daily-value percentage. Check the package label or recipe when available.'
+            'wellness.this_is_estimated_total_sugar_a_photo_cannot_reliably_separate_added_sugar_from_naturally_occurring_sugar_so_it_is_not_a_daily_value_percentage_check_the_package_label_or_recipe_when_available'
                 .tr,
             style: TextStyle(
               color: context.appMutedText,
@@ -1444,7 +1455,7 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
           const SizedBox(height: 2),
           Text(
-            label.tr,
+            label.trOrSelf,
             style: TextStyle(color: context.appMutedText, fontSize: 10.5),
           ),
         ],
@@ -1489,7 +1500,7 @@ class AiFoodView extends GetView<AiFoodController> {
                   ),
                 ),
                 Text(
-                  label.tr,
+                  label.trOrSelf,
                   style: TextStyle(color: context.appMutedText, fontSize: 11.5),
                 ),
               ],
@@ -1521,7 +1532,7 @@ class AiFoodView extends GetView<AiFoodController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'AI Recommendation'.tr,
+            'common.ai_recommendation'.tr,
             style: TextStyle(fontSize: 13, color: context.appMutedText),
           ),
           const SizedBox(height: 8),
@@ -1565,10 +1576,6 @@ class AiFoodView extends GetView<AiFoodController> {
   }
 
   Widget _legalNotice(BuildContext context, FoodNutritionModel? food) {
-    const defaultDisclaimer =
-        'AI nutrition results are estimates for general wellness only. They are not medical advice, a diagnosis, or an official nutrition label.';
-    const defaultPrivacy =
-        'Food photos are sent to the configured AI provider for analysis. Do not include faces, documents, or other personal information.';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1590,7 +1597,7 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
               const SizedBox(width: 7),
               Text(
-                'Important information'.tr,
+                'wellness.important_information'.tr,
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ],
@@ -1598,8 +1605,9 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(height: 7),
           Text(
             food?.disclaimer.isNotEmpty == true
-                ? food!.disclaimer.tr
-                : defaultDisclaimer.tr,
+                ? food!.disclaimer
+                : 'wellness.ai_nutrition_results_are_estimates_for_general_wellness_only_they_are_not_medical_advice_a_diagnosis_or_an_official_nutrition_label'
+                    .tr,
             style: TextStyle(
               fontSize: 11.5,
               height: 1.4,
@@ -1609,8 +1617,9 @@ class AiFoodView extends GetView<AiFoodController> {
           const SizedBox(height: 5),
           Text(
             food?.privacyNotice.isNotEmpty == true
-                ? food!.privacyNotice.tr
-                : defaultPrivacy.tr,
+                ? food!.privacyNotice
+                : 'wellness.food_photos_are_sent_to_the_configured_ai_provider_for_analysis_do_not_include_faces_documents_or_other_personal_information'
+                    .tr,
             style: TextStyle(
               fontSize: 11.5,
               height: 1.4,
@@ -1694,13 +1703,13 @@ class _TabletAnalysisPlaceholder extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Your nutrition analysis will appear here'.tr,
+          'wellness.analysis_empty'.tr,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 7),
         Text(
-          'Choose a clear food or drink photo, then tap Analyze.'.tr,
+          'wellness.choose_photo_to_analyze'.tr,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: context.appMutedText,

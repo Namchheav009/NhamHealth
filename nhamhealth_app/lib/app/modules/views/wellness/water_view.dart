@@ -6,6 +6,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class WaterView extends GetView<WaterController> {
   const WaterView({super.key});
@@ -65,7 +66,7 @@ class WaterView extends GetView<WaterController> {
               AppBackButton(onPressed: Get.back),
               Expanded(
                 child: Text(
-                  'Water'.tr,
+                  'common.water'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 17,
@@ -118,8 +119,8 @@ class WaterView extends GetView<WaterController> {
                     : const Icon(Icons.water_drop_rounded),
             label: Text(
               controller.isSaving.value
-                  ? 'Adding...'.tr
-                  : "Add to Today's Water".tr,
+                  ? 'wellness.adding'.tr
+                  : 'wellness.add_to_todays_water'.tr,
             ),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
@@ -159,7 +160,10 @@ class WaterView extends GetView<WaterController> {
           ),
           const SizedBox(height: 14),
           Text(
-            '$current / $target ${'glasses'.tr}',
+            'wellness.water_progress'.trParams({
+              'current': current,
+              'target': target,
+            }),
             style: TextStyle(
               fontSize: 27,
               fontWeight: FontWeight.w800,
@@ -168,7 +172,7 @@ class WaterView extends GetView<WaterController> {
           ),
           const SizedBox(height: 5),
           Text(
-            'Water Added Today'.tr,
+            'wellness.water_added_today'.tr,
             style: TextStyle(fontSize: 13, color: context.appMutedText),
           ),
           const SizedBox(height: 18),
@@ -193,7 +197,10 @@ class WaterView extends GetView<WaterController> {
                 ),
               ),
               Text(
-                '${_number(controller.remainingGlasses)} ${'glasses remaining'.tr}',
+                (controller.remainingGlasses == 1
+                        ? 'wellness.glass_remaining'
+                        : 'wellness.glasses_remaining')
+                    .trParams({'count': _number(controller.remainingGlasses)}),
                 style: TextStyle(fontSize: 12, color: context.appMutedText),
               ),
             ],
@@ -212,7 +219,7 @@ class WaterView extends GetView<WaterController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Choose amount'.tr,
+            'wellness.choose_amount'.tr,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -221,7 +228,7 @@ class WaterView extends GetView<WaterController> {
           ),
           const SizedBox(height: 4),
           Text(
-            '1 glass is about 250 ml'.tr,
+            'wellness.1_glass_is_about_250_ml'.tr,
             style: TextStyle(fontSize: 12, color: context.appMutedText),
           ),
           const SizedBox(height: 18),
@@ -248,7 +255,13 @@ class WaterView extends GetView<WaterController> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${controller.selectedGlasses.value == 1 ? 'glass'.tr : 'glasses'.tr} · ${controller.selectedMilliliters} ml',
+                      (controller.selectedGlasses.value == 1
+                              ? 'wellness.selected_water_amount_one'
+                              : 'wellness.selected_water_amount_many')
+                          .trParams({
+                            'count': '${controller.selectedGlasses.value}',
+                            'milliliters': '${controller.selectedMilliliters}',
+                          }),
                       style: TextStyle(
                         fontSize: 12,
                         color: context.appMutedText,
@@ -328,12 +341,12 @@ class WaterView extends GetView<WaterController> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              message.tr,
+              message.trOrSelf,
               style: TextStyle(color: context.appOnDangerSurface),
             ),
           ),
           IconButton(
-            tooltip: 'Retry'.tr,
+            tooltip: 'common.retry'.tr,
             onPressed: controller.loadWater,
             icon: const Icon(Icons.refresh_rounded),
             color: context.appOnDangerSurface,

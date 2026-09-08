@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AppSearchBar extends StatefulWidget {
   const AppSearchBar({
@@ -111,7 +112,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: widget.hintText.tr,
+                hintText: widget.hintText.trOrSelf,
                 hintStyle: TextStyle(
                   color: colors.onSurfaceVariant,
                   fontSize: 13.5,
@@ -129,7 +130,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: IconButton.filledTonal(
                 key: const ValueKey('search-clear'),
-                tooltip: 'Clear search'.tr,
+                tooltip: 'common.clear_search'.tr,
                 visualDensity: VisualDensity.compact,
                 onPressed: widget.onClear,
                 icon: Icon(
@@ -142,11 +143,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
           else if (widget.trailing == null)
             const SizedBox(width: 16),
           if (widget.trailing case final trailing?) ...[
-            Container(
-              width: 1,
-              height: 26,
-              color: colors.outlineVariant,
-            ),
+            Container(width: 1, height: 26, color: colors.outlineVariant),
             Padding(
               padding: const EdgeInsets.only(left: 2, right: 4),
               child: trailing,

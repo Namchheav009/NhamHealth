@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MealSectionHeader extends StatelessWidget {
   const MealSectionHeader({
     super.key,
     required this.title,
     this.onSeeAll,
-    this.actionLabel = 'See all',
+    this.actionLabel = 'meals.see_all',
     this.actionEnabled = true,
   });
 
@@ -23,7 +23,7 @@ class MealSectionHeader extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            title.tr,
+            title.trOrSelf,
             style: TextStyle(
               color: context.appText,
               fontSize: 15,
@@ -40,7 +40,7 @@ class MealSectionHeader extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              actionLabel.tr,
+              actionLabel.trOrSelf,
               style: const TextStyle(
                 color: AppColors.primaryGreen,
                 fontSize: 11,

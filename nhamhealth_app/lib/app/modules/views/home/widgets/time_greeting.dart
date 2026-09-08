@@ -9,33 +9,21 @@ class TimeGreeting extends GetView<HomeController> {
 
   ({String title, String subtitle}) _copyFor(DateTime time) {
     if (time.hour < 5) {
-      return (
-        title: 'Good night',
-        subtitle: 'Rest well and recharge for tomorrow.',
-      );
+      return (title: 'home.good_night', subtitle: 'home.rest_for_tomorrow');
     }
     if (time.hour < 12) {
       return (
-        title: 'Good morning',
-        subtitle: "Let's make healthy choices today.",
+        title: 'home.good_morning',
+        subtitle: 'home.healthy_choices_today',
       );
     }
     if (time.hour < 17) {
-      return (
-        title: 'Good afternoon',
-        subtitle: 'Keep your healthy momentum going.',
-      );
+      return (title: 'home.good_afternoon', subtitle: 'home.keep_momentum');
     }
     if (time.hour < 21) {
-      return (
-        title: 'Good evening',
-        subtitle: 'Finish your day with a healthy choice.',
-      );
+      return (title: 'home.good_evening', subtitle: 'home.finish_healthy');
     }
-    return (
-      title: 'Good night',
-      subtitle: 'Slow down, recharge, and rest well.',
-    );
+    return (title: 'home.good_night', subtitle: 'home.slow_down_rest');
   }
 
   @override
@@ -49,12 +37,18 @@ class TimeGreeting extends GetView<HomeController> {
           displayName == null || displayName.isEmpty
               ? null
               : displayName.split(RegExp(r'\s+')).last;
-      final greeting =
-          lastName == null ? '${copy.title}!' : '${copy.title}, $lastName!';
+      final localizedGreeting = copy.title.tr;
+      final greeting = (lastName == null
+              ? 'home.greeting'
+              : 'home.greeting_named')
+          .trParams({
+            'greeting': localizedGreeting,
+            if (lastName != null) 'name': lastName,
+          });
 
       return Semantics(
         header: true,
-        label: '$greeting ${copy.subtitle}',
+        label: '$greeting ${copy.subtitle.tr}',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -64,8 +58,10 @@ class TimeGreeting extends GetView<HomeController> {
                   TextSpan(
                     text:
                         lastName == null
-                            ? '${copy.title}!'
-                            : '${copy.title}, ',
+                            ? 'home.greeting'.trParams({
+                              'greeting': localizedGreeting,
+                            })
+                            : '$localizedGreeting ',
                   ),
                   if (lastName != null)
                     TextSpan(
@@ -86,7 +82,7 @@ class TimeGreeting extends GetView<HomeController> {
             ),
             const SizedBox(height: 5),
             Text(
-              copy.subtitle,
+              copy.subtitle.tr,
               style: TextStyle(
                 color: context.appMutedText,
                 fontSize: 13,

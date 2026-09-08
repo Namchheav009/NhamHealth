@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 
@@ -40,14 +41,17 @@ Future<CommunityPostVisibility?> showCommunityAudiencePicker(
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Who can see your post?',
-                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
+              Text(
+                'community.audience_question'.tr,
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 5),
-              const Text(
-                'Choose who can see this post in the Community feed and on your profile.',
-                style: TextStyle(
+              Text(
+                'community.audience_help'.tr,
+                style: const TextStyle(
                   color: Color(0xFF718078),
                   fontSize: 14,
                   height: 1.35,

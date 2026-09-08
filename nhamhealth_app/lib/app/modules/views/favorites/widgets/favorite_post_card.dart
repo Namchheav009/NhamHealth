@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/recipes/community_recipe.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FavoritePostCard extends StatelessWidget {
   const FavoritePostCard({
@@ -91,11 +92,17 @@ class FavoritePostCard extends StatelessWidget {
               runSpacing: 6,
               children: [
                 if (post.cookingTimeMinutes != null)
-                  _Meta(Icons.schedule_rounded, '${post.cookingTimeMinutes} min'),
+                  _Meta(
+                    Icons.schedule_rounded,
+                    '${post.cookingTimeMinutes} min',
+                  ),
                 if (post.servings != null)
                   _Meta(Icons.people_outline_rounded, '${post.servings}'),
                 if (post.difficulty.isNotEmpty)
-                  _Meta(Icons.signal_cellular_alt_rounded, post.difficulty.tr),
+                  _Meta(
+                    Icons.signal_cellular_alt_rounded,
+                    post.difficulty.trOrSelf,
+                  ),
               ],
             ),
           ],
@@ -120,7 +127,7 @@ class FavoritePostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              post.authorName.isEmpty ? 'Community member'.tr : post.authorName,
+              post.authorName.isEmpty ? 'community.member'.tr : post.authorName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -138,7 +145,7 @@ class FavoritePostCard extends StatelessWidget {
         ),
       ),
       IconButton(
-        tooltip: 'Remove from favorites'.tr,
+        tooltip: 'common.remove_from_favorites'.tr,
         onPressed: onRemove,
         icon: const Icon(
           Icons.bookmark_remove_rounded,
@@ -150,7 +157,7 @@ class FavoritePostCard extends StatelessWidget {
 
   String get _savedDate {
     final date = post.updatedAt ?? post.publishedAt ?? post.createdAt;
-    if (date == null) return 'Saved post'.tr;
+    if (date == null) return 'community.saved_post'.tr;
     final local = date.toLocal();
     return '${local.day.toString().padLeft(2, '0')}/'
         '${local.month.toString().padLeft(2, '0')}/${local.year}';

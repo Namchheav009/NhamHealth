@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../controllers/favorites/favorites_controller.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FavoritesTabSwitcher extends StatelessWidget {
   const FavoritesTabSwitcher({
@@ -27,12 +27,12 @@ class FavoritesTabSwitcher extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            label: 'Foods',
+            label: 'favorites.foods',
             active: selected == FavoritesTab.foods,
             onTap: () => onChanged(FavoritesTab.foods),
           ),
           _Tab(
-            label: 'Posts',
+            label: 'common.posts',
             active: selected == FavoritesTab.posts,
             onTap: () => onChanged(FavoritesTab.posts),
           ),
@@ -70,7 +70,7 @@ class _Tab extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              label.tr,
+              label.trOrSelf,
               style: TextStyle(
                 color: active ? colors.primary : colors.onSurfaceVariant,
                 fontWeight: active ? FontWeight.w600 : FontWeight.w500,

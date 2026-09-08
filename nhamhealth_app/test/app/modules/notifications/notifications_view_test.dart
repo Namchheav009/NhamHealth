@@ -29,8 +29,10 @@ void main() {
 
     expect(notification.actorUserId, 7);
     expect(notification.actorAvatarUrl, 'https://example.com/maya.jpg');
-    expect(notification.copyWith(isUnread: false).actorAvatarUrl,
-        'https://example.com/maya.jpg');
+    expect(
+      notification.copyWith(isUnread: false).actorAvatarUrl,
+      'https://example.com/maya.jpg',
+    );
   });
 
   testWidgets('notification page matches the reference sections', (
@@ -63,22 +65,20 @@ void main() {
     tester,
   ) async {
     final controller = Get.put(NotificationsController());
-    controller.notifications.assignAll(
-      [
-        NotificationItem.fromJson({
-          'id': 5,
-          'type': 'COMMUNITY',
-          'title': 'Maya Chen',
-          'message': 'commented on your post.',
-          'actorUserId': 7,
-          'actorAvatarUrl': 'https://example.com/maya.jpg',
-          'referenceType': 'POST',
-          'referenceId': 42,
-          'read': false,
-          'createdAt': DateTime.now().toIso8601String(),
-        }),
-      ],
-    );
+    controller.notifications.assignAll([
+      NotificationItem.fromJson({
+        'id': 5,
+        'type': 'COMMUNITY',
+        'title': 'Maya Chen',
+        'message': 'commented on your post.',
+        'actorUserId': 7,
+        'actorAvatarUrl': 'https://example.com/maya.jpg',
+        'referenceType': 'POST',
+        'referenceId': 42,
+        'read': false,
+        'createdAt': DateTime.now().toIso8601String(),
+      }),
+    ]);
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -106,34 +106,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('a realtime event refreshes the notification list immediately', () async {
-    final events = StreamController<NotificationRealtimeEvent>(sync: true);
-    final repository = _RealtimeNotificationsRepository();
-    final controller = NotificationsController(
-      repository: repository,
-      realtimeEvents: events.stream,
-    );
+  test(
+    'a realtime event refreshes the notification list immediately',
+    () async {
+      final events = StreamController<NotificationRealtimeEvent>(sync: true);
+      final repository = _RealtimeNotificationsRepository();
+      final controller = NotificationsController(
+        repository: repository,
+        realtimeEvents: events.stream,
+      );
 
-    controller.onInit();
-    await Future<void>.delayed(Duration.zero);
-    expect(controller.notifications, isEmpty);
+      controller.onInit();
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.notifications, isEmpty);
 
-    repository.items = [_notification(42)];
-    events.add(
-      const NotificationRealtimeEvent(
-        id: 42,
-        title: 'Maya Chen',
-        message: 'liked your post.',
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
+      repository.items = [_notification(42)];
+      events.add(
+        const NotificationRealtimeEvent(
+          id: 42,
+          title: 'Maya Chen',
+          message: 'liked your post.',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
 
-    expect(controller.notifications.single.id, 42);
-    expect(repository.loadCount, 2);
+      expect(controller.notifications.single.id, 42);
+      expect(repository.loadCount, 2);
 
-    controller.onClose();
-    await events.close();
-  });
+      controller.onClose();
+      await events.close();
+    },
+  );
 }
 
 NotificationItem _notification(int id) => NotificationItem.fromJson({

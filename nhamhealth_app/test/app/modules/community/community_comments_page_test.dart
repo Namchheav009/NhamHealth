@@ -44,12 +44,16 @@ void main() {
     expect(find.text('Hide'), findsOneWidget);
     expect(find.text('Fish'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey<String>('recipe-details-toggle')));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('recipe-details-toggle')),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Show all'), findsOneWidget);
     expect(find.text('Fish'), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey<String>('recipe-details-toggle')));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('recipe-details-toggle')),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Hide'), findsOneWidget);
     expect(find.text('Fish'), findsOneWidget);
@@ -57,7 +61,8 @@ void main() {
 }
 
 class _CommentsRepository extends CommunityRepository {
-  _CommentsRepository(AuthService authService) : super(authService: authService);
+  _CommentsRepository(AuthService authService)
+    : super(authService: authService);
 
   @override
   Future<List<CommunityComment>> getComments(String postId) async => const [];

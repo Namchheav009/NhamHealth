@@ -6,6 +6,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AppearanceView extends GetView<AppearanceController> {
   const AppearanceView({super.key});
@@ -30,12 +31,12 @@ class AppearanceView extends GetView<AppearanceController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AppBackHeader(
-                        title: 'Appearance',
+                        title: 'profile.appearance',
                         onBack: controller.goBack,
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Choose how NhamHealth looks on this device.'.tr,
+                        'profile.choose_how_nhamhealth_looks_on_this_device'.tr,
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.4,
@@ -47,7 +48,7 @@ class AppearanceView extends GetView<AppearanceController> {
                       Padding(
                         padding: const EdgeInsets.only(left: 6),
                         child: Text(
-                          'Theme'.tr,
+                          'profile.theme'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -85,8 +86,8 @@ class AppearanceView extends GetView<AppearanceController> {
             children: [
               _ThemeItem(
                 icon: Icons.brightness_auto_rounded,
-                title: 'theme_system',
-                subtitle: 'theme_system_description',
+                title: 'profile.theme_system',
+                subtitle: 'profile.theme_system_description',
                 selected: controller.selectedTheme.value == 'system',
                 onTap: controller.selectSystemMode,
               ),
@@ -100,8 +101,8 @@ class AppearanceView extends GetView<AppearanceController> {
               ),
               _ThemeItem(
                 icon: Icons.light_mode_outlined,
-                title: 'Light Mode',
-                subtitle: 'Light theme for a bright experience',
+                title: 'profile.light_mode',
+                subtitle: 'profile.light_theme_for_a_bright_experience',
                 selected: controller.selectedTheme.value == 'light',
                 onTap: controller.selectLightMode,
               ),
@@ -115,8 +116,8 @@ class AppearanceView extends GetView<AppearanceController> {
               ),
               _ThemeItem(
                 icon: Icons.dark_mode_outlined,
-                title: 'Dark Mode',
-                subtitle: 'Dark theme for comfortable viewing',
+                title: 'profile.dark_mode',
+                subtitle: 'profile.dark_theme_for_comfortable_viewing',
                 selected: controller.selectedTheme.value == 'dark',
                 onTap: controller.selectDarkMode,
               ),
@@ -150,7 +151,7 @@ class _ThemeItem extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: title.tr,
+      label: title.trOrSelf,
       child: Material(
         color:
             selected
@@ -190,7 +191,7 @@ class _ThemeItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title.tr,
+                          title.trOrSelf,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -199,7 +200,7 @@ class _ThemeItem extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          subtitle.tr,
+                          subtitle.trOrSelf,
                           style: TextStyle(
                             fontSize: 11,
                             color: colors.onSurfaceVariant,

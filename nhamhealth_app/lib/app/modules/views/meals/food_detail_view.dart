@@ -7,6 +7,7 @@ import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/food_detail_controller.dart';
 import '../../models/meals/meal_model.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodDetailView extends GetView<FoodDetailController> {
   const FoodDetailView({super.key});
@@ -156,7 +157,7 @@ class _DetailHeader extends StatelessWidget {
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            'Food Detail'.tr,
+            'common.food_detail'.tr,
             style: TextStyle(
               color: context.appText,
               fontSize: 15,
@@ -238,7 +239,7 @@ class _Category extends StatelessWidget {
           ),
         ),
         Text(
-          'Healthy recipe',
+          'meals.healthy_recipe'.tr,
           style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
       ],
@@ -266,7 +267,7 @@ class _Introduction extends StatelessWidget {
       const SizedBox(height: 9),
       Text(
         meal.description.isEmpty
-            ? 'A nourishing choice for your day'.tr
+            ? 'meals.nourishing_choice'.tr
             : meal.description,
         style: TextStyle(
           color: context.appMutedText,
@@ -311,7 +312,7 @@ class _Nutrition extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(left: 95),
               child: Text(
-                'kcal',
+                'common.kcal'.tr,
                 style: TextStyle(color: context.appMutedText, fontSize: 12),
               ),
             ),
@@ -400,20 +401,29 @@ class _Stats extends StatelessWidget {
       children: [
         _Stat(
           icon: Icons.schedule_rounded,
-          label: 'Cook time',
-          value: _withUnit(meal.cookingTimeMinutes, 'mins'),
+          label: 'meals.cook_time',
+          value:
+              meal.cookingTimeMinutes == null
+                  ? 'meals.not_specified'.tr
+                  : '${meal.cookingTimeMinutes} ${'meals.minutes_short'.tr}',
         ),
         const _StatDivider(),
         _Stat(
           icon: Icons.local_fire_department_outlined,
-          label: 'Difficulty',
-          value: meal.difficulty.isEmpty ? 'Not specified' : meal.difficulty,
+          label: 'common.difficulty',
+          value:
+              meal.difficulty.isEmpty
+                  ? 'meals.not_specified'.tr
+                  : meal.difficulty,
         ),
         const _StatDivider(),
         _Stat(
           icon: Icons.people_outline_rounded,
-          label: 'Servings',
-          value: _withUnit(meal.servings, 'people'),
+          label: 'common.servings',
+          value:
+              meal.servings == null
+                  ? 'meals.not_specified'.tr
+                  : '${meal.servings} ${'meals.people'.tr}',
         ),
       ],
     ),
@@ -433,7 +443,7 @@ class _Stat extends StatelessWidget {
         Icon(icon, color: context.appColorScheme.primary, size: 20),
         const SizedBox(height: 7),
         Text(
-          label.tr,
+          label.trOrSelf,
           style: TextStyle(color: context.appMutedText, fontSize: 10),
         ),
         const SizedBox(height: 5),
@@ -482,13 +492,13 @@ class _Tabs extends StatelessWidget {
     child: Row(
       children: [
         _Tab(
-          label: 'Ingredients',
+          label: 'common.ingredients',
           count: ingredientCount,
           selected: selected == 0,
           onTap: () => onSelected(0),
         ),
         _Tab(
-          label: 'How to make',
+          label: 'meals.how_to_make',
           count: stepCount,
           selected: selected == 1,
           onTap: () => onSelected(1),
@@ -521,7 +531,10 @@ class _Tab extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            '${label.tr} - $count',
+            'meals.label_count'.trParams({
+              'label': label.trOrSelf,
+              'count': '$count',
+            }),
             textAlign: TextAlign.center,
             style: TextStyle(
               color:
@@ -544,7 +557,7 @@ class _Ingredients extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const _Empty(message: 'No ingredients available');
+    if (items.isEmpty) return const _Empty(message: 'meals.no_ingredients');
     return Container(
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
@@ -647,7 +660,7 @@ class _Steps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const _Empty(message: 'No cooking steps available');
+      return const _Empty(message: 'meals.no_steps');
     }
     return Column(
       children: items
@@ -738,7 +751,10 @@ class _ContentLoading extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: context.appMutedText),
                   ),
-                  TextButton(onPressed: onRetry, child: Text('Try again'.tr)),
+                  TextButton(
+                    onPressed: onRetry,
+                    child: Text('common.try_again'.tr),
+                  ),
                 ],
               ),
             ),
@@ -753,7 +769,7 @@ class _Empty extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 34),
     child: Center(
       child: Text(
-        message.tr,
+        message.trOrSelf,
         style: TextStyle(color: context.appMutedText, fontSize: 14),
       ),
     ),
@@ -777,11 +793,11 @@ class _LoadError extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          message.isEmpty ? 'Meal details are unavailable.' : message,
+          message.isEmpty ? 'meals.details_unavailable'.tr : message,
           textAlign: TextAlign.center,
           style: TextStyle(color: context.appMutedText, fontSize: 14),
         ),
-        TextButton(onPressed: onRetry, child: Text('Try again'.tr)),
+        TextButton(onPressed: onRetry, child: Text('common.try_again'.tr)),
       ],
     ),
   );
@@ -826,8 +842,6 @@ List<MealNutritionModel> _keyNutrition(List<MealNutritionModel> source) {
   return selected;
 }
 
-String _withUnit(int? value, String unit) =>
-    value == null ? 'Not specified' : '$value $unit';
 String _ingredientAmount(MealIngredientModel item) =>
     item.quantity == null
         ? (item.description.isEmpty ? '—' : item.description)

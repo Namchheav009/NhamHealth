@@ -73,7 +73,7 @@ class NotificationsController extends GetxController {
     } on Object catch (error) {
       if (!silent) {
         AppAlert.error(
-          title: 'Notifications unavailable',
+          title: 'notifications.notifications_unavailable',
           message: error.toString(),
         );
       }
@@ -99,7 +99,7 @@ class NotificationsController extends GetxController {
     } on Object catch (error) {
       notifications[index] = item;
       AppAlert.error(
-        title: 'Notification not updated',
+        title: 'notifications.notification_not_updated',
         message: error.toString(),
       );
     }
@@ -121,7 +121,7 @@ class NotificationsController extends GetxController {
     } on Object catch (error) {
       notifications.assignAll(previous);
       AppAlert.error(
-        title: 'Notifications not updated',
+        title: 'notifications.not_updated',
         message: error.toString(),
       );
     }

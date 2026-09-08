@@ -49,7 +49,7 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'AI Insight'.tr,
+                          'wellness.ai_insight'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -75,7 +75,7 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '⚖️ Watch sugar'.tr,
+                            'wellness.watch_sugar'.tr,
                             style: const TextStyle(
                               color: Color(0xFFFF641E),
                               fontSize: 8,
@@ -86,7 +86,7 @@ class FoodDetailAiInsightCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Milk tea is okay sometimes, but sugar is a bit high for one drink. Balance it with water and a lighter next choice.'
+                      'wellness.milk_tea_is_okay_sometimes_but_sugar_is_a_bit_high_for_one_drink_balance_it_with_water_and_a_lighter_next_choice'
                           .tr,
                       style: TextStyle(
                         fontSize: 10,

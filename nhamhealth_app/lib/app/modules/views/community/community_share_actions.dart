@@ -104,11 +104,14 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
       Get.back<void>();
       unawaited(
         AppAlert.success(
-          title: widget.isEditing ? 'Post updated' : 'Post shared',
+          title:
+              widget.isEditing
+                  ? 'community.post_updated'
+                  : 'community.post_shared',
           message:
               widget.isEditing
-                  ? 'Your changes have been saved.'
-                  : 'The post is now on your profile and Community feed.',
+                  ? 'community.changes_saved'
+                  : 'community.post_shared_profile_help',
         ),
       );
     } on Object catch (error) {
@@ -117,8 +120,8 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
           AppAlert.error(
             title:
                 widget.isEditing
-                    ? 'Could not update post'
-                    : 'Could not share post',
+                    ? 'community.could_not_update_post'
+                    : 'community.could_not_share_post',
             message: error.toString(),
           ),
         );
@@ -241,7 +244,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Feed',
+                                    'community.feed'.tr,
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -330,7 +333,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                     maxLines: 5,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
-                      hintText: 'Say something...'.tr,
+                      hintText: 'community.post_prompt'.tr,
                       hintStyle: TextStyle(
                         color: context.appMutedText,
                         fontSize: 16,
@@ -360,7 +363,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                 children: [
                   IconButton(
                     key: const ValueKey<String>('community-share-emoji-button'),
-                    tooltip: 'Add emoji'.tr,
+                    tooltip: 'community.add_emoji'.tr,
                     onPressed: _addEmoji,
                     visualDensity: VisualDensity.compact,
                     icon: Icon(
@@ -371,7 +374,7 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    tooltip: 'Audience'.tr,
+                    tooltip: 'community.audience'.tr,
                     onPressed: _chooseAudience,
                     visualDensity: VisualDensity.compact,
                     icon: Icon(
@@ -411,7 +414,9 @@ class _CommunityShareComposerState extends State<_CommunityShareComposer> {
                             )
                             : Text(
                               (widget.submitButtonText ??
-                                      (widget.isEditing ? 'Save' : 'Share now'))
+                                      (widget.isEditing
+                                          ? 'common.save'
+                                          : 'community.share_now'))
                                   .tr,
                               style: const TextStyle(
                                 fontSize: 14,

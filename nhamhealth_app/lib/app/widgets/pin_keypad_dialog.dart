@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 typedef PinValidator = Future<String?> Function(String pin);
 typedef BiometricAuthenticator = Future<bool> Function();
@@ -23,7 +24,7 @@ Future<String?> showPinKeypadDialog({
 }) => showGeneralDialog<String>(
   context: context,
   barrierDismissible: false,
-  barrierLabel: 'PIN entry',
+  barrierLabel: 'security.pin_entry'.tr,
   barrierColor: Colors.black.withValues(alpha: .18),
   transitionDuration: const Duration(milliseconds: 220),
   pageBuilder:
@@ -194,7 +195,9 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                           const SizedBox(width: 40),
                           Expanded(
                             child: Text(
-                              _confirming ? 'Confirm PIN'.tr : widget.title.tr,
+                              _confirming
+                                  ? 'security.confirm_pin'.tr
+                                  : widget.title.trOrSelf,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: context.appText,
@@ -205,7 +208,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                           ),
                           if (widget.allowCancel)
                             IconButton(
-                              tooltip: 'Cancel'.tr,
+                              tooltip: 'common.cancel'.tr,
                               onPressed:
                                   _busy ? null : () => Navigator.pop(context),
                               icon: const Icon(Icons.close_rounded),
@@ -219,8 +222,8 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                         const SizedBox(height: 4),
                         Text(
                           _confirming
-                              ? 'Enter the same 6 digits again'.tr
-                              : widget.subtitle!.tr,
+                              ? 'profile.enter_the_same_6_digits_again'.tr
+                              : widget.subtitle!.trOrSelf,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.secondaryText,
@@ -231,9 +234,8 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                       ],
                       const SizedBox(height: 22),
                       Semantics(
-                        label: '@count of 6 PIN digits entered'.trParams({
-                          'count': '${_pin.length}',
-                        }),
+                        label: 'security.count_of_6_pin_digits_entered'
+                            .trParams({'count': '${_pin.length}'}),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
@@ -268,7 +270,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                                 ? null
                                 : Center(
                                   child: Text(
-                                    _error!.tr,
+                                    _error!.trOrSelf,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: AppColors.errorCoral,
@@ -324,7 +326,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                   widget.biometricAuthenticator == null
                       ? null
                       : IconButton(
-                        tooltip: widget.biometricLabel.tr,
+                        tooltip: widget.biometricLabel.trOrSelf,
                         onPressed: _busy ? null : _authenticateBiometrically,
                         icon: Icon(widget.biometricIcon, size: 32),
                         color: AppColors.primaryGreen,
@@ -335,7 +337,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
               width: 70,
               height: 70,
               child: IconButton(
-                tooltip: 'Delete digit'.tr,
+                tooltip: 'profile.delete_digit'.tr,
                 onPressed: _pin.isEmpty ? null : _removeDigit,
                 icon: const Icon(Icons.backspace_outlined),
                 color: context.appText,

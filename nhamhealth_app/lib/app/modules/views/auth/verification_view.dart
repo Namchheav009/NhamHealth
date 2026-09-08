@@ -11,6 +11,7 @@ import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import 'reset_password_view.dart';
 import 'widgets/auth_flow_scaffold.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class VerificationController extends GetxController {
   VerificationController({AuthService? authService})
@@ -167,16 +168,20 @@ class VerificationController extends GetxController {
       codeFocusNode.requestFocus();
       final isPhone = !userEmail.value.contains('@');
       AppAlert.success(
-        title: 'New code sent'.tr,
+        title: 'auth.new_code_sent'.tr,
         message:
             isPhone
-                ? 'Check your phone messages. The new code is valid for @minutes minutes.'
-                    .trParams({'minutes': '${isRegistration.value ? 5 : 3}'})
-                : 'Check your email. The new code is valid for @minutes minutes.'
+                ? 'auth.phone_code_resent'.trParams({
+                  'minutes': '${isRegistration.value ? 5 : 3}',
+                })
+                : 'auth.check_your_email_the_new_code_is_valid_for_minutes_minutes'
                     .trParams({'minutes': '${isRegistration.value ? 5 : 3}'}),
       );
     } on AuthException catch (error) {
-      AppAlert.error(title: 'Could not resend code'.tr, message: error.message);
+      AppAlert.error(
+        title: 'auth.could_not_resend_code'.tr,
+        message: error.message,
+      );
     } finally {
       isResending.value = false;
     }
@@ -214,11 +219,11 @@ class VerificationView extends StatelessWidget {
     final controller = Get.put(VerificationController());
 
     return AuthFlowScaffold(
-      title: 'Verification',
+      title: 'auth.verification',
       subtitle:
           controller.deliveryPending.value
-              ? 'Delivery is taking longer than usual. Enter the code when it arrives.'
-              : 'Enter the six-digit code to continue.',
+              ? 'auth.delivery_delayed'
+              : 'auth.enter_the_six_digit_code_to_continue',
       illustrationAsset: 'assets/images/auth/verification.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -226,8 +231,8 @@ class VerificationView extends StatelessWidget {
           Obx(
             () => Text(
               controller.userEmail.value.contains('@')
-                  ? 'We sent a code to'.tr
-                  : 'We sent an SMS code to'.tr,
+                  ? 'auth.we_sent_a_code_to'.tr
+                  : 'auth.we_sent_an_sms_code_to'.tr,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.darkGreen,
@@ -268,7 +273,7 @@ class VerificationView extends StatelessWidget {
                         key: const ValueKey('verification-error'),
                         padding: const EdgeInsets.only(top: 10),
                         child: Text(
-                          controller.errorMessage.value.tr,
+                          controller.errorMessage.value.trOrSelf,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.errorCoral,
@@ -294,7 +299,7 @@ class VerificationView extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  "Didn't receive the code?".tr,
+                  'auth.didnt_receive_the_code'.tr,
                   style: TextStyle(fontSize: 11, color: context.appText),
                 ),
                 TextButton(
@@ -311,12 +316,12 @@ class VerificationView extends StatelessWidget {
                   ),
                   child: Text(
                     controller.isResending.value
-                        ? 'Sending...'.tr
+                        ? 'auth.sending'.tr
                         : controller.resendSeconds.value > 0
-                        ? 'Send again in @seconds'.trParams({
+                        ? 'auth.send_again_in_seconds'.trParams({
                           'seconds': '${controller.resendSeconds.value}s',
                         })
-                        : 'Send again'.tr,
+                        : 'auth.send_again'.tr,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -357,8 +362,8 @@ class _ExpiryPill extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 expired
-                    ? 'Code expired'.tr
-                    : 'Code expires in @time'.trParams({'time': time}),
+                    ? 'auth.code_expired'.tr
+                    : 'auth.code_expires_in_time'.trParams({'time': time}),
                 style: TextStyle(
                   color: color,
                   fontSize: 11,
@@ -389,7 +394,7 @@ class _VerificationCodeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Six digit verification code'.tr,
+      label: 'common.six_digit_verification_code'.tr,
       textField: true,
       child: LayoutBuilder(
         builder: (context, constraints) {

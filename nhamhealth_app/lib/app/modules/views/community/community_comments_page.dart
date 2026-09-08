@@ -126,7 +126,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       final comments = await _repository.getComments(_post.id);
       if (mounted) setState(() => _comments = comments);
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not load comments', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_load_comments'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -157,7 +159,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       _message.clear();
       widget.onPostChanged?.call();
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not comment', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_comment'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -174,7 +178,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       });
       widget.onPostChanged?.call();
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not update like', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_update_like'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _updatingPost = false);
     }
@@ -210,8 +216,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (!canShare) {
       unawaited(
         AppAlert.error(
-          title: 'Cannot share this post',
-          message: 'Only public posts can be shared to your feed.',
+          title: 'community.cannot_share_post',
+          message: 'community.public_posts_only',
         ),
       );
       return;
@@ -245,7 +251,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             .toList(growable: false);
       });
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not update like', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_update_like'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _likingCommentId = null);
     }
@@ -256,22 +264,22 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       _CommentOptionsSheet(
         actions: [
           if (_post.allowReplies)
-            const _CommentOption(
+            _CommentOption(
               _DiscussionAction.reply,
-              'Reply',
+              'community.reply'.tr,
               Icons.reply_rounded,
             ),
           if (comment.canDelete)
-            const _CommentOption(
+            _CommentOption(
               _DiscussionAction.delete,
-              'Delete comment',
+              'community.delete_comment_action'.tr,
               Icons.delete_outline_rounded,
               isDestructive: true,
             )
           else
-            const _CommentOption(
+            _CommentOption(
               _DiscussionAction.report,
-              'Report comment',
+              'community.report_comment'.tr,
               Icons.flag_outlined,
               isDestructive: true,
             ),
@@ -302,21 +310,22 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (_deletingCommentId != null) return;
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: Text('Delete comment?'.tr),
+        title: Text('community.delete_comment'.tr),
         content: Text(
-          'This will permanently remove this comment and any replies to it.'.tr,
+          'community.this_will_permanently_remove_this_comment_and_any_replies_to_it'
+              .tr,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('Cancel'.tr),
+            child: Text('common.cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD94545),
             ),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr),
           ),
         ],
       ),
@@ -343,15 +352,15 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       widget.onPostChanged?.call();
       unawaited(
         AppAlert.success(
-          title: 'Comment deleted',
-          message: 'The comment has been removed.',
+          title: 'community.comment_deleted',
+          message: 'community.comment_removed',
         ),
       );
     } on Object catch (error) {
       if (mounted) {
         unawaited(
           AppAlert.error(
-            title: 'Could not delete comment',
+            title: 'community.could_not_delete_comment',
             message: error.toString(),
           ),
         );
@@ -381,32 +390,33 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     final isOwner = widget.canEdit;
     final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
-        title: isOwner ? 'Post options' : 'More options',
+        title:
+            (isOwner ? 'community.post_options' : 'community.more_options').tr,
         actions:
             isOwner
                 ? [
                   if (widget.onEditPost != null)
-                    const _CommentOption(
+                    _CommentOption(
                       _DiscussionAction.edit,
-                      'Edit post',
+                      'community.edit_post'.tr,
                       Icons.edit_outlined,
                     ),
-                  const _CommentOption(
+                  _CommentOption(
                     _DiscussionAction.delete,
-                    'Delete post',
+                    'community.delete_post'.tr,
                     Icons.delete_outline_rounded,
                     isDestructive: true,
                   ),
                 ]
-                : const [
+                : [
                   _CommentOption(
                     _DiscussionAction.share,
-                    'Share post',
+                    'community.share_post'.tr,
                     Icons.reply_rounded,
                   ),
                   _CommentOption(
                     _DiscussionAction.report,
-                    'Report post',
+                    'community.report_post'.tr,
                     Icons.flag_outlined,
                     isDestructive: true,
                   ),
@@ -437,21 +447,19 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     if (_updatingPost) return;
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete this post?'),
-        content: const Text(
-          'This will remove the post from Community and your profile. You cannot undo this action.',
-        ),
+        title: Text('community.delete_post_question'.tr),
+        content: Text('community.delete_post_profile_warning'.tr),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD94545),
             ),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr),
           ),
         ],
       ),
@@ -464,9 +472,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (!mounted) return;
       widget.onPostChanged?.call();
       Get.back<void>();
-      Get.snackbar('Post deleted', 'Your post has been removed.');
+      Get.snackbar('community.post_deleted'.tr, 'community.post_removed'.tr);
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not delete post', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_delete_post'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _updatingPost = false);
     }
@@ -486,7 +496,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         initialMessage: _post.description,
         initialVisibility: _post.visibility,
         isEditing: true,
-        submitButtonText: 'Save',
+        submitButtonText: 'common.save'.tr,
         onShare: (message, visibility) async {
           final updated = await _repository.updatePost(
             postId: _post.id,
@@ -581,7 +591,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 child: Padding(
                   padding: AppSpacing.topBarPagePadding,
                   child: AppBackHeader(
-                    title: 'Comments',
+                    title: 'community.comments'.tr,
                     onBack: Get.back,
                     backButtonKey: const ValueKey<String>(
                       'comments-back-button',
@@ -630,15 +640,20 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                     Row(
                                       children: [
                                         Text(
-                                          '${_post.comments} ${_post.comments == 1 ? 'Comment' : 'Comments'}',
+                                          (_post.comments == 1
+                                                  ? 'community.comment_count_one'
+                                                  : 'community.comment_count_many')
+                                              .trParams({
+                                                'count': '${_post.comments}',
+                                              }),
                                           style: const TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
                                         const Spacer(),
-                                        const Text(
-                                          'Discussion',
+                                        Text(
+                                          'community.discussion'.tr,
                                           style: TextStyle(
                                             color: _green,
                                             fontSize: 12,
@@ -655,7 +670,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            'Be the first to comment.'.tr,
+                                            'community.be_the_first_to_comment'
+                                                .tr,
                                           ),
                                         ),
                                       )
@@ -704,7 +720,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Recipe details'.tr,
+                      'community.recipe_details'.tr,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -724,7 +740,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                           : Icons.keyboard_arrow_down_rounded,
                     ),
                     label: Text(
-                      (_recipeDetailsExpanded ? 'Hide' : 'Show all').tr,
+                      (_recipeDetailsExpanded
+                              ? 'common.hide'
+                              : 'common.show_all')
+                          .tr,
                     ),
                   ),
                 ],
@@ -762,7 +781,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (_post.ingredients.isNotEmpty) ...[
         const SizedBox(height: 12),
         Text(
-          'Ingredients'.tr,
+          'common.ingredients'.tr,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 12),
@@ -790,7 +809,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         const Divider(height: 32),
       if (_post.steps.isNotEmpty) ...[
         Text(
-          'How to Cook'.tr,
+          'community.how_to_cook'.tr,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 12),
@@ -870,7 +889,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             IconButton(
               onPressed: _showPostOptions,
               icon: Icon(Icons.more_horiz_rounded, color: context.appMutedText),
-              tooltip: 'More options'.tr,
+              tooltip: 'common.more_options'.tr,
             ),
           ],
         ),
@@ -982,7 +1001,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       if (_post.likes > 0)
         Semantics(
           button: true,
-          label: '${_post.likes} likes. View people who liked this post.',
+          label: 'community.likes_a11y'.trParams({'count': '${_post.likes}'}),
           child: InkWell(
             onTap: _showPostLikers,
             borderRadius: BorderRadius.circular(12),
@@ -1017,14 +1036,20 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       const Spacer(),
       if (_post.comments > 0)
         Text(
-          '${_post.comments} ${_post.comments == 1 ? 'comment' : 'comments'}',
+          (_post.comments == 1
+                  ? 'community.comment_count_one'
+                  : 'community.comment_count_many')
+              .trParams({'count': '${_post.comments}'}),
           style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
       if (_post.comments > 0 && _post.shares > 0)
         Text('  ·  ', style: TextStyle(color: context.appMutedText)),
       if (_post.shares > 0)
         Text(
-          '${_post.shares} ${_post.shares == 1 ? 'share' : 'shares'}',
+          (_post.shares == 1
+                  ? 'community.share_count_one'
+                  : 'community.share_count_many')
+              .trParams({'count': '${_post.shares}'}),
           style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
     ],
@@ -1122,8 +1147,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     InkWell(
                       onTap: () => _beginReply(comment),
                       borderRadius: BorderRadius.circular(6),
-                      child: const Text(
-                        'Reply',
+                      child: Text(
+                        'notifications.reply'.tr,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -1155,7 +1180,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               ),
               iconSize: 20,
               visualDensity: VisualDensity.compact,
-              tooltip: comment.isLiked ? 'Unlike comment' : 'Like comment',
+              tooltip:
+                  (comment.isLiked
+                          ? 'community.unlike_comment'
+                          : 'community.like_comment')
+                      .tr,
             ),
             if (comment.likes > 0)
               Text(
@@ -1174,7 +1203,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   size: 20,
                   color: context.appMutedText,
                 ),
-                tooltip: 'Comment options'.tr,
+                tooltip: 'community.comment_options'.tr,
               ),
             ),
           ],
@@ -1194,7 +1223,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             padding: const EdgeInsets.all(18),
             child: Center(
               child: Text(
-                'Comments are turned off for this post.'.tr,
+                'community.comments_are_turned_off_for_this_post'.tr,
                 style: TextStyle(color: context.appMutedText),
               ),
             ),
@@ -1232,7 +1261,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Replying to @name'.trParams({
+                              'community.replying_to_name'.trParams({
                                 'name': _replyingTo!.author,
                               }),
                               style: TextStyle(
@@ -1244,7 +1273,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                           IconButton(
                             onPressed: _cancelReply,
                             icon: const Icon(Icons.close_rounded, size: 18),
-                            tooltip: 'Cancel reply'.tr,
+                            tooltip: 'community.cancel_reply'.tr,
                           ),
                         ],
                       ),
@@ -1258,8 +1287,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                     decoration: InputDecoration(
                       hintText:
                           _replyingTo == null
-                              ? 'Write a comment...'.tr
-                              : 'Write a reply...'.tr,
+                              ? 'community.write_a_comment'.tr
+                              : 'community.write_a_reply'.tr,
                       filled: true,
                       fillColor: context.appMutedSurface,
                       border: OutlineInputBorder(
@@ -1279,7 +1308,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                   ),
                                 )
                                 : const Icon(Icons.send_rounded, color: _green),
-                        tooltip: 'Send'.tr,
+                        tooltip: 'community.send'.tr,
                       ),
                     ),
                   ),

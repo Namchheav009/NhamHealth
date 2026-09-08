@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AuthTabSwitcher extends StatelessWidget {
   const AuthTabSwitcher({
@@ -30,14 +30,14 @@ class AuthTabSwitcher extends StatelessWidget {
         children: [
           Expanded(
             child: _Tab(
-              label: 'Sign In',
+              label: 'auth.sign_in',
               selected: selectedIndex == 0,
               onTap: onLogin,
             ),
           ),
           Expanded(
             child: _Tab(
-              label: 'Sign Up',
+              label: 'auth.sign_up',
               selected: selectedIndex == 1,
               onTap: onRegister,
             ),
@@ -76,7 +76,7 @@ class _Tab extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Center(
             child: Text(
-              label.tr,
+              label.trOrSelf,
               style: TextStyle(
                 color: selected ? context.appOnBrand : context.appText,
                 fontSize: 13,

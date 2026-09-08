@@ -35,7 +35,7 @@ class FoodSourcesCard extends GetView<CaloriesController> {
                 child: Row(
                   children: [
                     Text(
-                      'Today\'s food sources'.tr,
+                      'wellness.todays_food_sources'.tr,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -65,7 +65,7 @@ class FoodSourcesCard extends GetView<CaloriesController> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Add more'.tr,
+                    'common.add_more'.tr,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AiStatusBadge extends StatelessWidget {
   const AiStatusBadge({required this.status, super.key});
@@ -8,25 +9,25 @@ class AiStatusBadge extends StatelessWidget {
     final value = status.toUpperCase();
     final (label, icon, color, background) = switch (value) {
       'APPROVED' => (
-        'Added to Meals',
+        'community.added_to_meals',
         Icons.check_circle_outline_rounded,
         const Color(0xFF078B40),
         const Color(0xFFE2F8E9),
       ),
       'INCOMPLETE' => (
-        'Complete Recipe',
+        'community.complete_recipe',
         Icons.warning_amber_rounded,
         const Color(0xFFA76100),
         const Color(0xFFFFF2D6),
       ),
       'NOT_SUITABLE' => (
-        'Community only',
+        'community.community_only',
         Icons.info_outline_rounded,
         const Color(0xFF657069),
         const Color(0xFFEFF2F0),
       ),
       _ => (
-        'AI checking...',
+        'community.ai_checking',
         Icons.auto_awesome_rounded,
         const Color(0xFF6260A8),
         const Color(0xFFF0EEFF),
@@ -44,7 +45,7 @@ class AiStatusBadge extends StatelessWidget {
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 5),
           Text(
-            label,
+            label.tr,
             style: TextStyle(
               color: color,
               fontSize: 12,

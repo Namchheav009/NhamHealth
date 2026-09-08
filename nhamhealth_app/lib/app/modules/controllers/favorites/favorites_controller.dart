@@ -38,7 +38,10 @@ class FavoritesController extends GetxController {
       isLoading.value = true;
       foods.assignAll(await repository.getFoods());
     } on Object catch (error) {
-      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+      AppAlert.error(
+        title: 'common.favorites_unavailable',
+        message: error.toString(),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -64,7 +67,10 @@ class FavoritesController extends GetxController {
     try {
       posts.assignAll(await repository.getPosts());
     } on Object catch (error) {
-      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+      AppAlert.error(
+        title: 'common.favorites_unavailable',
+        message: error.toString(),
+      );
     } finally {
       isPostsLoading.value = false;
     }
@@ -100,7 +106,10 @@ class FavoritesController extends GetxController {
       }
     } on Object catch (error) {
       foods.insert(index, removed);
-      AppAlert.error(title: 'Favorite not removed', message: error.toString());
+      AppAlert.error(
+        title: 'favorites.favorite_not_removed',
+        message: error.toString(),
+      );
     }
   }
 
@@ -112,7 +121,10 @@ class FavoritesController extends GetxController {
       await repository.removePost(id);
     } on Object catch (error) {
       posts.insert(index, removed);
-      AppAlert.error(title: 'Favorite not removed', message: error.toString());
+      AppAlert.error(
+        title: 'favorites.favorite_not_removed',
+        message: error.toString(),
+      );
     }
   }
 }

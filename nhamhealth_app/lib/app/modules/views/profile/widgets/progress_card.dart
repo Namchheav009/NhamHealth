@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/profile/profile_controller.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class ProgressCard extends GetView<ProfileController> {
   const ProgressCard({super.key});
@@ -38,7 +39,7 @@ class ProgressCard extends GetView<ProfileController> {
             children: [
               Expanded(
                 child: Text(
-                  "Today's Progress".tr,
+                  'profile.todays_progress'.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
@@ -50,7 +51,7 @@ class ProgressCard extends GetView<ProfileController> {
                 child: Row(
                   children: [
                     Text(
-                      'View Details'.tr,
+                      'common.view_details'.tr,
                       style: TextStyle(
                         color: isDark ? context.appColorScheme.primary : green,
                         fontSize: 13,
@@ -79,7 +80,7 @@ class ProgressCard extends GetView<ProfileController> {
                     context: context,
                     icon: Icons.local_fire_department_rounded,
                     iconColor: Colors.deepOrange,
-                    title: 'Calories',
+                    title: 'common.calories',
                     current: '${controller.calories.value}',
                     target: '${controller.caloriesGoal.value}',
                     unit: 'kcal',
@@ -94,7 +95,7 @@ class ProgressCard extends GetView<ProfileController> {
                     context: context,
                     icon: Icons.energy_savings_leaf_outlined,
                     iconColor: isDark ? context.appColorScheme.primary : green,
-                    title: 'Protein',
+                    title: 'common.protein',
                     current: '${controller.protein.value}',
                     target: '${controller.proteinGoal.value}',
                     unit: 'g',
@@ -109,7 +110,7 @@ class ProgressCard extends GetView<ProfileController> {
                     context: context,
                     icon: Icons.water_drop_rounded,
                     iconColor: const Color(0xFF72A9FF),
-                    title: 'Water',
+                    title: 'common.water',
                     current: '${controller.water.value}',
                     target: '${controller.waterGoal.value}',
                     unit: 'glasses',
@@ -152,7 +153,7 @@ class ProgressCard extends GetView<ProfileController> {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                title.tr,
+                title.trOrSelf,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
@@ -200,7 +201,7 @@ class ProgressCard extends GetView<ProfileController> {
         const SizedBox(height: 5),
 
         Text(
-          unit.tr,
+          unit.trOrSelf,
           style: TextStyle(
             color:
                 context.appIsDark ? context.appMutedText : Colors.grey.shade500,

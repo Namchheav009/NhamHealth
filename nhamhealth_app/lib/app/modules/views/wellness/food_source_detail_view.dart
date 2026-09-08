@@ -74,7 +74,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
           Expanded(
             child: Center(
               child: Text(
-                'Food Detail'.tr,
+                'common.food_detail'.tr,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -105,7 +105,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: Text('Cancel'.tr),
+              child: Text('common.cancel'.tr),
             ),
           ),
           const SizedBox(width: 8),
@@ -122,7 +122,7 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: Text('Save Changes'.tr),
+              label: Text('common.save_changes'.tr),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/inner_shadow.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MoodCard extends StatefulWidget {
   final String emoji;
@@ -132,7 +133,7 @@ class _MoodCardState extends State<MoodCard>
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    widget.label.tr,
+                    widget.label.trOrSelf,
                     maxLines: 1,
                     style: TextStyle(
                       fontSize: 10.5,
@@ -228,8 +229,10 @@ class _MoodCardState extends State<MoodCard>
       selected: widget.selected,
       label:
           widget.invalid
-              ? 'Choose a mood. ${widget.label.tr}'.tr
-              : '@mood mood'.trParams({'mood': widget.label.tr}),
+              ? 'home.choose_mood_label'.trParams({
+                'mood': widget.label.trOrSelf,
+              })
+              : 'home.mood_mood'.trParams({'mood': widget.label.trOrSelf}),
       child: AnimatedBuilder(
         animation: _shake,
         child: AnimatedScale(

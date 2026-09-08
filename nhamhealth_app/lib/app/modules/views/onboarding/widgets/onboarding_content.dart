@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
@@ -10,6 +9,7 @@ import '../../../models/onboarding/onboarding_item.dart';
 import 'onboarding_indicator.dart';
 import 'onboarding_next_button.dart';
 import 'onboarding_skip_button.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class OnboardingContent extends StatelessWidget {
   const OnboardingContent({
@@ -191,7 +191,7 @@ class _TitleBlock extends StatelessWidget {
             centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           Text(
-            item.title.tr,
+            item.title.trOrSelf,
             textAlign: centered ? TextAlign.center : TextAlign.left,
             style: TextStyle(
               color: context.appText,
@@ -202,7 +202,7 @@ class _TitleBlock extends StatelessWidget {
           ),
           if (item.accentTitle != null)
             Text(
-              item.accentTitle!.tr,
+              item.accentTitle!.trOrSelf,
               style: const TextStyle(
                 color: AppColors.accentOrange,
                 fontSize: 34,
@@ -212,7 +212,7 @@ class _TitleBlock extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           Text(
-            item.description.tr,
+            item.description.trOrSelf,
             textAlign: centered ? TextAlign.center : TextAlign.left,
             style: TextStyle(
               color: context.appMutedText,

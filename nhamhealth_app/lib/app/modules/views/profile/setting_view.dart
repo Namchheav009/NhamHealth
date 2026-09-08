@@ -176,21 +176,21 @@ class SettingsView extends GetView<SettingsController> {
                                     children: [
                                       _buildSectionTitle(
                                         context,
-                                        'settings_account'.tr,
+                                        'profile.settings_account'.tr,
                                       ),
                                       const SizedBox(height: 10),
                                       _buildAccountCard(context),
                                       const SizedBox(height: 21),
                                       _buildSectionTitle(
                                         context,
-                                        'settings_preferences'.tr,
+                                        'profile.settings_preferences'.tr,
                                       ),
                                       const SizedBox(height: 10),
                                       _buildPreferenceCard(context),
                                       const SizedBox(height: 21),
                                       _buildSectionTitle(
                                         context,
-                                        'settings_support'.tr,
+                                        'profile.settings_support'.tr,
                                       ),
                                       const SizedBox(height: 10),
                                       _buildSupportCard(context),
@@ -237,7 +237,7 @@ class SettingsView extends GetView<SettingsController> {
 
   Widget _buildHeader() {
     return AppBackHeader(
-      title: 'Settings'.tr,
+      title: 'common.settings'.tr,
       backButtonKey: const ValueKey('settings-back-button'),
       onBack: controller.goBack,
     );
@@ -272,15 +272,15 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.lock_outline_rounded,
-          title: 'password_security'.tr,
-          subtitle: 'password_security_description'.tr,
+          title: 'profile.password_security'.tr,
+          subtitle: 'profile.password_security_description'.tr,
           onTap: controller.openPasswordSecurity,
         ),
         _divider(context),
         _SettingsItem(
           icon: Icons.favorite_border_rounded,
-          title: 'favorites'.tr,
-          subtitle: 'favorites_description'.tr,
+          title: 'profile.favorites'.tr,
+          subtitle: 'profile.favorites_description'.tr,
           onTap: controller.openFavorites,
         ),
       ],
@@ -297,8 +297,8 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.dark_mode_outlined,
-          title: 'appearance'.tr,
-          subtitle: 'appearance_description'.tr,
+          title: 'profile.appearance_2'.tr,
+          subtitle: 'profile.appearance_description'.tr,
           onTap: controller.openAppearance,
         ),
 
@@ -306,12 +306,12 @@ class SettingsView extends GetView<SettingsController> {
 
         _SettingsItem(
           icon: Icons.language_rounded,
-          title: 'language'.tr,
-          subtitle: 'language_setting_description'.tr,
+          title: 'settings.language'.tr,
+          subtitle: 'profile.language_setting_description'.tr,
           trailingText:
               Get.locale?.languageCode == 'km'
-                  ? 'language_khmer'.tr
-                  : 'language_english'.tr,
+                  ? 'settings.language_khmer'.tr
+                  : 'settings.language_english'.tr,
           onTap: controller.openLanguage,
         ),
       ],
@@ -328,8 +328,8 @@ class SettingsView extends GetView<SettingsController> {
       children: [
         _SettingsItem(
           icon: Icons.help_outline_rounded,
-          title: 'help_support'.tr,
-          subtitle: 'help_support_description'.tr,
+          title: 'profile.help_support'.tr,
+          subtitle: 'profile.help_support_description'.tr,
           onTap: controller.openHelpSupport,
         ),
 
@@ -337,8 +337,8 @@ class SettingsView extends GetView<SettingsController> {
 
         _SettingsItem(
           icon: Icons.description_outlined,
-          title: 'terms_privacy'.tr,
-          subtitle: 'terms_privacy_description'.tr,
+          title: 'profile.terms_privacy'.tr,
+          subtitle: 'profile.terms_privacy_description'.tr,
           onTap: controller.openTermsPrivacy,
         ),
       ],
@@ -378,8 +378,8 @@ class SettingsView extends GetView<SettingsController> {
       ),
       child: _SettingsItem(
         icon: Icons.logout_rounded,
-        title: 'log_out'.tr,
-        subtitle: 'log_out_description'.tr,
+        title: 'profile.log_out_2'.tr,
+        subtitle: 'profile.log_out_description'.tr,
         isLogout: true,
         onTap: controller.logout,
       ),

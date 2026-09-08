@@ -83,7 +83,9 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                         ),
                       ),
                       Text(
-                        'Report ${widget.subject}',
+                        'community.report_subject'.trParams({
+                          'subject': widget.subject,
+                        }),
                         style: TextStyle(
                           color: context.appText,
                           fontSize: 18,
@@ -123,7 +125,9 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Why are you reporting $_subjectLabel?',
+                              'community.report_reason_question'.trParams({
+                                'subject': _subjectLabel,
+                              }),
                               style: TextStyle(
                                 color: context.appText,
                                 fontSize: 14,
@@ -133,7 +137,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'Your report is anonymous and will be reviewed.',
+                              'community.report_anonymous'.tr,
                               style: TextStyle(
                                 color: context.appMutedText,
                                 fontSize: 12,
@@ -187,18 +191,18 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
             const SizedBox(height: 14),
             OutlinedButton(
               onPressed: _loadReasons,
-              child: const Text('Try again'),
+              child: Text('common.try_again'.tr),
             ),
           ],
         ),
       );
     }
     if (_reasons.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 276,
         child: Center(
           child: Text(
-            'Reporting is not available right now.',
+            'community.reporting_unavailable'.tr,
             textAlign: TextAlign.center,
           ),
         ),
@@ -219,11 +223,7 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
             child: ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: _reasons.length,
-              separatorBuilder:
-                  (_, _) => const Divider(
-                    height: 1,
-                    indent: 62,
-                  ),
+              separatorBuilder: (_, _) => const Divider(height: 1, indent: 62),
               itemBuilder: (_, index) => _reasonTile(_reasons[index], index),
             ),
           ),
@@ -254,9 +254,9 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
                           color: Colors.white,
                         ),
                       )
-                      : const Text(
-                        'Submit Report',
-                        style: TextStyle(
+                      : Text(
+                        'community.submit_report'.tr,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -367,11 +367,13 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       if (!mounted) return;
       Get.back<void>();
       Get.snackbar(
-        'Report submitted',
-        'Thanks for helping keep the community safe.',
+        'community.report_submitted'.tr,
+        'community.report_thanks'.tr,
       );
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not submit report', error.toString());
+      if (mounted) {
+        Get.snackbar('community.report_submit_failed'.tr, error.toString());
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

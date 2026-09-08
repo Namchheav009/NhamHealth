@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class CaloriesAiInsightCard extends StatelessWidget {
   const CaloriesAiInsightCard({super.key});
@@ -52,7 +53,7 @@ class CaloriesAiInsightCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'AI Insight'.tr,
+                          'wellness.ai_insight'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -80,7 +81,7 @@ class CaloriesAiInsightCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '⚖️ Needs Balance'.tr,
+                            'wellness.needs_balance_2'.tr,
                             style: const TextStyle(
                               color: Color(0xFFFF641E),
                               fontSize: 8,
@@ -93,7 +94,7 @@ class CaloriesAiInsightCard extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     Text(
-                      'Most of your calories came from food and sweet drinks. Stay balanced by choosing a lighter next meal.'
+                      'wellness.most_of_your_calories_came_from_food_and_sweet_drinks_stay_balanced_by_choosing_a_lighter_next_meal'
                           .tr,
                       style: TextStyle(
                         fontSize: 10,
@@ -151,7 +152,10 @@ class CaloriesAiInsightCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: foreground.withValues(alpha: 0.2)),
       ),
-      child: Text(text.tr, style: TextStyle(fontSize: 9, color: foreground)),
+      child: Text(
+        text.trOrSelf,
+        style: TextStyle(fontSize: 9, color: foreground),
+      ),
     );
   }
 }

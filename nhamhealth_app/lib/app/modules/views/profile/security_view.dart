@@ -14,6 +14,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class SecurityView extends StatefulWidget {
   const SecurityView({
@@ -75,24 +76,26 @@ class _SecurityViewState extends State<SecurityView> {
       context: context,
       title: title,
       subtitle:
-          confirm ? 'Choose a memorable 6-digit PIN' : 'Enter your 6-digit PIN',
+          confirm
+              ? 'profile.choose_a_memorable_6_digit_pin'.tr
+              : 'profile.enter_your_6_digit_pin'.tr,
       confirmPin: confirm,
       allowCancel: !widget.requirePinCreation,
     );
   }
 
   Future<bool> _verifyCurrentPin() async {
-    final pin = await _askPin('Verify your PIN');
+    final pin = await _askPin('profile.verify_pin'.tr);
     if (pin == null) return false;
     try {
       if (await _security.verifyPin(pin)) return true;
-      _showSecurityError('Incorrect PIN', 'The PIN you entered is incorrect.');
+      _showSecurityError('profile.incorrect_pin', 'profile.incorrect_pin_help');
     } on AuthException catch (error) {
-      await _handleAuthFailure(error, action: 'Could not verify PIN');
+      await _handleAuthFailure(error, action: 'profile.could_not_verify_pin');
     } on Object {
       _showSecurityError(
-        'Could not verify PIN',
-        'Something went wrong. Please try again.',
+        'profile.could_not_verify_pin',
+        'profile.something_went_wrong_please_try_again',
       );
     }
     return false;
@@ -102,7 +105,7 @@ class _SecurityViewState extends State<SecurityView> {
     if (_hasPin && !await _verifyCurrentPin()) return;
     if (!mounted) return;
     final pin = await _askPin(
-      _hasPin ? 'Choose a new PIN' : 'Create app PIN',
+      (_hasPin ? 'profile.choose_new_pin' : 'profile.create_app_pin').tr,
       confirm: true,
     );
     if (pin == null) return;
@@ -111,7 +114,7 @@ class _SecurityViewState extends State<SecurityView> {
       await _load();
       if (widget.requirePinCreation && _canUseBiometrics && !_biometrics) {
         final enabled = await _security.confirmDeviceBiometrics(
-          'Use your fingerprint or biometrics to protect private features',
+          'profile.biometric_prompt'.tr,
         );
         if (enabled) {
           await _security.setBiometricsEnabled(true);
@@ -119,21 +122,21 @@ class _SecurityViewState extends State<SecurityView> {
         }
       }
       await AppAlert.success(
-        title: 'App protection enabled',
+        title: 'profile.protection_enabled',
         message:
             _biometrics
-                ? 'Your PIN and biometric unlock are ready.'
-                : 'Your app PIN is ready. You can enable fingerprint or biometrics from Security.',
+                ? 'profile.pin_biometrics_ready'
+                : 'profile.pin_ready_settings',
       );
       widget.onPinCreated?.call();
     } on AuthException catch (error) {
-      await _handleAuthFailure(error, action: 'Could not save PIN');
+      await _handleAuthFailure(error, action: 'profile.could_not_save_pin');
     } on FormatException catch (error) {
-      _showSecurityError('Could not save PIN', error.message);
+      _showSecurityError('profile.could_not_save_pin', error.message);
     } on Object {
       _showSecurityError(
-        'Could not save PIN',
-        'Something went wrong. Please try again.',
+        'profile.could_not_save_pin',
+        'profile.something_went_wrong_please_try_again',
       );
     }
   }
@@ -159,19 +162,21 @@ class _SecurityViewState extends State<SecurityView> {
       await _load();
       if (mounted) {
         await AppAlert.success(
-          title:
-              enabled ? '$_biometricName enabled' : '$_biometricName disabled',
+          title: (enabled
+                  ? 'profile.biometric_enabled'
+                  : 'profile.biometric_disabled')
+              .trParams({'name': _biometricName}),
           message:
               enabled
-                  ? 'NhamHealth will use the biometric sensor secured by this phone.'
-                  : 'Your 6-digit PIN remains available as a backup.',
+                  ? 'profile.biometric_enabled_help'
+                  : 'profile.pin_backup_help',
         );
       }
     } on Object {
       if (mounted) {
         AppAlert.error(
-          title: 'Biometrics unavailable',
-          message: 'Biometrics could not be enabled.',
+          title: 'profile.biometrics_unavailable',
+          message: 'profile.biometrics_could_not_be_enabled',
         );
       }
     } finally {
@@ -200,10 +205,9 @@ class _SecurityViewState extends State<SecurityView> {
                     ),
                   ),
                 ),
-                title: Text('Ready to scan your face?'.tr),
+                title: Text('security.face_scan_title'.tr),
                 content: Text(
-                  'Hold your phone at eye level and keep your face inside the frame. Your face data stays secured by this device.'
-                      .tr,
+                  'security.face_scan_description'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: dialogContext.appMutedText,
@@ -214,7 +218,7 @@ class _SecurityViewState extends State<SecurityView> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: Text('Cancel'.tr),
+                    child: Text('common.cancel'.tr),
                   ),
                   FilledButton.icon(
                     onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -222,7 +226,7 @@ class _SecurityViewState extends State<SecurityView> {
                       Icons.center_focus_strong_rounded,
                       size: 19,
                     ),
-                    label: Text('Scan face'.tr),
+                    label: Text('security.scan_face'.tr),
                   ),
                 ],
               ),
@@ -279,10 +283,10 @@ class _SecurityViewState extends State<SecurityView> {
     await _security.clearInvalidSession();
     if (!mounted) return;
     AppAlert.error(
-      title: 'Session expired',
+      title: 'profile.session_expired',
       message:
-          'This account is no longer available in the configured database. '
-          'Please sign in or create the account again.',
+          '${'profile.this_account_is_no_longer_available_in_the_configured_database'.tr} '
+          '${'profile.please_sign_in_or_create_the_account_again'.tr}',
     );
     Get.offAllNamed<void>(AppRoutes.login);
   }
@@ -378,7 +382,7 @@ class _SecurityViewState extends State<SecurityView> {
             const SizedBox(width: AppBackButton.headerGap),
             Expanded(
               child: Text(
-                'Password & Security'.tr,
+                'profile.password_and_security'.tr,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -413,8 +417,8 @@ class _SecurityViewState extends State<SecurityView> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const _SectionTitle(
-        title: 'App protection',
-        subtitle: 'Choose how you unlock private features',
+        title: 'profile.app_protection',
+        subtitle: 'profile.choose_how_you_unlock_private_features',
       ),
       const SizedBox(height: 12),
       _settingsCard(),
@@ -425,8 +429,8 @@ class _SecurityViewState extends State<SecurityView> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const _SectionTitle(
-        title: 'Account security',
-        subtitle: 'Keep your NhamHealth account secure',
+        title: 'profile.account_security',
+        subtitle: 'profile.keep_your_nhamhealth_account_secure',
       ),
       const SizedBox(height: 12),
       _accountCard(),
@@ -525,8 +529,8 @@ class _SecurityViewState extends State<SecurityView> {
               children: [
                 Text(
                   protected
-                      ? 'Your privacy is protected'.tr
-                      : 'Add extra protection'.tr,
+                      ? 'profile.your_privacy_is_protected'.tr
+                      : 'profile.add_extra_protection'.tr,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
@@ -536,11 +540,15 @@ class _SecurityViewState extends State<SecurityView> {
                 const SizedBox(height: 6),
                 Text(
                   protected
-                      ? '@method required for private features'.trParams({
-                        'method':
-                            (_biometrics ? 'Biometrics and PIN' : 'PIN').tr,
-                      })
-                      : 'Secure AI Food Check and profile changes with a PIN.'
+                      ? 'profile.method_required_for_private_features'
+                          .trParams({
+                            'method':
+                                (_biometrics
+                                        ? 'profile.biometrics_and_pin'
+                                        : 'profile.pin')
+                                    .tr,
+                          })
+                      : 'profile.secure_ai_food_check_and_profile_changes_with_a_pin'
                           .tr,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: .84),
@@ -560,11 +568,12 @@ class _SecurityViewState extends State<SecurityView> {
     children: [
       _SecurityTile(
         leading: const Icon(Icons.pin_rounded),
-        title: _hasPin ? 'Change app PIN' : 'Create app PIN',
+        title:
+            (_hasPin ? 'profile.change_app_pin' : 'profile.create_app_pin').tr,
         subtitle:
             _hasPin
-                ? 'Your 6-digit backup PIN is active'
-                : 'Set a 6-digit unlock code',
+                ? 'profile.your_6_digit_backup_pin_is_active'.tr
+                : 'profile.set_unlock_code'.tr,
         trailing: Icon(
           Icons.chevron_right_rounded,
           color: context.appMutedText,
@@ -605,8 +614,8 @@ class _SecurityViewState extends State<SecurityView> {
     children: [
       _SecurityTile(
         leading: const Icon(Icons.password_rounded),
-        title: 'Change account password',
-        subtitle: 'Update the password used to sign in',
+        title: 'profile.change_account_password',
+        subtitle: 'profile.update_the_password_used_to_sign_in',
         trailing: Icon(
           Icons.chevron_right_rounded,
           color: context.appMutedText,
@@ -645,7 +654,7 @@ class _SecurityViewState extends State<SecurityView> {
   Widget _disableButton() => OutlinedButton.icon(
     onPressed: _disableLock,
     icon: const Icon(Icons.lock_open_rounded, size: 19),
-    label: Text('Turn off app protection'.tr),
+    label: Text('profile.turn_off_app_protection'.tr),
     style: OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFFC84444),
       minimumSize: const Size.fromHeight(50),
@@ -668,7 +677,7 @@ class _SectionTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title.tr,
+          title.trOrSelf,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -677,7 +686,7 @@ class _SectionTitle extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         Text(
-          subtitle.tr,
+          subtitle.trOrSelf,
           style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
       ],
@@ -738,7 +747,7 @@ class _SecurityTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title.tr,
+                    title.trOrSelf,
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -750,7 +759,7 @@ class _SecurityTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    subtitle.tr,
+                    subtitle.trOrSelf,
                     style: TextStyle(
                       fontSize: 11.5,
                       height: 1.25,

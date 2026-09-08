@@ -43,21 +43,23 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   final slides = <MealSlideModel>[
     MealSlideModel(
-      title: 'Healthy food,',
-      highlight: 'happy life.',
-      description: 'Simple, nutritious meals to\nsupport your daily wellness.',
+      title: 'meals.healthy_food',
+      highlight: 'meals.happy_life',
+      description:
+          'home.simple_nutritious_meals_to_support_your_daily_wellness',
       image: 'assets/images/meals/slideshow3.png',
     ),
     MealSlideModel(
-      title: 'Meals for more',
-      highlight: 'energy.',
-      description: 'Nutrient-rich meals to keep\nyou active and focused.',
+      title: 'meals.meals_for_more',
+      highlight: 'meals.energy',
+      description: 'meals.nutrient_rich_meals_to_keep_you_active_and_focused',
       image: 'assets/images/meals/slideshow1.png',
     ),
     MealSlideModel(
-      title: 'Start your day',
-      highlight: 'healthy.',
-      description: 'Fresh balanced meals for a\nbetter and stronger morning.',
+      title: 'meals.start_your_day',
+      highlight: 'meals.healthy_life',
+      description:
+          'meals.fresh_balanced_meals_for_a_better_and_stronger_morning',
       image: 'assets/images/meals/slideshow2.png',
     ),
   ];
@@ -122,20 +124,21 @@ class MealController extends GetxController with WidgetsBindingObserver {
       if (!showFeedback) return;
       final mealError = errorMessage.value;
       if (mealError != null) {
-        unawaited(AppAlert.error(title: 'Refresh failed', message: mealError));
+        unawaited(
+          AppAlert.error(title: 'meals.refresh_failed', message: mealError),
+        );
       } else if (ideasErrorMessage.value != null) {
         unawaited(
           AppAlert.error(
-            title: 'Meal ideas unavailable',
-            message:
-                'Meals were updated, but personalized ideas could not be refreshed.',
+            title: 'meals.ideas_unavailable',
+            message: 'meals.ideas_refresh_failed',
           ),
         );
       } else {
         unawaited(
           AppAlert.success(
-            title: 'Meals updated',
-            message: 'The latest meals and personalized ideas are now shown.',
+            title: 'meals.updated',
+            message: 'meals.updated_help',
           ),
         );
       }
@@ -327,7 +330,10 @@ class MealController extends GetxController with WidgetsBindingObserver {
       }
     } on Object catch (error) {
       _setFavoriteState(meal.id, favorite: previous);
-      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+      AppAlert.error(
+        title: 'common.favorites_unavailable',
+        message: error.toString(),
+      );
     }
   }
 

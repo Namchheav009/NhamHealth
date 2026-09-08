@@ -13,9 +13,9 @@ class SugarView extends StatelessWidget {
         toolbarHeight: AppBackButton.appBarToolbarHeight,
         leadingWidth: AppBackButton.appBarLeadingWidth,
         leading: AppBackButton.appBar(onPressed: Get.back),
-        title: Text('Sugar'.tr),
+        title: Text('common.sugar'.tr),
       ),
-      body: Center(child: Text('Sugar Detail Page'.tr)),
+      body: Center(child: Text('wellness.sugar_detail_page'.tr)),
     );
   }
 }

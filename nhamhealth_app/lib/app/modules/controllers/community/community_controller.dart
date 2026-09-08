@@ -301,7 +301,7 @@ class CommunityController extends GetxController {
       final index = posts.indexWhere((item) => item.id == post.id);
       if (index >= 0) posts[index] = updated;
     } on Object catch (error) {
-      Get.snackbar('Could not update like', error.toString());
+      Get.snackbar('community.could_not_update_like'.tr, error.toString());
     } finally {
       likingPostIds.remove(post.id);
     }
@@ -480,7 +480,7 @@ class CommunityController extends GetxController {
       _updatePostAuthorFollowState(person.id, wasFollowing);
       unawaited(
         AppAlert.error(
-          title: 'Could not update follow',
+          title: 'community.could_not_update_follow',
           message: error.toString(),
         ),
       );
@@ -531,7 +531,7 @@ class CommunityController extends GetxController {
       _updatePostAuthorFollowState(authorIdKey, wasFollowing);
       unawaited(
         AppAlert.error(
-          title: 'Could not update follow',
+          title: 'community.could_not_update_follow',
           message: error.toString(),
         ),
       );

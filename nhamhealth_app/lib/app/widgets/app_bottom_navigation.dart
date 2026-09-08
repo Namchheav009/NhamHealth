@@ -119,7 +119,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                                   child: _NavItem(
                                     id: 'home',
                                     icon: Icons.home_rounded,
-                                    label: 'home'.tr,
+                                    label: 'common.navigation_home'.tr,
                                     selected: _visualSelectedIndex == 0,
                                     onTap: () => _select(0),
                                   ),
@@ -128,7 +128,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                                   child: _NavItem(
                                     id: 'meals',
                                     icon: Icons.restaurant_menu_rounded,
-                                    label: 'meals'.tr,
+                                    label: 'common.navigation_meals'.tr,
                                     selected: _visualSelectedIndex == 1,
                                     onTap: () => _select(1),
                                   ),
@@ -138,7 +138,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                                     id: 'community',
                                     icon: Icons.people_outline_rounded,
                                     selectedIcon: Icons.people_rounded,
-                                    label: 'community'.tr,
+                                    label: 'common.navigation_community'.tr,
                                     selected: _visualSelectedIndex == 2,
                                     onTap: () => _select(2),
                                   ),
@@ -148,7 +148,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                                     id: 'settings',
                                     icon: Icons.settings_outlined,
                                     selectedIcon: Icons.settings_rounded,
-                                    label: 'settings'.tr,
+                                    label: 'settings.title'.tr,
                                     selected: _visualSelectedIndex == 4,
                                     onTap: () => _select(4),
                                   ),
@@ -437,9 +437,9 @@ class _ChatbotButtonState extends State<_ChatbotButton> {
             : const Duration(milliseconds: 140);
     return Semantics(
       button: true,
-      label: 'Open AI Assistant'.tr,
+      label: 'assistant.open'.tr,
       child: Tooltip(
-        message: 'Chat with AI Assistant'.tr,
+        message: 'assistant.chat_with'.tr,
         child: Material(
           color: Colors.transparent,
           child: InkWell(

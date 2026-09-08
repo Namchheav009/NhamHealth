@@ -75,15 +75,23 @@ class WaterController extends GetxController {
       );
       _applyDashboard(dashboard);
       await AppAlert.success(
-        title: 'Water Added Today',
-        message:
-            '${selectedGlasses.value} ${selectedGlasses.value == 1 ? 'glass' : 'glasses'} added.',
+        title: 'wellness.water_added_today',
+        message: (selectedGlasses.value == 1
+                ? 'wellness.water_count_added_one'
+                : 'wellness.water_count_added_many')
+            .trParams({'count': '${selectedGlasses.value}'}),
       );
       selectedGlasses.value = 1;
     } on Object catch (error) {
-      final message = _message(error, 'Unable to add water. Please try again.');
+      final message = _message(
+        error,
+        'wellness.unable_to_add_water_please_try_again',
+      );
       errorMessage.value = message;
-      await AppAlert.error(title: 'Water unavailable', message: message);
+      await AppAlert.error(
+        title: 'wellness.water_unavailable',
+        message: message,
+      );
     } finally {
       isSaving.value = false;
     }

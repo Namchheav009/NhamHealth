@@ -27,18 +27,20 @@ class CommunityPerson {
     if (trimmed.isEmpty) return 'Community member';
     if (!trimmed.contains('@')) return trimmed;
 
-    final localPart = trimmed.split('@').first
-        .replaceAll(RegExp(r'[._-]+'), ' ')
-        .replaceAll(RegExp(r'(?<=[A-Za-z])(?=\d)'), ' ')
-        .trim();
+    final localPart =
+        trimmed
+            .split('@')
+            .first
+            .replaceAll(RegExp(r'[._-]+'), ' ')
+            .replaceAll(RegExp(r'(?<=[A-Za-z])(?=\d)'), ' ')
+            .trim();
     if (localPart.isEmpty) return 'Community member';
 
     return localPart
         .split(RegExp(r'\s+'))
         .where((part) => part.isNotEmpty)
         .map(
-          (part) =>
-              '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
+          (part) => '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
         )
         .join(' ');
   }

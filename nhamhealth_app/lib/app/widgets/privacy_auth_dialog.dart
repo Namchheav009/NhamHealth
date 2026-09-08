@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../core/services/app_security_service.dart';
 import 'pin_keypad_dialog.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class PrivacyAuth {
   PrivacyAuth._();
@@ -13,7 +14,7 @@ class PrivacyAuth {
   }) async {
     final security = Get.find<AppSecurityService>();
     if (!await security.hasPin) return true;
-    if (await security.authenticateBiometrically(reason.tr)) return true;
+    if (await security.authenticateBiometrically(reason.trOrSelf)) return true;
     final biometricsEnabled = await security.biometricsEnabled;
     final canUseBiometrics =
         biometricsEnabled && await security.canUseBiometrics();
@@ -25,7 +26,7 @@ class PrivacyAuth {
     };
     final pin = await showPinKeypadDialog(
       context: Get.context!,
-      title: 'Enter PIN',
+      title: 'security.enter_pin',
       subtitle: reason,
       validator: (pin) async {
         if (await security.verifyPin(pin)) return null;
@@ -33,7 +34,7 @@ class PrivacyAuth {
       },
       biometricAuthenticator:
           canUseBiometrics
-              ? () => security.authenticateBiometrically(reason.tr)
+              ? () => security.authenticateBiometrically(reason.trOrSelf)
               : null,
       biometricLabel: biometricLabel,
       biometricIcon:

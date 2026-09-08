@@ -6,6 +6,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../controllers/profile/change_password_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class ChangePasswordView extends GetView<ChangePasswordController> {
   const ChangePasswordView({super.key});
@@ -92,7 +93,7 @@ class _PageHeader extends StatelessWidget {
         const SizedBox(width: AppBackButton.headerGap),
         Expanded(
           child: Text(
-            'Change password'.tr,
+            'profile.change_password'.tr,
             style: TextStyle(
               color: context.appText,
               fontSize: 22,
@@ -120,7 +121,7 @@ class _SecurityIntro extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Secure your account'.tr,
+              'profile.secure_your_account'.tr,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 17,
@@ -129,7 +130,7 @@ class _SecurityIntro extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              'Choose a strong password you have not used before.'.tr,
+              'profile.choose_a_strong_password_you_have_not_used_before'.tr,
               style: TextStyle(
                 color: context.appMutedText,
                 fontSize: 13,
@@ -182,8 +183,8 @@ class _PasswordForm extends StatelessWidget {
         children: [
           Obx(
             () => _PasswordField(
-              label: 'Current password',
-              hint: 'Enter your current password',
+              label: 'profile.current_password',
+              hint: 'profile.enter_your_current_password',
               textController: controller.currentPasswordController,
               obscureText: controller.hideCurrentPassword.value,
               onVisibilityPressed: controller.toggleCurrentPassword,
@@ -201,7 +202,7 @@ class _PasswordForm extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
               ),
               child: Text(
-                'Forgot password?'.tr,
+                'common.forgot_password'.tr,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -209,8 +210,8 @@ class _PasswordForm extends StatelessWidget {
           const SizedBox(height: 8),
           Obx(
             () => _PasswordField(
-              label: 'New password',
-              hint: 'Create a new password',
+              label: 'common.new_password',
+              hint: 'profile.create_a_new_password',
               textController: controller.newPasswordController,
               obscureText: controller.hideNewPassword.value,
               onVisibilityPressed: controller.toggleNewPassword,
@@ -221,8 +222,8 @@ class _PasswordForm extends StatelessWidget {
           const SizedBox(height: 18),
           Obx(
             () => _PasswordField(
-              label: 'Confirm new password',
-              hint: 'Enter the new password again',
+              label: 'profile.confirm_new_password',
+              hint: 'profile.enter_the_new_password_again',
               textController: controller.confirmPasswordController,
               obscureText: controller.hideConfirmPassword.value,
               onVisibilityPressed: controller.toggleConfirmPassword,
@@ -274,7 +275,7 @@ class _PasswordField extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        label.tr,
+        label.trOrSelf,
         style: TextStyle(
           color: context.appText,
           fontSize: 13,
@@ -297,11 +298,13 @@ class _PasswordField extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: hint.tr,
+          hintText: hint.trOrSelf,
           hintStyle: TextStyle(color: context.appMutedText, fontSize: 14),
           prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
           suffixIcon: IconButton(
-            tooltip: (obscureText ? 'Show password' : 'Hide password').tr,
+            tooltip:
+                (obscureText ? 'common.show_password' : 'common.hide_password')
+                    .tr,
             onPressed: onVisibilityPressed,
             icon: Icon(
               obscureText
@@ -358,7 +361,7 @@ class _PasswordGuidance extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'Use at least 8 characters. Your new password must be different from your current password.'
+            'profile.use_at_least_8_characters_your_new_password_must_be_different_from_your_current_password'
                 .tr,
             style: TextStyle(
               color: context.appMutedText,
@@ -410,7 +413,7 @@ class _SubmitButton extends StatelessWidget {
                   const Icon(Icons.lock_reset_rounded, size: 20),
                   const SizedBox(width: 9),
                   Text(
-                    'Update password'.tr,
+                    'profile.update_password'.tr,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

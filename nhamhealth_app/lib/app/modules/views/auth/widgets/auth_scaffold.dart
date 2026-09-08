@@ -16,79 +16,89 @@ class AuthScaffold extends StatelessWidget {
     return Theme(
       data: AppTheme.light,
       child: Builder(
-        builder: (context) => Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: AppBackground(
-        lightDecoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.backgroundMint, AppColors.backgroundCream],
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxHeight < 720;
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: compact ? 142 : 280,
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: compact ? 0 : 24),
-                          child: Align(
-                            alignment:
-                                compact
-                                    ? Alignment.center
-                                    : Alignment.bottomCenter,
-                            child: _EntranceMotion(
-                              offset: const Offset(0, -0.08),
-                              child: AuthHeader(compact: compact),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: context.appSurfaceLow,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(32),
-                            ),
-                            boxShadow: context.appCardShadow,
-                          ),
-                          child: SafeArea(
-                            top: false,
-                            minimum: const EdgeInsets.only(bottom: 12),
-                            child: SingleChildScrollView(
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(
-                                AppSpacing.pageHorizontal,
-                                compact ? 18 : 46,
-                                AppSpacing.pageHorizontal,
-                                AppSpacing.pageBottom,
-                              ),
-                              child: _EntranceMotion(delay: 0.12, child: child),
-                            ),
-                          ),
-                        ),
-                      ),
+        builder:
+            (context) => Scaffold(
+              resizeToAvoidBottomInset: true,
+              body: AppBackground(
+                lightDecoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.backgroundMint,
+                      AppColors.backgroundCream,
                     ],
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ),
-        ),
+                child: SafeArea(
+                  bottom: false,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxHeight < 720;
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: compact ? 142 : 280,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: compact ? 0 : 24,
+                                  ),
+                                  child: Align(
+                                    alignment:
+                                        compact
+                                            ? Alignment.center
+                                            : Alignment.bottomCenter,
+                                    child: _EntranceMotion(
+                                      offset: const Offset(0, -0.08),
+                                      child: AuthHeader(compact: compact),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: context.appSurfaceLow,
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(32),
+                                    ),
+                                    boxShadow: context.appCardShadow,
+                                  ),
+                                  child: SafeArea(
+                                    top: false,
+                                    minimum: const EdgeInsets.only(bottom: 12),
+                                    child: SingleChildScrollView(
+                                      keyboardDismissBehavior:
+                                          ScrollViewKeyboardDismissBehavior
+                                              .onDrag,
+                                      physics: const BouncingScrollPhysics(),
+                                      padding: EdgeInsets.fromLTRB(
+                                        AppSpacing.pageHorizontal,
+                                        compact ? 18 : 46,
+                                        AppSpacing.pageHorizontal,
+                                        AppSpacing.pageBottom,
+                                      ),
+                                      child: _EntranceMotion(
+                                        delay: 0.12,
+                                        child: child,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
       ),
     );
   }

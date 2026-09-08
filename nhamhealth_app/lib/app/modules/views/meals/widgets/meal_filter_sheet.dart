@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/meals/meal_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MealFilterButton extends GetView<MealController> {
   const MealFilterButton({super.key});
@@ -12,7 +13,7 @@ class MealFilterButton extends GetView<MealController> {
     return Obx(
       () => IconButton(
         key: const ValueKey<String>('meal-filter-button'),
-        tooltip: 'Filter meals'.tr,
+        tooltip: 'meals.filter'.tr,
         onPressed: () => _showFilters(context),
         icon: Badge(
           isLabelVisible: controller.activeFilterCount > 0,
@@ -74,7 +75,7 @@ class _MealFilterSheet extends GetView<MealController> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Meal filters'.tr,
+                      'meals.filters'.tr,
                       style: TextStyle(
                         color: context.appText,
                         fontSize: 18,
@@ -84,12 +85,12 @@ class _MealFilterSheet extends GetView<MealController> {
                   ),
                   TextButton(
                     onPressed: controller.clearMealFilters,
-                    child: Text('Clear all'.tr),
+                    child: Text('common.clear_all'.tr),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
-              _FilterLabel(text: 'Category'.tr),
+              _FilterLabel(text: 'meals.category'.tr),
               const SizedBox(height: 8),
               Obx(
                 () => Wrap(
@@ -102,7 +103,7 @@ class _MealFilterSheet extends GetView<MealController> {
                       index++
                     )
                       ChoiceChip(
-                        label: Text(controller.categories[index].name.tr),
+                        label: Text(controller.categories[index].name.trOrSelf),
                         selected: controller.selectedCategory.value == index,
                         onSelected: (_) => controller.selectCategory(index),
                       ),
@@ -110,24 +111,28 @@ class _MealFilterSheet extends GetView<MealController> {
                 ),
               ),
               const SizedBox(height: 20),
-              _FilterLabel(text: 'Calories'.tr),
+              _FilterLabel(text: 'common.calories'.tr),
               const SizedBox(height: 8),
               Obx(
                 () => _ChoiceRow<int?>(
                   value: controller.maxCalories.value,
                   values: const [null, 400, 600],
-                  label: (value) => value == null ? 'Any'.tr : '≤ $value kcal',
+                  label:
+                      (value) =>
+                          value == null ? 'common.any'.tr : '≤ $value kcal',
                   onSelected: controller.setMaxCalories,
                 ),
               ),
               const SizedBox(height: 20),
-              _FilterLabel(text: 'Cooking time'.tr),
+              _FilterLabel(text: 'common.cooking_time'.tr),
               const SizedBox(height: 8),
               Obx(
                 () => _ChoiceRow<int?>(
                   value: controller.maxCookingMinutes.value,
                   values: const [null, 20, 30],
-                  label: (value) => value == null ? 'Any'.tr : '≤ $value min',
+                  label:
+                      (value) =>
+                          value == null ? 'common.any'.tr : '≤ $value min',
                   onSelected: controller.setMaxCookingMinutes,
                 ),
               ),
@@ -157,7 +162,7 @@ class _MealFilterSheet extends GetView<MealController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI personalized ideas'.tr,
+                            'meals.ai_personalized_ideas'.tr,
                             style: TextStyle(
                               color: context.appText,
                               fontSize: 13,
@@ -166,8 +171,7 @@ class _MealFilterSheet extends GetView<MealController> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Uses saved height, weight and BMI when available, plus activity and daily nutrition goals for general wellness.'
-                                .tr,
+                            'meals.personalization_data_description'.tr,
                             style: TextStyle(
                               color: context.appMutedText,
                               fontSize: 10.5,
@@ -180,7 +184,7 @@ class _MealFilterSheet extends GetView<MealController> {
                     const SizedBox(width: 8),
                     Obx(
                       () => IconButton(
-                        tooltip: 'Refresh AI ideas'.tr,
+                        tooltip: 'meals.refresh_ai_ideas'.tr,
                         onPressed:
                             controller.isIdeasLoading.value
                                 ? null
@@ -206,7 +210,7 @@ class _MealFilterSheet extends GetView<MealController> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () => Get.back<void>(),
-                  child: Text('Done'.tr),
+                  child: Text('common.done'.tr),
                 ),
               ),
             ],

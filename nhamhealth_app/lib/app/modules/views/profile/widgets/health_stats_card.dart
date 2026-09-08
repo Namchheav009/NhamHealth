@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/profile/profile_controller.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class HealthStatsCard extends GetView<ProfileController> {
   const HealthStatsCard({super.key});
@@ -25,7 +26,7 @@ class HealthStatsCard extends GetView<ProfileController> {
             Expanded(
               child: _Stat(
                 icon: Icons.person_outline_rounded,
-                title: 'Age',
+                title: 'profile.age',
                 value:
                     controller.age.value > 0 ? '${controller.age.value}' : '--',
                 unit: 'Years',
@@ -35,7 +36,7 @@ class HealthStatsCard extends GetView<ProfileController> {
             Expanded(
               child: _Stat(
                 icon: Icons.height_rounded,
-                title: 'Height',
+                title: 'profile.height',
                 value:
                     controller.height.value > 0
                         ? '${controller.height.value}'
@@ -47,7 +48,7 @@ class HealthStatsCard extends GetView<ProfileController> {
             Expanded(
               child: _Stat(
                 icon: Icons.monitor_weight_outlined,
-                title: 'Weight',
+                title: 'profile.weight',
                 value:
                     controller.weight.value > 0
                         ? '${controller.weight.value}'
@@ -59,7 +60,7 @@ class HealthStatsCard extends GetView<ProfileController> {
             Expanded(
               child: _Stat(
                 icon: Icons.monitor_heart_outlined,
-                title: 'BMI',
+                title: 'common.bmi',
                 value:
                     controller.bmi > 0
                         ? controller.bmi.toStringAsFixed(1)
@@ -117,7 +118,7 @@ class _Stat extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.tr,
+                  title.trOrSelf,
                   maxLines: 1,
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
@@ -138,7 +139,7 @@ class _Stat extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  unit.tr,
+                  unit.trOrSelf,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textScaler: TextScaler.noScaling,

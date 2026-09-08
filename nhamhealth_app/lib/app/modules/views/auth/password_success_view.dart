@@ -18,15 +18,15 @@ class PasswordSuccessView extends StatelessWidget {
     final controller = Get.put(PasswordSuccessController());
 
     return AuthFlowScaffold(
-      title: 'Password changed!',
-      subtitle: 'Your account is ready to use again.',
+      title: 'auth.password_changed',
+      subtitle: 'auth.your_account_is_ready_to_use_again',
       illustrationAsset: 'assets/images/auth/account_create.png',
       showBackButton: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Your password has been reset successfully.'.tr,
+            'auth.your_password_has_been_reset_successfully'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: context.appText,
@@ -36,7 +36,7 @@ class PasswordSuccessView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           AuthPrimaryButton(
-            label: 'Back to sign in',
+            label: 'auth.back_to_sign_in',
             loading: false,
             onPressed: controller.backToLogin,
           ),

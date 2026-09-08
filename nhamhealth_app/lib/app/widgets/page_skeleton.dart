@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -132,7 +133,7 @@ class _PageSkeletonState extends State<PageSkeleton>
   @override
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
-    label: 'Loading page content',
+    label: 'common.loading_page'.tr,
     child: ExcludeSemantics(
       child: AnimatedBuilder(
         animation: _controller,

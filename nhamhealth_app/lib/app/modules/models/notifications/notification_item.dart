@@ -154,13 +154,33 @@ class NotificationItem {
   };
 
   String get actionLabel => switch (action) {
-    NotificationAction.like => 'Like',
-    NotificationAction.comment => 'Comment',
-    NotificationAction.reply => 'Reply',
-    NotificationAction.share => 'Share',
-    NotificationAction.follow => 'New follower',
-    NotificationAction.recommendation => 'For you',
-    NotificationAction.wellness => 'Wellness',
+    NotificationAction.like => 'notifications.like',
+    NotificationAction.comment => 'notifications.comment',
+    NotificationAction.reply => 'notifications.reply',
+    NotificationAction.share => 'notifications.share',
+    NotificationAction.follow => 'notifications.new_follower',
+    NotificationAction.recommendation => 'notifications.for_you',
+    NotificationAction.wellness => 'notifications.wellness',
     NotificationAction.system => 'Nham Health',
   };
+
+  String get timeTranslationKey {
+    final difference = DateTime.now().difference(createdAt.toLocal());
+    if (difference.inMinutes < 1) return 'notifications.just_now';
+    if (difference.inMinutes == 1) return 'notifications.minute_ago';
+    if (difference.inMinutes < 60) return 'notifications.minutes_ago';
+    if (difference.inHours == 1) return 'notifications.hour_ago';
+    if (difference.inHours < 24) return 'notifications.hours_ago';
+    if (difference.inDays == 1) return 'notifications.yesterday';
+    return 'notifications.days_ago';
+  }
+
+  Map<String, String> get timeTranslationParams {
+    final difference = DateTime.now().difference(createdAt.toLocal());
+    final count =
+        difference.inMinutes < 60 ? difference.inMinutes : difference.inHours;
+    return {
+      'count': difference.inHours < 24 ? '$count' : '${difference.inDays}',
+    };
+  }
 }

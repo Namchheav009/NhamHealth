@@ -41,7 +41,7 @@ class CalorieProgressCard extends GetView<CaloriesController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Calories'.tr,
+                        'common.calories'.tr,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -75,7 +75,7 @@ class CalorieProgressCard extends GetView<CaloriesController> {
                       const SizedBox(height: 5),
 
                       Text(
-                        '✨ You\'re on track today'.tr,
+                        'wellness.youre_on_track_today'.tr,
                         style: TextStyle(
                           fontSize: 9,
                           color: context.appMutedText,

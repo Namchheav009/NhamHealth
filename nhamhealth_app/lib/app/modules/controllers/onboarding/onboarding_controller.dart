@@ -12,18 +12,16 @@ class OnboardingController extends GetxController {
   final List<OnboardingItem> items = const [
     OnboardingItem(
       imagePath: 'assets/images/onboarding/onboarding1.png',
-      title: 'Affordable Organic\nGoodness',
+      title: 'onboarding.affordable_organic_goodness',
       description:
-          'Get affordable organic groceries made\n'
-          'for everyone, every single day.',
+          'auth.get_affordable_organic_groceries_made_for_everyone_every_single_day',
     ),
     OnboardingItem(
       imagePath: 'assets/images/onboarding/onboarding2.png',
-      title: 'Eat with purpose',
-      accentTitle: 'Live with energy.',
+      title: 'onboarding.eat_with_purpose',
+      accentTitle: 'onboarding.live_with_energy',
       description:
-          'Every meal you choose is a step toward\n'
-          'the life you deserve.',
+          'auth.every_meal_you_choose_is_a_step_toward_the_life_you_deserve',
       titleAboveImage: true,
       showBrandHeader: false,
     ),

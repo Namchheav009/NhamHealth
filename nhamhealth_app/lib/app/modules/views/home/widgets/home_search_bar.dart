@@ -11,11 +11,11 @@ class HomeSearchBar extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return AppSearchBar(
-      hintText: 'Search for meals, tips or healthy groceries',
+      hintText: 'home.search_for_meals_tips_or_healthy_groceries',
       useSoftHomeStyle: true,
       onSubmitted: (query) => controller.openMeals(query: query),
       trailing: IconButton(
-        tooltip: 'Browse and filter meals'.tr,
+        tooltip: 'home.browse_filter_meals'.tr,
         onPressed: controller.openMeals,
         icon: const Icon(
           Icons.tune_rounded,

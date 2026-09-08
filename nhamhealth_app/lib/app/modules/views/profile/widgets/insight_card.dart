@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/profile/profile_controller.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class InsightCard extends GetView<ProfileController> {
   const InsightCard({super.key});
@@ -62,7 +63,7 @@ class InsightCard extends GetView<ProfileController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "You're doing amazing!".tr,
+                  'profile.youre_doing_amazing'.tr,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -72,7 +73,7 @@ class InsightCard extends GetView<ProfileController> {
                 const SizedBox(height: 4),
                 Obx(
                   () => Text(
-                    controller.insight.value.tr,
+                    controller.insight.value.trOrSelf,
                     style: TextStyle(
                       fontSize: 11,
                       color: context.appMutedText,

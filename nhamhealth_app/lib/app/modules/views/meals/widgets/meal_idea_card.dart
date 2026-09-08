@@ -46,7 +46,7 @@ class MealIdeaCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              meal.name.tr,
+                              meal.name,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -78,10 +78,9 @@ class MealIdeaCard extends StatelessWidget {
                         meal.recommendationReason.isNotEmpty
                             ? meal.recommendationReason
                             : [
-                              if (meal.difficulty.isNotEmpty)
-                                meal.difficulty.tr,
-                              meal.category.tr,
-                              'Healthy'.tr,
+                              if (meal.difficulty.isNotEmpty) meal.difficulty,
+                              meal.category,
+                              'meals.healthy'.tr,
                             ].join('  •  '),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -106,8 +105,9 @@ class MealIdeaCard extends StatelessWidget {
                               _Metric(
                                 icon: Icons.fitness_center_rounded,
                                 iconColor: AppColors.primaryGreen,
-                                label:
-                                    '${'Protein'.tr} ${_formatNutrition(protein)}g',
+                                label: 'meals.protein_grams'.trParams({
+                                  'value': _formatNutrition(protein),
+                                }),
                               ),
                           if (meal.cookingTimeMinutes case final minutes?)
                             _Metric(

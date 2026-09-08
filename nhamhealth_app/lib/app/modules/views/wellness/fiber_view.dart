@@ -13,9 +13,9 @@ class FiberView extends StatelessWidget {
         toolbarHeight: AppBackButton.appBarToolbarHeight,
         leadingWidth: AppBackButton.appBarLeadingWidth,
         leading: AppBackButton.appBar(onPressed: Get.back),
-        title: Text('Fiber'.tr),
+        title: Text('common.fiber'.tr),
       ),
-      body: Center(child: Text('Fiber Detail Page'.tr)),
+      body: Center(child: Text('wellness.fiber_detail_page'.tr)),
     );
   }
 }

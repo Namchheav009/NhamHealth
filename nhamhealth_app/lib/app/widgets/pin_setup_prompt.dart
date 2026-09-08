@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 Future<void> showPinSetupPrompt(BuildContext context) =>
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'PIN setup required'.tr,
+      barrierLabel: 'errors.pin_setup_required'.tr,
       barrierColor: AppColors.darkGreen.withValues(alpha: .24),
       transitionDuration: const Duration(milliseconds: 260),
       pageBuilder:
@@ -61,7 +62,7 @@ class _PinSetupPrompt extends StatelessWidget {
                   _securityIcon(),
                   const SizedBox(height: 20),
                   Text(
-                    'Protect your health data'.tr,
+                    'profile.protect_your_health_data'.tr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: context.appText,
@@ -72,7 +73,8 @@ class _PinSetupPrompt extends StatelessWidget {
                   ),
                   const SizedBox(height: 9),
                   Text(
-                    'Create a 6-digit PIN before continuing to NhamHealth.'.tr,
+                    'security.create_a_6_digit_pin_before_continuing_to_nhamhealth'
+                        .tr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: context.appMutedText,
@@ -83,21 +85,22 @@ class _PinSetupPrompt extends StatelessWidget {
                   const SizedBox(height: 22),
                   const _BenefitRow(
                     icon: Icons.lock_outline_rounded,
-                    title: 'Private by default',
-                    subtitle: 'Protects AI Food and personal health details',
+                    title: 'security.private_by_default',
+                    subtitle:
+                        'profile.protects_ai_food_and_personal_health_details',
                   ),
                   const SizedBox(height: 14),
                   const _BenefitRow(
                     icon: Icons.fingerprint_rounded,
-                    title: 'Fast unlock',
-                    subtitle: 'Enable fingerprint or Face ID afterward',
+                    title: 'security.fast_unlock',
+                    subtitle: 'profile.enable_fingerprint_or_face_id_afterward',
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     key: const ValueKey('create-secure-pin-button'),
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.pin_rounded, size: 20),
-                    label: Text('Create secure PIN'.tr),
+                    label: Text('security.create_secure_pin'.tr),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
@@ -122,7 +125,7 @@ class _PinSetupPrompt extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Your PIN is securely hashed'.tr,
+                        'security.your_pin_is_securely_hashed'.tr,
                         style: TextStyle(
                           color: context.appMutedText,
                           fontSize: 11.5,
@@ -191,7 +194,7 @@ class _BenefitRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title.tr,
+              title.trOrSelf,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 13.5,
@@ -200,7 +203,7 @@ class _BenefitRow extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              subtitle.tr,
+              subtitle.trOrSelf,
               style: TextStyle(
                 color: context.appMutedText,
                 fontSize: 11.5,

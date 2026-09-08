@@ -38,7 +38,7 @@ class LanguageView extends GetView<LanguageController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             AppBackHeader(
-                              title: 'language'.tr,
+                              title: 'settings.language'.tr,
                               onBack: controller.goBack,
                             ),
 
@@ -47,7 +47,7 @@ class LanguageView extends GetView<LanguageController> {
                             Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
-                                'language_choose'.tr,
+                                'settings.language_choose'.tr,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -61,7 +61,7 @@ class LanguageView extends GetView<LanguageController> {
                             Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
-                                'language_description'.tr,
+                                'settings.language_description'.tr,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
@@ -103,7 +103,7 @@ class LanguageView extends GetView<LanguageController> {
           children: [
             _LanguageItem(
               languageCode: 'km',
-              title: 'language_khmer'.tr,
+              title: 'settings.language_khmer'.tr,
               selected: controller.selectedLanguage.value == 'km',
               onTap: controller.selectKhmer,
             ),
@@ -119,7 +119,7 @@ class LanguageView extends GetView<LanguageController> {
 
             _LanguageItem(
               languageCode: 'en',
-              title: 'language_english'.tr,
+              title: 'settings.language_english'.tr,
               selected: controller.selectedLanguage.value == 'en',
               onTap: controller.selectEnglish,
             ),
@@ -152,7 +152,7 @@ class LanguageView extends GetView<LanguageController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'language_applied'.tr,
+                  'settings.language_applied'.tr,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -163,7 +163,7 @@ class LanguageView extends GetView<LanguageController> {
                 const SizedBox(height: 9),
 
                 Text(
-                  'language_applied_description'.tr,
+                  'settings.language_applied_description'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     height: 1.25,
@@ -270,10 +270,7 @@ class _SettingsBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     if (context.appIsDark) {
       return const Positioned.fill(
-        child: ForestGlowBackground(
-          force: true,
-          child: SizedBox.expand(),
-        ),
+        child: ForestGlowBackground(force: true, child: SizedBox.expand()),
       );
     }
     return Positioned.fill(

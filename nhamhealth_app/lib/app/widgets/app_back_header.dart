@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 /// Shared back control used by every full-page header.
 class AppBackButton extends StatelessWidget {
@@ -37,9 +38,9 @@ class AppBackButton extends StatelessWidget {
         child: Semantics(
           button: true,
           enabled: enabled,
-          label: 'Back'.tr,
+          label: 'common.back'.tr,
           child: Tooltip(
-            message: 'Back'.tr,
+            message: 'common.back'.tr,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -105,7 +106,7 @@ class AppBackHeader extends StatelessWidget {
             child:
                 titleWidget ??
                 Text(
-                  title.tr,
+                  title.trOrSelf,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textScaler: TextScaler.noScaling,

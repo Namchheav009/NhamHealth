@@ -39,8 +39,8 @@ class AiMealAutoFillController extends GetxController {
     final parsed = _parser.parse(inputController.text);
     if (parsed.isEmpty || isAnalyzing.value) {
       AppAlert.error(
-        title: 'Add your meal',
-        message: 'Enter one or more foods first.',
+        title: 'wellness.add_your_meal',
+        message: 'wellness.enter_one_or_more_foods_first',
       );
       return;
     }
@@ -71,12 +71,15 @@ class AiMealAutoFillController extends GetxController {
       }
       if (foods.isEmpty) {
         AppAlert.error(
-          title: 'No catalog matches',
-          message: 'Try simpler food names, separated by commas.',
+          title: 'wellness.no_catalog_matches',
+          message: 'wellness.try_simpler_food_names_separated_by_commas',
         );
       }
     } on FoodNutritionException catch (error) {
-      AppAlert.error(title: 'Could not analyze meal', message: error.message);
+      AppAlert.error(
+        title: 'wellness.could_not_analyze_meal',
+        message: error.message,
+      );
     } finally {
       isAnalyzing.value = false;
     }
@@ -121,17 +124,19 @@ class AiMealAutoFillController extends GetxController {
         );
       }
       AppAlert.success(
-        title: 'Meal added',
-        message:
-            '${foods.length} food${foods.length == 1 ? '' : 's'} added to today.',
+        title: 'wellness.meal_added',
+        message: (foods.length == 1
+                ? 'wellness.food_count_added_one'
+                : 'wellness.food_count_added_many')
+            .trParams({'count': '${foods.length}'}),
       );
       foods.clear();
       unresolved.clear();
       inputController.clear();
     } on Object {
       AppAlert.error(
-        title: 'Could not save meal',
-        message: 'Please try again.',
+        title: 'wellness.could_not_save_meal',
+        message: 'wellness.please_try_again',
       );
     } finally {
       isSaving.value = false;

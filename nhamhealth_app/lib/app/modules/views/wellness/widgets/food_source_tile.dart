@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../models/wellness/food_source_model.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodSourceTile extends StatelessWidget {
   const FoodSourceTile({super.key, required this.source, required this.onTap});
@@ -53,14 +54,14 @@ class FoodSourceTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      source.mealType.tr,
+                      source.mealType.trOrSelf,
                       style: TextStyle(
                         fontSize: 9,
                         color: isDark ? context.appMutedText : Colors.black38,
                       ),
                     ),
                     Text(
-                      source.foodName.tr,
+                      source.foodName,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -83,7 +84,7 @@ class FoodSourceTile extends StatelessWidget {
               const SizedBox(width: 4),
 
               Text(
-                'kcal'.tr,
+                'common.kcal'.tr,
                 style: TextStyle(
                   color: isDark ? context.appMutedText : Colors.black38,
                   fontSize: 9,

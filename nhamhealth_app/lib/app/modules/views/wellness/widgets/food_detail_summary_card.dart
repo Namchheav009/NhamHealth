@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/wellness/food_source_detail_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
   const FoodDetailSummaryCard({super.key});
@@ -43,14 +44,14 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        controller.source.mealType.tr,
+                        controller.source.mealType.trOrSelf,
                         style: TextStyle(
                           fontSize: 10,
                           color: isDark ? context.appMutedText : Colors.black38,
                         ),
                       ),
                       Text(
-                        controller.source.foodName.tr,
+                        controller.source.foodName,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -84,7 +85,7 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '☕ Medium cup   ⏰ Added 10:30 AM'.tr,
+                        'wellness.medium_cup_added_10_30_am'.tr,
                         style: TextStyle(
                           fontSize: 9,
                           color: isDark ? context.appMutedText : Colors.black38,
@@ -92,7 +93,7 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Sweet drink, enjoy in balance.'.tr,
+                        'wellness.sweet_drink_enjoy_in_balance'.tr,
                         style: TextStyle(
                           fontSize: 9,
                           color: isDark ? context.appMutedText : Colors.black38,
@@ -113,7 +114,7 @@ class FoodDetailSummaryCard extends GetView<FoodSourceDetailController> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "of today's\ncalories".tr,
+                      'wellness.of_todays_calories'.tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 9,

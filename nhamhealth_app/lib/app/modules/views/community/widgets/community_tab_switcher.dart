@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../controllers/community/community_controller.dart';
 
@@ -12,7 +13,7 @@ class CommunityTabSwitcher extends StatelessWidget {
   final CommunitySection selected;
   final ValueChanged<CommunitySection> onChanged;
 
-  static const _labels = ['Feed', 'People'];
+  static const _labelKeys = ['community.feed', 'community.people'];
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -36,7 +37,9 @@ class CommunityTabSwitcher extends StatelessWidget {
                 child: Semantics(
                   selected: isSelected,
                   button: true,
-                  label: '${_labels[section.index]} tab',
+                  label: 'community.tab_label'.trParams({
+                    'name': _labelKeys[section.index].tr,
+                  }),
                   child: InkWell(
                     key: ValueKey('community-tab-${section.name}'),
                     onTap: () => onChanged(section),
@@ -66,7 +69,7 @@ class CommunityTabSwitcher extends StatelessWidget {
                                 : const [],
                       ),
                       child: Text(
-                        _labels[section.index],
+                        _labelKeys[section.index].tr,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight:

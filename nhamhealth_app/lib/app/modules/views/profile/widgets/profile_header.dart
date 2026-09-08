@@ -18,7 +18,7 @@ class ProfileHeader extends GetView<ProfileController> {
   Widget _editButton(BuildContext context) => OutlinedButton.icon(
     onPressed: controller.editProfile,
     icon: const Icon(Icons.edit_outlined, size: 15),
-    label: const Text('Edit Profile'),
+    label: Text('profile.edit_profile'.tr),
     style: OutlinedButton.styleFrom(
       backgroundColor:
           context.appIsDark ? context.appElevatedSurface : Colors.white,
@@ -160,7 +160,7 @@ class ProfileHeader extends GetView<ProfileController> {
                   child: _ProfileStat(
                     icon: Icons.article_outlined,
                     value: '${controller.posts.length}',
-                    label: 'Posts',
+                    label: 'common.posts',
                   ),
                 ),
                 const _StatDivider(),
@@ -168,7 +168,7 @@ class ProfileHeader extends GetView<ProfileController> {
                   child: _ProfileStat(
                     icon: Icons.group_outlined,
                     value: '${controller.followerCount.value}',
-                    label: 'Follower',
+                    label: 'profile.follower',
                   ),
                 ),
                 const _StatDivider(),
@@ -176,7 +176,7 @@ class ProfileHeader extends GetView<ProfileController> {
                   child: _ProfileStat(
                     icon: Icons.person_outline,
                     value: '${controller.followingCount.value}',
-                    label: 'Following',
+                    label: 'common.following',
                   ),
                 ),
               ],
@@ -201,7 +201,7 @@ class _ProfileStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: '$value $label',
+    label: '$value ${label.tr}',
     child: Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -230,7 +230,7 @@ class _ProfileStat extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              label,
+              label.tr,
               style: TextStyle(color: context.appMutedText, fontSize: 8),
             ),
           ],
@@ -274,9 +274,9 @@ class _ProfileAvatar extends StatelessWidget {
 
     return Semantics(
       button: hasImage,
-      label: hasImage ? 'View full profile photo' : 'Profile photo',
+      label: hasImage ? 'profile.view_full_photo'.tr : 'profile.photo'.tr,
       child: Tooltip(
-        message: hasImage ? 'View profile photo' : 'Profile photo',
+        message: hasImage ? 'profile.view_photo'.tr : 'profile.photo'.tr,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap:
@@ -320,7 +320,10 @@ class _ProfileAvatar extends StatelessWidget {
             hasImage: hasImage,
             onView: () async {
               if (!hasImage) {
-                Get.snackbar('No profile photo', 'Choose a photo first.');
+                Get.snackbar(
+                  'profile.no_photo'.tr,
+                  'profile.choose_photo_first'.tr,
+                );
                 return;
               }
               _openFullImage(
@@ -334,8 +337,8 @@ class _ProfileAvatar extends StatelessWidget {
             onRemove: () async {
               if (!hasImage) {
                 Get.snackbar(
-                  'No profile photo',
-                  'There is no photo to remove.',
+                  'profile.no_photo'.tr,
+                  'profile.no_photo_to_remove'.tr,
                 );
                 return;
               }
@@ -387,7 +390,7 @@ class _ProfileAvatar extends StatelessWidget {
         opaque: false,
         barrierColor: Colors.black,
         barrierDismissible: true,
-        barrierLabel: 'Close profile photo',
+        barrierLabel: 'profile.close_photo'.tr,
         transitionDuration: const Duration(milliseconds: 220),
         reverseTransitionDuration: const Duration(milliseconds: 180),
         pageBuilder:
@@ -453,15 +456,15 @@ class _FullProfileImageState extends State<_FullProfileImage> {
       if (!mounted) return;
       Navigator.of(context).pop();
       await AppAlert.success(
-        title: 'Profile photo removed',
-        message: 'Your profile now uses your initials instead.',
+        title: 'profile.photo_removed',
+        message: 'profile.photo_removed_message',
       );
     } on Object {
       if (!mounted) return;
       setState(() => _isDeleting = false);
       await AppAlert.error(
-        title: 'Could not remove photo',
-        message: 'Please check your connection and try again.',
+        title: 'profile.could_not_remove_photo',
+        message: 'profile.check_connection',
       );
     }
   }
@@ -497,7 +500,7 @@ class _FullProfileImageState extends State<_FullProfileImage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton.filled(
-                  tooltip: 'Photo options',
+                  tooltip: 'profile.photo_options'.tr,
                   onPressed: _isDeleting ? null : _showPhotoOptions,
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: .55),
@@ -507,7 +510,7 @@ class _FullProfileImageState extends State<_FullProfileImage> {
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  tooltip: 'Close',
+                  tooltip: 'common.close'.tr,
                   onPressed: () => Navigator.of(context).pop(),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: .55),
@@ -610,7 +613,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: Text(
-              'Profile photo',
+              'profile.photo'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.appText,
@@ -622,7 +625,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Center(
             child: Text(
-              'Manage your profile photo',
+              'profile.manage_photo'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(color: context.appMutedText, fontSize: 14),
             ),
@@ -632,8 +635,8 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 20),
           _PhotoAction(
             icon: Icons.visibility_outlined,
-            title: 'View photo',
-            subtitle: 'See your current profile photo',
+            title: 'profile.view_current_photo'.tr,
+            subtitle: 'profile.view_current_photo_help'.tr,
             color: const Color(0xFF5B2295),
             background: const Color(0xFFF1ECFF),
             enabled: true,
@@ -642,8 +645,8 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _PhotoAction(
             icon: Icons.image_outlined,
-            title: 'Choose new photo',
-            subtitle: 'Select a new photo from your gallery',
+            title: 'profile.choose_new_photo'.tr,
+            subtitle: 'profile.choose_new_photo_help'.tr,
             color: const Color(0xFF1769E0),
             background: const Color(0xFFEAF2FF),
             onTap: onChoose,
@@ -651,8 +654,8 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _PhotoAction(
             icon: Icons.delete_outline_rounded,
-            title: 'Remove current photo',
-            subtitle: 'Delete your current profile photo',
+            title: 'profile.remove_current_photo'.tr,
+            subtitle: 'profile.remove_current_photo_help'.tr,
             color: const Color(0xFFE3262E),
             background: const Color(0xFFFFECEC),
             enabled: true,
@@ -675,8 +678,8 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Cancel',
+              child: Text(
+                'common.cancel'.tr,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
@@ -801,7 +804,7 @@ class _DeleteProfilePhotoSheet extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           Text(
-            'Delete profile photo?',
+            'profile.delete_photo_question'.tr,
             style: TextStyle(
               color: context.appText,
               fontSize: 20,
@@ -810,7 +813,7 @@ class _DeleteProfilePhotoSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Your current profile photo will be removed. You can add a new one later.',
+            'profile.delete_photo_warning'.tr,
             style: TextStyle(color: context.appMutedText, height: 1.4),
           ),
           const SizedBox(height: 24),
@@ -819,7 +822,7 @@ class _DeleteProfilePhotoSheet extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text('common.cancel'.tr),
                 ),
               ),
               const SizedBox(width: 12),
@@ -831,7 +834,7 @@ class _DeleteProfilePhotoSheet extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('Delete'),
+                  label: Text('common.delete'.tr),
                 ),
               ),
             ],

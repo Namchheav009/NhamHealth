@@ -13,9 +13,9 @@ class ProteinView extends StatelessWidget {
         toolbarHeight: AppBackButton.appBarToolbarHeight,
         leadingWidth: AppBackButton.appBarLeadingWidth,
         leading: AppBackButton.appBar(onPressed: Get.back),
-        title: Text('Protein'.tr),
+        title: Text('common.protein'.tr),
       ),
-      body: Center(child: Text('Protein Detail Page'.tr)),
+      body: Center(child: Text('wellness.protein_detail_page'.tr)),
     );
   }
 }

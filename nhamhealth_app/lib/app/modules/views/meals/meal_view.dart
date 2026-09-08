@@ -19,6 +19,7 @@ import 'widgets/meal_filter_sheet.dart';
 import 'widgets/meal_idea_card.dart';
 import 'widgets/meal_section_header.dart';
 import 'widgets/meal_slideshow.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MealView extends GetView<MealController> {
   const MealView({super.key});
@@ -87,7 +88,7 @@ class MealView extends GetView<MealController> {
                                   Obx(
                                     () => AppSearchBar(
                                       hintText:
-                                          'Search meals and healthy ideas',
+                                          'meals.search_meals_and_healthy_ideas',
                                       controller: controller.searchController,
                                       onChanged: controller.updateSearch,
                                       showClear:
@@ -158,7 +159,7 @@ class MealView extends GetView<MealController> {
           child: Column(
             children: [
               Text(
-                error.tr,
+                error.trOrSelf,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Get.context?.appMutedText,
@@ -167,7 +168,7 @@ class MealView extends GetView<MealController> {
               ),
               TextButton(
                 onPressed: controller.loadMeals,
-                child: Text('Try again'.tr),
+                child: Text('common.try_again'.tr),
               ),
             ],
           ),
@@ -178,7 +179,7 @@ class MealView extends GetView<MealController> {
           padding: const EdgeInsets.symmetric(vertical: 42),
           child: Center(
             child: Text(
-              'No meals found. Try another search.'.tr,
+              'meals.empty_search'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(color: Get.context?.appMutedText, fontSize: 13),
             ),
@@ -199,7 +200,7 @@ class MealView extends GetView<MealController> {
           MealSectionHeader(
             title:
                 controller.searchQuery.value.isEmpty
-                    ? 'Popular meals'
+                    ? 'meals.popular'
                     : 'Search results',
             onSeeAll: () {
               controller.showAllMeals();
@@ -212,7 +213,7 @@ class MealView extends GetView<MealController> {
           const SizedBox(height: 10),
           _buildPopularMeals(meals),
           const SizedBox(height: 24),
-          MealSectionHeader(title: 'Ideas for you'),
+          MealSectionHeader(title: 'meals.ideas_for_you'),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,12 +232,10 @@ class MealView extends GetView<MealController> {
               Expanded(
                 child: Text(
                   personalizedIdeas.isNotEmpty
-                      ? 'AI-ranked using saved height, weight and BMI when available, plus activity and daily nutrition goals for general wellness.'
-                          .tr
+                      ? 'meals.ai_ranking_description'.tr
                       : controller.isIdeasLoading.value
-                      ? 'Creating your personalized meal ideas…'.tr
-                      : 'Showing general ideas until AI personalization is available.'
-                          .tr,
+                      ? 'meals.creating_personalized'.tr
+                      : 'meals.general_ideas_fallback'.tr,
                   style: TextStyle(
                     color: Get.context?.appMutedText,
                     fontSize: 10.5,

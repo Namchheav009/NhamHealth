@@ -12,7 +12,7 @@ class MealSearchBar extends GetView<MealController> {
   Widget build(BuildContext context) {
     return Obx(
       () => AppSearchBar(
-        hintText: 'Search meals and healthy ideas',
+        hintText: 'meals.search_meals_and_healthy_ideas',
         controller: controller.searchController,
         onChanged: controller.updateSearch,
         onSubmitted: controller.updateSearch,

@@ -10,6 +10,7 @@ import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../repositories/profile/profile_repository.dart';
 import 'profile_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class EditProfileController extends GetxController {
   EditProfileController({required this.profileController});
@@ -132,8 +133,8 @@ class EditProfileController extends GetxController {
     if (isBusy) return;
     if (fullName.value.trim().length < 2) {
       await AppAlert.actionError(
-        title: 'Add your name',
-        message: 'Enter your full name before saving your profile.',
+        title: 'profile.add_your_name',
+        message: 'profile.enter_your_full_name_before_saving_your_profile',
       );
       return;
     }
@@ -141,39 +142,37 @@ class EditProfileController extends GetxController {
     final phoneNumber = phone.value.trim();
     if (emailAddress.isEmpty && phoneNumber.isEmpty) {
       await AppAlert.actionError(
-        title: 'Contact information required',
-        message: 'Add an email address or phone number before saving.',
+        title: 'profile.contact_required',
+        message: 'profile.contact_required_help',
       );
       return;
     }
     if (emailAddress.isNotEmpty && !GetUtils.isEmail(emailAddress)) {
       await AppAlert.actionError(
-        title: 'Check your email',
-        message: 'Please enter a valid email address.',
+        title: 'common.check_your_email',
+        message: 'auth.invalid_email',
       );
       return;
     }
     if (phoneNumber.isNotEmpty && !_isValidPhone(phoneNumber)) {
       await AppAlert.actionError(
-        title: 'Check your phone number',
-        message: 'Please enter a valid phone number.',
+        title: 'profile.check_phone',
+        message: 'profile.invalid_phone',
       );
       return;
     }
     if (phoneNumber.isNotEmpty && !isPhoneVerified.value) {
-      verificationDetail.value =
-          'Verify your phone number with the 6-digit code before saving your profile.';
+      verificationDetail.value = 'profile.verify_phone_before_save';
       await AppAlert.actionError(
-        title: 'Verification required',
-        message:
-            'Your phone number has not been verified. Tap Verify and enter the OTP before saving.',
+        title: 'profile.verification_required',
+        message: 'profile.phone_not_verified_help',
       );
       return;
     }
     if (emailAddress.isEmpty && !isPhoneVerified.value) {
       await AppAlert.actionError(
-        title: 'Verify your phone number',
-        message: 'Verify your phone number before removing your email address.',
+        title: 'profile.verify_phone',
+        message: 'profile.verify_phone_before_remove_email',
       );
       return;
     }
@@ -195,24 +194,25 @@ class EditProfileController extends GetxController {
       }
       Get.back<void>();
       await AppAlert.actionSuccess(
-        title: 'Profile saved',
+        title: 'profile.profile_saved',
         message:
-            'Your photo and profile details are now available on your dashboard.',
+            'profile.your_photo_and_profile_details_are_now_available_on_your_dashboard',
       );
     } on ProfileException catch (error) {
       await AppAlert.actionError(
-        title: 'Profile couldn\'t be saved',
+        title: 'profile.save_failed',
         message: error.message,
       );
     } on TimeoutException {
       await AppAlert.actionError(
-        title: 'Upload took too long',
-        message: 'Check your connection and try saving your profile again.',
+        title: 'profile.upload_took_too_long',
+        message:
+            'profile.check_your_connection_and_try_saving_your_profile_again',
       );
     } on Object {
       await AppAlert.actionError(
-        title: 'Profile couldn\'t be saved',
-        message: 'Something went wrong while saving. Please try again.',
+        title: 'profile.save_failed',
+        message: 'profile.something_went_wrong_while_saving_please_try_again',
       );
     } finally {
       isSaving.value = false;
@@ -221,7 +221,7 @@ class EditProfileController extends GetxController {
 
   Future<void> editFullName() async {
     await _showTextEditor(
-      title: 'Full Name',
+      title: 'profile.full_name',
       initialValue: fullName.value,
       onSaved: (value) {
         fullName.value = value;
@@ -240,8 +240,8 @@ class EditProfileController extends GetxController {
       if (image != null) profileImagePath.value = image.path;
     } catch (_) {
       await AppAlert.error(
-        title: 'Couldn\'t open your photos',
-        message: 'Check photo permissions, then choose the image again.',
+        title: 'profile.photo_pick_failed',
+        message: 'profile.photo_pick_failed_help',
       );
     }
   }
@@ -251,7 +251,7 @@ class EditProfileController extends GetxController {
     final previousEmail = email.value.trim().toLowerCase();
     String? updatedEmail;
     await _showTextEditor(
-      title: 'Email',
+      title: 'profile.email',
       initialValue: email.value,
       keyboardType: TextInputType.emailAddress,
       allowEmpty: true,
@@ -267,8 +267,8 @@ class EditProfileController extends GetxController {
     }
     if (!GetUtils.isEmail(updatedEmail!)) {
       await AppAlert.error(
-        title: 'Check your email',
-        message: 'Please enter a valid email address.',
+        title: 'common.check_your_email',
+        message: 'auth.invalid_email',
       );
       return;
     }
@@ -280,7 +280,7 @@ class EditProfileController extends GetxController {
     final previousPhone = phone.value;
     final wasVerified = isPhoneVerified.value;
     await _showTextEditor(
-      title: 'Phone Number',
+      title: 'profile.phone_number',
       initialValue: phone.value,
       keyboardType: TextInputType.phone,
       allowEmpty: true,
@@ -309,18 +309,21 @@ class EditProfileController extends GetxController {
   Future<void> _verifyEmailChange(String emailAddress) async {
     isEmailVerified.value = false;
     verifyingContactType.value = 'email';
-    verificationDetail.value = 'Sending a verification code to $emailAddress…';
+    verificationDetail.value = 'profile.sending_email_code'.trParams({
+      'email': emailAddress,
+    });
     isContactVerificationBusy.value = true;
     try {
       final authService = Get.find<AuthService>();
       await authService.sendEmailVerificationCode(emailAddress);
       isContactVerificationBusy.value = false;
-      verificationDetail.value =
-          'Enter the 6-digit code sent to $emailAddress. The new email will not be saved until it is verified.';
+      verificationDetail.value = 'profile.email_code_detail'.trParams({
+        'email': emailAddress,
+      });
       await _showContactOtpDialog(
         destination: emailAddress,
-        title: 'Verify Email Address',
-        instruction: 'Enter the 6-digit code sent to your email.',
+        title: 'profile.verify_email',
+        instruction: 'profile.email_code_sent',
         icon: Icons.mark_email_read_outlined,
         verify:
             (code) => authService.verifyEmailVerificationCode(
@@ -332,8 +335,7 @@ class EditProfileController extends GetxController {
           email.value = verifiedEmail;
           isEmailVerified.value = true;
           profileController.email.value = verifiedEmail;
-          verificationDetail.value =
-              'Email verified. Tap Save to finish updating your profile.';
+          verificationDetail.value = 'profile.email_verified_save';
         },
       );
       if (email.value.trim().toLowerCase() != emailAddress) {
@@ -341,11 +343,14 @@ class EditProfileController extends GetxController {
             'Email change was not saved. Edit the email again to request another code.';
       }
     } on AuthException catch (error) {
-      await AppAlert.error(title: 'Verification Error', message: error.message);
+      await AppAlert.error(
+        title: 'profile.verification_error',
+        message: error.message,
+      );
     } on Object {
       await AppAlert.error(
-        title: 'Verification Error',
-        message: 'Could not send verification code. Please try again.',
+        title: 'profile.verification_error',
+        message: 'profile.could_not_send_verification_code_please_try_again',
       );
     } finally {
       isContactVerificationBusy.value = false;
@@ -389,7 +394,7 @@ class EditProfileController extends GetxController {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  title.tr,
+                  title.trOrSelf,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -403,7 +408,7 @@ class EditProfileController extends GetxController {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${instruction.tr}\n($destination)',
+                '${instruction.trOrSelf}\n($destination)',
                 style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 16),
@@ -437,7 +442,7 @@ class EditProfileController extends GetxController {
             ],
           ),
           actions: [
-            TextButton(onPressed: Get.back, child: Text('Cancel'.tr)),
+            TextButton(onPressed: Get.back, child: Text('common.cancel'.tr)),
             Obx(
               () =>
                   isSubmitting.value
@@ -454,7 +459,7 @@ class EditProfileController extends GetxController {
                           final enteredCode = codeController.text.trim();
                           if (!RegExp(r'^\d{6}$').hasMatch(enteredCode)) {
                             errorText.value =
-                                'Please enter a valid 6-digit code.';
+                                'profile.please_enter_a_valid_6_digit_code'.tr;
                             codeFocusNode.requestFocus();
                             return;
                           }
@@ -470,20 +475,22 @@ class EditProfileController extends GetxController {
                             Get.back<void>();
                             unawaited(profileController.loadProfile());
                             await AppAlert.success(
-                              title: 'Verified'.tr,
-                              message: '$title verified successfully!'.tr,
+                              title: 'profile.verified'.tr,
+                              message: 'profile.verified_successfully'.trParams(
+                                {'field': title.trOrSelf},
+                              ),
                             );
                           } on AuthException catch (error) {
                             errorText.value = error.message;
                           } on Object {
                             errorText.value =
-                                'The verification code is incorrect';
+                                'profile.the_verification_code_is_incorrect'.tr;
                           } finally {
                             isSubmitting.value = false;
                           }
                         },
                         child: Text(
-                          'Verify'.tr,
+                          'profile.verify'.tr,
                           style: const TextStyle(
                             color: Color(0xFF00A651),
                             fontWeight: FontWeight.bold,
@@ -505,8 +512,8 @@ class EditProfileController extends GetxController {
     final phoneNumber = phone.value.trim();
     if (phoneNumber.isEmpty) {
       await AppAlert.error(
-        title: 'Phone Number Required'.tr,
-        message: 'Please enter your phone number first.'.tr,
+        title: 'profile.phone_number_required'.tr,
+        message: 'profile.please_enter_your_phone_number_first'.tr,
       );
       return;
     }
@@ -526,11 +533,14 @@ class EditProfileController extends GetxController {
             'Phone number is still unverified. Request a code and verify it before saving.';
       }
     } on AuthException catch (e) {
-      await AppAlert.error(title: 'Verification Error'.tr, message: e.message);
+      await AppAlert.error(
+        title: 'profile.verification_error'.tr,
+        message: e.message,
+      );
     } catch (_) {
       await AppAlert.error(
-        title: 'Verification Error'.tr,
-        message: 'Could not send verification code. Please try again.'.tr,
+        title: 'profile.verification_error'.tr,
+        message: 'profile.could_not_send_verification_code_please_try_again'.tr,
       );
     } finally {
       isContactVerificationBusy.value = false;
@@ -569,7 +579,7 @@ class EditProfileController extends GetxController {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Verify Phone Number'.tr,
+                  'profile.verify_phone_number'.tr,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -583,7 +593,7 @@ class EditProfileController extends GetxController {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${'Enter the 6-digit code sent to your phone.'.tr}\n($phoneNumber)',
+                '${'profile.phone_code_prompt'.tr}\n($phoneNumber)',
                 style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 16),
@@ -606,7 +616,7 @@ class EditProfileController extends GetxController {
                         : Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            errorText.value.tr,
+                            errorText.value.trOrSelf,
                             style: const TextStyle(
                               color: Colors.red,
                               fontSize: 12,
@@ -620,7 +630,7 @@ class EditProfileController extends GetxController {
             TextButton(
               onPressed: () => Get.back(),
               child: Text(
-                'Cancel'.tr,
+                'common.cancel'.tr,
                 style: const TextStyle(color: Colors.grey),
               ),
             ),
@@ -640,7 +650,7 @@ class EditProfileController extends GetxController {
                           final enteredCode = codeController.text.trim();
                           if (enteredCode.length != 6) {
                             errorText.value =
-                                'Please enter a valid 6-digit code.';
+                                'profile.please_enter_a_valid_6_digit_code'.tr;
                             codeFocusNode.requestFocus();
                             return;
                           }
@@ -659,12 +669,12 @@ class EditProfileController extends GetxController {
                             }
                             isPhoneVerified.value = true;
                             verificationDetail.value =
-                                'Phone number verified. Tap Save to finish updating your profile.';
+                                'profile.phone_verified_save';
                             Get.back();
                             unawaited(profileController.loadProfile());
                             await AppAlert.success(
-                              title: 'Verified'.tr,
-                              message: 'Phone verified successfully!'.tr,
+                              title: 'profile.verified'.tr,
+                              message: 'profile.phone_verified_successfully'.tr,
                             );
                           } on AuthException catch (e) {
                             isSubmitting.value = false;
@@ -672,11 +682,11 @@ class EditProfileController extends GetxController {
                           } catch (_) {
                             isSubmitting.value = false;
                             errorText.value =
-                                'The verification code is incorrect';
+                                'profile.the_verification_code_is_incorrect'.tr;
                           }
                         },
                         child: Text(
-                          'Verify'.tr,
+                          'profile.verify'.tr,
                           style: const TextStyle(
                             color: Color(0xFF00A651),
                             fontWeight: FontWeight.bold,
@@ -695,7 +705,7 @@ class EditProfileController extends GetxController {
 
   Future<void> editHeight() async {
     await _showTextEditor(
-      title: 'Height (cm)',
+      title: 'profile.height_cm',
       initialValue: height.value.toStringAsFixed(0),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onSaved: (value) {
@@ -712,7 +722,7 @@ class EditProfileController extends GetxController {
 
   Future<void> editAge() async {
     await _showTextEditor(
-      title: 'Age (years)',
+      title: 'profile.age_years',
       initialValue: age.value.toString(),
       keyboardType: TextInputType.number,
       onSaved: (value) {
@@ -738,7 +748,7 @@ class EditProfileController extends GetxController {
 
   Future<void> editWeight() async {
     await _showTextEditor(
-      title: 'Weight (kg)',
+      title: 'profile.weight_kg',
       initialValue: weight.value.toStringAsFixed(0),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onSaved: (value) {
@@ -786,7 +796,7 @@ class EditProfileController extends GetxController {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Select Gender'.tr,
+                      'profile.select_gender'.tr,
                       style: TextStyle(
                         color: context.appText,
                         fontSize: 20,
@@ -812,7 +822,7 @@ class EditProfileController extends GetxController {
     return Obx(
       () => ListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(value.tr, style: TextStyle(color: context.appText)),
+        title: Text(value.trOrSelf, style: TextStyle(color: context.appText)),
         trailing:
             gender.value == value
                 ? const Icon(Icons.check_circle, color: AppColors.primaryGreen)
@@ -826,7 +836,9 @@ class EditProfileController extends GetxController {
   }
 
   void _showInputError(String message) {
-    unawaited(AppAlert.error(title: 'Check this value', message: message));
+    unawaited(
+      AppAlert.error(title: 'profile.check_this_value', message: message),
+    );
   }
 
   Future<void> _showTextEditor({
@@ -885,7 +897,7 @@ class _PhoneOtpCodeField extends StatelessWidget {
     const codeLength = 6;
     const gap = 6.0;
     return Semantics(
-      label: 'Six digit verification code'.tr,
+      label: 'common.six_digit_verification_code'.tr,
       textField: true,
       child: SizedBox(
         height: 52,
@@ -1015,12 +1027,12 @@ class _TextEditorDialogState extends State<_TextEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Get.back<String>(),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          child: Text('common.cancel'.tr, style: TextStyle(color: Colors.grey)),
         ),
         TextButton(
           onPressed: _save,
-          child: const Text(
-            'Save',
+          child: Text(
+            'common.save'.tr,
             style: TextStyle(
               color: Color(0xFF00A651),
               fontWeight: FontWeight.w600,

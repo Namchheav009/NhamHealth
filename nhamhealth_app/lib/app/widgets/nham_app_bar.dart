@@ -119,7 +119,7 @@ class _FavoritesButton extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return _Button(
       key: const ValueKey('favorites-button'),
-      tooltip: 'favorites'.tr,
+      tooltip: 'profile.favorites'.tr,
       onTap: onTap,
       child: Container(
         width: 36,
@@ -151,7 +151,7 @@ class _NotificationButton extends StatelessWidget {
       children: [
         _Button(
           key: const ValueKey('notifications-button'),
-          tooltip: 'notifications'.tr,
+          tooltip: 'common.notifications'.tr,
           onTap: onTap,
           child: Container(
             width: 36,
@@ -203,8 +203,8 @@ class _NotificationButton extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) => _Button(
 //     key: const ValueKey('chat-button'),
-//     tooltip: 'chat'.tr,
-//     onTap: () => Get.snackbar('chat'.tr, 'Chat is coming soon.'.tr),
+//     tooltip: 'common.navigation_chat'.tr,
+//     onTap: () => Get.snackbar('common.navigation_chat'.tr, 'assistant.coming_soon'.tr),
 //     child: Container(
 //       width: 36,
 //       height: 36,
@@ -232,8 +232,8 @@ class _ProfileButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message:
         user?.displayName == null
-            ? 'open_profile'.tr
-            : '${user!.displayName} · ${'profile'.tr}',
+            ? 'common.open_profile'.tr
+            : 'common.user_profile'.trParams({'name': user!.displayName}),
     child: InkResponse(
       key: const ValueKey('profile-button'),
       onTap: onTap,

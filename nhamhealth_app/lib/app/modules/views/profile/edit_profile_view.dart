@@ -7,6 +7,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/profile/edit_profile_controller.dart';
 import 'widgets/edit_info_row.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class EditProfileView extends GetView<EditProfileController> {
   const EditProfileView({super.key});
@@ -56,7 +57,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
   Widget _buildAppBar() {
     return AppBackHeader(
-      title: 'Edit Profile',
+      title: 'profile.edit_profile',
       onBack: controller.goBack,
       trailing: Obx(
         () => TextButton(
@@ -72,7 +73,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     ),
                   )
                   : Text(
-                    'Save'.tr,
+                    'common.save'.tr,
                     style: const TextStyle(
                       color: green,
                       fontWeight: FontWeight.w600,
@@ -183,7 +184,7 @@ class EditProfileView extends GetView<EditProfileController> {
   //                       const Icon(Icons.check_circle, color: green, size: 14),
   //                       const SizedBox(width: 3),
   //                       Text(
-  //                         controller.membership.value.tr,
+  //                         controller.membership.value.trOrSelf,
   //                         style: const TextStyle(
   //                           color: green,
   //                           fontSize: 10,
@@ -244,7 +245,7 @@ class EditProfileView extends GetView<EditProfileController> {
   Widget _buildPersonalInformation(BuildContext context) {
     return _sectionCard(
       context,
-      title: 'Personal Information',
+      title: 'profile.personal_information',
       child: Obx(
         () => Column(
           children: [
@@ -252,7 +253,7 @@ class EditProfileView extends GetView<EditProfileController> {
               icon: Icons.person_outline_rounded,
               iconColor: green,
               iconBackground: const Color(0xFFE9F8EC),
-              label: 'Full Name',
+              label: 'profile.full_name',
               value: controller.fullName.value,
               onTap: controller.editFullName,
             ),
@@ -261,7 +262,7 @@ class EditProfileView extends GetView<EditProfileController> {
               icon: Icons.email_outlined,
               iconColor: const Color(0xFF5275F5),
               iconBackground: const Color(0xFFEEF1FF),
-              label: 'Email',
+              label: 'profile.email',
               value: controller.email.value,
               onTap:
                   controller.isContactVerificationBusy.value
@@ -285,7 +286,7 @@ class EditProfileView extends GetView<EditProfileController> {
               icon: Icons.phone_outlined,
               iconColor: green,
               iconBackground: const Color(0xFFE9F8EC),
-              label: 'Phone',
+              label: 'profile.phone',
               value:
                   controller.phone.value.isEmpty
                       ? 'Not set'
@@ -329,7 +330,7 @@ class EditProfileView extends GetView<EditProfileController> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Verify'.tr,
+                                'profile.verify'.tr,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -350,9 +351,7 @@ class EditProfileView extends GetView<EditProfileController> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF0F8F3),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: green.withValues(alpha: 0.25),
-                  ),
+                  border: Border.all(color: green.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +382,7 @@ class EditProfileView extends GetView<EditProfileController> {
               icon: Icons.calendar_month_outlined,
               iconColor: const Color(0xFFD958FF),
               iconBackground: const Color(0xFFF8E7FF),
-              label: 'Date of Birth',
+              label: 'profile.date_of_birth',
               value: controller.formattedDateOfBirth,
               onTap: () {
                 controller.selectDateOfBirth(context);
@@ -394,7 +393,7 @@ class EditProfileView extends GetView<EditProfileController> {
               icon: Icons.male_rounded,
               iconColor: const Color(0xFF9C56FF),
               iconBackground: const Color(0xFFF2E5FF),
-              label: 'Gender',
+              label: 'profile.gender',
               value:
                   controller.gender.value.isEmpty
                       ? 'Not set'
@@ -419,14 +418,10 @@ class EditProfileView extends GetView<EditProfileController> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.check_circle_rounded,
-            size: 12,
-            color: green,
-          ),
+          const Icon(Icons.check_circle_rounded, size: 12, color: green),
           const SizedBox(width: 4),
           Text(
-            'Verified'.tr,
+            'profile.verified'.tr,
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -456,14 +451,15 @@ class EditProfileView extends GetView<EditProfileController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Body and Health Information'.tr,
+            'profile.body_and_health_information'.tr,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
 
           const SizedBox(height: 2),
 
           Text(
-            'BMI is calculated automatically from your height and weight'.tr,
+            'profile.bmi_is_calculated_automatically_from_your_height_and_weight'
+                .tr,
             style: const TextStyle(color: Color(0xFF888888), fontSize: 10),
           ),
 
@@ -482,10 +478,10 @@ class EditProfileView extends GetView<EditProfileController> {
                     icon: Icons.person_outline_rounded,
                     iconColor: green,
                     iconBackground: const Color(0xFFE9F8EC),
-                    label: 'Age',
+                    label: 'profile.age',
                     value:
                         controller.age.value > 0
-                            ? '@value years'.trParams({
+                            ? 'profile.value_years'.trParams({
                               'value': '${controller.age.value}',
                             })
                             : 'Not set',
@@ -496,7 +492,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     icon: Icons.accessibility_new_rounded,
                     iconColor: const Color(0xFF5275F5),
                     iconBackground: const Color(0xFFEDF1FF),
-                    label: 'Height',
+                    label: 'profile.height',
                     value:
                         controller.height.value > 0
                             ? '${controller.height.value.toStringAsFixed(0)} cm'
@@ -508,7 +504,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     icon: Icons.monitor_weight_outlined,
                     iconColor: const Color(0xFF3D315B),
                     iconBackground: const Color(0xFFF0ECFF),
-                    label: 'Weight',
+                    label: 'profile.weight',
                     value:
                         controller.weight.value > 0
                             ? '${controller.weight.value.toStringAsFixed(0)} kg'
@@ -555,7 +551,7 @@ class EditProfileView extends GetView<EditProfileController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Your BMI'.tr,
+                    'profile.your_bmi'.tr,
                     style: const TextStyle(
                       color: green,
                       fontSize: 14,
@@ -566,7 +562,7 @@ class EditProfileView extends GetView<EditProfileController> {
                   const SizedBox(height: 2),
 
                   Text(
-                    'Auto-calculate from height & weight'.tr,
+                    'profile.auto_calculate_from_height_and_weight'.tr,
                     style: const TextStyle(
                       color: Color(0xFF777777),
                       fontSize: 12,
@@ -593,8 +589,8 @@ class EditProfileView extends GetView<EditProfileController> {
                     child: Text(
                       controller.bmi > 0
                           ? '${controller.bmi.toStringAsFixed(1)} '
-                              '${controller.bmiStatus.tr}'
-                          : 'Not set'.tr,
+                              '${controller.bmiStatus.trOrSelf}'
+                          : 'profile.not_set'.tr,
                       maxLines: 1,
                       style: const TextStyle(
                         color: Color(0xFF008F42),
@@ -636,7 +632,7 @@ class EditProfileView extends GetView<EditProfileController> {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 9),
             child: Text(
-              title.tr,
+              title.trOrSelf,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),

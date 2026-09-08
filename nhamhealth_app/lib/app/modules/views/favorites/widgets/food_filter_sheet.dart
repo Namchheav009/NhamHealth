@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodFilterSheet extends StatefulWidget {
   const FoodFilterSheet({
@@ -87,7 +88,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Filter by category'.tr,
+                    'favorites.filter_by_category'.tr,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -99,7 +100,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                       selectedCategories.isEmpty
                           ? null
                           : () => setState(selectedCategories.clear),
-                  child: Text('Reset'.tr),
+                  child: Text('common.reset'.tr),
                 ),
               ],
             ),
@@ -155,7 +156,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                   shape: const StadiumBorder(),
                 ),
                 child: Text(
-                  'Apply Filter'.tr,
+                  'common.apply_filter'.tr,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -184,7 +185,9 @@ class _CategoryChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '@category category'.trParams({'category': label.tr}),
+      label: 'favorites.category_category'.trParams({
+        'category': label.trOrSelf,
+      }),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -231,7 +234,7 @@ class _CategoryChip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    label.tr,
+                    label.trOrSelf,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

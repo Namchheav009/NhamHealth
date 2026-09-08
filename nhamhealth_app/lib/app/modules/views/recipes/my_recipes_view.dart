@@ -35,7 +35,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
       _recipes = await _repository.mine();
     } catch (error) {
       if (mounted) {
-        Get.snackbar('Recipes unavailable', '$error');
+        Get.snackbar('meals.recipes_unavailable'.tr, '$error');
       }
     } finally {
       if (mounted) {
@@ -57,25 +57,25 @@ class _MyRecipesViewState extends State<MyRecipesView> {
                 .toList();
       });
     } catch (error) {
-      Get.snackbar('Unable to continue', '$error');
+      Get.snackbar('meals.unable_to_continue'.tr, '$error');
     }
   }
 
   Future<void> _delete(CommunityRecipe recipe) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete meal post?'),
+        title: Text('meals.delete_post_question'.tr),
         content: Text(
-          'This permanently removes "${recipe.name}" from Community and Meals.',
+          'meals.delete_post_warning'.trParams({'name': recipe.name}),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr),
           ),
         ],
       ),
@@ -91,14 +91,14 @@ class _MyRecipesViewState extends State<MyRecipesView> {
         );
       }
     } catch (error) {
-      Get.snackbar('Meal post not deleted', '$error');
+      Get.snackbar('meals.post_not_deleted'.tr, '$error');
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('My meal posts'),
+      title: Text('meals.my_posts'.tr),
       actions: [
         IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
       ],
@@ -113,7 +113,7 @@ class _MyRecipesViewState extends State<MyRecipesView> {
         }
       },
       icon: const Icon(Icons.add_rounded),
-      label: const Text('Create meal post'),
+      label: Text('meals.create_post'.tr),
     ),
     body:
         _loading
@@ -127,19 +127,15 @@ class _MyRecipesViewState extends State<MyRecipesView> {
               child:
                   _recipes.isEmpty
                       ? ListView(
-                        children: const [
-                          SizedBox(height: 170),
-                          Icon(
+                        children: [
+                          const SizedBox(height: 170),
+                          const Icon(
                             Icons.menu_book_outlined,
                             size: 56,
                             color: Color(0xFF789080),
                           ),
-                          SizedBox(height: 14),
-                          Center(
-                            child: Text(
-                              'Share your first meal with the Community.',
-                            ),
-                          ),
+                          const SizedBox(height: 14),
+                          Center(child: Text('meals.share_first'.tr)),
                         ],
                       )
                       : ListView.separated(
@@ -246,7 +242,7 @@ class _RecipeCard extends StatelessWidget {
             alignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                tooltip: 'Delete meal post',
+                tooltip: 'meals.delete_post_question'.tr,
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline_rounded),
               ),
@@ -254,14 +250,14 @@ class _RecipeCard extends StatelessWidget {
                 onPressed:
                     () => onRun(recipe, () => repository.aiCheck(recipe.id)),
                 icon: const Icon(Icons.auto_awesome_outlined),
-                label: const Text('AI check'),
+                label: Text('meals.ai_check'.tr),
               ),
               if (recipe.status == 'DRAFT')
                 FilledButton.icon(
                   onPressed:
                       () => onRun(recipe, () => repository.publish(recipe.id)),
                   icon: const Icon(Icons.publish_outlined),
-                  label: const Text('Publish'),
+                  label: Text('meals.publish'.tr),
                 ),
             ],
           ),
@@ -328,10 +324,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_ingredients.isEmpty || _steps.isEmpty) {
-      Get.snackbar(
-        'Finish your recipe',
-        'Add at least one ingredient and one step.',
-      );
+      Get.snackbar('meals.finish_recipe'.tr, 'meals.finish_recipe_help'.tr);
       return;
     }
     setState(() => _saving = true);
@@ -349,7 +342,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
       final recipe = await widget.repository.publish(draft.id);
       if (mounted) Get.back(result: recipe);
     } catch (error) {
-      Get.snackbar('Recipe not saved', '$error');
+      Get.snackbar('meals.recipe_not_saved'.tr, '$error');
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -359,7 +352,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Create Meal Post')),
+    appBar: AppBar(title: Text('meals.create_post_title'.tr)),
     body: Form(
       key: _form,
       child: ListView(
@@ -367,7 +360,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
         children: [
           TextFormField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'Meal name'),
+            decoration: InputDecoration(labelText: 'meals.name'.tr),
             validator:
                 (value) =>
                     value == null || value.trim().isEmpty
@@ -377,7 +370,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _description,
-            decoration: const InputDecoration(labelText: 'Description'),
+            decoration: InputDecoration(labelText: 'meals.description'.tr),
             minLines: 3,
             maxLines: 5,
           ),
@@ -387,7 +380,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
               Expanded(
                 child: TextFormField(
                   controller: _time,
-                  decoration: const InputDecoration(labelText: 'Minutes'),
+                  decoration: InputDecoration(labelText: 'meals.minutes'.tr),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -395,7 +388,7 @@ class _RecipeEditorState extends State<_RecipeEditor> {
               Expanded(
                 child: TextFormField(
                   controller: _servings,
-                  decoration: const InputDecoration(labelText: 'Servings'),
+                  decoration: InputDecoration(labelText: 'common.servings'.tr),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -404,11 +397,14 @@ class _RecipeEditorState extends State<_RecipeEditor> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _difficulty,
-            decoration: const InputDecoration(labelText: 'Difficulty'),
-            items: const [
-              DropdownMenuItem(value: 'EASY', child: Text('Easy')),
-              DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
-              DropdownMenuItem(value: 'HARD', child: Text('Hard')),
+            decoration: InputDecoration(labelText: 'common.difficulty'.tr),
+            items: [
+              DropdownMenuItem(value: 'EASY', child: Text('meals.easy'.tr)),
+              DropdownMenuItem(
+                value: 'MEDIUM',
+                child: Text('common.medium'.tr),
+              ),
+              DropdownMenuItem(value: 'HARD', child: Text('meals.hard'.tr)),
             ],
             onChanged: (value) => setState(() => _difficulty = value ?? 'EASY'),
           ),
@@ -417,14 +413,15 @@ class _RecipeEditorState extends State<_RecipeEditor> {
             onPressed: _chooseImage,
             icon: const Icon(Icons.photo_outlined),
             label: Text(
-              _image == null
-                  ? 'Add cover photo (required to publish)'
-                  : 'Cover photo selected',
+              (_image == null
+                      ? 'meals.add_cover_photo'
+                      : 'meals.cover_photo_selected')
+                  .tr,
             ),
           ),
           const SizedBox(height: 22),
           _EditableList(
-            title: 'Ingredients',
+            title: 'common.ingredients',
             controller: _ingredient,
             hint: 'e.g. 2 tomatoes',
             values: _ingredients.map((item) => item.name).toList(),
@@ -440,9 +437,9 @@ class _RecipeEditorState extends State<_RecipeEditor> {
           ),
           const SizedBox(height: 20),
           _EditableList(
-            title: 'Cooking steps',
+            title: 'meals.cooking_steps',
             controller: _step,
-            hint: 'Describe this step',
+            hint: 'meals.describe_step',
             values: _steps.map((item) => item.instruction).toList(),
             onAdd: () {
               if (_step.text.trim().isNotEmpty) {
@@ -457,7 +454,9 @@ class _RecipeEditorState extends State<_RecipeEditor> {
           const SizedBox(height: 28),
           FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Publishing…' : 'Publish Meal'),
+            child: Text(
+              (_saving ? 'meals.publishing' : 'meals.publish_meal').tr,
+            ),
           ),
         ],
       ),
@@ -486,7 +485,7 @@ class _EditableList extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: Theme.of(context).textTheme.titleMedium),
+      Text(title.tr, style: Theme.of(context).textTheme.titleMedium),
       const SizedBox(height: 8),
       ...values.asMap().entries.map(
         (entry) => ListTile(
@@ -504,7 +503,7 @@ class _EditableList extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              decoration: InputDecoration(hintText: hint),
+              decoration: InputDecoration(hintText: hint.tr),
             ),
           ),
           IconButton(
@@ -524,7 +523,7 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Chip(
-    label: Text(status == 'PUBLISHED' ? 'Published' : 'Draft'),
+    label: Text((status == 'PUBLISHED' ? 'meals.published' : 'meals.draft').tr),
     backgroundColor:
         status == 'PUBLISHED' ? context.appSoftGreen : context.appMutedSurface,
   );

@@ -63,7 +63,7 @@ class RegisterForm extends StatelessWidget {
           const SizedBox(height: 18),
           const SizedBox(height: 5),
           Text(
-            'Start building healthier habits with NhamHealth.'.tr,
+            'auth.start_building_healthier_habits_with_nhamhealth'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(color: context.appMutedText, fontSize: 12),
           ),
@@ -71,7 +71,7 @@ class RegisterForm extends StatelessWidget {
           AuthTextField(
             key: const ValueKey<String>('register-full-name-field'),
             controller: fullNameController,
-            hintText: 'Full name',
+            hintText: 'auth.full_name',
             prefixIcon: Icons.person_outline_rounded,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.name],
@@ -82,7 +82,7 @@ class RegisterForm extends StatelessWidget {
           AuthTextField(
             key: const ValueKey<String>('register-identifier-field'),
             controller: emailController,
-            hintText: 'Email or Phone Number'.tr,
+            hintText: 'auth.email_or_phone_number'.tr,
             prefixIcon: Icons.account_circle_outlined,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -98,7 +98,7 @@ class RegisterForm extends StatelessWidget {
           PasswordField(
             key: const ValueKey<String>('register-password-field'),
             controller: passwordController,
-            hintText: 'Password',
+            hintText: 'auth.password',
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.newPassword],
             errorText: passwordError,
@@ -108,7 +108,7 @@ class RegisterForm extends StatelessWidget {
           PasswordField(
             key: const ValueKey<String>('register-confirm-password-field'),
             controller: confirmPasswordController,
-            hintText: 'Confirm password',
+            hintText: 'auth.confirm_password',
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
             errorText: confirmPasswordError,
@@ -118,13 +118,13 @@ class RegisterForm extends StatelessWidget {
           AuthInlineError(message: submitError),
           const SizedBox(height: 13),
           AuthPrimaryButton(
-            label: 'Sign Up',
+            label: 'auth.sign_up',
             loading: loading,
             onPressed: onRegister,
           ),
           const SizedBox(height: 10),
           PlatformGoogleSignInButton(
-            label: 'Continue with Google',
+            label: 'auth.continue_with_google',
             loading: loading,
             onPressed: onGoogle,
             onAuthenticated: onGoogleAuthenticated,
@@ -135,7 +135,7 @@ class RegisterForm extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  'Already have an account?'.tr,
+                  'auth.already_have_an_account'.tr,
                   style: const TextStyle(fontSize: 11),
                 ),
               ),
@@ -147,7 +147,7 @@ class RegisterForm extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Sign In'.tr,
+                  'auth.sign_in'.tr,
                   style: const TextStyle(
                     color: AppColors.accentOrange,
                     fontSize: 11,

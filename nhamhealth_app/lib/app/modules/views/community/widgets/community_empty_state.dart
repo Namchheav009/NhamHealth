@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class CommunityEmptyState extends StatelessWidget {
   const CommunityEmptyState({
@@ -39,7 +39,7 @@ class CommunityEmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          title.tr,
+          title.trOrSelf,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17,
@@ -49,7 +49,7 @@ class CommunityEmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Text(
-          message.tr,
+          message.trOrSelf,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,

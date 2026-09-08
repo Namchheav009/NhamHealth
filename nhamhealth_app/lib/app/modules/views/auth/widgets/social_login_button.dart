@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
@@ -46,7 +46,7 @@ class AuthPrimaryButton extends StatelessWidget {
                     ),
                   )
                   : Text(
-                    label.tr,
+                    label.trOrSelf,
                     key: const ValueKey('auth-label'),
                     style: const TextStyle(
                       fontSize: 14,
@@ -86,7 +86,7 @@ class AuthSecondaryButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          label.tr,
+          label.trOrSelf,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),
@@ -126,7 +126,7 @@ class SocialLoginButton extends StatelessWidget {
         ),
         icon: Image.asset('assets/icons/google.png', width: 18, height: 18),
         label: Text(
-          label.tr,
+          label.trOrSelf,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),

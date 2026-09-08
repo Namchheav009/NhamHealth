@@ -6,6 +6,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import '../../../models/home/mood_model.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AiRecommendationCard extends GetView<HomeController> {
   const AiRecommendationCard({super.key});
@@ -100,7 +101,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                           const SizedBox(width: 7),
                           Expanded(
                             child: Text(
-                              'AI Recommendation'.tr,
+                              'common.ai_recommendation'.tr,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -137,7 +138,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                             child:
                                 selectedMood == null
                                     ? Text(
-                                      'Get personalized meal &\nactivity suggestions based\non your mood and ingredients.'
+                                      'home.get_personalized_meal_and_activity_suggestions_based_on_your_mood_and_ingredients'
                                           .tr,
                                       key: const ValueKey('no-mood'),
                                       maxLines: 4,
@@ -237,12 +238,15 @@ class AiRecommendationCard extends GetView<HomeController> {
                                     Flexible(
                                       child: Text(
                                         isLoading
-                                            ? 'Generating…'.tr
+                                            ? 'home.generating'.tr
                                             : selectedMood == null
-                                            ? 'Suggest Meals'.tr
-                                            : 'Suggest Meals for @mood'
+                                            ? 'home.suggest_meals'.tr
+                                            : 'home.suggest_meals_for_mood'
                                                 .trParams({
-                                                  'mood': selectedMood.name.tr,
+                                                  'mood':
+                                                      selectedMood
+                                                          .name
+                                                          .trOrSelf,
                                                 }),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -350,10 +354,14 @@ class _SelectedMoodDetail extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'You feel @mood\n'.trParams({'mood': mood.name.tr}),
+                  text: 'home.you_feel_mood'.trParams({
+                    'mood': mood.name.trOrSelf,
+                  }),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                TextSpan(text: 'AI will personalize meals for this mood.'.tr),
+                TextSpan(
+                  text: 'home.ai_will_personalize_meals_for_this_mood'.tr,
+                ),
               ],
             ),
             maxLines: 4,

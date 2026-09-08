@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../controllers/wellness/ai_meal_auto_fill_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
   const AiMealAutoFillView({super.key});
@@ -15,7 +16,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
     appBar: AppBar(
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      title: Text('AI Meal Auto-Fill'.tr),
+      title: Text('wellness.ai_meal_auto_fill'.tr),
     ),
     body: SafeArea(
       child: Center(
@@ -33,9 +34,10 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    labelText: 'What did you eat?'.tr,
+                    labelText: 'wellness.what_did_you_eat'.tr,
                     hintText:
-                        'Example: 150 g chicken breast, 1 cup rice, banana'.tr,
+                        'wellness.example_150_g_chicken_breast_1_cup_rice_banana'
+                            .tr,
                     alignLabelWithHint: true,
                     filled: true,
                     fillColor: context.appField,
@@ -64,8 +66,8 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                             : const Icon(Icons.auto_awesome_rounded),
                     label: Text(
                       controller.isAnalyzing.value
-                          ? 'Matching foods...'.tr
-                          : 'Create meal draft'.tr,
+                          ? 'wellness.matching_foods'.tr
+                          : 'wellness.create_meal_draft'.tr,
                     ),
                     style: FilledButton.styleFrom(backgroundColor: green),
                   ),
@@ -80,7 +82,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 if (controller.foods.isNotEmpty) ...[
                   const SizedBox(height: 22),
                   Text(
-                    'Review before logging'.tr,
+                    'wellness.review_before_logging'.tr,
                     style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
@@ -98,14 +100,19 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                           child: const Icon(Icons.restaurant, color: green),
                         ),
                         title: Text(
-                          food.name.tr,
+                          food.name,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
-                          '${_amount(food.servingSize)} ${food.servingUnit} • ${food.calories.round()} kcal • ${food.protein.toStringAsFixed(1)} g protein',
+                          'wellness.meal_nutrition_summary'.trParams({
+                            'amount': _amount(food.servingSize),
+                            'unit': food.servingUnit,
+                            'calories': '${food.calories.round()}',
+                            'protein': food.protein.toStringAsFixed(1),
+                          }),
                         ),
                         trailing: IconButton(
-                          tooltip: 'Remove'.tr,
+                          tooltip: 'common.remove'.tr,
                           onPressed: () => controller.removeAt(index),
                           icon: const Icon(Icons.close_rounded),
                         ),
@@ -125,8 +132,8 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                       icon: const Icon(Icons.add_circle_outline),
                       label: Text(
                         controller.isSaving.value
-                            ? 'Adding meal...'.tr
-                            : 'Add all to today'.tr,
+                            ? 'wellness.adding_meal'.tr
+                            : 'wellness.add_all_to_today'.tr,
                       ),
                       style: FilledButton.styleFrom(backgroundColor: green),
                     ),
@@ -135,7 +142,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
                 const SizedBox(height: 16),
                 _notice(
                   context,
-                  'Food names are matched to NhamHealth’s nutrition catalog. Review quantities before saving; results are for general wellness only.'
+                  'wellness.food_names_are_matched_to_nhamhealths_nutrition_catalog_review_quantities_before_saving_results_are_for_general_wellness_only'
                       .tr,
                 ),
               ],
@@ -158,7 +165,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
         const Icon(Icons.edit_note_rounded, color: Colors.white, size: 30),
         const SizedBox(height: 10),
         Text(
-          'Log a whole meal in one step'.tr,
+          'wellness.log_a_whole_meal_in_one_step'.tr,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -167,7 +174,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
         ),
         const SizedBox(height: 5),
         Text(
-          'Separate foods with commas or write one per line. Include amounts when you know them.'
+          'wellness.separate_foods_with_commas_or_write_one_per_line_include_amounts_when_you_know_them'
               .tr,
           style: const TextStyle(color: Color(0xDDFFFFFF), height: 1.4),
         ),
@@ -188,9 +195,9 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
         _total(
           context,
           controller.totalProtein.toStringAsFixed(1),
-          'g protein',
+          'wellness.grams_protein'.tr,
         ),
-        _total(context, '${controller.foods.length}', 'foods'),
+        _total(context, '${controller.foods.length}', 'wellness.foods'.tr),
       ],
     ),
   );
@@ -202,7 +209,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
       ),
       Text(
-        label.tr,
+        label.trOrSelf,
         style: TextStyle(fontSize: 12, color: context.appMutedText),
       ),
     ],
@@ -218,7 +225,7 @@ class AiMealAutoFillView extends GetView<AiMealAutoFillController> {
       ),
     ),
     child: Text(
-      text.tr,
+      text.trOrSelf,
       style: TextStyle(
         color: context.appOnWarningSurface,
         fontSize: 12.5,

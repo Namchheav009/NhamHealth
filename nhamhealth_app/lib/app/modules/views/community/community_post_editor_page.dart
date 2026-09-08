@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../translations/localized_text.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
@@ -191,7 +192,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                         child: Text(
-                          'Choose a favorite food'.tr,
+                          'community.choose_favorite_food'.tr,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -203,7 +204,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                             snapshot.hasError
                                 ? Center(
                                   child: Text(
-                                    'Unable to load favorite foods.'.tr,
+                                    'community.favorite_foods_load_failed'.tr,
                                     style: TextStyle(
                                       color: context.appMutedText,
                                     ),
@@ -212,7 +213,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                 : foods.isEmpty
                                 ? Center(
                                   child: Text(
-                                    'No favorite foods yet'.tr,
+                                    'common.no_favorite_foods_yet'.tr,
                                     style: TextStyle(
                                       color: context.appMutedText,
                                     ),
@@ -262,7 +263,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                         ),
                                       ),
                                       title: Text(
-                                        item.name.tr,
+                                        item.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
@@ -383,7 +384,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Add a meal photo',
+                    'common.add_a_meal_photo'.tr,
                     style: TextStyle(
                       color: sheetContext.appText,
                       fontSize: 19,
@@ -392,7 +393,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Choose how you would like to add your cover photo.',
+                    'community.photo_source_prompt'.tr,
                     style: TextStyle(
                       color: sheetContext.appMutedText,
                       fontSize: 13,
@@ -409,8 +410,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       children: [
                         _PhotoSourceTile(
                           icon: Icons.photo_library_outlined,
-                          title: 'Choose from gallery',
-                          subtitle: 'Select an existing photo',
+                          title: 'community.choose_gallery'.tr,
+                          subtitle: 'community.choose_gallery_help'.tr,
                           onTap:
                               () => Navigator.pop(
                                 sheetContext,
@@ -424,8 +425,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         ),
                         _PhotoSourceTile(
                           icon: Icons.photo_camera_outlined,
-                          title: 'Take a photo',
-                          subtitle: 'Use your camera now',
+                          title: 'community.take_photo'.tr,
+                          subtitle: 'community.take_photo_help'.tr,
                           onTap:
                               () => Navigator.pop(
                                 sheetContext,
@@ -446,15 +447,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   String? _positive(String? value, String label) =>
       (int.tryParse(value?.trim() ?? '') ?? 0) > 0
           ? null
-          : '$label must be greater than 0.';
+          : 'community.positive_value'.trParams({'label': label.trOrSelf});
 
   Future<void> _submit() async {
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
       await AppAlert.actionError(
-        title: 'Select a category',
-        message: 'Choose a meal category before publishing.',
+        title: 'community.select_category',
+        message: 'community.category_before_publish',
       );
       return;
     }
@@ -472,8 +473,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     final steps = _steps.where((item) => item.text.trim().isNotEmpty).toList();
     if (ingredients.any((item) => item.amount == null || item.amount! <= 0)) {
       await AppAlert.actionError(
-        title: 'Recipe incomplete',
-        message: 'Every ingredient needs a valid amount.',
+        title: 'community.recipe_incomplete',
+        message: 'community.ingredient_amounts_invalid',
       );
       return;
     }
@@ -508,16 +509,17 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Get.back(result: true);
         await WidgetsBinding.instance.endOfFrame;
         await AppAlert.actionSuccess(
-          title: isEditing ? 'Meal updated' : 'Meal published',
+          title:
+              isEditing ? 'community.meal_updated' : 'community.meal_published',
           message:
               isEditing
-                  ? 'Your changes have been saved.'
-                  : 'Your new meal is now available in Community.',
+                  ? 'community.changes_saved'
+                  : 'community.new_meal_available',
         );
       }
     } on Object catch (error) {
       await AppAlert.actionError(
-        title: 'Could not publish meal',
+        title: 'community.could_not_publish_meal',
         message: error.toString(),
       );
     } finally {
@@ -530,8 +532,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
       Get.snackbar(
-        'Select a category',
-        'Choose a meal category before continuing.',
+        'community.select_category'.tr,
+        'community.category_before_continue'.tr,
       );
       return;
     }
@@ -547,8 +549,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     final amount = num.tryParse(_newIngredient.amount.text.trim());
     if (name.isEmpty || amount == null || amount <= 0) {
       Get.snackbar(
-        'Add ingredient details',
-        'Enter an ingredient name and a valid amount first.',
+        'community.add_ingredient_details'.tr,
+        'community.ingredient_details_help'.tr,
       );
       return;
     }
@@ -573,7 +575,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   void _addStep() {
     final instruction = _newStep.text.trim();
     if (instruction.isEmpty) {
-      Get.snackbar('Add cooking instructions', 'Describe the step first.');
+      Get.snackbar(
+        'community.add_cooking_instructions'.tr,
+        'community.describe_step_first'.tr,
+      );
       return;
     }
     setState(() {
@@ -644,7 +649,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       });
       updateSheet(() {});
     } on Object catch (error) {
-      if (mounted) Get.snackbar('Could not create tag', error.toString());
+      if (mounted) {
+        Get.snackbar('community.could_not_create_tag'.tr, error.toString());
+      }
     } finally {
       _creatingTag = false;
       updateSheet(() {});
@@ -701,7 +708,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Add meal tags',
+                          'community.add_meal_tags'.tr,
                           style: TextStyle(
                             color: context.appText,
                             fontSize: 19,
@@ -710,7 +717,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Choose a tag, create your own, or use the food name.',
+                          'community.tag_help'.tr,
                           style: TextStyle(
                             color: context.appMutedText,
                             fontSize: 13,
@@ -722,7 +729,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                           onChanged:
                               (value) => updateSheet(() => search = value),
                           decoration: InputDecoration(
-                            hintText: 'Search tags',
+                            hintText: 'community.search_tags'.tr,
                             prefixIcon: const Icon(Icons.search_rounded),
                             filled: true,
                             fillColor: context.appMutedSurface,
@@ -782,7 +789,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'No tags available.',
+                                      'community.no_tags'.tr,
                                       style: TextStyle(
                                         color: context.appMutedText,
                                       ),
@@ -834,8 +841,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                             ),
                             child: Text(
                               _selectedTags.isEmpty
-                                  ? 'Done'
-                                  : 'Done (${_selectedTags.length})',
+                                  ? 'community.done'.tr
+                                  : 'community.done_count'.trParams({
+                                    'count': '${_selectedTags.length}',
+                                  }),
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -927,10 +936,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 children: [
                   Text(
                     _currentStep == 0
-                        ? 'Continue to ingredients'
+                        ? 'community.continue_to_ingredients'.tr
                         : widget.post == null
-                        ? 'Publish Meal'
-                        : 'Save Changes',
+                        ? 'meals.publish_meal'.tr
+                        : 'common.save_changes'.tr,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(width: 10),
@@ -948,7 +957,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Expanded(
           child: Center(
             child: Text(
-              widget.post == null ? 'New meal' : 'Edit meal',
+              (widget.post == null
+                      ? 'community.new_meal'
+                      : 'community.edit_meal')
+                  .tr,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 15,
@@ -1060,7 +1072,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _selectedFavoriteFood?.name ?? 'Choose from favorites',
+                      _selectedFavoriteFood?.name ??
+                          'community.choose_favorites'.tr,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1072,8 +1085,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     const SizedBox(height: 2),
                     Text(
                       _selectedFavoriteFood == null
-                          ? 'Prefill this post with one of your saved foods'
-                          : 'Food details added — tap to choose another',
+                          ? 'community.prefill_from_favorites'.tr
+                          : 'community.favorite_selected_help'.tr,
                       style: TextStyle(
                         color: context.appMutedText,
                         fontSize: 11,
@@ -1124,23 +1137,23 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       color: Colors.black.withValues(alpha: .55),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.edit_outlined,
                             color: Colors.white,
                             size: 18,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            'Change photo',
-                            style: TextStyle(
+                            'community.change_photo'.tr,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1206,7 +1219,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
         const SizedBox(width: 7),
         Text(
-          'Difficulty',
+          'common.difficulty'.tr,
           style: TextStyle(
             color: context.appText,
             fontSize: 13,
@@ -1253,12 +1266,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Add a cover photo',
+          'community.add_cover_photo'.tr,
           style: TextStyle(color: context.appText, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
-          'A clear photo helps your meal stand out',
+          'community.cover_photo_help'.tr,
           style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
         const SizedBox(height: 10),
@@ -1268,7 +1281,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             Icon(Icons.image_outlined, color: context.appMutedText, size: 14),
             const SizedBox(width: 5),
             Text(
-              'Recommended',
+              'common.recommended'.tr,
               style: TextStyle(color: context.appMutedText, fontSize: 11),
             ),
           ],
@@ -1302,9 +1315,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Meal category',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          Text(
+            'community.meal_category'.tr,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Material(
@@ -1354,7 +1367,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              selectedCategory?.name ?? 'Choose a category',
+                              selectedCategory?.name ??
+                                  'community.choose_meal_category'.tr,
                               style: TextStyle(
                                 color:
                                     selectedCategory == null
@@ -1366,8 +1380,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                             const SizedBox(height: 2),
                             Text(
                               selectedCategory == null
-                                  ? 'Select where your meal belongs'
-                                  : 'Tap to change',
+                                  ? 'community.category_approval_help'.tr
+                                  : 'common.tap_to_change'.tr,
                               style: TextStyle(
                                 color: context.appMutedText,
                                 fontSize: 12,
@@ -1387,11 +1401,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
           ),
           if (_showValidation && _selectedCategoryId == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 6, left: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 12),
               child: Text(
-                'Select a meal category.',
-                style: TextStyle(color: Color(0xFFCF3B3B), fontSize: 12),
+                'community.select_meal_category'.tr,
+                style: const TextStyle(color: Color(0xFFCF3B3B), fontSize: 12),
               ),
             ),
         ],
@@ -1434,16 +1448,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Choose meal category',
-                      style: TextStyle(
+                    Text(
+                      'community.choose_meal_category'.tr,
+                      style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'This is where your meal will appear after approval.',
+                      'community.category_approval_help'.tr,
                       style: TextStyle(
                         color: sheetContext.appMutedText,
                         fontSize: 13,
@@ -1619,7 +1633,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ActionChip(
           key: const ValueKey('community-add-tag'),
           avatar: const Icon(Icons.add_rounded, size: 17, color: green),
-          label: const Text('Add tag'),
+          label: Text('community.add_tag'.tr),
           backgroundColor: context.appElevatedSurface,
           side: BorderSide(
             color: context.appColorScheme.primary.withValues(alpha: .5),
@@ -1810,7 +1824,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         Icon(Icons.cloud_off_outlined, color: context.appOnWarningSurface),
         const SizedBox(width: 10),
         Expanded(child: Text(message)),
-        TextButton(onPressed: retry, child: const Text('Retry')),
+        TextButton(onPressed: retry, child: Text('common.retry'.tr)),
       ],
     ),
   );
@@ -1971,7 +1985,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               const SizedBox(width: 8),
               IconButton.filled(
                 key: const ValueKey('community-add-ingredient'),
-                tooltip: 'Add ingredient to list',
+                tooltip: 'community.add_ingredient'.tr,
                 onPressed: _submitting || !isReady ? null : _addIngredient,
                 icon: const Icon(Icons.add_rounded, size: 23),
                 style: IconButton.styleFrom(
@@ -2020,7 +2034,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Choose measurement unit',
+                    'community.choose_measurement_unit'.tr,
                     style: TextStyle(
                       color: sheetContext.appText,
                       fontSize: 19,
@@ -2029,7 +2043,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Select the unit used for this ingredient amount.',
+                    'community.measurement_unit_help'.tr,
                     style: TextStyle(
                       color: sheetContext.appMutedText,
                       fontSize: 13,
@@ -2156,7 +2170,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Nothing added yet — search above to start your list.',
+                'community.empty_ingredients'.tr,
                 style: TextStyle(color: context.appMutedText, fontSize: 11),
               ),
             ),
@@ -2171,9 +2185,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Row(
             children: [
-              const Text(
-                'Ingredients list',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              Text(
+                'community.ingredients_list'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Container(
@@ -2253,7 +2267,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           ),
         ),
         IconButton(
-          tooltip: 'Remove ${item.name.text}',
+          tooltip: 'community.remove_item'.trParams({'name': item.name.text}),
           visualDensity: VisualDensity.compact,
           onPressed: () {
             item.dispose();
@@ -2296,7 +2310,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               ),
               const SizedBox(width: 9),
               Text(
-                'Step ${_steps.length + 1}',
+                'community.step_number'.trParams({
+                  'number': '${_steps.length + 1}',
+                }),
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ],
@@ -2321,7 +2337,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               key: const ValueKey('community-add-cooking-step'),
               onPressed: _submitting || !isReady ? null : _addStep,
               icon: const Icon(Icons.add_rounded, size: 19),
-              label: const Text('Add step to list'),
+              label: Text('community.add_step'.tr),
               style: FilledButton.styleFrom(
                 backgroundColor: green,
                 disabledBackgroundColor: context.appMutedSurface,
@@ -2353,7 +2369,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'No steps yet — write one above and add it to your recipe.',
+                'community.empty_steps'.tr,
                 style: TextStyle(color: context.appMutedText, fontSize: 11),
               ),
             ),
@@ -2368,9 +2384,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Row(
             children: [
-              const Text(
-                'Cooking steps',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              Text(
+                'meals.cooking_steps'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Container(
@@ -2441,7 +2457,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
         IconButton(
           key: ValueKey('community-step-up-$index'),
-          tooltip: 'Move step ${index + 1} up',
+          tooltip: 'community.move_step_up'.trParams({
+            'number': '${index + 1}',
+          }),
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints.tightFor(width: 34, height: 34),
           padding: EdgeInsets.zero,
@@ -2452,7 +2470,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
         IconButton(
           key: ValueKey('community-step-down-$index'),
-          tooltip: 'Move step ${index + 1} down',
+          tooltip: 'community.move_step_down'.trParams({
+            'number': '${index + 1}',
+          }),
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints.tightFor(width: 34, height: 34),
           padding: EdgeInsets.zero,
@@ -2463,7 +2483,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           disabledColor: context.appMutedText.withValues(alpha: .4),
         ),
         IconButton(
-          tooltip: 'Remove step ${index + 1}',
+          tooltip: 'community.remove_step'.trParams({'number': '${index + 1}'}),
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints.tightFor(width: 38, height: 34),
           padding: EdgeInsets.zero,
@@ -2647,7 +2667,7 @@ class _TagCreateTile extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        subtitle: const Text('Create and select tag'),
+        subtitle: Text('community.create_select_tag'.tr),
         trailing:
             loading
                 ? const SizedBox.square(

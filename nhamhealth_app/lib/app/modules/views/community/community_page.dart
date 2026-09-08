@@ -174,8 +174,10 @@ class CommunityPage extends GetView<CommunityController> {
                 key: ValueKey<String>('people-search-${view.name}'),
                 hintText:
                     isDiscover
-                        ? 'Search people by name'
-                        : 'Search ${_resultLabel(view)}',
+                        ? 'community.search_people'.tr
+                        : 'community.search_group'.trParams({
+                          'group': _resultLabel(view),
+                        }),
                 onChanged: controller.updateSearch,
               ),
               if (isDiscover) ...[
@@ -192,7 +194,12 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Widget _peopleSections(BuildContext context) {
-    const labels = ['Friends', 'Followers', 'Following', 'Discover'];
+    const labelKeys = [
+      'community.friends',
+      'community.followers',
+      'community.following',
+      'community.discover',
+    ];
     const icons = [
       Icons.people_alt_rounded,
       Icons.person_add_alt_1_rounded,
@@ -213,7 +220,9 @@ class CommunityPage extends GetView<CommunityController> {
           return Semantics(
             selected: selected,
             button: true,
-            label: '${labels[index]} people filter',
+            label: 'community.people_filter_a11y'.trParams({
+              'name': labelKeys[index].tr,
+            }),
             child: Material(
               color:
                   selected
@@ -249,7 +258,7 @@ class CommunityPage extends GetView<CommunityController> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        labels[index],
+                        labelKeys[index].tr,
                         style: TextStyle(
                           color: selected ? green : context.appMutedText,
                           fontSize: 12,
@@ -281,13 +290,13 @@ class CommunityPage extends GetView<CommunityController> {
           _peopleFilterOption(
             context: context,
             icon: Icons.public_rounded,
-            label: 'Everyone',
+            label: 'community.everyone'.tr,
             filter: PeopleFilter.all,
           ),
           _peopleFilterOption(
             context: context,
             icon: Icons.people_alt_rounded,
-            label: 'Mutual friends',
+            label: 'community.mutual_friends'.tr,
             filter: PeopleFilter.mutualFriends,
           ),
         ],
@@ -363,8 +372,8 @@ class CommunityPage extends GetView<CommunityController> {
       }
       return CommunityEmptyState(
         icon: hasQuery ? Icons.search_off_rounded : _viewIcon(view),
-        title: hasQuery ? 'No matching people' : _emptyTitle(view),
-        message: hasQuery ? 'Try another name.' : _emptyMessage(view),
+        title: hasQuery ? 'community.no_matching_people' : _emptyTitle(view),
+        message: hasQuery ? 'community.try_another_name' : _emptyMessage(view),
       );
     }
 
@@ -517,7 +526,7 @@ class CommunityPage extends GetView<CommunityController> {
 
     return Semantics(
       image: true,
-      label: '${person.displayName} profile photo',
+      label: 'profile.photo_with_name'.trParams({'name': person.displayName}),
       child: Container(
         width: 50,
         height: 50,
@@ -586,10 +595,10 @@ class CommunityPage extends GetView<CommunityController> {
 
     final label =
         isFollowing
-            ? 'Following'
+            ? 'community.following'.tr
             : view == FriendsView.followers || status == 'FOLLOWS_YOU'
-            ? 'Follow back'
-            : 'Follow';
+            ? 'community.follow_back'.tr
+            : 'community.follow'.tr;
 
     final followButton =
         isFollowing
@@ -608,7 +617,7 @@ class CommunityPage extends GetView<CommunityController> {
                 ),
               ),
               child: _followButtonContent(
-                label: 'Following',
+                label: 'common.following'.tr,
                 icon: Icons.check_rounded,
                 isLoading: isUpdating,
                 spinnerColor: green,
@@ -698,7 +707,7 @@ class CommunityPage extends GetView<CommunityController> {
       ),
       icon: const Icon(Icons.person_outline_rounded, size: 17),
       label: Text(
-        expandedLabel ? 'View profile' : 'Profile',
+        (expandedLabel ? 'community.view_profile' : 'community.profile').tr,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800),
@@ -782,7 +791,7 @@ class CommunityPage extends GetView<CommunityController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Community',
+              'common.navigation_community'.tr,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 24,
@@ -792,7 +801,7 @@ class CommunityPage extends GetView<CommunityController> {
             ),
             const SizedBox(height: 3),
             Text(
-              'Small healthy steps, shared together.',
+              'community.tagline'.tr,
               style: TextStyle(fontSize: 13, color: context.appMutedText),
             ),
           ],
@@ -804,14 +813,14 @@ class CommunityPage extends GetView<CommunityController> {
           color: context.appSoftGreen,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.groups_rounded, size: 16, color: green),
-            SizedBox(width: 5),
+            const Icon(Icons.groups_rounded, size: 16, color: green),
+            const SizedBox(width: 5),
             Text(
-              'Connect',
-              style: TextStyle(
+              'community.connect'.tr,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: green,
@@ -824,7 +833,11 @@ class CommunityPage extends GetView<CommunityController> {
   );
 
   Widget _feedFilters(BuildContext context) {
-    const labels = ['For You', 'Following', 'Latest'];
+    const labelKeys = [
+      'community.for_you',
+      'community.following',
+      'community.latest',
+    ];
     final colors = Theme.of(context).colorScheme;
 
     return Obx(() {
@@ -846,7 +859,9 @@ class CommunityPage extends GetView<CommunityController> {
                 child: Semantics(
                   selected: selected,
                   button: true,
-                  label: '${labels[index]} feed filter',
+                  label: 'community.feed_filter_a11y'.trParams({
+                    'name': labelKeys[index].tr,
+                  }),
                   child: Material(
                     color: Colors.transparent,
                     borderRadius: borderRadius,
@@ -877,7 +892,7 @@ class CommunityPage extends GetView<CommunityController> {
                           ),
                         ),
                         child: Text(
-                          labels[index],
+                          labelKeys[index].tr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -916,8 +931,8 @@ class CommunityPage extends GetView<CommunityController> {
           if (visiblePosts.isEmpty)
             const CommunityEmptyState(
               icon: Icons.dynamic_feed_outlined,
-              title: 'Nothing here yet',
-              message: 'Follow more people or try another feed filter.',
+              title: 'community.empty_feed',
+              message: 'community.empty_feed_help',
             )
           else
             ...visiblePosts.map(_postCard),
@@ -953,7 +968,10 @@ class CommunityPage extends GetView<CommunityController> {
               ),
             ),
           ),
-          TextButton(onPressed: controller.reload, child: const Text('Retry')),
+          TextButton(
+            onPressed: controller.reload,
+            child: Text('common.retry'.tr),
+          ),
         ],
       ),
     );
@@ -1029,16 +1047,20 @@ class CommunityPage extends GetView<CommunityController> {
     if (isFollowing) {
       final confirmed = await Get.dialog<bool>(
         AlertDialog(
-          title: const Text('Unfollow'),
-          content: Text('Unfollow ${post.author}?'),
+          title: Text('community.unfollow'.tr),
+          content: Text(
+            'community.unfollow_person_question'.trParams({
+              'name': post.author,
+            }),
+          ),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel'),
+              child: Text('common.cancel'.tr),
             ),
             FilledButton(
               onPressed: () => Get.back(result: true),
-              child: const Text('Unfollow'),
+              child: Text('community.unfollow'.tr),
             ),
           ],
         ),
@@ -1078,26 +1100,27 @@ class CommunityPage extends GetView<CommunityController> {
 
     final action = await Get.bottomSheet<_CommunityPostAction>(
       _CommunityOptionsSheet(
-        title: isOwner ? 'Post options' : 'More options',
+        title:
+            (isOwner ? 'community.post_options' : 'community.more_options').tr,
         actions:
             isOwner
-                ? const [
+                ? [
                   _CommunityOption(
                     _CommunityPostAction.edit,
-                    'Edit post',
+                    'community.edit_post'.tr,
                     Icons.edit_outlined,
                   ),
                   _CommunityOption(
                     _CommunityPostAction.delete,
-                    'Delete post',
+                    'community.delete_post'.tr,
                     Icons.delete_outline_rounded,
                     isDestructive: true,
                   ),
                 ]
-                : const [
+                : [
                   _CommunityOption(
                     _CommunityPostAction.report,
-                    'Report post',
+                    'community.report_post'.tr,
                     Icons.flag_outlined,
                     isDestructive: true,
                   ),
@@ -1144,7 +1167,7 @@ class CommunityPage extends GetView<CommunityController> {
         initialMessage: post.description,
         initialVisibility: post.visibility,
         isEditing: true,
-        submitButtonText: 'Save',
+        submitButtonText: 'common.save'.tr,
         onShare: (message, visibility) async {
           await controller.updatePost(
             post: post,
@@ -1187,22 +1210,19 @@ class CommunityPage extends GetView<CommunityController> {
   Future<void> _confirmDeletePost(CommunityPost post) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete this post?'),
-        content: const Text(
-          'This will remove the post from Community. '
-          'You cannot undo this action.',
-        ),
+        title: Text('community.delete_post_question'.tr),
+        content: Text('community.delete_post_warning'.tr),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD94545),
             ),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr),
           ),
         ],
       ),
@@ -1212,9 +1232,9 @@ class CommunityPage extends GetView<CommunityController> {
 
     try {
       await controller.deletePost(post);
-      Get.snackbar('Post deleted', 'Your post has been removed.');
+      Get.snackbar('community.post_deleted'.tr, 'community.post_removed'.tr);
     } on Object catch (error) {
-      Get.snackbar('Could not delete post', error.toString());
+      Get.snackbar('community.could_not_delete_post'.tr, error.toString());
     }
   }
 
@@ -1226,8 +1246,8 @@ class CommunityPage extends GetView<CommunityController> {
     if (!canShare) {
       unawaited(
         AppAlert.error(
-          title: 'Cannot share this post',
-          message: 'Only public posts can be shared to your feed.',
+          title: 'community.cannot_share_post',
+          message: 'community.public_posts_only',
         ),
       );
       return;
@@ -1317,7 +1337,12 @@ class CommunityPage extends GetView<CommunityController> {
   // ---------------------------------------------------------------------------
 
   String _resultLabel(FriendsView view) =>
-      const ['friends', 'followers', 'people you follow', 'people'][view.index];
+      const [
+        'community.friends',
+        'community.followers',
+        'community.people_you_follow',
+        'community.people',
+      ][view.index].tr;
 
   String _personSummary(CommunityPerson person) {
     final details = <String>[];
@@ -1325,9 +1350,10 @@ class CommunityPage extends GetView<CommunityController> {
     if (location.isNotEmpty && !location.contains('@')) details.add(location);
     if (person.mutualFriends > 0) {
       details.add(
-        person.mutualFriends == 1
-            ? '1 mutual connection'
-            : '${person.mutualFriends} mutual connections',
+        (person.mutualFriends == 1
+                ? 'community.mutual_connection_one'
+                : 'community.mutual_connection_many')
+            .trParams({'count': '${person.mutualFriends}'}),
       );
     }
     return details.join(' • ');
@@ -1343,18 +1369,18 @@ class CommunityPage extends GetView<CommunityController> {
 
   String _emptyTitle(FriendsView view) =>
       const [
-        'No friends yet',
-        'No followers yet',
-        'You are not following anyone',
-        'No suggestions right now',
+        'community.no_friends',
+        'community.no_followers',
+        'community.not_following_anyone',
+        'community.no_suggestions',
       ][view.index];
 
   String _emptyMessage(FriendsView view) =>
       const [
-        'Discover people and follow each other to become friends.',
-        'Share useful posts to help more people find you.',
-        'Discover people whose wellness journey inspires you.',
-        'Pull to refresh and check again soon.',
+        'community.no_friends_help',
+        'community.no_followers_help',
+        'community.not_following_help',
+        'community.no_suggestions_help',
       ][view.index];
 
   String _effectiveConnectionStatus(CommunityPerson person) {
@@ -1457,7 +1483,7 @@ class _PeopleSearchFieldState extends State<_PeopleSearchField> {
                 ? null
                 : IconButton(
                   key: const ValueKey<String>('people-search-clear'),
-                  tooltip: 'Clear search',
+                  tooltip: 'common.clear_search'.tr,
                   onPressed: () {
                     _controller.clear();
                     widget.onChanged('');

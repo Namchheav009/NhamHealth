@@ -6,28 +6,24 @@ class HelpSupportController extends GetxController {
 
   final List<Map<String, String>> faqs = [
     {
-      'question': 'How do I Change my password?',
+      'question': 'profile.how_do_i_change_my_password',
       'answer':
-          'Go to Settings > Password & Security > Change Password. '
-          'Enter your current password, then create and confirm your new password.',
+          'security.go_to_settings_password_and_security_change_password_enter_your_current_password_then_create_and_confirm_your_new_password',
     },
     {
-      'question': 'How do I update my profile?',
+      'question': 'profile.how_do_i_update_my_profile',
       'answer':
-          'Go to Settings > Manage Profile. You can update your name, email, '
-          'phone number, age, height, and weight. Tap Save Changes when finished.',
+          'profile.go_to_settings_manage_profile_you_can_update_your_name_email_phone_number_age_height_and_weight_tap_save_changes_when_finished',
     },
     {
-      'question': 'How do I change the app language?',
+      'question': 'common.how_do_i_change_the_app_language',
       'answer':
-          'Go to Settings > Language. Choose English or Khmer. '
-          'The app language will update after you select it.',
+          'settings.go_to_settings_language_choose_english_or_khmer_the_app_language_will_update_after_you_select_it',
     },
     {
-      'question': 'How is BMI calculated?',
+      'question': 'profile.how_is_bmi_calculated',
       'answer':
-          'BMI is calculated from your height and weight. Enter your height '
-          'in cm and weight in kg, and the app will calculate your BMI automatically.',
+          'profile.bmi_is_calculated_from_your_height_and_weight_enter_your_height_in_cm_and_weight_in_kg_and_the_app_will_calculate_your_bmi_automatically',
     },
   ];
 
@@ -62,8 +58,8 @@ class HelpSupportController extends GetxController {
       // do not have an email or phone handler installed.
     }
     Get.snackbar(
-      'Unable to open'.tr,
-      'No compatible app is available on this device.'.tr,
+      'profile.unable_to_open'.tr,
+      'profile.no_compatible_app_is_available_on_this_device'.tr,
       snackPosition: SnackPosition.BOTTOM,
     );
   }

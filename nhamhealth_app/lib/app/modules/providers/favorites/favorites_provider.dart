@@ -67,7 +67,9 @@ class FavoritesProvider {
         .map((item) {
           final data = Map<String, dynamic>.from(item as Map);
           final image = '${data['mainImageUrl'] ?? ''}';
-          if (image.startsWith('/')) data['mainImageUrl'] = '${ApiConfig.baseUrl}$image';
+          if (image.startsWith('/')) {
+            data['mainImageUrl'] = '${ApiConfig.baseUrl}$image';
+          }
           return CommunityRecipe.fromJson(data);
         })
         .toList(growable: false);

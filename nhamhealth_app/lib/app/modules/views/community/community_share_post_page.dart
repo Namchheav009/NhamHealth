@@ -54,15 +54,15 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
       Get.back<void>();
       unawaited(
         AppAlert.success(
-          title: 'Post shared',
-          message: 'The post is now on your Community feed.',
+          title: 'community.post_shared',
+          message: 'community.post_shared_help',
         ),
       );
     } on Object catch (error) {
       if (mounted) {
         unawaited(
           AppAlert.error(
-            title: 'Could not share post',
+            title: 'community.could_not_share_post',
             message: error.toString(),
           ),
         );
@@ -93,11 +93,11 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: const Icon(Icons.close_rounded),
-        tooltip: 'Close'.tr,
+        tooltip: 'common.close'.tr,
         onPressed: () => Get.back<void>(),
       ),
       title: Text(
-        'Share to Feed'.tr,
+        'community.share_to_feed'.tr,
         style: TextStyle(
           fontWeight: FontWeight.w700,
           fontSize: 17,
@@ -131,8 +131,8 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                    : const Text(
-                      'Share',
+                    : Text(
+                      'notifications.share'.tr,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -229,7 +229,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
                       textCapitalization: TextCapitalization.sentences,
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
-                        hintText: 'Say something about this...'.tr,
+                        hintText: 'community.share_caption_hint'.tr,
                         hintStyle: TextStyle(
                           color: context.appMutedText,
                           fontSize: 16,
@@ -277,7 +277,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
               child: Row(
                 children: [
                   Text(
-                    'Add to your post'.tr,
+                    'community.add_to_post'.tr,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -286,7 +286,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
                   ),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'Add emoji'.tr,
+                    tooltip: 'community.add_emoji'.tr,
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(
                       Icons.sentiment_satisfied_alt_rounded,
@@ -296,7 +296,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
                     onPressed: _addEmoji,
                   ),
                   IconButton(
-                    tooltip: 'Choose audience'.tr,
+                    tooltip: 'community.choose_audience'.tr,
                     visualDensity: VisualDensity.compact,
                     icon: Icon(_visibility.icon, color: _green, size: 19),
                     onPressed: () async {
@@ -388,7 +388,7 @@ class _DestinationChip extends StatelessWidget {
         Icon(Icons.dynamic_feed_rounded, size: 13, color: context.appText),
         const SizedBox(width: 4),
         Text(
-          'Feed',
+          'community.feed'.tr,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AiInsightCard extends StatelessWidget {
   const AiInsightCard({super.key});
@@ -45,7 +46,7 @@ class AiInsightCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          'AI Insight'.tr,
+                          'wellness.ai_insight'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -80,7 +81,7 @@ class AiInsightCard extends StatelessWidget {
                               ),
                               SizedBox(width: 4),
                               Text(
-                                'Needs Balance'.tr,
+                                'wellness.needs_balance'.tr,
                                 style: const TextStyle(
                                   color: Color(0xFFFF6A32),
                                   fontSize: 9,
@@ -95,7 +96,7 @@ class AiInsightCard extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     Text(
-                      'Sugar is a bit high and fiber is still low. Drink 1 more glass of water and choose a light next meal.'
+                      'wellness.sugar_is_a_bit_high_and_fiber_is_still_low_drink_1_more_glass_of_water_and_choose_a_light_next_meal'
                           .tr,
                       style: TextStyle(
                         fontSize: 10,
@@ -169,7 +170,7 @@ class AiInsightCard extends StatelessWidget {
         children: [
           Text(emoji),
           const SizedBox(width: 3),
-          Text(text.tr, style: TextStyle(color: foreground, fontSize: 9)),
+          Text(text.trOrSelf, style: TextStyle(color: foreground, fontSize: 9)),
         ],
       ),
     );

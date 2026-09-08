@@ -10,26 +10,27 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/assistant/assistant_controller.dart';
 import '../../models/assistant/assistant_message.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AssistantView extends GetView<AssistantController> {
   const AssistantView({super.key});
 
   static const _suggestions = [
-    'How is my wellness progress today?',
-    'What can I do in NhamHealth?',
-    'Explain my nutrition dashboard',
-    'How many calories do I have left today?',
-    'How can I reach my protein goal?',
-    'How do I add food to Daily Wellness?',
-    'How does AI food photo analysis work?',
-    'How do meal recommendations work?',
-    'Where can I find my favorite meals?',
-    'How do I change the app language?',
-    'What special features are available?',
-    'Guide me through health monitoring',
-    'Help me configure my app settings',
-    'How do I use NhamHealth step by step?',
-    'Help me plan a new health feature',
+    'assistant.how_is_my_wellness_progress_today',
+    'assistant.what_can_i_do_in_nhamhealth',
+    'assistant.explain_my_nutrition_dashboard',
+    'assistant.how_many_calories_do_i_have_left_today',
+    'assistant.how_can_i_reach_my_protein_goal',
+    'assistant.how_do_i_add_food_to_daily_wellness',
+    'assistant.how_does_ai_food_photo_analysis_work',
+    'assistant.how_do_meal_recommendations_work',
+    'assistant.where_can_i_find_my_favorite_meals',
+    'common.how_do_i_change_the_app_language',
+    'assistant.what_special_features_are_available',
+    'assistant.guide_me_through_health_monitoring',
+    'assistant.help_me_configure_my_app_settings',
+    'assistant.how_do_i_use_nhamhealth_step_by_step',
+    'assistant.help_me_plan_a_new_health_feature',
   ];
 
   static const _suggestionIcons = [
@@ -71,12 +72,12 @@ class AssistantView extends GetView<AssistantController> {
               maxWidth: AppSpacing.maxWideContentWidth,
             ),
             child: AppBackHeader(
-              title: 'NhamHealth AI'.tr,
+              title: 'assistant.nhamhealth_ai'.tr,
               onBack: Get.back,
               backButtonKey: const ValueKey<String>('assistant-back-button'),
               titleWidget: const _AssistantHeaderIdentity(),
               trailing: IconButton(
-                tooltip: 'Open Daily Wellness'.tr,
+                tooltip: 'assistant.open_daily_wellness'.tr,
                 onPressed: () => Get.toNamed<void>(AppRoutes.wellness),
                 style: IconButton.styleFrom(
                   backgroundColor: context.appSoftGreen,
@@ -172,7 +173,7 @@ class AssistantView extends GetView<AssistantController> {
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          'Quick questions'.tr,
+                                          'assistant.quick_questions'.tr,
                                           style: TextStyle(
                                             color: context.appText,
                                             fontSize: 12,
@@ -201,7 +202,7 @@ class AssistantView extends GetView<AssistantController> {
                                           size: 14,
                                         ),
                                         label: Text(
-                                          'All questions'.tr,
+                                          'assistant.all_questions'.tr,
                                           style: const TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
@@ -239,7 +240,8 @@ class AssistantView extends GetView<AssistantController> {
                                               isSending
                                                   ? null
                                                   : () => controller.send(
-                                                    _suggestions[index].tr,
+                                                    _suggestions[index]
+                                                        .trOrSelf,
                                                   ),
                                           backgroundColor: _questionBackground(
                                             context,
@@ -302,7 +304,8 @@ class AssistantView extends GetView<AssistantController> {
                                   textInputAction: TextInputAction.send,
                                   onSubmitted: (_) => controller.send(),
                                   decoration: InputDecoration(
-                                    hintText: 'Ask about your wellness...'.tr,
+                                    hintText:
+                                        'assistant.ask_about_your_wellness'.tr,
                                     hintStyle: TextStyle(
                                       color: context.appMutedText,
                                       fontSize: 13,
@@ -348,7 +351,7 @@ class AssistantView extends GetView<AssistantController> {
                                     key: const ValueKey<String>(
                                       'assistant-send',
                                     ),
-                                    tooltip: 'Send message'.tr,
+                                    tooltip: 'assistant.send_message'.tr,
                                     onPressed:
                                         controller.isSending.value
                                             ? null
@@ -416,7 +419,7 @@ class AssistantView extends GetView<AssistantController> {
             const SizedBox(width: 7),
             Expanded(
               child: Text(
-                'Quick questions'.tr,
+                'assistant.quick_questions'.tr,
                 style: TextStyle(
                   color: context.appText,
                   fontSize: 13,
@@ -427,7 +430,7 @@ class AssistantView extends GetView<AssistantController> {
             TextButton(
               key: const ValueKey<String>('assistant-all-questions'),
               onPressed: () => _showAllQuestions(context),
-              child: Text('All'.tr),
+              child: Text('common.all'.tr),
             ),
           ],
         ),
@@ -449,7 +452,8 @@ class AssistantView extends GetView<AssistantController> {
                       onTap:
                           isSending
                               ? null
-                              : () => controller.send(_suggestions[index].tr),
+                              : () =>
+                                  controller.send(_suggestions[index].trOrSelf),
                       dense: true,
                       minTileHeight: 48,
                       contentPadding: const EdgeInsets.symmetric(
@@ -485,23 +489,23 @@ class AssistantView extends GetView<AssistantController> {
 
   String _questionLabel(int index) {
     const labels = [
-      'My wellness',
-      'App help',
-      'Nutrition',
-      'Calories left',
-      'Protein goal',
-      'Add food',
-      'Food photo AI',
-      'Meal ideas',
-      'Favorites',
-      'Language',
-      'Features',
-      'Health monitoring',
-      'Settings',
-      'App guide',
-      'Plan a feature',
+      'assistant.my_wellness',
+      'assistant.app_help',
+      'assistant.nutrition',
+      'assistant.calories_left',
+      'assistant.protein_goal',
+      'assistant.add_food',
+      'assistant.food_photo_ai',
+      'assistant.meal_ideas',
+      'common.favorites',
+      'assistant.language',
+      'assistant.features',
+      'assistant.health_monitoring',
+      'common.settings',
+      'assistant.app_guide',
+      'assistant.plan_a_feature',
     ];
-    return labels[index].tr;
+    return labels[index].trOrSelf;
   }
 
   Color _questionColor(int index) {
@@ -587,7 +591,7 @@ class AssistantView extends GetView<AssistantController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Ask NhamHealth AI'.tr,
+                                    'assistant.ask_nhamhealth_ai'.tr,
                                     style: TextStyle(
                                       color: context.appText,
                                       fontSize: 17,
@@ -595,7 +599,7 @@ class AssistantView extends GetView<AssistantController> {
                                     ),
                                   ),
                                   Text(
-                                    'Choose any question below'.tr,
+                                    'assistant.choose_any_question_below'.tr,
                                     style: TextStyle(
                                       color: context.appMutedText,
                                       fontSize: 11,
@@ -605,7 +609,7 @@ class AssistantView extends GetView<AssistantController> {
                               ),
                             ),
                             IconButton(
-                              tooltip: 'Close',
+                              tooltip: 'common.close'.tr,
                               onPressed: () => Navigator.of(sheetContext).pop(),
                               icon: const Icon(Icons.close_rounded),
                             ),
@@ -629,7 +633,9 @@ class AssistantView extends GetView<AssistantController> {
                                   enabled: !controller.isSending.value,
                                   onTap: () {
                                     Navigator.of(sheetContext).pop();
-                                    controller.send(_suggestions[index].tr);
+                                    controller.send(
+                                      _suggestions[index].trOrSelf,
+                                    );
                                   },
                                   minTileHeight: 58,
                                   shape: RoundedRectangleBorder(
@@ -649,7 +655,7 @@ class AssistantView extends GetView<AssistantController> {
                                     ),
                                   ),
                                   title: Text(
-                                    _suggestions[index].tr,
+                                    _suggestions[index].trOrSelf,
                                     style: TextStyle(
                                       color: context.appText,
                                       fontSize: 13,
@@ -723,7 +729,7 @@ class _AssistantHeaderIdentity extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'NhamHealth AI'.tr,
+                'assistant.nhamhealth_ai'.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textScaler: TextScaler.noScaling,
@@ -744,7 +750,7 @@ class _AssistantHeaderIdentity extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'Connected to your wellness data'.tr,
+                      'assistant.connected_to_your_wellness_data'.tr,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textScaler: TextScaler.noScaling,
@@ -803,7 +809,9 @@ class _MessageBubble extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        (message.isError ? 'Could not reply' : 'NhamHealth AI')
+                        (message.isError
+                                ? 'assistant.could_not_reply'
+                                : 'assistant.nhamhealth_ai')
                             .tr,
                         style: TextStyle(
                           color:
@@ -883,7 +891,7 @@ class _MessageBubble extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          tooltip: 'Copy reply'.tr,
+                          tooltip: 'assistant.copy_reply'.tr,
                           onPressed: () {
                             Clipboard.setData(
                               ClipboardData(text: message.content),
@@ -892,7 +900,7 @@ class _MessageBubble extends StatelessWidget {
                               ..hideCurrentSnackBar()
                               ..showSnackBar(
                                 SnackBar(
-                                  content: Text('Reply copied'.tr),
+                                  content: Text('assistant.reply_copied'.tr),
                                   duration: const Duration(seconds: 1),
                                 ),
                               );
@@ -911,7 +919,10 @@ class _MessageBubble extends StatelessWidget {
                               'assistant-reload-${message.hashCode}',
                             ),
                             tooltip:
-                                message.isError ? 'Try again' : 'Reload reply',
+                                (message.isError
+                                        ? 'common.try_again'
+                                        : 'assistant.reload_reply')
+                                    .tr,
                             onPressed: isReloading ? null : onReload,
                             visualDensity: VisualDensity.compact,
                             style: IconButton.styleFrom(
@@ -1174,7 +1185,7 @@ class _TypingBubble extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Checking your wellness...'.tr,
+                  'assistant.checking_your_wellness'.tr,
                   style: TextStyle(
                     color: context.appMutedText,
                     fontSize: 11,

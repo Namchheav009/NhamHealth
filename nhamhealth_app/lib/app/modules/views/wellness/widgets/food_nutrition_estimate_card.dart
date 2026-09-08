@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/wellness/food_source_detail_controller.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
   const FoodNutritionEstimateCard({super.key});
@@ -20,7 +21,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             Row(
               children: [
                 Text(
-                  'Nutrition estimate'.tr,
+                  'wellness.nutrition_estimate'.tr,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -42,7 +43,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 _nutritionBox(
                   context: context,
                   icon: Icons.local_fire_department_rounded,
-                  title: 'Calories',
+                  title: 'common.calories',
                   value: '+${controller.currentCalories.value}',
                   unit: 'kcal',
                   color: const Color(0xFFFF641E),
@@ -52,7 +53,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 _nutritionBox(
                   context: context,
                   icon: Icons.bolt_rounded,
-                  title: 'Protein',
+                  title: 'common.protein',
                   value: '+${controller.estimatedProtein}',
                   unit: 'g',
                   color: const Color(0xFF00A651),
@@ -62,7 +63,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 _nutritionBox(
                   context: context,
                   icon: Icons.air_rounded,
-                  title: 'Fiber',
+                  title: 'common.fiber',
                   value: '+${controller.estimatedFiber}',
                   unit: 'g',
                   color: const Color(0xFF9747FF),
@@ -72,7 +73,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 _nutritionBox(
                   context: context,
                   icon: Icons.hexagon_rounded,
-                  title: 'Sugar',
+                  title: 'common.sugar',
                   value: '+${controller.estimatedSugar}',
                   unit: 'g',
                   color: const Color(0xFFFF5CB8),
@@ -82,7 +83,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
                 _nutritionBox(
                   context: context,
                   icon: Icons.water_drop_rounded,
-                  title: 'Hydration tip',
+                  title: 'wellness.hydration_tip',
                   value: controller.hydrationTip,
                   unit: '',
                   color: const Color(0xFF48BFF2),
@@ -125,7 +126,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 4),
             Text(
-              title.tr,
+              title.trOrSelf,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 9,
@@ -135,7 +136,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             ),
             const SizedBox(height: 4),
             Text(
-              value.tr,
+              value.trOrSelf,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: small ? 9 : 13,
@@ -145,7 +146,7 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
             ),
             if (unit.isNotEmpty)
               Text(
-                unit.tr,
+                unit.trOrSelf,
                 style: TextStyle(
                   fontSize: 9,
                   color:

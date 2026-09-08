@@ -56,33 +56,33 @@ class ChangePasswordController extends GetxController {
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
       await AppAlert.actionError(
-        title: 'Required',
-        message: 'Please complete all password fields.',
+        title: 'common.required',
+        message: 'profile.please_complete_all_password_fields',
       );
       return;
     }
 
     if (newPassword != confirmPassword) {
       await AppAlert.actionError(
-        title: 'Password does not match',
-        message: 'Please confirm your new password correctly.',
+        title: 'profile.password_does_not_match',
+        message: 'profile.please_confirm_your_new_password_correctly',
       );
       return;
     }
 
     if (newPassword.length < 8) {
       await AppAlert.actionError(
-        title: 'Password too short',
-        message: 'Use at least 8 characters.',
+        title: 'profile.password_too_short',
+        message: 'profile.use_at_least_8_characters',
       );
       return;
     }
 
     if (newPassword == currentPassword) {
       await AppAlert.actionError(
-        title: 'Choose a new password',
+        title: 'profile.choose_a_new_password',
         message:
-            'Your new password must be different from your current password.',
+            'profile.your_new_password_must_be_different_from_your_current_password',
       );
       return;
     }
@@ -101,18 +101,18 @@ class ChangePasswordController extends GetxController {
       confirmPasswordController.clear();
 
       await AppAlert.actionSuccess(
-        title: 'Password updated',
-        message: 'Your password has been updated.',
+        title: 'profile.password_updated',
+        message: 'profile.your_password_has_been_updated',
       );
     } on AuthException catch (error) {
       await AppAlert.actionError(
-        title: 'Could not update password',
+        title: 'profile.could_not_update_password',
         message: error.message,
       );
     } on Object {
       await AppAlert.actionError(
-        title: 'Could not update password',
-        message: 'Something went wrong. Please try again.',
+        title: 'profile.could_not_update_password',
+        message: 'profile.something_went_wrong_please_try_again',
       );
     } finally {
       isLoading.value = false;

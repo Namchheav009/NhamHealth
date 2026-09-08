@@ -56,7 +56,7 @@ class MealCard extends StatelessWidget {
                     Positioned(
                       left: 12,
                       top: 12,
-                      child: _MealBadge(label: meal.category.tr),
+                      child: _MealBadge(label: meal.category),
                     ),
                     Positioned(
                       right: 12,
@@ -99,7 +99,9 @@ class MealCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$servings servings',
+                              'meals.servings_count'.trParams({
+                                'count': '$servings',
+                              }),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -123,7 +125,7 @@ class MealCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        meal.name.tr,
+                        meal.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -138,7 +140,7 @@ class MealCard extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _MealTag(label: meal.category.tr),
+                          _MealTag(label: meal.category),
                           if (meal.cookingTimeMinutes case final minutes?) ...[
                             const SizedBox(width: 6),
                             _MealTag(label: '$minutes min'),
@@ -191,7 +193,10 @@ class _FavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-    message: isFavorite ? 'Remove from favorites'.tr : 'Add to favorites'.tr,
+    message:
+        isFavorite
+            ? 'common.remove_from_favorites'.tr
+            : 'common.add_to_favorites'.tr,
     child: Material(
       color: Colors.white.withValues(alpha: 0.95),
       shape: const CircleBorder(),

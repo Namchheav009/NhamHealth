@@ -33,7 +33,7 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Your Daily Summary'.tr,
+                'wellness.your_daily_summary'.tr,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

@@ -31,8 +31,8 @@ class ForgotPasswordController extends GetxController {
     if (!isEmail && !isPhone) {
       identifierError.value =
           value.isEmpty
-              ? 'Enter your email or phone number.'
-              : 'Please enter a valid email or phone number.';
+              ? 'auth.enter_your_email_or_phone_number'.tr
+              : 'auth.please_enter_a_valid_email_or_phone_number'.tr;
       return;
     }
 
@@ -40,11 +40,11 @@ class ForgotPasswordController extends GetxController {
       isLoading.value = true;
       await _authService.requestPasswordReset(value);
       AppAlert.success(
-        title: isPhone ? 'Check your messages' : 'Check your email',
+        title: isPhone ? 'auth.check_your_messages' : 'auth.check_your_email',
         message:
             isPhone
-                ? 'If an account exists for this phone number, the code is on its way.'
-                : 'If an account exists for this email, the code is on its way.',
+                ? 'auth.if_an_account_exists_for_this_phone_number_the_code_is_on_its_way'
+                : 'auth.if_an_account_exists_for_this_email_the_code_is_on_its_way',
       );
       Get.to(
         () => const VerificationView(),
@@ -81,8 +81,9 @@ class ForgotPasswordPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthFlowScaffold(
-      title: 'Forgot password?',
-      subtitle: 'Enter your email address or phone number to receive a code.',
+      title: 'common.forgot_password',
+      subtitle:
+          'auth.enter_your_email_address_or_phone_number_to_receive_a_code',
       illustrationAsset: 'assets/images/auth/forgot_password.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,7 +92,7 @@ class ForgotPasswordPage extends StatelessWidget {
             () => AuthTextField(
               key: const ValueKey<String>('forgot-password-identifier-field'),
               controller: controller.emailOrPhoneController,
-              hintText: 'Email address or phone number',
+              hintText: 'auth.email_address_or_phone_number',
               prefixIcon: Icons.account_circle_outlined,
               autofillHints: const [
                 AutofillHints.username,
@@ -109,7 +110,7 @@ class ForgotPasswordPage extends StatelessWidget {
           const SizedBox(height: 16),
           Obx(
             () => AuthPrimaryButton(
-              label: 'Send code',
+              label: 'auth.send_code',
               loading: controller.isLoading.value,
               onPressed: controller.sendCode,
             ),

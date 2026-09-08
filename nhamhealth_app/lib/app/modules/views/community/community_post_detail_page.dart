@@ -26,7 +26,7 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
         backgroundColor: context.appBackground,
         appBar: AppBar(
           backgroundColor: context.appSurface,
-          title: const Text('Community post'),
+          title: Text('community.post_title'.tr),
         ),
         body: const SingleChildScrollView(
           physics: NeverScrollableScrollPhysics(),
@@ -40,7 +40,7 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
       backgroundColor: context.appBackground,
       appBar: AppBar(
         backgroundColor: context.appSurface,
-        title: const Text('Community post'),
+        title: Text('community.post_title'.tr),
       ),
       body: Center(
         child: Padding(
@@ -52,13 +52,13 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
               const SizedBox(height: 12),
               Text(
                 controller.errorMessage.value ??
-                    'The community post could not be loaded.',
+                    'community.post_load_failed'.tr,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 14),
               FilledButton(
                 onPressed: controller.load,
-                child: const Text('Try again'),
+                child: Text('common.try_again'.tr),
               ),
             ],
           ),

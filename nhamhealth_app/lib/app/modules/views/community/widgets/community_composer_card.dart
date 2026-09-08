@@ -77,7 +77,7 @@ class CommunityComposerCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: IgnorePointer(
                       child: Text(
-                        "What's on your healthy mind?".tr,
+                        'community.composer_prompt'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -98,13 +98,13 @@ class CommunityComposerCard extends StatelessWidget {
           children: [
             _ComposerAction(
               icon: Icons.image_outlined,
-              label: 'Photo'.tr,
+              label: 'community.photo'.tr,
               onTap: onTap,
             ),
             const SizedBox(width: 8),
             _ComposerAction(
               icon: Icons.forum_outlined,
-              label: 'Ask community'.tr,
+              label: 'community.ask_community'.tr,
               onTap: onTap,
             ),
           ],

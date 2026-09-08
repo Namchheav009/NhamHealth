@@ -4,18 +4,19 @@ import 'package:get/get.dart';
 Future<bool> confirmFavoriteRemoval() async {
   final confirmed = await Get.dialog<bool>(
     AlertDialog(
-      title: Text('Remove favorite?'.tr),
+      title: Text('profile.remove_favorite'.tr),
       content: Text(
-        'Remove this meal from your favorites? You can add it again later.'.tr,
+        'profile.remove_this_meal_from_your_favorites_you_can_add_it_again_later'
+            .tr,
       ),
       actions: [
         TextButton(
           onPressed: () => Get.back(result: false),
-          child: Text('Cancel'.tr),
+          child: Text('common.cancel'.tr),
         ),
         FilledButton(
           onPressed: () => Get.back(result: true),
-          child: Text('Remove'.tr),
+          child: Text('common.remove'.tr),
         ),
       ],
     ),

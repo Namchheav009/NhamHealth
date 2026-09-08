@@ -13,9 +13,9 @@ class FatView extends StatelessWidget {
         toolbarHeight: AppBackButton.appBarToolbarHeight,
         leadingWidth: AppBackButton.appBarLeadingWidth,
         leading: AppBackButton.appBar(onPressed: Get.back),
-        title: Text('Fat'.tr),
+        title: Text('common.fat'.tr),
       ),
-      body: Center(child: Text('Fat Detail Page'.tr)),
+      body: Center(child: Text('wellness.fat_detail'.tr)),
     );
   }
 }

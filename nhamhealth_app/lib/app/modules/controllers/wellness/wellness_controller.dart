@@ -103,8 +103,8 @@ class WellnessController extends GetxController {
     } on Object {
       if (version != _loadVersion) return;
       AppAlert.error(
-        title: 'Wellness unavailable',
-        message: 'Unable to load your daily wellness data.',
+        title: 'wellness.wellness_unavailable',
+        message: 'wellness.unable_to_load_your_daily_wellness_data',
       );
     } finally {
       if (version == _loadVersion) isLoading.value = false;
@@ -191,7 +191,7 @@ class WellnessController extends GetxController {
       lastDate: DateTime.now().add(const Duration(days: 365)),
 
       helpText: 'Select Date',
-      cancelText: 'Cancel',
+      cancelText: 'common.cancel',
       confirmText: 'Select',
     );
 

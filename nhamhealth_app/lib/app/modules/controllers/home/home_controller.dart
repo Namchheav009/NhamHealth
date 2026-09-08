@@ -103,15 +103,18 @@ class HomeController extends GetxController {
     try {
       await repository.setMealFavorite(mealId, favorite: !wasFavorite);
       AppAlert.success(
-        title: wasFavorite ? 'Favorite removed' : 'Favorite saved',
+        title: wasFavorite ? 'home.favorite_removed' : 'home.favorite_saved',
         message:
             wasFavorite
-                ? 'This meal was removed from your Favorites page.'
-                : 'This meal is now available on your Favorites page.',
+                ? 'home.meal_removed_from_favorites'
+                : 'home.meal_saved_to_favorites',
       );
     } on Object catch (error) {
       setMealFavoriteState(mealId, favorite: wasFavorite);
-      AppAlert.error(title: 'Favorites unavailable', message: error.toString());
+      AppAlert.error(
+        title: 'common.favorites_unavailable',
+        message: error.toString(),
+      );
     }
   }
 
@@ -163,8 +166,8 @@ class HomeController extends GetxController {
       }
     } catch (_) {
       AppAlert.error(
-        title: 'Home unavailable',
-        message: 'Unable to load home data.',
+        title: 'home.home_unavailable',
+        message: 'home.unable_to_load_home_data',
       );
     } finally {
       isLoading.value = false;
@@ -241,42 +244,42 @@ class HomeController extends GetxController {
 
   static const _emptySummary = DailySummaryModel(
     calories: NutritionProgressModel(
-      title: 'Calories',
+      title: 'common.calories',
       value: '0',
       target: '2000',
       progress: 0,
       unit: 'kcal',
     ),
     protein: NutritionProgressModel(
-      title: 'Protein',
+      title: 'common.protein',
       value: '0',
       target: '120',
       progress: 0,
       unit: 'g',
     ),
     fat: NutritionProgressModel(
-      title: 'Fat',
+      title: 'common.fat',
       value: '0',
       target: '78',
       progress: 0,
       unit: 'g',
     ),
     water: NutritionProgressModel(
-      title: 'Water',
+      title: 'common.water',
       value: '0',
       target: '8',
       progress: 0,
       unit: 'glasses',
     ),
     fiber: NutritionProgressModel(
-      title: 'Fiber',
+      title: 'common.fiber',
       value: '0',
       target: '25',
       progress: 0,
       unit: 'g',
     ),
     sugar: NutritionProgressModel(
-      title: 'Sugar',
+      title: 'common.sugar',
       value: '0',
       target: '50',
       progress: 0,
@@ -366,8 +369,8 @@ class HomeController extends GetxController {
       Get.offAllNamed(AppRoutes.login);
     } on Object {
       AppAlert.error(
-        title: 'Logout failed',
-        message: 'Unable to clear your session. Please try again.',
+        title: 'home.logout_failed',
+        message: 'home.logout_failed_help',
       );
     } finally {
       isLoggingOut.value = false;
@@ -429,8 +432,8 @@ class HomeController extends GetxController {
       }
     } on Object {
       AppAlert.error(
-        title: 'Recommendations unavailable',
-        message: 'Could not generate meals right now. Please try again.',
+        title: 'home.recommendations_unavailable',
+        message: 'home.could_not_generate_meals_right_now_please_try_again',
       );
     } finally {
       isRecommendedMealsLoading.value = false;

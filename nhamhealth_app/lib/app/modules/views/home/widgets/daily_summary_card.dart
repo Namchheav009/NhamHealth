@@ -5,6 +5,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'nutrition_progress_card.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class DailySummaryCard extends GetView<HomeController> {
   const DailySummaryCard({super.key});
@@ -62,7 +63,7 @@ class DailySummaryCard extends GetView<HomeController> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Your Daily Wellness'.tr,
+                        'home.your_daily_wellness'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -81,7 +82,7 @@ class DailySummaryCard extends GetView<HomeController> {
                         child: Row(
                           children: [
                             Text(
-                              'View Details'.tr,
+                              'common.view_details'.tr,
                               style: const TextStyle(
                                 fontSize: 9,
                                 color: AppColors.primaryGreen,
@@ -146,7 +147,7 @@ class DailySummaryCard extends GetView<HomeController> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    names[day.weekday - 1].tr,
+                                    names[day.weekday - 1].trOrSelf,
                                     style: TextStyle(
                                       fontSize: 9,
                                       color:

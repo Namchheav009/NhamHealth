@@ -116,7 +116,8 @@ class AiFoodController extends GetxController {
     } on FoodAiException catch (error) {
       errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'Food analysis failed. Please try another photo.';
+      errorMessage.value =
+          'wellness.food_analysis_failed_please_try_another_photo';
     } finally {
       stageTimer.cancel();
       isAnalyzing.value = false;
@@ -125,10 +126,10 @@ class AiFoodController extends GetxController {
   }
 
   String get analysisStageLabel => switch (analysisStage.value) {
-    0 => 'Checking image quality',
-    1 => 'Recognizing food and drinks',
-    2 => 'Estimating portions',
-    _ => 'Calculating nutrition and sugar',
+    0 => 'wellness.checking_image_quality',
+    1 => 'wellness.recognizing_food_and_drinks',
+    2 => 'wellness.estimating_portions',
+    _ => 'wellness.calculating_nutrition_and_sugar',
   };
 
   double get analysisProgress => switch (analysisStage.value) {
@@ -173,13 +174,13 @@ class AiFoodController extends GetxController {
       recommendation.value = FoodRecommendationModel(
         title:
             useReviewGuidance
-                ? 'Review this estimate'
+                ? 'wellness.review_this_estimate'
                 : useLocalTitle
                 ? localGuidance.title
                 : food.recommendationTitle,
         message:
             useReviewGuidance
-                ? 'AI nutrition and portions are estimates. Check the details before adding.'
+                ? 'wellness.review_estimate_help'
                 : useLocalMessage
                 ? localGuidance.message
                 : food.recommendation,
@@ -311,14 +312,17 @@ class AiFoodController extends GetxController {
       }
       wasAdded.value = true;
       await AppAlert.actionSuccess(
-        title: food.isPlainWaterOnly ? 'Water added' : 'Food added',
-        message: '${food.name} added successfully.',
+        title:
+            food.isPlainWaterOnly
+                ? 'wellness.water_added'
+                : 'wellness.food_added',
+        message: 'wellness.food_added_success'.trParams({'name': food.name}),
       );
     } on Object {
       await AppAlert.actionError(
-        title: 'Could not save food',
+        title: 'wellness.could_not_save_food',
         message:
-            'Your nutrition was not stored. Please check the server and try again.',
+            'wellness.your_nutrition_was_not_stored_please_check_the_server_and_try_again',
       );
     } finally {
       isSaving.value = false;
@@ -352,8 +356,9 @@ class AiFoodController extends GetxController {
       isUserConfirmed.value = true;
       errorMessage.value = null;
       AppAlert.success(
-        title: 'Food confirmed',
-        message: 'Thanks—your confirmation helps improve future results.',
+        title: 'wellness.food_confirmed',
+        message:
+            'wellness.thanks_your_confirmation_helps_improve_future_results',
       );
     } on FoodNutritionException catch (error) {
       errorMessage.value = error.message;
@@ -411,9 +416,8 @@ class AiFoodController extends GetxController {
         isUserConfirmed.value = true;
         errorMessage.value = null;
         AppAlert.success(
-          title: 'Correction saved',
-          message:
-              'Your correction was sent for admin review. Nutrition remains an AI estimate until the food is added to the database.',
+          title: 'wellness.correction_saved',
+          message: 'wellness.correction_review_estimate',
         );
         return;
       }
@@ -422,9 +426,10 @@ class AiFoodController extends GetxController {
         isUserConfirmed.value = true;
         errorMessage.value = null;
         AppAlert.success(
-          title: 'Correction saved',
-          message:
-              'Your correction was sent for admin review. Use ${databaseFood.servingUnit} to recalculate nutrition safely.',
+          title: 'wellness.correction_saved',
+          message: 'wellness.correction_review_unit'.trParams({
+            'unit': databaseFood.servingUnit,
+          }),
         );
         return;
       }
@@ -450,8 +455,8 @@ class AiFoodController extends GetxController {
       isUserConfirmed.value = true;
       errorMessage.value = null;
       AppAlert.success(
-        title: 'Correction saved',
-        message: 'Nutrition was recalculated from the database.',
+        title: 'wellness.correction_saved',
+        message: 'wellness.nutrition_was_recalculated_from_the_database',
       );
     } on FoodNutritionException catch (error) {
       errorMessage.value = error.message;

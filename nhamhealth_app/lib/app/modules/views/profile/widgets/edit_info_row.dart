@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class EditInfoRow extends StatelessWidget {
   final IconData icon;
@@ -52,7 +52,7 @@ class EditInfoRow extends StatelessWidget {
                   SizedBox(
                     width: 90,
                     child: Text(
-                      label.tr,
+                      label.trOrSelf,
                       style: TextStyle(
                         fontSize: 12,
                         color: context.appMutedText,
@@ -62,7 +62,7 @@ class EditInfoRow extends StatelessWidget {
 
                   Expanded(
                     child: Text(
-                      value.tr,
+                      value.trOrSelf,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,

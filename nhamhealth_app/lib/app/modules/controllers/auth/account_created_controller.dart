@@ -63,10 +63,7 @@ class AccountCreatedController extends GetxController {
         promptCreatePin: true,
         requirePinCreation: true,
         onPinCreated:
-            () => Get.offAllNamed(
-              AppRoutes.home,
-              arguments: homeArguments,
-            ),
+            () => Get.offAllNamed(AppRoutes.home, arguments: homeArguments),
       ),
       transition: Transition.rightToLeft,
     );

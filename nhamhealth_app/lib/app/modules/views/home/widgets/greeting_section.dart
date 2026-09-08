@@ -32,7 +32,7 @@ class GreetingSection extends GetView<HomeController> {
                   children: [
                     Expanded(
                       child: Text(
-                        'How are you feeling today?'.tr,
+                        'home.how_are_you_feeling_today'.tr,
                         style: const TextStyle(
                           color: AppColors.primaryGreen,
                           fontSize: 15,
@@ -61,7 +61,7 @@ class GreetingSection extends GetView<HomeController> {
                     height: 78,
                     child: Center(
                       child: Text(
-                        'No moods are available right now.'.tr,
+                        'home.no_moods_are_available_right_now'.tr,
                         style: TextStyle(color: context.appText, fontSize: 12),
                       ),
                     ),

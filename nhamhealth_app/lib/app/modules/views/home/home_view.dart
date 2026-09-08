@@ -202,7 +202,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Recommended for You'.tr,
+                        'home.recommended_for_you'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -214,7 +214,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Picked for your mood and wellness goals'.tr,
+                        'home.picked_for_your_mood_and_wellness_goals'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -284,7 +284,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                     const SizedBox(width: 11),
                     Expanded(
                       child: Text(
-                        'Choose a mood, then tap Get Recommendation to see personalized meals.'
+                        'home.choose_a_mood_then_tap_get_recommendation_to_see_personalized_meals'
                             .tr,
                         style: TextStyle(
                           color: context.appMutedText,

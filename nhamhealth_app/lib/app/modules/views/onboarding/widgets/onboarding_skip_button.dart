@@ -19,7 +19,7 @@ class OnboardingSkipButton extends StatelessWidget {
           minimumSize: const Size(64, 48),
         ),
         child: Text(
-          'Skip'.tr,
+          'onboarding.skip'.tr,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 abstract final class AppAlert {
   static Future<void> _transition = Future<void>.value();
@@ -28,7 +29,7 @@ abstract final class AppAlert {
   static Future<void> actionSuccess({
     required String title,
     required String message,
-    String confirmText = 'OK',
+    String confirmText = 'common.ok',
   }) => _showActionDialog(
     title: title,
     message: message,
@@ -39,7 +40,7 @@ abstract final class AppAlert {
   static Future<void> actionError({
     required String title,
     required String message,
-    String confirmText = 'OK',
+    String confirmText = 'common.ok',
   }) => _showActionDialog(
     title: title,
     message: message,
@@ -87,7 +88,7 @@ abstract final class AppAlert {
       await showGeneralDialog<void>(
         context: context,
         barrierDismissible: false,
-        barrierLabel: 'Alert dialog'.tr,
+        barrierLabel: 'common.alert_dialog'.tr,
         barrierColor: Colors.black.withValues(alpha: 0.48),
         transitionDuration:
             disableAnimations
@@ -253,8 +254,8 @@ class _AppActionAlertOverlay extends StatelessWidget {
     final isSuccess = tone == _AppActionAlertTone.success;
     final iconColor = isSuccess ? AppColors.primaryGreen : AppColors.errorCoral;
     final icon = isSuccess ? Icons.check_rounded : Icons.close_rounded;
-    final localizedTitle = title.tr;
-    final localizedMessage = message.tr;
+    final localizedTitle = title.trOrSelf;
+    final localizedMessage = message.trOrSelf;
     final buttonColor = context.appColorScheme.primary;
     final buttonForeground = context.appOnBrand;
 
@@ -363,7 +364,7 @@ class _AppActionAlertOverlay extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              child: Text(confirmText.tr),
+                              child: Text(confirmText.trOrSelf),
                             ),
                           ),
                         ],
@@ -402,8 +403,8 @@ class _AppAlertCard extends StatelessWidget {
             : context.appOnDangerSurface;
     final tint = _isSuccess ? context.appSoftGreen : context.appDangerSurface;
     final icon = _isSuccess ? Icons.check_rounded : Icons.priority_high_rounded;
-    final localizedTitle = title.tr;
-    final localizedMessage = message.tr;
+    final localizedTitle = title.trOrSelf;
+    final localizedMessage = message.trOrSelf;
 
     return Container(
       decoration: BoxDecoration(
@@ -484,7 +485,7 @@ class _AppAlertCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    tooltip: 'Dismiss notification'.tr,
+                    tooltip: 'common.dismiss_notification'.tr,
                     visualDensity: VisualDensity.compact,
                     onPressed: () => unawaited(AppAlert.dismiss()),
                     icon: Icon(

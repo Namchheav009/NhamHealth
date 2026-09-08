@@ -10,6 +10,7 @@ import '../../models/auth/google_login_request.dart';
 import '../../models/auth/login_request.dart';
 import '../../services/auth/google_auth_service.dart';
 import '../../views/auth/verification_view.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class LoginController extends GetxController {
   LoginController({AuthService? authService, GoogleAuthService? googleAuth})
@@ -178,6 +179,6 @@ class LoginController extends GetxController {
   }
 
   void _showError(String message) {
-    AppAlert.error(title: 'Sign in failed'.tr, message: message.tr);
+    AppAlert.error(title: 'auth.sign_in_failed'.tr, message: message.trOrSelf);
   }
 }

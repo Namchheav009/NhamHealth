@@ -14,6 +14,7 @@ import 'widgets/favorite_food_card.dart';
 import 'widgets/favorite_post_card.dart';
 import 'widgets/favorites_tab_switcher.dart';
 import 'widgets/food_filter_sheet.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
@@ -42,7 +43,7 @@ class FavoritesView extends GetView<FavoritesController> {
                       AppBackButton(onPressed: Get.back),
                       const SizedBox(width: AppBackButton.headerGap),
                       Text(
-                        'Favorites'.tr,
+                        'common.favorites'.tr,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -103,8 +104,8 @@ class FavoritesView extends GetView<FavoritesController> {
             return _EmptyFavorites(
               message:
                   categories.isEmpty
-                      ? 'No favorite foods yet'
-                      : 'No foods match these filters',
+                      ? 'common.no_favorite_foods_yet'
+                      : 'favorites.no_foods_match_these_filters',
             );
           }
           return RefreshIndicator(
@@ -171,7 +172,9 @@ class FavoritesView extends GetView<FavoritesController> {
             return const PageSkeleton.favorites();
           }
           if (visible.isEmpty) {
-            return const _EmptyFavorites(message: 'No favorite posts yet');
+            return const _EmptyFavorites(
+              message: 'favorites.no_favorite_posts_yet',
+            );
           }
           return RefreshIndicator(
             onRefresh: controller.refresh,
@@ -206,7 +209,7 @@ class FavoritesView extends GetView<FavoritesController> {
     children: [
       Expanded(
         child: Text(
-          title.tr,
+          title.trOrSelf,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
@@ -265,7 +268,7 @@ class FavoritesView extends GetView<FavoritesController> {
           Icon(icon, color: selected ? primary : Colors.grey, size: 21),
           const SizedBox(width: 10),
           Text(
-            label.tr,
+            label.trOrSelf,
             style: TextStyle(
               color: selected ? primary : Colors.grey,
               fontWeight: FontWeight.w600,
@@ -294,7 +297,7 @@ class FavoritesView extends GetView<FavoritesController> {
         ),
         const SizedBox(width: 5),
         Text(
-          'Filter'.tr,
+          'common.filter'.tr,
           style: TextStyle(
             color:
                 context.appIsDark
@@ -352,7 +355,7 @@ class _EmptyFavorites extends StatelessWidget {
       children: [
         const Icon(Icons.favorite_border_rounded, size: 48, color: Colors.grey),
         const SizedBox(height: 10),
-        Text(message.tr, style: const TextStyle(color: Colors.grey)),
+        Text(message.trOrSelf, style: const TextStyle(color: Colors.grey)),
       ],
     ),
   );

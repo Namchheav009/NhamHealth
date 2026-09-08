@@ -78,7 +78,7 @@ class CaloriesView extends GetView<CaloriesController> {
           Expanded(
             child: Center(
               child: Text(
-                'Calories'.tr,
+                'common.calories'.tr,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -110,7 +110,7 @@ class CaloriesView extends GetView<CaloriesController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: Text('Cancel'.tr),
+              child: Text('common.cancel'.tr),
             ),
           ),
 
@@ -129,7 +129,7 @@ class CaloriesView extends GetView<CaloriesController> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              label: Text('Save Changes'.tr),
+              label: Text('common.save_changes'.tr),
             ),
           ),
         ],

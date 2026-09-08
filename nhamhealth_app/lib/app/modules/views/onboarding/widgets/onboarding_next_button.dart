@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class OnboardingNextButton extends StatelessWidget {
   const OnboardingNextButton({
@@ -28,7 +28,7 @@ class OnboardingNextButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          text.tr,
+          text.trOrSelf,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
       ),

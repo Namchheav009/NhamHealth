@@ -8,6 +8,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/notifications/notifications_controller.dart';
 import '../../models/notifications/notification_item.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});
@@ -45,24 +46,28 @@ class NotificationsView extends StatelessWidget {
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                           children: [
                             _NotificationSection(
-                              title: 'New',
+                              title: 'notifications.new',
                               notifications: const [],
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 13),
                             _NotificationSection(
-                              title: 'Today',
+                              title: 'common.today',
                               notifications: const [],
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 13),
                             _NotificationSection(
-                              title: 'Earlier',
+                              title: 'notifications.earlier',
                               notifications: const [],
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 100),
-                            Center(child: Text('No notifications yet'.tr)),
+                            Center(
+                              child: Text(
+                                'notifications.no_notifications_yet'.tr,
+                              ),
+                            ),
                           ],
                         ),
                       );
@@ -77,19 +82,19 @@ class NotificationsView extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         children: [
                           _NotificationSection(
-                            title: 'New',
+                            title: 'notifications.new',
                             notifications: controller.unread,
                             onTap: controller.open,
                           ),
                           const SizedBox(height: 13),
                           _NotificationSection(
-                            title: 'Today',
+                            title: 'common.today',
                             notifications: controller.today,
                             onTap: controller.open,
                           ),
                           const SizedBox(height: 13),
                           _NotificationSection(
-                            title: 'Earlier',
+                            title: 'notifications.earlier',
                             notifications: controller.earlier,
                             onTap: controller.open,
                           ),
@@ -117,7 +122,7 @@ class _NotificationsHeader extends StatelessWidget {
     return Padding(
       padding: AppSpacing.topBarPagePadding,
       child: AppBackHeader(
-        title: 'notifications',
+        title: 'common.notifications',
         backButtonKey: const ValueKey<String>('notifications-back-button'),
         onBack: Get.back,
         trailing: Obx(
@@ -125,7 +130,7 @@ class _NotificationsHeader extends StatelessWidget {
               controller.unread.isEmpty
                   ? const SizedBox(width: 44)
                   : IconButton(
-                    tooltip: 'Mark all as read',
+                    tooltip: 'notifications.mark_all_read'.tr,
                     onPressed: controller.markAllRead,
                     icon: const Icon(Icons.done_all_rounded),
                     color: AppColors.primaryGreen,
@@ -158,7 +163,7 @@ class _NotificationSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 7, 4, 8),
             child: Text(
-              title.tr,
+              title.trOrSelf,
               style: TextStyle(
                 color: context.appText,
                 fontSize: 17,
@@ -303,11 +308,7 @@ class _NotificationLeading extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(
-              notification.actionIcon,
-              size: 12,
-              color: Colors.white,
-            ),
+            child: Icon(notification.actionIcon, size: 12, color: Colors.white),
           ),
         ),
       ],
@@ -367,14 +368,14 @@ class _NotificationCopy extends StatelessWidget {
           TextSpan(
             children: [
               TextSpan(
-                text: notification.displayTitle.tr,
+                text: notification.displayTitle,
                 style: TextStyle(
                   color: context.appText,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               TextSpan(
-                text: ' ${notification.displayMessage.tr}',
+                text: ' ${notification.displayMessage}',
                 style: TextStyle(
                   color: context.appText,
                   fontWeight: FontWeight.w400,
@@ -390,7 +391,9 @@ class _NotificationCopy extends StatelessWidget {
         Row(
           children: [
             Text(
-              notification.time.tr,
+              notification.timeTranslationKey.trParams(
+                notification.timeTranslationParams,
+              ),
               style: TextStyle(
                 color:
                     notification.isUnread
@@ -414,7 +417,7 @@ class _NotificationCopy extends StatelessWidget {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                notification.actionLabel.tr,
+                notification.actionLabel.trOrSelf,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

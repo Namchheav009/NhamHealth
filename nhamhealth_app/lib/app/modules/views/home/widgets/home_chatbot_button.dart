@@ -14,9 +14,9 @@ class HomeChatbotButton extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Open AI Assistant'.tr,
+      label: 'assistant.open'.tr,
       child: Tooltip(
-        message: 'Chat with AI Assistant'.tr,
+        message: 'assistant.chat_with'.tr,
         child: Material(
           color: Colors.transparent,
           child: InkWell(

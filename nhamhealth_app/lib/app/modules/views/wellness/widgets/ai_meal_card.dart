@@ -39,7 +39,7 @@ class AiMealCard extends GetView<WellnessController> {
                 'assets/images/wellness/ai_search.png',
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
-                semanticLabel: 'AI food search assistant',
+                semanticLabel: 'wellness.ai_food_search_assistant'.tr,
               ),
             ),
           ),
@@ -50,7 +50,7 @@ class AiMealCard extends GetView<WellnessController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Log food with AI'.tr,
+                  'wellness.log_food_with_ai'.tr,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -61,7 +61,7 @@ class AiMealCard extends GetView<WellnessController> {
                 const SizedBox(height: 7),
 
                 Text(
-                  'Tell AI what you ate and choose the amount for a better estimate.'
+                  'wellness.tell_ai_what_you_ate_and_choose_the_amount_for_a_better_estimate'
                       .tr,
                   style: TextStyle(
                     fontSize: 11,
@@ -82,7 +82,7 @@ class AiMealCard extends GetView<WellnessController> {
                     icon: const Icon(Icons.auto_awesome_rounded, size: 17),
 
                     label: Text(
-                      'Open AI Meal Auto-Fill'.tr,
+                      'wellness.open_ai_meal_auto_fill'.tr,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

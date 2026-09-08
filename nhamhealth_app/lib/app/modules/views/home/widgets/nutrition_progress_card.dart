@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/home/nutrition_progress_model.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class NutritionProgressCard extends StatelessWidget {
   const NutritionProgressCard({
@@ -43,7 +43,7 @@ class NutritionProgressCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      data.title.tr,
+                      data.title.trOrSelf,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -67,7 +67,7 @@ class NutritionProgressCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                data.unit.tr,
+                data.unit.trOrSelf,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 10, color: context.appMutedText),

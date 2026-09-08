@@ -10,6 +10,7 @@ import '../../controllers/meals/meal_controller.dart';
 import 'widgets/meal_card.dart';
 import 'widgets/meal_category.dart';
 import 'widgets/meal_search_bar.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AllMealsView extends GetView<MealController> {
   const AllMealsView({super.key});
@@ -70,7 +71,7 @@ class AllMealsView extends GetView<MealController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'All meals'.tr,
+                    'meals.all'.tr,
                     style: TextStyle(
                       color: context.appText,
                       fontSize: 23,
@@ -79,7 +80,7 @@ class AllMealsView extends GetView<MealController> {
                     ),
                   ),
                   Text(
-                    'Find something healthy and delicious'.tr,
+                    'meals.search_subtitle'.tr,
                     style: TextStyle(
                       color: context.appMutedText,
                       fontSize: 13,
@@ -137,9 +138,9 @@ class AllMealsView extends GetView<MealController> {
         hasScrollBody: false,
         child: _MessageState(
           icon: Icons.cloud_off_rounded,
-          title: 'Meals unavailable',
+          title: 'meals.unavailable',
           message: controller.errorMessage.value!,
-          actionLabel: 'Try again',
+          actionLabel: 'common.try_again',
           onAction: controller.loadMeals,
         ),
       );
@@ -149,9 +150,9 @@ class AllMealsView extends GetView<MealController> {
         hasScrollBody: false,
         child: _MessageState(
           icon: Icons.search_off_rounded,
-          title: 'No meals found',
-          message: 'Try a different search, category, or filter.',
-          actionLabel: 'Clear filters',
+          title: 'meals.no_results',
+          message: 'meals.try_filters',
+          actionLabel: 'meals.clear_filters',
           onAction: () {
             controller.clearSearch();
             controller.clearMealFilters();
@@ -221,7 +222,7 @@ class _MessageState extends StatelessWidget {
           Icon(icon, size: 48, color: context.appMutedText),
           const SizedBox(height: 14),
           Text(
-            title.tr,
+            title.trOrSelf,
             style: TextStyle(
               color: context.appText,
               fontSize: 18,
@@ -230,12 +231,15 @@ class _MessageState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            message.tr,
+            message.trOrSelf,
             textAlign: TextAlign.center,
             style: TextStyle(color: context.appMutedText, fontSize: 13),
           ),
           const SizedBox(height: 16),
-          OutlinedButton(onPressed: onAction, child: Text(actionLabel.tr)),
+          OutlinedButton(
+            onPressed: onAction,
+            child: Text(actionLabel.trOrSelf),
+          ),
         ],
       ),
     ),

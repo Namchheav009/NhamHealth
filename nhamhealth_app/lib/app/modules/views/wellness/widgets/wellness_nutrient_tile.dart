@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../models/wellness/wellness_summary_model.dart';
 import '../../../../theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class WellnessNutrientTile extends StatelessWidget {
   const WellnessNutrientTile({super.key, required this.item, this.onTap});
@@ -45,7 +46,7 @@ class WellnessNutrientTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name.tr,
+                        item.name.trOrSelf,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -67,8 +68,15 @@ class WellnessNutrientTile extends StatelessWidget {
                             TextSpan(
                               text:
                                   item.isLimit
-                                      ? ' / ${item.target} ${item.unit.tr} max'
-                                      : '/${item.target} ${item.unit.tr}',
+                                      ? 'wellness.nutrient_target_max'
+                                          .trParams({
+                                            'target': item.target,
+                                            'unit': item.unit.trOrSelf,
+                                          })
+                                      : 'wellness.nutrient_target'.trParams({
+                                        'target': item.target,
+                                        'unit': item.unit.trOrSelf,
+                                      }),
                               style: TextStyle(color: context.appMutedText),
                             ),
                           ],
@@ -91,7 +99,9 @@ class WellnessNutrientTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   item.isLimit && item.percentage <= 100
-                      ? '${100 - item.percentage}% left'
+                      ? 'wellness.percent_left'.trParams({
+                        'value': '${100 - item.percentage}',
+                      })
                       : '${item.percentage}%',
                   style: TextStyle(
                     color: item.color,

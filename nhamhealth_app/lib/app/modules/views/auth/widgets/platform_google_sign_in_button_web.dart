@@ -70,7 +70,10 @@ class _PlatformGoogleSignInButtonState
 
   void _showError(Object error) {
     if (!mounted) return;
-    AppAlert.error(title: 'Google sign in failed', message: error.toString());
+    AppAlert.error(
+      title: 'auth.google_sign_in_failed',
+      message: error.toString(),
+    );
   }
 
   @override
@@ -84,9 +87,9 @@ class _PlatformGoogleSignInButtonState
     if (_initializationError case final error?) {
       return Tooltip(
         message: error.toString(),
-        child: const SizedBox(
+        child: SizedBox(
           height: 48,
-          child: Center(child: Text('Google sign in is unavailable')),
+          child: Center(child: Text('auth.google_sign_in_is_unavailable'.tr)),
         ),
       );
     }

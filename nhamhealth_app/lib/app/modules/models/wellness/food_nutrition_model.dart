@@ -389,13 +389,16 @@ class FoodNutritionModel {
   bool get isDatabaseCalculated => dataSource == 'DATABASE_CALCULATED';
 
   String get nutritionSourceLabel => switch (dataSource) {
-    'DATABASE_CALCULATED' => 'Database calculated',
-    'HYBRID_ESTIMATED' => 'Database + AI estimate',
-    'AI_ESTIMATED' || 'AI_ESTIMATE' => 'AI estimate',
-    'PARTIAL_DATABASE' => 'Partial nutrition',
-    'USER_ENTERED' => 'User entered',
-    'UNAVAILABLE' => 'Nutrition unavailable',
-    _ => databaseMatched ? 'Database matched' : 'Nutrition estimate',
+    'DATABASE_CALCULATED' => 'wellness.database_calculated',
+    'HYBRID_ESTIMATED' => 'wellness.database_and_ai_estimate',
+    'AI_ESTIMATED' || 'AI_ESTIMATE' => 'wellness.ai_estimate',
+    'PARTIAL_DATABASE' => 'wellness.partial_nutrition',
+    'USER_ENTERED' => 'wellness.user_entered',
+    'UNAVAILABLE' => 'wellness.nutrition_unavailable',
+    _ =>
+      databaseMatched
+          ? 'wellness.database_matched'
+          : 'wellness.nutrition_estimate',
   };
 
   static double _number(Object? value, {double fallback = 0}) =>

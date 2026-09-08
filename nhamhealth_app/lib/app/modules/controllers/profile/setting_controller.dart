@@ -120,8 +120,8 @@ class SettingsController extends GetxController {
       Get.offAllNamed<void>(AppRoutes.login);
     } on Object {
       AppAlert.error(
-        title: 'Logout failed',
-        message: 'Unable to clear your session. Please try again.',
+        title: 'home.logout_failed',
+        message: 'home.logout_failed_help',
       );
     } finally {
       isLoggingOut.value = false;

@@ -7,6 +7,7 @@ import '../../../theme/app_colors.dart';
 
 import '../../controllers/profile/terms_privacy_controller.dart';
 import '../../../theme/app_spacing.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class TermsPrivacyView extends GetView<TermsPrivacyController> {
   const TermsPrivacyView({super.key});
@@ -39,7 +40,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         const SizedBox(height: 27),
 
                         Text(
-                          'Read the main policies that protect'.tr,
+                          'profile.read_the_main_policies_that_protect'.tr,
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.3,
@@ -51,7 +52,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         const SizedBox(height: 3),
 
                         Text(
-                          'your account and data.'.tr,
+                          'profile.your_account_and_data'.tr,
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.3,
@@ -65,7 +66,7 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         Padding(
                           padding: const EdgeInsets.only(left: 2),
                           child: Text(
-                            'Main Policies'.tr,
+                            'profile.main_policies'.tr,
                             style: TextStyle(
                               fontSize: 16,
                               height: 1,
@@ -80,34 +81,34 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         Obx(
                           () => _PolicyCard(
                             icon: Icons.policy_outlined,
-                            title: 'Terms of Service',
-                            subtitle: 'How to use the app',
+                            title: 'profile.terms_of_service',
+                            subtitle: 'profile.how_to_use_the_app',
                             expanded: controller.termsExpanded.value,
                             onTap: controller.toggleTerms,
                             children: const [
                               _PolicyDetail(
                                 icon: Icons.person_outline_rounded,
-                                title: 'Using the app',
+                                title: 'profile.using_the_app',
                                 subtitle:
-                                    'Download the app to perform health and wellness tracking.',
+                                    'profile.download_the_app_to_perform_health_and_wellness_tracking',
                               ),
                               _PolicyDetail(
                                 icon: Icons.verified_user_outlined,
-                                title: 'Account Responsibility',
+                                title: 'profile.account_responsibility',
                                 subtitle:
-                                    'Keep your account secure and your profile information accurate.',
+                                    'profile.keep_your_account_secure_and_your_profile_information_accurate',
                               ),
                               _PolicyDetail(
                                 icon: Icons.article_outlined,
-                                title: 'Content & Behavior',
+                                title: 'profile.content_and_behavior',
                                 subtitle:
-                                    'Do not misuse the app or publish harmful content.',
+                                    'profile.do_not_misuse_the_app_or_publish_harmful_content',
                               ),
                               _PolicyDetail(
                                 icon: Icons.update_rounded,
-                                title: 'Updates',
+                                title: 'profile.updates',
                                 subtitle:
-                                    'We may update these terms when needed.',
+                                    'profile.we_may_update_these_terms_when_needed',
                               ),
                             ],
                           ),
@@ -118,34 +119,34 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
                         Obx(
                           () => _PolicyCard(
                             icon: Icons.privacy_tip_outlined,
-                            title: 'Privacy Policy',
-                            subtitle: 'How we protect your data',
+                            title: 'profile.privacy_policy',
+                            subtitle: 'profile.how_we_protect_your_data',
                             expanded: controller.privacyExpanded.value,
                             onTap: controller.togglePrivacy,
                             children: const [
                               _PolicyDetail(
                                 icon: Icons.storage_outlined,
-                                title: 'Data We Collect',
+                                title: 'profile.data_we_collect',
                                 subtitle:
-                                    'We may collect basic account and wellness information you provide.',
+                                    'profile.we_may_collect_basic_account_and_wellness_information_you_provide',
                               ),
                               _PolicyDetail(
                                 icon: Icons.manage_accounts_outlined,
-                                title: 'How We Use Data',
+                                title: 'profile.how_we_use_data',
                                 subtitle:
-                                    'Your data helps us personalize the app and improve your experience.',
+                                    'profile.your_data_helps_us_personalize_the_app_and_improve_your_experience',
                               ),
                               _PolicyDetail(
                                 icon: Icons.lock_outline_rounded,
-                                title: 'Data Security',
+                                title: 'profile.data_security',
                                 subtitle:
-                                    'We protect your information with secure systems and privacy safeguards.',
+                                    'profile.we_protect_your_information_with_secure_systems_and_privacy_safeguards',
                               ),
                               _PolicyDetail(
                                 icon: Icons.admin_panel_settings_outlined,
-                                title: 'Your Control',
+                                title: 'profile.your_control',
                                 subtitle:
-                                    'You can update or request deletion of your personal data.',
+                                    'profile.you_can_update_or_request_deletion_of_your_personal_data',
                               ),
                             ],
                           ),
@@ -163,7 +164,10 @@ class TermsPrivacyView extends GetView<TermsPrivacyController> {
   }
 
   Widget _buildHeader() {
-    return AppBackHeader(title: 'Terms & Privacy', onBack: controller.goBack);
+    return AppBackHeader(
+      title: 'profile.terms_privacy'.tr,
+      onBack: controller.goBack,
+    );
   }
 }
 
@@ -229,7 +233,7 @@ class _PolicyCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title.tr,
+                          title.trOrSelf,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -237,7 +241,7 @@ class _PolicyCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          subtitle.tr,
+                          subtitle.trOrSelf,
                           style: const TextStyle(
                             color: Color(0xFF7C8589),
                             fontSize: 11,
@@ -293,7 +297,7 @@ class _PolicyDetail extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.tr,
+                  title.trOrSelf,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -301,7 +305,7 @@ class _PolicyDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle.tr,
+                  subtitle.trOrSelf,
                   style: const TextStyle(
                     fontSize: 11,
                     height: 1.35,
@@ -324,10 +328,7 @@ class _TermsBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     if (context.appIsDark) {
       return const Positioned.fill(
-        child: ForestGlowBackground(
-          force: true,
-          child: SizedBox.expand(),
-        ),
+        child: ForestGlowBackground(force: true, child: SizedBox.expand()),
       );
     }
     return Positioned.fill(

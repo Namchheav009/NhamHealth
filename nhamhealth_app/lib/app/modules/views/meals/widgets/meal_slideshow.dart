@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/meals/meal_controller.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MealSlideShow extends GetView<MealController> {
   const MealSlideShow({super.key});
@@ -67,7 +68,7 @@ class MealSlideShow extends GetView<MealController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    slide.title.tr,
+                                    slide.title.trOrSelf,
                                     style: TextStyle(
                                       fontSize: compact ? 18 : 20,
                                       height: 1.08,
@@ -77,7 +78,7 @@ class MealSlideShow extends GetView<MealController> {
                                   ),
                                   const SizedBox(height: 3),
                                   Text(
-                                    slide.highlight.tr,
+                                    slide.highlight.trOrSelf,
                                     style: TextStyle(
                                       fontSize: compact ? 18 : 20,
                                       height: 1.08,
@@ -87,7 +88,7 @@ class MealSlideShow extends GetView<MealController> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    slide.description.tr,
+                                    slide.description.trOrSelf,
                                     maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -116,7 +117,7 @@ class MealSlideShow extends GetView<MealController> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'Explore now'.tr,
+                                        'meals.explore_now'.tr,
                                         style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,

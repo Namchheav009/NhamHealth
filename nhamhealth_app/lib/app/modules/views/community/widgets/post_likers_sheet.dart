@@ -80,7 +80,10 @@ class _PostLikersSheetState extends State<_PostLikersSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              widget.likeCount == 1 ? '1 like' : '${widget.likeCount} likes',
+              (widget.likeCount == 1
+                      ? 'community.like_count_one'
+                      : 'community.like_count_many')
+                  .trParams({'count': '${widget.likeCount}'}),
               style: TextStyle(
                 color: context.appText,
                 fontSize: 17,
@@ -193,7 +196,7 @@ class _LikerAvatar extends StatelessWidget {
     );
     return Semantics(
       image: true,
-      label: '$name profile photo',
+      label: 'profile.photo_with_name'.trParams({'name': name}),
       child: Container(
         width: 48,
         height: 48,
@@ -224,7 +227,10 @@ class _NoLikers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Text('No likes yet.', style: TextStyle(color: context.appMutedText)),
+    child: Text(
+      'community.no_likes'.tr,
+      style: TextStyle(color: context.appMutedText),
+    ),
   );
 }
 
@@ -241,11 +247,11 @@ class _LikersError extends StatelessWidget {
         Icon(Icons.cloud_off_rounded, color: context.appMutedText, size: 30),
         const SizedBox(height: 8),
         Text(
-          'Could not load likes.',
+          'community.likes_load_failed'.tr,
           style: TextStyle(color: context.appMutedText),
         ),
         const SizedBox(height: 6),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
+        TextButton(onPressed: onRetry, child: Text('common.retry'.tr)),
       ],
     ),
   );
