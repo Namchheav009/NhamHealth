@@ -17,6 +17,8 @@ import 'wellness_controller.dart';
 import '../home/home_controller.dart';
 import '../../repositories/profile/profile_repository.dart';
 
+enum AiFoodInputKind { food, drink }
+
 class AiFoodController extends GetxController {
   AiFoodController({
     required this.aiService,
@@ -51,7 +53,57 @@ class AiFoodController extends GetxController {
   final errorMessage = RxnString();
   final errorMessageParams = <String, String>{}.obs;
   final wasAdded = false.obs;
+  final inputKind = AiFoodInputKind.food.obs;
+  final foodAmount = 1.0.obs;
+  final foodUnit = 'plate'.obs;
+  final drinkCupMl = 350.0.obs;
+  final drinkConsumedFraction = 1.0.obs;
   int _scanGeneration = 0;
+
+  double get selectedAmount =>
+      inputKind.value == AiFoodInputKind.drink
+          ? drinkCupMl.value * drinkConsumedFraction.value
+          : foodAmount.value;
+
+  String get selectedAmountUnit =>
+      inputKind.value == AiFoodInputKind.drink ? 'ml' : foodUnit.value;
+
+  String get selectedAmountLabel {
+    final value = selectedAmount;
+    final formatted =
+        value == value.roundToDouble()
+            ? value.toStringAsFixed(0)
+            : value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
+    return '$formatted $selectedAmountUnit';
+  }
+
+  bool get canAnalyze =>
+      selectedImage.value != null &&
+      selectedAmount.isFinite &&
+      selectedAmount > 0;
+
+  void setInputKind(AiFoodInputKind value) => inputKind.value = value;
+
+  void setFoodAmount(double value) {
+    if (value.isFinite && value > 0) foodAmount.value = value;
+  }
+
+  void adjustFoodAmount(double delta) {
+    final next = (foodAmount.value + delta).clamp(.25, 5.0);
+    foodAmount.value = (next * 4).round() / 4;
+  }
+
+  void setFoodUnit(String value) {
+    if (value.trim().isNotEmpty) foodUnit.value = value.trim();
+  }
+
+  void setDrinkCupMl(double value) {
+    if (value.isFinite && value > 0) drinkCupMl.value = value;
+  }
+
+  void setDrinkConsumedFraction(double value) {
+    drinkConsumedFraction.value = value.clamp(.25, 1.0);
+  }
 
   @override
   void onInit() {
@@ -86,6 +138,7 @@ class AiFoodController extends GetxController {
       }
       selectedImage.value = File(image.path);
       clearResult();
+      resetAmountInput();
     } catch (_) {
       errorMessage.value =
           source == ImageSource.camera
@@ -162,28 +215,29 @@ class AiFoodController extends GetxController {
                 : food.reason;
         return;
       }
-      _publishPrediction(food);
+      final adjustedFood = _applySelectedAmount(food);
+      _publishPrediction(adjustedFood);
       final localGuidance = recommendationService.create(
-        food: food,
+        food: adjustedFood,
         currentCalories: caloriesController.currentCalories.value,
         targetCalories: caloriesController.targetCalories.value,
       );
-      final useReviewGuidance = food.needsUserConfirmation;
-      final useLocalTitle = food.recommendationTitle.isEmpty;
-      final useLocalMessage = food.recommendation.isEmpty;
+      final useReviewGuidance = adjustedFood.needsUserConfirmation;
+      final useLocalTitle = adjustedFood.recommendationTitle.isEmpty;
+      final useLocalMessage = adjustedFood.recommendation.isEmpty;
       recommendation.value = FoodRecommendationModel(
         title:
             useReviewGuidance
                 ? 'wellness.review_this_estimate'
                 : useLocalTitle
                 ? localGuidance.title
-                : food.recommendationTitle,
+                : adjustedFood.recommendationTitle,
         message:
             useReviewGuidance
                 ? 'wellness.review_estimate_help'
                 : useLocalMessage
                 ? localGuidance.message
-                : food.recommendation,
+                : adjustedFood.recommendation,
         type: localGuidance.type,
         titleParams:
             useReviewGuidance
@@ -214,15 +268,16 @@ class AiFoodController extends GetxController {
           );
         }
         if (generation != null && generation != _scanGeneration) return;
-        nutrition.value = localNutrition;
+        final adjustedFood = _applySelectedAmount(localNutrition);
+        nutrition.value = adjustedFood;
         prediction.value = FoodPredictionModel(
-          foodName: localNutrition.name,
+          foodName: adjustedFood.name,
           confidence: localPrediction.confidence.clamp(0, 1),
           classIndex: localPrediction.classIndex,
         );
         isUserConfirmed.value = false;
         recommendation.value = recommendationService.create(
-          food: localNutrition,
+          food: adjustedFood,
           currentCalories: caloriesController.currentCalories.value,
           targetCalories: caloriesController.targetCalories.value,
         );
@@ -479,6 +534,15 @@ class AiFoodController extends GetxController {
     _scanGeneration++;
     selectedImage.value = null;
     clearResult();
+    resetAmountInput();
+  }
+
+  void resetAmountInput() {
+    inputKind.value = AiFoodInputKind.food;
+    foodAmount.value = 1;
+    foodUnit.value = 'plate';
+    drinkCupMl.value = 350;
+    drinkConsumedFraction.value = 1;
   }
 
   void clearResult() {
@@ -499,6 +563,25 @@ class AiFoodController extends GetxController {
       classIndex: -1,
     );
     isUserConfirmed.value = !food.needsUserConfirmation;
+  }
+
+  FoodNutritionModel _applySelectedAmount(FoodNutritionModel food) {
+    if (inputKind.value == AiFoodInputKind.food) {
+      return food.withPortionScale(
+        factor: foodAmount.value,
+        size: foodAmount.value,
+        unit: foodUnit.value,
+      );
+    }
+
+    final requestedMl = selectedAmount;
+    final detectedMl = food.drinkVolumeMl;
+    final baselineMl = detectedMl > 0 ? detectedMl : 350.0;
+    return food.withPortionScale(
+      factor: requestedMl / baselineMl,
+      size: requestedMl,
+      unit: 'ml',
+    );
   }
 
   @override

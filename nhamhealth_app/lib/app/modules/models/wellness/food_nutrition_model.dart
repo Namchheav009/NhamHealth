@@ -235,6 +235,54 @@ class FoodNutritionModel {
     );
   }
 
+  FoodNutritionModel withPortionScale({
+    required double factor,
+    required double size,
+    required String unit,
+  }) {
+    final safeFactor = factor.isFinite && factor > 0 ? factor : 1.0;
+    final cleanUnit = unit.trim().isEmpty ? servingUnit : unit.trim();
+    return FoodNutritionModel.fromJson({
+      ...toJson(),
+      'calories': calories * safeFactor,
+      'protein': protein * safeFactor,
+      'carbs': carbs * safeFactor,
+      'fat': fat * safeFactor,
+      'sugar': sugar * safeFactor,
+      'fiber': fiber * safeFactor,
+      'sodium': sodium * safeFactor,
+      'servingSize': size,
+      'servingUnit': cleanUnit,
+      'components': components
+          .map(
+            (component) => {
+              ...component.toJson(),
+              'estimatedAmount': component.estimatedAmount * safeFactor,
+              'liquidVolumeMl': component.liquidVolumeMl * safeFactor,
+              'calories': component.calories * safeFactor,
+              'protein': component.protein * safeFactor,
+              'carbohydrates': component.carbohydrates * safeFactor,
+              'fat': component.fat * safeFactor,
+              'sugar': component.sugar * safeFactor,
+              'fiber': component.fiber * safeFactor,
+              'sodium': component.sodium * safeFactor,
+            },
+          )
+          .toList(growable: false),
+      'nutrition': {
+        'calories': calories * safeFactor,
+        'protein': protein * safeFactor,
+        'carbohydrates': carbs * safeFactor,
+        'fat': fat * safeFactor,
+        'sugar': sugar * safeFactor,
+        'fiber': fiber * safeFactor,
+        'sodium': sodium * safeFactor,
+        'source': dataSource,
+        'complete': nutritionComplete,
+      },
+    });
+  }
+
   FoodNutritionModel withCorrection({
     required String correctedName,
     required double size,

@@ -784,52 +784,27 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _feedIntro(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'common.navigation_community'.tr,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 24,
-                letterSpacing: -.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              'community.tagline'.tr,
-              style: TextStyle(fontSize: 13, color: context.appMutedText),
-            ),
-          ],
+  Widget _feedIntro(BuildContext context) => SizedBox(
+    width: double.infinity,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'common.navigation_community'.tr,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 24,
+            letterSpacing: -.5,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-      ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: context.appSoftGreen,
-          borderRadius: BorderRadius.circular(12),
+        const SizedBox(height: 3),
+        Text(
+          'community.tagline'.tr,
+          style: TextStyle(fontSize: 13, color: context.appMutedText),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.groups_rounded, size: 16, color: green),
-            const SizedBox(width: 5),
-            Text(
-              'community.connect'.tr,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: green,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
+      ],
+    ),
   );
 
   Widget _feedFilters(BuildContext context) {

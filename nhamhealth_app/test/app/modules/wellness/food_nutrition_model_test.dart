@@ -242,4 +242,54 @@ void main() {
     expect(food.sugarTeaspoons, 5);
     expect(food.sugarShareOfCarbs, 80);
   });
+
+  test('scales nutrition and drink volume to the user-selected amount', () {
+    final drink = FoodNutritionModel.fromJson({
+      'name': 'Iced coffee',
+      'calories': 180,
+      'protein': 4,
+      'carbs': 28,
+      'fat': 6,
+      'sugar': 22,
+      'fiber': 0,
+      'sodium': 90,
+      'servingSize': 350,
+      'servingUnit': 'ml',
+      'components': [
+        {
+          'name': 'Iced coffee',
+          'estimatedAmount': 350,
+          'unit': 'ml',
+          'componentType': 'drink',
+          'liquidVolumeMl': 350,
+          'calories': 180,
+          'protein': 4,
+          'carbohydrates': 28,
+          'fat': 6,
+          'sugar': 22,
+          'sodium': 90,
+        },
+      ],
+      'nutrition': {
+        'calories': 180,
+        'protein': 4,
+        'carbohydrates': 28,
+        'fat': 6,
+        'sugar': 22,
+        'fiber': 0,
+        'sodium': 90,
+        'source': 'AI_ESTIMATED',
+        'complete': true,
+      },
+    });
+
+    final half = drink.withPortionScale(factor: .5, size: 175, unit: 'ml');
+
+    expect(half.servingSize, 175);
+    expect(half.servingUnit, 'ml');
+    expect(half.calories, 90);
+    expect(half.sugar, 11);
+    expect(half.drinkVolumeMl, 175);
+    expect(half.components.single.calories, 90);
+  });
 }

@@ -10,6 +10,31 @@ import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommenda
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
+  test('builds food and drink amount summaries before analysis', () {
+    final controller = AiFoodController(
+      aiService: FoodAiService(),
+      nutritionRepository: FoodNutritionRepository(),
+      recommendationService: FoodRecommendationService(),
+      caloriesController: CaloriesController(),
+      wellnessController: WellnessController(),
+      profileRepository: ProfileRepository(authService: AuthService()),
+    );
+
+    controller.setFoodAmount(.5);
+    controller.setFoodUnit('bowl');
+    expect(controller.selectedAmountLabel, '0.5 bowl');
+
+    controller.adjustFoodAmount(.25);
+    expect(controller.selectedAmountLabel, '0.75 bowl');
+
+    controller.setInputKind(AiFoodInputKind.drink);
+    controller.setDrinkCupMl(350);
+    controller.setDrinkConsumedFraction(.5);
+    expect(controller.selectedAmountLabel, '175 ml');
+
+    controller.onClose();
+  });
+
   test('uncertain AI nutrition cannot be added before user confirmation', () {
     final controller = AiFoodController(
       aiService: FoodAiService(),

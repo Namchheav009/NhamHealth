@@ -126,7 +126,6 @@ const Map<String, String> communityEn = {
       'This will remove the post from Community and your profile. You cannot undo this action.',
   'community.discussion': 'Discussion',
   'community.tagline': 'Small healthy steps, shared together.',
-  'community.connect': 'Connect',
   'community.unfollow_member_warning':
       'You will stop seeing posts from @name in your following feed.',
   'community.member_since': 'Member since @date',
