@@ -2,7 +2,6 @@ const rowsBox = document.getElementById("mealRows");
 const resultText = document.getElementById("resultText");
 const showingText = document.getElementById("showingText");
 const totalMeals = document.getElementById("totalMeals");
-const averageRating = document.getElementById("averageRating");
 const favoritesSaved = document.getElementById("favoritesSaved");
 const modal = document.getElementById("mealModal");
 const form = document.getElementById("mealForm");
@@ -95,7 +94,7 @@ function closeImageViewer() {
 function drawRows(list) {
     rowsBox.innerHTML = "";
     if (!list.length) {
-        rowsBox.innerHTML = '<tr><td colspan="12" style="padding:40px;text-align:center">No meals found.</td></tr>';
+        rowsBox.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center">No meals found.</td></tr>';
     } else {
         list.forEach(meal => {
             const tags = (meal.tags || []).map(tag => `<span class="pill ${tagClass(tag)}">${escapeHtml(tag)}</span>`).join(" ");
@@ -104,20 +103,18 @@ function drawRows(list) {
                 : `<i class="bi ${escapeHtml(meal.iconClass || "bi-egg-fried")}"></i>`;
             rowsBox.insertAdjacentHTML("beforeend", `
                 <tr>
-                    <td><div class="meal-cell"><div class="meal-thumb">${thumbnail}</div><div><strong>${escapeHtml(meal.mealName)}</strong><small>${escapeHtml(meal.category)} meal</small></div></div></td>
+                    <td><button class="meal-cell meal-edit-link" data-action="edit" data-meal-id="${meal.mealId}" type="button" aria-label="Edit ${escapeHtml(meal.mealName)}"><span class="meal-thumb">${thumbnail}</span><span><strong>${escapeHtml(meal.mealName)}</strong><small>${escapeHtml(meal.category)} meal</small></span></button></td>
+                    <td><div class="meal-actions"><button class="action edit-action" data-action="edit" data-meal-id="${meal.mealId}" type="button"><i class="bi bi-pencil"></i><span>Edit</span></button><button class="action danger-action" data-action="delete" data-meal-id="${meal.mealId}" type="button" aria-label="Delete ${escapeHtml(meal.mealName)}"><i class="bi bi-trash3"></i></button></div></td>
                     <td>${escapeHtml(meal.category)}</td>
                     <td>${escapeHtml(meal.calories)}</td>
                     <td>${escapeHtml(meal.servingSize)}</td>
                     <td>${tags}</td>
-                    <td><i class="bi bi-star-fill" style="color:#f5a623"></i> ${escapeHtml(meal.rating)}</td>
-                    <td>${Number(meal.reviewCount || 0).toLocaleString()}</td>
                     <td>${Number(meal.favorites || 0).toLocaleString()}</td>
                     <td><span class="pill ${statusClass(meal.status)}">${escapeHtml(meal.status)}</span></td>
                     <td>${escapeHtml(meal.updatedDate)}</td>
                     <td class="image-url-cell">${meal.mainImageUrl
                         ? `<a class="image-link" href="${escapeHtml(meal.mainImageUrl)}" target="_blank" rel="noopener" title="${escapeHtml(meal.mainImageUrl)}"><i class="bi bi-image"></i> View</a>`
                         : "—"}</td>
-                    <td><div class="meal-actions"><button class="action" data-action="edit" data-meal-id="${meal.mealId}" type="button" aria-label="Edit meal"><i class="bi bi-pencil"></i></button><button class="action danger-action" data-action="delete" data-meal-id="${meal.mealId}" type="button" aria-label="Delete meal"><i class="bi bi-trash3"></i></button></div></td>
                 </tr>`);
         });
     }
@@ -132,7 +129,6 @@ function drawRows(list) {
 
 function updateSummary() {
     totalMeals.textContent = Number(mealSummary?.totalMeals ?? mealPageData?.totalElements ?? meals.length).toLocaleString();
-    averageRating.textContent = `${Number(mealSummary?.averageRating ?? 0).toFixed(1)} / 5`;
     favoritesSaved.textContent = Number(mealSummary?.favoriteCount ?? 0).toLocaleString();
 }
 
@@ -209,7 +205,7 @@ async function loadMeals(page = mealPage) {
         drawRows(meals);
         updatePagination();
     } catch (error) {
-        rowsBox.innerHTML = '<tr><td colspan="11" style="padding:40px;text-align:center">Unable to load meals from the API.</td></tr>';
+        rowsBox.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center">Unable to load meals from the API.</td></tr>';
         console.error(error);
     }
 }
@@ -255,7 +251,7 @@ function renderSelectedIngredients() {
         <article class="selected-ingredient" data-ingredient-id="${ingredient.ingredientId}">
             <div class="selected-ingredient-name"><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>Type: ${escapeHtml(ingredient.ingredientType || "General")}</span><span>Default unit: ${escapeHtml(ingredient.defaultUnit || "Not set")}</span></div>
             <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
-            <label>Measurement unit<select data-ingredient-unit required><option value="">Select unit</option>${unitOptions}</select></label>
+            <label>Measurement unit<select data-ingredient-unit><option value="">Optional</option>${unitOptions}</select></label>
             <label class="ingredient-note">Preparation note<input data-ingredient-note type="text" maxlength="150" value="${escapeHtml(ingredient.preparationNote ?? "")}" placeholder="e.g. finely chopped"></label>
             <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="bi bi-trash3"></i></button>
         </article>`;
@@ -326,8 +322,12 @@ async function openCreateModal() {
     document.getElementById("mealRelatedData").hidden = true;
     document.getElementById("mealModalTitle").textContent = "Add Meal";
     document.getElementById("mealModalText").textContent = "Enter meal information for your catalog.";
-    document.getElementById("saveMealButton").textContent = "Save Meal";
+    document.querySelector("#saveMealButton span").textContent = "Save Meal";
     modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    modal.querySelector(".modal-body").scrollTop = 0;
+    form.elements.mealName.focus();
 }
 
 async function openEditModal(mealId) {
@@ -349,6 +349,7 @@ async function openEditModal(mealId) {
         form.elements.categoryId.value = meal.categoryId;
         form.elements.calories.value = meal.calories ?? "";
         form.elements.servings.value = meal.servings;
+        form.elements.description.value = meal.description ?? "";
         form.elements.cookingTimeMinutes.value = meal.cookingTimeMinutes ?? "";
         form.elements.difficulty.value = meal.difficulty ?? "";
         form.elements.published.value = String(meal.published);
@@ -356,20 +357,27 @@ async function openEditModal(mealId) {
         renderSelectedIngredients();
         ingredientSearchInput.value = "";
         loadIngredientSearchResults();
-        mealImageFile.required = false;
-        mealImageHelp.textContent = "Leave empty to keep the current meal image. JPG, PNG, or WebP; maximum 5 MB.";
+        mealImageFile.required = !meal.mainImageUrl;
+        mealImageHelp.textContent = meal.mainImageUrl
+            ? "Leave empty to keep the current meal image. JPG, PNG, or WebP; maximum 5 MB."
+            : "This draft does not have an image yet. Choose a JPG, PNG, or WebP image to save it.";
         showImagePreview(meal.mainImageUrl, "Current meal image", "This is the image currently shown to users.");
         recipeStepsBox.innerHTML = "";
-        meal.recipeSteps.forEach(appendRecipeStep);
+        if (meal.recipeSteps?.length) meal.recipeSteps.forEach(appendRecipeStep);
+        else appendRecipeStep();
         const relatedData = document.getElementById("mealRelatedData");
         relatedData.hidden = false;
-        ["ingredients", "nutrition", "recipeSteps", "reviews"].forEach(key => {
+        ["ingredients", "nutrition", "recipeSteps"].forEach(key => {
             relatedData.querySelector(`[data-related-count="${key}"]`).textContent = (meal[key] || []).length;
         });
         document.getElementById("mealModalTitle").textContent = "Edit Meal";
-        document.getElementById("mealModalText").textContent = "Update the meal and its cooking steps.";
-        document.getElementById("saveMealButton").textContent = "Update Meal";
+        document.getElementById("mealModalText").textContent = `Update ${meal.mealName} and save when finished.`;
+        document.querySelector("#saveMealButton span").textContent = "Update Meal";
         modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+        modal.querySelector(".modal-body").scrollTop = 0;
+        form.elements.mealName.focus();
     } catch (error) {
         window.adminAlerts?.error(error.message) ?? window.alert(error.message);
     }
@@ -379,6 +387,8 @@ function closeModal() {
     closeImageViewer();
     clearImagePreview();
     modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
 }
 
 async function uploadImage(endpoint, file, responseField) {
@@ -436,6 +446,11 @@ async function saveMeal(event) {
         window.adminAlerts?.error("Add an ingredient", "Select at least one ingredient for this meal.") ?? window.alert("Select at least one ingredient for this meal.");
         return;
     }
+    const saveButton = document.getElementById("saveMealButton");
+    const saveButtonLabel = saveButton.querySelector("span");
+    const originalLabel = saveButtonLabel.textContent;
+    saveButton.disabled = true;
+    saveButtonLabel.textContent = "Saving...";
     try {
         payload.mainImageUrl = imageFile?.size
             ? await uploadImage("/admin/meal-images", imageFile, "mainImageUrl")
@@ -462,6 +477,9 @@ async function saveMeal(event) {
     } catch (error) {
         window.adminAlerts?.error(error.message) ?? window.alert(error.message);
         console.error(error);
+    } finally {
+        saveButton.disabled = false;
+        saveButtonLabel.textContent = originalLabel;
     }
 }
 
@@ -569,6 +587,7 @@ recipeStepsBox.addEventListener("click", event => {
 form.addEventListener("submit", saveMeal);
 document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !mealImageViewer.hidden) closeImageViewer();
+    else if (event.key === "Escape" && modal.classList.contains("show")) closeModal();
 });
 updateRecipeStepLabels();
 loadMeals();

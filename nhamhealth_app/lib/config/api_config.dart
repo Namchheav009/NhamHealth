@@ -6,13 +6,24 @@ abstract final class ApiConfig {
   );
 
   static String get baseUrl {
-    // If API_BASE_URL was provided when running Flutter,
-    // always use that value.
     if (_configuredBaseUrl.isNotEmpty) {
-      return _withoutTrailingSlash(_configuredBaseUrl);
+      final configured = _withoutTrailingSlash(_configuredBaseUrl);
+      final uri = Uri.tryParse(configured);
+      if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+        throw StateError('API_BASE_URL must be an absolute URL.');
+      }
+      if (kReleaseMode && uri.scheme != 'https') {
+        throw StateError('Release builds require an HTTPS API_BASE_URL.');
+      }
+      return configured;
     }
 
-    // Flutter Web
+    if (kReleaseMode) {
+      throw StateError(
+        'API_BASE_URL must be provided when building a release.',
+      );
+    }
+
     if (kIsWeb) {
       return 'http://localhost:8080';
     }

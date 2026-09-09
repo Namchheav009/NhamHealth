@@ -101,14 +101,16 @@ class FavoriteFoodCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFFFFBE0B),
-                        size: 14,
-                      ),
-                      Text(
-                        food.rating.toStringAsFixed(1),
-                        style: TextStyle(fontSize: 9, color: context.appText),
+                      Flexible(
+                        child: Text(
+                          food.category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: context.appMutedText,
+                          ),
+                        ),
                       ),
                     ],
                   ),

@@ -43,38 +43,37 @@ import com.nhamhealth.nhamhealth_api.security.DatabaseUserDetailsService;
 @Configuration
 public class SecurityConfig {
 
-        @Bean
-        @Order(1)
-        SecurityFilterChain apiSecurityFilterChain(
-                        HttpSecurity http,
-                        JwtAuthenticationConverter jwtAuthenticationConverter,
-                        CorsConfigurationSource corsConfigurationSource) throws Exception {
-                http
-                                .securityMatcher("/api/**")
-                                .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                                .csrf(csrf -> csrf.disable())
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authorizeHttpRequests(authorize -> authorize
-                                                .requestMatchers(
-                                                                "/api/v1/health",
-                                                                "/api/v1/auth/login",
-                                                                "/api/v1/auth/register",
-                                                                "/api/v1/auth/verify-registration",
-                                                                "/api/v1/auth/resend-registration-code",
-                                                                "/api/v1/auth/google",
-                                                                "/api/v1/auth/forgot-password",
-                                                                "/api/v1/auth/verify-reset-code",
-                                                                "/api/v1/auth/reset-password",
-                                                                "/api/v1/auth/refresh",
-                                                                "/api/v1/auth/logout",
-                                                                "/api/v1/auth/verify-login",
-                                                                "/api/v1/auth/resend-login-code")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
-                                .oauth2ResourceServer(oauth2 -> oauth2
-                                                .jwt(jwt -> jwt.jwtAuthenticationConverter(
-                                                                jwtAuthenticationConverter)));
+    @Bean
+    @Order(1)
+    SecurityFilterChain apiSecurityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            CorsConfigurationSource corsConfigurationSource) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                "/api/v1/health",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/verify-registration",
+                                "/api/v1/auth/resend-registration-code",
+                                "/api/v1/auth/google",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/verify-reset-code",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/verify-login",
+                                "/api/v1/auth/resend-login-code")
+                        .permitAll()
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
                 return http.build();
         }

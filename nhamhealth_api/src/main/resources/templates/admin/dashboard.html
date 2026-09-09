@@ -91,21 +91,15 @@
               <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
             </a>
 
-            <a class="stat-card stat-link" th:href="@{/admin/reviews}">
-              <div class="stat-icon teal"><i class="bi bi-star-fill"></i></div>
+            <a class="stat-card stat-link" th:href="@{/admin/notifications}">
+              <div class="stat-icon teal"><i class="bi bi-bell-fill"></i></div>
               <div class="stat-content">
-                <span>Meal reviews</span>
+                <span>Unread notifications</span>
                 <strong
-                  th:text="${#numbers.formatInteger(dashboard.totalReviews(), 1, 'COMMA')}"
+                  th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}"
                   >0</strong
                 >
-                <small
-                  ><b
-                    th:text="${#numbers.formatInteger(dashboard.unreadNotifications(), 1, 'COMMA')}"
-                    >0</b
-                  >
-                  unread notifications</small
-                >
+                <small>Open notification center</small>
               </div>
               <i class="bi bi-arrow-up-right stat-arrow" aria-hidden="true"></i>
             </a>
@@ -298,46 +292,6 @@
               </div>
             </article>
 
-            <article class="panel reviews-panel">
-              <div class="panel-header">
-                <h2>Latest meal reviews</h2>
-                <a th:href="@{/admin/reviews}"
-                  >View reviews <i class="bi bi-arrow-right"></i
-                ></a>
-              </div>
-              <div
-                class="review-list"
-                th:if="${!#lists.isEmpty(dashboard.recentReviews())}"
-              >
-                <div
-                  class="review-item"
-                  th:each="review : ${dashboard.recentReviews()}"
-                >
-                  <div class="meal-thumb"><i class="bi bi-egg-fried"></i></div>
-                  <div class="review-main">
-                    <strong th:text="${review.mealName()}">Meal</strong>
-                    <span th:text="${review.userEmail()}"
-                      >user@example.com</span
-                    >
-                  </div>
-                  <div class="rating">
-                    <i class="bi bi-star-fill"></i
-                    ><b th:text="${review.rating() ?: '—'}">—</b
-                    ><span>/ 5</span>
-                  </div>
-                  <time
-                    th:text="${review.createdAt() != null ? #temporals.format(review.createdAt(), 'MMM d') : '—'}"
-                    >—</time
-                  >
-                </div>
-              </div>
-              <div
-                class="empty-state"
-                th:if="${#lists.isEmpty(dashboard.recentReviews())}"
-              >
-                No meal reviews yet.
-              </div>
-            </article>
           </div>
         </section>
 

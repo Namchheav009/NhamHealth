@@ -8,7 +8,6 @@ public record FavoriteMealResponse(
         String name,
         String imageUrl,
         BigDecimal calories,
-        double rating,
         String category,
         LocalDateTime savedAt) {
 }

@@ -74,14 +74,6 @@
                         </div>
                     </article>
                     <article class="summary-card">
-                        <div class="summary-icon blue"><i class="bi bi-star-fill"></i></div>
-                        <div>
-                            <span class="summary-label">Average Rating</span>
-                            <strong class="summary-number" id="averageRating">0.0 / 5</strong>
-                            <span class="change">Based on published reviews</span>
-                        </div>
-                    </article>
-                    <article class="summary-card">
                         <div class="summary-icon pink"><i class="bi bi-heart-fill"></i></div>
                         <div>
                             <span class="summary-label">Favorites Saved</span>
@@ -100,7 +92,7 @@
                         <table>
                             <thead>
                             <tr>
-                                <th>Meal Name</th><th>Category</th><th>Calories</th><th>Serving</th><th>Tags</th><th>Rating</th><th>Review Count</th><th>Favorite Count</th><th>Status</th><th>Updated Date</th><th>Image</th><th>Actions</th>
+                                <th>Meal</th><th>Manage</th><th>Category</th><th>Calories</th><th>Serving</th><th>Tags</th><th>Favorite Count</th><th>Status</th><th>Updated Date</th><th>Image</th>
                             </tr>
                             </thead>
                             <tbody id="mealRows"></tbody>
@@ -125,8 +117,8 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<div class="modal" id="mealModal">
-    <section class="modal-card">
+<div class="modal" id="mealModal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mealModalTitle">
         <div class="modal-header">
             <div>
                 <h2 id="mealModalTitle">Add Meal</h2>
@@ -136,21 +128,26 @@
         </div>
         <form id="mealForm">
             <div class="modal-body">
-                <div class="field"><label>Meal name</label><input name="mealName" type="text" maxlength="150" required></div>
-                <div class="field"><label>Category</label><select name="categoryId" required><option value="">Select category</option><option th:each="category : ${mealCategories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Category</option></select></div>
-                <div class="field"><label>Calories</label><input name="calories" type="number" min="0" step="0.1"></div>
-                <div class="field"><label>Servings</label><input name="servings" type="number" min="1" max="100" required></div>
-                <div class="field"><label>Cooking time (minutes)</label><input name="cookingTimeMinutes" type="number" min="0" max="1440"></div>
-                <div class="field"><label>Difficulty</label><select name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
-                <div class="field"><label>Status</label><select name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
-                <div class="field full"><label>Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><button id="openMealImageViewer" class="meal-image-preview-button" type="button" aria-label="View meal image at full size"><img id="mealImagePreviewImage" alt="Meal image preview"></button><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users. Select the image to view it larger.</span></div></div></div>
+                <fieldset class="form-section full">
+                    <legend>Meal details</legend>
+                    <div class="form-section-grid">
+                        <div class="field"><label for="mealName">Meal name</label><input id="mealName" name="mealName" type="text" maxlength="150" required></div>
+                        <div class="field"><label for="mealCategory">Category</label><select id="mealCategory" name="categoryId" required><option value="">Select category</option><option th:each="category : ${mealCategories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Category</option></select></div>
+                        <div class="field"><label for="mealCalories">Calories</label><input id="mealCalories" name="calories" type="number" min="0" step="0.1" placeholder="Per serving"></div>
+                        <div class="field"><label for="mealServings">Servings</label><input id="mealServings" name="servings" type="number" min="1" max="100" required></div>
+                        <div class="field"><label for="mealCookingTime">Cooking time (minutes)</label><input id="mealCookingTime" name="cookingTimeMinutes" type="number" min="0" max="1440"></div>
+                        <div class="field"><label for="mealDifficulty">Difficulty</label><select id="mealDifficulty" name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                        <div class="field"><label for="mealStatus">Status</label><select id="mealStatus" name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
+                        <div class="field full"><label for="mealDescription">Description</label><textarea id="mealDescription" name="description" maxlength="255" placeholder="Short description shown with the meal"></textarea></div>
+                        <div class="field full"><label for="mealImageFile">Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><button id="openMealImageViewer" class="meal-image-preview-button" type="button" aria-label="View meal image at full size"><img id="mealImagePreviewImage" alt="Meal image preview"></button><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users. Select the image to view it larger.</span></div></div></div>
+                    </div>
+                </fieldset>
                 <div class="field full related-data-summary" id="mealRelatedData" hidden>
                     <label>Related meal data</label>
                     <div class="related-data-grid">
                         <span><strong data-related-count="ingredients">0</strong> Ingredients</span>
                         <span><strong data-related-count="nutrition">0</strong> Nutrition fields</span>
                         <span><strong data-related-count="recipeSteps">0</strong> Recipe Steps</span>
-                        <span><strong data-related-count="reviews">0</strong> Reviews</span>
                     </div>
                 </div>
                 <div class="field full meal-ingredients-field">
@@ -180,7 +177,7 @@
             </div>
             <div class="modal-actions">
                 <button class="btn" id="cancelModal" type="button">Cancel</button>
-                <button class="btn btn-primary" id="saveMealButton" type="submit">Save Meal</button>
+                <button class="btn btn-primary" id="saveMealButton" type="submit"><i class="bi bi-check-lg"></i><span>Save Meal</span></button>
             </div>
         </form>
     </section>

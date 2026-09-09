@@ -9,7 +9,6 @@ public record RecommendedMealResponse(
         BigDecimal calories,
         BigDecimal proteinGrams,
         Integer cookingTimeMinutes,
-        double rating,
         Integer recommendationId,
         Integer moodId,
         String reason) {

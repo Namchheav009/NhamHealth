@@ -20,9 +20,5 @@ public interface MealAdminAggregateProjection {
 
     LocalDateTime getUpdatedAt();
 
-    Double getRating();
-
-    Long getReviewCount();
-
     Long getFavorites();
 }

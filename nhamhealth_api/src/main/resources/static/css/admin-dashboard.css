@@ -14,7 +14,7 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
     min-width: 0;
     margin-bottom: 14px;
@@ -151,7 +151,7 @@
 }
 
 .dashboard-grid-bottom {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .legend {
@@ -271,106 +271,6 @@
     display: block;
     padding: 0 18px 16px;
     text-align: right;
-}
-
-.review-list {
-    padding: 0 14px 10px;
-}
-
-.review-item {
-    display: grid;
-    grid-template-columns: 36px minmax(125px, 1fr) auto 78px;
-    align-items: center;
-    gap: 10px;
-    min-height: 53px;
-    border-bottom: 1px solid #edf0f4;
-}
-
-.meal-thumb {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    font-size: 17px;
-}
-
-.thumb-1 {
-    color: #1a8550;
-    background: #e1f7e8;
-}
-
-.thumb-2 {
-    color: #d4701e;
-    background: #fff0dd;
-}
-
-.thumb-3 {
-    color: #b12f69;
-    background: #fde4ef;
-}
-
-.thumb-4 {
-    color: #64793d;
-    background: #edf2df;
-}
-
-.thumb-5 {
-    color: #996a27;
-    background: #f7ead9;
-}
-
-.review-main {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-}
-
-.review-main strong {
-    overflow: hidden;
-    color: #2b3643;
-    font-size: 10px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.review-main span {
-    margin-top: 3px;
-    color: #96a1af;
-    font-size: 8px;
-}
-
-.rating {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.rating span {
-    color: #f5a623;
-    font-size: 9px;
-    letter-spacing: 1px;
-}
-
-.rating b {
-    color: #647181;
-    font-size: 9px;
-}
-
-.review-item time {
-    color: #8b97a5;
-    font-size: 8px;
-    text-align: right;
-}
-
-.rating i {
-    color: #f5a623;
-    font-size: 11px;
-}
-
-.rating span {
-    color: #8b97a5;
-    font-size: 9px;
 }
 
 .user-cell {
@@ -625,14 +525,6 @@
         padding: 0 8px;
     }
 
-    .review-item {
-        grid-template-columns: 36px 1fr auto;
-    }
-
-    .review-item time {
-        display: none;
-    }
-
     .page-footer {
         padding: 2px 14px 14px;
     }
@@ -701,22 +593,4 @@
         height: min(170px, 70vw);
     }
 
-    .review-list {
-        padding-right: 10px;
-        padding-left: 10px;
-    }
-
-    .review-item {
-        grid-template-columns: 32px minmax(0, 1fr) auto;
-        gap: 7px;
-    }
-
-    .meal-thumb {
-        width: 32px;
-        height: 32px;
-    }
-
-    .rating span {
-        display: none;
-    }
 }

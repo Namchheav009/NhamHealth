@@ -12,8 +12,6 @@ public record MealAdminRowDto(
         String calories,
         String servingSize,
         List<String> tags,
-        String rating,
-        int reviewCount,
         Integer favorites,
         String status,
         String updatedDate) {

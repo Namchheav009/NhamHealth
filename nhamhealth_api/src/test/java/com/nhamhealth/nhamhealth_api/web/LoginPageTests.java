@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -81,6 +82,18 @@ class LoginPageTests {
 		mockMvc.perform(get("/admin/reviews")
 					.with(user("admin@nhamhealth.local").roles("ADMIN")))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void mealAdminPageHasEasyEditingAndNoReviewUi() throws Exception {
+		mockMvc.perform(get("/admin/meals")
+					.with(user("admin@nhamhealth.local").roles("ADMIN")))
+				.andExpect(status().isOk())
+				.andExpect(view().name("admin/meals"))
+				.andExpect(content().string(containsString("<th>Manage</th>")))
+				.andExpect(content().string(containsString("id=\"mealDescription\"")))
+				.andExpect(content().string(not(containsString("Review Count"))))
+				.andExpect(content().string(not(containsString("Average Rating"))));
 	}
 
 	@Test

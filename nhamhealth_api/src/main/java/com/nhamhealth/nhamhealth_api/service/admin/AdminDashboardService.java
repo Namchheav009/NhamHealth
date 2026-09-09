@@ -93,13 +93,11 @@ public class AdminDashboardService {
                 userRepository.countByIsVerifiedTrueAndStatusNot("DELETED"),
                 mealRepository.count(),
                 mealRepository.countByIsPublishedTrue(),
-                0,
                 notificationRepository.countByIsReadFalse(),
                 startDate.format(PERIOD_LABEL) + " – " + today.format(PERIOD_LABEL),
                 buildActivity(startDate),
                 buildCategories(),
                 buildRecentUsers(),
-                List.of(),
                 buildNutrientMetrics(today),
                 buildRecentRecommendations(),
                 List.of(
@@ -197,13 +195,11 @@ public class AdminDashboardService {
             long verifiedUsers,
             long totalMeals,
             long publishedMeals,
-            long totalReviews,
             long unreadNotifications,
             String periodLabel,
             List<ActivityPoint> activity,
             List<CategoryMetric> categories,
             List<RecentUser> recentUsers,
-            List<RecentReview> recentReviews,
             List<NutrientMetric> nutrients,
             List<RecentRecommendation> recentRecommendations,
             List<ModuleMetric> modules) {
@@ -225,10 +221,6 @@ public class AdminDashboardService {
             String profileImageUrl,
             String status,
             LocalDateTime createdAt) {
-
-    }
-
-    public record RecentReview(String mealName, String userEmail, Integer rating, LocalDateTime createdAt) {
 
     }
 

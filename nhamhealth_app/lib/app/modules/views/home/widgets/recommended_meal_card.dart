@@ -158,21 +158,6 @@ class RecommendedMealCard extends StatelessWidget {
                                   ),
                                 ),
                               ],
-                            const Spacer(),
-                            const Icon(
-                              Icons.star_rounded,
-                              color: Color(0xFFFFC107),
-                              size: 13,
-                            ),
-                            const SizedBox(width: 1),
-                            Text(
-                              meal.rating.toStringAsFixed(1),
-                              style: TextStyle(
-                                color: context.appMutedText,
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                           ],
                         ),
                       ],

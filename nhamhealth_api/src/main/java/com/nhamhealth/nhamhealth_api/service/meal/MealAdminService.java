@@ -17,7 +17,6 @@ import com.nhamhealth.nhamhealth_api.dto.response.AdminMealEditorDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminRecipeStepDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealIngredientDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealNutritionDto;
-import com.nhamhealth.nhamhealth_api.dto.response.AdminMealReviewDto;
 import com.nhamhealth.nhamhealth_api.dto.response.MealAdminAggregateProjection;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
@@ -82,10 +81,6 @@ public class MealAdminService {
         return mealRepository.count();
     }
 
-    public double getAverageRating() {
-        return 0;
-    }
-
     public long getFavoriteCount() {
         return mealFavoriteRepository.countAllFavorites();
     }
@@ -103,6 +98,31 @@ public class MealAdminService {
         return toAdminRow(savedMeal);
     }
 
+    /** Import-only path: drafts may omit the image; normal Admin validation stays strict. */
+    @org.springframework.transaction.annotation.Transactional
+    public MealAdminRowDto createScrapedDraft(AdminMealRequest request) {
+        if (request.published()) throw new IllegalArgumentException("Scraped meals must be drafts");
+        if (request.mainImageUrl() != null && !request.mainImageUrl().isBlank()) {
+            return createMeal(request);
+        }
+        Meal meal = new Meal();
+        meal.setMealName(request.mealName().trim());
+        meal.setCategory(mealCategoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Selected meal category was not found")));
+        meal.setDescription(blankToNull(request.description()));
+        meal.setDifficulty(blankToNull(request.difficulty()));
+        meal.setCookingTimeMinutes(request.cookingTimeMinutes());
+        meal.setServings(request.servings());
+        meal.setCaloriesCached(request.calories());
+        meal.setIsPublished(false);
+        meal.setCreatedAt(java.time.LocalDateTime.now());
+        meal.setUpdatedAt(meal.getCreatedAt());
+        Meal saved = mealRepository.save(meal);
+        saveMealIngredients(saved, request);
+        saveRecipeSteps(saved, request);
+        return toAdminRow(saved);
+    }
+
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public AdminMealEditorDto getMealForEdit(Integer mealId) {
         Meal meal = findMeal(mealId);
@@ -116,16 +136,15 @@ public class MealAdminService {
                         ingredient.getIngredient().getDefaultUnit(), ingredient.getQuantity(), ingredient.getUnit(),
                         ingredient.getPreparationNote()))
                 .toList();
-            List<AdminMealNutritionDto> nutrition = mealNutritionRepository.findByMealMealIdOrderByNutrientDisplayOrderAsc(mealId).stream()
+        List<AdminMealNutritionDto> nutrition = mealNutritionRepository.findByMealMealIdOrderByNutrientDisplayOrderAsc(mealId).stream()
                 .map(item -> new AdminMealNutritionDto(
                     item.getNutrient().getNutrientId(), item.getNutrient().getNutrientName(),
                     item.getAmountPerServing(), item.getNutrient().getUnit()))
                 .toList();
-            List<AdminMealReviewDto> reviews = List.of();
         return new AdminMealEditorDto(
                 meal.getMealId(), meal.getMealName(), meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), meal.getDifficulty(), meal.getCookingTimeMinutes(),
-                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition, recipeSteps, reviews);
+                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition, recipeSteps);
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -256,10 +275,6 @@ public class MealAdminService {
                 .filter(tag -> tag != null && !tag.isBlank())
                 .collect(Collectors.toList());
 
-        List<AdminMealReviewDto> reviews = List.of();
-        double averageRating = 0;
-        String rating = String.format("%.1f", averageRating);
-
         long favorites = mealFavoriteRepository.countByMealMealId(meal.getMealId());
 
         return new MealAdminRowDto(
@@ -272,8 +287,6 @@ public class MealAdminService {
                 calories,
                 servingSize,
                 tags,
-                rating,
-                reviews.size(),
                 Math.toIntExact(favorites),
                 status,
                 updatedDate);
@@ -294,8 +307,7 @@ public class MealAdminService {
         return new MealAdminRowDto(
             meal.getMealId(), mealIconClass(category), meal.getMainImageUrl(),
             profileImageStorageService.mealThumbnailUrl(meal.getMainImageUrl()), meal.getMealName(), category,
-            calories, servingSize, tags, String.format("%.1f", meal.getRating() == null ? 0 : meal.getRating()),
-            Math.toIntExact(meal.getReviewCount()), Math.toIntExact(meal.getFavorites()), status, updatedDate);
+            calories, servingSize, tags, Math.toIntExact(meal.getFavorites()), status, updatedDate);
         }
 
     private String mealIconClass(String category) {

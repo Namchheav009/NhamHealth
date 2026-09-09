@@ -77,7 +77,6 @@ public class MealAdminController {
     public ResponseEntity<Map<String, Object>> mealSummary() {
         return ResponseEntity.ok(Map.of(
                 "totalMeals", mealAdminService.getMealCount(),
-                "averageRating", mealAdminService.getAverageRating(),
                 "favoriteCount", mealAdminService.getFavoriteCount()));
     }
 

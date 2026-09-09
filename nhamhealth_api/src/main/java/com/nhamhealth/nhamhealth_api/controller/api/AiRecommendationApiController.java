@@ -84,12 +84,11 @@ public class AiRecommendationApiController {
 
     private RecommendedMealResponse toResponse(AiRecommendation recommendation, AiRecommendationItem item) {
         Meal meal = item.getMeal();
-        double rating = 0;
         return new RecommendedMealResponse(
                 meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
                 meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),
                 meal.getProteinGramsCached(),
-                meal.getCookingTimeMinutes(), rating, recommendation.getRecommendationId(),
+                meal.getCookingTimeMinutes(), recommendation.getRecommendationId(),
                 recommendation.getMood() == null ? null : recommendation.getMood().getMoodId(),
                 item.getReasonText());
     }

@@ -9,6 +9,13 @@ spring.profiles.active=${SPRING_PROFILES_ACTIVE:dev}
 # Keep Tomcat session files out of the shared Windows temp directory. Spring
 # Boot 4 rejects temp directories created by a different Windows identity.
 server.servlet.session.store-dir=target/runtime-temp/sessions
+server.servlet.session.cookie.http-only=true
+server.servlet.session.cookie.same-site=strict
+# Enable in every HTTPS deployment. It remains false locally so HTTP development works.
+server.servlet.session.cookie.secure=${SESSION_COOKIE_SECURE:false}
+server.error.include-message=never
+server.error.include-binding-errors=never
+server.error.include-stacktrace=never
 
 # Authentication
 app.auth.jwt.secret=REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTERS

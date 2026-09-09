@@ -27,8 +27,6 @@ public interface MealRepository extends JpaRepository<Meal, Integer> {
                                                                          meal.servings as servings,
                                                                          meal.isPublished as published,
                                                                          meal.updatedAt as updatedAt,
-                                                                         0.0 as rating,
-                                                                         0L as reviewCount,
                                                                          count(distinct favorite.mealFavoriteId) as favorites
                                                 from Meal meal
                                                 left join meal.category category

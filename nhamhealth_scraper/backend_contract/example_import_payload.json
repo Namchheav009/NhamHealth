@@ -1,0 +1,36 @@
+{
+  "mealName": "Bai Sach Chrouk",
+  "khmerName": "បាយសាច់ជ្រូក",
+  "description": "Traditional Cambodian grilled pork served with rice.",
+  "categoryName": "Breakfast",
+  "calories": null,
+  "proteinGrams": null,
+  "carbohydrateGrams": null,
+  "fatGrams": null,
+  "nutritionBasis": "UNKNOWN",
+  "servings": 4,
+  "cookingTimeMinutes": 20,
+  "difficulty": "EASY",
+  "ingredients": [
+    {
+      "ingredientName": "pork shoulder",
+      "quantity": 600,
+      "unit": "g",
+      "preparationNote": "sliced",
+      "originalIngredientText": "600 g pork shoulder, sliced",
+      "displayOrder": 1
+    }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "instruction": "Prepare and marinate the pork according to the recipe."
+    }
+  ],
+  "sourceLanguage": "en",
+  "sourceName": "Cambodian Cookbook",
+  "sourceUrl": "https://cambodiancookbook.com/recipes/bai-sach-chrouk/",
+  "sourceImageUrl": null,
+  "reviewStatus": "PENDING_REVIEW",
+  "published": false
+}

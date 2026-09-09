@@ -104,7 +104,7 @@ body {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -170,7 +170,7 @@ body {
 
 table {
     width: 100%;
-    min-width: 1480px;
+    min-width: 1120px;
     border-collapse: collapse;
 }
 
@@ -203,7 +203,7 @@ table {
 
 .related-data-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-top: 8px;
 }
@@ -350,16 +350,31 @@ tbody tr:hover { background: #fbfdfc; }
 .status-archived { color: #667085; background: #f2f4f7; }
 
 .action {
-    width: 28px;
+    min-width: 32px;
     height: 28px;
+    padding: 0 8px;
     border: 0;
     border-radius: 6px;
     background: transparent;
     color: #667085;
     cursor: pointer;
 }
+.meal-edit-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.meal-edit-link:hover strong,
+.meal-edit-link:focus-visible strong { color: var(--green-dark); text-decoration: underline; }
+.meal-edit-link:focus-visible { outline: 2px solid #85d6aa; outline-offset: 3px; border-radius: 8px; }
 .action:hover { background: #eef2f5; }
+.action span { font-size: 10px; font-weight: 700; }
 .meal-actions { display: flex; gap: 4px; }
+.edit-action { display: inline-flex; align-items: center; gap: 5px; color: var(--green-dark); background: var(--green-soft); }
 .danger-action { color: #d92d20; }
 .danger-action:hover { background: #fff0f1; }
 
@@ -401,9 +416,11 @@ tbody tr:hover { background: #fbfdfc; }
 }
 .modal.show { display: grid; }
 .modal-card {
-    width: min(680px, 100%);
+    display: flex;
+    width: min(920px, 100%);
     max-height: calc(100vh - 40px);
-    overflow-y: auto;
+    overflow: hidden;
+    flex-direction: column;
     border-radius: 12px;
     background: #fff;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.24);
@@ -413,6 +430,7 @@ tbody tr:hover { background: #fbfdfc; }
     justify-content: space-between;
     padding: 19px 20px;
     border-bottom: 1px solid var(--border);
+    background: #fff;
 }
 .modal-header h2 { margin: 0; font-size: 18px; }
 .modal-header p {
@@ -430,10 +448,19 @@ tbody tr:hover { background: #fbfdfc; }
 }
 .modal-body {
     display: grid;
+    min-height: 0;
+    flex: 1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     padding: 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
+.modal-card form { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.modal-open { overflow: hidden; }
+.form-section { min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: #fbfdfc; }
+.form-section legend { padding: 0 6px; color: #344054; font-size: 12px; font-weight: 800; }
+.form-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .field { display: grid; gap: 6px; }
 .field label {
     color: #475467;
@@ -451,7 +478,8 @@ tbody tr:hover { background: #fbfdfc; }
     font: inherit;
 }
 .field textarea { min-height: 90px; resize: vertical; }
-.field.full { grid-column: 1 / -1; }
+.field.full,
+.modal-body > .full { grid-column: 1 / -1; }
 .field-help { color: var(--muted); font-size: 10px; }
 .recipe-steps-field { gap: 10px; }
 .meal-ingredients-field { gap: 10px; }
@@ -550,8 +578,12 @@ tbody tr:hover { background: #fbfdfc; }
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 0 20px 20px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+    box-shadow: 0 -8px 20px rgba(15, 23, 42, .04);
 }
+.modal-actions .btn:disabled { opacity: .65; cursor: wait; transform: none; }
 .image-viewer {
     position: fixed;
     inset: 0;
@@ -578,11 +610,14 @@ tbody tr:hover { background: #fbfdfc; }
     .heading-actions { width: 100%; }
     .heading-actions .btn { flex: 1; }
     .filters,
-    .modal-body { grid-template-columns: 1fr; }
+    .modal-body,
+    .form-section-grid { grid-template-columns: 1fr; }
     .search { grid-column: auto; }
     .clear-btn { grid-column: auto; }
     .table-footer { align-items: flex-start; flex-direction: column; }
     .selected-ingredient { grid-template-columns: 1fr 1fr; }
     .selected-ingredient-name,
     .ingredient-note { grid-column: 1 / -1; }
+    .modal { padding: 0; place-items: stretch; }
+    .modal-card { width: 100%; max-height: 100vh; max-height: 100dvh; border-radius: 0; }
 }

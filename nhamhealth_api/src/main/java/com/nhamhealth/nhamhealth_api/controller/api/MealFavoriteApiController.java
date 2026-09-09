@@ -117,13 +117,8 @@ public class MealFavoriteApiController {
 
     private FavoriteMealResponse toResponse(MealFavorite favorite) {
         Meal meal = favorite.getMeal();
-        return toResponse(favorite, 0);
-    }
-
-    private FavoriteMealResponse toResponse(MealFavorite favorite, double rating) {
-        Meal meal = favorite.getMeal();
         return new FavoriteMealResponse(meal.getMealId(), meal.getMealName(), meal.getMainImageUrl(),
-                meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(), rating,
+                meal.getCaloriesCached() == null ? BigDecimal.ZERO : meal.getCaloriesCached(),
                 meal.getCategory().getCategoryName(), favorite.getSavedAt());
     }
 }

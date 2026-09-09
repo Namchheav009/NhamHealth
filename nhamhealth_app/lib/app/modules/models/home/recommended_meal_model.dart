@@ -5,7 +5,6 @@ class RecommendedMealModel {
   final int calories;
   final num? proteinGrams;
   final String cookingTime;
-  final double rating;
   final String reason;
 
   const RecommendedMealModel({
@@ -15,7 +14,6 @@ class RecommendedMealModel {
     required this.calories,
     this.proteinGrams,
     required this.cookingTime,
-    required this.rating,
     this.reason = '',
   });
 
@@ -28,7 +26,6 @@ class RecommendedMealModel {
 
     final calories = json['calories'];
     final cookingTime = json['cookingTimeMinutes'];
-    final rating = json['rating'];
     return RecommendedMealModel(
       id: id.toInt(),
       name: name.trim(),
@@ -36,7 +33,6 @@ class RecommendedMealModel {
       calories: calories is num ? calories.round() : 0,
       proteinGrams: json['proteinGrams'] as num?,
       cookingTime: cookingTime is num ? '${cookingTime.toInt()} min' : '',
-      rating: rating is num ? rating.toDouble() : 0,
       reason: (json['reason'] as String? ?? '').trim(),
     );
   }

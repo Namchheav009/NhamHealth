@@ -96,6 +96,23 @@ public class AuthService {
     }
 
     @Transactional
+    public MobileLoginResult loginAdmin(LoginRequest request) {
+        String identifier = request.email().trim().toLowerCase(Locale.ROOT);
+        Authentication authentication = authenticationManager.authenticate(
+                UsernamePasswordAuthenticationToken.unauthenticated(identifier, request.password()));
+        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+        if (!"ADMIN".equals(principal.role())) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Admin credentials required");
+        }
+        User user = userRepository.findById(principal.userId()).orElseThrow();
+        if (Boolean.TRUE.equals(user.getLoginOtpRequired())) {
+            return new MobileLoginResult(null, user);
+        }
+        user.setLastLoginAt(LocalDateTime.now());
+        return new MobileLoginResult(issueToken(principal), null);
+    }
+
+    @Transactional
     public User registerPendingMobileUser(RegisterRequest request) {
         String rawIdentifier = request.email().trim();
         boolean isPhone = !rawIdentifier.contains("@") && rawIdentifier.matches(".*\\d+.*");
