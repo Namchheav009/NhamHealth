@@ -15,7 +15,6 @@ class OnboardingPageTwo extends GetView<OnboardingController> {
       activePage: 1,
       buttonText: 'Get Started',
       showSkipButton: false,
-      showBackButton: true,
       onNext: controller.finishOnboarding,
       onSkip: controller.finishOnboarding,
       onBack: controller.previousPage,

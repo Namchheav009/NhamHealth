@@ -23,7 +23,6 @@ class OnboardingController extends GetxController {
       description:
           'auth.every_meal_you_choose_is_a_step_toward_the_life_you_deserve',
       titleAboveImage: true,
-      showBrandHeader: false,
     ),
   ];
 

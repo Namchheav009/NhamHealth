@@ -5,7 +5,6 @@ class OnboardingItem {
     required this.description,
     this.accentTitle,
     this.titleAboveImage = false,
-    this.showBrandHeader = true,
   });
 
   final String imagePath;
@@ -13,5 +12,4 @@ class OnboardingItem {
   final String description;
   final String? accentTitle;
   final bool titleAboveImage;
-  final bool showBrandHeader;
 }

@@ -4,10 +4,19 @@ import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.da
 import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/setting_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/onboarding/choose_language_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/app/routes/app_routes.dart';
 
 void main() {
+  test('choose-language route builds ChooseLanguageView', () {
+    final page = AppPages.pages.singleWhere(
+      (page) => page.name == AppRoutes.chooseLanguage,
+    );
+
+    expect(page.page(), isA<ChooseLanguageView>());
+  });
+
   test('authenticated home route builds HomeView', () {
     final homePage = AppPages.pages.singleWhere(
       (page) => page.name == AppRoutes.home,

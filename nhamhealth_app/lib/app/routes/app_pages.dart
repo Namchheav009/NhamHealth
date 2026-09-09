@@ -4,6 +4,8 @@ import '../modules/bindings/onboarding/onboarding_binding.dart';
 import '../modules/views/onboarding/onboarding_view.dart';
 import '../modules/bindings/splash/splash_binding.dart';
 import '../modules/views/splash/splash_view.dart';
+import '../modules/bindings/onboarding/choose_language_binding.dart';
+import '../modules/views/onboarding/choose_language_view.dart';
 import '../modules/views/auth/login_view.dart';
 import '../modules/views/auth/register_view.dart';
 import '../modules/bindings/auth/login_binding.dart';
@@ -73,6 +75,12 @@ abstract class AppPages {
       name: AppRoutes.onboarding,
       page: () => const OnboardingView(),
       binding: OnboardingBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.chooseLanguage,
+      page: () => const ChooseLanguageView(),
+      binding: ChooseLanguageBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(

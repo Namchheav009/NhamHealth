@@ -149,7 +149,7 @@ class SplashController extends GetxController
     if (isClosed) return;
 
     if (user == null) {
-      Get.offAllNamed(AppRoutes.onboarding);
+      Get.offAllNamed(AppRoutes.chooseLanguage);
     } else {
       Get.offAllNamed(AppRoutes.home, arguments: user);
     }

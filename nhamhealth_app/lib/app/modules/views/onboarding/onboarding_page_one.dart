@@ -15,7 +15,6 @@ class OnboardingPageOne extends GetView<OnboardingController> {
       activePage: 0,
       buttonText: 'Next',
       showSkipButton: true,
-      showBackButton: false,
       onNext: controller.nextPage,
       onSkip: controller.skipToLastPage,
       onBack: controller.previousPage,

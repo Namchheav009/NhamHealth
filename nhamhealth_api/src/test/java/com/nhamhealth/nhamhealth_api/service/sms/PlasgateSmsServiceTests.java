@@ -63,6 +63,20 @@ class PlasgateSmsServiceTests {
     }
 
     @Test
+    void acceptsOnlyGatewayResponsesContainingAQueueId() {
+        assertThat(PlasgateSmsService.hasAcceptedQueueId("{\"queue_id\":\"12345\"}"))
+                .isTrue();
+        assertThat(PlasgateSmsService.hasAcceptedQueueId("{\"queue_id\":12345}"))
+                .isTrue();
+        assertThat(PlasgateSmsService.hasAcceptedQueueId("{\"queue_id\":\"\"}"))
+                .isFalse();
+        assertThat(PlasgateSmsService.hasAcceptedQueueId("{\"error\":\"Invalid sender\"}"))
+                .isFalse();
+        assertThat(PlasgateSmsService.hasAcceptedQueueId("not-json"))
+                .isFalse();
+    }
+
+    @Test
     void returnsTrueWhenSmsIsDisabled() {
         PlasgateSmsService disabledService = new PlasgateSmsService(
                 "https://cloudapi.plasgate.com",

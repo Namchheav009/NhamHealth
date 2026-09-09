@@ -16,11 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Service
 public class PlasgateSmsService {
 
     private static final Logger log = LoggerFactory.getLogger(PlasgateSmsService.class);
     private static final Pattern NON_DIGITS = Pattern.compile("[^0-9]");
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private final RestClient client;
     private final String baseUrl;
@@ -140,8 +144,14 @@ public class PlasgateSmsService {
                     .retrieve()
                     .body(String.class);
 
-            log.info("PlasGate SMS dispatched to {} via sender '{}'. Response: {}", maskPhone(recipient), sender, response);
-            return SendResult.SENT;
+            SendResult result = parseSendResponse(response);
+            if (result == SendResult.SENT) {
+                log.info("PlasGate accepted SMS for {} via sender '{}'", maskPhone(recipient), sender);
+            } else {
+                log.error("PlasGate did not accept SMS for {} via sender '{}'. Response: {}",
+                        maskPhone(recipient), sender, response);
+            }
+            return result;
         } catch (RestClientResponseException error) {
             String responseBody = error.getResponseBodyAsString();
             if (error.getStatusCode().value() == 400
@@ -155,6 +165,30 @@ public class PlasgateSmsService {
         } catch (Exception error) {
             log.error("Failed to send PlasGate SMS to {}: {}", maskPhone(recipient), error.getMessage());
             return SendResult.FAILED;
+        }
+    }
+
+    private SendResult parseSendResponse(String response) {
+        if (response == null || response.isBlank()) {
+            return SendResult.FAILED;
+        }
+        if (response.toLowerCase(Locale.ROOT).contains("invalid sender")) {
+            return SendResult.INVALID_SENDER;
+        }
+        return hasAcceptedQueueId(response) ? SendResult.SENT : SendResult.FAILED;
+    }
+
+    static boolean hasAcceptedQueueId(String response) {
+        if (response == null || response.isBlank()) {
+            return false;
+        }
+        try {
+            JsonNode queueId = JSON.readTree(response).path("queue_id");
+            return !queueId.isMissingNode()
+                    && !queueId.isNull()
+                    && (!queueId.isTextual() || !queueId.asText().isBlank());
+        } catch (Exception ignored) {
+            return false;
         }
     }
 

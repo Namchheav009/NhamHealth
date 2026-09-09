@@ -248,8 +248,12 @@ class VerificationView extends StatelessWidget {
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: TextStyle(
-                color: context.appText,
+              style: const TextStyle(
+                // AuthFlowScaffold always uses the light auth palette. Using
+                // the parent context here can resolve to the dark theme before
+                // the scaffold's theme override is mounted, making this text
+                // white on the light background.
+                color: AppColors.primaryText,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),
@@ -300,7 +304,10 @@ class VerificationView extends StatelessWidget {
               children: [
                 Text(
                   'auth.didnt_receive_the_code'.tr,
-                  style: TextStyle(fontSize: 11, color: context.appText),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.primaryText,
+                  ),
                 ),
                 TextButton(
                   onPressed:

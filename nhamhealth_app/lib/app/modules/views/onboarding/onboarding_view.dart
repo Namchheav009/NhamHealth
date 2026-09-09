@@ -27,7 +27,6 @@ class OnboardingView extends GetView<OnboardingController> {
                       buttonText:
                           index == items.length - 1 ? 'Get Started' : 'Next',
                       showSkipButton: index < items.length - 1,
-                      showBackButton: index > 0,
                       onNext:
                           index == items.length - 1
                               ? controller.finishOnboarding

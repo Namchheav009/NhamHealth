@@ -4,7 +4,6 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_background.dart';
-import '../../../../widgets/app_back_header.dart';
 import '../../../models/onboarding/onboarding_item.dart';
 import 'onboarding_indicator.dart';
 import 'onboarding_next_button.dart';
@@ -19,7 +18,6 @@ class OnboardingContent extends StatelessWidget {
     this.pageCount = 2,
     required this.buttonText,
     required this.showSkipButton,
-    required this.showBackButton,
     required this.onNext,
     required this.onSkip,
     required this.onBack,
@@ -30,7 +28,6 @@ class OnboardingContent extends StatelessWidget {
   final int pageCount;
   final String buttonText;
   final bool showSkipButton;
-  final bool showBackButton;
   final VoidCallback onNext;
   final VoidCallback onSkip;
   final VoidCallback onBack;
@@ -69,13 +66,6 @@ class OnboardingContent extends StatelessWidget {
                           padding: AppSpacing.pagePadding,
                           child: Column(
                             children: [
-                              if (item.showBrandHeader)
-                                _BrandHeader(
-                                  showBackButton: showBackButton,
-                                  onBack: onBack,
-                                )
-                              else
-                                const SizedBox(height: 28),
                               if (item.titleAboveImage) ...[
                                 const SizedBox(height: 8),
                                 _TitleBlock(item: item, centered: false),
@@ -133,44 +123,6 @@ class OnboardingContent extends StatelessWidget {
                 ),
               ),
             ),
-      ),
-    );
-  }
-}
-
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader({required this.showBackButton, required this.onBack});
-
-  final bool showBackButton;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: AppBackButton.layoutSize,
-      child: Row(
-        children: [
-          Image.asset('assets/icons/logo.png', width: 26, height: 26),
-          const SizedBox(width: 6),
-          const Text(
-            'NHAM ',
-            style: TextStyle(
-              color: AppColors.primaryPink,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const Text(
-            'HEALTH',
-            style: TextStyle(
-              color: AppColors.primaryGreen,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const Spacer(),
-          if (showBackButton) AppBackButton(onPressed: onBack),
-        ],
       ),
     );
   }
