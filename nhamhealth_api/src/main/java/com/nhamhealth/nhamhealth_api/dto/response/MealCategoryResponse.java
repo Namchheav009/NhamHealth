@@ -3,8 +3,8 @@ package com.nhamhealth.nhamhealth_api.dto.response;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 
 /** A meal category available for selection in the mobile application. */
-public record MealCategoryResponse(Integer id, String name) {
+public record MealCategoryResponse(Integer id, String name, String nameKm) {
     public static MealCategoryResponse from(MealCategory category) {
-        return new MealCategoryResponse(category.getCategoryId(), category.getCategoryName());
+        return new MealCategoryResponse(category.getCategoryId(), category.getCategoryName(), null);
     }
 }

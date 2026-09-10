@@ -57,6 +57,10 @@ public class MealCategory {
         return categoryId;
     }
 
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+
     public String getCategoryName() {
         return categoryName;
     }

@@ -7,7 +7,9 @@ import jakarta.validation.constraints.Size;
 
 public record AdminMealCategoryRequest(
         @NotBlank @Size(max = 50) String categoryName,
+        @Size(max = 50) String categoryNameKm,
         @Size(max = 255) String description,
+        @Size(max = 1000) String descriptionKm,
         boolean active,
         @Min(0) @Max(10000) Integer sortOrder) {
 }

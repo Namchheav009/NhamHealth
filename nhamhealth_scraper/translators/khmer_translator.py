@@ -73,9 +73,11 @@ class KhmerTranslator:
             km_translation = self._translate_to_khmer(en_translation)
             recipe["translations"]["km"] = km_translation
 
-            # Update top-level khmerName for backward compatibility with Spring Boot importer
+            # Update top-level khmerName and categoryNameKm for backward compatibility with Spring Boot importer
             if km_translation.get("mealName"):
                 recipe["khmerName"] = km_translation["mealName"]
+            if km_translation.get("category"):
+                recipe["categoryNameKm"] = km_translation["category"]
 
             # Validate translation
             is_valid, error_msg = validate_translation(recipe)
