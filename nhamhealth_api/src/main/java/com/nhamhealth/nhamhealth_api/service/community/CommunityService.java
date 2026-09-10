@@ -1,28 +1,52 @@
 package com.nhamhealth.nhamhealth_api.service.community;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
-import com.nhamhealth.nhamhealth_api.dto.response.CommunityProfileResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityCommentResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityPersonResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityPostResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.CommunityProfileResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.CommunityTagResponse;
-import com.nhamhealth.nhamhealth_api.entity.*;
+import com.nhamhealth.nhamhealth_api.entity.CommentLike;
+import com.nhamhealth.nhamhealth_api.entity.Follow;
+import com.nhamhealth.nhamhealth_api.entity.ModerationAction;
+import com.nhamhealth.nhamhealth_api.entity.ModerationActionType;
+import com.nhamhealth.nhamhealth_api.entity.Post;
+import com.nhamhealth.nhamhealth_api.entity.PostComment;
+import com.nhamhealth.nhamhealth_api.entity.PostLike;
+import com.nhamhealth.nhamhealth_api.entity.PostMedia;
+import com.nhamhealth.nhamhealth_api.entity.PostTag;
+import com.nhamhealth.nhamhealth_api.entity.Recipe;
+import com.nhamhealth.nhamhealth_api.entity.RecipeIngredient;
+import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
+import com.nhamhealth.nhamhealth_api.entity.RecipeTag;
+import com.nhamhealth.nhamhealth_api.entity.TagType;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.CommentLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostMediaRepository;
@@ -35,6 +59,7 @@ import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.SavedRecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 @Service
 public class CommunityService {
@@ -56,6 +81,7 @@ public class CommunityService {
     private final RecipeTagRepository recipeTags;
     private final RecipeRepository recipes;
     private final SavedRecipeRepository savedRecipes;
+    private final ModerationActionRepository moderationActions;
 
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
@@ -65,7 +91,8 @@ public class CommunityService {
             CommunityNotificationService communityNotifications,
             RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
             RecipeTagRepository recipeTags, RecipeRepository recipes,
-            SavedRecipeRepository savedRecipes) {
+            SavedRecipeRepository savedRecipes,
+            ModerationActionRepository moderationActions) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -83,6 +110,7 @@ public class CommunityService {
         this.recipeTags = recipeTags;
         this.recipes = recipes;
         this.savedRecipes = savedRecipes;
+        this.moderationActions = moderationActions;
     }
 
     @Transactional(readOnly = true)
@@ -134,8 +162,9 @@ public class CommunityService {
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 target.getRoleLabel(),
                 profile == null ? "" : value(profile.getBio(), ""),
-                target.getCreatedAt() == null ? "" : target.getCreatedAt()
-                        .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)),
+                target.getCreatedAt() == null ? ""
+                        : target.getCreatedAt()
+                                .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)),
                 Boolean.TRUE.equals(target.getIsVerified()),
                 visiblePosts,
                 follows.countByFollowingUserUserIdAndStatusIgnoreCase(targetUserId, "ACTIVE"),
@@ -166,7 +195,7 @@ public class CommunityService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tags", "mealTagNames"}, allEntries = true)
+    @CacheEvict(value = { "tags", "mealTagNames" }, allEntries = true)
     public CommunityTagResponse createTag(String rawName) {
         String name = value(rawName, "").trim();
         if (name.isEmpty() || name.length() > 100) {
@@ -190,6 +219,7 @@ public class CommunityService {
     @Transactional
     public CommunityPostResponse create(Integer userId, String description, String visibility,
             boolean allowComments, boolean allowReplies, List<Integer> tagIds, List<MultipartFile> images) {
+        assertNotRestricted(userId, ModerationActionType.POST_RESTRICTED, "posting");
         if (description == null || description.trim().isEmpty()) {
             throw new IllegalArgumentException("Post message is required");
         }
@@ -293,6 +323,7 @@ public class CommunityService {
     @Transactional
     public CommunityPostResponse shareToFeed(
             Integer userId, Integer postId, String message, String visibility) {
+        assertNotRestricted(userId, ModerationActionType.POST_RESTRICTED, "sharing posts");
         Post sourcePost = visiblePost(userId, postId);
         Recipe source = sourcePost.getRecipe();
         if (source == null) {
@@ -341,6 +372,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityCommentResponse comment(Integer userId, Integer postId, String text, Integer parentCommentId) {
+        assertNotRestricted(userId, ModerationActionType.COMMENT_RESTRICTED, "commenting");
         if (text == null || text.trim().isEmpty()) {
             throw new IllegalArgumentException("Comment text is required");
         }
@@ -442,7 +474,8 @@ public class CommunityService {
 
     @Transactional
     public String toggleFollow(Integer viewerId, Integer targetId) {
-        if (viewerId.equals(targetId)) throw new IllegalArgumentException("You cannot follow yourself");
+        if (viewerId.equals(targetId))
+            throw new IllegalArgumentException("You cannot follow yourself");
         Optional<Follow> existing = follows.findByFollowerUserUserIdAndFollowingUserUserId(viewerId, targetId);
         if (existing.isPresent()) {
             follows.delete(existing.get());
@@ -463,13 +496,15 @@ public class CommunityService {
         UserProfile profile = profiles.findByUser_UserId(post.getUser().getUserId()).orElse(null);
         com.nhamhealth.nhamhealth_api.entity.Recipe recipe = post.getRecipe();
         boolean isShared = recipe != null && recipe.getSharedFrom() != null;
-        List<String> imageUrls = (isShared ? List.<PostMedia>of() : media.findByPostPostIdOrderByDisplayOrder(post.getPostId()))
+        List<String> imageUrls = (isShared ? List.<PostMedia>of()
+                : media.findByPostPostIdOrderByDisplayOrder(post.getPostId()))
                 .stream()
                 .map(PostMedia::getMediaUrl).toList();
         String imageUrl = imageUrls.isEmpty() && recipe != null && !isShared
                 ? value(recipe.getMainImageUrl(), "")
                 : (imageUrls.isEmpty() ? "" : imageUrls.getFirst());
-        if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
+        if (imageUrls.isEmpty() && !imageUrl.isBlank())
+            imageUrls = List.of(imageUrl);
         List<TagType> assignedTags = recipe == null
                 ? postTags.findByPostPostIdOrderByPostTagId(post.getPostId()).stream()
                         .map(PostTag::getTag).toList()
@@ -491,17 +526,23 @@ public class CommunityService {
                 recipe == null || isShared ? null : recipe.getCookingTimeMinutes(),
                 recipe == null || isShared ? null : recipe.getServings(),
                 recipe == null || isShared ? "" : value(recipe.getDifficulty(), ""),
-                recipe == null || isShared || recipe.getCategory() == null ? null : recipe.getCategory().getCategoryId(),
-                recipe == null || isShared || recipe.getCategory() == null ? "" : recipe.getCategory().getCategoryName(),
+                recipe == null || isShared || recipe.getCategory() == null ? null
+                        : recipe.getCategory().getCategoryId(),
+                recipe == null || isShared || recipe.getCategory() == null ? ""
+                        : recipe.getCategory().getCategoryName(),
                 null, "", null,
                 !isShared && recipe != null
                         && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
-                recipe == null ? List.of() : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
-                        .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
-                                item.getIngredientName(), item.getAmount(), value(item.getUnit(), ""))).toList(),
-                recipe == null ? List.of() : recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())
-                        .stream().map(item -> new CommunityPostResponse.MealPostStep(
-                                item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), ""))).toList(),
+                recipe == null ? List.of()
+                        : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
+                                .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
+                                        item.getIngredientName(), item.getAmount(), value(item.getUnit(), "")))
+                                .toList(),
+                recipe == null ? List.of()
+                        : recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())
+                                .stream().map(item -> new CommunityPostResponse.MealPostStep(
+                                        item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), "")))
+                                .toList(),
                 isShared ? sharedPost(recipe.getSharedFrom()) : null);
     }
 
@@ -513,7 +554,8 @@ public class CommunityService {
                         .map(PostMedia::getMediaUrl).toList())
                 .orElse(List.of());
         String imageUrl = imageUrls.isEmpty() ? value(original.getMainImageUrl(), "") : imageUrls.getFirst();
-        if (imageUrls.isEmpty() && !imageUrl.isBlank()) imageUrls = List.of(imageUrl);
+        if (imageUrls.isEmpty() && !imageUrl.isBlank())
+            imageUrls = List.of(imageUrl);
         return new CommunityPostResponse.SharedPost(
                 original.getRecipeId(), original.getAuthor().getUserId(),
                 communityDisplayName(original.getAuthor(), profile),
@@ -525,7 +567,8 @@ public class CommunityService {
 
     private Recipe originalSharedSource(Recipe recipe) {
         Recipe current = recipe;
-        while (current.getSharedFrom() != null) current = current.getSharedFrom();
+        while (current.getSharedFrom() != null)
+            current = current.getSharedFrom();
         return current;
     }
 
@@ -541,15 +584,18 @@ public class CommunityService {
                 comment.getCommentText(), comment.getCreatedAt(),
                 comment.getParentComment() == null ? null : comment.getParentComment().getCommentId(),
                 commentLikes.countByPostCommentCommentId(comment.getCommentId()),
-                viewerId != null && commentLikes.existsByUserUserIdAndPostCommentCommentId(viewerId, comment.getCommentId()),
+                viewerId != null
+                        && commentLikes.existsByUserUserIdAndPostCommentCommentId(viewerId, comment.getCommentId()),
                 viewerId != null && (comment.getUser().getUserId().equals(viewerId)
                         || comment.getPost().getUser().getUserId().equals(viewerId)));
     }
 
-    private CommunityPersonResponse person(User user, UserProfile profile, Set<Integer> following, Set<Integer> followers) {
+    private CommunityPersonResponse person(User user, UserProfile profile, Set<Integer> following,
+            Set<Integer> followers) {
         boolean mutual = following.contains(user.getUserId()) && followers.contains(user.getUserId());
-        String status = mutual ? "FRIEND" : following.contains(user.getUserId()) ? "FOLLOWING" :
-                followers.contains(user.getUserId()) ? "FOLLOWS_YOU" : "NONE";
+        String status = mutual ? "FRIEND"
+                : following.contains(user.getUserId()) ? "FOLLOWING"
+                        : followers.contains(user.getUserId()) ? "FOLLOWS_YOU" : "NONE";
         return new CommunityPersonResponse(user.getUserId(), communityDisplayName(user, profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 profile == null ? "" : value(profile.getLocationText(), ""), List.of(), mutual ? 1 : 0, status);
@@ -558,7 +604,8 @@ public class CommunityService {
     /** A community response exposes a profile name, never an email address. */
     private String communityDisplayName(User user, UserProfile profile) {
         String profileName = profile == null ? "" : value(profile.getFullName(), "").trim();
-        if (!profileName.isBlank() && !profileName.contains("@")) return profileName;
+        if (!profileName.isBlank() && !profileName.contains("@"))
+            return profileName;
 
         String email = value(user.getEmail(), "").trim();
         int atIndex = email.indexOf('@');
@@ -566,7 +613,8 @@ public class CommunityService {
                 .replaceAll("[._-]+", " ")
                 .replaceAll("(?<=[A-Za-z])(?=\\d)", " ")
                 .trim();
-        if (localPart.isBlank()) return "Community member";
+        if (localPart.isBlank())
+            return "Community member";
 
         return Arrays.stream(localPart.split("\\s+"))
                 .filter(part -> !part.isBlank())
@@ -589,7 +637,8 @@ public class CommunityService {
     }
 
     private boolean canView(Post post, Integer viewerId, Set<Integer> followed, Set<Integer> followers) {
-        if (post.getUser().getUserId().equals(viewerId)) return true;
+        if (post.getUser().getUserId().equals(viewerId))
+            return true;
         return switch (value(post.getVisibility(), "PUBLIC").toUpperCase(Locale.ROOT)) {
             case "ONLY_ME" -> false;
             case "FOLLOWERS" -> followed.contains(post.getUser().getUserId());
@@ -601,13 +650,15 @@ public class CommunityService {
 
     private String cleanVisibility(String visibility) {
         String clean = value(visibility, "PUBLIC").toUpperCase(Locale.ROOT);
-        if (Set.of("PUBLIC", "FOLLOWERS", "FRIENDS", "ONLY_ME").contains(clean)) return clean;
+        if (Set.of("PUBLIC", "FOLLOWERS", "FRIENDS", "ONLY_ME").contains(clean))
+            return clean;
         throw new IllegalArgumentException("Select a valid audience");
     }
 
     private void replaceTags(Post post, List<Integer> rawTagIds) {
         Set<Integer> tagIds = rawTagIds == null ? Set.of()
-                : rawTagIds.stream().filter(Objects::nonNull).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+                : rawTagIds.stream().filter(Objects::nonNull)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
         List<TagType> tags = tagIds.isEmpty() ? List.of() : tagTypes.findAllById(tagIds);
         if (tags.size() != tagIds.size() || tags.stream().anyMatch(tag -> !Boolean.TRUE.equals(tag.getIsActive()))) {
             throw new IllegalArgumentException("Choose active tags only");
@@ -663,7 +714,8 @@ public class CommunityService {
     }
 
     private List<MultipartFile> usableImages(List<MultipartFile> images) {
-        if (images == null) return List.of();
+        if (images == null)
+            return List.of();
         return images.stream().filter(Objects::nonNull).filter(image -> !image.isEmpty()).toList();
     }
 
@@ -673,8 +725,14 @@ public class CommunityService {
         }
     }
 
-    private User user(Integer id) { return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found")); }
-    private Post post(Integer id) { return posts.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post not found")); }
+    private User user(Integer id) {
+        return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+    }
+
+    private Post post(Integer id) {
+        return posts.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post not found"));
+    }
+
     private Post ownedPost(Integer userId, Integer postId) {
         Post post = post(postId);
         if (!"ACTIVE".equalsIgnoreCase(post.getStatus())) {
@@ -685,6 +743,7 @@ public class CommunityService {
         }
         return post;
     }
+
     private Post visiblePost(Integer viewerId, Integer postId) {
         Post selected = post(postId);
         if (!"ACTIVE".equalsIgnoreCase(selected.getStatus())
@@ -693,5 +752,22 @@ public class CommunityService {
         }
         return selected;
     }
-    private String value(String value, String fallback) { return value == null || value.isBlank() ? fallback : value; }
+
+    private String value(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private void assertNotRestricted(Integer userId, ModerationActionType type, String actionLabel) {
+        List<ModerationAction> active = moderationActions.findActiveRestrictions(userId, type,
+                java.time.LocalDateTime.now());
+        if (!active.isEmpty()) {
+            ModerationAction restriction = active.get(0);
+            String expiry = restriction.getExpiresAt() != null
+                    ? " until " + restriction.getExpiresAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "";
+            throw new ResponseStatusException(
+                    FORBIDDEN,
+                    "Your account is currently restricted from " + actionLabel + expiry + ".");
+        }
+    }
 }

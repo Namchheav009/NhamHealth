@@ -75,6 +75,8 @@ public class ReportModerationPolicy {
           Set.of(
               ModerationActionType.WARNING,
               ModerationActionType.ACCOUNT_RESTRICTED,
+              ModerationActionType.POST_RESTRICTED,
+              ModerationActionType.COMMENT_RESTRICTED,
               ModerationActionType.SUSPENDED,
               ModerationActionType.BANNED);
       case POST ->
@@ -82,15 +84,21 @@ public class ReportModerationPolicy {
               ModerationActionType.WARNING,
               ModerationActionType.CONTENT_HIDDEN,
               ModerationActionType.CONTENT_REMOVED,
+              ModerationActionType.CONTENT_RESTORED,
               ModerationActionType.POST_RESTRICTED,
-              ModerationActionType.SUSPENDED);
+              ModerationActionType.COMMENT_RESTRICTED,
+              ModerationActionType.SUSPENDED,
+              ModerationActionType.BANNED);
       case COMMENT ->
           Set.of(
               ModerationActionType.WARNING,
               ModerationActionType.CONTENT_HIDDEN,
               ModerationActionType.CONTENT_REMOVED,
+              ModerationActionType.CONTENT_RESTORED,
+              ModerationActionType.POST_RESTRICTED,
               ModerationActionType.COMMENT_RESTRICTED,
-              ModerationActionType.SUSPENDED);
+              ModerationActionType.SUSPENDED,
+              ModerationActionType.BANNED);
     };
   }
 }

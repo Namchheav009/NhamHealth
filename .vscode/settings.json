@@ -12,7 +12,8 @@
   "cmake.ignoreCMakeListsMissing": true,
   "java.import.exclusions": [
     "**/.dart_tool/**",
-    "**/build/**"
+    "**/build/**",
+    "**/.m2-repository/**"
   ],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true,
@@ -20,6 +21,7 @@
     "**/.dart_tool": true,
     "**/build": true,
     "**/target": true,
+    "**/.m2-repository": true,
     ".m2": true,
     ".dart_appdata": true
   },
@@ -27,6 +29,7 @@
     "**/.dart_tool": true,
     "**/build": true,
     "**/target": true,
+    "**/.m2-repository": true,
     ".m2": true,
     ".dart_appdata": true
   }

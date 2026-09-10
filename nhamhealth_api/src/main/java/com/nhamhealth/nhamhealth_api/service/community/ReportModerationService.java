@@ -6,6 +6,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.*;
 import com.nhamhealth.nhamhealth_api.dto.response.*;
 import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.community.*;
+import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.notification.NotificationRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
@@ -22,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class ReportModerationService {
   private static final Set<ReportStatus> ACTIVE =
-      Set.of(ReportStatus.PENDING, ReportStatus.UNDER_REVIEW);
+      Set.of(ReportStatus.PENDING, ReportStatus.UNDER_REVIEW, ReportStatus.ESCALATED);
   private final ReportRepository reports;
   private final ModerationActionRepository actions;
   private final ModerationAppealRepository appeals;
@@ -35,6 +36,7 @@ public class ReportModerationService {
   private final UserProfileRepository profiles;
   private final ReportAttachmentRepository reportAttachments;
   private final ProfileImageStorageService imageStorage;
+  private final RecipeRepository recipes;
 
   public ReportModerationService(
       ReportRepository reports,
@@ -48,7 +50,8 @@ public class ReportModerationService {
       ReportModerationPolicy policy,
       UserProfileRepository profiles,
       ReportAttachmentRepository reportAttachments,
-      ProfileImageStorageService imageStorage) {
+      ProfileImageStorageService imageStorage,
+      RecipeRepository recipes) {
     this.reports = reports;
     this.actions = actions;
     this.appeals = appeals;
@@ -61,6 +64,7 @@ public class ReportModerationService {
     this.profiles = profiles;
     this.reportAttachments = reportAttachments;
     this.imageStorage = imageStorage;
+    this.recipes = recipes;
   }
 
   @Transactional
@@ -186,7 +190,7 @@ public class ReportModerationService {
   @Transactional
   public AdminReportResponse dismiss(Integer id, Integer adminId, ReviewReportRequest request) {
     Report r = report(id);
-    if (r.getStatus() != ReportStatus.UNDER_REVIEW)
+    if (r.getStatus() != ReportStatus.UNDER_REVIEW && r.getStatus() != ReportStatus.ESCALATED)
       throw new ResponseStatusException(CONFLICT, "Start review before making a decision");
     r.setStatus(ReportStatus.NO_VIOLATION);
     r.setReviewedBy(user(adminId));
@@ -209,10 +213,39 @@ public class ReportModerationService {
   }
 
   @Transactional
+  public AdminReportResponse escalate(Integer id, Integer adminId, ReviewReportRequest request) {
+    Report r = report(id);
+    if (r.getStatus() == ReportStatus.RESOLVED
+        || r.getStatus() == ReportStatus.NO_VIOLATION
+        || r.getStatus() == ReportStatus.REJECTED
+        || r.getStatus() == ReportStatus.DISMISSED) {
+      throw new ResponseStatusException(CONFLICT, "Resolved or dismissed reports cannot be escalated");
+    }
+    r.setStatus(ReportStatus.ESCALATED);
+    r.setReviewedBy(user(adminId));
+    r.setReviewedAt(LocalDateTime.now());
+    if (request != null) {
+      if (request.adminNote() != null && !request.adminNote().isBlank()) {
+        r.setAdminNote(clean(request.adminNote()));
+      }
+      if (request.severity() != null) {
+        r.setSeverity(request.severity());
+      } else if (r.getSeverity() == ReportSeverity.LOW) {
+        r.setSeverity(ReportSeverity.HIGH);
+      }
+      if (request.adminMessage() != null) {
+        r.setAdminMessage(clean(request.adminMessage()));
+      }
+    }
+    r = reports.saveAndFlush(r);
+    return admin(r);
+  }
+
+  @Transactional
   public ModerationActionResponse act(
       Integer id, Integer adminId, ModerationActionRequest request) {
     Report r = report(id);
-    if (r.getStatus() != ReportStatus.UNDER_REVIEW)
+    if (r.getStatus() != ReportStatus.UNDER_REVIEW && r.getStatus() != ReportStatus.ESCALATED)
       throw new ResponseStatusException(CONFLICT, "Start review before making a decision");
     policy.requireAllowedAction(r.getReportType(), request.actionType());
     LocalDateTime start = request.startsAt() == null ? LocalDateTime.now() : request.startsAt();
@@ -383,6 +416,28 @@ public class ReportModerationService {
   }
 
   private void applyContentState(Report r, ModerationActionType type) {
+    if (type == ModerationActionType.CONTENT_RESTORED) {
+      if (r.getReportType() == ReportType.COMMENT) {
+        PostComment c =
+            comments
+                .findById(r.getTargetId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Comment not found"));
+        c.setStatus("ACTIVE");
+        c.setUpdatedAt(LocalDateTime.now());
+        comments.save(c);
+      } else if (r.getReportType() == ReportType.POST) {
+        Post p =
+            posts
+                .findById(r.getTargetId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post not found"));
+        if (p.getRecipe() != null) {
+          p.getRecipe().setStatus("PUBLISHED");
+          p.getRecipe().setUpdatedAt(LocalDateTime.now());
+          recipes.save(p.getRecipe());
+        }
+      }
+      return;
+    }
     if (type != ModerationActionType.CONTENT_HIDDEN && type != ModerationActionType.CONTENT_REMOVED)
       return;
     String state = type == ModerationActionType.CONTENT_HIDDEN ? "HIDDEN" : "REMOVED";
@@ -400,9 +455,9 @@ public class ReportModerationService {
               .findById(r.getTargetId())
               .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post not found"));
       if (p.getRecipe() != null) {
-        p.getRecipe()
-            .setStatus(type == ModerationActionType.CONTENT_HIDDEN ? "HIDDEN" : "REMOVED");
+        p.getRecipe().setStatus(state);
         p.getRecipe().setUpdatedAt(LocalDateTime.now());
+        recipes.save(p.getRecipe());
       }
     }
   }
@@ -539,17 +594,34 @@ public class ReportModerationService {
   }
 
   private String title(ModerationActionType t) {
-    return t == ModerationActionType.SUSPENDED
-        ? "Account temporarily suspended"
-        : t == ModerationActionType.WARNING
-            ? "Community Guidelines Warning"
-            : "Moderation action taken";
+    return switch (t) {
+      case SUSPENDED -> "Account temporarily suspended";
+      case BANNED -> "Account permanently banned";
+      case WARNING -> "Community Guidelines Warning";
+      case CONTENT_HIDDEN -> "Content hidden";
+      case CONTENT_REMOVED -> "Content removed";
+      case CONTENT_RESTORED -> "Content restored";
+      case POST_RESTRICTED -> "Posting restricted";
+      case COMMENT_RESTRICTED -> "Commenting restricted";
+      case ACCOUNT_RESTRICTED -> "Account restricted";
+    };
   }
 
   private String message(ModerationAction a) {
+    if (a.getActionType() == ModerationActionType.CONTENT_RESTORED) {
+      return "Following a moderation review, your content has been restored and is now visible again.";
+    }
+    if (a.getActionType() == ModerationActionType.POST_RESTRICTED) {
+      return "Your account has been restricted from creating or sharing posts"
+          + (a.getExpiresAt() == null ? "." : " until " + a.getExpiresAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) + ".");
+    }
+    if (a.getActionType() == ModerationActionType.COMMENT_RESTRICTED) {
+      return "Your account has been restricted from commenting"
+          + (a.getExpiresAt() == null ? "." : " until " + a.getExpiresAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) + ".");
+    }
     return "Some activity on your account violated NhamHealth Community Guidelines. Reason: "
         + a.getReason().name().replace('_', ' ')
-        + (a.getExpiresAt() == null ? "" : "; until " + a.getExpiresAt());
+        + (a.getExpiresAt() == null ? "" : "; until " + a.getExpiresAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")));
   }
 
   private void notify(

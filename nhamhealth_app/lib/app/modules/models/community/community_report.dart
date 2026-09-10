@@ -10,6 +10,7 @@ enum CommunityReportStatus {
   factory CommunityReportStatus.fromApi(String value) => switch (value
       .toUpperCase()) {
     'UNDER_REVIEW' => underReview,
+    'UNDER_REVIEW' || 'ESCALATED' => underReview,
     'RESOLVED' => resolved,
     'NO_VIOLATION' || 'DISMISSED' => noViolation,
     'REJECTED' => rejected,

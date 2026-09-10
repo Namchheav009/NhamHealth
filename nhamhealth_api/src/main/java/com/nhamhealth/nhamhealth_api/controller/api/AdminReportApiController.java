@@ -2,19 +2,39 @@ package com.nhamhealth.nhamhealth_api.controller.api;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
-import com.nhamhealth.nhamhealth_api.dto.request.*;
-import com.nhamhealth.nhamhealth_api.dto.response.*;
-import com.nhamhealth.nhamhealth_api.entity.*;
-import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
-import jakarta.validation.Valid;
 import java.time.LocalDateTime;
-import org.springframework.data.domain.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.nhamhealth.nhamhealth_api.dto.request.ModerationActionRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ReviewAppealRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ReviewReportRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminReportResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AppealResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.ModerationActionResponse;
+import com.nhamhealth.nhamhealth_api.entity.AppealStatus;
+import com.nhamhealth.nhamhealth_api.entity.ReportReasonCode;
+import com.nhamhealth.nhamhealth_api.entity.ReportSeverity;
+import com.nhamhealth.nhamhealth_api.entity.ReportStatus;
+import com.nhamhealth.nhamhealth_api.entity.ReportType;
+import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -33,12 +53,9 @@ public class AdminReportApiController {
       @RequestParam(required = false) ReportSeverity severity,
       @RequestParam(required = false) Integer reportedUserId,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          LocalDateTime from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          LocalDateTime to,
-      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-          Pageable pageable) {
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return service.list(type, status, reason, severity, reportedUserId, search, from, to, pageable);
   }
 
@@ -61,6 +78,14 @@ public class AdminReportApiController {
       @PathVariable Integer id,
       @Valid @RequestBody(required = false) ReviewReportRequest request) {
     return service.dismiss(id, userId(jwt), request);
+  }
+
+  @PatchMapping("/reports/{id}/escalate")
+  public AdminReportResponse escalate(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable Integer id,
+      @Valid @RequestBody(required = false) ReviewReportRequest request) {
+    return service.escalate(id, userId(jwt), request);
   }
 
   @PostMapping("/reports/{id}/actions")
@@ -92,7 +117,8 @@ public class AdminReportApiController {
   }
 
   private Integer userId(Jwt jwt) {
-    if (jwt == null) throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required");
+    if (jwt == null)
+      throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required");
     Number id = jwt.getClaim("userId");
     if (id == null)
       throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID");

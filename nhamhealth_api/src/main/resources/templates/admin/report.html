@@ -1,26 +1,421 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><meta name="report-type" th:content="${fixedType}">
-  <title th:text="${pageTitle+' | Nham Health Admin'}">All Reports</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><link rel="stylesheet" th:href="@{/css/admin-layout.css}"><link rel="stylesheet" th:href="@{/css/admin-dashboard.css}"><link rel="stylesheet" th:href="@{/css/admin-report.css(v=9)}">
-</head>
-<body><div class="app-shell"><div th:replace="~{layouts/sidebar :: sidebar(${activePage})}"></div><main class="main-area"><div th:replace="~{layouts/topbar :: topbar}"></div><section class="page-content">
-  <div class="page-heading"><div><div class="title-line"><h1 th:text="${pageTitle}">All Reports</h1><span>Manage reported users and content from one moderation queue.</span></div><p>Dashboard <i class="bi bi-chevron-right"></i> Report Management <i class="bi bi-chevron-right"></i> <span th:text="${pageTitle}">All Reports</span></p></div><button class="btn" id="exportReports"><i class="bi bi-download"></i> Export</button></div>
-  <div class="report-stats">
-    <article class="stat-card total"><i class="bi bi-flag stat-icon"></i><div><span>Total reports</span><strong id="statTotal">0</strong></div></article>
-    <article class="stat-card pending"><i class="bi bi-hourglass-split stat-icon"></i><div><span>Pending</span><strong id="statPending">0</strong></div></article>
-    <article class="stat-card review"><i class="bi bi-eye stat-icon"></i><div><span>Under review</span><strong id="statReview">0</strong></div></article>
-    <article class="stat-card resolved"><i class="bi bi-check2-circle stat-icon"></i><div><span>Resolved</span><strong id="statResolved">0</strong></div></article>
-    <article class="stat-card dismissed"><i class="bi bi-x-circle stat-icon"></i><div><span>Dismissed</span><strong id="statDismissed">0</strong></div></article>
-  </div>
-  <section class="report-filters panel"><div class="filter-heading"><div><i class="bi bi-funnel"></i><span>Filter reports</span></div><button class="clear-link" id="clearReportFilters"><i class="bi bi-x-lg"></i> Clear all</button></div><div class="filter-grid">
-    <label class="search-field">Search<div class="input-icon"><i class="bi bi-search"></i><input id="reportSearch" type="search" placeholder="Report ID, user, target or description"></div></label>
-    <label th:if="${fixedType==''}">Report type<select id="reportType"><option value="">All types</option><option>PROFILE</option><option>POST</option><option>COMMENT</option></select></label>
-    <label>Status<select id="reportStatus"><option value="">All statuses</option><option>PENDING</option><option>UNDER_REVIEW</option><option>RESOLVED</option><option>DISMISSED</option></select></label>
-    <label>Reason<select id="reportReason"><option value="">All reasons</option><option th:each="r:${reasons}" th:value="${r}" th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(r.name(),'_',' ')))}"></option></select></label>
-    <label>Severity<select id="reportSeverity"><option value="">All levels</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select></label><label>From<input id="reportFrom" type="date"></label><label>To<input id="reportTo" type="date"></label>
-  </div></section>
-  <article class="panel table-panel"><div class="panel-header"><div><h2 th:text="${pageTitle}">Reports</h2><p id="resultSummary">Loading moderation queue&hellip;</p></div><button class="btn" id="refreshReports"><i class="bi bi-arrow-clockwise"></i> Refresh</button></div><div class="table-responsive"><table><thead><tr><th>ID</th><th>Type</th><th>Reporter</th><th>Reported user / target</th><th>Reason</th><th>Severity</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="reportRows"><tr><td colspan="9" class="empty-state"><i class="bi bi-hourglass-split"></i><strong>Loading reports&hellip;</strong></td></tr></tbody></table></div><div class="pagination-row"><span id="pageSummary"></span><nav class="pagination-controls"><button class="page-btn" id="pagePrev" aria-label="Previous page"><i class="bi bi-chevron-left"></i></button><div id="pageNumbers" class="page-numbers"></div><button class="page-btn" id="pageNext" aria-label="Next page"><i class="bi bi-chevron-right"></i></button></nav></div></article>
-</section><footer class="page-footer"><span>&copy; 2026 Nham Health. All rights reserved.</span><span>Version 1.0.0</span></footer></main></div><div class="sidebar-overlay" id="sidebarOverlay"></div><script th:src="@{/js/admin-layout.js(v=3)}"></script><script th:src="@{/js/admin-report.js(v=9)}"></script></body></html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="report-type" th:content="${fixedType}" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">All Reports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&family=Noto+Sans+Khmer:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-report.css(v=14)}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div th:replace="~{layouts/sidebar :: sidebar(${activePage})}"></div>
+      <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+          <div class="page-heading">
+            <div>
+              <div class="title-line">
+                <h1 th:text="${pageTitle}">All Reports</h1>
+                <span
+                  >Manage reported users and community content from one central
+                  moderation desk.</span
+                >
+              </div>
+              <p>
+                Dashboard <i class="bi bi-chevron-right"></i> Report Management
+                <i class="bi bi-chevron-right"></i>
+                <span th:text="${pageTitle}">All Reports</span>
+              </p>
+            </div>
+            <div class="heading-actions">
+              <button class="btn" id="exportReports">
+                <i class="bi bi-download"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Summary Cards -->
+          <div
+            class="report-stats"
+            role="region"
+            aria-label="Report statistics summary"
+          >
+            <article
+              class="stat-card total"
+              role="button"
+              tabindex="0"
+              data-status=""
+              title="Filter by All reports"
+            >
+              <div class="stat-icon"><i class="bi bi-flag-fill"></i></div>
+              <div>
+                <span>Total reports</span><strong id="statTotal">0</strong>
+                <small class="stat-hint">All queue items</small>
+              </div>
+            </article>
+            <article
+              class="stat-card pending"
+              role="button"
+              tabindex="0"
+              data-status="PENDING"
+              title="Filter by Pending reports"
+            >
+              <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+              <div>
+                <span>Pending</span><strong id="statPending">0</strong>
+                <small class="stat-hint">Awaiting review</small>
+              </div>
+            </article>
+            <article
+              class="stat-card review"
+              role="button"
+              tabindex="0"
+              data-status="UNDER_REVIEW"
+              title="Filter by Under review reports"
+            >
+              <div class="stat-icon"><i class="bi bi-eye-fill"></i></div>
+              <div>
+                <span>Under review</span><strong id="statReview">0</strong>
+                <small class="stat-hint">Assigned / in progress</small>
+              </div>
+            </article>
+            <article
+              class="stat-card escalated"
+              role="button"
+              tabindex="0"
+              data-status="ESCALATED"
+              title="Filter by Escalated reports"
+            >
+              <div class="stat-icon">
+                <i class="bi bi-shield-exclamation"></i>
+              </div>
+              <div>
+                <span>Escalated</span><strong id="statEscalated">0</strong>
+                <small class="stat-hint">Needs senior action</small>
+              </div>
+            </article>
+            <article
+              class="stat-card resolved"
+              role="button"
+              tabindex="0"
+              data-status="RESOLVED"
+              title="Filter by Resolved reports"
+            >
+              <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+              <div>
+                <span>Resolved</span><strong id="statResolved">0</strong>
+                <small class="stat-hint">Action completed</small>
+              </div>
+            </article>
+            <article
+              class="stat-card dismissed"
+              role="button"
+              tabindex="0"
+              data-status="DISMISSED"
+              title="Filter by Dismissed reports"
+            >
+              <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+              <div>
+                <span>Dismissed</span><strong id="statDismissed">0</strong>
+                <small class="stat-hint">No violation found</small>
+              </div>
+            </article>
+          </div>
+
+          <!-- Filter Panel -->
+          <section class="report-filters panel">
+            <div class="filter-heading">
+              <div>
+                <i class="bi bi-funnel-fill"></i>
+                <span>Filter &amp; search moderation queue</span>
+              </div>
+              <button class="clear-link" id="clearReportFilters">
+                <i class="bi bi-x-lg"></i> Clear filters
+              </button>
+            </div>
+            <div class="filter-grid">
+              <label class="search-field">
+                Search records
+                <div class="input-icon">
+                  <i class="bi bi-search"></i>
+                  <input
+                    id="reportSearch"
+                    type="search"
+                    placeholder="Search by ID, user, target or notes..."
+                  />
+                </div>
+              </label>
+              <label th:if="${fixedType==''}">
+                Content type
+                <select id="reportType">
+                  <option value="">All content types</option>
+                  <option value="PROFILE">Profile</option>
+                  <option value="POST">Post</option>
+                  <option value="COMMENT">Comment</option>
+                </select>
+              </label>
+              <label>
+                Status
+                <select id="reportStatus">
+                  <option value="">All statuses</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="UNDER_REVIEW">Under Review</option>
+                  <option value="ESCALATED">Escalated</option>
+                  <option value="RESOLVED">Resolved</option>
+                  <option value="DISMISSED">Dismissed</option>
+                </select>
+              </label>
+              <label>
+                Report reason
+                <select id="reportReason">
+                  <option value="">All reasons</option>
+                  <option
+                    th:each="r:${reasons}"
+                    th:value="${r}"
+                    th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(r.name(),'_',' ')))}"
+                  ></option>
+                </select>
+              </label>
+              <label>
+                Priority severity
+                <select id="reportSeverity">
+                  <option value="">All severity levels</option>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </label>
+              <label>
+                From date
+                <input id="reportFrom" type="date" />
+              </label>
+              <label>
+                To date
+                <input id="reportTo" type="date" />
+              </label>
+            </div>
+          </section>
+
+          <!-- Moderation Queue Table Panel -->
+          <article class="panel table-panel">
+            <div class="panel-header">
+              <div>
+                <div class="queue-title-row">
+                  <h2 th:text="${pageTitle}">Reports</h2>
+                  <span class="queue-counter-badge" id="resultSummary"
+                    >Loading...</span
+                  >
+                </div>
+                <p>
+                  Click on any row or use the action buttons to inspect evidence
+                  and apply moderation.
+                </p>
+              </div>
+              <div class="panel-actions">
+                <button class="btn" id="refreshReports">
+                  <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+              </div>
+            </div>
+
+            <!-- Segmented Status Tabs -->
+            <nav class="queue-tabs" aria-label="Moderation queue quick tabs">
+              <button class="queue-tab active" data-status="">
+                All Reports <span class="tab-pill" id="tabBadgeTotal">0</span>
+              </button>
+              <button class="queue-tab" data-status="PENDING">
+                <i class="bi bi-hourglass-split"></i> Pending
+                <span class="tab-pill tab-pill-amber" id="tabBadgePending"
+                  >0</span
+                >
+              </button>
+              <button class="queue-tab" data-status="ESCALATED">
+                <i class="bi bi-shield-exclamation"></i> Escalated
+                <span class="tab-pill tab-pill-red" id="tabBadgeEscalated"
+                  >0</span
+                >
+              </button>
+              <button class="queue-tab" data-status="UNDER_REVIEW">
+                <i class="bi bi-eye"></i> Under Review
+                <span class="tab-pill tab-pill-blue" id="tabBadgeReview"
+                  >0</span
+                >
+              </button>
+              <button class="queue-tab" data-status="RESOLVED">
+                <i class="bi bi-check2-circle"></i> Resolved
+                <span class="tab-pill tab-pill-green" id="tabBadgeResolved"
+                  >0</span
+                >
+              </button>
+              <button class="queue-tab" data-status="DISMISSED">
+                <i class="bi bi-x-circle"></i> Dismissed
+                <span class="tab-pill tab-pill-gray" id="tabBadgeDismissed"
+                  >0</span
+                >
+              </button>
+            </nav>
+
+            <div class="table-responsive">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width: 80px">ID</th>
+                    <th style="width: 120px">Target Type</th>
+                    <th>Reported User &amp; Target</th>
+                    <th>Reporter</th>
+                    <th>Reason</th>
+                    <th style="width: 110px">Severity</th>
+                    <th style="width: 130px">Status</th>
+                    <th style="width: 130px">Submitted</th>
+                    <th style="width: 160px; text-align: right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reportRows">
+                  <tr>
+                    <td colspan="9" class="empty-state">
+                      <i class="bi bi-hourglass-split"></i>
+                      <strong>Loading moderation queue&hellip;</strong>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <span id="pageSummary"></span>
+              <nav class="pagination-controls">
+                <button
+                  class="page-btn"
+                  id="pagePrev"
+                  aria-label="Previous page"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <div id="pageNumbers" class="page-numbers"></div>
+                <button class="page-btn" id="pageNext" aria-label="Next page">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </nav>
+            </div>
+          </article>
+        </section>
+        <footer class="page-footer">
+          <span>&copy; 2026 Nham Health. All rights reserved.</span>
+          <span>Version 1.0.0</span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Quick Preview Modal -->
+    <div
+      class="modal"
+      id="quickPreviewModal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <div class="preview-modal-badges">
+              <span class="type-badge" id="modalTypeBadge">POST</span>
+              <span class="severity-badge" id="modalSeverityBadge">MEDIUM</span>
+              <span class="status-pill" id="modalStatusPill">PENDING</span>
+            </div>
+            <h2 id="modalTitle">Report #0 Details</h2>
+          </div>
+          <button
+            class="icon-button"
+            id="closeModalBtn"
+            aria-label="Close dialog"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="preview-card-grid">
+            <div class="preview-user-card">
+              <small>Reported Account</small>
+              <div class="preview-user-flex">
+                <div class="user-avatar" id="modalUserAvatar">U</div>
+                <div>
+                  <strong id="modalUserName">User Name</strong>
+                  <span id="modalUserId">User ID #0</span>
+                </div>
+              </div>
+            </div>
+            <div class="preview-reporter-card">
+              <small>Reporter Information</small>
+              <div class="preview-user-flex">
+                <div
+                  class="user-avatar reporter-avatar"
+                  id="modalReporterAvatar"
+                >
+                  <i class="bi bi-shield-lock"></i>
+                </div>
+                <div>
+                  <strong id="modalReporterName">Reporter Name</strong>
+                  <span id="modalReporterId"
+                    ><i class="bi bi-lock-fill"></i> Confidential ID #0</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <label class="preview-section-title"
+              ><i class="bi bi-flag"></i> Violation Reason</label
+            >
+            <p class="preview-text-box" id="modalReason">-</p>
+          </div>
+
+          <div class="preview-section">
+            <label class="preview-section-title"
+              ><i class="bi bi-card-text"></i> Content Snapshot /
+              Evidence</label
+            >
+            <div class="preview-quote-box">
+              <p id="modalSnapshot">No content snapshot available.</p>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <label class="preview-section-title"
+              ><i class="bi bi-chat-left-quote"></i> Reporter's
+              Description</label
+            >
+            <div class="preview-desc-box">
+              <p id="modalDescription">No description supplied.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="cancelModalBtn">Close</button>
+          <a class="btn btn-primary" id="modalReviewBtn" href="#"
+            ><i class="bi bi-shield-check"></i> Open Full Review Workspace</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <script th:src="@{/js/admin-layout.js(v=3)}"></script>
+    <script th:src="@{/js/admin-report.js(v=13)}"></script>
+  </body>
+</html>

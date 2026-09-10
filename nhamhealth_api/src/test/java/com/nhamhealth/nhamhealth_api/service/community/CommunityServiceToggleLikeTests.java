@@ -17,6 +17,7 @@ import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.CommentLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostMediaRepository;
@@ -62,7 +63,12 @@ class CommunityServiceToggleLikeTests {
     void handlesConcurrentConflictSilentlyWithoutDuplicateNotification() {
         Dependencies deps = new Dependencies();
         when(deps.likes.deleteByUserUserIdAndPostPostId(9, 20)).thenReturn(0);
-        // insertIgnoreConflict returns 0 when concurrent insert won the race (conflict DO NOTHING)
+        // insertIgnoreConflict returns 0 when concurrent insert won the race (conflict
+        // DO NOTHING)
+        // insertIgnoreConflict returns 0 when concurrent insert won the race (conflict
+        // DO NOTHING)
+        // insertIgnoreConflict returns 0 when concurrent insert won the race (conflict
+        // DO NOTHING)
         when(deps.likes.insertIgnoreConflict(eq(9), eq(20), any())).thenReturn(0);
 
         var response = deps.service.toggleLike(9, 20);
@@ -92,9 +98,10 @@ class CommunityServiceToggleLikeTests {
         private final RecipeTagRepository recipeTags = mock(RecipeTagRepository.class);
         private final RecipeRepository recipes = mock(RecipeRepository.class);
         private final SavedRecipeRepository savedRecipes = mock(SavedRecipeRepository.class);
+        private final ModerationActionRepository moderationActions = mock(ModerationActionRepository.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
                 commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications,
-                recipeIngredients, recipeSteps, recipeTags, recipes, savedRecipes);
+                recipeIngredients, recipeSteps, recipeTags, recipes, savedRecipes, moderationActions);
 
         private final User postOwner = mock(User.class);
         private final User actor = mock(User.class);

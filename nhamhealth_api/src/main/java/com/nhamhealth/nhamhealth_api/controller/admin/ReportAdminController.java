@@ -1,17 +1,36 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
-import com.nhamhealth.nhamhealth_api.dto.request.*;
-import com.nhamhealth.nhamhealth_api.dto.response.*;
-import com.nhamhealth.nhamhealth_api.entity.*;
-import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
 import java.time.LocalDateTime;
-import org.springframework.data.domain.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.nhamhealth.nhamhealth_api.dto.request.ModerationActionRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ReviewAppealRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ReviewReportRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminReportResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AppealResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.ModerationActionResponse;
+import com.nhamhealth.nhamhealth_api.entity.AppealStatus;
+import com.nhamhealth.nhamhealth_api.entity.ReportReasonCode;
+import com.nhamhealth.nhamhealth_api.entity.ReportSeverity;
+import com.nhamhealth.nhamhealth_api.entity.ReportStatus;
+import com.nhamhealth.nhamhealth_api.entity.ReportType;
+import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
 
 @Controller
 public class ReportAdminController {
@@ -59,11 +78,14 @@ public class ReportAdminController {
   public String reportReview(@PathVariable Integer id, Authentication authentication, Model model) {
     AdminReportResponse report = reports.detail(id);
     if (report.status() == ReportStatus.PENDING) {
-      report =
-          reports.startReview(
-              id, admin(authentication).getUserId(), new ReviewReportRequest(null, null));
+      report = reports.startReview(
+          id, admin(authentication).getUserId(), new ReviewReportRequest(null, null));
     }
-    model.addAttribute("pageTitle", "Review Report #" + id);
+    model.addAttribute(
+        "pageTitle",
+        (report.status() == ReportStatus.ESCALATED
+            ? "Review Escalated Report #"
+            : "Review Report #") + id);
     model.addAttribute("activePage", activePage(report.type()));
     model.addAttribute("report", report);
     addReturnDestination(model, report.type());
@@ -94,10 +116,8 @@ public class ReportAdminController {
       @RequestParam(required = false) ReportSeverity severity,
       @RequestParam(required = false) Integer reportedUserId,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          LocalDateTime from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          LocalDateTime to,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
       @RequestParam(defaultValue = "0") int page) {
     return reports.list(
         type,
@@ -118,6 +138,7 @@ public class ReportAdminController {
         count(null),
         count(ReportStatus.PENDING),
         count(ReportStatus.UNDER_REVIEW),
+        count(ReportStatus.ESCALATED),
         count(ReportStatus.RESOLVED),
         count(ReportStatus.NO_VIOLATION) + count(ReportStatus.REJECTED)
             + count(ReportStatus.DISMISSED));
@@ -139,6 +160,15 @@ public class ReportAdminController {
       Authentication auth,
       @RequestBody(required = false) ReviewReportRequest request) {
     return reports.dismiss(id, admin(auth).getUserId(), request);
+  }
+
+  @PatchMapping("/admin/reports/{id:\\d+}/escalate")
+  @ResponseBody
+  public AdminReportResponse escalate(
+      @PathVariable Integer id,
+      Authentication auth,
+      @RequestBody(required = false) ReviewReportRequest request) {
+    return reports.escalate(id, admin(auth).getUserId(), request);
   }
 
   @PostMapping("/admin/reports/{id:\\d+}/actions")
@@ -185,7 +215,8 @@ public class ReportAdminController {
   }
 
   private User admin(Authentication auth) {
-    if (auth == null) throw new IllegalStateException("Admin authentication is required");
+    if (auth == null)
+      throw new IllegalStateException("Admin authentication is required");
     return users
         .findByEmailIgnoreCase(auth.getName())
         .orElseThrow(() -> new IllegalStateException("Admin account not found"));
@@ -213,5 +244,11 @@ public class ReportAdminController {
   }
 
   public record ReportSummary(
-      long total, long pending, long underReview, long resolved, long dismissed) {}
+      long total,
+      long pending,
+      long underReview,
+      long escalated,
+      long resolved,
+      long dismissed) {
+  }
 }

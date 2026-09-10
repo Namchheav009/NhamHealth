@@ -42,6 +42,10 @@ import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.SavedRecipeRepository;
+import com.nhamhealth.nhamhealth_api.entity.ModerationAction;
+import com.nhamhealth.nhamhealth_api.entity.ModerationActionType;
+import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
+import java.time.format.DateTimeFormatter;
 import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.UserRecipeAiCheckRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
@@ -63,18 +67,21 @@ public class RecipeFlowService {
     private final UserRepository users;
     private final ProfileImageStorageService images;
     private final EntityManager entityManager;
+    private final ModerationActionRepository moderationActions;
 
     public RecipeFlowService(RecipeRepository recipes, RecipeIngredientRepository ingredients,
             RecipeStepRepository steps, RecipeTagRepository recipeTags, TagTypeRepository tags,
             AiRecipeReviewRepository reviews, UserRecipeAiCheckRepository checks,
             SavedRecipeRepository savedRecipes, PostRepository posts,
             MealRepository meals, MealCategoryRepository categories, UserRepository users,
-            ProfileImageStorageService images, EntityManager entityManager) {
+            ProfileImageStorageService images, EntityManager entityManager,
+            ModerationActionRepository moderationActions) {
         this.recipes = recipes; this.ingredients = ingredients; this.steps = steps; this.recipeTags = recipeTags;
         this.tags = tags; this.reviews = reviews; this.checks = checks; this.savedRecipes = savedRecipes;
         this.posts = posts; this.meals = meals; this.categories = categories;
         this.users = users; this.images = images;
         this.entityManager = entityManager;
+        this.moderationActions = moderationActions;
     }
 
     @Transactional(readOnly = true)
@@ -106,6 +113,7 @@ public class RecipeFlowService {
 
     @Transactional
     public RecipeResponse create(Integer userId, RecipeRequest request, MultipartFile image) {
+        assertNotRestricted(userId, ModerationActionType.POST_RESTRICTED, "creating recipes");
         Recipe recipe = new Recipe();
         recipe.setAuthor(user(userId));
         recipe.setStatus("DRAFT");
@@ -125,6 +133,7 @@ public class RecipeFlowService {
 
     @Transactional
     public RecipeResponse publish(Integer userId, Integer recipeId) {
+        assertNotRestricted(userId, ModerationActionType.POST_RESTRICTED, "publishing recipes");
         Recipe recipe = owned(userId, recipeId);
         if (!"PUBLISHED".equals(recipe.getStatus())) {
             LocalDateTime now = LocalDateTime.now();
@@ -336,4 +345,18 @@ public class RecipeFlowService {
     private static String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static String value(String value) { return value == null ? "" : value; }
     private static <T> List<T> list(List<T> value) { return value == null ? List.of() : value; }
+
+    private void assertNotRestricted(Integer userId, ModerationActionType type, String actionLabel) {
+        List<ModerationAction> active = moderationActions.findActiveRestrictions(userId, type,
+                java.time.LocalDateTime.now());
+        if (!active.isEmpty()) {
+            ModerationAction restriction = active.get(0);
+            String expiry = restriction.getExpiresAt() != null
+                    ? " until " + restriction.getExpiresAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "";
+            throw new ResponseStatusException(
+                    FORBIDDEN,
+                    "Your account is currently restricted from " + actionLabel + expiry + ".");
+        }
+    }
 }

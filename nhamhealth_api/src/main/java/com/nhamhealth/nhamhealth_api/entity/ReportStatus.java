@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.entity;
 public enum ReportStatus {
   PENDING,
   UNDER_REVIEW,
+  ESCALATED,
   RESOLVED,
   NO_VIOLATION,
   REJECTED,

@@ -1,5 +1,4 @@
 package com.nhamhealth.nhamhealth_api.service.community;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,8 +16,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.nhamhealth.nhamhealth_api.entity.Post;
 import com.nhamhealth.nhamhealth_api.entity.PostComment;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.CommentLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.FollowRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostCommentRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostLikeRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostMediaRepository;
@@ -29,9 +30,9 @@ import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.SavedRecipeRepository;
-import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 class CommunityServiceCommentDeletionTests {
 
@@ -82,9 +83,10 @@ class CommunityServiceCommentDeletionTests {
         private final RecipeTagRepository recipeTags = mock(RecipeTagRepository.class);
         private final RecipeRepository recipes = mock(RecipeRepository.class);
         private final SavedRecipeRepository savedRecipes = mock(SavedRecipeRepository.class);
+        private final ModerationActionRepository moderationActions = mock(ModerationActionRepository.class);
         private final CommunityService service = new CommunityService(posts, media, likes, comments,
                 commentLikes, users, profiles, follows, postTags, tagTypes, imageStorage, notifications,
-                recipeIngredients, recipeSteps, recipeTags, recipes, savedRecipes);
+                recipeIngredients, recipeSteps, recipeTags, recipes, savedRecipes, moderationActions);
         private final PostComment comment = mock(PostComment.class);
 
         private Dependencies(int postOwnerId, int commentAuthorId) {

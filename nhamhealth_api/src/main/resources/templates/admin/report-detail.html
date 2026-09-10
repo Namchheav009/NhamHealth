@@ -1,14 +1,654 @@
-<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><title th:text="${pageTitle+' | Nham Health Admin'}">Report</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><link rel="stylesheet" th:href="@{/css/admin-layout.css}"><link rel="stylesheet" th:href="@{/css/admin-report.css(v=10)}"></head><body><div class="app-shell"><div th:replace="~{layouts/sidebar :: sidebar(${activePage})}"></div><main class="main-area"><div th:replace="~{layouts/topbar :: topbar}"></div>
-<section class="page-content report-detail-page" th:attr="data-report-id=${report.id},data-report-type=${report.type},data-report-status=${report.status},data-return-url=${returnUrl}">
-<div class="page-heading detail-heading"><div><p class="eyebrow">Moderation workspace</p><div class="detail-title"><h1 th:text="${pageTitle}">Report</h1><span class="status-pill" th:classappend="${' status-'+#strings.toLowerCase(report.status.name())}" th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.status.name(),'_',' ')))}"></span></div><p>Dashboard <i class="bi bi-chevron-right"></i> Report Management <i class="bi bi-chevron-right"></i> <a th:href="${returnUrl}" th:text="${returnLabel}">Reports</a> <i class="bi bi-chevron-right"></i> <span th:text="${'#'+report.id}"></span></p></div><a class="btn" th:href="${returnUrl}"><i class="bi bi-arrow-left"></i> <span th:text="${'Back to '+returnLabel}">Back to Reports</span></a></div>
-<div class="review-overview"><article><span class="overview-icon reason"><i class="bi bi-flag"></i></span><div><small>Reported for</small><strong th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.reason.name(),'_',' ')))}"></strong></div></article><article><span class="overview-icon" th:classappend="${' severity-'+#strings.toLowerCase(report.severity.name())}"><i class="bi bi-exclamation-triangle"></i></span><div><small>Priority</small><strong th:text="${report.severity+' severity'}"></strong></div></article><article><span class="overview-icon target"><i class="bi" th:classappend="${report.type.name()=='PROFILE'?' bi-person':(report.type.name()=='POST'?' bi-file-post':' bi-chat-left-text')}"></i></span><div><small>Content type</small><strong th:text="${report.type}"></strong></div></article><article><span class="overview-icon history"><i class="bi bi-clock-history"></i></span><div><small>Account history</small><strong th:text="${report.previousReportCount+' previous report'+(report.previousReportCount==1?'':'s')}"></strong></div></article></div>
-<div class="detail-layout"><div class="detail-main">
-<section class="detail-card evidence-card"><div class="card-heading"><div><span class="section-icon"><i class="bi bi-card-text"></i></span><div><h2>Reported content</h2><p>Review the exact target and submitted evidence.</p></div></div><span class="type-badge" th:classappend="${' type-'+#strings.toLowerCase(report.type.name())}" th:text="${report.type}"></span></div><div class="target-identity"><div><small>Target</small><strong th:text="${report.targetSummary}">Target</strong><span th:text="${report.type.name()+' #'+report.targetId}"></span></div><div><small>Owner / account</small><strong th:text="${report.reportedUserName}"></strong><span th:text="${'User ID #'+report.reportedUserId}"></span></div></div><div class="evidence-box"><span>Content snapshot</span><p th:text="${report.contentSnapshot ?: (report.type.name()=='PROFILE' ? 'This report concerns the user profile and account activity.' : 'No content snapshot was available when this report was submitted.')}"></p></div></section>
-<section class="detail-card"><div class="card-heading"><div><span class="section-icon"><i class="bi bi-file-earmark-text"></i></span><div><h2>Report details</h2><p>Information supplied when the report was created.</p></div></div></div><div class="description prominent"><span>Reporter’s description</span><p th:text="${report.description ?: 'No additional description was provided.'}"></p></div><dl class="detail-grid compact"><div><dt>Report ID</dt><dd th:text="${'#'+report.id}"></dd></div><div><dt>Submitted</dt><dd th:text="${#temporals.format(report.createdAt,'dd MMM yyyy, HH:mm')}"></dd></div><div><dt>Current status</dt><dd th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.status.name(),'_',' ')))}"></dd></div></dl></section>
-<section class="detail-card decision-card" th:if="${report.status.name()=='PENDING'}"><div class="card-heading"><div><span class="section-icon action"><i class="bi bi-search"></i></span><div><h2>Start review</h2><p>Assign this report to yourself and begin the moderation decision.</p></div></div></div><div class="review-callout"><i class="bi bi-info-circle"></i><span>Starting review changes the status to <strong>Under Review</strong>. Other admins will see that this report is being handled.</span></div><button class="btn btn-primary action-button" id="startReview"><i class="bi bi-play-circle"></i> Start Review</button></section>
-<section class="detail-card decision-card" th:if="${report.status.name()=='UNDER_REVIEW'}"><div class="card-heading"><div><span class="section-icon action"><i class="bi bi-shield-check"></i></span><div><h2>Make a decision</h2><p>Choose an outcome and leave a clear audit note.</p></div></div><span class="required-label">Decision required</span></div><div class="decision-toggle"><label><input type="radio" name="decision" value="none" checked><span><i class="bi bi-check-circle"></i><strong>No violation</strong><small>Dismiss without action</small></span></label><label><input type="radio" name="decision" value="violation"><span><i class="bi bi-exclamation-octagon"></i><strong>Violation found</strong><small>Apply moderation action</small></span></label></div><div id="actionFields" hidden><label>Moderation action<select id="actionType"></select></label><label id="durationField" hidden>Suspension duration<select id="duration"><option value="1">1 day</option><option value="3">3 days</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="custom">Custom dates</option></select></label><div id="customDates" hidden><label>Start<input id="startsAt" type="datetime-local"></label><label>End<input id="expiresAt" type="datetime-local"></label></div></div><label class="note-field">Admin note <span>Recommended for the audit trail</span><textarea id="adminNote" maxlength="1000" rows="4" placeholder="Summarize what you reviewed and why you chose this decision..."></textarea></label><div class="decision-footer"><small><i class="bi bi-journal-check"></i> Your decision will be recorded in moderation history.</small><button class="btn btn-primary action-button" id="submitDecision">Dismiss Report</button></div></section>
-<section class="detail-card resolved-card" th:if="${report.status.name()=='RESOLVED' or report.status.name()=='DISMISSED'}"><div class="resolved-icon"><i class="bi bi-check2-circle"></i></div><div><h2>Review completed</h2><p>This report has a final moderation decision.</p><strong>Admin note</strong><p th:text="${report.adminNote ?: 'No admin note was recorded.'}"></p></div></section></div>
-<aside class="detail-side"><section class="detail-card account-card"><div class="card-heading"><div><span class="section-icon"><i class="bi bi-person"></i></span><div><h2>Reported account</h2><p>User receiving this report</p></div></div></div><div class="avatar-placeholder" th:text="${#strings.substring(report.reportedUserName,0,1)}">U</div><strong th:text="${report.reportedUserName}"></strong><span th:text="${'User ID #'+report.reportedUserId}"></span><div class="account-warning" th:if="${report.previousReportCount>0}"><i class="bi bi-exclamation-triangle"></i><span><strong th:text="${report.previousReportCount}"></strong> earlier report(s) against this account</span></div></section>
-<section class="detail-card"><div class="card-heading"><div><span class="section-icon"><i class="bi bi-clock-history"></i></span><div><h2>Moderation history</h2><p>Previous actions on this account</p></div></div></div><div th:if="${report.moderationHistory.empty}" class="empty-inline"><i class="bi bi-inbox"></i><span>No previous moderation actions.</span></div><div class="history-list"><article class="history-item" th:each="action:${report.moderationHistory}"><span class="history-dot"></span><div><strong th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(action.actionType.name(),'_',' ')))}"></strong><span th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(action.reason.name(),'_',' ')))}"></span><small th:text="${#temporals.format(action.createdAt,'dd MMM yyyy, HH:mm')}"></small></div></article></div></section>
-<section class="detail-card privacy-card"><div class="card-heading"><div><span class="section-icon"><i class="bi bi-shield-lock"></i></span><div><h2>Reporter</h2><p>Confidential information</p></div></div></div><strong th:text="${report.reporterName}"></strong><span th:text="${'User ID #'+report.reporterId}"></span><p><i class="bi bi-lock"></i> Never share the reporter’s identity with the reported user.</p></section></aside></div></section>
-<footer class="page-footer"><span>&copy; 2026 Nham Health.</span></footer></main></div><div class="sidebar-overlay" id="sidebarOverlay"></div><script th:src="@{/js/admin-layout.js(v=3)}"></script><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script th:src="@{/js/admin-report-detail.js(v=2)}"></script></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&family=Noto+Sans+Khmer:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-report.css(v=14)}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div th:replace="~{layouts/sidebar :: sidebar(${activePage})}"></div>
+      <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section
+          class="page-content report-detail-page"
+          th:attr="data-report-id=${report.id},data-report-type=${report.type},data-report-status=${report.status},data-return-url=${returnUrl}"
+        >
+          <!-- Heading -->
+          <div class="page-heading detail-heading">
+            <div>
+              <p class="eyebrow">
+                <i class="bi bi-shield-lock-fill"></i> Moderation Workspace
+              </p>
+              <div class="detail-title">
+                <h1 th:text="${pageTitle}">Report</h1>
+                <span
+                  class="status-pill"
+                  th:classappend="${' status-' + #strings.toLowerCase(report.status.name())}"
+                >
+                  <i
+                    class="bi"
+                    th:classappend="${report.status.name()=='PENDING' ? ' bi-hourglass-split' : (report.status.name()=='ESCALATED' ? ' bi-shield-exclamation' : (report.status.name()=='UNDER_REVIEW' ? ' bi-eye' : (report.status.name()=='RESOLVED' ? ' bi-check2-circle' : ' bi-x-circle')))}"
+                  ></i>
+                  <span
+                    th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.status.name(),'_',' ')))}"
+                    >Status</span
+                  >
+                </span>
+                <span
+                  class="severity-badge"
+                  th:classappend="${' severity-' + #strings.toLowerCase(report.severity.name())}"
+                >
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  <span th:text="${report.severity + ' Priority'}"
+                    >Severity</span
+                  >
+                </span>
+              </div>
+              <p>
+                Dashboard <i class="bi bi-chevron-right"></i> Report Management
+                <i class="bi bi-chevron-right"></i>
+                <a th:href="${returnUrl}" th:text="${returnLabel}">Reports</a>
+                <i class="bi bi-chevron-right"></i>
+                <span
+                  class="breadcrumb-active"
+                  th:text="${'Report #' + report.id}"
+                  >#0</span
+                >
+              </p>
+            </div>
+            <a class="btn" th:href="${returnUrl}"
+              ><i class="bi bi-arrow-left"></i>
+              <span th:text="${'Back to ' + returnLabel}"
+                >Back to Reports</span
+              ></a
+            >
+          </div>
+
+          <!-- 4-Card KPI Overview Grid -->
+          <div class="review-overview">
+            <article class="overview-card">
+              <span class="overview-icon reason"
+                ><i class="bi bi-flag-fill"></i
+              ></span>
+              <div>
+                <small>Reported Reason</small>
+                <strong
+                  th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.reason.name(),'_',' ')))}"
+                  >Reason</strong
+                >
+                <span class="overview-subtext">Violation category</span>
+              </div>
+            </article>
+            <article class="overview-card">
+              <span
+                class="overview-icon"
+                th:classappend="${' severity-' + #strings.toLowerCase(report.severity.name())}"
+              >
+                <i class="bi bi-exclamation-octagon-fill"></i>
+              </span>
+              <div>
+                <small>Triage Priority</small>
+                <strong th:text="${report.severity + ' Severity'}"
+                  >Severity</strong
+                >
+                <span class="overview-subtext">Automated SLA level</span>
+              </div>
+            </article>
+            <article class="overview-card">
+              <span class="overview-icon target"
+                ><i
+                  class="bi"
+                  th:classappend="${report.type.name()=='PROFILE' ? ' bi-person-badge-fill' : (report.type.name()=='POST' ? ' bi-file-post-fill' : ' bi-chat-left-text-fill')}"
+                ></i
+              ></span>
+              <div>
+                <small>Content Entity</small>
+                <strong th:text="${report.type}">Entity</strong>
+                <span
+                  class="overview-subtext"
+                  th:text="${'Target #' + report.targetId}"
+                  >Target ID</span
+                >
+              </div>
+            </article>
+            <article class="overview-card">
+              <span class="overview-icon history"
+                ><i class="bi bi-clock-history"></i
+              ></span>
+              <div>
+                <small>Account Standing</small>
+                <strong
+                  th:text="${report.previousReportCount + ' prior report' + (report.previousReportCount==1 ? '' : 's')}"
+                  >0 reports</strong
+                >
+                <span
+                  class="risk-badge"
+                  th:classappend="${report.previousReportCount > 0 ? 'risk-flagged' : 'risk-clean'}"
+                  th:text="${report.previousReportCount > 0 ? 'Prior Violations' : 'Clean History'}"
+                  >Standing</span
+                >
+              </div>
+            </article>
+          </div>
+
+          <!-- 2-Column Detail Layout -->
+          <div class="detail-layout">
+            <!-- Left Main Column -->
+            <div class="detail-main">
+              <!-- Evidence & Target Card -->
+              <section class="detail-card evidence-card">
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon"
+                      ><i class="bi bi-card-text"></i
+                    ></span>
+                    <div>
+                      <h2>Reported Content &amp; Target</h2>
+                      <p>
+                        Inspect the reported entity and the submitted evidence
+                        snapshot.
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    class="type-badge"
+                    th:classappend="${' type-' + #strings.toLowerCase(report.type.name())}"
+                  >
+                    <i
+                      class="bi"
+                      th:classappend="${report.type.name()=='PROFILE' ? ' bi-person-badge' : (report.type.name()=='POST' ? ' bi-file-post' : ' bi-chat-left-text')}"
+                    ></i>
+                    <span th:text="${report.type}">POST</span>
+                  </span>
+                </div>
+                <div class="target-identity">
+                  <div class="target-identity-item">
+                    <small>Reported Target Summary</small>
+                    <strong th:text="${report.targetSummary}"
+                      >Target Name</strong
+                    >
+                    <span
+                      class="target-subid"
+                      th:text="${report.type.name() + ' ID #' + report.targetId}"
+                      >ID #0</span
+                    >
+                  </div>
+                  <div class="target-identity-item">
+                    <small>Target Author / Account</small>
+                    <strong th:text="${report.reportedUserName}"
+                      >User Name</strong
+                    >
+                    <span
+                      class="target-subid"
+                      th:text="${'Account User ID #' + report.reportedUserId}"
+                      >User ID #0</span
+                    >
+                  </div>
+                </div>
+                <div class="evidence-box">
+                  <div class="evidence-box-header">
+                    <span
+                      ><i class="bi bi-quote"></i> Content Snapshot at Time of
+                      Report</span
+                    >
+                  </div>
+                  <p
+                    th:text="${report.contentSnapshot ?: (report.type.name()=='PROFILE' ? 'This report concerns the user profile, username, bio or general account behavior.' : 'No content snapshot was available when this report was submitted.')}"
+                  ></p>
+                </div>
+              </section>
+
+              <!-- Report Details Card -->
+              <section class="detail-card">
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon"
+                      ><i class="bi bi-chat-left-quote-fill"></i
+                    ></span>
+                    <div>
+                      <h2>Reporter's Submission</h2>
+                      <p>
+                        Context and details submitted by the reporting community
+                        member.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="description prominent">
+                  <span class="desc-header"
+                    ><i class="bi bi-info-circle-fill"></i> Additional details
+                    from reporter</span
+                  >
+                  <p
+                    th:text="${report.description ?: 'No additional description was provided by the reporter.'}"
+                  ></p>
+                </div>
+                <dl class="detail-grid compact">
+                  <div>
+                    <dt>Report ID</dt>
+                    <dd th:text="${'#' + report.id}"></dd>
+                  </div>
+                  <div>
+                    <dt>Date Submitted</dt>
+                    <dd
+                      th:text="${#temporals.format(report.createdAt,'dd MMM yyyy, HH:mm')}"
+                    ></dd>
+                  </div>
+                  <div>
+                    <dt>Current Status</dt>
+                    <dd
+                      th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(report.status.name(),'_',' ')))}"
+                    ></dd>
+                  </div>
+                </dl>
+              </section>
+
+              <!-- Start Review Card (When PENDING) -->
+              <section
+                class="detail-card decision-card"
+                th:if="${report.status.name()=='PENDING'}"
+              >
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon action"
+                      ><i class="bi bi-play-circle-fill"></i
+                    ></span>
+                    <div>
+                      <h2>Assign Report &amp; Begin Review</h2>
+                      <p>
+                        Claim this report into your moderation queue and start
+                        evaluating actions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="review-callout">
+                  <i class="bi bi-info-circle-fill"></i>
+                  <div>
+                    <strong>Ready for moderator review</strong>
+                    <p>
+                      Starting review marks this ticket as
+                      <strong>Under Review</strong> and assigns you as the
+                      reviewer, preventing duplicate moderation from other
+                      administrators.
+                    </p>
+                  </div>
+                </div>
+                <button class="btn btn-primary action-button" id="startReview">
+                  <i class="bi bi-play-circle"></i> Start Review Workflow
+                </button>
+              </section>
+
+              <!-- Decision Card (When UNDER_REVIEW or ESCALATED) -->
+              <section
+                class="detail-card decision-card"
+                th:if="${report.status.name()=='UNDER_REVIEW' or report.status.name()=='ESCALATED'}"
+              >
+                <!-- Escalation Banner -->
+                <div
+                  class="escalation-alert-banner"
+                  th:if="${report.status.name()=='ESCALATED'}"
+                >
+                  <i class="bi bi-shield-exclamation"></i>
+                  <div>
+                    <strong>Escalated For Senior Moderator Review</strong>
+                    <p
+                      th:if="${report.adminNote}"
+                      th:text="${'Prior escalation note: ' + report.adminNote}"
+                    >
+                      Escalation details
+                    </p>
+                    <p th:unless="${report.adminNote}">
+                      This report was marked as high priority and forwarded for
+                      senior determination.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon action"
+                      ><i class="bi bi-shield-check"></i
+                    ></span>
+                    <div>
+                      <h2>Make a Moderation Decision</h2>
+                      <p>
+                        Select the final outcome, configure required action
+                        parameters, and record your audit note.
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    class="required-label"
+                    th:text="${report.status.name()=='ESCALATED' ? 'Escalated Review' : 'Decision required'}"
+                    >Decision required</span
+                  >
+                </div>
+
+                <!-- 3 Decision Radio Cards -->
+                <div class="decision-toggle decision-toggle-3">
+                  <label class="decision-tile">
+                    <input
+                      type="radio"
+                      name="decision"
+                      value="none"
+                      th:checked="${report.status.name()!='ESCALATED'}"
+                    />
+                    <span>
+                      <i class="bi bi-check-circle-fill tile-icon-green"></i>
+                      <strong>No Action / Dismiss</strong>
+                      <small
+                        >No violation. Dismiss report without penalty.</small
+                      >
+                    </span>
+                  </label>
+                  <label class="decision-tile">
+                    <input type="radio" name="decision" value="violation" />
+                    <span>
+                      <i class="bi bi-shield-shaded tile-icon-blue"></i>
+                      <strong>Moderation Action</strong>
+                      <small
+                        >Apply guideline sanction or restore content.</small
+                      >
+                    </span>
+                  </label>
+                  <label class="decision-tile">
+                    <input
+                      type="radio"
+                      name="decision"
+                      value="escalate"
+                      th:checked="${report.status.name()=='ESCALATED'}"
+                    />
+                    <span>
+                      <i
+                        class="bi bi-arrow-up-right-circle-fill tile-icon-amber"
+                      ></i>
+                      <strong>Escalate for Review</strong>
+                      <small>Forward report to senior moderation desk.</small>
+                    </span>
+                  </label>
+                </div>
+
+                <!-- Action Fields Form -->
+                <div id="actionFields" hidden>
+                  <div class="action-fields-grid">
+                    <label>
+                      Moderation Action
+                      <select id="actionType" class="select-styled"></select>
+                    </label>
+                    <label id="durationField" hidden>
+                      <span id="durationLabel">Duration</span>
+                      <select id="duration" class="select-styled">
+                        <option value="1">1 day (24 hours)</option>
+                        <option value="3">3 days</option>
+                        <option value="7" selected>7 days (1 week)</option>
+                        <option value="14">14 days (2 weeks)</option>
+                        <option value="30">30 days (1 month)</option>
+                        <option value="custom">
+                          Custom date &amp; time range
+                        </option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <!-- Custom Dates Container -->
+                  <div id="customDates" hidden>
+                    <label>
+                      Start date &amp; time
+                      <input id="startsAt" type="datetime-local" />
+                    </label>
+                    <label>
+                      End date &amp; time
+                      <input id="expiresAt" type="datetime-local" />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Escalation Form -->
+                <div id="escalateFields" hidden>
+                  <label>
+                    Escalation Urgency Priority
+                    <select id="escalateSeverity" class="select-styled">
+                      <option
+                        value="HIGH"
+                        th:selected="${report.severity.name()!='CRITICAL'}"
+                      >
+                        High Priority (Senior Queue)
+                      </option>
+                      <option
+                        value="CRITICAL"
+                        th:selected="${report.severity.name()=='CRITICAL'}"
+                      >
+                        Critical Priority (Immediate Action)
+                      </option>
+                    </select>
+                  </label>
+                </div>
+
+                <!-- Admin Note -->
+                <label class="note-field">
+                  <div class="note-field-header">
+                    <span>Moderator Audit Note</span>
+                    <span id="charCount" class="char-count">0 / 1000</span>
+                  </div>
+                  <textarea
+                    id="adminNote"
+                    maxlength="1000"
+                    rows="4"
+                    placeholder="Document what was reviewed, reasoning, and context for the permanent audit trail..."
+                  ></textarea>
+                </label>
+
+                <!-- Decision Footer -->
+                <div class="decision-footer">
+                  <small
+                    ><i class="bi bi-journal-check"></i> Decision and audit
+                    notes will be permanently logged in moderation
+                    history.</small
+                  >
+                  <button
+                    class="btn btn-primary action-button"
+                    id="submitDecision"
+                  >
+                    Dismiss Report
+                  </button>
+                </div>
+              </section>
+
+              <!-- Resolved Card (When finalized) -->
+              <section
+                class="detail-card resolved-card"
+                th:if="${report.status.name()=='RESOLVED' or report.status.name()=='NO_VIOLATION' or report.status.name()=='DISMISSED' or report.status.name()=='REJECTED'}"
+              >
+                <div class="resolved-icon">
+                  <i class="bi bi-check2-circle"></i>
+                </div>
+                <div class="resolved-body">
+                  <h2>Moderation Review Finalized</h2>
+                  <p>
+                    This report has been reviewed and a final decision was
+                    enacted.
+                  </p>
+                  <div class="resolved-note-box">
+                    <strong>Official Audit Note</strong>
+                    <p
+                      th:text="${report.adminNote ?: 'No additional admin note was recorded at closure.'}"
+                    ></p>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <!-- /.detail-main -->
+
+            <!-- Right Column Sidebar -->
+            <aside class="detail-side">
+              <!-- Reported User Profile Card -->
+              <section class="detail-card account-card">
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon"
+                      ><i class="bi bi-person-badge"></i
+                    ></span>
+                    <div>
+                      <h2>Reported Account</h2>
+                      <p>Account under moderation review</p>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="avatar-placeholder"
+                  th:text="${#strings.substring(report.reportedUserName,0,1)}"
+                >
+                  U
+                </div>
+                <strong
+                  class="account-name"
+                  th:text="${report.reportedUserName}"
+                  >Username</strong
+                >
+                <span
+                  class="account-id-badge"
+                  th:text="${'User ID #' + report.reportedUserId}"
+                  >User ID #0</span
+                >
+
+                <div
+                  class="account-warning"
+                  th:if="${report.previousReportCount > 0}"
+                >
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  <div>
+                    <strong
+                      th:text="${report.previousReportCount + ' earlier report(s)'}"
+                      >0 earlier reports</strong
+                    >
+                    <p>This user has a history of prior community reports.</p>
+                  </div>
+                </div>
+                <div
+                  class="account-clean"
+                  th:unless="${report.previousReportCount > 0}"
+                >
+                  <i class="bi bi-shield-check"></i>
+                  <span>First reported violation for this account</span>
+                </div>
+              </section>
+
+              <!-- Moderation History Timeline Card -->
+              <section class="detail-card history-card">
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon"
+                      ><i class="bi bi-clock-history"></i
+                    ></span>
+                    <div>
+                      <h2>Moderation Timeline</h2>
+                      <p>Previous enforcement actions</p>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  th:if="${report.moderationHistory.empty}"
+                  class="empty-inline"
+                >
+                  <i class="bi bi-inbox"></i>
+                  <span>No earlier moderation sanctions on this account.</span>
+                </div>
+                <div
+                  class="timeline-list"
+                  th:unless="${report.moderationHistory.empty}"
+                >
+                  <article
+                    class="timeline-item"
+                    th:each="action:${report.moderationHistory}"
+                  >
+                    <span
+                      class="timeline-dot"
+                      th:classappend="${' dot-' + #strings.toLowerCase(action.actionType.name())}"
+                    ></span>
+                    <div class="timeline-content">
+                      <div class="timeline-head">
+                        <strong
+                          th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(action.actionType.name(),'_',' ')))}"
+                          >Action</strong
+                        >
+                        <small
+                          th:text="${#temporals.format(action.createdAt,'dd MMM yyyy')}"
+                          >Date</small
+                        >
+                      </div>
+                      <span
+                        class="timeline-reason"
+                        th:text="${'Reason: ' + #strings.capitalize(#strings.toLowerCase(#strings.replace(action.reason.name(),'_',' ')))}"
+                        >Reason</span
+                      >
+                      <p
+                        class="timeline-note"
+                        th:if="${action.adminNote}"
+                        th:text="${action.adminNote}"
+                      >
+                        Note
+                      </p>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <!-- Reporter Confidentiality Card -->
+              <section class="detail-card privacy-card">
+                <div class="card-heading">
+                  <div>
+                    <span class="section-icon"
+                      ><i class="bi bi-shield-lock-fill"></i
+                    ></span>
+                    <div>
+                      <h2>Confidential Reporter</h2>
+                      <p>Protected reporter identity</p>
+                    </div>
+                  </div>
+                </div>
+                <strong th:text="${report.reporterName}">Reporter Name</strong>
+                <span
+                  class="reporter-subid"
+                  th:text="${'Reporter User ID #' + report.reporterId}"
+                  >User ID #0</span
+                >
+                <div class="privacy-callout">
+                  <i class="bi bi-lock-fill"></i>
+                  <p>
+                    Under NhamHealth trust &amp; safety policies, the reporter's
+                    identity must remain strictly confidential and never
+                    disclosed to reported parties.
+                  </p>
+                </div>
+              </section>
+            </aside>
+          </div>
+          <!-- /.detail-layout -->
+        </section>
+        <footer class="page-footer">
+          <span>&copy; 2026 Nham Health. All rights reserved.</span>
+        </footer>
+      </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <script th:src="@{/js/admin-layout.js(v=3)}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/js/admin-report-detail.js(v=13)}"></script>
+  </body>
+</html>
