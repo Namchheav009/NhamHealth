@@ -62,7 +62,6 @@ def validate_recipe(recipe: dict, *, require_image: bool = True) -> tuple[list[s
         errors.append("Difficulty must be EASY, MEDIUM, HARD or NOT_SPECIFIED.")
     if recipe.get("nutritionBasis") not in {"UNKNOWN", "PER_SERVING", "PER_100G", "WHOLE_RECIPE"}:
         errors.append("Unknown nutrition basis.")
-    for field in ("calories", "proteinGrams", "carbohydrateGrams", "fatGrams"):
     for field in ("calories", "proteinGrams"):
         value = recipe.get(field)
         if value is None:

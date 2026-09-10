@@ -3,6 +3,8 @@ package com.nhamhealth.nhamhealth_api.controller.admin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,8 +23,10 @@ import jakarta.validation.Valid;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealCategoryRequest;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.MealCategoryTranslation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
 import com.nhamhealth.nhamhealth_api.service.catalog.MealCategoryAdminService;
 
 @Controller
@@ -30,14 +34,17 @@ public class MealCategoryAdminController {
 
     private final MealCategoryRepository mealCategoryRepository;
     private final MealRepository mealRepository;
+    private final MealCategoryTranslationRepository mealCategoryTranslationRepository;
     private final MealCategoryAdminService mealCategoryAdminService;
 
     public MealCategoryAdminController(
             MealCategoryRepository mealCategoryRepository,
             MealRepository mealRepository,
+            MealCategoryTranslationRepository mealCategoryTranslationRepository,
             MealCategoryAdminService mealCategoryAdminService) {
         this.mealCategoryRepository = mealCategoryRepository;
         this.mealRepository = mealRepository;
+        this.mealCategoryTranslationRepository = mealCategoryTranslationRepository;
         this.mealCategoryAdminService = mealCategoryAdminService;
     }
 
@@ -51,10 +58,16 @@ public class MealCategoryAdminController {
             mealCounts.put(category.getCategoryId(), count);
         }
 
+        Map<Integer, MealCategoryTranslation> kmTranslations = mealCategoryTranslationRepository
+                .findByLanguageCode("km")
+                .stream()
+                .collect(Collectors.toMap(t -> t.getCategory().getCategoryId(), Function.identity(), (a, b) -> a));
+
         model.addAttribute("pageTitle", "Meal Categories");
         model.addAttribute("activePage", "meal-categories");
         model.addAttribute("adminName", authentication.getName());
         model.addAttribute("mealCategories", categories);
+        model.addAttribute("kmTranslations", kmTranslations);
         model.addAttribute("mealCounts", mealCounts);
         model.addAttribute("totalCategories", categories.size());
         model.addAttribute("totalMeals", mealRepository.count());

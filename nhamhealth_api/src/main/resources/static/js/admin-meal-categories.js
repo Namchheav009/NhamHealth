@@ -24,7 +24,9 @@
         const keyword = (searchInput.value || '').trim().toLowerCase();
         const status = statusFilter.value;
         categoryRows().forEach((row) => {
-            const matchesName = !keyword || row.dataset.name.toLowerCase().includes(keyword);
+            const matchesName = !keyword
+                || row.dataset.name.toLowerCase().includes(keyword)
+                || (row.dataset.nameKm && row.dataset.nameKm.toLowerCase().includes(keyword));
             const matchesStatus = status === 'all' || row.dataset.status === status;
             row.hidden = !(matchesName && matchesStatus);
         });
@@ -44,6 +46,8 @@
         form.reset();
         form.elements.categoryStatus.value = 'true';
         form.elements.sortOrder.value = nextDisplayOrder();
+        if (form.elements.categoryNameKm) form.elements.categoryNameKm.value = '';
+        if (form.elements.descriptionKm) form.elements.descriptionKm.value = '';
         title.textContent = 'Add Meal Category';
         subtitle.textContent = 'Enter category information for your menu catalog.';
         saveButton.textContent = 'Save Category';
@@ -55,9 +59,11 @@
         editingCategoryId = row.dataset.id;
         form.reset();
         form.elements.categoryName.value = row.dataset.name;
+        if (form.elements.categoryNameKm) form.elements.categoryNameKm.value = row.dataset.nameKm || '';
         form.elements.categoryStatus.value = row.dataset.status === 'active' ? 'true' : 'false';
         form.elements.sortOrder.value = row.dataset.order;
         form.elements.description.value = row.dataset.description || '';
+        if (form.elements.descriptionKm) form.elements.descriptionKm.value = row.dataset.descriptionKm || '';
         title.textContent = 'Edit Meal Category';
         subtitle.textContent = 'Update the category shown in your meal catalog.';
         saveButton.textContent = 'Save Changes';
@@ -98,7 +104,9 @@
         const data = Object.fromEntries(new FormData(form).entries());
         const payload = {
             categoryName: data.categoryName.trim(),
-            description: data.description.trim(),
+            categoryNameKm: (data.categoryNameKm || '').trim() || null,
+            description: (data.description || '').trim() || null,
+            descriptionKm: (data.descriptionKm || '').trim() || null,
             active: data.categoryStatus === 'true',
             sortOrder: Number(data.sortOrder)
         };

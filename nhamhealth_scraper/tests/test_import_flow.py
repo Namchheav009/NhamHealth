@@ -63,7 +63,6 @@ class ImportFlowTests(unittest.TestCase):
                 import_recipe(self.recipe)
             post.assert_not_called()
 
-    def test_multipart_preserves_unknown_nutrition_and_forces_draft(self):
     def test_multipart_preserves_nutrition_and_forces_draft(self):
         self.recipe.update(published=True, reviewStatus="APPROVED")
         response = Mock(ok=True, content=b"{}")
@@ -75,7 +74,6 @@ class ImportFlowTests(unittest.TestCase):
             payload = json.loads(files["recipe"][1])
             self.assertFalse(payload["published"])
             self.assertEqual("PENDING_REVIEW", payload["reviewStatus"])
-            self.assertIsNone(payload["calories"])
             self.assertEqual(400, payload["calories"])
             self.assertEqual(20, payload["proteinGrams"])
             self.assertEqual("អាហារពេលព្រឹក", payload["categoryNameKm"])

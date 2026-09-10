@@ -10,18 +10,25 @@ import org.springframework.cache.annotation.Caching;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealCategoryRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealCategoryDto;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.MealCategoryTranslation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
 
 @Service
 public class MealCategoryAdminService {
 
     private final MealCategoryRepository mealCategoryRepository;
     private final MealRepository mealRepository;
+    private final MealCategoryTranslationRepository mealCategoryTranslationRepository;
 
-    public MealCategoryAdminService(MealCategoryRepository mealCategoryRepository, MealRepository mealRepository) {
+    public MealCategoryAdminService(
+            MealCategoryRepository mealCategoryRepository,
+            MealRepository mealRepository,
+            MealCategoryTranslationRepository mealCategoryTranslationRepository) {
         this.mealCategoryRepository = mealCategoryRepository;
         this.mealRepository = mealRepository;
+        this.mealCategoryTranslationRepository = mealCategoryTranslationRepository;
     }
 
         @Transactional
@@ -39,7 +46,25 @@ public class MealCategoryAdminService {
         if (category.getSortOrder() == null) {
             category.setSortOrder(nextSortOrder());
         }
-        return toDto(mealCategoryRepository.save(category));
+        MealCategory saved = mealCategoryRepository.save(category);
+
+        MealCategoryTranslation en = new MealCategoryTranslation();
+        en.setCategory(saved);
+        en.setLanguageCode("en");
+        en.setName(saved.getCategoryName());
+        en.setDescription(saved.getDescription());
+        mealCategoryTranslationRepository.save(en);
+
+        if (request.categoryNameKm() != null && !request.categoryNameKm().isBlank()) {
+            MealCategoryTranslation km = new MealCategoryTranslation();
+            km.setCategory(saved);
+            km.setLanguageCode("km");
+            km.setName(request.categoryNameKm().trim());
+            km.setDescription(blankToNull(request.descriptionKm()));
+            mealCategoryTranslationRepository.save(km);
+        }
+
+        return toDto(saved);
     }
 
         @Transactional
@@ -54,7 +79,36 @@ public class MealCategoryAdminService {
                 .filter(existing -> !existing.getCategoryId().equals(categoryId))
                 .ifPresent(existing -> { throw new IllegalArgumentException("A meal category with this name already exists"); });
         apply(category, request);
-        return toDto(mealCategoryRepository.save(category));
+        MealCategory saved = mealCategoryRepository.save(category);
+
+        MealCategoryTranslation en = mealCategoryTranslationRepository
+                .findByCategoryCategoryIdAndLanguageCode(categoryId, "en")
+                .orElseGet(() -> {
+                    MealCategoryTranslation t = new MealCategoryTranslation();
+                    t.setCategory(saved);
+                    t.setLanguageCode("en");
+                    return t;
+                });
+        en.setName(saved.getCategoryName());
+        en.setDescription(saved.getDescription());
+        mealCategoryTranslationRepository.save(en);
+
+        var kmOpt = mealCategoryTranslationRepository.findByCategoryCategoryIdAndLanguageCode(categoryId, "km");
+        if (request.categoryNameKm() != null && !request.categoryNameKm().isBlank()) {
+            MealCategoryTranslation km = kmOpt.orElseGet(() -> {
+                MealCategoryTranslation t = new MealCategoryTranslation();
+                t.setCategory(saved);
+                t.setLanguageCode("km");
+                return t;
+            });
+            km.setName(request.categoryNameKm().trim());
+            km.setDescription(blankToNull(request.descriptionKm()));
+            mealCategoryTranslationRepository.save(km);
+        } else {
+            kmOpt.ifPresent(mealCategoryTranslationRepository::delete);
+        }
+
+        return toDto(saved);
     }
 
         @Transactional
@@ -67,6 +121,7 @@ public class MealCategoryAdminService {
         if (mealRepository.countByCategoryCategoryId(categoryId) > 0) {
             throw new IllegalArgumentException("This category still has meals. Set it inactive instead of deleting it.");
         }
+        mealCategoryTranslationRepository.deleteByCategoryCategoryId(categoryId);
         mealCategoryRepository.delete(category);
     }
 
@@ -95,10 +150,15 @@ public class MealCategoryAdminService {
     }
 
     private AdminMealCategoryDto toDto(MealCategory category) {
+        MealCategoryTranslation km = mealCategoryTranslationRepository
+                .findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(), "km")
+                .orElse(null);
         return new AdminMealCategoryDto(
                 category.getCategoryId(),
                 category.getCategoryName(),
+                km == null ? null : km.getName(),
                 category.getDescription(),
+                km == null ? null : km.getDescription(),
                 Boolean.TRUE.equals(category.getIsActive()),
                 category.getSortOrder(),
                 mealRepository.countByCategoryCategoryId(category.getCategoryId()));

@@ -84,12 +84,15 @@
                         </tr>
                         </thead>
                         <tbody id="categoryRows">
-                        <tr th:each="category, iter : ${mealCategories}" th:data-id="${category.categoryId}" th:data-status="${category.isActive != null and category.isActive ? 'active' : 'inactive'}" th:data-name="${category.categoryName}" th:data-description="${category.description}" th:data-order="${category.sortOrder}">
+                        <tr th:each="category, iter : ${mealCategories}" th:data-id="${category.categoryId}" th:data-status="${category.isActive != null and category.isActive ? 'active' : 'inactive'}" th:data-name="${category.categoryName}" th:data-name-km="${kmTranslations[category.categoryId] != null ? kmTranslations[category.categoryId].name : ''}" th:data-description="${category.description}" th:data-description-km="${kmTranslations[category.categoryId] != null ? kmTranslations[category.categoryId].description : ''}" th:data-order="${category.sortOrder}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="category-name">
                                     <span class="category-icon"><i class="bi bi-bag-fill"></i></span>
-                                    <span th:text="${category.categoryName}">Breakfast</span>
+                                    <div>
+                                        <span th:text="${category.categoryName}">Breakfast</span>
+                                        <small class="category-name-km" th:if="${kmTranslations[category.categoryId] != null and kmTranslations[category.categoryId].name != null and !kmTranslations[category.categoryId].name.isBlank()}" th:text="${kmTranslations[category.categoryId].name}" lang="km" style="display:block;color:var(--text-muted,#6b7280);font-size:0.85rem;margin-top:2px;">អាហារពេលព្រឹក</small>
+                                    </div>
                                 </div>
                             </td>
                             <td th:text="${category.description != null ? category.description : '-'}">Meals for a healthy and energetic start</td>
@@ -137,8 +140,12 @@
         <form id="categoryForm">
             <div class="modal-body">
                 <div class="field">
-                    <label for="categoryName">Category name</label>
+                    <label for="categoryName">Category name (English)</label>
                     <input id="categoryName" name="categoryName" type="text" maxlength="50" required>
+                </div>
+                <div class="field">
+                    <label for="categoryNameKm">Category name (ខ្មែរ)</label>
+                    <input id="categoryNameKm" name="categoryNameKm" type="text" maxlength="50" lang="km" placeholder="ឈ្មោះប្រភេទជាភាសាខ្មែរ">
                 </div>
                 <div class="field">
                     <label for="categoryStatus">Status</label>
@@ -152,8 +159,12 @@
                     <input id="categoryOrder" name="sortOrder" type="number" min="0" max="10000" required>
                 </div>
                 <div class="field full">
-                    <label for="categoryDescription">Description</label>
+                    <label for="categoryDescription">Description (English)</label>
                     <textarea id="categoryDescription" name="description" maxlength="255" placeholder="Meal category description..."></textarea>
+                </div>
+                <div class="field full">
+                    <label for="categoryDescriptionKm">Description (ខ្មែរ)</label>
+                    <textarea id="categoryDescriptionKm" name="descriptionKm" maxlength="1000" lang="km" placeholder="ការពិពណ៌នាប្រភេទជាភាសាខ្មែរ..."></textarea>
                 </div>
             </div>
             <div class="modal-actions">
