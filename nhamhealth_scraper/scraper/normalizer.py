@@ -92,8 +92,45 @@ def normalize_recipe(recipe: dict) -> dict:
         "prepTimeMinutes": recipe.get("prepTimeMinutes"),
         "difficulty": recipe.get("difficulty") or "NOT_SPECIFIED",
         "sourceImageUrl": recipe.get("sourceImageUrl"),
+        "imageUrl": recipe.get("sourceImageUrl") or recipe.get("localImagePath"),
         "localImagePath": recipe.get("localImagePath"),
         "imageDownloadError": recipe.get("imageDownloadError"),
+        "nutrition": {
+            "calories": recipe.get("calories"),
+            "proteinGrams": recipe.get("proteinGrams"),
+            "carbsGrams": recipe.get("carbohydrateGrams"),
+            "fatGrams": recipe.get("fatGrams"),
+        },
+        "tags": list(recipe.get("tags") or []),
+        "translations": recipe.get("translations") or {
+            "en": {
+                "mealName": " ".join((recipe.get("mealName") or "").split()),
+                "description": (
+                    " ".join((recipe.get("description") or "").split())
+                    if recipe.get("description")
+                    else None
+                ),
+                "category": recipe.get("categoryName") or recipe.get("sourceCategory") or "",
+                "ingredients": [
+                    {
+                        "name": item.get("ingredientName"),
+                        "quantity": item.get("quantity"),
+                        "unit": item.get("unit"),
+                        "note": item.get("preparationNote"),
+                    }
+                    for item in normalized_ingredients
+                ],
+                "steps": [
+                    step.get("instruction")
+                    for step in normalized_steps
+                    if step.get("instruction")
+                ],
+                "tags": list(recipe.get("tags") or []),
+            },
+            "km": None,
+        },
+        "translationStatus": recipe.get("translationStatus") or "PENDING",
+        "translationError": recipe.get("translationError"),
         "ingredients": normalized_ingredients,
         "steps": normalized_steps,
         "sourceLanguage": recipe.get("sourceLanguage") or "en",

@@ -523,7 +523,7 @@ tbody tr:hover { background: #fbfdfc; }
 .no-selected-ingredients { margin: 0; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; color: var(--muted); font-size: 10px; text-align: center; }
 .selected-ingredient {
     display: grid;
-    grid-template-columns: minmax(115px, 1.2fr) minmax(80px, .6fr) minmax(70px, .55fr) minmax(130px, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
     align-items: end;
     gap: 8px;
     padding: 10px;
@@ -531,7 +531,7 @@ tbody tr:hover { background: #fbfdfc; }
     border-radius: 9px;
     background: #fbfdfc;
 }
-.selected-ingredient-name { align-self: center; min-width: 0; }
+.selected-ingredient-name { grid-column: 1 / -1; align-self: center; min-width: 0; }
 .selected-ingredient-name strong,
 .selected-ingredient-name span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .selected-ingredient-name strong { color: #344054; font-size: 11px; }

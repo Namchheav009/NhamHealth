@@ -132,6 +132,7 @@
                     <legend>Meal details</legend>
                     <div class="form-section-grid">
                         <div class="field"><label for="mealName">Meal name</label><input id="mealName" name="mealName" type="text" maxlength="150" required></div>
+                        <div class="field"><label for="mealNameKm">Meal name (ខ្មែរ)</label><input id="mealNameKm" name="mealNameKm" type="text" maxlength="150" lang="km" placeholder="Optional Khmer name"></div>
                         <div class="field"><label for="mealCategory">Category</label><select id="mealCategory" name="categoryId" required><option value="">Select category</option><option th:each="category : ${mealCategories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Category</option></select></div>
                         <div class="field"><label for="mealCalories">Calories</label><input id="mealCalories" name="calories" type="number" min="0" step="0.1" placeholder="Per serving"></div>
                         <div class="field"><label for="mealServings">Servings</label><input id="mealServings" name="servings" type="number" min="1" max="100" required></div>
@@ -139,6 +140,7 @@
                         <div class="field"><label for="mealDifficulty">Difficulty</label><select id="mealDifficulty" name="difficulty"><option value="">Not specified</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
                         <div class="field"><label for="mealStatus">Status</label><select id="mealStatus" name="published" required><option value="true">Published</option><option value="false">Draft</option></select></div>
                         <div class="field full"><label for="mealDescription">Description</label><textarea id="mealDescription" name="description" maxlength="255" placeholder="Short description shown with the meal"></textarea></div>
+                        <div class="field full"><label for="mealDescriptionKm">Description (ខ្មែរ)</label><textarea id="mealDescriptionKm" name="descriptionKm" maxlength="1000" lang="km" placeholder="Optional Khmer description; English is used when empty"></textarea></div>
                         <div class="field full"><label for="mealImageFile">Meal image</label><input id="mealImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help" id="mealImageHelp">JPG, PNG, or WebP. Maximum 5 MB.</span><div class="meal-image-preview" id="mealImagePreview" hidden><button id="openMealImageViewer" class="meal-image-preview-button" type="button" aria-label="View meal image at full size"><img id="mealImagePreviewImage" alt="Meal image preview"></button><div><strong id="mealImagePreviewTitle">Current meal image</strong><span id="mealImagePreviewText">This image is currently shown to users. Select the image to view it larger.</span></div></div></div>
                     </div>
                 </fieldset>

@@ -12,6 +12,7 @@ class FoodDetailController extends GetxController {
   final errorMessage = ''.obs;
   final selectedContentTab = 0.obs;
   final isFavorite = false.obs;
+  final languageCode = 'en'.obs;
   int _requestVersion = 0;
 
   MealModel? get meal => detail.value;
@@ -38,7 +39,10 @@ class FoodDetailController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = '';
-      final loadedMeal = await repository.getMealDetail(mealId);
+      final loadedMeal = await repository.getMealDetail(
+        mealId,
+        languageCode: languageCode.value,
+      );
       if (requestVersion != _requestVersion) return;
       loadedMeal.isFavorite = isFavorite.value;
       detail.value = loadedMeal;
@@ -57,6 +61,13 @@ class FoodDetailController extends GetxController {
 
   void selectContentTab(int index) {
     if (index == 0 || index == 1) selectedContentTab.value = index;
+  }
+
+  Future<void> selectLanguage(String language) async {
+    if (language != 'en' && language != 'km') return;
+    if (languageCode.value == language && isDetailLoaded.value) return;
+    languageCode.value = language;
+    await loadDetail();
   }
 
   Future<void> toggleFavorite() async {

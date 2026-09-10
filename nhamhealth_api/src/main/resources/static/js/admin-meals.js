@@ -211,7 +211,7 @@ async function loadMeals(page = mealPage) {
 }
 
 function recipeStepMarkup(number) {
-    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div><textarea data-step-instruction maxlength="255" placeholder="Describe this cooking step..."></textarea><span class="field-help">Leave blank to skip this step.</span></article>`;
+    return `<article class="recipe-step" data-recipe-step><div class="recipe-step-title"><strong>Step ${number}</strong><button class="step-remove" type="button" aria-label="Remove cooking step"><i class="bi bi-trash3"></i></button></div><textarea data-step-instruction maxlength="255" placeholder="English instruction..."></textarea><textarea data-step-instruction-km maxlength="4000" lang="km" placeholder="Khmer instruction (optional)..."></textarea><span class="field-help">English is required for a saved step. Khmer falls back to English when empty.</span></article>`;
 }
 
 function updateRecipeStepLabels() {
@@ -226,6 +226,7 @@ function appendRecipeStep(step = {}) {
     recipeStepsBox.insertAdjacentHTML("beforeend", recipeStepMarkup(recipeStepsBox.children.length + 1));
     const element = recipeStepsBox.lastElementChild;
     element.querySelector("[data-step-instruction]").value = step.instruction || "";
+    element.querySelector("[data-step-instruction-km]").value = step.instructionKm || "";
     updateRecipeStepLabels();
 }
 
@@ -253,6 +254,8 @@ function renderSelectedIngredients() {
             <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
             <label>Measurement unit<select data-ingredient-unit><option value="">Optional</option>${unitOptions}</select></label>
             <label class="ingredient-note">Preparation note<input data-ingredient-note type="text" maxlength="150" value="${escapeHtml(ingredient.preparationNote ?? "")}" placeholder="e.g. finely chopped"></label>
+            <label>Ingredient name (ខ្មែរ)<input data-ingredient-name-km type="text" maxlength="100" lang="km" value="${escapeHtml(ingredient.ingredientNameKm ?? "")}" placeholder="Optional Khmer name"></label>
+            <label class="ingredient-note">Preparation note (ខ្មែរ)<input data-ingredient-note-km type="text" maxlength="150" lang="km" value="${escapeHtml(ingredient.preparationNoteKm ?? "")}" placeholder="Optional Khmer note"></label>
             <button class="step-remove remove-ingredient" data-remove-ingredient="${index}" type="button" aria-label="Remove ${escapeHtml(ingredient.ingredientName)}"><i class="bi bi-trash3"></i></button>
         </article>`;
     }).join("");
@@ -304,7 +307,9 @@ function selectedIngredientPayload() {
         ingredientId: Number(row.dataset.ingredientId),
         quantity: row.querySelector("[data-ingredient-quantity]").value || null,
         unit: row.querySelector("[data-ingredient-unit]").value.trim(),
-        preparationNote: row.querySelector("[data-ingredient-note]").value.trim()
+        preparationNote: row.querySelector("[data-ingredient-note]").value.trim(),
+        ingredientNameKm: row.querySelector("[data-ingredient-name-km]").value.trim(),
+        preparationNoteKm: row.querySelector("[data-ingredient-note-km]").value.trim()
     }));
 }
 
@@ -340,6 +345,7 @@ async function openEditModal(mealId) {
         currentMainImageUrl = meal.mainImageUrl;
         form.reset();
         form.elements.mealName.value = meal.mealName;
+        form.elements.mealNameKm.value = meal.mealNameKm || "";
         const categorySelect = form.elements.categoryId;
         if (![...categorySelect.options].some(option => option.value === String(meal.categoryId))) {
             const option = new Option("Current category (inactive)", meal.categoryId, false, false);
@@ -350,6 +356,7 @@ async function openEditModal(mealId) {
         form.elements.calories.value = meal.calories ?? "";
         form.elements.servings.value = meal.servings;
         form.elements.description.value = meal.description ?? "";
+        form.elements.descriptionKm.value = meal.descriptionKm || "";
         form.elements.cookingTimeMinutes.value = meal.cookingTimeMinutes ?? "";
         form.elements.difficulty.value = meal.difficulty ?? "";
         form.elements.published.value = String(meal.published);
@@ -456,7 +463,7 @@ async function saveMeal(event) {
             ? await uploadImage("/admin/meal-images", imageFile, "mainImageUrl")
             : currentMainImageUrl;
         payload.recipeSteps = [...recipeStepsBox.querySelectorAll("[data-recipe-step]")]
-            .map(step => ({ instruction: step.querySelector("[data-step-instruction]").value.trim() }))
+            .map(step => ({ instruction: step.querySelector("[data-step-instruction]").value.trim(), instructionKm: step.querySelector("[data-step-instruction-km]").value.trim() }))
             .filter(step => step.instruction.length > 0);
         const response = await fetch(isUpdate ? `/admin/meals/${editingMealId}` : "/admin/meals", {
             method: isUpdate ? "PUT" : "POST",

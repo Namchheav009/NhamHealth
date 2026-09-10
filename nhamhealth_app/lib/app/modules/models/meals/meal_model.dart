@@ -16,6 +16,9 @@ class MealModel {
     this.ingredients = const [],
     this.nutrition = const [],
     this.steps = const [],
+    this.languageCode = 'en',
+    this.tags = const [],
+    this.moods = const [],
   });
 
   final int id;
@@ -34,6 +37,9 @@ class MealModel {
   final List<MealIngredientModel> ingredients;
   final List<MealNutritionModel> nutrition;
   final List<MealStepModel> steps;
+  final String languageCode;
+  final List<MealLabelModel> tags;
+  final List<MealLabelModel> moods;
 
   factory MealModel.fromJson(
     Map<String, dynamic> json, {
@@ -101,6 +107,13 @@ class MealModel {
             ),
           )
           .toList(growable: false),
+      languageCode: (json['languageCode'] as String? ?? 'en').trim(),
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .map((item) => MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false),
+      moods: (json['moods'] as List<dynamic>? ?? const [])
+          .map((item) => MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false),
     );
   }
 
@@ -137,6 +150,16 @@ class MealModel {
     final separator = image.startsWith('/') ? '' : '/';
     return '$baseUrl$separator$image';
   }
+}
+
+class MealLabelModel {
+  const MealLabelModel({required this.id, required this.name});
+  final int id;
+  final String name;
+  factory MealLabelModel.fromJson(Map<String, dynamic> json) => MealLabelModel(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    name: (json['name'] as String? ?? '').trim(),
+  );
 }
 
 num? _nutritionAmount(List<MealNutritionModel> nutrition, String nutrient) {

@@ -8,5 +8,7 @@ public record AdminMealIngredientDto(
         String defaultUnit,
         BigDecimal quantity,
         String unit,
-        String preparationNote) {
+        String preparationNote,
+        String ingredientNameKm,
+        String preparationNoteKm) {
 }

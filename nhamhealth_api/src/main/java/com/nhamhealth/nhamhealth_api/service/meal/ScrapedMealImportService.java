@@ -103,7 +103,8 @@ public class ScrapedMealImportService {
                             .orElseGet(() -> createScrapedIngredient(
                                     ingredientName, item.unit(), request.sourceName(), warnings)));
             AdminMealIngredientRequest incoming = new AdminMealIngredientRequest(
-                    ingredient.getIngredientId(), item.quantity(), item.unit(), item.preparationNote());
+                    ingredient.getIngredientId(), item.quantity(), item.unit(), item.preparationNote(),
+                    item.ingredientNameKm(), item.preparationNoteKm());
             resolvedById.merge(ingredient.getIngredientId(), incoming,
                     (existing, repeated) -> mergeRepeatedIngredient(existing, repeated, ingredientName, warnings));
         }
@@ -125,9 +126,9 @@ public class ScrapedMealImportService {
         }
         String imageUrl = image == null ? null : images.storeMealImage(image);
         if (imageUrl == null) warnings.add("Draft has no image; upload a meal photo in Admin before publishing");
-        var saved = admin.createScrapedDraft(new AdminMealRequest(request.mealName(), category.getCategoryId(),
-                calories, request.servings(), request.description(), request.difficulty(), request.cookingTimeMinutes(),
-                false, imageUrl, resolved, orderedSteps.stream().map(s -> new AdminRecipeStepRequest(s.instruction())).toList()));
+        var saved = admin.createScrapedDraft(new AdminMealRequest(request.mealName(), request.khmerName(), category.getCategoryId(),
+                calories, request.servings(), request.description(), request.descriptionKm(), request.difficulty(), request.cookingTimeMinutes(),
+                false, imageUrl, resolved, orderedSteps.stream().map(s -> new AdminRecipeStepRequest(s.instruction(), s.instructionKm())).toList()));
         Meal meal = meals.findById(saved.mealId()).orElseThrow();
         meal.setProteinGramsCached(perServing(request.proteinGrams(), request));
         for (var entry : amounts.entrySet()) {
@@ -179,7 +180,9 @@ public class ScrapedMealImportService {
         }
 
         warnings.add("Combined repeated ingredient lines: " + name);
-        return new AdminMealIngredientRequest(existing.ingredientId(), quantity, unit, note);
+        String khmerName = existing.ingredientNameKm() != null ? existing.ingredientNameKm() : repeated.ingredientNameKm();
+        String khmerNote = joinNotes(existing.preparationNoteKm(), repeated.preparationNoteKm());
+        return new AdminMealIngredientRequest(existing.ingredientId(), quantity, unit, note, khmerName, khmerNote);
     }
 
     private String describeAmount(AdminMealIngredientRequest item) {

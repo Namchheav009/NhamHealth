@@ -1,4 +1,4 @@
-﻿import argparse
+import argparse
 import json
 import sys
 import time
@@ -17,6 +17,7 @@ from scraper.normalizer import normalize_recipe
 from scraper.recipe_detail import scrape_recipe
 from scraper.recipe_list import get_recipe_links
 from scraper.validator import validate_recipe
+from translators import khmer_translator, validate_translation
 
 
 def review_output_path(input_path: Path | None) -> Path:
@@ -83,6 +84,11 @@ def main():
         action="store_true",
         help="Acknowledge all flagged ingredient parses in the selected batch before importing.",
     )
+    parser.add_argument(
+        "--retranslate",
+        action="store_true",
+        help="Force retranslation to Khmer even if already translated.",
+    )
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be positive")
@@ -132,6 +138,14 @@ def main():
             recipe["reviewStatus"] = "PENDING_REVIEW"
             errors, warnings = validate_recipe(recipe, require_image=False)
             recipe["validationErrors"], recipe["validationWarnings"] = errors, warnings
+
+            # Translate normalized text EN -> KM
+            khmer_translator.translate(recipe, force=args.retranslate)
+            is_valid_trans, trans_err = validate_translation(recipe)
+            if not is_valid_trans and recipe.get("translationStatus") != "FAILED":
+                recipe["translationStatus"] = "FAILED"
+                recipe["translationError"] = trans_err
+
             normalized_recipes.append(recipe)
             # Preserve hand-edited input files; emit validation into a separate artifact.
             destination = review_output_path(args.input)
@@ -143,7 +157,22 @@ def main():
                 for error in errors:
                     print("  ERROR:", error)
                 continue
-            print(f"  {recipe['mealName']}: {len(recipe['ingredients'])} ingredients, {len(recipe['steps'])} steps.")
+
+            image_status = "OK" if recipe.get("localImagePath") else "Missing"
+            trans_status = (
+                "OK"
+                if recipe.get("translationStatus") == "COMPLETED"
+                else f"FAILED ({recipe.get('translationError')})"
+            )
+            print(f"\n{recipe.get('mealName')}")
+            print("- Scrape: OK")
+            print(f"- Ingredients: {len(recipe.get('ingredients') or [])}")
+            print(f"- Steps: {len(recipe.get('steps') or [])}")
+            print("- English: OK")
+            print(f"- Khmer translation: {trans_status}")
+            print(f"- Image: {image_status}")
+            print(f"- Saved: {destination}")
+
             if args.import_api:
                 result = import_recipe(recipe)
                 results.append(result)

@@ -4,5 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record AdminRecipeStepRequest(
-        @NotBlank @Size(max = 255) String instruction) {
+        @NotBlank @Size(max = 255) String instruction,
+        @Size(max = 4000) String instructionKm) {
 }

@@ -31,8 +31,9 @@ class MealProvider {
         .toList(growable: false);
   }
 
-  Future<MealModel> getMealDetail(int mealId) async {
-    final payload = await _getObject('/api/v1/meals/$mealId');
+  Future<MealModel> getMealDetail(int mealId, {String languageCode = 'en'}) async {
+    final path = Uri(path: '/api/v1/meals/$mealId', queryParameters: {'lang': languageCode}).toString();
+    final payload = await _getObject(path);
     try {
       return MealModel.fromDetailJson(payload, baseUrl: ApiConfig.baseUrl);
     } on Object {

@@ -11,5 +11,7 @@ public record AdminMealIngredientRequest(
         @NotNull Integer ingredientId,
         @DecimalMin("0.0") @Digits(integer = 8, fraction = 2) BigDecimal quantity,
         @Size(max = 30) String unit,
-        @Size(max = 150) String preparationNote) {
+        @Size(max = 150) String preparationNote,
+        @Size(max = 100) String ingredientNameKm,
+        @Size(max = 150) String preparationNoteKm) {
 }

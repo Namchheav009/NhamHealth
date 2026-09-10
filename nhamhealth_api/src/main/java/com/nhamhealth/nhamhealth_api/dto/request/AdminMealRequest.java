@@ -13,10 +13,12 @@ import jakarta.validation.constraints.Size;
 
 public record AdminMealRequest(
         @NotBlank @Size(max = 150) String mealName,
+        @Size(max = 150) String mealNameKm,
         @NotNull Integer categoryId,
         @DecimalMin("0.0") BigDecimal calories,
         @NotNull @Min(1) @Max(100) Integer servings,
         @Size(max = 500) String description,
+        @Size(max = 1000) String descriptionKm,
         @Size(max = 20) String difficulty,
         @Min(0) @Max(1440) Integer cookingTimeMinutes,
         boolean published,

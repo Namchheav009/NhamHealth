@@ -64,6 +64,14 @@ class FoodDetailView extends GetView<FoodDetailController> {
                   isFavorite: controller.isFavorite.value,
                   onFavorite: controller.toggleFavorite,
                 ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _LanguageSelector(
+                    selected: controller.languageCode.value,
+                    onSelected: controller.selectLanguage,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _Hero(meal: meal),
                 const SizedBox(height: 22),
@@ -96,6 +104,39 @@ class FoodDetailView extends GetView<FoodDetailController> {
       ),
     );
   }
+}
+
+class _LanguageSelector extends StatelessWidget {
+  const _LanguageSelector({required this.selected, required this.onSelected});
+  final String selected;
+  final ValueChanged<String> onSelected;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(3),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      _LanguageOption(label: 'EN', selected: selected == 'en', onTap: () => onSelected('en')),
+      _LanguageOption(label: 'ខ្មែរ', selected: selected == 'km', onTap: () => onSelected('km')),
+    ]),
+  );
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({required this.label, required this.selected, required this.onTap});
+  final String label; final bool selected; final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap, borderRadius: BorderRadius.circular(15),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      decoration: BoxDecoration(color: selected ? context.appColorScheme.primary : Colors.transparent, borderRadius: BorderRadius.circular(15)),
+      child: Text(label, style: TextStyle(color: selected ? context.appColorScheme.onPrimary : context.appMutedText, fontSize: 12, fontWeight: FontWeight.w700)),
+    ),
+  );
 }
 
 class _Hero extends StatelessWidget {

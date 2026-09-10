@@ -9,6 +9,7 @@ public record ScrapedMealImportRequest(
         @NotBlank @Size(max = 150) String mealName,
         @Size(max = 150) String khmerName,
         @Size(max = 500) String description,
+        @Size(max = 1000) String descriptionKm,
         @NotBlank @Size(max = 100) String categoryName,
         @DecimalMin("0") BigDecimal calories,
         @DecimalMin("0") BigDecimal proteinGrams,
@@ -33,10 +34,13 @@ public record ScrapedMealImportRequest(
             @DecimalMin("0") @Digits(integer = 8, fraction = 2) BigDecimal quantity,
             @Size(max = 30) String unit,
             @Size(max = 150) String preparationNote,
+            @Size(max = 100) String ingredientNameKm,
+            @Size(max = 150) String preparationNoteKm,
             @Size(max = 2000) String originalIngredientText,
             @NotNull @Min(1) Integer displayOrder) {}
 
     public record StepInput(
             @NotNull @Min(1) Integer stepNumber,
-            @NotBlank @Size(max = 255) String instruction) {}
+            @NotBlank @Size(max = 255) String instruction,
+            @Size(max = 4000) String instructionKm) {}
 }
