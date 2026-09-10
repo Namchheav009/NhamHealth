@@ -1,7 +1,5 @@
 package com.nhamhealth.nhamhealth_api.service.notification;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -13,8 +11,8 @@ import com.google.firebase.messaging.AndroidConfig;
 import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.repository.notification.PushNotificationDeviceRepository;
 
@@ -24,7 +22,8 @@ public class PushNotificationService {
     private final ObjectProvider<FirebaseMessaging> messaging;
     private final PushNotificationDeviceRepository devices;
 
-    public PushNotificationService(ObjectProvider<FirebaseMessaging> messaging, PushNotificationDeviceRepository devices) {
+    public PushNotificationService(ObjectProvider<FirebaseMessaging> messaging,
+            PushNotificationDeviceRepository devices) {
         this.messaging = messaging;
         this.devices = devices;
     }
@@ -51,22 +50,103 @@ public class PushNotificationService {
         sendNow(notification);
     }
 
+    public void broadcast(String title, String message, String referenceType, String referenceId,
+            String avatarUrl, String subText) {
+        var firebase = messaging.getIfAvailable();
+        if (firebase == null) {
+            log.info("Firebase Cloud Messaging is not configured; skipping push broadcast.");
+            return;
+        }
+
+        var data = new java.util.HashMap<String, String>();
+        data.put("notificationId", String.valueOf((int) (System.currentTimeMillis() & 0x7FFFFFFF)));
+        data.put("title", value(title));
+        data.put("body", value(message));
+        data.put("referenceType", value(referenceType));
+        data.put("referenceId", value(referenceId));
+        if (avatarUrl != null && !avatarUrl.isBlank())
+            data.put("avatarUrl", avatarUrl);
+        if (subText != null && !subText.isBlank())
+            data.put("subText", subText);
+
+        var notifBuilder = com.google.firebase.messaging.Notification.builder()
+                .setTitle(title)
+                .setBody(message);
+        if (avatarUrl != null && !avatarUrl.isBlank()) {
+            notifBuilder.setImage(avatarUrl);
+        }
+
+        // 1. Broadcast to all Android devices subscribed to 'all_devices' topic
+        var topicMessage = Message.builder()
+                .setTopic("all_devices")
+                .setNotification(notifBuilder.build())
+                .putAllData(data)
+                .setAndroidConfig(AndroidConfig.builder()
+                        .setPriority(AndroidConfig.Priority.HIGH)
+                        .setNotification(AndroidNotification.builder()
+                                .setChannelId("nhamhealth_notifications")
+                                .setSound("default")
+                                .build())
+                        .build())
+                .build();
+
+        try {
+            String response = firebase.send(topicMessage);
+            log.info("Real-time push broadcast sent to topic 'all_devices': {}", response);
+        } catch (FirebaseMessagingException error) {
+            log.warn("Unable to broadcast to topic 'all_devices'", error);
+        }
+
+        // 2. Also send directly to all registered device tokens
+        for (var device : devices.findAll()) {
+            var directMessage = Message.builder()
+                    .setToken(device.getToken())
+                    .setNotification(notifBuilder.build())
+                    .putAllData(data)
+                    .setAndroidConfig(AndroidConfig.builder()
+                            .setPriority(AndroidConfig.Priority.HIGH)
+                            .setNotification(AndroidNotification.builder()
+                                    .setChannelId("nhamhealth_notifications")
+                                    .setSound("default")
+                                    .build())
+                            .build())
+                    .build();
+            try {
+                firebase.send(directMessage);
+            } catch (FirebaseMessagingException error) {
+                if (error.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                    devices.delete(device);
+                }
+            }
+        }
+    }
+
     private void sendNow(Notification notification) {
         var firebase = messaging.getIfAvailable();
-        if (firebase == null) return;
-        var data = Map.of(
-                "notificationId", notification.getNotificationId().toString(),
-                "title", value(notification.getTitle()),
-                "body", value(notification.getMessage()),
-                "referenceType", value(notification.getReferenceType()),
-                "referenceId", notification.getReferenceId() == null ? "" : notification.getReferenceId().toString());
+        if (firebase == null)
+            return;
+        var data = new java.util.HashMap<String, String>();
+        data.put("notificationId", notification.getNotificationId().toString());
+        data.put("title", value(notification.getTitle()));
+        data.put("body", value(notification.getMessage()));
+        data.put("referenceType", value(notification.getReferenceType()));
+        data.put("referenceId", notification.getReferenceId() == null ? "" : notification.getReferenceId().toString());
+
+        if (notification.getActorUser() != null) {
+            String actorName = notification.getActorUser().getName();
+            if (actorName != null && !actorName.isBlank()) {
+                data.put("subText", actorName);
+            }
+        }
+
+        var notifBuilder = com.google.firebase.messaging.Notification.builder()
+                .setTitle(notification.getTitle())
+                .setBody(notification.getMessage());
+
         for (var device : devices.findByUserUserId(notification.getUser().getUserId())) {
             var message = Message.builder()
                     .setToken(device.getToken())
-                    .setNotification(com.google.firebase.messaging.Notification.builder()
-                            .setTitle(notification.getTitle())
-                            .setBody(notification.getMessage())
-                            .build())
+                    .setNotification(notifBuilder.build())
                     .putAllData(data)
                     .setAndroidConfig(AndroidConfig.builder()
                             .setPriority(AndroidConfig.Priority.HIGH)
@@ -89,5 +169,7 @@ public class PushNotificationService {
         }
     }
 
-    private String value(String value) { return value == null ? "" : value; }
+    private String value(String value) {
+        return value == null ? "" : value;
+    }
 }

@@ -26,6 +26,9 @@ class _Messaging extends Fake implements FirebaseMessaging {
     }
     return 'recovered-token';
   }
+
+  @override
+  Future<void> subscribeToTopic(String topic) async {}
 }
 
 class _AuthService extends Fake implements AuthService {

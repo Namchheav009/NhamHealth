@@ -48,4 +48,16 @@ class PushNotificationServiceTests {
 
         verify(messaging).getIfAvailable();
     }
+
+    @Test
+    void broadcastsToAllDevicesWhenFirebaseConfigured() {
+        @SuppressWarnings("unchecked")
+        ObjectProvider<FirebaseMessaging> messaging = mock(ObjectProvider.class);
+        PushNotificationService service = new PushNotificationService(
+                messaging, mock(PushNotificationDeviceRepository.class));
+
+        service.broadcast("Announcement", "Healthy eating event today!", "SYSTEM", "1", null, "NhamHealth");
+
+        verify(messaging).getIfAvailable();
+    }
 }

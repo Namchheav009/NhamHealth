@@ -90,6 +90,11 @@ class PushNotificationService {
       final title =
           notification?.title ?? message.data['title'] ?? 'NhamHealth';
       final body = notification?.body ?? message.data['body'] ?? '';
+      final avatarUrl =
+          message.data['avatarUrl'] ??
+          message.data['imageUrl'] ??
+          notification?.android?.imageUrl;
+      final subText = message.data['subText'] ?? message.data['subtitle'];
       try {
         await _androidNotifications.invokeMethod<void>('showNotification', {
           'title': title,
@@ -97,6 +102,8 @@ class PushNotificationService {
           'notificationId': message.data['notificationId'] ?? '',
           'referenceType': message.data['referenceType'] ?? '',
           'referenceId': message.data['referenceId'] ?? '',
+          'avatarUrl': avatarUrl,
+          'subText': subText,
         });
       } on Object {
         AppAlert.notification(title: title, message: body);
@@ -115,6 +122,11 @@ class PushNotificationService {
     }
     // Token retrieval can require the network. Do not delay notification taps.
     await syncToken();
+    try {
+      await messaging.subscribeToTopic('all_devices');
+    } on Object catch (error) {
+      debugPrint('FCM broadcast topic subscription unavailable: $error');
+    }
   }
 
   void _publish(RemoteMessage message) {
@@ -129,6 +141,34 @@ class PushNotificationService {
         referenceId: int.tryParse(message.data['referenceId'] ?? ''),
       ),
     );
+  }
+
+  Future<void> showLocalTestNotification({
+    String title = 'Kun Kaknika',
+    String body = 'Shared an instant: "How cute 🫣🫶"',
+    String? subText = 'c.zen_03',
+    String? avatarUrl,
+    Duration delay = Duration.zero,
+  }) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+    if (isSupported) {
+      try {
+        await _androidNotifications.invokeMethod<void>('showNotification', {
+          'title': title,
+          'body': body,
+          'subText': subText,
+          'avatarUrl': avatarUrl,
+          'referenceType': 'AI_FOOD',
+          'referenceId': '1',
+        });
+        return;
+      } on Object catch (error) {
+        debugPrint('Native test notification unavailable: $error');
+      }
+    }
+    AppAlert.notification(title: title, message: body);
   }
 
   Future<void> syncToken() async {

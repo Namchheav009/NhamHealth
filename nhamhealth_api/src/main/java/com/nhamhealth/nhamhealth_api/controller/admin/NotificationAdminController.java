@@ -52,13 +52,15 @@ public class NotificationAdminController {
                 .filter(notification -> !Boolean.TRUE.equals(notification.getIsRead())).count());
         model.addAttribute("recentNotifications", notifs.stream()
                 .filter(notification -> notification.getCreatedAt() != null
-                        && !notification.getCreatedAt().isBefore(lastDay)).count());
+                        && !notification.getCreatedAt().isBefore(lastDay))
+                .count());
         return "admin/notification";
     }
 
     @GetMapping("/admin/notifications/unread-summary")
     public ResponseEntity<?> unreadSummary(Authentication authentication) {
-        if (authentication == null) return ResponseEntity.status(401).build();
+        if (authentication == null)
+            return ResponseEntity.status(401).build();
         return userRepository.findByEmailIgnoreCase(authentication.getName())
                 .<ResponseEntity<?>>map(admin -> ResponseEntity.ok(Map.of(
                         "count", notificationRepository.countByUserUserIdAndIsReadFalse(admin.getUserId()),
@@ -74,6 +76,43 @@ public class NotificationAdminController {
         if (!VALID_TYPES.contains(notificationType)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Select a valid notification type"));
         }
+
+        if ("ALL".equalsIgnoreCase(request.userEmail().trim())) {
+            List<com.nhamhealth.nhamhealth_api.entity.User> allUsers = userRepository.findAll();
+            for (var user : allUsers) {
+                Notification notification = new Notification();
+                notification.setUser(user);
+                notification.setNotificationType(notificationType);
+                notification.setTitle(request.title().trim());
+                notification.setMessage(request.message().trim());
+                notification.setIsRead(false);
+                notification.setCreatedAt(LocalDateTime.now());
+                notificationRepository.save(notification);
+            }
+            notificationRepository.flush();
+            pushNotifications.broadcast(
+                    request.title().trim(),
+                    request.message().trim(),
+                    notificationType,
+                    "",
+                    request.avatarUrl(),
+                    request.subText() != null && !request.subText().isBlank() ? request.subText().trim()
+                            : "NhamHealth");
+            return ResponseEntity.ok(Map.ofEntries(
+                    Map.entry("id", 0),
+                    Map.entry("userId", 0),
+                    Map.entry("userName", "All Users (Broadcast)"),
+                    Map.entry("userEmail", "ALL"),
+                    Map.entry("userInitials", "📢"),
+                    Map.entry("title", request.title().trim()),
+                    Map.entry("message", request.message().trim()),
+                    Map.entry("notificationType", notificationType),
+                    Map.entry("read", false),
+                    Map.entry("createdAt", LocalDateTime.now().toString()),
+                    Map.entry("broadcast", true),
+                    Map.entry("recipientCount", allUsers.size())));
+        }
+
         return userRepository.findByEmailIgnoreCase(request.userEmail().trim())
                 .<ResponseEntity<?>>map(user -> {
                     Notification notification = new Notification();
@@ -91,7 +130,8 @@ public class NotificationAdminController {
                             Map.entry("id", saved.getNotificationId()), Map.entry("userId", user.getUserId()),
                             Map.entry("userName", name), Map.entry("userEmail", email),
                             Map.entry("userInitials", user.getInitials()), Map.entry("title", saved.getTitle()),
-                            Map.entry("message", saved.getMessage()), Map.entry("notificationType", saved.getNotificationType()),
+                            Map.entry("message", saved.getMessage()),
+                            Map.entry("notificationType", saved.getNotificationType()),
                             Map.entry("read", false), Map.entry("createdAt", saved.getCreatedAt().toString())));
                 })
                 .orElseGet(() -> ResponseEntity.badRequest()

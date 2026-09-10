@@ -8,6 +8,7 @@ import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_report_controller.dart';
 import '../../models/community/community_report.dart';
 import '../../repositories/community/community_repository.dart';
@@ -429,7 +430,7 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     title: 'community.my_reports'.tr,
     child: Obx(() {
       if (controller.isLoading.value && controller.myReports.isEmpty) {
-        return const Center(child: CircularProgressIndicator(color: _green));
+        return const PageSkeleton.reports();
       }
       if (controller.errorMessage.value != null &&
           controller.myReports.isEmpty) {

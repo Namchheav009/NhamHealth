@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/profile/setting_controller.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/forest_glow_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
+import '../../controllers/profile/setting_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -306,13 +306,21 @@ class SettingsView extends GetView<SettingsController> {
 
         _SettingsItem(
           icon: Icons.language_rounded,
-          title: 'settings.language'.tr,
+          title: 'settings.change_language'.tr,
           subtitle: 'profile.language_setting_description'.tr,
           trailingText:
               Get.locale?.languageCode == 'km'
                   ? 'settings.language_khmer'.tr
                   : 'settings.language_english'.tr,
           onTap: controller.openLanguage,
+        ),
+        _divider(context),
+
+        _SettingsItem(
+          icon: Icons.notifications_active_outlined,
+          title: 'profile.test_notification_alert'.tr,
+          subtitle: 'profile.test_notification_alert_desc'.tr,
+          onTap: controller.sendTestNotificationAlert,
         ),
       ],
     );
@@ -326,6 +334,15 @@ class SettingsView extends GetView<SettingsController> {
     return _groupCard(
       context,
       children: [
+        _SettingsItem(
+          icon: Icons.flag_outlined,
+          title: 'settings.my_reports'.tr,
+          subtitle: 'settings.my_reports_description'.tr,
+          onTap: controller.openMyReports,
+        ),
+
+        _divider(context),
+
         _SettingsItem(
           icon: Icons.help_outline_rounded,
           title: 'profile.help_support'.tr,

@@ -1,4 +1,10 @@
 const Map<String, String> profileKm = {
+  'profile.test_notification_alert': 'សាកល្បងការជូនដំណឹងផ្ទាល់',
+  'profile.test_notification_alert_desc':
+      'សាកល្បងការជូនដំណឹងលើអេក្រង់ចាក់សោ និងផ្ទាំងរុញ',
+  'profile.alert_scheduled_title': 'បានកំណត់ពេលជូនដំណឹង (3វិនាទី)',
+  'profile.alert_scheduled_desc':
+      'ចាក់សោទូរសព្ទ ឬត្រឡប់ទៅអេក្រង់ដើមដើម្បីមើលការជូនដំណឹង!',
   'profile.save_failed': 'មិនអាចរក្សាទុកប្រវត្តិរូបបានទេ',
   'profile.protection_enabled': 'បានបើកការការពារកម្មវិធី',
   'profile.pin_biometrics_ready':

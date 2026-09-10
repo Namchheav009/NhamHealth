@@ -1,4 +1,10 @@
 const Map<String, String> profileEn = {
+  'profile.test_notification_alert': 'Test Real-Time Alert',
+  'profile.test_notification_alert_desc':
+      'Lock screen and floating banner alert test',
+  'profile.alert_scheduled_title': 'Alert Scheduled (3s)',
+  'profile.alert_scheduled_desc':
+      'Lock phone or swipe to Home now to see the banner!',
   'profile.save_failed': "Profile couldn't be saved",
   'profile.protection_enabled': 'App protection enabled',
   'profile.pin_biometrics_ready': 'Your PIN and biometric unlock are ready.',

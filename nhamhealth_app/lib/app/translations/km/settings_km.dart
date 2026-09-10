@@ -10,5 +10,8 @@ const Map<String, String> settingsKm = {
   'settings.language_applied_description':
       'ភាសាថ្មីនឹងត្រូវបានអនុវត្តភ្លាមៗចំពោះមាតិកាដែលគាំទ្រ។',
   'settings.change_language': 'ប្តូរភាសា',
+  'settings.my_reports': 'របាយការណ៍របស់ខ្ញុំ',
+  'settings.my_reports_description':
+      'មើលស្ថានភាព និងព័ត៌មានលម្អិតនៃរបាយការណ៍ដែលអ្នកបានដាក់ស្នើ',
   'settings.title': 'ការកំណត់',
 };

@@ -20,6 +20,7 @@ enum PageSkeletonType {
   communityPeople,
   recipes,
   settings,
+  reports,
   aiFoodAnalysis,
 }
 
@@ -105,6 +106,11 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.settings;
 
+  const PageSkeleton.reports({
+    super.key,
+    this.duration = const Duration(milliseconds: 1500),
+  }) : type = PageSkeletonType.reports;
+
   const PageSkeleton.aiFoodAnalysis({
     super.key,
     this.duration = const Duration(milliseconds: 1600),
@@ -189,8 +195,70 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.communityPeople => const _CommunityPeoplePlaceholder(),
     PageSkeletonType.recipes => const _RecipesPlaceholder(),
     PageSkeletonType.settings => const _SettingsPlaceholder(),
+    PageSkeletonType.reports => const _ReportsPlaceholder(),
     PageSkeletonType.aiFoodAnalysis => const _AiFoodAnalysisPlaceholder(),
   };
+}
+
+class _ReportsPlaceholder extends StatelessWidget {
+  const _ReportsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('reports-skeleton'),
+    children: [
+      _ReportRowPlaceholder(),
+      SizedBox(height: 10),
+      _ReportRowPlaceholder(),
+      SizedBox(height: 10),
+      _ReportRowPlaceholder(),
+      SizedBox(height: 10),
+      _ReportRowPlaceholder(),
+    ],
+  );
+}
+
+class _ReportRowPlaceholder extends StatelessWidget {
+  const _ReportRowPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    height: 82,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: context.appSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: const Row(
+      children: [
+        _SkeletonBox(width: 40, height: 40, radius: 20),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FractionallySizedBox(
+                widthFactor: .58,
+                child: _SkeletonBox(height: 13, radius: 7),
+              ),
+              SizedBox(height: 8),
+              FractionallySizedBox(
+                widthFactor: .38,
+                child: _SkeletonBox(height: 10, radius: 5),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 12),
+        _SkeletonBox(width: 64, height: 26, radius: 13),
+        SizedBox(width: 8),
+        _SkeletonBox(width: 18, height: 18, radius: 9),
+      ],
+    ),
+  );
 }
 
 class _WellnessPlaceholder extends StatelessWidget {

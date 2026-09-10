@@ -10,5 +10,8 @@ const Map<String, String> settingsEn = {
   'settings.language_applied_description':
       'The new language is applied to supported content immediately.',
   'settings.change_language': 'Change language',
+  'settings.my_reports': 'My Reports',
+  'settings.my_reports_description':
+      'View the status and details of reports you submitted',
   'settings.title': 'Settings',
 };
