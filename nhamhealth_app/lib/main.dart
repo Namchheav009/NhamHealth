@@ -34,7 +34,11 @@ Future<void> _initializePushNotifications() async {
   if (!PushNotificationService.isSupported) return;
   try {
     await Firebase.initializeApp();
-    await PushNotificationService(authService: Get.find()).initialize();
+    final pushService = PushNotificationService(authService: Get.find());
+    await pushService.initialize();
+    if (!Get.isRegistered<PushNotificationService>()) {
+      Get.put<PushNotificationService>(pushService, permanent: true);
+    }
   } on Object catch (error) {
     // Notifications are optional; an unavailable service must not block startup.
     debugPrint('Push notification initialization unavailable: $error');

@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.service.notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -15,17 +16,27 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.nhamhealth.nhamhealth_api.entity.Notification;
 import com.nhamhealth.nhamhealth_api.repository.notification.PushNotificationDeviceRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 
 @Service
 public class PushNotificationService {
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
     private final ObjectProvider<FirebaseMessaging> messaging;
     private final PushNotificationDeviceRepository devices;
+    private final ObjectProvider<UserProfileRepository> profilesProvider;
 
     public PushNotificationService(ObjectProvider<FirebaseMessaging> messaging,
             PushNotificationDeviceRepository devices) {
+        this(messaging, devices, null);
+    }
+
+    @Autowired
+    public PushNotificationService(ObjectProvider<FirebaseMessaging> messaging,
+            PushNotificationDeviceRepository devices,
+            ObjectProvider<UserProfileRepository> profilesProvider) {
         this.messaging = messaging;
         this.devices = devices;
+        this.profilesProvider = profilesProvider;
     }
 
     public void send(Notification notification) {
@@ -137,11 +148,23 @@ public class PushNotificationService {
             if (actorName != null && !actorName.isBlank()) {
                 data.put("subText", actorName);
             }
+            if (profilesProvider != null) {
+                var profiles = profilesProvider.getIfAvailable();
+                if (profiles != null) {
+                    profiles.findByUser_UserId(notification.getActorUser().getUserId())
+                            .map(com.nhamhealth.nhamhealth_api.entity.UserProfile::getProfileImageUrl)
+                            .filter(url -> url != null && !url.isBlank())
+                            .ifPresent(url -> data.put("avatarUrl", url));
+                }
+            }
         }
 
         var notifBuilder = com.google.firebase.messaging.Notification.builder()
                 .setTitle(notification.getTitle())
                 .setBody(notification.getMessage());
+        if (data.containsKey("avatarUrl")) {
+            notifBuilder.setImage(data.get("avatarUrl"));
+        }
 
         for (var device : devices.findByUserUserId(notification.getUser().getUserId())) {
             var message = Message.builder()

@@ -320,7 +320,7 @@ class SettingsView extends GetView<SettingsController> {
           icon: Icons.notifications_active_outlined,
           title: 'profile.test_notification_alert'.tr,
           subtitle: 'profile.test_notification_alert_desc'.tr,
-          onTap: controller.sendTestNotificationAlert,
+          onTap: () => controller.openDynamicNotificationStudio(context),
         ),
       ],
     );

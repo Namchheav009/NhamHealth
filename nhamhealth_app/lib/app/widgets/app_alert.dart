@@ -3,9 +3,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../theme/app_colors.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 abstract final class AppAlert {
   static Future<void> _transition = Future<void>.value();
@@ -164,6 +164,9 @@ abstract final class AppAlert {
     if (request != _latestRequest) return;
     await _closeActiveAlert();
     if (request != _latestRequest) return;
+    if (Get.key.currentState?.overlay == null && Get.overlayContext == null) {
+      return;
+    }
 
     final disableAnimations = _animationsAreDisabled();
     final controller = Get.rawSnackbar(

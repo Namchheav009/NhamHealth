@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
 
-import '../../core/services/auth_service.dart';
-import '../../core/services/app_security_service.dart';
 import '../../core/services/app_locale_service.dart';
+import '../../core/services/app_security_service.dart';
 import '../../core/services/app_theme_service.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/services/dynamic_notification_sync_service.dart';
 import '../modules/services/auth/google_auth_service.dart';
 
 class InitialBinding extends Bindings {
@@ -32,6 +33,12 @@ class InitialBinding extends Bindings {
     if (!Get.isRegistered<AppSecurityService>()) {
       Get.put<AppSecurityService>(
         AppSecurityService(authService: Get.find<AuthService>()),
+        permanent: true,
+      );
+    }
+    if (!Get.isRegistered<DynamicNotificationSyncService>()) {
+      Get.put<DynamicNotificationSyncService>(
+        DynamicNotificationSyncService(authService: Get.find<AuthService>()),
         permanent: true,
       );
     }

@@ -15,6 +15,7 @@ import '../../views/profile/help_support_view.dart';
 import '../../views/profile/language_view.dart';
 import '../../views/profile/security_view.dart';
 import '../../views/profile/terms_privacy_view.dart';
+import '../../views/profile/widgets/dynamic_notification_studio_sheet.dart';
 import '../../views/profile/widgets/logout_dialog.dart';
 
 class SettingsController extends GetxController {
@@ -96,12 +97,25 @@ class SettingsController extends GetxController {
     );
   }
 
-  Future<void> sendTestNotificationAlert() async {
+  void openDynamicNotificationStudio([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx != null) {
+      DynamicNotificationStudioSheet.show(ctx);
+    }
+  }
+
+  Future<void> sendTestNotificationAlert([BuildContext? context]) async {
+    final ctx = context ?? Get.context;
+    if (ctx != null) {
+      DynamicNotificationStudioSheet.show(ctx);
+      return;
+    }
+
     if (isSendingTestAlert.value) return;
     isSendingTestAlert.value = true;
     AppAlert.notification(
       title: 'profile.alert_scheduled_title'.tr,
-      message: 'profile.alert_scheduled_desc'.tr,
+      message: 'profile.alert_sent_toast'.tr,
     );
     try {
       final pushService =

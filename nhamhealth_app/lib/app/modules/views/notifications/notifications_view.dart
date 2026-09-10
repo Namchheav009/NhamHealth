@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/notifications/notifications_controller.dart';
 import '../../models/notifications/notification_item.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});
@@ -48,18 +48,21 @@ class NotificationsView extends StatelessWidget {
                             _NotificationSection(
                               title: 'notifications.new',
                               notifications: const [],
+                              alwaysShowTitle: true,
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 13),
                             _NotificationSection(
                               title: 'common.today',
                               notifications: const [],
+                              alwaysShowTitle: true,
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 13),
                             _NotificationSection(
                               title: 'notifications.earlier',
                               notifications: const [],
+                              alwaysShowTitle: true,
                               onTap: (_) {},
                             ),
                             const SizedBox(height: 100),
@@ -146,18 +149,20 @@ class _NotificationSection extends StatelessWidget {
     required this.title,
     required this.notifications,
     required this.onTap,
+    this.alwaysShowTitle = false,
   });
 
   final String title;
   final List<NotificationItem> notifications;
   final ValueChanged<NotificationItem> onTap;
+  final bool alwaysShowTitle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (notifications.isEmpty)
+        if (notifications.isEmpty && !alwaysShowTitle)
           const SizedBox.shrink()
         else ...[
           Padding(

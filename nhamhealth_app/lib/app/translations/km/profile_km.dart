@@ -1,10 +1,20 @@
 const Map<String, String> profileKm = {
-  'profile.test_notification_alert': 'សាកល្បងការជូនដំណឹងផ្ទាល់',
+  'profile.test_notification_alert': 'ការជូនដំណឹងផ្ទាល់ (Real-Time)',
   'profile.test_notification_alert_desc':
-      'សាកល្បងការជូនដំណឹងលើអេក្រង់ចាក់សោ និងផ្ទាំងរុញ',
+      'ការជូនដំណឹងលើអេក្រង់ចាក់សោ និងផ្ទាំងរុញលើទូរស័ព្ទទាំងអស់',
   'profile.alert_scheduled_title': 'បានកំណត់ពេលជូនដំណឹង (3វិនាទី)',
   'profile.alert_scheduled_desc':
       'ចាក់សោទូរសព្ទ ឬត្រឡប់ទៅអេក្រង់ដើមដើម្បីមើលការជូនដំណឹង!',
+  'profile.dynamic_notification_title': 'ស្ទូឌីយោការជូនដំណឹងផ្ទាល់',
+  'profile.dynamic_notification_desc':
+      'សាកល្បងការជូនដំណឹងលើអេក្រង់ចាក់សោរ និងផ្ទាំងអណ្តែតលើទូរស័ព្ទដៃរបស់អ្នក។',
+  'profile.alert_community_comment': 'ការជូនដំណឹងមតិយោបល់សហគមន៍',
+  'profile.alert_community_like': 'ការជូនដំណឹងចូលចិត្តសហគមន៍',
+  'profile.alert_meal_reminder': 'ការរំលឹកអាហារ និងជាតិទឹក',
+  'profile.alert_broadcast': 'ការផ្សាយដំណឹងទូទាំងប្រព័ន្ធ (Admin Broadcast)',
+  'profile.alert_custom': 'ការជូនដំណឹងផ្ទាល់ខ្លួន',
+  'profile.alert_sent_toast':
+      'បានកំណត់ពេលជូនដំណឹងក្នុង 3 វិនាទី! សូមចាក់សោទូរសព្ទឥឡូវនេះដើម្បីមើល។',
   'profile.save_failed': 'មិនអាចរក្សាទុកប្រវត្តិរូបបានទេ',
   'profile.protection_enabled': 'បានបើកការការពារកម្មវិធី',
   'profile.pin_biometrics_ready':

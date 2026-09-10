@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
@@ -153,16 +154,26 @@ class MainActivity : FlutterFragmentActivity() {
     private fun loadBitmap(imageUrl: String?): Bitmap? {
         if (imageUrl.isNullOrBlank()) return null
         return try {
-            val url = URL(imageUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.doInput = true
-            connection.connectTimeout = 4000
-            connection.readTimeout = 4000
-            connection.connect()
-            val input = connection.inputStream
-            val bitmap = BitmapFactory.decodeStream(input)
-            input.close()
-            connection.disconnect()
+            val raw = imageUrl.trim()
+            val bitmap = if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                val url = URL(raw)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.doInput = true
+                connection.connectTimeout = 4000
+                connection.readTimeout = 4000
+                connection.connect()
+                val input = connection.inputStream
+                val decoded = BitmapFactory.decodeStream(input)
+                input.close()
+                connection.disconnect()
+                decoded
+            } else if (raw.startsWith("file://")) {
+                BitmapFactory.decodeFile(raw.removePrefix("file://"))
+            } else if (File(raw).exists()) {
+                BitmapFactory.decodeFile(raw)
+            } else {
+                null
+            }
             if (bitmap != null) toCircleBitmap(bitmap) else null
         } catch (_: Exception) {
             null

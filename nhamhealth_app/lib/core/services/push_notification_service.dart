@@ -171,6 +171,40 @@ class PushNotificationService {
     AppAlert.notification(title: title, message: body);
   }
 
+  Future<void> showDynamicNotification({
+    required String title,
+    required String body,
+    String? subText,
+    String? avatarUrl,
+    String? referenceType,
+    String? referenceId,
+    String? notificationId,
+    Duration delay = Duration.zero,
+  }) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+    if (isSupported) {
+      try {
+        await _androidNotifications.invokeMethod<void>('showNotification', {
+          'title': title,
+          'body': body,
+          'subText': subText,
+          'avatarUrl': avatarUrl,
+          'referenceType': referenceType ?? '',
+          'referenceId': referenceId ?? '',
+          'notificationId':
+              notificationId ??
+              (DateTime.now().millisecondsSinceEpoch & 0x7FFFFFFF).toString(),
+        });
+        return;
+      } on Object catch (error) {
+        debugPrint('Native dynamic notification unavailable: $error');
+      }
+    }
+    AppAlert.notification(title: title, message: body);
+  }
+
   Future<void> syncToken() async {
     if (!isSupported) return;
     try {
