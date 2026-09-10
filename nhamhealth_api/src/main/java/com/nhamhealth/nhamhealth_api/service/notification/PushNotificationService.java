@@ -35,7 +35,15 @@ public class PushNotificationService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    sendNow(notification);
+                    try {
+                        sendNow(notification);
+                    } catch (RuntimeException error) {
+                        // Push delivery is best-effort. The database action has
+                        // already committed and must not be reported to the app
+                        // as a failed request because Firebase or a device-token
+                        // lookup is temporarily unavailable.
+                        log.warn("Unable to deliver push notification after commit", error);
+                    }
                 }
             });
             return;

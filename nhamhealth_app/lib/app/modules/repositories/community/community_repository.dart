@@ -143,10 +143,13 @@ class CommunityRepository {
   Future<void> reportPost({
     required String postId,
     required int reasonId,
+    String? description,
   }) async {
+    final reason = await _reportReasonCode(reasonId);
     final response = await _client.post(
-      _uri('/api/v1/community/posts/$postId/reports?reasonId=$reasonId'),
+      _uri('/api/reports'),
       headers: await _headers(),
+      body: jsonEncode({'reportType': 'POST', 'targetId': int.parse(postId), 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
     );
     _ensureSuccess(response);
   }
@@ -155,12 +158,13 @@ class CommunityRepository {
     required String postId,
     required String commentId,
     required int reasonId,
+    String? description,
   }) async {
+    final reason = await _reportReasonCode(reasonId);
     final response = await _client.post(
-      _uri(
-        '/api/v1/community/posts/$postId/comments/$commentId/reports?reasonId=$reasonId',
-      ),
+      _uri('/api/reports'),
       headers: await _headers(),
+      body: jsonEncode({'reportType': 'COMMENT', 'targetId': int.parse(commentId), 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
     );
     _ensureSuccess(response);
   }
@@ -168,12 +172,34 @@ class CommunityRepository {
   Future<void> reportProfile({
     required int userId,
     required int reasonId,
+    String? description,
   }) async {
+    final reason = await _reportReasonCode(reasonId);
     final response = await _client.post(
-      _uri('/api/v1/community/people/$userId/reports?reasonId=$reasonId'),
+      _uri('/api/reports'),
       headers: await _headers(),
+      body: jsonEncode({'reportType': 'PROFILE', 'targetId': userId, 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
     );
     _ensureSuccess(response);
+  }
+
+  Future<String> _reportReasonCode(int reasonId) async {
+    const fixed = <int, String>{101: 'SPAM', 102: 'HARASSMENT', 103: 'IMPERSONATION', 104: 'FALSE_INFORMATION', 105: 'INAPPROPRIATE_PROFILE', 106: 'SCAM_OR_FRAUD', 107: 'INAPPROPRIATE_CONTENT', 108: 'DANGEROUS_HEALTH_INFORMATION', 109: 'MISLEADING_NUTRITION_INFORMATION', 110: 'HATE_OR_ABUSIVE_CONTENT', 111: 'STOLEN_CONTENT', 199: 'OTHER'};
+    if (fixed.containsKey(reasonId)) return fixed[reasonId]!;
+    CommunityReportReason? reason;
+    for (final item in await getReportReasons()) {
+      if (item.id == reasonId) { reason = item; break; }
+    }
+    final name = (reason?.name ?? 'Other').trim().toLowerCase();
+    const codes = <String, String>{
+      'spam': 'SPAM', 'harassment': 'HARASSMENT', 'false information': 'FALSE_INFORMATION',
+      'inappropriate content': 'INAPPROPRIATE_CONTENT', 'inappropriate profile': 'INAPPROPRIATE_PROFILE',
+      'pretending to be someone else': 'IMPERSONATION', 'scam or fraud': 'SCAM_OR_FRAUD',
+      'dangerous health information': 'DANGEROUS_HEALTH_INFORMATION',
+      'misleading nutrition information': 'MISLEADING_NUTRITION_INFORMATION',
+      'stolen content': 'STOLEN_CONTENT', 'hate or abusive content': 'HATE_OR_ABUSIVE_CONTENT',
+    };
+    return codes[name] ?? 'OTHER';
   }
 
   Future<CommunityPost> createPost({

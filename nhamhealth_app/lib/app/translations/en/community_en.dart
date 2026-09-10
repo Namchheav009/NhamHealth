@@ -97,8 +97,11 @@ const Map<String, String> communityEn = {
   'community.recipe_incomplete': 'Recipe incomplete',
   'community.ingredient_amounts_invalid':
       'Every ingredient needs a valid amount.',
+  'community.ingredients_and_steps_required':
+      'Add at least one ingredient and one cooking step.',
   'community.meal_updated': 'Meal updated',
   'community.meal_published': 'Meal published',
+  'community.meal_submitted': 'Meal submitted',
   'community.changes_saved': 'Your changes have been saved.',
   'community.could_not_publish_meal': 'Could not publish meal',
   'community.add_ingredient_details': 'Add ingredient details',
@@ -118,10 +121,12 @@ const Map<String, String> communityEn = {
   'community.favorite_selected_help':
       'Food details added — tap to choose another',
   'community.new_meal_available':
-      'Your new meal is now available in Community.',
+      'Your post is available in Community and is waiting for admin approval before it appears in Meals.',
   'community.report_submitted': 'Report submitted',
   'community.report_thanks': 'Thanks for helping keep the community safe.',
   'community.report_submit_failed': 'Could not submit report',
+  'community.report_submit_failed_help':
+      'Please try again. If the problem continues, return to Community and reopen the post.',
   'community.delete_post_profile_warning':
       'This will remove the post from Community and your profile. You cannot undo this action.',
   'community.discussion': 'Discussion',

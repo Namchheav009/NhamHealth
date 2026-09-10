@@ -100,8 +100,11 @@ const Map<String, String> communityKm = {
   'community.recipe_incomplete': 'រូបមន្តមិនទាន់ពេញលេញ',
   'community.ingredient_amounts_invalid':
       'គ្រឿងផ្សំនីមួយៗត្រូវមានបរិមាណត្រឹមត្រូវ។',
+  'community.ingredients_and_steps_required':
+      'សូមបន្ថែមគ្រឿងផ្សំយ៉ាងហោចណាស់មួយ និងជំហានចម្អិនយ៉ាងហោចណាស់មួយ។',
   'community.meal_updated': 'បានកែប្រែអាហារ',
   'community.meal_published': 'បានបោះពុម្ពផ្សាយអាហារ',
+  'community.meal_submitted': 'បានដាក់ស្នើអាហារ',
   'community.changes_saved': 'បានរក្សាទុកការកែប្រែរបស់អ្នក។',
   'community.could_not_publish_meal': 'មិនអាចបោះពុម្ពផ្សាយអាហារបានទេ',
   'community.add_ingredient_details': 'បន្ថែមព័ត៌មានគ្រឿងផ្សំ',
@@ -120,10 +123,13 @@ const Map<String, String> communityKm = {
       'បំពេញការបង្ហោះនេះជាមុនដោយអាហារមួយក្នុងចំណោមអាហារដែលអ្នកបានរក្សាទុក',
   'community.favorite_selected_help':
       'បានបន្ថែមព័ត៌មានអាហារ — ចុចដើម្បីជ្រើសរើសអាហារផ្សេង',
-  'community.new_meal_available': 'អាហារថ្មីរបស់អ្នកមាននៅក្នុងសហគមន៍ហើយ។',
+  'community.new_meal_available':
+      'ការបង្ហោះរបស់អ្នកមាននៅក្នុងសហគមន៍ ហើយកំពុងរង់ចាំការអនុម័តពីអ្នកគ្រប់គ្រង មុនពេលបង្ហាញក្នុងបញ្ជីអាហារ។',
   'community.report_submitted': 'បានផ្ញើរបាយការណ៍',
   'community.report_thanks': 'សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាពសហគមន៍។',
   'community.report_submit_failed': 'មិនអាចផ្ញើរបាយការណ៍បានទេ',
+  'community.report_submit_failed_help':
+      'សូមព្យាយាមម្តងទៀត។ បើបញ្ហានៅតែបន្ត សូមត្រឡប់ទៅសហគមន៍ ហើយបើកការបង្ហោះម្តងទៀត។',
   'community.delete_post_profile_warning':
       'ការបង្ហោះនេះនឹងត្រូវបានលុបពីសហគមន៍ និងប្រវត្តិរូបរបស់អ្នក។ អ្នកមិនអាចត្រឡប់សកម្មភាពនេះវិញបានទេ។',
   'community.discussion': 'ការពិភាក្សា',

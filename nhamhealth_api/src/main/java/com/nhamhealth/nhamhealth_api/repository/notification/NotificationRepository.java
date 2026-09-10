@@ -17,6 +17,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
 
     long countByUserUserIdAndIsReadFalse(Integer userId);
 
+    long countByUserUserIdAndNotificationTypeIgnoreCaseAndIsReadFalse(Integer userId, String notificationType);
+
+    List<Notification> findByUserUserIdAndNotificationTypeIgnoreCaseAndIsReadFalse(
+            Integer userId, String notificationType);
+
     List<Notification> findTop20ByUserUserIdOrderByCreatedAtDesc(Integer userId);
 
     java.util.Optional<Notification> findByNotificationIdAndUserUserId(Integer notificationId, Integer userId);

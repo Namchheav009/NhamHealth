@@ -57,9 +57,20 @@
         <a class="nav-link" th:classappend="${activePage == 'community-recipes'} ? ' active' : ''" th:href="@{/admin/community-recipes}"><i class="bi bi-journal-richtext"></i><span>Meal Posts</span></a>
         <a class="nav-link" th:classappend="${activePage == 'comments'} ? ' active' : ''" th:href="@{/admin/comments}"><i class="bi bi-chat-left-text"></i><span>Comments</span></a>
         <a class="nav-link" th:classappend="${activePage == 'post-likes'} ? ' active' : ''" th:href="@{/admin/post-likes}"><i class="bi bi-heart"></i><span>Post Likes</span></a>
-        <a class="nav-link" th:classappend="${activePage == 'reports'} ? ' active' : ''" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>Reports</span></a>
         <a class="nav-link" th:classappend="${activePage == 'follows'} ? ' active' : ''" th:href="@{/admin/follows}"><i class="bi bi-person-plus"></i><span>Follows</span></a>
         <a class="nav-link" th:classappend="${activePage == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}"><i class="bi bi-bell"></i><span>Notifications</span></a>
+        </div>
+
+        <button class="nav-section" type="button" aria-expanded="false" aria-controls="report-management-menu">
+            <span>Report Management</span><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="nav-group" id="report-management-menu">
+        <a class="nav-link" th:classappend="${activePage == 'reports-all'} ? ' active' : ''" th:href="@{/admin/reports}"><i class="bi bi-flag"></i><span>All Reports</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports-profiles'} ? ' active' : ''" th:href="@{/admin/reports/profiles}"><i class="bi bi-person-exclamation"></i><span>Profile Reports</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports-posts'} ? ' active' : ''" th:href="@{/admin/reports/posts}"><i class="bi bi-file-earmark-exclamation"></i><span>Post Reports</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports-comments'} ? ' active' : ''" th:href="@{/admin/reports/comments}"><i class="bi bi-chat-left-dots"></i><span>Comment Reports</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports-appeals'} ? ' active' : ''" th:href="@{/admin/reports/appeals}"><i class="bi bi-arrow-counterclockwise"></i><span>Appeals</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'reports-history'} ? ' active' : ''" th:href="@{/admin/reports/moderation-history}"><i class="bi bi-clock-history"></i><span>Moderation History</span></a>
         </div>
 
         <button class="nav-section" type="button" aria-expanded="false" aria-controls="system-menu">

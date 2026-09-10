@@ -1,172 +1,216 @@
 package com.nhamhealth.nhamhealth_api.controller.admin;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import org.springframework.http.ResponseEntity;
+import com.nhamhealth.nhamhealth_api.dto.request.*;
+import com.nhamhealth.nhamhealth_api.dto.response.*;
+import com.nhamhealth.nhamhealth_api.entity.*;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
+import java.time.LocalDateTime;
+import org.springframework.data.domain.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.nhamhealth.nhamhealth_api.entity.Post;
-import com.nhamhealth.nhamhealth_api.entity.PostComment;
-import com.nhamhealth.nhamhealth_api.entity.PostMedia;
-import com.nhamhealth.nhamhealth_api.entity.PostReport;
-import com.nhamhealth.nhamhealth_api.entity.ReportReason;
-import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.community.PostReportRepository;
-import com.nhamhealth.nhamhealth_api.repository.community.PostMediaRepository;
-import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
-import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
-import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.community.CommunityReportService;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class ReportAdminController {
-    private final PostReportRepository reportRepository;
-    private final PostRepository postRepository;
-    private final PostMediaRepository mediaRepository;
-    private final UserRepository userRepository;
-    private final ReportReasonRepository reasonRepository;
-    private final CommunityReportService reportService;
+  private static final int PAGE_SIZE = 20;
+  private final ReportModerationService reports;
+  private final UserRepository users;
 
-    public ReportAdminController(PostReportRepository reportRepository, PostRepository postRepository,
-            PostMediaRepository mediaRepository,
-            UserRepository userRepository, ReportReasonRepository reasonRepository,
-            CommunityReportService reportService) {
-        this.reportRepository = reportRepository;
-        this.postRepository = postRepository;
-        this.mediaRepository = mediaRepository;
-        this.userRepository = userRepository;
-        this.reasonRepository = reasonRepository;
-        this.reportService = reportService;
-    }
+  public ReportAdminController(ReportModerationService reports, UserRepository users) {
+    this.reports = reports;
+    this.users = users;
+  }
 
-    @GetMapping("/admin/reports/{reportId}/target")
-    @ResponseBody
-    public ResponseEntity<?> reportedTarget(@PathVariable Integer reportId) {
-        return reportRepository.findByReportId(reportId)
-                .map(report -> ResponseEntity.ok(toTargetResponse(report)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+  @GetMapping("/admin/reports")
+  public String allReports(Model model) {
+    return queue(model, "All Reports", "reports-all", null);
+  }
 
-    @GetMapping("/admin/reports")
-    public String reportsPage(Authentication authentication, Model model) {
-        List<PostReport> reports = reportRepository.findAllByOrderByCreatedAtDesc();
-        long uniqueReporters = reports.stream().map(PostReport::getReportedByUser).filter(Objects::nonNull)
-                .map(User::getUserId).distinct().count();
-        model.addAttribute("pageTitle", "Reports");
-        model.addAttribute("activePage", "reports");
-        model.addAttribute("adminName", authentication != null ? authentication.getName() : "admin");
-        model.addAttribute("reports", reports);
-        model.addAttribute("posts", postRepository.findAllByOrderByUpdatedAtDescCreatedAtDesc());
-        model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("reasons", reasonRepository.findAllByIsActiveTrueOrderByReasonNameAsc());
-        model.addAttribute("totalReports", reports.size());
-        model.addAttribute("uniqueReporters", uniqueReporters);
-        model.addAttribute("pendingReports", reportRepository.countByStatusIgnoreCase("pending"));
-        return "admin/report";
-    }
+  @GetMapping("/admin/reports/profiles")
+  public String profileReports(Model model) {
+    return queue(model, "Profile Reports", "reports-profiles", ReportType.PROFILE);
+  }
 
-    /** Manual creation remains available for moderation testing and historical imports. */
-    @PostMapping("/admin/reports")
-    @ResponseBody
-    public ResponseEntity<?> createReport(@RequestParam Integer postId, @RequestParam Integer reporterId,
-            @RequestParam Integer reasonId) {
-        Post post = postRepository.findById(postId).orElse(null);
-        User reporter = userRepository.findById(reporterId).orElse(null);
-        ReportReason reason = reasonRepository.findById(reasonId)
-                .filter(item -> Boolean.TRUE.equals(item.getIsActive())).orElse(null);
-        if (post == null || reporter == null || reason == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Select a valid post, reporter, and active reason."));
-        }
-        PostReport report = new PostReport();
-        report.setPost(post);
-        report.setTargetType("POST");
-        report.setReportedByUser(reporter);
-        report.setReportReason(reason);
-        report.setStatus("pending");
-        report.setCreatedAt(java.time.LocalDateTime.now());
-        return ResponseEntity.ok(toResponse(reportRepository.saveAndFlush(report)));
-    }
+  @GetMapping("/admin/reports/posts")
+  public String postReports(Model model) {
+    return queue(model, "Post Reports", "reports-posts", ReportType.POST);
+  }
 
-    @PatchMapping("/admin/reports/{reportId}/status")
-    @ResponseBody
-    public ResponseEntity<?> reviewReport(@PathVariable Integer reportId, @RequestParam String status,
-            @RequestParam(defaultValue = "none") String action,
-            @RequestParam(required = false) String adminNote, Authentication authentication) {
-        User reviewer = authentication == null ? null
-                : userRepository.findByEmailIgnoreCase(authentication.getName()).orElse(null);
-        if (reviewer == null) return ResponseEntity.status(401).body(Map.of("message", "Admin account not found."));
-        try {
-            return ResponseEntity.ok(toResponse(reportService.review(reportId, status, action, adminNote, reviewer)));
-        } catch (ResponseStatusException exception) {
-            return ResponseEntity.status(exception.getStatusCode()).body(Map.of("message", exception.getReason()));
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
-        }
-    }
+  @GetMapping("/admin/reports/comments")
+  public String commentReports(Model model) {
+    return queue(model, "Comment Reports", "reports-comments", ReportType.COMMENT);
+  }
 
-    private Map<String, Object> toResponse(PostReport report) {
-        User reporter = report.getReportedByUser();
-        Post post = report.getPost();
-        PostComment comment = report.getComment();
-        boolean commentReport = "COMMENT".equalsIgnoreCase(report.getTargetType()) && comment != null;
-        String content = commentReport ? comment.getCommentText() : displayPostContent(post);
-        String summary = content == null ? "" : content.length() > 80 ? content.substring(0, 80) + "..." : content;
-        String reviewer = report.getReviewedByUser() == null || report.getReviewedByUser().getName() == null
-                ? "" : report.getReviewedByUser().getName();
-        return Map.ofEntries(
-                Map.entry("id", report.getReportId()), Map.entry("reporterId", reporter.getUserId()),
-                Map.entry("reporterName", reporter.getName() == null ? "Unknown user" : reporter.getName()),
-                Map.entry("reporterEmail", reporter.getEmail() == null ? "" : reporter.getEmail()),
-                Map.entry("postId", post.getPostId()), Map.entry("targetSummary", summary),
-                Map.entry("targetType", commentReport ? "comment" : "post"),
-                Map.entry("reason", report.getReportReason().getReasonName()), Map.entry("status", report.getStatus()),
-                Map.entry("action", report.getModerationAction() == null ? "" : report.getModerationAction()),
-                Map.entry("reviewer", reviewer),
-                Map.entry("createdAt", report.getCreatedAt().toString()));
-    }
+  @GetMapping("/admin/reports/{id:\\d+}")
+  public String reportDetail(@PathVariable Integer id, Model model) {
+    AdminReportResponse report = reports.detail(id);
+    model.addAttribute("pageTitle", "Report #" + id);
+    model.addAttribute("activePage", activePage(report.type()));
+    model.addAttribute("report", report);
+    addReturnDestination(model, report.type());
+    model.addAttribute("reviewMode", false);
+    return "admin/report-detail";
+  }
 
-    private Map<String, Object> toTargetResponse(PostReport report) {
-        Post post = report.getPost();
-        PostComment comment = report.getComment();
-        boolean commentReport = "COMMENT".equalsIgnoreCase(report.getTargetType()) && comment != null;
-        User author = commentReport ? comment.getUser() : post.getUser();
-        String content = commentReport ? comment.getCommentText() : displayPostContent(post);
-        List<String> imageUrls = imageUrlsFor(post);
-        return Map.ofEntries(
-                Map.entry("reportId", report.getReportId()),
-                Map.entry("targetType", commentReport ? "Comment" : "Post"),
-                Map.entry("targetId", commentReport ? comment.getCommentId() : post.getPostId()),
-                Map.entry("content", content == null ? "" : content),
-                Map.entry("postId", post.getPostId()),
-                Map.entry("postContent", displayPostContent(post)),
-                Map.entry("author", author.getName() == null ? "Unknown user" : author.getName()),
-                Map.entry("authorEmail", author.getEmail() == null ? "" : author.getEmail()),
-                Map.entry("contentStatus", commentReport ? comment.getStatus() : post.getStatus()),
-                Map.entry("createdAt", commentReport ? comment.getCreatedAt().toString() : post.getCreatedAt().toString()),
-                Map.entry("imageUrls", imageUrls));
+  @GetMapping("/admin/reports/{id:\\d+}/review")
+  public String reportReview(@PathVariable Integer id, Authentication authentication, Model model) {
+    AdminReportResponse report = reports.detail(id);
+    if (report.status() == ReportStatus.PENDING) {
+      report =
+          reports.startReview(
+              id, admin(authentication).getUserId(), new ReviewReportRequest(null, null));
     }
+    model.addAttribute("pageTitle", "Review Report #" + id);
+    model.addAttribute("activePage", activePage(report.type()));
+    model.addAttribute("report", report);
+    addReturnDestination(model, report.type());
+    model.addAttribute("reviewMode", true);
+    return "admin/report-detail";
+  }
 
-    private String displayPostContent(Post post) {
-        if (post.getCaption() != null && !post.getCaption().isBlank()) {
-            return post.getCaption();
-        }
-        return "This post has no written caption. Review any attached images before taking action.";
-    }
+  @GetMapping("/admin/reports/appeals")
+  public String appeals(Model model) {
+    model.addAttribute("pageTitle", "Appeals");
+    model.addAttribute("activePage", "reports-appeals");
+    return "admin/report-appeals";
+  }
 
-    private List<String> imageUrlsFor(Post post) {
-        List<String> imageUrls = mediaRepository.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
-                .map(PostMedia::getMediaUrl).toList();
-        return imageUrls;
-    }
+  @GetMapping("/admin/reports/moderation-history")
+  public String moderationHistory(Model model) {
+    model.addAttribute("pageTitle", "Moderation History");
+    model.addAttribute("activePage", "reports-history");
+    return "admin/moderation-history";
+  }
+
+  @GetMapping("/admin/reports/data")
+  @ResponseBody
+  public Page<AdminReportResponse> reportData(
+      @RequestParam(required = false) ReportType type,
+      @RequestParam(required = false) ReportStatus status,
+      @RequestParam(required = false) ReportReasonCode reason,
+      @RequestParam(required = false) ReportSeverity severity,
+      @RequestParam(required = false) Integer reportedUserId,
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+          LocalDateTime from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+          LocalDateTime to,
+      @RequestParam(defaultValue = "0") int page) {
+    return reports.list(
+        type,
+        status,
+        reason,
+        severity,
+        reportedUserId,
+        search,
+        from,
+        to,
+        PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by(Sort.Order.desc("createdAt"))));
+  }
+
+  @GetMapping("/admin/reports/summary")
+  @ResponseBody
+  public ReportSummary summary() {
+    return new ReportSummary(
+        count(null),
+        count(ReportStatus.PENDING),
+        count(ReportStatus.UNDER_REVIEW),
+        count(ReportStatus.RESOLVED),
+        count(ReportStatus.DISMISSED));
+  }
+
+  @PatchMapping("/admin/reports/{id:\\d+}/start-review")
+  @ResponseBody
+  public AdminReportResponse startReview(
+      @PathVariable Integer id,
+      Authentication auth,
+      @RequestBody(required = false) ReviewReportRequest request) {
+    return reports.startReview(id, admin(auth).getUserId(), request);
+  }
+
+  @PatchMapping("/admin/reports/{id:\\d+}/dismiss")
+  @ResponseBody
+  public AdminReportResponse dismiss(
+      @PathVariable Integer id,
+      Authentication auth,
+      @RequestBody(required = false) ReviewReportRequest request) {
+    return reports.dismiss(id, admin(auth).getUserId(), request);
+  }
+
+  @PostMapping("/admin/reports/{id:\\d+}/actions")
+  @ResponseBody
+  public ModerationActionResponse action(
+      @PathVariable Integer id, Authentication auth, @RequestBody ModerationActionRequest request) {
+    return reports.act(id, admin(auth).getUserId(), request);
+  }
+
+  @GetMapping("/admin/reports/appeals/data")
+  @ResponseBody
+  public Page<AppealResponse> appealData(
+      @RequestParam(defaultValue = "PENDING") AppealStatus status,
+      @RequestParam(defaultValue = "0") int page) {
+    return reports.appeals(status, PageRequest.of(Math.max(0, page), PAGE_SIZE));
+  }
+
+  @PatchMapping("/admin/reports/appeals/{id:\\d+}")
+  @ResponseBody
+  public AppealResponse reviewAppeal(
+      @PathVariable Integer id, Authentication auth, @RequestBody ReviewAppealRequest request) {
+    return reports.reviewAppeal(id, admin(auth).getUserId(), request);
+  }
+
+  @GetMapping("/admin/reports/moderation-history/data")
+  @ResponseBody
+  public Page<ModerationActionResponse> historyData(@RequestParam(defaultValue = "0") int page) {
+    return reports.history(
+        PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("createdAt").descending()));
+  }
+
+  private String queue(Model model, String title, String activePage, ReportType fixedType) {
+    model.addAttribute("pageTitle", title);
+    model.addAttribute("activePage", activePage);
+    model.addAttribute("fixedType", fixedType == null ? "" : fixedType.name());
+    model.addAttribute("reasons", ReportReasonCode.values());
+    return "admin/report";
+  }
+
+  private long count(ReportStatus status) {
+    return reports
+        .list(null, status, null, null, null, null, null, null, PageRequest.of(0, 1))
+        .getTotalElements();
+  }
+
+  private User admin(Authentication auth) {
+    if (auth == null) throw new IllegalStateException("Admin authentication is required");
+    return users
+        .findByEmailIgnoreCase(auth.getName())
+        .orElseThrow(() -> new IllegalStateException("Admin account not found"));
+  }
+
+  private String activePage(ReportType type) {
+    return switch (type) {
+      case PROFILE -> "reports-profiles";
+      case POST -> "reports-posts";
+      case COMMENT -> "reports-comments";
+    };
+  }
+
+  private void addReturnDestination(Model model, ReportType type) {
+    model.addAttribute("returnUrl", switch (type) {
+      case PROFILE -> "/admin/reports/profiles";
+      case POST -> "/admin/reports/posts";
+      case COMMENT -> "/admin/reports/comments";
+    });
+    model.addAttribute("returnLabel", switch (type) {
+      case PROFILE -> "Profile Reports";
+      case POST -> "Post Reports";
+      case COMMENT -> "Comment Reports";
+    });
+  }
+
+  public record ReportSummary(
+      long total, long pending, long underReview, long resolved, long dismissed) {}
 }

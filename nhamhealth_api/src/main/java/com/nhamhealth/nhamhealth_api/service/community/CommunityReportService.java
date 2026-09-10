@@ -150,6 +150,8 @@ public class CommunityReportService {
         if ("UNDER_REVIEW".equals(cleanStatus)) {
             report.setStatus("under_review");
             report.setModerationAction(null);
+            notifyReporter(report, "Report under review",
+                    "An administrator is reviewing the content you reported. We will notify you when a decision is made.");
             return reports.saveAndFlush(report);
         }
 
@@ -174,6 +176,76 @@ public class CommunityReportService {
                 "Report reviewed — thank you for helping keep the community safe. We reviewed the content and took appropriate action.");
         notifyReportedUser(report, cleanAction);
         return reports.saveAndFlush(report);
+    }
+
+    /** Reviews a reported user profile and informs the reporter of each meaningful decision. */
+    @Transactional
+    public UserProfileReport reviewProfile(Integer reportId, String status, String action,
+            String adminNote, User reviewer) {
+        UserProfileReport report = profileReports.findByProfileReportId(reportId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Profile report not found"));
+        String cleanStatus = normalize(status);
+        String cleanAction = normalize(action);
+        if (!List.of("PENDING", "UNDER_REVIEW", "RESOLVED", "DISMISSED").contains(cleanStatus)) {
+            throw new IllegalArgumentException("Select a valid report status.");
+        }
+        if (!List.of("NONE", "KEEP", "WARN", "SUSPEND", "BAN").contains(cleanAction)) {
+            throw new IllegalArgumentException("Select a valid moderation action for a profile report.");
+        }
+
+        report.setAdminNote(adminNote == null || adminNote.isBlank() ? null : adminNote.trim());
+        if ("PENDING".equals(cleanStatus)) {
+            report.setStatus("pending");
+            report.setModerationAction(null);
+            report.setReviewedByUser(null);
+            report.setReviewedAt(null);
+            return profileReports.saveAndFlush(report);
+        }
+
+        report.setReviewedByUser(reviewer);
+        report.setReviewedAt(LocalDateTime.now());
+        if ("UNDER_REVIEW".equals(cleanStatus)) {
+            report.setStatus("under_review");
+            report.setModerationAction(null);
+            notifyProfileReporter(report, "Report accepted for review",
+                    "An administrator accepted your profile report and is reviewing it.");
+            return profileReports.saveAndFlush(report);
+        }
+        if ("DISMISSED".equals(cleanStatus)) {
+            if (!"NONE".equals(cleanAction) && !"KEEP".equals(cleanAction)) {
+                throw new IllegalArgumentException("A dismissed report can only keep the profile.");
+            }
+            report.setStatus("dismissed");
+            report.setModerationAction("keep");
+            notifyProfileReporter(report, "Profile report reviewed",
+                    "We reviewed your report and did not find a Community Guidelines violation.");
+            return profileReports.saveAndFlush(report);
+        }
+        if ("NONE".equals(cleanAction) || "KEEP".equals(cleanAction)) {
+            throw new IllegalArgumentException("Choose warn, suspend, or ban before resolving this report.");
+        }
+        report.setStatus("resolved");
+        report.setModerationAction(cleanAction.toLowerCase());
+        if ("SUSPEND".equals(cleanAction)) report.getReportedUser().setStatus("SUSPENDED");
+        if ("BAN".equals(cleanAction)) report.getReportedUser().setStatus("BANNED");
+        if ("SUSPEND".equals(cleanAction) || "BAN".equals(cleanAction)) users.save(report.getReportedUser());
+        notifyProfileReporter(report, "Profile report resolved",
+                "Thank you for helping keep the community safe. We reviewed your report and took appropriate action.");
+        return profileReports.saveAndFlush(report);
+    }
+
+    private void notifyProfileReporter(UserProfileReport report, String title, String message) {
+        Notification notification = new Notification();
+        notification.setUser(report.getReportedByUser());
+        notification.setActorUser(report.getReviewedByUser());
+        notification.setNotificationType("MODERATION");
+        notification.setReferenceType("PROFILE");
+        notification.setReferenceId(report.getReportedUser().getUserId());
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setIsRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        pushNotifications.send(notifications.saveAndFlush(notification));
     }
 
     private void applyAction(PostReport report, String action) {

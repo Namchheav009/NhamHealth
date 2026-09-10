@@ -52,6 +52,7 @@
     const profileMenuToggle = document.getElementById('adminProfileMenuToggle');
     const profileMenu = document.getElementById('adminProfileMenu');
     const logoutForm = document.getElementById('logoutForm');
+    const notificationBell = document.getElementById('adminNotificationBell');
     const desktopBreakpoint = 850;
     const sidebarPreferenceKey = 'nhamHealthAdminSidebarCollapsed';
     const sidebarScrollKey = 'nhamHealthAdminSidebarScrollTop';
@@ -205,6 +206,40 @@
     }
     initializeSectionStates();
     restoreSidebarScrollPosition();
+
+    const refreshNotificationBell = async () => {
+        if (!notificationBell || document.hidden) return;
+        try {
+            const response = await fetch('/admin/notifications/unread-summary', {
+                headers: { Accept: 'application/json' }
+            });
+            if (!response.ok) return;
+            const summary = await response.json();
+            const count = Number(summary.count) || 0;
+            const reportCount = Number(summary.reportCount) || 0;
+            let badge = notificationBell.querySelector('.badge-dot');
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge-dot';
+                    notificationBell.appendChild(badge);
+                }
+                badge.textContent = count > 99 ? '99+' : String(count);
+            } else {
+                badge?.remove();
+            }
+            const label = reportCount > 0 ? `${reportCount} new report alert(s)` : 'Community report alerts';
+            notificationBell.href = '/admin/reports';
+            notificationBell.setAttribute('aria-label', label);
+            notificationBell.title = label;
+        } catch (_) {
+            // The server-rendered badge remains available if polling fails.
+        }
+    };
+    if (notificationBell) {
+        window.setInterval(refreshNotificationBell, 5000);
+        document.addEventListener('visibilitychange', refreshNotificationBell);
+    }
 
     const pageWindow = (totalPages, currentPage) => {
         if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1);

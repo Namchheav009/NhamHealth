@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/community/community_report_reason.dart';
 import '../../repositories/community/community_repository.dart';
 
@@ -37,6 +38,13 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
   String? _error;
   bool _loading = true;
   bool _submitting = false;
+  final TextEditingController _detailsController = TextEditingController();
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -50,7 +58,24 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       _error = null;
     });
     try {
-      final reasons = await _repository.getReportReasons();
+      final reasons = switch (widget.subject.toLowerCase()) {
+        'profile' => const [
+          CommunityReportReason(id: 101, name: 'Spam'), CommunityReportReason(id: 102, name: 'Harassment'),
+          CommunityReportReason(id: 103, name: 'Pretending to be someone else'), CommunityReportReason(id: 104, name: 'False information'),
+          CommunityReportReason(id: 105, name: 'Inappropriate profile'), CommunityReportReason(id: 106, name: 'Scam or fraud'), CommunityReportReason(id: 199, name: 'Something else'),
+        ],
+        'comment' => const [
+          CommunityReportReason(id: 101, name: 'Spam'), CommunityReportReason(id: 102, name: 'Harassment'),
+          CommunityReportReason(id: 110, name: 'Hate or abusive content'), CommunityReportReason(id: 107, name: 'Inappropriate content'),
+          CommunityReportReason(id: 104, name: 'False information'), CommunityReportReason(id: 199, name: 'Something else'),
+        ],
+        _ => const [
+          CommunityReportReason(id: 101, name: 'Spam'), CommunityReportReason(id: 102, name: 'Harassment'),
+          CommunityReportReason(id: 107, name: 'Inappropriate content'), CommunityReportReason(id: 104, name: 'False information'),
+          CommunityReportReason(id: 108, name: 'Dangerous health information'), CommunityReportReason(id: 109, name: 'Misleading nutrition information'),
+          CommunityReportReason(id: 111, name: 'Stolen content'), CommunityReportReason(id: 199, name: 'Something else'),
+        ],
+      };
       if (!mounted) return;
       setState(() => _reasons = reasons);
     } on Object catch (error) {
@@ -228,6 +253,22 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
             ),
           ),
           const SizedBox(height: 14),
+          if (_selectedReason?.name.toLowerCase().contains('other') == true ||
+              _selectedReason?.name.toLowerCase().contains('something else') == true) ...[
+            TextField(
+              controller: _detailsController,
+              enabled: !_submitting,
+              maxLength: 500,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Details',
+                hintText: 'Tell us what happened',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 8),
+          ],
           Divider(height: 1, color: context.appBorder),
           const SizedBox(height: 14),
           SizedBox(
@@ -235,7 +276,9 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
             height: 48,
             child: FilledButton(
               onPressed:
-                  _selectedReasonId == null || _submitting ? null : _submit,
+                  _selectedReasonId == null || _submitting ||
+                    ((_selectedReason?.name.toLowerCase().contains('other') == true || _selectedReason?.name.toLowerCase().contains('something else') == true) && _detailsController.text.trim().isEmpty)
+                    ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF087B3A),
                 disabledBackgroundColor: const Color(0xFFE1E4E9),
@@ -266,6 +309,13 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
         ],
       ),
     );
+  }
+
+  CommunityReportReason? get _selectedReason {
+    for (final reason in _reasons) {
+      if (reason.id == _selectedReasonId) return reason;
+    }
+    return null;
   }
 
   Widget _reasonTile(CommunityReportReason reason, int index) {
@@ -351,28 +401,37 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
         await _repository.reportProfile(
           userId: profileUserId,
           reasonId: reasonId,
+          description: _detailsController.text,
         );
       } else if (commentId == null) {
         await _repository.reportPost(
           postId: widget.postId!,
           reasonId: reasonId,
+          description: _detailsController.text,
         );
       } else {
         await _repository.reportComment(
           postId: widget.postId!,
           commentId: commentId,
           reasonId: reasonId,
+          description: _detailsController.text,
         );
       }
       if (!mounted) return;
       Get.back<void>();
-      Get.snackbar(
-        'community.report_submitted'.tr,
-        'community.report_thanks'.tr,
+      await WidgetsBinding.instance.endOfFrame;
+      await AppAlert.actionSuccess(
+        title: 'community.report_submitted',
+        message: 'community.report_thanks',
       );
     } on Object catch (error) {
       if (mounted) {
-        Get.snackbar('community.report_submit_failed'.tr, error.toString());
+        final message = error.toString().replaceFirst('Exception: ', '').trim();
+        await AppAlert.actionError(
+          title: 'community.report_submit_failed',
+          message:
+              message.isEmpty ? 'community.report_submit_failed_help' : message,
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

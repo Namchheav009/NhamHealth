@@ -471,6 +471,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             )
             .toList();
     final steps = _steps.where((item) => item.text.trim().isNotEmpty).toList();
+    if (ingredients.isEmpty || steps.isEmpty) {
+      await AppAlert.actionError(
+        title: 'community.recipe_incomplete',
+        message: 'community.ingredients_and_steps_required',
+      );
+      return;
+    }
     if (ingredients.any((item) => item.amount == null || item.amount! <= 0)) {
       await AppAlert.actionError(
         title: 'community.recipe_incomplete',
@@ -510,7 +517,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         await WidgetsBinding.instance.endOfFrame;
         await AppAlert.actionSuccess(
           title:
-              isEditing ? 'community.meal_updated' : 'community.meal_published',
+              isEditing ? 'community.meal_updated' : 'community.meal_submitted',
           message:
               isEditing
                   ? 'community.changes_saved'

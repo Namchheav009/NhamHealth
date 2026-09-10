@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/verify-login",
                                 "/api/v1/auth/resend-login-code")
                         .permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));

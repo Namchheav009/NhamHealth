@@ -11,37 +11,36 @@ import jakarta.persistence.Table;
 @Table(name = "report_reasons")
 public class ReportReason {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_reason_id")
-    private Integer reportReasonId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "report_reason_id")
+  private Integer reportReasonId;
 
-    @Column(name = "reason_name", nullable = false, unique = true, length = 100)
-    private String reasonName;
+  @Column(name = "reason_name", nullable = false, unique = true, length = 100)
+  private String reasonName;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+  @Column(name = "is_active", nullable = false)
+  private Boolean isActive;
 
-    public ReportReason() {
-    }
+  public ReportReason() {}
 
-    public Integer getReportReasonId() {
-        return reportReasonId;
-    }
+  public Integer getReportReasonId() {
+    return reportReasonId;
+  }
 
-    public String getReasonName() {
-        return reasonName;
-    }
+  public String getReasonName() {
+    return reasonName;
+  }
 
-    public void setReasonName(String reasonName) {
-        this.reasonName = reasonName;
-    }
+  public void setReasonName(String reasonName) {
+    this.reasonName = reasonName;
+  }
 
-    public Boolean getIsActive() {
-        return isActive;
-    }
+  public Boolean getIsActive() {
+    return isActive;
+  }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
+  public void setIsActive(Boolean isActive) {
+    this.isActive = isActive;
+  }
 }

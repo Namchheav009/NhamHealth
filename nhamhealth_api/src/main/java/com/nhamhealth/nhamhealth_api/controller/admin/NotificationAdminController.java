@@ -56,6 +56,18 @@ public class NotificationAdminController {
         return "admin/notification";
     }
 
+    @GetMapping("/admin/notifications/unread-summary")
+    public ResponseEntity<?> unreadSummary(Authentication authentication) {
+        if (authentication == null) return ResponseEntity.status(401).build();
+        return userRepository.findByEmailIgnoreCase(authentication.getName())
+                .<ResponseEntity<?>>map(admin -> ResponseEntity.ok(Map.of(
+                        "count", notificationRepository.countByUserUserIdAndIsReadFalse(admin.getUserId()),
+                        "reportCount", notificationRepository
+                                .countByUserUserIdAndNotificationTypeIgnoreCaseAndIsReadFalse(
+                                        admin.getUserId(), "REPORT"))))
+                .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
     @PostMapping("/admin/notifications")
     public ResponseEntity<?> createNotification(@Valid @RequestBody AdminCreateNotificationRequest request) {
         String notificationType = request.notificationType().trim().toUpperCase();

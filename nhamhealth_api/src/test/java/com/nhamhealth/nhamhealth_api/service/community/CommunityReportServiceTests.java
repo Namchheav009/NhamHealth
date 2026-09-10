@@ -39,6 +39,11 @@ class CommunityReportServiceTests {
         CommunityReportService service = new CommunityReportService(
                 posts, comments, reports, reasons, users, notifications, pushNotifications, profileReports);
         PostReport report = new PostReport();
+        Post post = mock(Post.class);
+        report.setPost(post);
+        report.setReportedByUser(mock(User.class));
+        report.setTargetType("POST");
+        when(post.getPostId()).thenReturn(44);
 
         when(reports.findByReportId(12)).thenReturn(Optional.of(report));
         when(reports.saveAndFlush(report)).thenReturn(report);
@@ -47,6 +52,7 @@ class CommunityReportServiceTests {
 
         assertEquals("under_review", reviewed.getStatus());
         verify(reports).findByReportId(12);
+        verify(notifications).saveAndFlush(any(Notification.class));
     }
 
     @Test

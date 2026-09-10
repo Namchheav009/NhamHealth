@@ -35,8 +35,21 @@ public class UserProfileReport {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "moderation_action", length = 20)
+    private String moderationAction;
+
+    @Column(name = "admin_note", length = 1000)
+    private String adminNote;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by_user_id")
+    private User reviewedByUser;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
 
     public Integer getProfileReportId() { return profileReportId; }
     public User getReportedUser() { return reportedUser; }
@@ -47,6 +60,14 @@ public class UserProfileReport {
     public void setReportReason(ReportReason reportReason) { this.reportReason = reportReason; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getModerationAction() { return moderationAction; }
+    public void setModerationAction(String moderationAction) { this.moderationAction = moderationAction; }
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
+    public User getReviewedByUser() { return reviewedByUser; }
+    public void setReviewedByUser(User reviewedByUser) { this.reviewedByUser = reviewedByUser; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
 }
