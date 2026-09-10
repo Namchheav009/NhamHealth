@@ -9,10 +9,6 @@ const Map<String, String> communityKm = {
   'community.post_shared_profile_help':
       'ការបង្ហោះនេះមាននៅលើប្រវត្តិរូប និងព័ត៌មានថ្មីៗក្នុងសហគមន៍របស់អ្នកហើយ។',
   'community.approved': 'បានអនុម័ត',
-  'community.added_to_meals': 'បានបន្ថែមទៅអាហារ',
-  'community.complete_recipe': 'បំពេញរូបមន្ត',
-  'community.community_only': 'សម្រាប់តែសហគមន៍',
-  'community.ai_checking': 'AI កំពុងពិនិត្យ...',
   'community.like_count_one': 'ចូលចិត្ត 1',
   'community.like_count_many': 'ចូលចិត្ត @count',
   'community.could_not_update_like': 'មិនអាចកែប្រែការចូលចិត្តបានទេ',

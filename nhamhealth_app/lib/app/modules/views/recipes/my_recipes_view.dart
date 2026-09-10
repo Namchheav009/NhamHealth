@@ -220,23 +220,8 @@ class _RecipeCard extends StatelessWidget {
                 Icons.restaurant_outlined,
                 '${recipe.ingredients.length} ingredients',
               ),
-              if (recipe.mealId != null)
-                const _InfoChip(Icons.verified_rounded, 'In Meals'),
             ],
           ),
-          if (recipe.aiReviewReason.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color:
-                    recipe.aiStatus == 'APPROVED'
-                        ? const Color(0xFFE7F6EB)
-                        : const Color(0xFFFFF4DF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(recipe.aiReviewReason),
-            ),
           const SizedBox(height: 8),
           OverflowBar(
             alignment: MainAxisAlignment.end,
@@ -245,12 +230,6 @@ class _RecipeCard extends StatelessWidget {
                 tooltip: 'meals.delete_post_question'.tr,
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline_rounded),
-              ),
-              TextButton.icon(
-                onPressed:
-                    () => onRun(recipe, () => repository.aiCheck(recipe.id)),
-                icon: const Icon(Icons.auto_awesome_outlined),
-                label: Text('meals.ai_check'.tr),
               ),
               if (recipe.status == 'DRAFT')
                 FilledButton.icon(

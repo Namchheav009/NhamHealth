@@ -24,11 +24,8 @@ import com.nhamhealth.nhamhealth_api.dto.request.RecipeIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeStepRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.RecipeResponse;
-import com.nhamhealth.nhamhealth_api.entity.AiRecipeReview;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
-import com.nhamhealth.nhamhealth_api.entity.Ingredient;
 import com.nhamhealth.nhamhealth_api.entity.Recipe;
 import com.nhamhealth.nhamhealth_api.entity.RecipeIngredient;
 import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
@@ -36,11 +33,8 @@ import com.nhamhealth.nhamhealth_api.entity.RecipeTag;
 import com.nhamhealth.nhamhealth_api.entity.SavedRecipe;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.entity.UserRecipeAiCheck;
 import com.nhamhealth.nhamhealth_api.repository.recipe.AiRecipeReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealIngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeIngredientRepository;
@@ -52,10 +46,9 @@ import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.UserRecipeAiCheckRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
-/** The author-owned Community recipe lifecycle and its auditable AI gate. */
+/** The author-owned Community meal-post lifecycle. */
 @Service
 public class RecipeFlowService {
-    private static final String REVIEW_MODEL = "NhamHealth recipe-readiness v1";
     private final RecipeRepository recipes;
     private final RecipeIngredientRepository ingredients;
     private final RecipeStepRepository steps;
@@ -66,8 +59,6 @@ public class RecipeFlowService {
     private final SavedRecipeRepository savedRecipes;
     private final PostRepository posts;
     private final MealRepository meals;
-    private final MealIngredientRepository mealIngredients;
-    private final IngredientRepository catalogIngredients;
     private final MealCategoryRepository categories;
     private final UserRepository users;
     private final ProfileImageStorageService images;
@@ -77,13 +68,11 @@ public class RecipeFlowService {
             RecipeStepRepository steps, RecipeTagRepository recipeTags, TagTypeRepository tags,
             AiRecipeReviewRepository reviews, UserRecipeAiCheckRepository checks,
             SavedRecipeRepository savedRecipes, PostRepository posts,
-            MealRepository meals, MealIngredientRepository mealIngredients,
-            IngredientRepository catalogIngredients, MealCategoryRepository categories, UserRepository users,
+            MealRepository meals, MealCategoryRepository categories, UserRepository users,
             ProfileImageStorageService images, EntityManager entityManager) {
         this.recipes = recipes; this.ingredients = ingredients; this.steps = steps; this.recipeTags = recipeTags;
         this.tags = tags; this.reviews = reviews; this.checks = checks; this.savedRecipes = savedRecipes;
-        this.posts = posts; this.meals = meals; this.mealIngredients = mealIngredients;
-        this.catalogIngredients = catalogIngredients; this.categories = categories;
+        this.posts = posts; this.meals = meals; this.categories = categories;
         this.users = users; this.images = images;
         this.entityManager = entityManager;
     }
@@ -130,8 +119,6 @@ public class RecipeFlowService {
     public RecipeResponse update(Integer userId, Integer recipeId, RecipeRequest request, MultipartFile image) {
         Recipe recipe = owned(userId, recipeId);
         apply(recipe, request, image, true);
-        recipe.setAiStatus("PENDING");
-        recipe.setAiReviewReason(null);
         recipe.setUpdatedAt(LocalDateTime.now());
         return response(recipes.save(recipe), userId);
     }
@@ -144,26 +131,6 @@ public class RecipeFlowService {
             recipe.setStatus("PUBLISHED"); recipe.setPublishedAt(now); recipe.setUpdatedAt(now);
             recipes.save(recipe);
         }
-        return runAiCheck(userId, recipeId);
-    }
-
-    @Transactional
-    public RecipeResponse runAiCheck(Integer userId, Integer recipeId) {
-        Recipe recipe = owned(userId, recipeId);
-        List<String> gaps = readinessGaps(recipe);
-        String status = gaps.isEmpty() ? "APPROVED" : "INCOMPLETE";
-        String feedback = gaps.isEmpty()
-                ? "Recipe is complete and ready for an administrator to approve for Meals."
-                : "Add or improve: " + String.join(", ", gaps) + ".";
-        recipe.setAiStatus(status);
-        recipe.setAiReviewReason(feedback);
-        recipes.save(recipe);
-        AiRecipeReview review = new AiRecipeReview(); review.setRecipe(recipe); review.setStatus(status);
-        review.setSummary(gaps.isEmpty() ? "Ready for catalog promotion" : "More recipe details are needed");
-        review.setFeedback(feedback); review.setModelName(REVIEW_MODEL); review.setModelResponse("{\"missing\":" + gaps.size() + "}");
-        review.setCreatedAt(LocalDateTime.now()); review = reviews.save(review);
-        UserRecipeAiCheck check = new UserRecipeAiCheck(); check.setUser(user(userId)); check.setRecipe(recipe);
-        check.setAiRecipeReview(review); check.setStatus(status); check.setCreatedAt(review.getCreatedAt()); checks.save(check);
         return response(recipe, userId);
     }
 
@@ -258,7 +225,7 @@ public class RecipeFlowService {
 
         MealCategory category = new MealCategory();
         category.setCategoryName("Community Meals");
-        category.setDescription("Meals approved from Community meal posts.");
+        category.setDescription("Category for Community meal posts.");
         category.setSortOrder(existing.stream().map(MealCategory::getSortOrder)
                 .filter(Objects::nonNull).max(Integer::compareTo).orElse(0) + 1);
         category.setIsActive(true);
@@ -309,8 +276,6 @@ public class RecipeFlowService {
         } else if (!"PUBLISHED".equals(normalizedStatus)) {
             recipe.setPublishedAt(null);
         }
-        recipe.setAiStatus("PENDING");
-        recipe.setAiReviewReason(null);
         recipe.setUpdatedAt(LocalDateTime.now());
         return response(recipes.save(recipe), null);
     }
@@ -319,65 +284,6 @@ public class RecipeFlowService {
     public void adminDelete(Integer recipeId) {
         Recipe recipe = recipe(recipeId);
         delete(recipe.getAuthor().getUserId(), recipeId);
-    }
-
-    @Transactional
-    public RecipeResponse promote(Integer recipeId, Integer categoryId, Integer adminUserId) {
-        Recipe recipe = recipe(recipeId);
-        AiRecipeReview latest = latestReview(recipeId);
-        if (latest == null || !"APPROVED".equals(latest.getStatus())) {
-            throw new IllegalArgumentException("Run an approved AI readiness check before promoting this recipe.");
-        }
-        if (!"PUBLISHED".equals(recipe.getStatus())) {
-            throw new IllegalArgumentException("Only published Community meal posts can be approved.");
-        }
-        MealCategory category = categories.findById(categoryId)
-                .filter(item -> Boolean.TRUE.equals(item.getIsActive()))
-                .orElseThrow(() -> new IllegalArgumentException("Select a valid active meal category."));
-        Meal meal = meals.findBySourceRecipeRecipeId(recipeId).orElseGet(Meal::new);
-        boolean isNew = meal.getMealId() == null;
-        meal.setSourceRecipe(recipe); meal.setSourceType("COMMUNITY"); meal.setApprovalSource("ADMIN");
-        meal.setCategory(category); meal.setCreatedByUser(user(adminUserId)); meal.setMealName(recipe.getRecipeName());
-        meal.setDescription(recipe.getDescription()); meal.setMainImageUrl(recipe.getMainImageUrl());
-        meal.setCookingTimeMinutes(recipe.getCookingTimeMinutes()); meal.setServings(recipe.getServings());
-        meal.setDifficulty(recipe.getDifficulty()); meal.setIsPublished(true);
-        LocalDateTime now = LocalDateTime.now();
-        if (isNew) meal.setCreatedAt(now);
-        meal.setUpdatedAt(now);
-        meal = meals.save(meal);
-        copyRecipeContentToMeal(recipe, meal);
-        recipe.setMeal(meal);
-        recipes.save(recipe);
-        return response(recipe, null);
-    }
-
-    private void copyRecipeContentToMeal(Recipe recipe, Meal meal) {
-        mealIngredients.deleteByMealMealId(meal.getMealId());
-        steps.deleteByMealMealId(meal.getMealId());
-        mealIngredients.flush(); steps.flush();
-
-        List<MealIngredient> copiedIngredients = new ArrayList<>();
-        for (RecipeIngredient source : ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())) {
-            String name = source.getIngredientName().trim();
-            if (name.length() > 100) throw new IllegalArgumentException("Ingredient names must be 100 characters or fewer before approval.");
-            Ingredient catalogIngredient = catalogIngredients.findByIngredientNameIgnoreCase(name).orElseGet(() -> {
-                Ingredient created = new Ingredient(); created.setIngredientName(name); created.setDefaultUnit(source.getUnit());
-                return catalogIngredients.save(created);
-            });
-            MealIngredient target = new MealIngredient();
-            target.setMeal(meal); target.setIngredient(catalogIngredient); target.setQuantity(source.getAmount());
-            target.setUnit(source.getUnit()); target.setPreparationNote(source.getPreparationNote());
-            target.setDisplayOrder(source.getDisplayOrder() + 1); copiedIngredients.add(target);
-        }
-        mealIngredients.saveAll(copiedIngredients);
-
-        List<RecipeStep> copiedSteps = new ArrayList<>();
-        for (RecipeStep source : steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())) {
-            RecipeStep target = new RecipeStep();
-            target.setMeal(meal); target.setStepNumber(source.getStepNumber()); target.setStepTitle(source.getStepTitle());
-            target.setInstruction(source.getInstruction()); target.setImageUrl(source.getImageUrl()); copiedSteps.add(target);
-        }
-        steps.saveAll(copiedSteps);
     }
 
     private void apply(Recipe recipe, RecipeRequest request, MultipartFile image, boolean update) {
@@ -416,28 +322,14 @@ public class RecipeFlowService {
     }
 
     private RecipeResponse response(Recipe recipe, Integer viewerId) {
-        List<AiRecipeReview> allReviews = reviews.findByRecipeRecipeIdOrderByCreatedAtDesc(recipe.getRecipeId());
-        AiRecipeReview latest = allReviews.isEmpty() ? null : allReviews.getFirst();
         Integer postId = "PUBLISHED".equals(recipe.getStatus()) ? recipe.getRecipeId() : null;
-        Integer mealId = meals.findBySourceRecipeRecipeId(recipe.getRecipeId()).map(Meal::getMealId).orElse(null);
         boolean saved = viewerId != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent();
-        return new RecipeResponse(recipe.getRecipeId(), value(recipe.getAuthor().getName()), recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()), recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(), recipe.getAiStatus(), value(recipe.getAiReviewReason()), recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
+        return new RecipeResponse(recipe.getRecipeId(), value(recipe.getAuthor().getName()), recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()), recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(), null, "", recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
                 recipeTags.findByRecipeRecipeId(recipe.getRecipeId()).stream().map(item -> item.getTag().getTagName()).toList(),
                 ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeIngredient(item.getIngredientName(), item.getAmount(), value(item.getUnit()), value(item.getPreparationNote()))).toList(),
                 steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeStep(item.getStepNumber(), value(item.getStepTitle()), item.getInstruction(), value(item.getImageUrl()))).toList(),
-                latest == null ? null : new RecipeResponse.RecipeReview(latest.getStatus(), value(latest.getSummary()), value(latest.getFeedback()), value(latest.getModelName()), latest.getCreatedAt()), postId, mealId, saved);
+                null, postId, null, saved);
     }
-
-    private List<String> readinessGaps(Recipe recipe) {
-        List<String> gaps = new ArrayList<>();
-        if (recipe.getMainImageUrl() == null || recipe.getMainImageUrl().isBlank()) gaps.add("a cover image");
-        if (recipe.getCookingTimeMinutes() == null) gaps.add("cooking time");
-        if (recipe.getServings() == null) gaps.add("servings");
-        if (ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId()).isEmpty()) gaps.add("at least one ingredient");
-        if (steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId()).isEmpty()) gaps.add("at least one cooking step");
-        return gaps;
-    }
-    private AiRecipeReview latestReview(Integer recipeId) { List<AiRecipeReview> list = reviews.findByRecipeRecipeIdOrderByCreatedAtDesc(recipeId); return list.isEmpty() ? null : list.getFirst(); }
     private Recipe recipe(Integer id) { return recipes.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Recipe not found")); }
     private Recipe owned(Integer userId, Integer recipeId) { Recipe recipe = recipe(recipeId); if (!recipe.getAuthor().getUserId().equals(userId)) throw new ResponseStatusException(FORBIDDEN, "You can only manage your own recipes."); return recipe; }
     private User user(Integer id) { return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found")); }

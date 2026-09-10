@@ -441,10 +441,6 @@ class CommunityRepository {
       await _client.send(request),
     );
     _decodeMap(response);
-    await _client.post(
-      _uri('/api/community/meals/$postId/ai-check'),
-      headers: await _headers(),
-    );
     return getPost(postId);
   }
 

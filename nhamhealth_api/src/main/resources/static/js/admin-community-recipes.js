@@ -31,10 +31,5 @@
     if (!response.ok) return alertError(responseBody.message || 'The meal post could not be deleted.'); await alertSuccess('Meal post deleted', 'The meal post was removed.'); window.location.reload();
   });
 
-  const promoteModal = $('promoteModal'), promoteForm = $('promoteForm'); let recipeId = null;
-  const closePromote = () => { promoteModal.classList.remove('show'); promoteModal.setAttribute('aria-hidden', 'true'); recipeId = null; promoteForm.reset(); };
   $('recipeSearch').addEventListener('input', event => { const term = event.target.value.trim().toLowerCase(); document.querySelectorAll('#recipeRows tr[data-search]').forEach(row => row.hidden = Boolean(term && !row.dataset.search.includes(term))); });
-  document.querySelectorAll('.promote-button').forEach(button => button.addEventListener('click', () => { recipeId = button.dataset.recipeId; $('promoteText').textContent = `Approve “${button.dataset.recipeName}” and add its ingredients and cooking steps to Meals.`; promoteModal.classList.add('show'); promoteModal.setAttribute('aria-hidden', 'false'); }));
-  $('closePromote').onclick = $('cancelPromote').onclick = closePromote;
-  promoteForm.addEventListener('submit', async event => { event.preventDefault(); const categoryId = $('promoteCategory').value; if (!categoryId) return; const response = await fetch(`/admin/community-recipes/${recipeId}/promote?categoryId=${encodeURIComponent(categoryId)}`, { method: 'POST', headers: headers() }); const body = await response.json().catch(() => ({})); if (!response.ok) return alertError(body.message || 'Approval failed.'); await alertSuccess('Meal approved', 'The recipe, ingredients, and cooking steps are now available in Meals.'); window.location.reload(); });
 })();

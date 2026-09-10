@@ -34,7 +34,6 @@ const Map<String, String> mealsEn = {
   'meals.delete_post_question': 'Delete meal post?',
   'meals.my_posts': 'My meal posts',
   'meals.create_post': 'Create meal post',
-  'meals.ai_check': 'AI check',
   'meals.publish': 'Publish',
   'meals.create_post_title': 'Create Meal Post',
   'meals.name': 'Meal name',

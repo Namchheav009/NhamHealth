@@ -45,8 +45,6 @@ public class RecipeApiController {
     @PostMapping(value = "/step-images", consumes = "multipart/form-data")
     public Map<String, String> uploadStepImage(@AuthenticationPrincipal Jwt jwt, @RequestPart("file") MultipartFile file) { userId(jwt); return Map.of("imageUrl", images.storeRecipeStepImage(file)); }
     @PostMapping("/{recipeId}/publish") public RecipeResponse publish(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.publish(userId(jwt), recipeId); }
-    @PostMapping("/{recipeId}/ai-check") public RecipeResponse aiCheck(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }
-    @PostMapping("/{recipeId}/ai-review") public RecipeResponse aiReview(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.runAiCheck(userId(jwt), recipeId); }
     @DeleteMapping("/{recipeId}") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { recipes.delete(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/saved") public RecipeResponse save(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.toggleSaved(userId(jwt), recipeId); }
