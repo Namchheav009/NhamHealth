@@ -64,7 +64,6 @@ class RecipeRepository {
     imageBytes: imageBytes,
   );
   Future<CommunityRecipe> publish(int id) => _post('$_basePath/$id/publish');
-  Future<CommunityRecipe> aiCheck(int id) => _post('$_basePath/$id/ai-review');
   Future<void> delete(int id) async {
     final response = await _client.delete(
       _uri('$_basePath/$id'),

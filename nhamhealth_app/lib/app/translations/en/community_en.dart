@@ -8,10 +8,6 @@ const Map<String, String> communityEn = {
   'community.post_shared_profile_help':
       'The post is now on your profile and Community feed.',
   'community.approved': 'APPROVED',
-  'community.added_to_meals': 'Added to Meals',
-  'community.complete_recipe': 'Complete Recipe',
-  'community.community_only': 'Community only',
-  'community.ai_checking': 'AI checking...',
   'community.like_count_one': '1 like',
   'community.like_count_many': '@count likes',
   'community.could_not_update_like': 'Could not update like',

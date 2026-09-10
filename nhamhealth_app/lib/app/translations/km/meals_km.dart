@@ -33,7 +33,6 @@ const Map<String, String> mealsKm = {
   'meals.delete_post_question': 'លុបការបង្ហោះអាហារនេះ?',
   'meals.my_posts': 'ការបង្ហោះអាហាររបស់ខ្ញុំ',
   'meals.create_post': 'បង្កើតការបង្ហោះអាហារ',
-  'meals.ai_check': 'ពិនិត្យដោយ AI',
   'meals.publish': 'បោះពុម្ពផ្សាយ',
   'meals.create_post_title': 'បង្កើតការបង្ហោះអាហារ',
   'meals.name': 'ឈ្មោះអាហារ',

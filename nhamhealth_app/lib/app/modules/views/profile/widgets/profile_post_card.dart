@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
-import '../../community/widgets/ai_status_badge.dart';
 import '../../community/widgets/community_shared_post_card.dart';
 import 'package:get/get.dart';
 
@@ -243,8 +242,6 @@ class ProfilePostCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 9),
-              AiStatusBadge(status: post.aiStatus),
             ],
 
             if (post.tags.isNotEmpty) ...[

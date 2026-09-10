@@ -493,9 +493,7 @@ public class CommunityService {
                 recipe == null || isShared ? "" : value(recipe.getDifficulty(), ""),
                 recipe == null || isShared || recipe.getCategory() == null ? null : recipe.getCategory().getCategoryId(),
                 recipe == null || isShared || recipe.getCategory() == null ? "" : recipe.getCategory().getCategoryName(),
-                recipe == null || isShared ? "PENDING" : recipe.getAiStatus(),
-                recipe == null || isShared ? "" : value(recipe.getAiReviewReason(), ""),
-                recipe == null || isShared || recipe.getMeal() == null ? null : recipe.getMeal().getMealId(),
+                null, "", null,
                 !isShared && recipe != null
                         && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
                 recipe == null ? List.of() : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
