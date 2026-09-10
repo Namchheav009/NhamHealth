@@ -72,6 +72,8 @@ const Map<String, String> commonEn = {
   'common.clear_all': 'Clear all',
   'common.any': 'Any',
   'common.done': 'Done',
+  'common.change': 'Change',
+  'common.none': 'None',
   'common.confirm': 'Confirm',
   'common.saving': 'Saving...',
   'common.kcal': 'kcal',

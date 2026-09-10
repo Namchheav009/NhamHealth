@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -35,6 +36,39 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.service.catalog.FoodDatabaseMatchingService.MatchCandidate;
 
 class AiFoodAnalysisServiceTests {
+    @Test
+    void detectsDrinkWithoutLoadingAUserOrPersistingAnAnalysis() {
+        FoodVisionProvider visionProvider = mock(FoodVisionProvider.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        AiFoodAnalysisRepository analysisRepository = mock(AiFoodAnalysisRepository.class);
+        FoodVisionResult vision = new FoodVisionResult(
+                true, "", "Iced tea", "Unknown", "drink",
+                0.91, 0.80, 0.85, List.of(), List.of());
+        when(visionProvider.analyze(any(), any())).thenReturn(new AiFoodModelResult(
+                vision, "vision-model", "prompt-v1", false, 10, 20, 100));
+        AiFoodAnalysisService service = new AiFoodAnalysisService(
+                visionProvider,
+                mock(FoodDatabaseMatchingService.class),
+                new FoodNutritionCalculationService(),
+                mock(FoodNutritionEstimationProvider.class),
+                new FoodAnalysisConfidencePolicy(0.75, 0.15, 0.70, 0.65),
+                mock(FoodCorrectionSuggestionService.class),
+                mock(AiUserHealthProfileService.class),
+                userRepository,
+                analysisRepository,
+                mock(AiFoodAnalysisNutrientRepository.class),
+                mock(NutrientRepository.class));
+
+        var result = service.detect(new byte[] {1, 2, 3}, "image/jpeg");
+
+        assertTrue(result.foodDetected());
+        assertEquals("drink", result.type());
+        assertTrue(result.requiresDrinkDetails());
+        assertEquals(0.91, result.confidence());
+        verify(visionProvider).analyze(any(), any());
+        verifyNoInteractions(userRepository, analysisRepository);
+    }
+
     @Test
     void calculatesMealNutritionFromMatchedComponents() {
         FoodVisionProvider visionProvider = mock(FoodVisionProvider.class);

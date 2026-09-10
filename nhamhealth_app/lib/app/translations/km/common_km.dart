@@ -72,6 +72,8 @@ const Map<String, String> commonKm = {
   'common.clear_all': 'សម្អាតទាំងអស់',
   'common.any': 'ណាមួយ',
   'common.done': 'រួចរាល់',
+  'common.change': 'ផ្លាស់ប្តូរ',
+  'common.none': 'គ្មាន',
   'common.confirm': 'បញ្ជាក់',
   'common.saving': 'កំពុងរក្សាទុក...',
   'common.kcal': 'កាឡូរី',

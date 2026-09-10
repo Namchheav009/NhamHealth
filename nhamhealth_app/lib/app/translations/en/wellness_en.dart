@@ -62,6 +62,8 @@ const Map<String, String> wellnessEn = {
   'wellness.nutrition_uses_selected_amount':
       'Nutrition will be calculated using the selected amount of @amount.',
   'wellness.analyze_this_amount': 'Analyze this amount',
+  'wellness.update_amount': 'Update Amount',
+  'wellness.continue_analysis': 'Continue Analysis',
   'wellness.added_to_today': 'Added to Today',
   'wellness.water_added_today': 'Water Added Today',
   'wellness.adding': 'Adding...',

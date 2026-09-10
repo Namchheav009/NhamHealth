@@ -20,6 +20,7 @@ abstract final class AppSpacing {
   static const double navigationHorizontal = 16;
   static const double navigationBottom = 10;
   static const double navigationBarHeight = 82;
+  static const double maxNavigationWidth = 820;
   static const double navigationContentGap = 16;
 
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
@@ -53,6 +54,9 @@ abstract final class AppSpacing {
       MediaQuery.sizeOf(context).width >= tabletBreakpoint
           ? tabletPageHorizontal
           : pageHorizontal;
+
+  static bool isTabletFor(BuildContext context) =>
+      MediaQuery.sizeOf(context).shortestSide >= tabletBreakpoint;
 
   static EdgeInsets pagePaddingFor(BuildContext context) {
     final horizontal = pageHorizontalFor(context);

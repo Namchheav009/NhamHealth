@@ -220,4 +220,60 @@ const Map<String, String> communityKm = {
   'community.ask_community': 'សួរសហគមន៍',
   'community.member': 'សមាជិកសហគមន៍',
   'community.saved_post': 'ការបង្ហោះដែលបានរក្សាទុក',
+  'community.report_post_title': 'រាយការណ៍ការបង្ហោះ',
+  'community.report_private': 'របាយការណ៍របស់អ្នកជាឯកជន ហើយនឹងត្រូវបានពិនិត្យ។',
+  'community.report_more_details': 'ផ្តល់ព័ត៌មានលម្អិតបន្ថែម',
+  'community.report_details_help':
+      'សូមប្រាប់យើងបន្ថែមអំពីបញ្ហា ដើម្បីជួយឱ្យការពិនិត្យកាន់តែលឿន។',
+  'community.report_details_hint': 'ប្រាប់យើងបន្ថែមអំពីបញ្ហា...',
+  'community.report_add_screenshots': 'បន្ថែមរូបថតអេក្រង់ (ស្រេចចិត្ត)',
+  'community.report_add_photo': 'បន្ថែមរូបថត',
+  'community.report_max_images': 'អ្នកអាចបន្ថែមរូបភាពបានរហូតដល់ ៥។',
+  'community.report_review_title': 'ពិនិត្យរបាយការណ៍របស់អ្នក',
+  'community.report_review_help': 'សូមពិនិត្យព័ត៌មានខាងក្រោមមុនពេលដាក់ស្នើ។',
+  'community.report_reason': 'មូលហេតុ',
+  'community.report_description': 'ការពិពណ៌នា',
+  'community.report_attachments': 'ឯកសារភ្ជាប់',
+  'community.report_image_count': '@count រូបភាព',
+  'community.report_anonymous_footer':
+      'របាយការណ៍របស់អ្នកអនាមិក។ យើងមិនចែករំលែកអត្តសញ្ញាណអ្នកជាមួយម្ចាស់ការបង្ហោះទេ។',
+  'community.report_thank_you': 'សូមអរគុណ!',
+  'community.report_success_message':
+      'របាយការណ៍របស់អ្នកត្រូវបានដាក់ស្នើដោយជោគជ័យ។',
+  'community.report_review_guidelines_message':
+      'ក្រុមការងាររបស់យើងនឹងពិនិត្យ និងចាត់វិធានការ ប្រសិនបើវាបំពានគោលការណ៍សហគមន៍។',
+  'community.view_my_reports': 'មើលរបាយការណ៍របស់ខ្ញុំ',
+  'community.my_reports': 'របាយការណ៍របស់ខ្ញុំ',
+  'community.report_empty': 'អ្នកមិនទាន់បានដាក់ស្នើរបាយការណ៍ទេ។',
+  'community.report_details_title': 'ព័ត៌មានលម្អិតរបាយការណ៍',
+  'community.report_submitted_on': 'បានដាក់ស្នើនៅ',
+  'community.reported_post': 'មើលជាមុនការបង្ហោះដែលបានរាយការណ៍',
+  'community.report_review_result': 'លទ្ធផលពិនិត្យ',
+  'community.report_being_reviewed':
+      'ក្រុមការងារកំពុងពិនិត្យរបាយការណ៍របស់អ្នក។',
+  'community.report_resolution': 'ដំណោះស្រាយ',
+  'community.report_status_pending': 'កំពុងរង់ចាំ',
+  'community.report_status_review': 'កំពុងពិនិត្យ',
+  'community.report_status_resolved': 'បានដោះស្រាយ',
+  'community.report_status_no_violation': 'មិនមានការបំពាន',
+  'community.report_status_closed': 'បានបិទ',
+  'community.report_reason_spam': 'សារឥតបានការ',
+  'community.report_reason_harassment': 'ការយាយី',
+  'community.report_reason_inappropriate': 'មាតិកាមិនសមរម្យ',
+  'community.report_reason_false': 'ព័ត៌មានមិនពិត',
+  'community.report_reason_copyright': 'កម្មសិទ្ធិបញ្ញា',
+  'community.report_reason_other': 'ផ្សេងទៀត',
+  'community.community_guidelines': 'គោលការណ៍សហគមន៍',
+  'community.report_guideline_spam':
+      'កុំបង្ហោះការផ្សាយពាណិជ្ជកម្ម ការបោកប្រាស់ ឬមាតិកាដដែលៗ។',
+  'community.report_guideline_harassment':
+      'គោរពគ្នា។ ការស្អប់ ការគំរាម និងការយាយីមិនត្រូវបានអនុញ្ញាតទេ។',
+  'community.report_guideline_inappropriateContent':
+      'កុំចែករំលែកអាក្រាតកាយ អំពើហិង្សា ឬមាតិការសើប។',
+  'community.report_guideline_falseInformation':
+      'កុំចែករំលែកព័ត៌មានសុខភាពមិនពិត ឬបំភាន់។',
+  'community.report_guideline_copyright':
+      'គោរពសិទ្ធិកម្មសិទ្ធិបញ្ញារបស់អ្នកបង្កើត។',
+  'community.report_guideline_other':
+      'រាយការណ៍មាតិកាផ្សេងទៀតដែលបំពានស្តង់ដារសហគមន៍។',
 };

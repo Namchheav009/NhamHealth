@@ -92,7 +92,7 @@ class HomeView extends GetView<HomeController> {
             heightFactor: 1,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxContentWidth,
+                maxWidth: AppSpacing.maxNavigationWidth,
               ),
               child: const HomeBottomNavigation(),
             ),

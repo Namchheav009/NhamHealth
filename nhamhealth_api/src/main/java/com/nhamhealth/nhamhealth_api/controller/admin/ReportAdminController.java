@@ -119,7 +119,8 @@ public class ReportAdminController {
         count(ReportStatus.PENDING),
         count(ReportStatus.UNDER_REVIEW),
         count(ReportStatus.RESOLVED),
-        count(ReportStatus.DISMISSED));
+        count(ReportStatus.NO_VIOLATION) + count(ReportStatus.REJECTED)
+            + count(ReportStatus.DISMISSED));
   }
 
   @PatchMapping("/admin/reports/{id:\\d+}/start-review")

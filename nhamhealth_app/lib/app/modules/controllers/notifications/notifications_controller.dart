@@ -137,6 +137,14 @@ class NotificationsController extends GetxController {
       await Get.toNamed<void>(
         AppRoutes.communityPersonProfilePath(item.referenceId!),
       );
+      return;
+    }
+    if (item.referenceType == 'AI_FOOD') {
+      await Get.toNamed<void>(AppRoutes.aiFood);
+      return;
+    }
+    if (item.referenceType == 'SECURITY') {
+      await Get.toNamed<void>(AppRoutes.settings);
     }
   }
 

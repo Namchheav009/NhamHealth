@@ -56,6 +56,7 @@ public class ReportModerationPolicy {
               ReportReasonCode.DANGEROUS_HEALTH_INFORMATION,
               ReportReasonCode.MISLEADING_NUTRITION_INFORMATION,
               ReportReasonCode.STOLEN_CONTENT,
+              ReportReasonCode.COPYRIGHT,
               ReportReasonCode.OTHER);
       case COMMENT ->
           Set.of(

@@ -213,6 +213,14 @@ class PushNotificationService {
       Get.toNamed<void>(AppRoutes.communityPersonProfilePath(referenceId));
       return;
     }
+    if (referenceType == 'AI_FOOD') {
+      Get.toNamed<void>(AppRoutes.aiFood);
+      return;
+    }
+    if (referenceType == 'SECURITY') {
+      Get.toNamed<void>(AppRoutes.settings);
+      return;
+    }
     Get.toNamed<void>(AppRoutes.notifications);
   }
 

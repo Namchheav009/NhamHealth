@@ -12,5 +12,7 @@ public interface ReportRepository
 
   Page<Report> findByReporterUserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
 
+  Optional<Report> findByReportIdAndReporterUserId(Integer reportId, Integer userId);
+
   long countByReportedUserUserId(Integer userId);
 }

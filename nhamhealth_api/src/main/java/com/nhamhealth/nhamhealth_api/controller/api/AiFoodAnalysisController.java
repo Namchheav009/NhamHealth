@@ -15,8 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
+import com.nhamhealth.nhamhealth_api.service.notification.UserNotificationService;
 import jakarta.validation.Valid;
 import java.util.Map;
 
@@ -27,31 +29,31 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 public class AiFoodAnalysisController {
     private static final int NVIDIA_INLINE_IMAGE_LIMIT_BYTES = 180 * 1024;
     private final AiFoodAnalysisService service;
+    private final UserNotificationService userNotifications;
 
-    public AiFoodAnalysisController(AiFoodAnalysisService service) {
+    public AiFoodAnalysisController(AiFoodAnalysisService service, UserNotificationService userNotifications) {
         this.service = service;
+        this.userNotifications = userNotifications;
     }
 
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public AiFoodAnalysisResponse analyze(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam("image") MultipartFile image) throws IOException {
-        if (image.isEmpty()) {
-            throw new ResponseStatusException(BAD_REQUEST, "A food image is required.");
-        }
-        byte[] imageBytes = image.getBytes();
-        String detectedContentType = detectContentType(imageBytes);
-        if (detectedContentType == null) {
-            throw new ResponseStatusException(BAD_REQUEST, "Upload a valid JPG, PNG, or WebP food image.");
-        }
-        if (imageBytes.length > NVIDIA_INLINE_IMAGE_LIMIT_BYTES) {
-            throw new ResponseStatusException(
-                    org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE,
-                    "The AI image must be 180 KB or smaller. Crop or compress it and try again.");
-        }
+        ValidatedImage validated = validateImage(image);
         Number userId = jwt.getClaim("userId");
-        return service.analyzeAndSave(
-                userId.intValue(), image.getOriginalFilename(), imageBytes, detectedContentType);
+        AiFoodAnalysisResponse result = service.analyzeAndSave(
+                userId.intValue(), image.getOriginalFilename(), validated.bytes(), validated.contentType());
+        if (result != null) {
+            userNotifications.aiFoodAnalysisCompleted(userId.intValue(), result);
+        }
+        return result;
+    }
+
+    @PostMapping(value = "/detect", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public AiFoodDetectionResponse detect(@RequestParam("image") MultipartFile image) throws IOException {
+        ValidatedImage validated = validateImage(image);
+        return service.detect(validated.bytes(), validated.contentType());
     }
 
     @PostMapping("/{analysisId}/feedback")
@@ -88,5 +90,25 @@ public class AiFoodAnalysisController {
             return "image/webp";
         }
         return null;
+    }
+
+    private static ValidatedImage validateImage(MultipartFile image) throws IOException {
+        if (image.isEmpty()) {
+            throw new ResponseStatusException(BAD_REQUEST, "A food image is required.");
+        }
+        byte[] imageBytes = image.getBytes();
+        String detectedContentType = detectContentType(imageBytes);
+        if (detectedContentType == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "Upload a valid JPG, PNG, or WebP food image.");
+        }
+        if (imageBytes.length > NVIDIA_INLINE_IMAGE_LIMIT_BYTES) {
+            throw new ResponseStatusException(
+                    org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE,
+                    "The AI image must be 180 KB or smaller. Crop or compress it and try again.");
+        }
+        return new ValidatedImage(imageBytes, detectedContentType);
+    }
+
+    private record ValidatedImage(byte[] bytes, String contentType) {
     }
 }

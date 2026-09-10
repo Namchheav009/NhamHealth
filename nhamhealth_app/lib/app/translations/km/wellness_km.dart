@@ -64,6 +64,8 @@ const Map<String, String> wellnessKm = {
   'wellness.nutrition_uses_selected_amount':
       'អាហារូបត្ថម្ភនឹងត្រូវគណនាតាមបរិមាណ @amount ដែលបានជ្រើស។',
   'wellness.analyze_this_amount': 'វិភាគបរិមាណនេះ',
+  'wellness.update_amount': 'កែប្រែបរិមាណ',
+  'wellness.continue_analysis': 'បន្តការវិភាគ',
   'wellness.added_to_today': 'បានបន្ថែមសម្រាប់ថ្ងៃនេះ',
   'wellness.water_added_today': 'បានបន្ថែមទឹកសម្រាប់ថ្ងៃនេះ',
   'wellness.adding': 'កំពុងបន្ថែម...',

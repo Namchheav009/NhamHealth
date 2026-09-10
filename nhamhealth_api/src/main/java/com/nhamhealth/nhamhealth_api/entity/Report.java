@@ -60,6 +60,9 @@ public class Report {
   @Column(name = "admin_note", length = 1000)
   private String adminNote;
 
+  @Column(name = "admin_message", length = 1000)
+  private String adminMessage;
+
   @PrePersist
   void create() {
     var now = LocalDateTime.now();
@@ -181,4 +184,7 @@ public class Report {
   public void setAdminNote(String v) {
     adminNote = v;
   }
+
+  public String getAdminMessage() { return adminMessage; }
+  public void setAdminMessage(String value) { adminMessage = value; }
 }

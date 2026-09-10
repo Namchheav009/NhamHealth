@@ -126,7 +126,7 @@ class MealView extends GetView<MealController> {
             heightFactor: 1,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxContentWidth,
+                maxWidth: AppSpacing.maxNavigationWidth,
               ),
               child: Obx(
                 () => AppBottomNavigation(

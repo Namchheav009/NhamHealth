@@ -144,7 +144,7 @@ class AiFoodView extends GetView<AiFoodController> {
               context: context,
               icon: Icons.photo_camera_outlined,
               text: 'Take Photo',
-              action: () => _pickAndEditAmount(context, camera: true),
+              action: () => _pickImage(context, camera: true),
               style: _ButtonStyle.outlined,
             ),
           ),
@@ -154,13 +154,14 @@ class AiFoodView extends GetView<AiFoodController> {
               context: context,
               icon: Icons.photo_library_outlined,
               text: 'Gallery',
-              action: () => _pickAndEditAmount(context, camera: false),
+              action: () => _pickImage(context, camera: false),
               style: _ButtonStyle.outlined,
             ),
           ),
         ],
       ),
-      if (controller.selectedImage.value != null) ...[
+      if (controller.selectedImage.value != null &&
+          controller.hasDetectedImage) ...[
         const SizedBox(height: 14),
         _amountInputCard(context),
       ],
@@ -168,7 +169,8 @@ class AiFoodView extends GetView<AiFoodController> {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         child:
-            controller.selectedImage.value != null
+            controller.selectedImage.value != null &&
+                    !controller.hasDetectedImage
                 ? Padding(
                   padding: const EdgeInsets.only(top: 14),
                   child: _button(
@@ -180,7 +182,7 @@ class AiFoodView extends GetView<AiFoodController> {
                             ? null
                             : !controller.canAnalyze
                             ? null
-                            : () => _showAmountSheet(context),
+                            : () => _detectAndEditAmount(context),
                     style: _ButtonStyle.primary,
                   ),
                 )
@@ -258,10 +260,7 @@ class AiFoodView extends GetView<AiFoodController> {
     );
   }
 
-  Future<void> _pickAndEditAmount(
-    BuildContext context, {
-    required bool camera,
-  }) async {
+  Future<void> _pickImage(BuildContext context, {required bool camera}) async {
     final previousPath = controller.selectedImage.value?.path;
     if (camera) {
       await controller.takePhoto();
@@ -272,12 +271,22 @@ class AiFoodView extends GetView<AiFoodController> {
     if (context.mounted &&
         selectedPath != null &&
         selectedPath != previousPath) {
+      await _detectAndEditAmount(context);
+    }
+  }
+
+  Future<void> _detectAndEditAmount(BuildContext context) async {
+    final detected = await controller.detectFood();
+    if (context.mounted && detected) {
       await _showAmountSheet(context);
     }
   }
 
   Future<void> _showAmountSheet(BuildContext context) async {
-    if (controller.selectedImage.value == null) return;
+    if (controller.selectedImage.value == null ||
+        !controller.hasDetectedImage) {
+      return;
+    }
     final shouldAnalyze = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -323,7 +332,11 @@ class AiFoodView extends GetView<AiFoodController> {
           ),
     );
     if (shouldAnalyze == true && context.mounted) {
-      await controller.analyzeFood();
+      if (controller.hasCompleteResult) {
+        controller.updateAmountForCurrentResult();
+      } else {
+        await controller.analyzeFood();
+      }
     }
   }
 
@@ -371,36 +384,6 @@ class AiFoodView extends GetView<AiFoodController> {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 18),
-        Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: context.appSurfaceLow,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _kindButton(
-                  context,
-                  icon: Icons.restaurant_rounded,
-                  label: 'wellness.food'.tr,
-                  selected: !isDrink,
-                  onTap: () => controller.setInputKind(AiFoodInputKind.food),
-                ),
-              ),
-              Expanded(
-                child: _kindButton(
-                  context,
-                  icon: Icons.local_drink_rounded,
-                  label: 'wellness.drink'.tr,
-                  selected: isDrink,
-                  onTap: () => controller.setInputKind(AiFoodInputKind.drink),
-                ),
-              ),
-            ],
-          ),
         ),
         const SizedBox(height: 18),
         AnimatedSwitcher(
@@ -513,47 +496,15 @@ class AiFoodView extends GetView<AiFoodController> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text('wellness.analyze_this_amount'.tr),
+              child: Text(
+                controller.hasCompleteResult
+                    ? 'wellness.update_amount'.tr
+                    : 'wellness.continue_analysis'.tr,
+              ),
             ),
           ),
         ),
       ],
-    ),
-  );
-
-  Widget _kindButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) => Material(
-    color: selected ? context.appSoftGreen : Colors.transparent,
-    borderRadius: BorderRadius.circular(9),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(9),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected ? green : context.appMutedText,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? greenDark : context.appMutedText,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
     ),
   );
 

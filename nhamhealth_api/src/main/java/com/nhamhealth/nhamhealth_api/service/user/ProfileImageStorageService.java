@@ -44,6 +44,7 @@ public class ProfileImageStorageService {
     private final Path recipeStepImageDirectory;
     private final Path ingredientImageDirectory;
     private final Path postImageDirectory;
+    private final Path reportImageDirectory;
     private final String supabaseUrl;
     private final String supabaseServiceKey;
     private final String supabaseBucket;
@@ -91,6 +92,10 @@ public class ProfileImageStorageService {
                 .toAbsolutePath()
                 .normalize()
                 .resolve("post-images");
+        this.reportImageDirectory = Path.of(uploadDirectory)
+                .toAbsolutePath()
+                .normalize()
+                .resolve("report-images");
         this.supabaseUrl = stripTrailingSlash(supabaseUrl);
         this.supabaseServiceKey = supabaseServiceKey == null ? "" : supabaseServiceKey.trim();
         this.supabaseBucket = supabaseBucket == null ? "nhamhealth-images" : supabaseBucket.trim();
@@ -115,6 +120,10 @@ public class ProfileImageStorageService {
 
     public String storePostImage(MultipartFile file) {
         return storeImage(file, postImageDirectory, "/uploads/post-images/", "Post");
+    }
+
+    public String storeReportImage(MultipartFile file) {
+        return storeImage(file, reportImageDirectory, "/uploads/report-images/", "Report");
     }
 
     public boolean isStoredMealImageUrl(String imageUrl) {

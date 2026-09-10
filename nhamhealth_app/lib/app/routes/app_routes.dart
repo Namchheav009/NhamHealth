@@ -35,8 +35,16 @@ abstract class AppRoutes {
   static const String communityPost = '/community/posts/:postId';
   static const String communityPersonProfile = '/community/people/:userId';
   static const String myRecipes = '/community/my-recipes';
+  static const String communityReport = '/community/posts/:postId/report';
+  static const String myReports = '/community/reports';
+  static const String communityReportDetails = '/community/reports/:reportId';
+  static const String communityGuidelines = '/community/guidelines';
 
   static String communityPostPath(int postId) => '/community/posts/$postId';
   static String communityPersonProfilePath(int userId) =>
       '/community/people/$userId';
+  static String communityReportPath(String postId) =>
+      '/community/posts/$postId/report';
+  static String communityReportDetailsPath(int reportId) =>
+      '/community/reports/$reportId';
 }

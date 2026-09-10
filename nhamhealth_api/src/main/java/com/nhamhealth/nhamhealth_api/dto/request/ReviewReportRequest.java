@@ -5,4 +5,9 @@ import jakarta.validation.constraints.Size;
 
 public record ReviewReportRequest(
     @Size(max = 1000) String adminNote,
-    ReportSeverity severity) {}
+    ReportSeverity severity,
+    @Size(max = 1000) String adminMessage) {
+  public ReviewReportRequest(String adminNote, ReportSeverity severity) {
+    this(adminNote, severity, null);
+  }
+}

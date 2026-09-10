@@ -55,6 +55,8 @@ import 'app_routes.dart';
 import '../modules/views/community/community_page.dart';
 import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/views/community/community_person_profile_view.dart';
+import '../modules/views/community/community_report_page.dart';
+import '../modules/bindings/community/community_report_binding.dart';
 import '../modules/bindings/community/community_binding.dart';
 import '../modules/bindings/community/community_post_detail_binding.dart';
 import '../modules/views/recipes/my_recipes_view.dart';
@@ -265,6 +267,36 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.myRecipes,
       page: () => const MyRecipesView(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.communityReport,
+      page:
+          () => CommunityReportPage(
+            postId: Get.parameters['postId'],
+            subject: 'post',
+          ),
+      binding: CommunityReportBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.myReports,
+      page: () => const CommunityMyReportsPage(),
+      binding: CommunityReportBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.communityReportDetails,
+      page:
+          () => CommunityReportDetailPage(
+            reportId: int.tryParse(Get.parameters['reportId'] ?? '') ?? 0,
+          ),
+      binding: CommunityReportBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.communityGuidelines,
+      page: () => const CommunityGuidelinesPage(),
       transition: Transition.rightToLeft,
     ),
   ];

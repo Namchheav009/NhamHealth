@@ -214,6 +214,48 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('tablet navigation bar stays centered beside the chatbot', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1180, 820);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          bottomNavigationBar: SafeArea(
+            top: false,
+            minimum: AppSpacing.navigationMargin,
+            child: Center(
+              heightFactor: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSpacing.maxNavigationWidth,
+                ),
+                child: AppBottomNavigation(selectedIndex: 0, onSelect: (_) {}),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final navigation = find.byType(AppBottomNavigation);
+    final surface = find.byType(PhysicalShape);
+    final chatbot = find.byKey(const ValueKey<String>('nav-chatbot'));
+    final navigationRect = tester.getRect(navigation);
+    final surfaceRect = tester.getRect(surface);
+    final chatbotRect = tester.getRect(chatbot);
+
+    expect(navigationRect.width, AppSpacing.maxNavigationWidth);
+    expect(surfaceRect.center.dx, closeTo(navigationRect.center.dx, 0.01));
+    expect(chatbotRect.left, greaterThan(surfaceRect.right));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('chatbot opens the AI assistant page', (tester) async {
     Get.put<AuthService>(AuthService());
     addTearDown(Get.reset);

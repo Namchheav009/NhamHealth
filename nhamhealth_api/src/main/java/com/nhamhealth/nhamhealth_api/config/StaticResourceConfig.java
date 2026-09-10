@@ -15,6 +15,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     private final String recipeStepImagesLocation;
     private final String ingredientImagesLocation;
     private final String postImagesLocation;
+    private final String reportImagesLocation;
 
     public StaticResourceConfig(@Value("${app.upload.directory:uploads}") String uploadDirectory) {
         Path uploadPath = Path.of(uploadDirectory)
@@ -25,6 +26,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         this.recipeStepImagesLocation = directoryLocation(uploadPath.resolve("recipe-step-images"));
         this.ingredientImagesLocation = directoryLocation(uploadPath.resolve("ingredient-images"));
         this.postImagesLocation = directoryLocation(uploadPath.resolve("post-images"));
+        this.reportImagesLocation = directoryLocation(uploadPath.resolve("report-images"));
     }
 
     @Override
@@ -39,6 +41,8 @@ public class StaticResourceConfig implements WebMvcConfigurer {
                 .addResourceLocations(ingredientImagesLocation);
         registry.addResourceHandler("/uploads/post-images/**")
                 .addResourceLocations(postImagesLocation);
+        registry.addResourceHandler("/uploads/report-images/**")
+                .addResourceLocations(reportImagesLocation);
     }
 
     private String directoryLocation(Path path) {

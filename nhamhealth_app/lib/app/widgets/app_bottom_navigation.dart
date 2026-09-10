@@ -59,6 +59,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     final showNavigationItems = navigationVisibility?.visible ?? true;
     final animationDuration =
         navigationVisibility?.duration ?? const Duration(milliseconds: 240);
+    final tabletLayout = AppSpacing.isTabletFor(context);
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: SizedBox(
@@ -67,7 +68,10 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
           clipBehavior: Clip.none,
           children: [
             Positioned(
-              left: 0,
+              // On tablets, reserve matching space on both sides so the four
+              // destinations remain centered while the AI action stays
+              // visually separate. Phones keep the compact grouped layout.
+              left: tabletLayout ? 80 : 0,
               right: 80,
               bottom: 0,
               height: 70,

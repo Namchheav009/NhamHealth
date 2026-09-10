@@ -18,7 +18,6 @@ import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
 import 'community_post_editor_page.dart';
-import 'community_report_page.dart';
 import 'community_share_actions.dart';
 import 'widgets/community_composer_card.dart';
 import 'widgets/community_empty_state.dart';
@@ -1124,9 +1123,7 @@ class CommunityPage extends GetView<CommunityController> {
         return;
 
       case _CommunityPostAction.report:
-        await Get.to<void>(
-          () => CommunityReportPage(postId: post.id, subject: 'post'),
-        );
+        await Get.toNamed<void>(AppRoutes.communityReportPath(post.id));
         return;
     }
   }
@@ -1398,7 +1395,9 @@ class CommunityPage extends GetView<CommunityController> {
     child: Center(
       heightFactor: 1,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+        constraints: const BoxConstraints(
+          maxWidth: AppSpacing.maxNavigationWidth,
+        ),
         child: AppBottomNavigation(
           selectedIndex: 2,
           onSelect: (index) {

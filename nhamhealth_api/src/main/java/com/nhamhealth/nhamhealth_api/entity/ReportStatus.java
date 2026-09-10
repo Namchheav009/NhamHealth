@@ -4,5 +4,8 @@ public enum ReportStatus {
   PENDING,
   UNDER_REVIEW,
   RESOLVED,
+  NO_VIOLATION,
+  REJECTED,
+  /** Kept for records created before the mobile report workflow was added. */
   DISMISSED
 }

@@ -7,6 +7,7 @@ import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/wellness/food_nutrition_model.dart';
+import '../../models/wellness/food_detection_model.dart';
 import '../../models/wellness/food_prediction_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
@@ -47,6 +48,7 @@ class AiFoodController extends GetxController {
   final analysisStage = 0.obs;
   final isUserConfirmed = false.obs;
   final selectedImage = Rxn<File>();
+  final detection = Rxn<FoodDetectionModel>();
   final prediction = Rxn<FoodPredictionModel>();
   final nutrition = Rxn<FoodNutritionModel>();
   final recommendation = Rxn<FoodRecommendationModel>();
@@ -59,6 +61,7 @@ class AiFoodController extends GetxController {
   final drinkCupMl = 350.0.obs;
   final drinkConsumedFraction = 1.0.obs;
   int _scanGeneration = 0;
+  FoodNutritionModel? _baseNutrition;
 
   double get selectedAmount =>
       inputKind.value == AiFoodInputKind.drink
@@ -81,6 +84,9 @@ class AiFoodController extends GetxController {
       selectedImage.value != null &&
       selectedAmount.isFinite &&
       selectedAmount > 0;
+
+  bool get hasAnalyzedImage => _baseNutrition != null;
+  bool get hasDetectedImage => detection.value?.foodDetected == true;
 
   void setInputKind(AiFoodInputKind value) => inputKind.value = value;
 
@@ -149,7 +155,7 @@ class AiFoodController extends GetxController {
 
   Future<void> analyzeFood() async {
     final image = selectedImage.value;
-    if (image == null || isAnalyzing.value) {
+    if (image == null || !hasDetectedImage || isAnalyzing.value) {
       return;
     }
     isAnalyzing.value = true;
@@ -159,7 +165,7 @@ class AiFoodController extends GetxController {
     });
     final generation = ++_scanGeneration;
     errorMessage.value = null;
-    clearResult();
+    _clearAnalysisResult();
     try {
       await _analyzeWithCloud(
         await image.readAsBytes(),
@@ -173,6 +179,44 @@ class AiFoodController extends GetxController {
           'wellness.food_analysis_failed_please_try_another_photo';
     } finally {
       stageTimer.cancel();
+      isAnalyzing.value = false;
+      analysisStage.value = 0;
+    }
+  }
+
+  Future<bool> detectFood() async {
+    final image = selectedImage.value;
+    if (image == null || isAnalyzing.value) return false;
+    isAnalyzing.value = true;
+    analysisStage.value = 0;
+    final generation = ++_scanGeneration;
+    clearResult();
+    try {
+      final result = await nutritionRepository.detectImage(
+        await image.readAsBytes(),
+        filename: image.path.split(Platform.pathSeparator).last,
+      );
+      if (generation != _scanGeneration) return false;
+      detection.value = result;
+      if (!result.foodDetected) {
+        errorMessage.value =
+            result.reason.isEmpty
+                ? "We couldn't detect food or drink in this photo. Try another clear photo."
+                : result.reason;
+        return false;
+      }
+      inputKind.value =
+          result.isDrink ? AiFoodInputKind.drink : AiFoodInputKind.food;
+      errorMessage.value = null;
+      return true;
+    } on FoodNutritionException catch (error) {
+      errorMessage.value = error.message;
+      return false;
+    } on Object {
+      errorMessage.value =
+          'wellness.food_analysis_failed_please_try_another_photo';
+      return false;
+    } finally {
       isAnalyzing.value = false;
       analysisStage.value = 0;
     }
@@ -215,6 +259,8 @@ class AiFoodController extends GetxController {
                 : food.reason;
         return;
       }
+      _baseNutrition = food;
+      _syncInputKindFrom(food);
       final adjustedFood = _applySelectedAmount(food);
       _publishPrediction(adjustedFood);
       final localGuidance = recommendationService.create(
@@ -268,6 +314,8 @@ class AiFoodController extends GetxController {
           );
         }
         if (generation != null && generation != _scanGeneration) return;
+        _baseNutrition = localNutrition;
+        _syncInputKindFrom(localNutrition);
         final adjustedFood = _applySelectedAmount(localNutrition);
         nutrition.value = adjustedFood;
         prediction.value = FoodPredictionModel(
@@ -546,6 +594,12 @@ class AiFoodController extends GetxController {
   }
 
   void clearResult() {
+    detection.value = null;
+    _clearAnalysisResult();
+  }
+
+  void _clearAnalysisResult() {
+    _baseNutrition = null;
     prediction.value = null;
     nutrition.value = null;
     recommendation.value = null;
@@ -563,6 +617,34 @@ class AiFoodController extends GetxController {
       classIndex: -1,
     );
     isUserConfirmed.value = !food.needsUserConfirmation;
+  }
+
+  void updateAmountForCurrentResult() {
+    final baseFood = _baseNutrition;
+    if (baseFood == null) return;
+    final adjustedFood = _applySelectedAmount(baseFood);
+    _publishPrediction(adjustedFood);
+    recommendation.value = recommendationService.create(
+      food: adjustedFood,
+      currentCalories: caloriesController.currentCalories.value,
+      targetCalories: caloriesController.targetCalories.value,
+    );
+    wasAdded.value = false;
+    errorMessage.value = null;
+  }
+
+  void _syncInputKindFrom(FoodNutritionModel food) {
+    final onlyDrinkComponents =
+        food.components.isNotEmpty &&
+        food.components.every(
+          (component) => component.componentType == 'drink',
+        );
+    inputKind.value =
+        food.mealType == 'drink' ||
+                food.requiresDrinkDetails ||
+                onlyDrinkComponents
+            ? AiFoodInputKind.drink
+            : AiFoodInputKind.food;
   }
 
   FoodNutritionModel _applySelectedAmount(FoodNutritionModel food) {

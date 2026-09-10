@@ -34,6 +34,7 @@ import com.nhamhealth.nhamhealth_api.service.auth.AuthService;
 import com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService;
 import com.nhamhealth.nhamhealth_api.service.auth.PasswordResetService;
 import com.nhamhealth.nhamhealth_api.service.auth.RegistrationVerificationService;
+import com.nhamhealth.nhamhealth_api.service.notification.UserNotificationService;
 
 import jakarta.validation.Valid;
 
@@ -45,14 +46,17 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
     private final RegistrationVerificationService registrationVerificationService;
     private final LoginAttemptService loginAttemptService;
+    private final UserNotificationService userNotifications;
 
     public AuthController(AuthService authService, PasswordResetService passwordResetService,
             RegistrationVerificationService registrationVerificationService,
-            LoginAttemptService loginAttemptService) {
+            LoginAttemptService loginAttemptService,
+            UserNotificationService userNotifications) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.registrationVerificationService = registrationVerificationService;
         this.loginAttemptService = loginAttemptService;
+        this.userNotifications = userNotifications;
     }
 
     @PostMapping("/login")
@@ -203,6 +207,7 @@ public class AuthController {
         try {
             Number userId = jwt.getClaim("userId");
             authService.changePassword(userId.intValue(), request);
+            userNotifications.passwordChanged(userId.intValue());
             return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(new AuthErrorResponse(exception.getMessage()));

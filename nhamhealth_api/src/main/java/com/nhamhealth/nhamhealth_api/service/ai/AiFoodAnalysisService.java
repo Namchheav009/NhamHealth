@@ -22,6 +22,7 @@ import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 import com.nhamhealth.nhamhealth_api.dto.ai.AiUserHealthProfile;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.DetectedFoodComponent;
 import com.nhamhealth.nhamhealth_api.dto.response.NutritionSource;
 import com.nhamhealth.nhamhealth_api.dto.response.NutritionSummaryResponse;
@@ -78,6 +79,18 @@ public class AiFoodAnalysisService {
         this.analysisRepository = analysisRepository;
         this.analysisNutrientRepository = analysisNutrientRepository;
         this.nutrientRepository = nutrientRepository;
+    }
+
+    public AiFoodDetectionResponse detect(byte[] image, String contentType) {
+        FoodVisionResult vision = visionProvider.analyze(image, contentType).response();
+        String type = vision.type() == null ? "food" : vision.type();
+        return new AiFoodDetectionResponse(
+                vision.foodDetected(),
+                vision.reason(),
+                vision.mealName(),
+                type,
+                "drink".equalsIgnoreCase(type) || "mixed".equalsIgnoreCase(type),
+                vision.mealConfidence());
     }
 
     @Transactional

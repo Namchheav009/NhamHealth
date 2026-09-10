@@ -218,7 +218,7 @@ class SettingsView extends GetView<SettingsController> {
             heightFactor: 1,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxContentWidth,
+                maxWidth: AppSpacing.maxNavigationWidth,
               ),
               child: AppBottomNavigation(
                 selectedIndex: 4,

@@ -219,4 +219,60 @@ const Map<String, String> communityEn = {
   'community.ask_community': 'Ask community',
   'community.member': 'Community member',
   'community.saved_post': 'Saved post',
+  'community.report_post_title': 'Report post',
+  'community.report_private': 'Your report is private and will be reviewed.',
+  'community.report_more_details': 'Provide more details',
+  'community.report_details_help':
+      'Please tell us more about the issue. This helps us review your report faster.',
+  'community.report_details_hint': 'Tell us more about the problem...',
+  'community.report_add_screenshots': 'Add screenshots (optional)',
+  'community.report_add_photo': 'Add photo',
+  'community.report_max_images': 'You can add up to 5 images.',
+  'community.report_review_title': 'Review your report',
+  'community.report_review_help':
+      'Please check the information below before submitting.',
+  'community.report_reason': 'Reason',
+  'community.report_description': 'Description',
+  'community.report_attachments': 'Attachments',
+  'community.report_image_count': '@count images',
+  'community.report_anonymous_footer':
+      "Your report is anonymous. We don't share your identity with the poster.",
+  'community.report_thank_you': 'Thank you!',
+  'community.report_success_message':
+      'Your report has been submitted successfully.',
+  'community.report_review_guidelines_message':
+      'Our team will review this post and take action if it violates our Community Guidelines.',
+  'community.view_my_reports': 'View My Reports',
+  'community.my_reports': 'My Reports',
+  'community.report_empty': 'You have not submitted any reports yet.',
+  'community.report_details_title': 'Report details',
+  'community.report_submitted_on': 'Submitted on',
+  'community.reported_post': 'Reported post preview',
+  'community.report_review_result': 'Review result',
+  'community.report_being_reviewed': 'Our team is reviewing your report.',
+  'community.report_resolution': 'Resolution',
+  'community.report_status_pending': 'Pending',
+  'community.report_status_review': 'Under review',
+  'community.report_status_resolved': 'Resolved',
+  'community.report_status_no_violation': 'No violation',
+  'community.report_status_closed': 'Closed',
+  'community.report_reason_spam': 'Spam',
+  'community.report_reason_harassment': 'Harassment',
+  'community.report_reason_inappropriate': 'Inappropriate content',
+  'community.report_reason_false': 'False information',
+  'community.report_reason_copyright': 'Copyright',
+  'community.report_reason_other': 'Other',
+  'community.community_guidelines': 'Community Guidelines',
+  'community.report_guideline_spam':
+      "Don't post unsolicited advertising, scams, or repetitive content.",
+  'community.report_guideline_harassment':
+      'Be respectful. Hate, threats, bullying, and targeted harassment are not allowed.',
+  'community.report_guideline_inappropriateContent':
+      'Do not share nudity, violence, or other sensitive content.',
+  'community.report_guideline_falseInformation':
+      'Do not share false or misleading health information.',
+  'community.report_guideline_copyright':
+      "Respect creators' intellectual property rights.",
+  'community.report_guideline_other':
+      'Report any other content that violates our community standards.',
 };

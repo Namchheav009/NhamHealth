@@ -54,7 +54,7 @@ class NotificationItem {
       kind: switch (type) {
         'COMMUNITY' => NotificationKind.social,
         'HEALTH' || 'REMINDER' => NotificationKind.wellness,
-        'MODERATION' => NotificationKind.system,
+        'MODERATION' || 'SYSTEM' => NotificationKind.system,
         _ => NotificationKind.recommendation,
       },
       isUnread: json['read'] != true,

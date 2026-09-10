@@ -10,12 +10,14 @@ import com.nhamhealth.nhamhealth_api.repository.notification.NotificationReposit
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.service.notification.PushNotificationService;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ReportModerationService {
@@ -31,6 +33,8 @@ public class ReportModerationService {
   private final PushNotificationService push;
   private final ReportModerationPolicy policy;
   private final UserProfileRepository profiles;
+  private final ReportAttachmentRepository reportAttachments;
+  private final ProfileImageStorageService imageStorage;
 
   public ReportModerationService(
       ReportRepository reports,
@@ -42,7 +46,9 @@ public class ReportModerationService {
       NotificationRepository notifications,
       PushNotificationService push,
       ReportModerationPolicy policy,
-      UserProfileRepository profiles) {
+      UserProfileRepository profiles,
+      ReportAttachmentRepository reportAttachments,
+      ProfileImageStorageService imageStorage) {
     this.reports = reports;
     this.actions = actions;
     this.appeals = appeals;
@@ -53,10 +59,18 @@ public class ReportModerationService {
     this.push = push;
     this.policy = policy;
     this.profiles = profiles;
+    this.reportAttachments = reportAttachments;
+    this.imageStorage = imageStorage;
   }
 
   @Transactional
   public ReportResponse create(Integer reporterId, CreateReportRequest request) {
+    return create(reporterId, request, List.of());
+  }
+
+  @Transactional
+  public ReportResponse create(
+      Integer reporterId, CreateReportRequest request, List<MultipartFile> attachments) {
     User reporter = user(reporterId);
     Target target = validateTarget(request.reportType(), request.targetId());
     User owner = target.owner();
@@ -64,9 +78,6 @@ public class ReportModerationService {
       throw new ResponseStatusException(BAD_REQUEST, "You cannot report yourself");
     policy.requireAllowedReason(request.reportType(), request.reason());
     String description = clean(request.description());
-    if (request.reason() == ReportReasonCode.OTHER
-        && (description == null || description.isBlank()))
-      throw new ResponseStatusException(BAD_REQUEST, "Please provide details for Something else");
     if (reports.existsByReporterUserIdAndReportTypeAndTargetIdAndStatusIn(
         reporterId, request.reportType(), request.targetId(), ACTIVE))
       throw new ResponseStatusException(
@@ -81,6 +92,7 @@ public class ReportModerationService {
     r.setContentSnapshot(target.snapshot());
     r.setSeverity(policy.defaultSeverity(request.reason()));
     r = reports.saveAndFlush(r);
+    storeAttachments(r, attachments);
     notify(
         reporter,
         null,
@@ -95,6 +107,15 @@ public class ReportModerationService {
   @Transactional(readOnly = true)
   public Page<ReportResponse> mine(Integer userId, Pageable pageable) {
     return reports.findByReporterUserIdOrderByCreatedAtDesc(userId, pageable).map(this::safe);
+  }
+
+  @Transactional(readOnly = true)
+  public ReportResponse viewerDetail(Integer userId, Integer reportId, boolean isAdmin) {
+    Report value = isAdmin
+        ? report(reportId)
+        : reports.findByReportIdAndReporterUserId(reportId, userId)
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Report not found"));
+    return safe(value);
   }
 
   @Transactional(readOnly = true)
@@ -156,6 +177,7 @@ public class ReportModerationService {
     r.setReviewedAt(LocalDateTime.now());
     if (request != null) {
       r.setAdminNote(clean(request.adminNote()));
+      r.setAdminMessage(clean(request.adminMessage()));
       if (request.severity() != null) r.setSeverity(request.severity());
     }
     return admin(reports.saveAndFlush(r));
@@ -166,11 +188,12 @@ public class ReportModerationService {
     Report r = report(id);
     if (r.getStatus() != ReportStatus.UNDER_REVIEW)
       throw new ResponseStatusException(CONFLICT, "Start review before making a decision");
-    r.setStatus(ReportStatus.DISMISSED);
+    r.setStatus(ReportStatus.NO_VIOLATION);
     r.setReviewedBy(user(adminId));
     r.setReviewedAt(LocalDateTime.now());
     if (request != null) {
       r.setAdminNote(clean(request.adminNote()));
+      r.setAdminMessage(clean(request.adminMessage()));
       if (request.severity() != null) r.setSeverity(request.severity());
     }
     r = reports.saveAndFlush(r);
@@ -441,7 +464,28 @@ public class ReportModerationService {
         r.getStatus(),
         r.getSeverity(),
         r.getCreatedAt(),
-        r.getUpdatedAt());
+        r.getUpdatedAt(),
+        r.getReviewedAt(),
+        r.getAdminMessage(),
+        r.getContentSnapshot(),
+        reportAttachments.findByReportReportIdOrderByDisplayOrder(r.getReportId()).stream()
+            .map(ReportAttachment::getImageUrl)
+            .toList());
+  }
+
+  private void storeAttachments(Report report, List<MultipartFile> files) {
+    List<MultipartFile> uploads = files == null
+        ? List.of()
+        : files.stream().filter(file -> file != null && !file.isEmpty()).toList();
+    if (uploads.size() > 5)
+      throw new ResponseStatusException(BAD_REQUEST, "A report can contain at most 5 images");
+    for (int index = 0; index < uploads.size(); index++) {
+      ReportAttachment attachment = new ReportAttachment();
+      attachment.setReport(report);
+      attachment.setImageUrl(imageStorage.storeReportImage(uploads.get(index)));
+      attachment.setDisplayOrder(index);
+      reportAttachments.save(attachment);
+    }
   }
 
   private AdminReportResponse admin(Report r) {

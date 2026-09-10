@@ -8,6 +8,7 @@ import 'package:image/image.dart' as image;
 import '../../../../config/api_config.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../models/wellness/food_nutrition_model.dart';
+import '../../models/wellness/food_detection_model.dart';
 
 class FoodNutritionException implements Exception {
   const FoodNutritionException(this.message);
@@ -125,6 +126,70 @@ class FoodNutritionRepository {
     } on TimeoutException {
       throw const FoodNutritionException(
         'Food analysis took too long. Please try again with a smaller, clearer photo.',
+      );
+    } catch (_) {
+      throw FoodNutritionException(
+        'Could not reach the NhamHealth API at ${ApiConfig.baseUrl}. Start the API server and try again.',
+      );
+    }
+  }
+
+  Future<FoodDetectionModel> detectImage(
+    Uint8List bytes, {
+    String filename = 'food.jpg',
+  }) async {
+    final token = await _tokenStorage.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const FoodNutritionException(
+        'Please sign in again to check this image.',
+      );
+    }
+    if (_imageMediaSubtype(bytes) == null) {
+      throw const FoodNutritionException(
+        'Choose a valid JPG, PNG, or WebP food image.',
+      );
+    }
+    final uploadBytes = _prepareAiImage(bytes);
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConfig.baseUrl}/api/v1/ai/food/detect'),
+    )..headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        uploadBytes,
+        filename: _jpegFilename(filename),
+        contentType: http.MediaType('image', 'jpeg'),
+      ),
+    );
+    try {
+      final streamed = await _client
+          .send(request)
+          .timeout(const Duration(seconds: 90));
+      final response = await http.Response.fromStream(streamed);
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw const FoodNutritionException(
+          'Your session has expired. Please sign in again.',
+        );
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw FoodNutritionException(
+          _serverErrorMessage(response.body) ??
+              'Could not determine whether this image contains food or drink.',
+        );
+      }
+      final payload = jsonDecode(response.body);
+      if (payload is! Map<String, dynamic>) {
+        throw const FoodNutritionException(
+          'The food detection response was invalid.',
+        );
+      }
+      return FoodDetectionModel.fromJson(payload);
+    } on FoodNutritionException {
+      rethrow;
+    } on TimeoutException {
+      throw const FoodNutritionException(
+        'Food detection took too long. Please try another photo.',
       );
     } catch (_) {
       throw FoodNutritionException(

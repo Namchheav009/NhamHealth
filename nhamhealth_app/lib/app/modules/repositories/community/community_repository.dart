@@ -13,6 +13,7 @@ import '../../models/community/community_post.dart';
 import '../../models/community/community_tag.dart';
 import '../../models/community/community_types.dart';
 import '../../models/community/community_report_reason.dart';
+import '../../models/community/community_report.dart';
 import '../../models/community/ingredient_suggestion.dart';
 import '../../models/meals/meal_category_model.dart';
 
@@ -149,9 +150,101 @@ class CommunityRepository {
     final response = await _client.post(
       _uri('/api/reports'),
       headers: await _headers(),
-      body: jsonEncode({'reportType': 'POST', 'targetId': int.parse(postId), 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
+      body: jsonEncode({
+        'reportType': 'POST',
+        'targetId': int.parse(postId),
+        'reason': reason,
+        if (description?.trim().isNotEmpty == true)
+          'description': description!.trim(),
+      }),
     );
     _ensureSuccess(response);
+  }
+
+  Future<CommunityReport> submitPostReport({
+    required String postId,
+    required CommunityPostReportReason reason,
+    String? description,
+    List<CommunityReportAttachmentDraft> attachments = const [],
+  }) async {
+    if (attachments.length > 5) {
+      throw const CommunityException('You can attach up to 5 images.');
+    }
+    if (attachments.isEmpty) {
+      final response = await _client.post(
+        _uri('/api/community/posts/$postId/reports'),
+        headers: await _headers(),
+        body: jsonEncode({
+          'reason': reason.apiValue,
+          if (description?.trim().isNotEmpty == true)
+            'description': description!.trim(),
+        }),
+      );
+      return _report(_decodeMap(response));
+    }
+    final request = http.MultipartRequest(
+      'POST',
+      _uri('/api/community/posts/$postId/reports'),
+    )..headers.addAll(await _headers(includeContentType: false));
+    request.files.add(
+      http.MultipartFile.fromString(
+        'report',
+        jsonEncode({
+          'reason': reason.apiValue,
+          if (description?.trim().isNotEmpty == true)
+            'description': description!.trim(),
+        }),
+        contentType: MediaType('application', 'json'),
+      ),
+    );
+    for (final attachment in attachments) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'images',
+          attachment.bytes,
+          filename: attachment.name,
+          contentType: MediaType('image', _imageSubtype(attachment.name)),
+        ),
+      );
+    }
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
+    return _report(_decodeMap(response));
+  }
+
+  Future<List<CommunityReport>> getMyReports() async {
+    final response = await _client.get(
+      _uri('/api/community/reports/me?size=50'),
+      headers: await _headers(),
+    );
+    final json = _decodeMap(response);
+    final values = json['content'] as List<dynamic>? ?? const [];
+    return values
+        .whereType<Map>()
+        .map((value) => _report(Map<String, dynamic>.from(value)))
+        .toList(growable: false);
+  }
+
+  Future<CommunityReport> getReportDetails(int reportId) async {
+    final response = await _client.get(
+      _uri('/api/community/reports/$reportId'),
+      headers: await _headers(),
+    );
+    return _report(_decodeMap(response));
+  }
+
+  CommunityReport _report(Map<String, dynamic> json) {
+    final attachments = (json['attachments'] as List<dynamic>? ?? const [])
+        .map((value) => _absoluteUrl('$value'))
+        .toList(growable: false);
+    return CommunityReport.fromJson({...json, 'attachments': attachments});
+  }
+
+  String _imageSubtype(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'png';
+    if (lower.endsWith('.webp')) return 'webp';
+    return 'jpeg';
   }
 
   Future<void> reportComment({
@@ -164,7 +257,13 @@ class CommunityRepository {
     final response = await _client.post(
       _uri('/api/reports'),
       headers: await _headers(),
-      body: jsonEncode({'reportType': 'COMMENT', 'targetId': int.parse(commentId), 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
+      body: jsonEncode({
+        'reportType': 'COMMENT',
+        'targetId': int.parse(commentId),
+        'reason': reason,
+        if (description?.trim().isNotEmpty == true)
+          'description': description!.trim(),
+      }),
     );
     _ensureSuccess(response);
   }
@@ -178,26 +277,53 @@ class CommunityRepository {
     final response = await _client.post(
       _uri('/api/reports'),
       headers: await _headers(),
-      body: jsonEncode({'reportType': 'PROFILE', 'targetId': userId, 'reason': reason, if (description?.trim().isNotEmpty == true) 'description': description!.trim()}),
+      body: jsonEncode({
+        'reportType': 'PROFILE',
+        'targetId': userId,
+        'reason': reason,
+        if (description?.trim().isNotEmpty == true)
+          'description': description!.trim(),
+      }),
     );
     _ensureSuccess(response);
   }
 
   Future<String> _reportReasonCode(int reasonId) async {
-    const fixed = <int, String>{101: 'SPAM', 102: 'HARASSMENT', 103: 'IMPERSONATION', 104: 'FALSE_INFORMATION', 105: 'INAPPROPRIATE_PROFILE', 106: 'SCAM_OR_FRAUD', 107: 'INAPPROPRIATE_CONTENT', 108: 'DANGEROUS_HEALTH_INFORMATION', 109: 'MISLEADING_NUTRITION_INFORMATION', 110: 'HATE_OR_ABUSIVE_CONTENT', 111: 'STOLEN_CONTENT', 199: 'OTHER'};
+    const fixed = <int, String>{
+      101: 'SPAM',
+      102: 'HARASSMENT',
+      103: 'IMPERSONATION',
+      104: 'FALSE_INFORMATION',
+      105: 'INAPPROPRIATE_PROFILE',
+      106: 'SCAM_OR_FRAUD',
+      107: 'INAPPROPRIATE_CONTENT',
+      108: 'DANGEROUS_HEALTH_INFORMATION',
+      109: 'MISLEADING_NUTRITION_INFORMATION',
+      110: 'HATE_OR_ABUSIVE_CONTENT',
+      111: 'STOLEN_CONTENT',
+      199: 'OTHER',
+    };
     if (fixed.containsKey(reasonId)) return fixed[reasonId]!;
     CommunityReportReason? reason;
     for (final item in await getReportReasons()) {
-      if (item.id == reasonId) { reason = item; break; }
+      if (item.id == reasonId) {
+        reason = item;
+        break;
+      }
     }
     final name = (reason?.name ?? 'Other').trim().toLowerCase();
     const codes = <String, String>{
-      'spam': 'SPAM', 'harassment': 'HARASSMENT', 'false information': 'FALSE_INFORMATION',
-      'inappropriate content': 'INAPPROPRIATE_CONTENT', 'inappropriate profile': 'INAPPROPRIATE_PROFILE',
-      'pretending to be someone else': 'IMPERSONATION', 'scam or fraud': 'SCAM_OR_FRAUD',
+      'spam': 'SPAM',
+      'harassment': 'HARASSMENT',
+      'false information': 'FALSE_INFORMATION',
+      'inappropriate content': 'INAPPROPRIATE_CONTENT',
+      'inappropriate profile': 'INAPPROPRIATE_PROFILE',
+      'pretending to be someone else': 'IMPERSONATION',
+      'scam or fraud': 'SCAM_OR_FRAUD',
       'dangerous health information': 'DANGEROUS_HEALTH_INFORMATION',
       'misleading nutrition information': 'MISLEADING_NUTRITION_INFORMATION',
-      'stolen content': 'STOLEN_CONTENT', 'hate or abusive content': 'HATE_OR_ABUSIVE_CONTENT',
+      'stolen content': 'STOLEN_CONTENT',
+      'hate or abusive content': 'HATE_OR_ABUSIVE_CONTENT',
     };
     return codes[name] ?? 'OTHER';
   }
