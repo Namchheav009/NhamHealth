@@ -18,6 +18,8 @@ class ImportFlowTests(unittest.TestCase):
         Image.new("RGB", (10, 10)).save(self.image, "WEBP")
         self.recipe = {
             "mealName": "Test meal", "categoryName": "Breakfast", "servings": 4,
+            "mealName": "Test meal", "categoryName": "Breakfast", "categoryNameKm": "អាហារពេលព្រឹក",
+            "calories": 400, "proteinGrams": 20, "servings": 4,
             "difficulty": "EASY", "nutritionBasis": "UNKNOWN", "localImagePath": str(self.image),
             "sourceName": "Test source", "sourceLanguage": "en", "sourceUrl": "https://example.com/recipe",
             "scrapedAt": "2026-09-08T00:00:00Z",
@@ -62,6 +64,7 @@ class ImportFlowTests(unittest.TestCase):
             post.assert_not_called()
 
     def test_multipart_preserves_unknown_nutrition_and_forces_draft(self):
+    def test_multipart_preserves_nutrition_and_forces_draft(self):
         self.recipe.update(published=True, reviewStatus="APPROVED")
         response = Mock(ok=True, content=b"{}")
         response.json.return_value = {"mealId": 7}
@@ -73,8 +76,18 @@ class ImportFlowTests(unittest.TestCase):
             self.assertFalse(payload["published"])
             self.assertEqual("PENDING_REVIEW", payload["reviewStatus"])
             self.assertIsNone(payload["calories"])
+            self.assertEqual(400, payload["calories"])
+            self.assertEqual(20, payload["proteinGrams"])
+            self.assertEqual("អាហារពេលព្រឹក", payload["categoryNameKm"])
             self.assertEqual("image/webp", files["image"][2])
             self.assertTrue(files["image"][1].closed)
+
+    def test_missing_calories_and_protein_are_errors(self):
+        self.recipe["calories"] = None
+        self.recipe["proteinGrams"] = None
+        errors, _ = validate_recipe(self.recipe)
+        self.assertTrue(any("calories" in error for error in errors))
+        self.assertTrue(any("proteinGrams" in error for error in errors))
 
     def test_api_validation_message_is_visible(self):
         response = Mock(ok=False, status_code=400)

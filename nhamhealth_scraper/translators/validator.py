@@ -45,6 +45,15 @@ def validate_translation(recipe: dict) -> tuple[bool, str | None]:
         return False, "Khmer description does not contain Khmer script."
 
     # 3. Ingredients validation
+    # 3. Category validation (if English has category)
+    en_cat = (en.get("category") or "").strip()
+    km_cat = (km.get("category") or "").strip()
+    if en_cat and not km_cat:
+        return False, "English category is present but Khmer category translation is missing."
+    if km_cat and not contains_khmer(km_cat):
+        return False, f"Khmer category '{km_cat}' does not contain Khmer script."
+
+    # 4. Ingredients validation
     en_ingredients = en.get("ingredients") or []
     km_ingredients = km.get("ingredients") or []
     if len(en_ingredients) != len(km_ingredients):

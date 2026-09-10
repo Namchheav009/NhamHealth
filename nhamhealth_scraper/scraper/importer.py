@@ -75,6 +75,7 @@ def _api_recipe_payload(recipe: dict) -> dict:
     km_trans = (recipe.get("translations") or {}).get("km") if isinstance(recipe.get("translations"), dict) else None
     khmer_name = recipe.get("khmerName") or (km_trans.get("mealName") if isinstance(km_trans, dict) else None)
     description_km = km_trans.get("description") if isinstance(km_trans, dict) else None
+    category_km = (km_trans.get("category") if isinstance(km_trans, dict) else None) or recipe.get("categoryNameKm")
     km_ingredients = (km_trans.get("ingredients") or []) if isinstance(km_trans, dict) else []
     km_steps = (km_trans.get("steps") or []) if isinstance(km_trans, dict) else []
 
@@ -110,6 +111,7 @@ def _api_recipe_payload(recipe: dict) -> dict:
         "description": recipe.get("description"),
         "descriptionKm": description_km,
         "categoryName": recipe.get("categoryName"),
+        "categoryNameKm": category_km,
         "calories": recipe.get("calories"),
         "proteinGrams": recipe.get("proteinGrams"),
         "carbohydrateGrams": recipe.get("carbohydrateGrams"),

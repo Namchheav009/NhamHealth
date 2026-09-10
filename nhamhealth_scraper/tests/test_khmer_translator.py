@@ -24,6 +24,10 @@ class KhmerTranslatorTests(unittest.TestCase):
             "proteinGrams": None,
             "carbohydrateGrams": None,
             "fatGrams": None,
+            "calories": 420,
+            "proteinGrams": 28,
+            "carbohydrateGrams": 18,
+            "fatGrams": 25,
             "ingredients": [
                 {
                     "ingredientName": "chicken breast",
@@ -145,12 +149,14 @@ class KhmerTranslatorTests(unittest.TestCase):
                 "en": {
                     "mealName": "Fish Amok",
                     "description": "Steamed curry",
+                    "category": "Lunch",
                     "ingredients": [{"name": "fish", "quantity": 100, "unit": "g"}],
                     "steps": ["Steam the fish."],
                 },
                 "km": {
                     "mealName": "អាម៉ុកត្រី",
                     "description": "ការីចំហុយ",
+                    "category": "អាហារពេលថ្ងៃត្រង់",
                     "ingredients": [{"name": "ត្រី", "quantity": 100, "unit": "g"}],
                     "steps": ["ចំហុយត្រី។"],
                 },
@@ -165,6 +171,13 @@ class KhmerTranslatorTests(unittest.TestCase):
         is_valid, err = validate_translation(recipe)
         self.assertFalse(is_valid)
         self.assertIn("quantity modified", err)
+
+        # Missing Khmer category causes failure
+        recipe["translations"]["km"]["ingredients"][0]["quantity"] = 100
+        recipe["translations"]["km"]["category"] = ""
+        is_valid, err = validate_translation(recipe)
+        self.assertFalse(is_valid)
+        self.assertIn("category", err)
 
     def test_graceful_error_fallback(self):
         """Verify requirement 6: Failure keeps English, sets translationStatus='FAILED'."""

@@ -69,7 +69,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/verify-login",
-                                "/api/v1/auth/resend-login-code")
+                                "/api/v1/auth/resend-login-code",
+                                "/api/admin/auth/login")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())

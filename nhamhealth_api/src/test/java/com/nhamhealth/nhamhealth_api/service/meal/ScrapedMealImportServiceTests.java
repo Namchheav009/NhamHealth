@@ -16,11 +16,13 @@ import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.catalog.*;
 import com.nhamhealth.nhamhealth_api.repository.meal.*;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
 import jakarta.persistence.*;
 import jakarta.validation.*;
 
 class ScrapedMealImportServiceTests {
     private final MealCategoryRepository categories = mock(MealCategoryRepository.class);
+    private final MealCategoryTranslationRepository categoryTranslations = mock(MealCategoryTranslationRepository.class);
     private final IngredientRepository ingredients = mock(IngredientRepository.class);
     private final NutrientRepository nutrients = mock(NutrientRepository.class);
     private final MealNutritionRepository nutrition = mock(MealNutritionRepository.class);
@@ -33,7 +35,8 @@ class ScrapedMealImportServiceTests {
     private ScrapedMealImportService service;
     private final MockMultipartFile photo = new MockMultipartFile("image", "meal.webp", "image/webp", new byte[]{1});
     private static final String PAYLOAD = """
-        {"mealName":"Test meal","categoryName":"Breakfast","servings":4,
+        {"mealName":"Test meal","categoryName":"Breakfast","categoryNameKm":"អាហារពេលព្រឹក",
+         "calories":500,"proteinGrams":25,"servings":4,
          "difficulty":"EASY","cookingTimeMinutes":20,"nutritionBasis":"UNKNOWN",
          "ingredients":[{"ingredientName":"Pork","quantity":600,"unit":"g","displayOrder":1}],
          "steps":[{"stepNumber":1,"instruction":"Cook the ingredients."}],
@@ -43,7 +46,7 @@ class ScrapedMealImportServiceTests {
 
     @BeforeEach void setup() {
         factory = Validation.buildDefaultValidatorFactory();
-        service = new ScrapedMealImportService(factory.getValidator(), categories, ingredients, nutrients,
+        service = new ScrapedMealImportService(factory.getValidator(), categories, categoryTranslations, ingredients, nutrients,
                 nutrition, meals, admin, images, em);
         when(em.createNativeQuery(anyString())).thenReturn(nativeQuery);
         when(nativeQuery.setParameter(anyString(), any())).thenReturn(nativeQuery);
@@ -154,5 +157,15 @@ class ScrapedMealImportServiceTests {
     @Test void normalizesSourceAndRejectsNonHttpUrls() {
         assertEquals("https://example.com/recipe", ScrapedMealImportService.canonicalSourceUrl("https://EXAMPLE.com/recipe/#top"));
         assertThrows(IllegalArgumentException.class, () -> ScrapedMealImportService.canonicalSourceUrl("file:///tmp/recipe"));
+    }
+
+    @Test void missingCaloriesFailsValidation() {
+        String invalid = PAYLOAD.replace("\"calories\":500,", "");
+        assertThrows(IllegalArgumentException.class, () -> service.importMeal(invalid, photo));
+    }
+
+    @Test void missingProteinFailsValidation() {
+        String invalid = PAYLOAD.replace("\"proteinGrams\":25,", "");
+        assertThrows(IllegalArgumentException.class, () -> service.importMeal(invalid, photo));
     }
 }

@@ -63,6 +63,14 @@ def validate_recipe(recipe: dict, *, require_image: bool = True) -> tuple[list[s
     if recipe.get("nutritionBasis") not in {"UNKNOWN", "PER_SERVING", "PER_100G", "WHOLE_RECIPE"}:
         errors.append("Unknown nutrition basis.")
     for field in ("calories", "proteinGrams", "carbohydrateGrams", "fatGrams"):
+    for field in ("calories", "proteinGrams"):
+        value = recipe.get(field)
+        if value is None:
+            errors.append(f"{field} is required and must be provided.")
+        elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            errors.append(f"{field} must be a non-negative number.")
+
+    for field in ("carbohydrateGrams", "fatGrams"):
         value = recipe.get(field)
         if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))
                                   or not math.isfinite(value) or value < 0):

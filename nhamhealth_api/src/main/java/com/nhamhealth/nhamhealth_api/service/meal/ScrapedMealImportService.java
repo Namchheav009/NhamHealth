@@ -13,6 +13,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.*;
 import com.nhamhealth.nhamhealth_api.entity.*;
 import com.nhamhealth.nhamhealth_api.repository.catalog.*;
 import com.nhamhealth.nhamhealth_api.repository.meal.*;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Validator;
@@ -25,6 +26,7 @@ public class ScrapedMealImportService {
     private final ObjectMapper json = new ObjectMapper();
     private final Validator validator;
     private final MealCategoryRepository categories;
+    private final MealCategoryTranslationRepository categoryTranslations;
     private final IngredientRepository ingredients;
     private final NutrientRepository nutrients;
     private final MealNutritionRepository nutrition;
@@ -34,11 +36,13 @@ public class ScrapedMealImportService {
     private final EntityManager em;
 
     public ScrapedMealImportService(Validator validator, MealCategoryRepository categories,
+            MealCategoryTranslationRepository categoryTranslations,
             IngredientRepository ingredients, NutrientRepository nutrients,
             MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
             ProfileImageStorageService images, EntityManager em) {
         this.validator = validator;
         this.categories = categories;
+        this.categoryTranslations = categoryTranslations;
         this.ingredients = ingredients;
         this.nutrients = nutrients;
         this.nutrition = nutrition;
@@ -85,9 +89,40 @@ public class ScrapedMealImportService {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.CONFLICT, "This source URL or meal name is already imported");
         }
-        var category = categories.findByCategoryNameIgnoreCase(request.categoryName().trim())
+        String catName = request.categoryName().trim();
+        var category = categories.findByCategoryNameIgnoreCase(catName)
                 .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
-                .orElseThrow(() -> new IllegalArgumentException("Unknown or inactive category: " + request.categoryName()));
+                .orElseGet(() -> {
+                    MealCategory newCat = new MealCategory();
+                    newCat.setCategoryName(catName);
+                    newCat.setDescription("Scraped recipe category");
+                    newCat.setIsActive(true);
+                    newCat.setSortOrder(999);
+                    return categories.save(newCat);
+                });
+
+        categoryTranslations.findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(), "en")
+                .orElseGet(() -> {
+                    MealCategoryTranslation t = new MealCategoryTranslation();
+                    t.setCategory(category);
+                    t.setLanguageCode("en");
+                    t.setName(category.getCategoryName());
+                    t.setDescription(category.getDescription());
+                    return categoryTranslations.save(t);
+                });
+
+        if (request.categoryNameKm() != null && !request.categoryNameKm().isBlank()) {
+            String kmName = request.categoryNameKm().trim();
+            var kmTrans = categoryTranslations.findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(), "km")
+                    .orElseGet(() -> {
+                        MealCategoryTranslation t = new MealCategoryTranslation();
+                        t.setCategory(category);
+                        t.setLanguageCode("km");
+                        return t;
+                    });
+            kmTrans.setName(kmName);
+            categoryTranslations.save(kmTrans);
+        }
         List<String> warnings = new ArrayList<>();
         Map<String, Ingredient> catalogByName = new HashMap<>();
         Map<Integer, AdminMealIngredientRequest> resolvedById = new LinkedHashMap<>();

@@ -271,6 +271,12 @@ public class MealAdminService {
         for (int index = 0; index < mealIngredients.size(); index++) {
             MealIngredient row = mealIngredients.get(index);
             var requested = request.ingredients().get(index);
+            IngredientTranslation enTrans = ingredientTranslations
+                    .findByIngredientIngredientIdAndLanguageCode(row.getIngredient().getIngredientId(), "en")
+                    .orElseGet(IngredientTranslation::new);
+            enTrans.setIngredient(row.getIngredient()); enTrans.setLanguageCode("en");
+            enTrans.setName(row.getIngredient().getIngredientName());
+            ingredientTranslations.save(enTrans);
             String khmerName = blankToNull(requested.ingredientNameKm());
             if (khmerName != null) {
                 IngredientTranslation translation = ingredientTranslations
