@@ -32,6 +32,14 @@ DISH_NAMES: dict[str, str] = {
     "kari sach moan": "ការីសាច់មាន់",
     "amok trey — fish amok steamed in banana leaf": "អាម៉ុកត្រី",
     "amok trey - fish amok steamed in banana leaf": "អាម៉ុកត្រី",
+    # Jasmine rice / Bai dishes
+    "bai — perfect jasmine rice": "បាយ — បាយម្លិះល្អឥតខ្ចោះ",
+    "bai - perfect jasmine rice": "បាយ — បាយម្លិះល្អឥតខ្ចោះ",
+    "perfect jasmine rice": "បាយម្លិះល្អឥតខ្ចោះ",
+    "jasmine rice": "បាយម្លិះ",
+    # Amok Trey short forms
+    "amok trey — fish amok": "អាម៉ុកត្រី",
+    "amok trey - fish amok": "អាម៉ុកត្រី",
 }
 
 # Standard categories in NhamHealth

@@ -119,7 +119,7 @@ class ProfilePostCard extends StatelessWidget {
                           const SizedBox(height: 2),
 
                           Text(
-                            '${post.ageLabel}  •  ${membership ?? post.role}',
+                            '${_localizedAge(post)}  •  ${_localizedRole(membership ?? post.role)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -146,7 +146,7 @@ class ProfilePostCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         child: Text(
-                          relationshipLabel!,
+                          _localizedRelationship(relationshipLabel!),
                           style: TextStyle(
                             color: context.appMutedText,
                             fontSize: 13,
@@ -286,7 +286,7 @@ class ProfilePostCard extends StatelessWidget {
                         post.isLiked
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
-                    value: post.isLiked ? 'Liked' : 'Like',
+                    value: post.isLiked ? 'community.liked'.tr : 'community.like'.tr,
                     color:
                         post.isLiked
                             ? const Color(0xFFE64657)
@@ -296,14 +296,14 @@ class ProfilePostCard extends StatelessWidget {
                   const _ProfileMetricDivider(),
                   _ProfilePostMetric(
                     icon: Icons.chat_bubble_outline_rounded,
-                    value: 'Comment',
+                    value: 'community.comment'.tr,
                     color: context.appMutedText,
                     onTap: onComment,
                   ),
                   const _ProfileMetricDivider(),
                   _ProfilePostMetric(
                     icon: Icons.share_outlined,
-                    value: 'Share',
+                    value: 'community.share'.tr,
                     color: context.appMutedText,
                     onTap: onShare,
                   ),
@@ -401,6 +401,60 @@ class ProfilePostCard extends StatelessWidget {
           ),
         ),
   );
+
+  String _localizedAge(CommunityPost post) {
+    final date = post.createdAt;
+    if (date != null) {
+      final difference = DateTime.now().difference(date);
+      if (difference.inMinutes < 1) return 'community.just_now'.tr;
+      if (difference.inHours < 1) {
+        return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+      }
+      if (difference.inDays < 1) {
+        return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});
+      }
+      if (difference.inDays == 1) return 'community.yesterday'.tr;
+      return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
+    }
+    final raw = post.ageLabel.trim();
+    if (raw.isEmpty || raw.toLowerCase() == 'just now') return 'community.just_now'.tr;
+    if (raw.toLowerCase() == 'recently') return 'community.recently'.tr;
+    if (raw.toLowerCase() == 'yesterday') return 'community.yesterday'.tr;
+    final minMatch = RegExp(r'^(\d+)\s*m\s*ago$', caseSensitive: false).firstMatch(raw);
+    if (minMatch != null) {
+      return 'community.minutes_ago'.trParams({'count': minMatch.group(1)!});
+    }
+    final hourMatch = RegExp(r'^(\d+)\s*h\s*ago$', caseSensitive: false).firstMatch(raw);
+    if (hourMatch != null) {
+      return 'community.hours_ago'.trParams({'count': hourMatch.group(1)!});
+    }
+    final dayMatch = RegExp(r'^(\d+)\s*d\s*ago$', caseSensitive: false).firstMatch(raw);
+    if (dayMatch != null) {
+      return 'community.days_ago'.trParams({'count': dayMatch.group(1)!});
+    }
+    return raw;
+  }
+
+  String _localizedRole(String? role) {
+    final value = (role ?? '').trim();
+    if (value.isEmpty ||
+        value.toUpperCase() == 'USER' ||
+        value.toLowerCase() == 'community member' ||
+        value.toLowerCase() == 'member') {
+      return 'community.member'.tr;
+    }
+    return value;
+  }
+
+  String _localizedRelationship(String label) {
+    final trimmed = label.trim();
+    if (trimmed.isEmpty) return trimmed;
+    final lower = trimmed.toLowerCase();
+    if (lower == 'follow') return 'community.follow'.tr;
+    if (lower == 'following') return 'community.following'.tr;
+    if (lower == 'friend') return 'community.friend'.tr;
+    return trimmed;
+  }
 }
 
 String _compactCount(int value) {

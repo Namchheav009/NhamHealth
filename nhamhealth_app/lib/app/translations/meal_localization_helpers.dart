@@ -26,9 +26,11 @@ const Map<String, String> _dishNamesEnToKm = {
   'sach ko ang': 'សាច់គោអាំង',
   'kari sach moan': 'ការីសាច់មាន់',
   'chicken curry': 'ការីសាច់មាន់',
+  'high protein salad': 'សាឡាត់ប្រូតេអ៊ីនខ្ពស់',
   'healthy salad': 'សាឡាត់សុខភាព',
   'salad': 'សាឡាត់',
-  'high protein salad': 'សាឡាត់ប្រូតេអ៊ីនខ្ពស់',
+  'jasmine rice': 'បាយអង្ករផ្កាម្លិះ',
+  'bai': 'បាយ',
 };
 
 const Map<String, String> _dishNamesKmToEn = {
@@ -53,6 +55,7 @@ const Map<String, String> _dishNamesKmToEn = {
   'សាឡាត់សុខភាព': 'Healthy Salad',
   'សាឡាត់': 'Salad',
   'សាឡាត់ប្រូតេអ៊ីនខ្ពស់': 'High Protein Salad',
+  'បាយអង្ករផ្កាម្លិះ': 'Jasmine Rice',
 };
 
 String localizeDishName(String name) {
@@ -61,10 +64,23 @@ String localizeDishName(String name) {
   final isKm = Get.locale?.languageCode == 'km';
   if (isKm) {
     final lower = trimmed.toLowerCase();
+    // 1. Exact match first
     if (_dishNamesEnToKm.containsKey(lower)) {
       return _dishNamesEnToKm[lower]!;
     }
+    // 2. Substring match — find the longest key contained in the name
+    //    (longest key wins to prefer 'amok trey' over 'amok', etc.)
+    String? bestKey;
+    for (final key in _dishNamesEnToKm.keys) {
+      if (lower.contains(key)) {
+        if (bestKey == null || key.length > bestKey.length) {
+          bestKey = key;
+        }
+      }
+    }
+    if (bestKey != null) return _dishNamesEnToKm[bestKey]!;
   } else {
+    // Exact match for Khmer → English
     if (_dishNamesKmToEn.containsKey(trimmed)) {
       return _dishNamesKmToEn[trimmed]!;
     }
@@ -245,5 +261,146 @@ String localizeMealDescription(String description) {
     }
     return description;
   }
+}
+
+const Map<String, String> _notificationTitlesEnToKm = {
+  'report submitted': 'បានដាក់ស្នើរបាយការណ៍',
+  'report reviewed': 'របាយការណ៍ត្រូវបានពិនិត្យ',
+  'report accepted for review': 'របាយការណ៍ត្រូវបានទទួលយកដើម្បីពិនិត្យ',
+  'profile report reviewed': 'របាយការណ៍គណនីត្រូវបានពិនិត្យ',
+  'profile report resolved': 'របាយការណ៍គណនីត្រូវបានដោះស្រាយ',
+  'password changed': 'បានប្តូរពាក្យសម្ងាត់',
+  'ai food check needs review': 'ការពិនិត្យម្ហូប AI ត្រូវការការបញ្ជាក់',
+  'ai food check complete': 'ការពិនិត្យម្ហូប AI បានបញ្ចប់',
+  'someone': 'នរណាម្នាក់',
+  'notification': 'ការជូនដំណឹង',
+};
+
+const Map<String, String> _notificationTitlesKmToEn = {
+  'បានដាក់ស្នើរបាយការណ៍': 'Report submitted',
+  'របាយការណ៍ត្រូវបានពិនិត្យ': 'Report reviewed',
+  'របាយការណ៍ត្រូវបានទទួលយកដើម្បីពិនិត្យ': 'Report accepted for review',
+  'របាយការណ៍គណនីត្រូវបានពិនិត្យ': 'Profile report reviewed',
+  'របាយការណ៍គណនីត្រូវបានដោះស្រាយ': 'Profile report resolved',
+  'បានប្តូរពាក្យសម្ងាត់': 'Password changed',
+  'ការពិនិត្យម្ហូប AI ត្រូវការការបញ្ជាក់': 'AI food check needs review',
+  'ការពិនិត្យម្ហូប AI បានបញ្ចប់': 'AI food check complete',
+  'នរណាម្នាក់': 'Someone',
+  'ការជូនដំណឹង': 'Notification',
+};
+
+const Map<String, String> _notificationMessagesEnToKm = {
+  'started following you.': 'បានចាប់ផ្តើមតាមដានអ្នក។',
+  'started following you': 'បានចាប់ផ្តើមតាមដានអ្នក។',
+  'followed you.': 'បានតាមដានអ្នក។',
+  'followed you': 'បានតាមដានអ្នក។',
+  'replied to your comment.': 'បានឆ្លើយតបទៅមតិរបស់អ្នក។',
+  'replied to your comment': 'បានឆ្លើយតបទៅមតិរបស់អ្នក។',
+  'replied to a comment on your post.': 'បានឆ្លើយតបទៅមតិលើការបង្ហោះរបស់អ្នក។',
+  'replied to a comment on your post': 'បានឆ្លើយតបទៅមតិលើការបង្ហោះរបស់អ្នក។',
+  'commented on your post.': 'បានបញ្ចេញមតិលើការបង្ហោះរបស់អ្នក។',
+  'commented on your post': 'បានបញ្ចេញមតិលើការបង្ហោះរបស់អ្នក។',
+  'liked your post.': 'បានចូលចិត្តការបង្ហោះរបស់អ្នក។',
+  'liked your post': 'បានចូលចិត្តការបង្ហោះរបស់អ្នក។',
+  'liked your comment.': 'បានចូលចិត្តមតិរបស់អ្នក។',
+  'liked your comment': 'បានចូលចិត្តមតិរបស់អ្នក។',
+  'shared your post.': 'បានចែករំលែកការបង្ហោះរបស់អ្នក។',
+  'shared your post': 'បានចែករំលែកការបង្ហោះរបស់អ្នក។',
+  'thanks for letting us know. our team will review your report.':
+      'សូមអរគុណដែលបានប្រាប់យើង។ ក្រុមការងាររបស់យើងនឹងពិនិត្យមើលរបាយការណ៍របស់អ្នក។',
+  'your report has been reviewed. thank you for helping keep nhamhealth safe.':
+      'របាយការណ៍របស់អ្នកត្រូវបានពិនិត្យរួចរាល់។ សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាព NhamHealth។',
+  'an administrator accepted your profile report and is reviewing it.':
+      'អ្នកគ្រប់គ្រងបានទទួលយករបាយការណ៍គណនីរបស់អ្នក ហើយកំពុងពិនិត្យមើល។',
+  'we reviewed your report and did not find a community guidelines violation.':
+      'យើងបានពិនិត្យរបាយការណ៍របស់អ្នក ហើយរកមិនឃើញការបំពានគោលការណ៍សហគមន៍ទេ។',
+  'thank you for helping keep the community safe. we reviewed your report and took appropriate action.':
+      'សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាពសហគមន៍។ យើងបានពិនិត្យរបាយការណ៍របស់អ្នក និងចាត់វិធានការសមស្រប។',
+  'report reviewed — we reviewed the reported content and did not find a community guidelines violation.':
+      'របាយការណ៍ត្រូវបានពិនិត្យ — យើងបានពិនិត្យមាតិកាដែលបានរាយការណ៍ ហើយរកមិនឃើញការបំពានគោលការណ៍សហគមន៍ទេ។',
+  'report reviewed — thank you for helping keep the community safe. we reviewed the content and took appropriate action.':
+      'របាយការណ៍ត្រូវបានពិនិត្យ — សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាពសហគមន៍។ យើងបានពិនិត្យមាតិកា និងចាត់វិធានការសមស្រប។',
+  'your nhamhealth password was changed successfully. if this was not you, secure your account now.':
+      'ពាក្យសម្ងាត់ NhamHealth របស់អ្នកត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ។ ប្រសិនបើមិនមែនជាអ្នក សូមការពារគណនីរបស់អ្នកឥឡូវនេះ។',
+  'no food was detected. open ai food check and try another clear photo.':
+      'រកមិនឃើញម្ហូបអាហារទេ។ សូមបើកការពិនិត្យម្ហូប AI ហើយសាកល្បងថតរូបច្បាស់ម្តងទៀត។',
+};
+
+const Map<String, String> _notificationMessagesKmToEn = {
+  'បានចាប់ផ្តើមតាមដានអ្នក។': 'started following you.',
+  'បានតាមដានអ្នក។': 'followed you.',
+  'បានឆ្លើយតបទៅមតិរបស់អ្នក។': 'replied to your comment.',
+  'បានឆ្លើយតបទៅមតិលើការបង្ហោះរបស់អ្នក។': 'replied to a comment on your post.',
+  'បានបញ្ចេញមតិលើការបង្ហោះរបស់អ្នក។': 'commented on your post.',
+  'បានចូលចិត្តការបង្ហោះរបស់អ្នក។': 'liked your post.',
+  'បានចូលចិត្តមតិរបស់អ្នក។': 'liked your comment.',
+  'បានចែករំលែកការបង្ហោះរបស់អ្នក។': 'shared your post.',
+  'សូមអរគុណដែលបានប្រាប់យើង។ ក្រុមការងាររបស់យើងនឹងពិនិត្យមើលរបាយការណ៍របស់អ្នក។':
+      'Thanks for letting us know. Our team will review your report.',
+  'របាយការណ៍របស់អ្នកត្រូវបានពិនិត្យរួចរាល់។ សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាព NhamHealth។':
+      'Your report has been reviewed. Thank you for helping keep NhamHealth safe.',
+  'អ្នកគ្រប់គ្រងបានទទួលយករបាយការណ៍គណនីរបស់អ្នក ហើយកំពុងពិនិត្យមើល។':
+      'An administrator accepted your profile report and is reviewing it.',
+  'យើងបានពិនិត្យរបាយការណ៍របស់អ្នក ហើយរកមិនឃើញការបំពានគោលការណ៍សហគមន៍ទេ។':
+      'We reviewed your report and did not find a Community Guidelines violation.',
+  'សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាពសហគមន៍។ យើងបានពិនិត្យរបាយការណ៍របស់អ្នក និងចាត់វិធានការសមស្រប។':
+      'Thank you for helping keep the community safe. We reviewed your report and took appropriate action.',
+  'របាយការណ៍ត្រូវបានពិនិត្យ — យើងបានពិនិត្យមាតិកាដែលបានរាយការណ៍ ហើយរកមិនឃើញការបំពានគោលការណ៍សហគមន៍ទេ។':
+      'Report reviewed — we reviewed the reported content and did not find a Community Guidelines violation.',
+  'របាយការណ៍ត្រូវបានពិនិត្យ — សូមអរគុណដែលបានជួយរក្សាសុវត្ថិភាពសហគមន៍។ យើងបានពិនិត្យមាតិកា និងចាត់វិធានការសមស្រប។':
+      'Report reviewed — thank you for helping keep the community safe. We reviewed the content and took appropriate action.',
+  'ពាក្យសម្ងាត់ NhamHealth របស់អ្នកត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ។ ប្រសិនបើមិនមែនជាអ្នក សូមការពារគណនីរបស់អ្នកឥឡូវនេះ។':
+      'Your NhamHealth password was changed successfully. If this was not you, secure your account now.',
+  'រកមិនឃើញម្ហូបអាហារទេ។ សូមបើកការពិនិត្យម្ហូប AI ហើយសាកល្បងថតរូបច្បាស់ម្តងទៀត។':
+      'No food was detected. Open AI Food Check and try another clear photo.',
+};
+
+String localizeNotificationTitle(String title) {
+  final trimmed = title.trim();
+  if (trimmed.isEmpty) return trimmed;
+  final isKm = Get.locale?.languageCode == 'km';
+  if (isKm) {
+    final lower = trimmed.toLowerCase();
+    if (_notificationTitlesEnToKm.containsKey(lower)) {
+      return _notificationTitlesEnToKm[lower]!;
+    }
+  } else {
+    if (_notificationTitlesKmToEn.containsKey(trimmed)) {
+      return _notificationTitlesKmToEn[trimmed]!;
+    }
+  }
+  return trimmed;
+}
+
+String localizeNotificationMessage(String message) {
+  final trimmed = message.trim();
+  if (trimmed.isEmpty) return trimmed;
+  final isKm = Get.locale?.languageCode == 'km';
+  if (isKm) {
+    final lower = trimmed.toLowerCase();
+    if (_notificationMessagesEnToKm.containsKey(lower)) {
+      return _notificationMessagesEnToKm[lower]!;
+    }
+    final aiAnalysisMatch = RegExp(
+      r'^(.*?)\s+was analyzed\.\s+Open the result to review the nutrition details\.?$',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (aiAnalysisMatch != null) {
+      final dish = localizeDishName(aiAnalysisMatch.group(1)!);
+      return '$dish ត្រូវបានវិភាគរួចរាល់។ បើកលទ្ធផលដើម្បីពិនិត្យមើលព័ត៌មានលម្អិតអំពីអាហារូបត្ថម្ភ។';
+    }
+  } else {
+    if (_notificationMessagesKmToEn.containsKey(trimmed)) {
+      return _notificationMessagesKmToEn[trimmed]!;
+    }
+    final aiAnalysisMatchKm = RegExp(
+      r'^(.*?)\s+ត្រូវបានវិភាគរួចរាល់។\s+បើកលទ្ធផលដើម្បីពិនិត្យមើលព័ត៌មានលម្អិតអំពីអាហារូបត្ថម្ភ\.?$',
+    ).firstMatch(trimmed);
+    if (aiAnalysisMatchKm != null) {
+      final dish = localizeDishName(aiAnalysisMatchKm.group(1)!);
+      return '$dish was analyzed. Open the result to review the nutrition details.';
+    }
+  }
+  return trimmed;
 }
 

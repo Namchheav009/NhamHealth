@@ -44,7 +44,7 @@ class KhmerTranslator:
         ) or os.getenv("GEMINI_API_KEY", "")
         self.gemini_model = (
             getattr(settings, "gemini_model", None) if settings else None
-        ) or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        ) or os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
         self.gemini_base_url = (
             getattr(settings, "gemini_base_url", None) if settings else None
         ) or os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
@@ -52,10 +52,10 @@ class KhmerTranslator:
         # Candidate models tried in sequence if one encounters 429 quota or 404
         self.candidate_models = list(dict.fromkeys([
             self.gemini_model,
-            "gemini-3.5-flash-lite",
-            "gemini-flash-latest",
-            "gemini-3.5-flash",
-            "gemini-3.8-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash",
         ]))
 
     def translate(self, recipe: dict, force: bool = False) -> dict:
@@ -104,6 +104,12 @@ class KhmerTranslator:
             # Fallback approach: translate field-by-field if Gemini was unavailable or failed
             if not km_translation:
                 km_translation = self._translate_to_khmer(en_translation)
+
+            # Override mealName with glossary entry if one exists (glossary takes priority over AI)
+            meal_name_en = en_translation.get("mealName", "")
+            glossary_name = self._lookup_dish_name_glossary(meal_name_en)
+            if glossary_name:
+                km_translation["mealName"] = glossary_name
 
             recipe["translations"]["km"] = km_translation
 
@@ -388,6 +394,26 @@ class KhmerTranslator:
             except Exception:
                 continue
 
+        return None
+
+    def _lookup_dish_name_glossary(self, name: str) -> str | None:
+        """Return the DISH_NAMES glossary entry for a meal name, or None if not found."""
+        cleaned = name.strip()
+        if not cleaned:
+            return None
+        lower = cleaned.lower()
+        if lower in DISH_NAMES:
+            return DISH_NAMES[lower]
+        for separator in ("—", "-", ":", "|"):
+            if separator in cleaned:
+                parts = [p.strip() for p in cleaned.split(separator) if p.strip()]
+                # Try the full compound first (longest match)
+                compound = " — ".join(parts).lower()
+                if compound in DISH_NAMES:
+                    return DISH_NAMES[compound]
+                for part in parts:
+                    if part.lower() in DISH_NAMES:
+                        return DISH_NAMES[part.lower()]
         return None
 
     def translate_meal_name(self, name: str) -> str:

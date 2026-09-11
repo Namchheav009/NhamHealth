@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as image;
 
@@ -426,13 +427,17 @@ class ProfileRepository {
 
   String _ageLabel(String value) {
     final date = DateTime.tryParse(value)?.toLocal();
-    if (date == null) return 'Recently';
+    if (date == null) return 'community.recently'.tr;
     final difference = DateTime.now().difference(date);
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inHours < 1) return '${difference.inMinutes}m ago';
-    if (difference.inDays < 1) return '${difference.inHours}h ago';
-    if (difference.inDays == 1) return 'Yesterday';
-    return '${difference.inDays}d ago';
+    if (difference.inMinutes < 1) return 'community.just_now'.tr;
+    if (difference.inHours < 1) {
+      return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+    }
+    if (difference.inDays < 1) {
+      return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});
+    }
+    if (difference.inDays == 1) return 'community.yesterday'.tr;
+    return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
   }
 }
 

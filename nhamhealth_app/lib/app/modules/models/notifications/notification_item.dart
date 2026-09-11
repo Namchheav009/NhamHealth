@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../translations/meal_localization_helpers.dart';
+
 enum NotificationKind { social, recommendation, wellness, system }
 
 enum NotificationAction {
@@ -88,6 +90,10 @@ class NotificationItem {
   /// individual administrator who performed the audit action.
   String get displayTitle =>
       kind == NotificationKind.system ? 'Nham Health' : title;
+  String get displayTitle {
+    final raw = kind == NotificationKind.system ? 'Nham Health' : title;
+    return localizeNotificationTitle(raw);
+  }
 
   String get displayMessage {
     if (kind != NotificationKind.system ||
@@ -95,6 +101,11 @@ class NotificationItem {
       return message;
     }
     return '$title — $message';
+    final raw = (kind != NotificationKind.system ||
+            title.trim().toLowerCase() == 'nham health')
+        ? message
+        : '$title — $message';
+    return localizeNotificationMessage(raw);
   }
 
   static String _relativeTime(DateTime? value) {

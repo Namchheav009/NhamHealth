@@ -394,7 +394,7 @@ class _CommunityPersonProfileViewState
 
   String _roleLabel(String role) {
     final value = role.trim();
-    if (value.isEmpty || value.toUpperCase() == 'USER') return 'Member';
+    if (value.isEmpty || value.toUpperCase() == 'USER') return 'community.member'.tr;
     return value
         .toLowerCase()
         .split(RegExp(r'[_\s]+'))
@@ -419,11 +419,11 @@ class _CommunityPersonProfileViewState
           ),
           child: Row(
             children: [
-              _stat(context, _formatCount(profile.posts), 'Posts'),
+              _stat(context, _formatCount(profile.posts), 'community.posts'.tr),
               _divider(context),
-              _stat(context, _formatCount(profile.followers), 'Followers'),
+              _stat(context, _formatCount(profile.followers), 'community.followers'.tr),
               _divider(context),
-              _stat(context, _formatCount(profile.following), 'Following'),
+              _stat(context, _formatCount(profile.following), 'community.following'.tr),
             ],
           ),
         ),

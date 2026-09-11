@@ -994,15 +994,15 @@ class CommunityPage extends GetView<CommunityController> {
                 status == 'FOLLOWING' ||
                 status == 'FOLLOW'));
 
-    if (isMutualFollow) return 'Friend';
-    if (status == 'FOLLOWING' || post.isFollowingAuthor) return 'Following';
+    if (isMutualFollow) return 'community.friend'.tr;
+    if (status == 'FOLLOWING' || post.isFollowingAuthor) return 'community.following'.tr;
     if (status == 'FOLLOW' ||
         status == 'FOLLOW_BACK' ||
         status == 'FOLLOWS_YOU') {
-      return 'Follow';
+      return 'community.follow'.tr;
     }
 
-    return post.isFollowingAuthor ? 'Following' : 'Follow';
+    return post.isFollowingAuthor ? 'community.following'.tr : 'community.follow'.tr;
   }
 
   Future<void> _toggleAuthorRelationship(CommunityPost post) async {

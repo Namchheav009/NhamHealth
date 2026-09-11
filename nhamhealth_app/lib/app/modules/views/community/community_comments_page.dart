@@ -932,7 +932,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   _post.isLiked
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  _post.isLiked ? 'Liked' : 'Like',
+                  _post.isLiked ? 'community.liked'.tr : 'community.like'.tr,
                   color:
                       _post.isLiked
                           ? const Color(0xFFE64657)
@@ -944,7 +944,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               Expanded(
                 child: _postMetric(
                   Icons.chat_bubble_outline_rounded,
-                  'Comment',
+                  'community.comment'.tr,
                   onTap: _focusComposer,
                 ),
               ),
@@ -952,7 +952,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               Expanded(
                 child: _postMetric(
                   Icons.reply_rounded,
-                  'Share',
+                  'community.share'.tr,
                   onTap: _showShareOptions,
                 ),
               ),
@@ -1333,12 +1333,16 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   String _commentAge(String value) {
     final date = DateTime.tryParse(value)?.toLocal();
-    if (date == null) return 'Recently';
+    if (date == null) return 'community.recently'.tr;
     final difference = DateTime.now().difference(date);
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inHours < 1) return '${difference.inMinutes}m ago';
-    if (difference.inDays < 1) return '${difference.inHours}h ago';
-    return '${difference.inDays}d ago';
+    if (difference.inMinutes < 1) return 'community.just_now'.tr;
+    if (difference.inHours < 1) {
+      return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+    }
+    if (difference.inDays < 1) {
+      return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});
+    }
+    return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
   }
 }
 
