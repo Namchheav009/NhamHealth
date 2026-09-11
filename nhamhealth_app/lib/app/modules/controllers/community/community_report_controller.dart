@@ -84,6 +84,25 @@ class CommunityReportController extends GetxController {
     }
   }
 
+  void removeReportLocally(int reportId) {
+    myReports.removeWhere((item) => item.id == reportId);
+    if (selectedReport.value?.id == reportId) {
+      selectedReport.value = null;
+    }
+  }
+
+  void updateDescriptionLocally(int reportId, String newDescription) {
+    final index = myReports.indexWhere((item) => item.id == reportId);
+    if (index != -1) {
+      myReports[index] = myReports[index].copyWith(description: newDescription);
+    }
+    if (selectedReport.value?.id == reportId) {
+      selectedReport.value = selectedReport.value!.copyWith(
+        description: newDescription,
+      );
+    }
+  }
+
   void resetForm() {
     selectedReason.value = null;
     description.value = '';

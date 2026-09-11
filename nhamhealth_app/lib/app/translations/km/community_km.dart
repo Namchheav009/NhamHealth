@@ -272,4 +272,27 @@ const Map<String, String> communityKm = {
       'គោរពសិទ្ធិកម្មសិទ្ធិបញ្ញារបស់អ្នកបង្កើត។',
   'community.report_guideline_other':
       'រាយការណ៍មាតិកាផ្សេងទៀតដែលបំពានស្តង់ដារសហគមន៍។',
+  'community.report_keep_safe_title': 'ជួយរក្សាសហគមន៍របស់យើងឱ្យមានសុវត្ថិភាព',
+  'community.report_keep_safe_desc':
+      'របាយការណ៍របស់អ្នកជួយយើងរក្សាបរិយាកាសវិជ្ជមាន និងមានសុខភាពល្អ។',
+  'community.report_filter_all': 'ទាំងអស់',
+  'community.report_filter_pending': 'កំពុងរង់ចាំ',
+  'community.report_filter_resolved': 'បានដោះស្រាយ',
+  'community.report_filter_no_violation': 'មិនមានការបំពាន',
+  'community.report_no_description': 'មិនមានការពិពណ៌នាទេ។',
+  'community.report_need_help': 'ត្រូវការជំនួយ?',
+  'community.report_need_help_desc': 'ស្វែងយល់បន្ថែមអំពីគោលការណ៍សហគមន៍របស់យើង',
+  'community.reported_content_title': 'មាតិកាដែលបានរាយការណ៍',
+  'community.report_what_happens_next': 'តើមានអ្វីកើតឡើងបន្ទាប់?',
+  'community.report_what_happens_next_desc':
+      'ក្រុមការងារនឹងពិនិត្យមាតិកាធៀបនឹងគោលការណ៍សហគមន៍។ ដំណើរការនេះចំណាយពេល ១-៣ ថ្ងៃ។',
+  'community.report_delete': 'លុបរបាយការណ៍នេះ',
+  'community.report_delete_confirm': 'តើអ្នកប្រាកដជាចង់លុបរបាយការណ៍នេះទេ?',
+  'community.report_delete_desc':
+      'របាយការណ៍នេះនឹងត្រូវបានលុបចេញពីកំណត់ត្រារបស់អ្នក។',
+  'community.report_deleted_success': 'បានលុបរបាយការណ៍ដោយជោគជ័យ។',
+  'community.report_guidelines_desc':
+      'ស្វែងយល់បន្ថែមអំពីអ្វីដែលយើងអនុញ្ញាត និងមិនអនុញ្ញាត។',
+  'community.report_edit_description': 'កែប្រែការពិពណ៌នា',
+  'community.report_edit_description_hint': 'បញ្ចូលការពិពណ៌នាថ្មីរបស់អ្នក...',
 };

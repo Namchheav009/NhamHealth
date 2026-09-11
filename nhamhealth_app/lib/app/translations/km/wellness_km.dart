@@ -218,6 +218,8 @@ const Map<String, String> wellnessKm = {
       'វិភាគអាហារមិនបាន។ សូមសាកល្បងរូបថតផ្សេង។',
   'wellness.food_added': 'បានបន្ថែមអាហារ',
   'wellness.could_not_save_food': 'មិនអាចរក្សាទុកអាហារបានទេ',
+  'wellness.could_not_save_correction': 'មិនអាចរក្សាទុកការកែតម្រូវបានទេ',
+  'wellness.could_not_save_feedback': 'មិនអាចរក្សាទុកការបញ្ជាក់បានទេ',
   'wellness.your_nutrition_was_not_stored_please_check_the_server_and_try_again':
       'ព័ត៌មានអាហារូបត្ថម្ភមិនត្រូវបានរក្សាទុក។ សូមពិនិត្យម៉ាស៊ីនមេ ហើយព្យាយាមម្តងទៀត។',
   'wellness.food_confirmed': 'បានបញ្ជាក់អាហារ',

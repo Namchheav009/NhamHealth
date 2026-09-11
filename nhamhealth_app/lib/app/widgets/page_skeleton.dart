@@ -21,6 +21,7 @@ enum PageSkeletonType {
   recipes,
   settings,
   reports,
+  reportDetail,
   aiFoodAnalysis,
 }
 
@@ -111,6 +112,11 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1500),
   }) : type = PageSkeletonType.reports;
 
+  const PageSkeleton.reportDetail({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.reportDetail;
+
   const PageSkeleton.aiFoodAnalysis({
     super.key,
     this.duration = const Duration(milliseconds: 1600),
@@ -196,6 +202,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.recipes => const _RecipesPlaceholder(),
     PageSkeletonType.settings => const _SettingsPlaceholder(),
     PageSkeletonType.reports => const _ReportsPlaceholder(),
+    PageSkeletonType.reportDetail => const _ReportDetailPlaceholder(),
     PageSkeletonType.aiFoodAnalysis => const _AiFoodAnalysisPlaceholder(),
   };
 }
@@ -256,6 +263,96 @@ class _ReportRowPlaceholder extends StatelessWidget {
         _SkeletonBox(width: 64, height: 26, radius: 13),
         SizedBox(width: 8),
         _SkeletonBox(width: 18, height: 18, radius: 9),
+      ],
+    ),
+  );
+}
+
+class _ReportDetailPlaceholder extends StatelessWidget {
+  const _ReportDetailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey<String>('report-detail-skeleton'),
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appTileShadow,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            _SkeletonBox(width: 40, height: 40, radius: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonBox(width: 120, height: 16, radius: 8),
+                  SizedBox(height: 6),
+                  _SkeletonBox(width: 72, height: 20, radius: 10),
+                ],
+              ),
+            ),
+            _SkeletonBox(width: 40, height: 14, radius: 7),
+          ],
+        ),
+        const SizedBox(height: 14),
+        const _SkeletonBox(width: 110, height: 12, radius: 6),
+        const SizedBox(height: 5),
+        const _SkeletonBox(width: 140, height: 12, radius: 6),
+        const SizedBox(height: 14),
+        Divider(height: 28, color: context.appBorder),
+        const _SkeletonBox(width: 110, height: 14, radius: 7),
+        const SizedBox(height: 8),
+        const _SkeletonBox(width: double.infinity, height: 13, radius: 6),
+        const SizedBox(height: 6),
+        const FractionallySizedBox(
+          widthFactor: .65,
+          child: _SkeletonBox(height: 13, radius: 6),
+        ),
+        const SizedBox(height: 20),
+        const _SkeletonBox(width: 130, height: 14, radius: 7),
+        const SizedBox(height: 8),
+        const _SkeletonBox(width: double.infinity, height: 38, radius: 10),
+        const SizedBox(height: 22),
+        for (var i = 0; i < 3; i++) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SkeletonBox(width: 14, height: 14, radius: 7),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SkeletonBox(
+                        width: i == 0 ? 110 : (i == 1 ? 140 : 90),
+                        height: 14,
+                        radius: 7,
+                      ),
+                      if (i < 2) ...[
+                        const SizedBox(height: 6),
+                        _SkeletonBox(
+                          width: i == 0 ? 130 : 100,
+                          height: 12,
+                          radius: 6,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     ),
   );

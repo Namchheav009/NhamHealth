@@ -166,17 +166,32 @@ class AuthService {
     });
   }
 
-  Future<Map<String, dynamic>> _authenticatedPost(
+  Future<Map<String, dynamic>> postAuthenticatedJson(
     String path,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    Duration timeout = const Duration(seconds: 15),
+    bool allowRefresh = true,
+  }) async {
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {
       throw const AuthException(
         'Your session has expired. Please sign in again.',
       );
     }
-    return _postJson(path, body, accessToken: token);
+    return _postJson(
+      path,
+      body,
+      accessToken: token,
+      timeout: timeout,
+      allowRefresh: allowRefresh,
+    );
+  }
+
+  Future<Map<String, dynamic>> _authenticatedPost(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    return postAuthenticatedJson(path, body);
   }
 
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
@@ -382,9 +397,13 @@ class AuthService {
         await _tokenStorage.clear();
       }
       throw AuthException(
-        _errorMessage(response, payload),
+        _errorMessage(response, payload, path: path),
         statusCode: response.statusCode,
       );
+    }
+
+    if (response.statusCode == 204 || response.body.trim().isEmpty) {
+      return const <String, dynamic>{};
     }
 
     if (payload == null) {
@@ -430,27 +449,47 @@ class AuthService {
     }
   }
 
-  String _errorMessage(http.Response response, Map<String, dynamic>? payload) {
+  String _errorMessage(
+    http.Response response,
+    Map<String, dynamic>? payload, {
+    String? path,
+  }) {
     final apiMessage = payload?['message'] ?? payload?['error'];
     if (apiMessage is String && apiMessage.trim().isNotEmpty) {
       return apiMessage.trim();
     }
 
+    final isAuthEndpoint =
+        path != null &&
+        (path.contains('/auth/login') ||
+            path.contains('/auth/register') ||
+            path.contains('/auth/verify'));
+
     return switch (response.statusCode) {
       301 || 302 || 303 || 307 || 308 =>
-        'The API redirected the sign-in request to a web page. Restart the API '
+        'The API redirected the request to a web page. Restart the API '
             'and verify API_BASE_URL (${ApiConfig.baseUrl}).',
-      400 => 'The sign-in request was rejected by the server.',
-      401 => 'Invalid email or password.',
-      403 => 'This account is not allowed to sign in to the mobile app.',
+      400 =>
+        isAuthEndpoint
+            ? 'The sign-in request was rejected by the server.'
+            : 'The request was rejected by the server.',
+      401 =>
+        isAuthEndpoint
+            ? 'Invalid email or password.'
+            : 'Your session has expired. Please sign in again.',
+      403 => 'This account is not allowed to perform this action.',
       404 =>
-        'The sign-in endpoint was not found. Verify API_BASE_URL '
-            '(${ApiConfig.baseUrl}).',
-      500 => 'The server could not complete sign in. Check the API logs.',
-      502 || 503 || 504 =>
-        'The authentication service is temporarily unavailable. Try again '
-            'shortly.',
-      _ => 'Authentication failed (HTTP ${response.statusCode}).',
+        isAuthEndpoint
+            ? 'The sign-in endpoint was not found. Verify API_BASE_URL (${ApiConfig.baseUrl}).'
+            : 'The requested resource was not found.',
+      500 =>
+        isAuthEndpoint
+            ? 'The server could not complete sign in. Check the API logs.'
+            : 'The server encountered an error. Check the API logs.',
+      502 ||
+      503 ||
+      504 => 'The service is temporarily unavailable. Try again shortly.',
+      _ => 'Request failed (HTTP ${response.statusCode}).',
     };
   }
 }

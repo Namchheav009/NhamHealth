@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,8 +32,12 @@ public class MealCategoryApiController {
         this.mealCategoryTranslationRepository = mealCategoryTranslationRepository;
     }
 
-    /** Returns only active categories, in the order configured by the admin, localized by lang. */
+    /**
+     * Returns only active categories, in the order configured by the admin,
+     * localized by lang.
+     */
     @GetMapping
+    @Cacheable(value = "activeMealCategories", key = "#lang == null ? 'en' : #lang")
     public ResponseEntity<List<MealCategoryResponse>> activeMealCategories(
             @RequestParam(defaultValue = "en") String lang) {
         String normalizedLang = "km".equalsIgnoreCase(lang == null ? "" : lang.trim()) ? "km" : "en";

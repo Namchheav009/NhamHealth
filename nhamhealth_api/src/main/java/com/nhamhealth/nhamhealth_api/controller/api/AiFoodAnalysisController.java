@@ -1,28 +1,30 @@
 package com.nhamhealth.nhamhealth_api.controller.api;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
-import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
 import com.nhamhealth.nhamhealth_api.service.notification.UserNotificationService;
-import jakarta.validation.Valid;
-import java.util.Map;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/ai/food")
@@ -41,7 +43,13 @@ public class AiFoodAnalysisController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam("image") MultipartFile image) throws IOException {
         ValidatedImage validated = validateImage(image);
+        if (jwt == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
+        }
         Number userId = jwt.getClaim("userId");
+        if (userId == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "User ID not found in token.");
+        }
         AiFoodAnalysisResponse result = service.analyzeAndSave(
                 userId.intValue(), image.getOriginalFilename(), validated.bytes(), validated.contentType());
         if (result != null) {
@@ -61,7 +69,13 @@ public class AiFoodAnalysisController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Integer analysisId,
             @Valid @RequestBody AiFoodFeedbackRequest request) {
+        if (jwt == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
+        }
         Number userId = jwt.getClaim("userId");
+        if (userId == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "User ID not found in token.");
+        }
         service.saveFeedback(userId.intValue(), analysisId, request);
         return Map.of("saved", true, "analysisId", analysisId);
     }

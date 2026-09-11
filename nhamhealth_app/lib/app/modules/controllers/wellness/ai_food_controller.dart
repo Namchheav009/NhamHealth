@@ -3,20 +3,20 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../models/wellness/food_nutrition_model.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/wellness/food_detection_model.dart';
+import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_prediction_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
+import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
 import '../../services/wellness/food_ai_service.dart';
 import '../../services/wellness/food_recommendation_service.dart';
+import '../home/home_controller.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
-import '../home/home_controller.dart';
-import '../../repositories/profile/profile_repository.dart';
 
 enum AiFoodInputKind { food, drink }
 
@@ -438,9 +438,7 @@ class AiFoodController extends GetxController {
       (!nutrition.value!.needsUserConfirmation || isUserConfirmed.value);
 
   bool get hasCompleteResult =>
-      prediction.value != null &&
-      nutrition.value != null &&
-      errorMessage.value == null;
+      prediction.value != null && nutrition.value != null;
 
   Future<void> confirmFood() async {
     final food = nutrition.value;
@@ -464,7 +462,10 @@ class AiFoodController extends GetxController {
             'wellness.thanks_your_confirmation_helps_improve_future_results',
       );
     } on FoodNutritionException catch (error) {
-      errorMessage.value = error.message;
+      await AppAlert.actionError(
+        title: 'wellness.could_not_save_feedback'.tr,
+        message: error.message,
+      );
     } finally {
       isFeedbackSaving.value = false;
     }
@@ -480,14 +481,14 @@ class AiFoodController extends GetxController {
     final cleanName = foodName.trim();
     final cleanUnit = servingUnit.trim();
     if (cleanName.isEmpty || cleanUnit.isEmpty || servingSize <= 0) {
-      errorMessage.value =
-          'Enter a food, a serving amount, and a serving unit.';
-      return;
+      throw const FoodNutritionException(
+        'Enter a food, a serving amount, and a serving unit.',
+      );
     }
     if (current.analysisId == null) {
-      errorMessage.value =
-          'This result cannot be corrected because its analysis session has expired. Analyze the photo again.';
-      return;
+      throw const FoodNutritionException(
+        'This result cannot be corrected because its analysis session has expired. Analyze the photo again.',
+      );
     }
     isFeedbackSaving.value = true;
     try {
@@ -526,6 +527,17 @@ class AiFoodController extends GetxController {
       }
       if (cleanUnit.toLowerCase() !=
           databaseFood.servingUnit.trim().toLowerCase()) {
+        final corrected = current.withCorrection(
+          correctedName: cleanName,
+          size: servingSize,
+          unit: cleanUnit,
+        );
+        nutrition.value = corrected;
+        prediction.value = FoodPredictionModel(
+          foodName: cleanName,
+          confidence: 1,
+          classIndex: -1,
+        );
         isUserConfirmed.value = true;
         errorMessage.value = null;
         AppAlert.success(
@@ -561,11 +573,12 @@ class AiFoodController extends GetxController {
         title: 'wellness.correction_saved',
         message: 'wellness.nutrition_was_recalculated_from_the_database',
       );
-    } on FoodNutritionException catch (error) {
-      errorMessage.value = error.message;
-    } on Object {
-      errorMessage.value =
-          'The correction could not be saved. Please try again.';
+    } on FoodNutritionException {
+      rethrow;
+    } catch (_) {
+      throw const FoodNutritionException(
+        'The correction could not be saved. Please try again.',
+      );
     } finally {
       isFeedbackSaving.value = false;
     }

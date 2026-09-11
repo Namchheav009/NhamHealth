@@ -213,6 +213,8 @@ const Map<String, String> wellnessEn = {
       'Food analysis failed. Please try another photo.',
   'wellness.food_added': 'Food added',
   'wellness.could_not_save_food': 'Could not save food',
+  'wellness.could_not_save_correction': 'Could not save correction',
+  'wellness.could_not_save_feedback': 'Could not save confirmation',
   'wellness.your_nutrition_was_not_stored_please_check_the_server_and_try_again':
       'Your nutrition was not stored. Please check the server and try again.',
   'wellness.food_confirmed': 'Food confirmed',

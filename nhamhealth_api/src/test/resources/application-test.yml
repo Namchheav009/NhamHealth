@@ -12,9 +12,9 @@ spring:
     open-in-view: false
   cache:
     type: caffeine
-    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches
+    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches,foodSearch,meals,mealDetail
     caffeine:
-      spec: maximumSize=100,expireAfterWrite=60s
+      spec: maximumSize=500,expireAfterWrite=600s
     properties:
       hibernate:
         default_schema: public
@@ -26,7 +26,6 @@ spring:
     host: localhost
     port: 2525
     username: no-reply@nhamhealth.local
-    password: ""
 
 server:
   port: 0

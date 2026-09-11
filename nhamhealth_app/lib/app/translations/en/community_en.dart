@@ -271,4 +271,29 @@ const Map<String, String> communityEn = {
       "Respect creators' intellectual property rights.",
   'community.report_guideline_other':
       'Report any other content that violates our community standards.',
+  'community.report_keep_safe_title': 'Help keep our community safe',
+  'community.report_keep_safe_desc':
+      'Your reports help us maintain a positive and healthy environment.',
+  'community.report_filter_all': 'All',
+  'community.report_filter_pending': 'Pending',
+  'community.report_filter_resolved': 'Resolved',
+  'community.report_filter_no_violation': 'No violation',
+  'community.report_no_description': 'No description provided.',
+  'community.report_need_help': 'Need help?',
+  'community.report_need_help_desc':
+      'Learn more about our Community Guidelines',
+  'community.reported_content_title': 'Reported content',
+  'community.report_what_happens_next': 'What happens next?',
+  'community.report_what_happens_next_desc':
+      'Our team will review the reported content against our Community Guidelines. This usually takes 1–3 days.',
+  'community.report_delete': 'Delete this report',
+  'community.report_delete_confirm':
+      'Are you sure you want to delete this report?',
+  'community.report_delete_desc':
+      'This report will be deleted from your records.',
+  'community.report_deleted_success': 'Report deleted successfully.',
+  'community.report_guidelines_desc':
+      "Learn more about what we allow and don't allow.",
+  'community.report_edit_description': 'Edit description',
+  'community.report_edit_description_hint': 'Enter your updated description...',
 };

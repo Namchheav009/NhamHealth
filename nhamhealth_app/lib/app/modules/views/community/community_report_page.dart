@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,9 +7,10 @@ import 'package:intl/intl.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_report_controller.dart';
 import '../../models/community/community_report.dart';
@@ -328,13 +331,16 @@ class CommunityReportSuccessPage extends StatelessWidget {
   final CommunityReportController controller;
   @override
   Widget build(BuildContext context) => Scaffold(
+    backgroundColor: context.appBackground,
     body: AppBackground(
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxContentWidth,
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: AppSpacing.pagePaddingFor(context),
               child: Column(
                 children: [
                   const Spacer(),
@@ -407,6 +413,8 @@ class CommunityReportSuccessPage extends StatelessWidget {
   );
 }
 
+enum _ReportFilter { all, pending, resolved, noViolation }
+
 class CommunityMyReportsPage extends StatefulWidget {
   const CommunityMyReportsPage({this.controller, super.key});
   final CommunityReportController? controller;
@@ -416,6 +424,8 @@ class CommunityMyReportsPage extends StatefulWidget {
 
 class _MyReportsState extends State<CommunityMyReportsPage> {
   late final CommunityReportController controller;
+  _ReportFilter _selectedFilter = _ReportFilter.all;
+
   @override
   void initState() {
     super.initState();
@@ -425,51 +435,316 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     );
   }
 
+  List<CommunityReport> _getFilteredReports(List<CommunityReport> list) {
+    return switch (_selectedFilter) {
+      _ReportFilter.all => list,
+      _ReportFilter.pending =>
+        list
+            .where(
+              (r) =>
+                  r.status == CommunityReportStatus.pending ||
+                  r.status == CommunityReportStatus.underReview,
+            )
+            .toList(),
+      _ReportFilter.resolved =>
+        list.where((r) => r.status == CommunityReportStatus.resolved).toList(),
+      _ReportFilter.noViolation =>
+        list
+            .where(
+              (r) =>
+                  r.status == CommunityReportStatus.noViolation ||
+                  r.status == CommunityReportStatus.rejected,
+            )
+            .toList(),
+    };
+  }
+
   @override
-  Widget build(BuildContext context) => _Page(
-    title: 'community.my_reports'.tr,
-    child: Obx(() {
-      if (controller.isLoading.value && controller.myReports.isEmpty) {
-        return const PageSkeleton.reports();
-      }
-      if (controller.errorMessage.value != null &&
-          controller.myReports.isEmpty) {
-        return _Message(
-          icon: Icons.cloud_off_rounded,
-          text: controller.errorMessage.value!,
-          action: controller.fetchMyReports,
-        );
-      }
-      if (controller.myReports.isEmpty) {
-        return _Message(
-          icon: Icons.flag_outlined,
-          text: 'community.report_empty'.tr,
-          action: controller.fetchMyReports,
-        );
-      }
-      return RefreshIndicator(
-        onRefresh: controller.fetchMyReports,
-        child: ListView.separated(
-          physics: const AlwaysScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: controller.myReports.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
-          itemBuilder: (_, index) {
-            final report = controller.myReports[index];
-            return _ReportList(
-              report: report,
-              onTap:
-                  () => Get.to<void>(
-                    () => CommunityReportDetailPage(
-                      reportId: report.id,
-                      controller: controller,
+  Widget build(BuildContext context) {
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final contentPadding = EdgeInsets.fromLTRB(
+      horizontalPadding,
+      12,
+      horizontalPadding,
+      AppSpacing.pageBottom,
+    );
+
+    return _Page(
+      title: 'community.my_reports'.tr,
+      scrollable: false,
+      child: Obx(() {
+        if (controller.isLoading.value && controller.myReports.isEmpty) {
+          return SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: contentPadding,
+            child: const PageSkeleton.reports(),
+          );
+        }
+        if (controller.errorMessage.value != null &&
+            controller.myReports.isEmpty) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: contentPadding,
+            child: _Message(
+              icon: Icons.cloud_off_rounded,
+              text: controller.errorMessage.value!,
+              action: controller.fetchMyReports,
+            ),
+          );
+        }
+
+        final reports = controller.myReports;
+        final allCount = reports.length;
+        final pendingCount =
+            reports
+                .where(
+                  (r) =>
+                      r.status == CommunityReportStatus.pending ||
+                      r.status == CommunityReportStatus.underReview,
+                )
+                .length;
+        final resolvedCount =
+            reports
+                .where((r) => r.status == CommunityReportStatus.resolved)
+                .length;
+        final noViolationCount =
+            reports
+                .where(
+                  (r) =>
+                      r.status == CommunityReportStatus.noViolation ||
+                      r.status == CommunityReportStatus.rejected,
+                )
+                .length;
+
+        final filtered = _getFilteredReports(reports);
+
+        return RefreshIndicator(
+          color: _green,
+          onRefresh: controller.fetchMyReports,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: contentPadding,
+            children: [
+              _buildSafetyBanner(context),
+              const SizedBox(height: 14),
+              _buildFilterChips(
+                context,
+                allCount: allCount,
+                pendingCount: pendingCount,
+                resolvedCount: resolvedCount,
+                noViolationCount: noViolationCount,
+              ),
+              const SizedBox(height: 14),
+              if (filtered.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 48,
+                          color: context.appMutedText,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'community.report_empty'.tr,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-            );
-          },
+                )
+              else
+                ...filtered.map(
+                  (report) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _ReportList(
+                      report: report,
+                      onTap:
+                          () => Get.to<void>(
+                            () => CommunityReportDetailPage(
+                              reportId: report.id,
+                              controller: controller,
+                            ),
+                          ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 6),
+              _buildNeedHelpCard(context),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildSafetyBanner(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF102820) : const Color(0xFFE8F7F0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              isDark ? _green.withValues(alpha: 0.3) : const Color(0xFFBCE7D3),
         ),
-      );
-    }),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _green.withValues(alpha: 0.15),
+            ),
+            child: const Icon(Icons.shield_outlined, color: _green, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.report_keep_safe_title'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'community.report_keep_safe_desc'.tr,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: _green.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.verified_user_rounded,
+              color: _green,
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(
+    BuildContext context, {
+    required int allCount,
+    required int pendingCount,
+    required int resolvedCount,
+    required int noViolationCount,
+  }) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    physics: const BouncingScrollPhysics(),
+    child: Row(
+      children: [
+        _FilterChipItem(
+          label: 'community.report_filter_all'.tr,
+          count: allCount,
+          selected: _selectedFilter == _ReportFilter.all,
+          onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
+        ),
+        const SizedBox(width: 8),
+        _FilterChipItem(
+          label: 'community.report_filter_pending'.tr,
+          count: pendingCount,
+          selected: _selectedFilter == _ReportFilter.pending,
+          onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
+        ),
+        const SizedBox(width: 8),
+        _FilterChipItem(
+          label: 'community.report_filter_resolved'.tr,
+          count: resolvedCount,
+          selected: _selectedFilter == _ReportFilter.resolved,
+          onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
+        ),
+        const SizedBox(width: 8),
+        _FilterChipItem(
+          label: 'community.report_filter_no_violation'.tr,
+          count: noViolationCount,
+          selected: _selectedFilter == _ReportFilter.noViolation,
+          onTap:
+              () => setState(() => _selectedFilter = _ReportFilter.noViolation),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildNeedHelpCard(BuildContext context) => _Card(
+    child: InkWell(
+      onTap: () => Get.to<void>(() => const CommunityGuidelinesPage()),
+      borderRadius: BorderRadius.circular(14),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.appMutedSurface,
+            ),
+            child: Icon(
+              Icons.help_outline_rounded,
+              color: context.appText,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.report_need_help'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'community.report_need_help_desc'.tr,
+                  style: TextStyle(color: context.appMutedText, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.appMutedText,
+            size: 22,
+          ),
+        ],
+      ),
+    ),
   );
 }
 
@@ -499,9 +774,10 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
   @override
   Widget build(BuildContext context) => _Page(
     title: 'community.report_details_title'.tr,
+    scrollable: true,
     child: Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator(color: _green));
+        return const PageSkeleton.reportDetail();
       }
       if (controller.errorMessage.value case final error?) {
         return _Message(
@@ -512,94 +788,798 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
       }
       final report = controller.selectedReport.value;
       if (report == null || report.id != widget.reportId) {
-        return const SizedBox.shrink();
+        return const PageSkeleton.reportDetail();
       }
-      return _Card(
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSummaryCard(context, report),
+          const SizedBox(height: 12),
+          _buildDescriptionCard(context, report),
+          const SizedBox(height: 12),
+          _buildReportedContentCard(context, report),
+          const SizedBox(height: 12),
+          _buildStatusTimelineCard(context, report),
+          const SizedBox(height: 12),
+          _buildWhatHappensNextCard(context),
+          if (report.status == CommunityReportStatus.pending) ...[
+            const SizedBox(height: 14),
+            _buildDeleteReportButton(context, report),
+          ],
+          const SizedBox(height: 12),
+          _buildGuidelinesCard(context),
+        ],
+      );
+    }),
+  );
+
+  Widget _buildSummaryCard(BuildContext context, CommunityReport report) =>
+      _Card(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _reasonColor(report.reason).withValues(alpha: .12),
+              ),
+              child: Icon(
+                _reasonIcon(report.reason),
+                color: _reasonColor(report.reason),
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.reason.labelKey.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'community.report_guideline_${report.reason.name}'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _Status(status: report.status, showIcon: true),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.appMutedSurface,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '#${report.id}',
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  DateFormat('MMM d, yyyy').format(report.createdAt),
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  DateFormat('h:mm a').format(report.createdAt),
+                  style: TextStyle(color: context.appMutedText, fontSize: 11),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildDescriptionCard(BuildContext context, CommunityReport report) =>
+      _Card(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                CircleAvatar(
-                  backgroundColor: _reasonColor(
-                    report.reason,
-                  ).withValues(alpha: .12),
-                  child: Icon(
-                    _reasonIcon(report.reason),
-                    color: _reasonColor(report.reason),
+                Text(
+                  'community.report_description'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(report.reason.labelKey.tr, style: _title(context)),
-                      const SizedBox(height: 4),
-                      _Status(status: report.status),
-                    ],
+                if (report.status == CommunityReportStatus.pending)
+                  InkWell(
+                    onTap: () => _showEditDescriptionDialog(context, report),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.edit_outlined,
+                            size: 14,
+                            color: _green,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'common.edit'.tr,
+                            style: const TextStyle(
+                              color: _green,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                Text('#${report.id}', style: _muted(context)),
               ],
             ),
-            const SizedBox(height: 14),
-            Text(
-              '${'community.report_submitted_on'.tr}\n${_date(report.createdAt)}',
-              style: _muted(context),
-            ),
-            const Divider(height: 28),
-            _Section(
-              title: 'community.report_description'.tr,
-              value:
-                  report.description.isEmpty
-                      ? 'common.none'.tr
-                      : report.description,
-            ),
-            if (report.postPreview.isNotEmpty)
-              _Section(
-                title: 'community.reported_post'.tr,
-                value: report.postPreview,
-              ),
-            if (report.attachments.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            if (report.description.isNotEmpty)
               Text(
-                '${'community.report_attachments'.tr} (${report.attachments.length})',
-                style: _label(context),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 96,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: report.attachments.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder:
-                      (_, i) => ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          report.attachments[i],
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                report.description,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 14,
+                  height: 1.45,
+                ),
+              )
+            else
+              Text(
+                'community.report_no_description'.tr,
+                style: TextStyle(
+                  color: context.appMutedText,
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
-              const SizedBox(height: 22),
-            ],
-            _Timeline(report: report),
-            if (report.adminMessage.isNotEmpty) ...[
-              const Divider(height: 28),
-              _Section(
-                title: 'community.report_review_result'.tr,
-                value: report.adminMessage,
-              ),
-            ],
           ],
         ),
       );
-    }),
+
+  Widget _buildReportedContentCard(
+    BuildContext context,
+    CommunityReport report,
+  ) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'community.reported_content_title'.tr,
+            style: TextStyle(
+              color: context.appText,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.appMutedSurface.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.appBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: context.appMutedSurface,
+                      child: Icon(
+                        Icons.person,
+                        size: 16,
+                        color: context.appMutedText,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'User',
+                      style: TextStyle(
+                        color: context.appText,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '@content',
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  report.postPreview.isNotEmpty
+                      ? report.postPreview
+                      : 'community.reported_post'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                if (report.attachments.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.image_outlined,
+                        size: 14,
+                        color: context.appMutedText,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${report.attachments.length} ${report.attachments.length == 1 ? "image" : "images"}',
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 72,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: report.attachments.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder:
+                          (_, i) => ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              report.attachments[i],
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, _, _) => Container(
+                                    width: 72,
+                                    height: 72,
+                                    color: context.appMutedSurface,
+                                    child: const Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 20,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusTimelineCard(
+    BuildContext context,
+    CommunityReport report,
+  ) => _Card(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'community.report_status'.tr,
+          style: TextStyle(
+            color: context.appText,
+            fontWeight: FontWeight.w800,
+            fontSize: 15,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _ConnectedTimeline(report: report),
+        if (report.adminMessage.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.report_review_result'.tr,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  report.adminMessage,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    ),
   );
+
+  Widget _buildWhatHappensNextCard(BuildContext context) => _Card(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.shield_outlined, color: _green, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'community.report_what_happens_next'.tr,
+              style: TextStyle(
+                color: context.appText,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'community.report_what_happens_next_desc'.tr,
+          style: TextStyle(
+            color: context.appMutedText,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildDeleteReportButton(
+    BuildContext context,
+    CommunityReport report,
+  ) => SizedBox(
+    width: double.infinity,
+    height: 48,
+    child: OutlinedButton.icon(
+      onPressed: () => _showDeleteConfirmDialog(context, report),
+      icon: const Icon(
+        Icons.delete_outline_rounded,
+        color: Colors.redAccent,
+        size: 18,
+      ),
+      label: Text(
+        'community.report_delete'.tr,
+        style: const TextStyle(
+          color: Colors.redAccent,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Colors.redAccent),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+  );
+
+  Widget _buildGuidelinesCard(BuildContext context) => _Card(
+    child: InkWell(
+      onTap: () => Get.to<void>(() => const CommunityGuidelinesPage()),
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.appMutedSurface,
+            ),
+            child: Icon(
+              Icons.menu_book_outlined,
+              color: context.appText,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.community_guidelines'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'community.report_guidelines_desc'.tr,
+                  style: TextStyle(color: context.appMutedText, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.appMutedText,
+            size: 22,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Future<void> _showDeleteConfirmDialog(
+    BuildContext context,
+    CommunityReport report,
+  ) async {
+    final confirmed = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'common.alert_dialog'.tr,
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (dialogCtx, animation, secondaryAnimation) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: const SizedBox.expand(),
+              ),
+              SafeArea(
+                minimum: const EdgeInsets.all(22),
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
+                        decoration: BoxDecoration(
+                          color: dialogCtx.appElevatedSurface,
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.22),
+                              blurRadius: 32,
+                              offset: const Offset(0, 16),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                color: dialogCtx.appElevatedSurface,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.16),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: AppColors.errorCoral,
+                                size: 34,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'community.report_delete_confirm'.tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: dialogCtx.appText,
+                                fontSize: 20,
+                                height: 1.2,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'community.report_delete_desc'.tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: dialogCtx.appMutedText,
+                                fontSize: 14,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 52,
+                                    child: OutlinedButton(
+                                      onPressed:
+                                          () => Navigator.of(
+                                            dialogCtx,
+                                          ).pop(false),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                          color: dialogCtx.appBorder,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            21,
+                                          ),
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: Text('common.cancel'.tr),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 52,
+                                    child: FilledButton(
+                                      onPressed:
+                                          () =>
+                                              Navigator.of(dialogCtx).pop(true),
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: AppColors.errorCoral,
+                                        foregroundColor: Colors.white,
+                                        elevation: 5,
+                                        shadowColor: AppColors.errorCoral
+                                            .withValues(alpha: 0.38),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            21,
+                                          ),
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: Text('community.report_delete'.tr),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.9, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      controller.removeReportLocally(report.id);
+      Get.back<void>();
+      await AppAlert.actionSuccess(
+        title: 'community.report_deleted_success'.tr,
+        message: '',
+      );
+    }
+  }
+
+  void _showEditDescriptionDialog(
+    BuildContext context,
+    CommunityReport report,
+  ) {
+    final textController = TextEditingController(text: report.description);
+    showDialog<void>(
+      context: context,
+      builder:
+          (dialogCtx) => AlertDialog(
+            backgroundColor: dialogCtx.appElevatedSurface,
+            surfaceTintColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 32,
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: dialogCtx.appSoftGreen,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.edit_note_rounded, color: _green),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'community.report_edit_description'.tr,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'community.report_edit_description_hint'.tr,
+                    style: Theme.of(dialogCtx).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(dialogCtx).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: textController,
+                    maxLines: 4,
+                    maxLength: 500,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: 'community.report_description'.tr,
+                      alignLabelWithHint: true,
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 56),
+                        child: Icon(Icons.description_outlined),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: dialogCtx.appBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: _green, width: 1.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(dialogCtx).pop(),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'common.cancel'.tr,
+                        style: const TextStyle(
+                          color: _green,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () {
+                        final newText = textController.text.trim();
+                        Navigator.of(dialogCtx).pop();
+                        controller.updateDescriptionLocally(report.id, newText);
+                      },
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        backgroundColor: _green,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: _green.withValues(alpha: 0.35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      child: Text('common.save'.tr),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+    );
+  }
 }
 
 class CommunityGuidelinesPage extends StatelessWidget {
@@ -633,22 +1613,44 @@ class CommunityGuidelinesPage extends StatelessWidget {
 }
 
 class _Page extends StatelessWidget {
-  const _Page({required this.title, required this.child, this.step});
+  const _Page({
+    required this.title,
+    required this.child,
+    this.step,
+    this.scrollable = true,
+  });
+
   final String title;
   final Widget child;
   final int? step;
+  final bool scrollable;
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: AppBackground(
-      child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
+  Widget build(BuildContext context) {
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
+      child: Scaffold(
+        backgroundColor: context.appBackground,
+        body: AppBackground(
+          child: SafeArea(
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 20, 0),
-                  child: AppBackHeader(title: title, onBack: Get.back),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    AppSpacing.pageTop,
+                    horizontalPadding,
+                    0,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxContentWidth,
+                      ),
+                      child: AppBackHeader(title: title, onBack: Get.back),
+                    ),
+                  ),
                 ),
                 if (step != null)
                   Padding(
@@ -656,18 +1658,41 @@ class _Page extends StatelessWidget {
                     child: _Steps(current: step!),
                   ),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
-                    child: child,
-                  ),
+                  child:
+                      scrollable
+                          ? SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              12,
+                              horizontalPadding,
+                              AppSpacing.pageBottom,
+                            ),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: AppSpacing.maxContentWidth,
+                                ),
+                                child: child,
+                              ),
+                            ),
+                          )
+                          : Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: AppSpacing.maxContentWidth,
+                              ),
+                              child: child,
+                            ),
+                          ),
                 ),
               ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _Steps extends StatelessWidget {
@@ -705,6 +1730,7 @@ class _Steps extends StatelessWidget {
 class _Card extends StatelessWidget {
   const _Card({required this.child});
   final Widget child;
+
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
@@ -963,17 +1989,26 @@ class _ReportList extends StatelessWidget {
   const _ReportList({required this.report, required this.onTap});
   final CommunityReport report;
   final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) => _Card(
     child: InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          CircleAvatar(
-            backgroundColor: _reasonColor(report.reason).withValues(alpha: .12),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _reasonColor(report.reason).withValues(alpha: .12),
+            ),
             child: Icon(
               _reasonIcon(report.reason),
               color: _reasonColor(report.reason),
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
@@ -981,21 +2016,68 @@ class _ReportList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(report.reason.labelKey.tr, style: _label(context)),
-                const SizedBox(height: 5),
-                Text(_date(report.createdAt), style: _muted(context)),
-                if (report.postPreview.isNotEmpty)
+                Text(
+                  report.reason.labelKey.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                if (report.description.isNotEmpty)
+                  Text(
+                    report.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: context.appMutedText, fontSize: 13),
+                  )
+                else if (report.postPreview.isNotEmpty)
                   Text(
                     report.postPreview,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: _muted(context),
+                    style: TextStyle(color: context.appMutedText, fontSize: 13),
+                  )
+                else
+                  Text(
+                    'community.report_no_description'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText.withValues(alpha: 0.7),
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 12,
+                      color: context.appMutedText,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      DateFormat('MMM d, yyyy').format(report.createdAt),
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _Status(status: report.status),
+                  ],
+                ),
               ],
             ),
           ),
-          _Status(status: report.status),
-          const Icon(Icons.chevron_right),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.appMutedText,
+            size: 22,
+          ),
         ],
       ),
     ),
@@ -1003,121 +2085,275 @@ class _ReportList extends StatelessWidget {
 }
 
 class _Status extends StatelessWidget {
-  const _Status({required this.status});
+  const _Status({required this.status, this.showIcon = false});
   final CommunityReportStatus status;
+  final bool showIcon;
+
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) {
-      CommunityReportStatus.pending ||
-      CommunityReportStatus.underReview => Colors.blue,
-      CommunityReportStatus.resolved => _green,
-      CommunityReportStatus.noViolation ||
-      CommunityReportStatus.rejected => context.appMutedText,
+    final (color, icon) = switch (status) {
+      CommunityReportStatus.pending => (Colors.blue, Icons.access_time_rounded),
+      CommunityReportStatus.underReview => (Colors.blue, Icons.sync_rounded),
+      CommunityReportStatus.resolved => (
+        _green,
+        Icons.check_circle_outline_rounded,
+      ),
+      CommunityReportStatus.noViolation => (
+        Colors.grey.shade700,
+        Icons.remove_circle_outline_rounded,
+      ),
+      CommunityReportStatus.rejected => (
+        Colors.redAccent,
+        Icons.cancel_outlined,
+      ),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        status.labelKey.tr,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showIcon) ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            status.labelKey.tr,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _Timeline extends StatelessWidget {
-  const _Timeline({required this.report});
+class _ConnectedTimeline extends StatelessWidget {
+  const _ConnectedTimeline({required this.report});
   final CommunityReport report;
+
   @override
   Widget build(BuildContext context) {
-    final reviewed = report.status != CommunityReportStatus.pending;
-    final done =
+    final isReviewed = report.status != CommunityReportStatus.pending;
+    final isDone =
         report.status == CommunityReportStatus.resolved ||
         report.status == CommunityReportStatus.noViolation ||
         report.status == CommunityReportStatus.rejected;
+
+    final resolutionTitle = switch (report.status) {
+      CommunityReportStatus.resolved => 'community.report_status_resolved'.tr,
+      CommunityReportStatus.noViolation =>
+        'community.report_status_no_violation'.tr,
+      CommunityReportStatus.rejected => 'community.report_status_closed'.tr,
+      _ => 'community.report_resolution'.tr,
+    };
+
+    final resolutionSubtitle = switch (report.status) {
+      CommunityReportStatus.resolved =>
+        report.reviewedAt != null ? _date(report.reviewedAt!) : '',
+      CommunityReportStatus.noViolation =>
+        report.reviewedAt != null ? _date(report.reviewedAt!) : '',
+      CommunityReportStatus.rejected =>
+        report.reviewedAt != null ? _date(report.reviewedAt!) : '',
+      _ => '',
+    };
+
     return Column(
       children: [
-        _Line(
-          active: true,
+        _TimelineItem(
+          isFirst: true,
+          isCompleted: true,
+          isActive: true,
           title: 'community.report_submitted'.tr,
           subtitle: _date(report.createdAt),
         ),
-        _Line(
-          active: reviewed,
+        _TimelineItem(
+          isCompleted: isReviewed,
+          isActive:
+              isReviewed || report.status == CommunityReportStatus.pending,
           title: 'community.report_status_review'.tr,
-          subtitle: reviewed ? 'community.report_being_reviewed'.tr : '',
+          subtitle: isReviewed ? 'community.report_being_reviewed'.tr : '',
         ),
-        _Line(
-          active: done,
-          title:
-              done
-                  ? report.status.labelKey.tr
-                  : 'community.report_resolution'.tr,
-          subtitle: '',
+        _TimelineItem(
+          isLast: true,
+          isCompleted: isDone,
+          isActive: isDone,
+          title: resolutionTitle,
+          subtitle: resolutionSubtitle,
         ),
       ],
     );
   }
 }
 
-class _Line extends StatelessWidget {
-  const _Line({
-    required this.active,
+class _TimelineItem extends StatelessWidget {
+  const _TimelineItem({
     required this.title,
     required this.subtitle,
+    this.isCompleted = false,
+    this.isActive = false,
+    this.isFirst = false,
+    this.isLast = false,
   });
-  final bool active;
+
   final String title, subtitle;
+  final bool isCompleted, isActive, isFirst, isLast;
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 14,
-          height: 14,
-          margin: const EdgeInsets.only(top: 3),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? _green : context.appMutedSurface,
+  Widget build(BuildContext context) {
+    final dotColor =
+        isCompleted
+            ? _green
+            : (isActive ? Colors.blue : context.appMutedSurface);
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: dotColor,
+                    border:
+                        !isCompleted && !isActive
+                            ? Border.all(color: context.appBorder, width: 2)
+                            : null,
+                  ),
+                  child:
+                      isCompleted
+                          ? const Icon(
+                            Icons.check,
+                            size: 12,
+                            color: Colors.white,
+                          )
+                          : (isActive
+                              ? const Center(
+                                child: SizedBox(
+                                  width: 6,
+                                  height: 6,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              : null),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      color: isCompleted ? _green : context.appBorder,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: _label(context)),
-              if (subtitle.isNotEmpty) Text(subtitle, style: _muted(context)),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.value});
-  final String title, value;
+class _FilterChipItem extends StatelessWidget {
+  const _FilterChipItem({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: _label(context)),
-        const SizedBox(height: 5),
-        Text(value, style: _muted(context).copyWith(fontSize: 14)),
-      ],
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: selected ? _green : context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: selected ? _green : context.appBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : context.appText,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color:
+                  selected
+                      ? Colors.white.withValues(alpha: 0.25)
+                      : context.appMutedSurface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                color: selected ? Colors.white : context.appMutedText,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

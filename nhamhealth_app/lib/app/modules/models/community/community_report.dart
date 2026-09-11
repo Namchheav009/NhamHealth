@@ -102,4 +102,30 @@ class CommunityReport {
             .where((value) => value.isNotEmpty)
             .toList(growable: false),
       );
+
+  CommunityReport copyWith({
+    int? id,
+    int? postId,
+    CommunityPostReportReason? reason,
+    CommunityReportStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? reviewedAt,
+    String? description,
+    String? adminMessage,
+    String? postPreview,
+    List<String>? attachments,
+  }) => CommunityReport(
+    id: id ?? this.id,
+    postId: postId ?? this.postId,
+    reason: reason ?? this.reason,
+    status: status ?? this.status,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    reviewedAt: reviewedAt ?? this.reviewedAt,
+    description: description ?? this.description,
+    adminMessage: adminMessage ?? this.adminMessage,
+    postPreview: postPreview ?? this.postPreview,
+    attachments: attachments ?? this.attachments,
+  );
 }

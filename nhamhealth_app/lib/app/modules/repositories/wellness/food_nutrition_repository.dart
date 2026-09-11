@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as image;
 
 import '../../../../config/api_config.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/storage/token_storage.dart';
-import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_detection_model.dart';
+import '../../models/wellness/food_nutrition_model.dart';
 
 class FoodNutritionException implements Exception {
   const FoodNutritionException(this.message);
@@ -16,14 +18,33 @@ class FoodNutritionException implements Exception {
 }
 
 class FoodNutritionRepository {
-  FoodNutritionRepository({http.Client? client, TokenStorage? tokenStorage})
-    : _client = client ?? http.Client(),
-      _tokenStorage = tokenStorage ?? TokenStorage();
+  FoodNutritionRepository({
+    http.Client? client,
+    TokenStorage? tokenStorage,
+    AuthService? authService,
+  }) : _client = client ?? http.Client(),
+       _tokenStorage = tokenStorage ?? TokenStorage(),
+       _authService = authService;
 
   final http.Client _client;
   final TokenStorage _tokenStorage;
+  final AuthService? _authService;
+  final Map<String, FoodNutritionModel> _searchCache = {};
+
+  AuthService get _effectiveAuthService =>
+      _authService ??
+      (Get.isRegistered<AuthService>()
+          ? Get.find<AuthService>()
+          : AuthService(client: _client, tokenStorage: _tokenStorage));
+
+  void clearSearchCache() => _searchCache.clear();
 
   Future<FoodNutritionModel?> searchFood(String name) async {
+    final key = name.trim().toLowerCase();
+    if (key.isEmpty) return null;
+    if (_searchCache.containsKey(key)) {
+      return _searchCache[key];
+    }
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {
       throw const FoodNutritionException(
@@ -57,7 +78,10 @@ class FoodNutritionRepository {
           'The nutrition response was invalid.',
         );
       }
-      return FoodNutritionModel.fromJson(payload).asDatabaseVerified();
+      final verified =
+          FoodNutritionModel.fromJson(payload).asDatabaseVerified();
+      _searchCache[key] = verified;
+      return verified;
     } on FoodNutritionException {
       rethrow;
     } catch (_) {
@@ -317,37 +341,16 @@ class FoodNutritionRepository {
     required double servingSize,
     required String servingUnit,
   }) async {
-    final token = await _tokenStorage.readAccessToken();
-    if (token == null || token.isEmpty) {
-      throw const FoodNutritionException(
-        'Please sign in again to confirm this food.',
-      );
-    }
     try {
-      final response = await _client
-          .post(
-            Uri.parse(
-              '${ApiConfig.baseUrl}/api/v1/ai/food/$analysisId/feedback',
-            ),
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode({
-              'confirmed': confirmed,
-              'foodName': foodName.trim(),
-              'servingSize': servingSize,
-              'servingUnit': servingUnit.trim(),
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw FoodNutritionException(
-          _serverErrorMessage(response.body) ??
-              'Could not save your AI correction.',
-        );
-      }
+      await _effectiveAuthService
+          .postAuthenticatedJson('/api/v1/ai/food/$analysisId/feedback', {
+            'confirmed': confirmed,
+            'foodName': foodName.trim(),
+            'servingSize': servingSize,
+            'servingUnit': servingUnit.trim(),
+          });
+    } on AuthException catch (error) {
+      throw FoodNutritionException(error.message);
     } on FoodNutritionException {
       rethrow;
     } catch (_) {

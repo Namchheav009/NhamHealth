@@ -1,15 +1,19 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import '../../repositories/wellness/food_nutrition_repository.dart';
 
 /// -----------------------------------------------------------------------
 /// AiFoodView — restyled
@@ -1509,291 +1513,503 @@ class AiFoodView extends GetView<AiFoodController> {
     final unitController = TextEditingController(text: food.servingUnit);
     String? validationError;
     var saving = false;
-    final dialogRoute = DialogRoute<void>(
+
+    await showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder:
-          (dialogContext) => StatefulBuilder(
-            builder:
-                (context, updateDialog) => PopScope(
-                  canPop: !saving,
-                  child: AlertDialog(
-                    backgroundColor: context.appElevatedSurface,
-                    surfaceTintColor: Colors.transparent,
-                    insetPadding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 32,
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    title: Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: context.appSoftGreen,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.edit_note_rounded,
-                            color: green,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'wellness.correct_ai_result'.tr,
-                            style: const TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'wellness.correction_description'.tr,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          TextField(
-                            controller: nameController,
-                            enabled: !saving,
-                            textCapitalization: TextCapitalization.words,
-                            maxLength: 150,
-                            decoration: InputDecoration(
-                              labelText: 'wellness.food_name'.tr,
-                              prefixIcon: const Icon(Icons.restaurant_rounded),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'wellness.serving_details'.tr,
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: amountController,
-                                  enabled: !saving,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  decoration: InputDecoration(
-                                    labelText: 'wellness.amount'.tr,
-                                    prefixIcon: const Icon(
-                                      Icons.scale_outlined,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: TextField(
-                                  controller: unitController,
-                                  enabled: !saving,
-                                  maxLength: 40,
-                                  decoration: InputDecoration(
-                                    labelText: 'wellness.unit'.tr,
-                                    prefixIcon: const Icon(
-                                      Icons.straighten_rounded,
-                                    ),
-                                    counterText: '',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'wellness.unit_examples'.tr,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          if (validationError != null) ...[
-                            const SizedBox(height: 10),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.appDangerSurface,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                validationError!,
-                                style: TextStyle(
-                                  color: context.appOnDangerSurface,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                        ],
+      barrierLabel: 'wellness.correct_ai_result'.tr,
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return StatefulBuilder(
+          builder:
+              (context, updateDialog) => PopScope(
+                canPop: !saving,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: const SizedBox.expand(),
                       ),
-                    ),
-                    actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    actions: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed:
-                                  saving
-                                      ? null
-                                      : () => Navigator.of(dialogContext).pop(),
-                              style: TextButton.styleFrom(
-                                minimumSize: const Size(0, 48),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                      SafeArea(
+                        minimum: const EdgeInsets.all(22),
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 424),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.fromLTRB(
+                                  26,
+                                  28,
+                                  26,
+                                  26,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                decoration: BoxDecoration(
+                                  color: context.appElevatedSurface,
+                                  borderRadius: BorderRadius.circular(26),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.22,
+                                      ),
+                                      blurRadius: 32,
+                                      offset: const Offset(0, 16),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              child: Text('common.cancel'.tr),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: FilledButton(
-                              onPressed:
-                                  saving
-                                      ? null
-                                      : () async {
-                                        final amount = double.tryParse(
-                                          amountController.text.trim(),
-                                        );
-                                        if (nameController.text
-                                                .trim()
-                                                .isEmpty ||
-                                            nameController.text.trim().length >
-                                                150 ||
-                                            unitController.text
-                                                .trim()
-                                                .isEmpty ||
-                                            unitController.text.trim().length >
-                                                40 ||
-                                            amount == null ||
-                                            amount <= 0 ||
-                                            amount > 10000) {
-                                          updateDialog(
-                                            () =>
-                                                validationError =
-                                                    'Enter a valid food, amount, and unit.',
-                                          );
-                                          return;
-                                        }
-                                        updateDialog(() {
-                                          saving = true;
-                                          validationError = null;
-                                        });
-                                        await controller.correctFood(
-                                          foodName: nameController.text,
-                                          servingSize: amount,
-                                          servingUnit: unitController.text,
-                                        );
-                                        if (!dialogContext.mounted) return;
-                                        if (controller.isUserConfirmed.value) {
-                                          Navigator.of(dialogContext).pop();
-                                          return;
-                                        }
-                                        updateDialog(() {
-                                          saving = false;
-                                          validationError =
-                                              controller.errorMessage.value ??
-                                              'The correction could not be saved.';
-                                        });
-                                      },
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(0, 48),
-                                backgroundColor: context.appColorScheme.primary,
-                                foregroundColor: context.appOnBrand,
-                                disabledBackgroundColor: context
-                                    .appColorScheme
-                                    .primary
-                                    .withValues(alpha: .55),
-                                disabledForegroundColor: context.appOnBrand,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 180),
-                                child:
-                                    saving
-                                        ? Row(
-                                          key: const ValueKey(
-                                            'saving-correction',
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Center(
+                                      child: Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration: BoxDecoration(
+                                          color: context.appElevatedSurface,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.16,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit_note_rounded,
+                                          color: green,
+                                          size: 34,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      'wellness.correct_ai_result'.tr,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: context.appText,
+                                        fontSize: 20,
+                                        height: 1.2,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'wellness.correction_description'.tr,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                        fontSize: 14,
+                                        height: 1.4,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 22),
+                                    TextField(
+                                      controller: nameController,
+                                      enabled: !saving,
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      maxLength: 150,
+                                      decoration: InputDecoration(
+                                        labelText: 'wellness.food_name'.tr,
+                                        prefixIcon: const Icon(
+                                          Icons.restaurant_rounded,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
                                           ),
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: context.appOnBrand,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: context.appBorder,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: green,
+                                            width: 1.8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'wellness.serving_details'.tr,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextField(
+                                            controller: amountController,
+                                            enabled: !saving,
+                                            keyboardType:
+                                                const TextInputType.numberWithOptions(
+                                                  decimal: true,
+                                                ),
+                                            decoration: InputDecoration(
+                                              labelText: 'wellness.amount'.tr,
+                                              prefixIcon: const Icon(
+                                                Icons.scale_outlined,
+                                              ),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                  color: context.appBorder,
+                                                ),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: const BorderSide(
+                                                  color: green,
+                                                  width: 1.8,
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(width: 9),
-                                            Text('common.saving'.tr),
-                                          ],
-                                        )
-                                        : Text(
-                                          'wellness.save_correction'.tr,
-                                          key: const ValueKey(
-                                            'save-correction',
                                           ),
-                                          textAlign: TextAlign.center,
                                         ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: TextField(
+                                            controller: unitController,
+                                            enabled: !saving,
+                                            maxLength: 40,
+                                            decoration: InputDecoration(
+                                              labelText: 'wellness.unit'.tr,
+                                              prefixIcon: const Icon(
+                                                Icons.straighten_rounded,
+                                              ),
+                                              counterText: '',
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                  color: context.appBorder,
+                                                ),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: const BorderSide(
+                                                  color: green,
+                                                  width: 1.8,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'wellness.unit_examples'.tr,
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    if (validationError != null) ...[
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: context.appDangerSurface,
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          validationError!,
+                                          style: TextStyle(
+                                            color: context.appOnDangerSurface,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed:
+                                                saving
+                                                    ? null
+                                                    : () =>
+                                                        Navigator.of(
+                                                          dialogContext,
+                                                        ).pop(),
+                                            style: OutlinedButton.styleFrom(
+                                              minimumSize: const Size(0, 50),
+                                              side: BorderSide(
+                                                color: context.appBorder,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(21),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'common.cancel'.tr,
+                                              style: TextStyle(
+                                                color: context.appText,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          flex: 2,
+                                          child: FilledButton(
+                                            onPressed:
+                                                saving
+                                                    ? null
+                                                    : () async {
+                                                      final amount =
+                                                          double.tryParse(
+                                                            amountController
+                                                                .text
+                                                                .trim(),
+                                                          );
+                                                      if (nameController.text
+                                                              .trim()
+                                                              .isEmpty ||
+                                                          nameController.text
+                                                                  .trim()
+                                                                  .length >
+                                                              150 ||
+                                                          unitController.text
+                                                              .trim()
+                                                              .isEmpty ||
+                                                          unitController.text
+                                                                  .trim()
+                                                                  .length >
+                                                              40 ||
+                                                          amount == null ||
+                                                          amount <= 0 ||
+                                                          amount > 10000) {
+                                                        updateDialog(
+                                                          () =>
+                                                              validationError =
+                                                                  'Enter a valid food, amount, and unit.',
+                                                        );
+                                                        return;
+                                                      }
+                                                      updateDialog(() {
+                                                        saving = true;
+                                                        validationError = null;
+                                                      });
+                                                      try {
+                                                        await controller
+                                                            .correctFood(
+                                                              foodName:
+                                                                  nameController
+                                                                      .text,
+                                                              servingSize:
+                                                                  amount,
+                                                              servingUnit:
+                                                                  unitController
+                                                                      .text,
+                                                            );
+                                                        if (!dialogContext
+                                                            .mounted) {
+                                                          return;
+                                                        }
+                                                        if (controller
+                                                            .isUserConfirmed
+                                                            .value) {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop();
+                                                          return;
+                                                        }
+                                                      } on FoodNutritionException catch (
+                                                        error
+                                                      ) {
+                                                        if (!dialogContext
+                                                            .mounted) {
+                                                          return;
+                                                        }
+                                                        updateDialog(() {
+                                                          saving = false;
+                                                          validationError =
+                                                              error.message;
+                                                        });
+                                                        AppAlert.actionError(
+                                                          title:
+                                                              'wellness.could_not_save_correction'
+                                                                  .tr,
+                                                          message:
+                                                              error.message,
+                                                        );
+                                                        return;
+                                                      } catch (_) {
+                                                        if (!dialogContext
+                                                            .mounted) {
+                                                          return;
+                                                        }
+                                                        updateDialog(() {
+                                                          saving = false;
+                                                          validationError =
+                                                              'wellness.could_not_save_correction'
+                                                                  .tr;
+                                                        });
+                                                        AppAlert.actionError(
+                                                          title:
+                                                              'wellness.could_not_save_correction'
+                                                                  .tr,
+                                                          message:
+                                                              'wellness.could_not_save_correction'
+                                                                  .tr,
+                                                        );
+                                                        return;
+                                                      }
+                                                      updateDialog(() {
+                                                        saving = false;
+                                                      });
+                                                    },
+                                            style: FilledButton.styleFrom(
+                                              minimumSize: const Size(0, 50),
+                                              backgroundColor:
+                                                  context
+                                                      .appColorScheme
+                                                      .primary,
+                                              foregroundColor:
+                                                  context.appOnBrand,
+                                              disabledBackgroundColor: context
+                                                  .appColorScheme
+                                                  .primary
+                                                  .withValues(alpha: .55),
+                                              disabledForegroundColor:
+                                                  context.appOnBrand,
+                                              elevation: 5,
+                                              shadowColor: context
+                                                  .appColorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.38),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(21),
+                                              ),
+                                            ),
+                                            child: AnimatedSwitcher(
+                                              duration: const Duration(
+                                                milliseconds: 180,
+                                              ),
+                                              child:
+                                                  saving
+                                                      ? Row(
+                                                        key: const ValueKey(
+                                                          'saving-correction',
+                                                        ),
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 16,
+                                                            height: 16,
+                                                            child: CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              color:
+                                                                  context
+                                                                      .appOnBrand,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 9,
+                                                          ),
+                                                          Text(
+                                                            'common.saving'.tr,
+                                                          ),
+                                                        ],
+                                                      )
+                                                      : Text(
+                                                        'wellness.save_correction'
+                                                            .tr,
+                                                        key: const ValueKey(
+                                                          'save-correction',
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
+              ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
+            child: child,
           ),
+        );
+      },
     );
-    await Navigator.of(context).push(dialogRoute);
-    // The pop future completes before the closing animation removes the fields.
-    await dialogRoute.completed;
+
     nameController.dispose();
     amountController.dispose();
     unitController.dispose();

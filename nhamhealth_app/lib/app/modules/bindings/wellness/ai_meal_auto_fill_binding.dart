@@ -25,7 +25,12 @@ class AiMealAutoFillBinding extends Bindings {
     if (!Get.isRegistered<CaloriesController>()) {
       Get.lazyPut<CaloriesController>(() => CaloriesController(), fenix: true);
     }
-    Get.lazyPut<FoodNutritionRepository>(() => FoodNutritionRepository());
+    Get.lazyPut<FoodNutritionRepository>(
+      () => FoodNutritionRepository(
+        authService:
+            Get.isRegistered<AuthService>() ? Get.find<AuthService>() : null,
+      ),
+    );
     Get.lazyPut<AiMealAutoFillController>(
       () => AiMealAutoFillController(
         nutritionRepository: Get.find(),

@@ -1,45 +1,47 @@
 package com.nhamhealth.nhamhealth_api.service.meal;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.cache.annotation.Cacheable;
 
-import jakarta.persistence.EntityManager;
-
-import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
+import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealEditorDto;
-import com.nhamhealth.nhamhealth_api.dto.response.AdminRecipeStepDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealIngredientDto;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminMealNutritionDto;
+import com.nhamhealth.nhamhealth_api.dto.response.AdminRecipeStepDto;
 import com.nhamhealth.nhamhealth_api.dto.response.MealAdminAggregateProjection;
-import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.MealAdminRowDto;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
-import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
-import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
+import com.nhamhealth.nhamhealth_api.entity.IngredientTranslation;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.entity.MealTranslation;
-import com.nhamhealth.nhamhealth_api.entity.IngredientTranslation;
+import com.nhamhealth.nhamhealth_api.entity.MealIngredient;
 import com.nhamhealth.nhamhealth_api.entity.MealIngredientTranslation;
+import com.nhamhealth.nhamhealth_api.entity.MealTranslation;
+import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
 import com.nhamhealth.nhamhealth_api.entity.RecipeStepTranslation;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealFavoriteRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
-import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealTagRepository;
-import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealFavoriteRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealIngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealNutritionRepository;
-import com.nhamhealth.nhamhealth_api.repository.translation.MealTranslationRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealTagRepository;
+import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.translation.IngredientTranslationRepository;
 import com.nhamhealth.nhamhealth_api.repository.translation.MealIngredientTranslationRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealTranslationRepository;
 import com.nhamhealth.nhamhealth_api.repository.translation.RecipeStepTranslationRepository;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+
+import jakarta.persistence.EntityManager;
 
 @Service
 public class MealAdminService {
@@ -92,8 +94,9 @@ public class MealAdminService {
     public Page<MealAdminRowDto> getMealsForAdmin(
             String search, String category, String status, String tag, Pageable pageable) {
         return mealRepository.findForAdmin(
-                normalizeFilter(search), normalizeFilter(category), normalizeFilter(status), normalizeFilter(tag), pageable)
-            .map(this::toAdminRow);
+                normalizeFilter(search), normalizeFilter(category), normalizeFilter(status), normalizeFilter(tag),
+                pageable)
+                .map(this::toAdminRow);
     }
 
     public long getMealCount() {
@@ -105,6 +108,11 @@ public class MealAdminService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "meals", allEntries = true),
+            @CacheEvict(value = "mealDetail", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     public MealAdminRowDto createMeal(AdminMealRequest request) {
         Meal meal = new Meal();
         applyMealRequest(meal, request);
@@ -118,10 +126,19 @@ public class MealAdminService {
         return toAdminRow(savedMeal);
     }
 
-    /** Import-only path: drafts may omit the image; normal Admin validation stays strict. */
+    /**
+     * Import-only path: drafts may omit the image; normal Admin validation stays
+     * strict.
+     */
     @org.springframework.transaction.annotation.Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "meals", allEntries = true),
+            @CacheEvict(value = "mealDetail", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     public MealAdminRowDto createScrapedDraft(AdminMealRequest request) {
-        if (request.published()) throw new IllegalArgumentException("Scraped meals must be drafts");
+        if (request.published())
+            throw new IllegalArgumentException("Scraped meals must be drafts");
         if (request.mainImageUrl() != null && !request.mainImageUrl().isBlank()) {
             return createMeal(request);
         }
@@ -148,13 +165,15 @@ public class MealAdminService {
     public AdminMealEditorDto getMealForEdit(Integer mealId) {
         Meal meal = findMeal(mealId);
         MealTranslation mealKm = mealTranslations.findByMealMealIdAndLanguageCode(mealId, "km").orElse(null);
-        List<AdminRecipeStepDto> recipeSteps = recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId).stream()
+        List<AdminRecipeStepDto> recipeSteps = recipeStepRepository.findByMealMealIdOrderByStepNumberAsc(mealId)
+                .stream()
                 .map(step -> new AdminRecipeStepDto(
                         step.getStepId(), step.getStepNumber(), step.getInstruction(),
                         stepTranslations.findByRecipeStepStepIdAndLanguageCode(step.getStepId(), "km")
                                 .map(RecipeStepTranslation::getInstruction).orElse("")))
                 .toList();
-        List<AdminMealIngredientDto> ingredients = mealIngredientRepository.findByMealMealIdOrderByDisplayOrderAsc(mealId).stream()
+        List<AdminMealIngredientDto> ingredients = mealIngredientRepository
+                .findByMealMealIdOrderByDisplayOrderAsc(mealId).stream()
                 .map(ingredient -> new AdminMealIngredientDto(
                         ingredient.getIngredient().getIngredientId(), ingredient.getIngredient().getIngredientName(),
                         ingredient.getIngredient().getDefaultUnit(), ingredient.getQuantity(), ingredient.getUnit(),
@@ -166,20 +185,27 @@ public class MealAdminService {
                                 ingredient.getMealIngredientId(), "km")
                                 .map(MealIngredientTranslation::getPreparationNote).orElse("")))
                 .toList();
-        List<AdminMealNutritionDto> nutrition = mealNutritionRepository.findByMealMealIdOrderByNutrientDisplayOrderAsc(mealId).stream()
+        List<AdminMealNutritionDto> nutrition = mealNutritionRepository
+                .findByMealMealIdOrderByNutrientDisplayOrderAsc(mealId).stream()
                 .map(item -> new AdminMealNutritionDto(
-                    item.getNutrient().getNutrientId(), item.getNutrient().getNutrientName(),
-                    item.getAmountPerServing(), item.getNutrient().getUnit()))
+                        item.getNutrient().getNutrientId(), item.getNutrient().getNutrientName(),
+                        item.getAmountPerServing(), item.getNutrient().getUnit()))
                 .toList();
         return new AdminMealEditorDto(
                 meal.getMealId(), meal.getMealName(), mealKm == null ? "" : mealKm.getMealName(),
                 meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), mealKm == null ? "" : nullToEmpty(mealKm.getDescription()),
                 meal.getDifficulty(), meal.getCookingTimeMinutes(),
-                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition, recipeSteps);
+                Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition,
+                recipeSteps);
     }
 
     @org.springframework.transaction.annotation.Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "meals", allEntries = true),
+            @CacheEvict(value = "mealDetail", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     public MealAdminRowDto updateMeal(Integer mealId, AdminMealRequest request) {
         Meal meal = findMeal(mealId);
         applyMealRequest(meal, request);
@@ -195,6 +221,11 @@ public class MealAdminService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "meals", allEntries = true),
+            @CacheEvict(value = "mealDetail", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     public void deleteMeal(Integer mealId) {
         findMeal(mealId);
         deleteRelatedRows("ai_recommendation_items", mealId);
@@ -274,7 +305,8 @@ public class MealAdminService {
             IngredientTranslation enTrans = ingredientTranslations
                     .findByIngredientIngredientIdAndLanguageCode(row.getIngredient().getIngredientId(), "en")
                     .orElseGet(IngredientTranslation::new);
-            enTrans.setIngredient(row.getIngredient()); enTrans.setLanguageCode("en");
+            enTrans.setIngredient(row.getIngredient());
+            enTrans.setLanguageCode("en");
             enTrans.setName(row.getIngredient().getIngredientName());
             ingredientTranslations.save(enTrans);
             String khmerName = blankToNull(requested.ingredientNameKm());
@@ -282,14 +314,18 @@ public class MealAdminService {
                 IngredientTranslation translation = ingredientTranslations
                         .findByIngredientIngredientIdAndLanguageCode(row.getIngredient().getIngredientId(), "km")
                         .orElseGet(IngredientTranslation::new);
-                translation.setIngredient(row.getIngredient()); translation.setLanguageCode("km");
-                translation.setName(khmerName); ingredientTranslations.save(translation);
+                translation.setIngredient(row.getIngredient());
+                translation.setLanguageCode("km");
+                translation.setName(khmerName);
+                ingredientTranslations.save(translation);
             }
             String khmerNote = blankToNull(requested.preparationNoteKm());
             if (khmerNote != null) {
                 MealIngredientTranslation translation = new MealIngredientTranslation();
-                translation.setMealIngredient(row); translation.setLanguageCode("km");
-                translation.setPreparationNote(khmerNote); mealIngredientTranslations.save(translation);
+                translation.setMealIngredient(row);
+                translation.setLanguageCode("km");
+                translation.setPreparationNote(khmerNote);
+                mealIngredientTranslations.save(translation);
             }
         }
     }
@@ -304,9 +340,11 @@ public class MealAdminService {
         }
         MealTranslation translation = mealTranslations.findByMealMealIdAndLanguageCode(meal.getMealId(), "km")
                 .orElseGet(MealTranslation::new);
-        translation.setMeal(meal); translation.setLanguageCode("km");
+        translation.setMeal(meal);
+        translation.setLanguageCode("km");
         translation.setMealName(khmerName == null ? meal.getMealName() : khmerName);
-        translation.setDescription(khmerDescription); mealTranslations.save(translation);
+        translation.setDescription(khmerDescription);
+        mealTranslations.save(translation);
     }
 
     private Meal findMeal(Integer mealId) {
@@ -343,7 +381,9 @@ public class MealAdminService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private String nullToEmpty(String value) { return value == null ? "" : value; }
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
 
     private MealAdminRowDto toAdminRow(Meal meal) {
         String category = meal.getCategory() != null ? meal.getCategory().getCategoryName() : "Uncategorized";
@@ -376,23 +416,23 @@ public class MealAdminService {
                 updatedDate);
     }
 
-        private MealAdminRowDto toAdminRow(MealAdminAggregateProjection meal) {
+    private MealAdminRowDto toAdminRow(MealAdminAggregateProjection meal) {
         String category = meal.getCategory() == null ? "Uncategorized" : meal.getCategory();
         String status = Boolean.TRUE.equals(meal.getPublished()) ? "Published" : "Draft";
         String calories = meal.getCalories() == null ? "—"
-            : meal.getCalories().setScale(0, java.math.RoundingMode.HALF_UP).toPlainString() + " kcal";
+                : meal.getCalories().setScale(0, java.math.RoundingMode.HALF_UP).toPlainString() + " kcal";
         String servingSize = meal.getServings() == null ? "—" : meal.getServings() + " serving";
         String updatedDate = meal.getUpdatedAt() == null ? "—"
-            : meal.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+                : meal.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
         List<String> tags = mealTagRepository.findByMealMealId(meal.getMealId()).stream()
-            .map(tag -> tag.getTag() != null ? tag.getTag().getTagName() : null)
-            .filter(tag -> tag != null && !tag.isBlank())
-            .collect(Collectors.toList());
+                .map(tag -> tag.getTag() != null ? tag.getTag().getTagName() : null)
+                .filter(tag -> tag != null && !tag.isBlank())
+                .collect(Collectors.toList());
         return new MealAdminRowDto(
-            meal.getMealId(), mealIconClass(category), meal.getMainImageUrl(),
-            profileImageStorageService.mealThumbnailUrl(meal.getMainImageUrl()), meal.getMealName(), category,
-            calories, servingSize, tags, Math.toIntExact(meal.getFavorites()), status, updatedDate);
-        }
+                meal.getMealId(), mealIconClass(category), meal.getMainImageUrl(),
+                profileImageStorageService.mealThumbnailUrl(meal.getMainImageUrl()), meal.getMealName(), category,
+                calories, servingSize, tags, Math.toIntExact(meal.getFavorites()), status, updatedDate);
+    }
 
     private String mealIconClass(String category) {
         String normalized = category == null ? "" : category.toLowerCase();

@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../models/meals/meal_model.dart';
 import '../../models/meals/meal_category_model.dart';
+import '../../models/meals/meal_model.dart';
 
 class MealProvider {
   MealProvider({required AuthService authService, http.Client? client})
@@ -15,6 +15,9 @@ class MealProvider {
 
   final AuthService _authService;
   final http.Client _client;
+  final Map<String, List<MealCategoryModel>> _categoriesCache = {};
+
+  void clearCategoriesCache() => _categoriesCache.clear();
 
   Future<List<MealModel>> getMeals({
     String keyword = '',
@@ -35,8 +38,15 @@ class MealProvider {
         .toList(growable: false);
   }
 
-  Future<MealModel> getMealDetail(int mealId, {String languageCode = 'en'}) async {
-    final path = Uri(path: '/api/v1/meals/$mealId', queryParameters: {'lang': languageCode}).toString();
+  Future<MealModel> getMealDetail(
+    int mealId, {
+    String languageCode = 'en',
+  }) async {
+    final path =
+        Uri(
+          path: '/api/v1/meals/$mealId',
+          queryParameters: {'lang': languageCode},
+        ).toString();
     final payload = await _getObject(path);
     try {
       return MealModel.fromDetailJson(payload, baseUrl: ApiConfig.baseUrl);
@@ -45,12 +55,23 @@ class MealProvider {
     }
   }
 
-  Future<List<MealCategoryModel>> getCategories({String? languageCode}) async {
+  Future<List<MealCategoryModel>> getCategories({
+    String? languageCode,
+    bool forceRefresh = false,
+  }) async {
     final lang = languageCode ?? Get.locale?.languageCode ?? 'en';
-    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories')
-        .replace(queryParameters: {'lang': lang});
+    if (!forceRefresh && _categoriesCache.containsKey(lang)) {
+      return _categoriesCache[lang]!;
+    }
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-categories',
+    ).replace(queryParameters: {'lang': lang});
     final payload = await _getList(uri);
-    return payload.map(MealCategoryModel.fromJson).toList(growable: false);
+    final categories = payload
+        .map(MealCategoryModel.fromJson)
+        .toList(growable: false);
+    _categoriesCache[lang] = categories;
+    return categories;
   }
 
   Future<List<MealModel>> getPersonalizedMealIdeas({
