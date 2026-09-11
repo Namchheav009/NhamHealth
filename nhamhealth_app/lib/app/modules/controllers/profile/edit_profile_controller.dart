@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
+import '../../../widgets/app_input_dialog.dart';
 import '../../repositories/profile/profile_repository.dart';
 import 'profile_controller.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class EditProfileController extends GetxController {
   EditProfileController({required this.profileController});
@@ -222,7 +224,17 @@ class EditProfileController extends GetxController {
   Future<void> editFullName() async {
     await _showTextEditor(
       title: 'profile.full_name',
+      subtitle: 'profile.enter_your_full_name_before_saving_your_profile',
       initialValue: fullName.value,
+      icon: Icons.person_outline_rounded,
+      prefixIcon: Icons.person_outline_rounded,
+      maxLength: 70,
+      validator: (val) {
+        if (val.trim().length < 2) {
+          return 'profile.enter_your_full_name_before_saving_your_profile';
+        }
+        return null;
+      },
       onSaved: (value) {
         fullName.value = value;
       },
@@ -252,9 +264,19 @@ class EditProfileController extends GetxController {
     String? updatedEmail;
     await _showTextEditor(
       title: 'profile.email',
+      subtitle: 'Enter your email address for account and security.',
       initialValue: email.value,
+      icon: Icons.email_outlined,
+      prefixIcon: Icons.email_outlined,
       keyboardType: TextInputType.emailAddress,
       allowEmpty: true,
+      validator: (val) {
+        final trimmed = val.trim();
+        if (trimmed.isNotEmpty && !GetUtils.isEmail(trimmed)) {
+          return 'auth.invalid_email';
+        }
+        return null;
+      },
       onSaved: (value) {
         updatedEmail = value.trim().toLowerCase();
       },
@@ -281,9 +303,19 @@ class EditProfileController extends GetxController {
     final wasVerified = isPhoneVerified.value;
     await _showTextEditor(
       title: 'profile.phone_number',
+      subtitle: 'Enter your phone number for SMS verification.',
       initialValue: phone.value,
+      icon: Icons.phone_outlined,
+      prefixIcon: Icons.phone_outlined,
       keyboardType: TextInputType.phone,
       allowEmpty: true,
+      validator: (val) {
+        final trimmed = val.trim();
+        if (trimmed.isNotEmpty && !_isValidPhone(trimmed)) {
+          return 'profile.invalid_phone';
+        }
+        return null;
+      },
       onSaved: (value) {
         final trimmed = value.trim();
         phone.value = trimmed;
@@ -556,146 +588,311 @@ class EditProfileController extends GetxController {
     final isSubmitting = false.obs;
     final errorText = ''.obs;
 
+    final context = Get.overlayContext ?? Get.context;
+    if (context == null) return;
+
     try {
-      await Get.dialog<void>(
-        AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE9F8EC),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.phonelink_ring_rounded,
-                  color: Color(0xFF00A651),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'profile.verify_phone_number'.tr,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${'profile.phone_code_prompt'.tr}\n($phoneNumber)',
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
-              ),
-              const SizedBox(height: 16),
-              Obx(
-                () => _PhoneOtpCodeField(
-                  controller: codeController,
-                  focusNode: codeFocusNode,
-                  code: code.value,
-                  hasError: errorText.value.isNotEmpty,
-                  onChanged: (value) {
-                    code.value = value;
-                    if (errorText.value.isNotEmpty) errorText.value = '';
-                  },
-                ),
-              ),
-              Obx(
-                () =>
-                    errorText.value.isEmpty
-                        ? const SizedBox.shrink()
-                        : Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            errorText.value.trOrSelf,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 12,
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: 'profile.verify_phone_number'.tr,
+        barrierColor: Colors.black.withValues(alpha: 0.48),
+        transitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (dialogCtx, animation, secondaryAnimation) {
+          return Obx(
+            () => PopScope(
+              canPop: !isSubmitting.value,
+              child: Material(
+                type: MaterialType.transparency,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: const SizedBox.expand(),
+                    ),
+                    SafeArea(
+                      minimum: const EdgeInsets.all(22),
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 424),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                26,
+                                28,
+                                26,
+                                26,
+                              ),
+                              decoration: BoxDecoration(
+                                color: dialogCtx.appElevatedSurface,
+                                borderRadius: BorderRadius.circular(26),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.22),
+                                    blurRadius: 32,
+                                    offset: const Offset(0, 16),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 58,
+                                      height: 58,
+                                      decoration: BoxDecoration(
+                                        color: dialogCtx.appElevatedSurface,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.16,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.phonelink_ring_rounded,
+                                        color: AppColors.primaryGreen,
+                                        size: 34,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'profile.verify_phone_number'.tr,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: dialogCtx.appText,
+                                      fontSize: 20,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${'profile.phone_code_prompt'.tr}\n($phoneNumber)',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: dialogCtx.appMutedText,
+                                      fontSize: 14,
+                                      height: 1.4,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  _PhoneOtpCodeField(
+                                    controller: codeController,
+                                    focusNode: codeFocusNode,
+                                    code: code.value,
+                                    hasError: errorText.value.isNotEmpty,
+                                    onChanged: (value) {
+                                      code.value = value;
+                                      if (errorText.value.isNotEmpty)
+                                        errorText.value = '';
+                                    },
+                                  ),
+                                  if (errorText.value.isNotEmpty)
+                                    Container(
+                                      width: double.infinity,
+                                      margin: const EdgeInsets.only(top: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: dialogCtx.appDangerSurface,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Text(
+                                        errorText.value.trOrSelf,
+                                        style: TextStyle(
+                                          color: dialogCtx.appOnDangerSurface,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 24),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed:
+                                              isSubmitting.value
+                                                  ? null
+                                                  : () =>
+                                                      Navigator.of(
+                                                        dialogCtx,
+                                                      ).pop(),
+                                          style: OutlinedButton.styleFrom(
+                                            minimumSize: const Size(0, 50),
+                                            side: BorderSide(
+                                              color: dialogCtx.appBorder,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(21),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'common.cancel'.tr,
+                                            style: TextStyle(
+                                              color: dialogCtx.appText,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: FilledButton(
+                                          onPressed:
+                                              isSubmitting.value
+                                                  ? null
+                                                  : () async {
+                                                    final enteredCode =
+                                                        codeController.text
+                                                            .trim();
+                                                    if (enteredCode.length !=
+                                                        6) {
+                                                      errorText.value =
+                                                          'profile.please_enter_a_valid_6_digit_code'
+                                                              .tr;
+                                                      codeFocusNode
+                                                          .requestFocus();
+                                                      return;
+                                                    }
+                                                    try {
+                                                      isSubmitting.value = true;
+                                                      final response =
+                                                          await authService
+                                                              .verifyPhoneVerificationCode(
+                                                                phone:
+                                                                    phoneNumber,
+                                                                code:
+                                                                    enteredCode,
+                                                              );
+                                                      isSubmitting.value =
+                                                          false;
+                                                      final verifiedPhone =
+                                                          response['phone'];
+                                                      if (verifiedPhone
+                                                              is String &&
+                                                          verifiedPhone
+                                                              .trim()
+                                                              .isNotEmpty) {
+                                                        phone.value =
+                                                            verifiedPhone
+                                                                .trim();
+                                                      }
+                                                      isPhoneVerified.value =
+                                                          true;
+                                                      verificationDetail.value =
+                                                          'profile.phone_verified_save';
+                                                      if (dialogCtx.mounted) {
+                                                        Navigator.of(
+                                                          dialogCtx,
+                                                        ).pop();
+                                                      }
+                                                      unawaited(
+                                                        profileController
+                                                            .loadProfile(),
+                                                      );
+                                                      await AppAlert.success(
+                                                        title:
+                                                            'profile.verified'
+                                                                .tr,
+                                                        message:
+                                                            'profile.phone_verified_successfully'
+                                                                .tr,
+                                                      );
+                                                    } on AuthException catch (
+                                                      e
+                                                    ) {
+                                                      isSubmitting.value =
+                                                          false;
+                                                      errorText.value =
+                                                          e.message;
+                                                    } catch (_) {
+                                                      isSubmitting.value =
+                                                          false;
+                                                      errorText.value =
+                                                          'profile.the_verification_code_is_incorrect'
+                                                              .tr;
+                                                    }
+                                                  },
+                                          style: FilledButton.styleFrom(
+                                            minimumSize: const Size(0, 50),
+                                            backgroundColor:
+                                                AppColors.primaryGreen,
+                                            foregroundColor: Colors.white,
+                                            elevation: 2,
+                                            shadowColor: AppColors.primaryGreen
+                                                .withValues(alpha: 0.35),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(21),
+                                            ),
+                                          ),
+                                          child:
+                                              isSubmitting.value
+                                                  ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                  )
+                                                  : Text(
+                                                    'profile.verify'.tr,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 15,
+                                                    ),
+                                                  ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text(
-                'common.cancel'.tr,
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ),
-            Obx(
-              () =>
-                  isSubmitting.value
-                      ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                      : TextButton(
-                        onPressed: () async {
-                          final enteredCode = codeController.text.trim();
-                          if (enteredCode.length != 6) {
-                            errorText.value =
-                                'profile.please_enter_a_valid_6_digit_code'.tr;
-                            codeFocusNode.requestFocus();
-                            return;
-                          }
-                          try {
-                            isSubmitting.value = true;
-                            final response = await authService
-                                .verifyPhoneVerificationCode(
-                                  phone: phoneNumber,
-                                  code: enteredCode,
-                                );
-                            isSubmitting.value = false;
-                            final verifiedPhone = response['phone'];
-                            if (verifiedPhone is String &&
-                                verifiedPhone.trim().isNotEmpty) {
-                              phone.value = verifiedPhone.trim();
-                            }
-                            isPhoneVerified.value = true;
-                            verificationDetail.value =
-                                'profile.phone_verified_save';
-                            Get.back();
-                            unawaited(profileController.loadProfile());
-                            await AppAlert.success(
-                              title: 'profile.verified'.tr,
-                              message: 'profile.phone_verified_successfully'.tr,
-                            );
-                          } on AuthException catch (e) {
-                            isSubmitting.value = false;
-                            errorText.value = e.message;
-                          } catch (_) {
-                            isSubmitting.value = false;
-                            errorText.value =
-                                'profile.the_verification_code_is_incorrect'.tr;
-                          }
-                        },
-                        child: Text(
-                          'profile.verify'.tr,
-                          style: const TextStyle(
-                            color: Color(0xFF00A651),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
+          );
+        },
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
+              child: child,
+            ),
+          );
+        },
       );
     } finally {
       codeFocusNode.dispose();
@@ -705,16 +902,25 @@ class EditProfileController extends GetxController {
 
   Future<void> editHeight() async {
     await _showTextEditor(
-      title: 'profile.height_cm',
-      initialValue: height.value.toStringAsFixed(0),
+      title: 'profile.height',
+      labelText: 'profile.height_cm',
+      subtitle: 'Enter your height in centimeters.',
+      initialValue: height.value > 0 ? height.value.toStringAsFixed(0) : '',
+      icon: Icons.straighten_rounded,
+      prefixIcon: Icons.straighten_rounded,
+      exampleText: 'Example: 170 cm',
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) {
+        final number = double.tryParse(val);
+        if (number == null || number < 50 || number > 300) {
+          return 'Enter a height between 50 and 300 cm.';
+        }
+        return null;
+      },
       onSaved: (value) {
         final number = double.tryParse(value);
-
         if (number != null && number >= 50 && number <= 300) {
           height.value = number;
-        } else {
-          _showInputError('Enter a height between 50 and 300 cm.');
         }
       },
     );
@@ -722,12 +928,23 @@ class EditProfileController extends GetxController {
 
   Future<void> editAge() async {
     await _showTextEditor(
-      title: 'profile.age_years',
-      initialValue: age.value.toString(),
+      title: 'profile.age',
+      labelText: 'profile.age_years',
+      subtitle: 'Enter your age in years.',
+      initialValue: age.value > 0 ? age.value.toString() : '',
+      icon: Icons.cake_outlined,
+      prefixIcon: Icons.cake_outlined,
+      exampleText: 'Example: 25 years',
       keyboardType: TextInputType.number,
+      validator: (val) {
+        final number = int.tryParse(val);
+        if (number == null || number <= 0 || number > 120) {
+          return 'Enter an age between 1 and 120 years.';
+        }
+        return null;
+      },
       onSaved: (value) {
         final number = int.tryParse(value);
-
         if (number != null && number > 0 && number <= 120) {
           age.value = number;
           final current = dateOfBirth.value ?? DateTime.now();
@@ -739,8 +956,6 @@ class EditProfileController extends GetxController {
                 .clamp(1, DateTime(year, current.month + 1, 0).day)
                 .toInt(),
           );
-        } else {
-          _showInputError('Enter an age between 1 and 120 years.');
         }
       },
     );
@@ -748,16 +963,25 @@ class EditProfileController extends GetxController {
 
   Future<void> editWeight() async {
     await _showTextEditor(
-      title: 'profile.weight_kg',
-      initialValue: weight.value.toStringAsFixed(0),
+      title: 'profile.weight',
+      labelText: 'profile.weight_kg',
+      subtitle: 'Enter your weight in kilograms.',
+      initialValue: weight.value > 0 ? weight.value.toStringAsFixed(0) : '',
+      icon: Icons.scale_outlined,
+      prefixIcon: Icons.scale_outlined,
+      exampleText: 'Example: 65 kg',
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) {
+        final number = double.tryParse(val);
+        if (number == null || number < 10 || number > 500) {
+          return 'Enter a weight between 10 and 500 kg.';
+        }
+        return null;
+      },
       onSaved: (value) {
         final number = double.tryParse(value);
-
         if (number != null && number >= 10 && number <= 500) {
           weight.value = number;
-        } else {
-          _showInputError('Enter a weight between 10 and 500 kg.');
         }
       },
     );
@@ -845,16 +1069,35 @@ class EditProfileController extends GetxController {
     required String title,
     required String initialValue,
     required ValueChanged<String> onSaved,
+    String? subtitle,
+    String? labelText,
+    String? helperText,
+    String? exampleText,
+    IconData icon = Icons.edit_note_rounded,
+    IconData? prefixIcon,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
     bool allowEmpty = false,
+    String? Function(String value)? validator,
   }) async {
-    final value = await Get.dialog<String>(
-      _TextEditorDialog(
-        title: title,
-        initialValue: initialValue,
-        keyboardType: keyboardType,
-        allowEmpty: allowEmpty,
-      ),
+    final context = Get.overlayContext ?? Get.context;
+    if (context == null) return;
+    final value = await AppInputDialog.show(
+      context: context,
+      title: title,
+      subtitle: subtitle,
+      initialValue: initialValue,
+      labelText: labelText,
+      helperText: helperText,
+      exampleText: exampleText,
+      icon: icon,
+      prefixIcon: prefixIcon,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      maxLength: maxLength,
+      allowEmpty: allowEmpty,
+      validator: validator,
     );
 
     if (value != null && (allowEmpty || value.isNotEmpty)) onSaved(value);
@@ -971,80 +1214,5 @@ class _PhoneOtpCodeField extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _TextEditorDialog extends StatefulWidget {
-  const _TextEditorDialog({
-    required this.title,
-    required this.initialValue,
-    required this.keyboardType,
-    required this.allowEmpty,
-  });
-
-  final String title;
-  final String initialValue;
-  final TextInputType keyboardType;
-  final bool allowEmpty;
-
-  @override
-  State<_TextEditorDialog> createState() => _TextEditorDialogState();
-}
-
-class _TextEditorDialogState extends State<_TextEditorDialog> {
-  late final TextEditingController _textController;
-
-  @override
-  void initState() {
-    super.initState();
-    _textController = TextEditingController(text: widget.initialValue);
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
-        widget.title,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      content: TextField(
-        controller: _textController,
-        keyboardType: widget.keyboardType,
-        autofocus: true,
-        decoration: InputDecoration(
-          hintText: widget.title,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onSubmitted: (_) => _save(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back<String>(),
-          child: Text('common.cancel'.tr, style: TextStyle(color: Colors.grey)),
-        ),
-        TextButton(
-          onPressed: _save,
-          child: Text(
-            'common.save'.tr,
-            style: TextStyle(
-              color: Color(0xFF00A651),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _save() {
-    final value = _textController.text.trim();
-    if (widget.allowEmpty || value.isNotEmpty) Get.back(result: value);
   }
 }

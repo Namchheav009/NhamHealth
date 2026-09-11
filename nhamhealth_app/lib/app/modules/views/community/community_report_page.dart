@@ -11,6 +11,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/app_input_dialog.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_report_controller.dart';
 import '../../models/community/community_report.dart';
@@ -1443,142 +1444,30 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
     }
   }
 
-  void _showEditDescriptionDialog(
+  Future<void> _showEditDescriptionDialog(
     BuildContext context,
     CommunityReport report,
-  ) {
-    final textController = TextEditingController(text: report.description);
-    showDialog<void>(
+  ) async {
+    final updatedText = await AppInputDialog.show(
       context: context,
-      builder:
-          (dialogCtx) => AlertDialog(
-            backgroundColor: dialogCtx.appElevatedSurface,
-            surfaceTintColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 32,
-            ),
-            contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            title: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: dialogCtx.appSoftGreen,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.edit_note_rounded, color: _green),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'community.report_edit_description'.tr,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'community.report_edit_description_hint'.tr,
-                    style: Theme.of(dialogCtx).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(dialogCtx).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  TextField(
-                    controller: textController,
-                    maxLines: 4,
-                    maxLength: 500,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      labelText: 'community.report_description'.tr,
-                      alignLabelWithHint: true,
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.only(bottom: 56),
-                        child: Icon(Icons.description_outlined),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: dialogCtx.appBorder),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: _green, width: 1.8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-            actions: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(dialogCtx).pop(),
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(0, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        'common.cancel'.tr,
-                        style: const TextStyle(
-                          color: _green,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: () {
-                        final newText = textController.text.trim();
-                        Navigator.of(dialogCtx).pop();
-                        controller.updateDescriptionLocally(report.id, newText);
-                      },
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 48),
-                        backgroundColor: _green,
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        shadowColor: _green.withValues(alpha: 0.35),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      child: Text('common.save'.tr),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      title: 'community.report_edit_description',
+      subtitle: 'community.report_edit_description_hint',
+      labelText: 'community.report_description',
+      prefixIcon: Icons.description_outlined,
+      icon: Icons.edit_note_rounded,
+      initialValue: report.description,
+      minLines: 3,
+      maxLines: 5,
+      maxLength: 500,
+      textCapitalization: TextCapitalization.sentences,
+      confirmText: 'common.save',
+      cancelText: 'common.cancel',
+      allowEmpty: true,
     );
+
+    if (updatedText != null && mounted) {
+      controller.updateDescriptionLocally(report.id, updatedText);
+    }
   }
 }
 
