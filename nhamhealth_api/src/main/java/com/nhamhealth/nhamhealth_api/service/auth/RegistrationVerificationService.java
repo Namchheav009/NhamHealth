@@ -1,6 +1,5 @@
 package com.nhamhealth.nhamhealth_api.service.auth;
 
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -8,12 +7,9 @@ import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +24,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
-
-import jakarta.mail.internet.MimeMessage;
+import com.nhamhealth.nhamhealth_api.service.email.BrevoEmailService;
 
 @Service
 public class RegistrationVerificationService {
@@ -42,7 +37,7 @@ public class RegistrationVerificationService {
     private final UserProfileRepository userProfileRepository;
     private final VerificationCodeRepository codes;
     private final PasswordEncoder passwordEncoder;
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final BrevoEmailService brevoEmailService;
     private final PlasgateSmsService smsService;
     private final SecureRandom random = new SecureRandom();
     private final String mailFrom;
@@ -58,7 +53,7 @@ public class RegistrationVerificationService {
             UserProfileRepository userProfileRepository,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             PlasgateSmsService smsService,
             @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
@@ -70,7 +65,7 @@ public class RegistrationVerificationService {
         this.userProfileRepository = userProfileRepository;
         this.codes = codes;
         this.passwordEncoder = passwordEncoder;
-        this.mailSenderProvider = mailSenderProvider;
+        this.brevoEmailService = brevoEmailService;
         this.smsService = smsService;
         this.mailFrom = mailFrom;
         this.codeTtl = codeTtl;
@@ -85,14 +80,30 @@ public class RegistrationVerificationService {
             UserProfileRepository userProfileRepository,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             PlasgateSmsService smsService,
             String mailFrom,
             Duration codeTtl,
             Duration resendCooldown,
             int maximumAttempts) {
         this(authService, userRepository, userProfileRepository, codes, passwordEncoder,
-                mailSenderProvider, smsService, mailFrom, codeTtl, resendCooldown, maximumAttempts, false);
+                brevoEmailService, smsService, mailFrom, codeTtl, resendCooldown, maximumAttempts, false);
+    }
+
+    public RegistrationVerificationService(
+            AuthService authService,
+            UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
+            VerificationCodeRepository codes,
+            PasswordEncoder passwordEncoder,
+            org.springframework.beans.factory.ObjectProvider<?> ignoredMailSenderProvider,
+            PlasgateSmsService smsService,
+            String mailFrom,
+            Duration codeTtl,
+            Duration resendCooldown,
+            int maximumAttempts) {
+        this(authService, userRepository, userProfileRepository, codes, passwordEncoder,
+                null, smsService, mailFrom, codeTtl, resendCooldown, maximumAttempts, false);
     }
 
     @Transactional
@@ -315,28 +326,12 @@ public class RegistrationVerificationService {
     }
 
     private void deliver(String email, String code, boolean isLogin) {
-        JavaMailSender sender = mailSenderProvider.getIfAvailable();
-        if (sender == null || mailFrom.isBlank()) {
-            if (fallbackToConsole) {
-                LOGGER.warn("==================================================================");
-                LOGGER.warn(" [EMAIL FALLBACK OTP] Verification code for {}: {}", email, code);
-                LOGGER.warn("==================================================================");
-                return;
-            }
-            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "Email delivery is not configured");
-        }
         try {
-            MimeMessage message = sender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            if (!mailFrom.isBlank()) {
-                helper.setFrom(mailFrom, "NhamHealth");
-            }
-            helper.setTo(email);
-            helper.setSubject(EmailVerificationTemplate.subject(code, isLogin));
-            helper.setText(
+            brevoEmailService.sendEmail(
+                    email,
+                    EmailVerificationTemplate.subject(code, isLogin),
                     EmailVerificationTemplate.plainText(code, isLogin),
                     EmailVerificationTemplate.html(code, isLogin));
-            sender.send(message);
             LOGGER.info("Verification code email successfully sent to {}", email);
         } catch (Exception exception) {
             LOGGER.error("Could not deliver a verification code email to {}", email, exception);
@@ -346,7 +341,7 @@ public class RegistrationVerificationService {
                 LOGGER.warn("==================================================================");
                 return;
             }
-            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
+                throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
                     "We could not send the verification email. Please try again shortly");
         }
     }

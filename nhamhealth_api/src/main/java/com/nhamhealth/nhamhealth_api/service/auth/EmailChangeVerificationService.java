@@ -1,6 +1,5 @@
 package com.nhamhealth.nhamhealth_api.service.auth;
 
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -8,12 +7,9 @@ import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +20,7 @@ import com.nhamhealth.nhamhealth_api.entity.VerificationCode;
 import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
 import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-
-import jakarta.mail.internet.MimeMessage;
+import com.nhamhealth.nhamhealth_api.service.email.BrevoEmailService;
 
 @Service
 public class EmailChangeVerificationService {
@@ -36,7 +31,7 @@ public class EmailChangeVerificationService {
     private final UserRepository users;
     private final VerificationCodeRepository codes;
     private final PasswordEncoder passwordEncoder;
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final BrevoEmailService brevoEmailService;
     private final SecureRandom random = new SecureRandom();
     private final String mailFrom;
     private final Duration codeTtl;
@@ -49,7 +44,7 @@ public class EmailChangeVerificationService {
             UserRepository users,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
             @Value("${app.auth.otp.resend-cooldown:PT1M}") Duration resendCooldown,
@@ -58,7 +53,7 @@ public class EmailChangeVerificationService {
         this.users = users;
         this.codes = codes;
         this.passwordEncoder = passwordEncoder;
-        this.mailSenderProvider = mailSenderProvider;
+        this.brevoEmailService = brevoEmailService;
         this.mailFrom = mailFrom;
         this.codeTtl = codeTtl;
         this.resendCooldown = resendCooldown;
@@ -70,12 +65,12 @@ public class EmailChangeVerificationService {
             UserRepository users,
             VerificationCodeRepository codes,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             String mailFrom,
             Duration codeTtl,
             Duration resendCooldown,
             int maximumAttempts) {
-        this(users, codes, passwordEncoder, mailSenderProvider, mailFrom, codeTtl, resendCooldown, maximumAttempts,
+        this(users, codes, passwordEncoder, brevoEmailService, mailFrom, codeTtl, resendCooldown, maximumAttempts,
                 false);
     }
 
@@ -161,27 +156,14 @@ public class EmailChangeVerificationService {
     }
 
     private void deliver(String email, String code) {
-        JavaMailSender sender = mailSenderProvider.getIfAvailable();
-        if (sender == null || mailFrom.isBlank()) {
-            if (fallbackToConsole) {
-                LOGGER.warn("==================================================================");
-                LOGGER.warn(" [EMAIL FALLBACK OTP] Email change code for {}: {}", email, code);
-                LOGGER.warn("==================================================================");
-                return;
-            }
-            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE, "Email delivery is not configured");
-        }
         try {
-            MimeMessage message = sender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            if (!mailFrom.isBlank()) {
-                helper.setFrom(mailFrom, "NhamHealth");
-            }
-            helper.setTo(email);
-            helper.setSubject("%s is your NhamHealth verification code".formatted(code));
-            helper.setText("Your NhamHealth email-change verification code is %s. It expires in 5 minutes."
-                    .formatted(code));
-            sender.send(message);
+            String plainText = "Your NhamHealth email-change verification code is %s. It expires in 5 minutes."
+                    .formatted(code);
+            brevoEmailService.sendEmail(
+                    email,
+                    "%s is your NhamHealth verification code".formatted(code),
+                    plainText,
+                    "<p>" + plainText + "</p>");
             LOGGER.info("Email change verification code successfully sent to {}", email);
         } catch (Exception exception) {
             LOGGER.error("Could not deliver an email-change verification code to {}", email, exception);
