@@ -20,7 +20,7 @@ public class FoodNutritionService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "foodSearch", key = "#rawName == null ? '' : #rawName.trim().toLowerCase()", unless = "!#result.isPresent()")
+    @Cacheable(value = "foodSearch", key = "#rawName == null ? '' : #rawName.trim().toLowerCase()", unless = "#result == null")
     public Optional<FoodNutrition> search(String rawName) {
         String name = rawName == null ? "" : rawName.trim();
         if (name.isEmpty())
