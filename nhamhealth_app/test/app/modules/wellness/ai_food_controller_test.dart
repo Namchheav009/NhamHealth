@@ -64,4 +64,51 @@ void main() {
 
     controller.onClose();
   });
+
+  test('adjusts drink nutrition when sugar percentage is modified', () {
+    final controller = AiFoodController(
+      aiService: FoodAiService(),
+      nutritionRepository: FoodNutritionRepository(),
+      recommendationService: FoodRecommendationService(),
+      caloriesController: CaloriesController(),
+      wellnessController: WellnessController(),
+      profileRepository: ProfileRepository(authService: AuthService()),
+    );
+
+    controller.setInputKind(AiFoodInputKind.drink);
+    controller.setDrinkCupMl(350);
+    controller.setDrinkConsumedFraction(1.0);
+    expect(controller.drinkSugarPercentage.value, 100);
+
+    controller.setDrinkSugarPercentage(50);
+    expect(controller.drinkSugarPercentage.value, 50);
+
+    final baseDrink = const FoodNutritionModel(
+      name: 'Milk Tea',
+      mealType: 'drink',
+      calories: 200,
+      protein: 4,
+      carbs: 35,
+      fat: 5,
+      sugar: 20,
+      servingSize: 350,
+      servingUnit: 'ml',
+    );
+
+    final scaled50Sugar = baseDrink.withPortionScale(
+      factor: 1.0,
+      size: 350,
+      unit: 'ml',
+      sugarFactor: 0.5,
+    );
+
+    // 50% sugar: sugar drops from 20g to 10g (delta = -10g)
+    // carbs drops by 10g: 35g - 10g = 25g
+    // calories drops by 10g * 4 kcal = 40 kcal: 200 kcal - 40 kcal = 160 kcal
+    expect(scaled50Sugar.sugar, 10);
+    expect(scaled50Sugar.carbs, 25);
+    expect(scaled50Sugar.calories, 160);
+
+    controller.onClose();
+  });
 }

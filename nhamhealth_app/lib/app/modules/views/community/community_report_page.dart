@@ -848,7 +848,7 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'community.report_guideline_${report.reason.name}'.tr,
+                    report.reason.guidelineKey.tr,
                     style: TextStyle(
                       color: context.appMutedText,
                       fontSize: 12,
@@ -936,7 +936,7 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'common.edit'.tr,
+                            'community.edit_description'.tr,
                             style: const TextStyle(
                               color: _green,
                               fontSize: 12,
@@ -1489,10 +1489,7 @@ class CommunityGuidelinesPage extends StatelessWidget {
                   child: Icon(_reasonIcon(reason), color: _reasonColor(reason)),
                 ),
                 title: Text(reason.labelKey.tr, style: _label(context)),
-                subtitle: Text(
-                  'community.report_guideline_${reason.name}'.tr,
-                  style: _muted(context),
-                ),
+                subtitle: Text(reason.guidelineKey.tr, style: _muted(context)),
               ),
             ),
           ),

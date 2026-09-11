@@ -41,6 +41,15 @@ enum CommunityPostReportReason {
   final String apiValue;
   final String labelKey;
 
+  String get guidelineKey => switch (this) {
+    spam => 'community.report_guideline_spam',
+    harassment => 'community.report_guideline_harassment',
+    inappropriateContent => 'community.report_guideline_inappropriate_content',
+    falseInformation => 'community.report_guideline_false_information',
+    copyright => 'community.report_guideline_copyright',
+    other => 'community.report_guideline_other',
+  };
+
   factory CommunityPostReportReason.fromApi(String value) => values.firstWhere(
     (item) => item.apiValue == value.toUpperCase(),
     orElse: () => other,

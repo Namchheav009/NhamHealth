@@ -122,6 +122,11 @@ abstract class AppTheme {
             isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         centerTitle: false,
         elevation: 0,
+        titleTextStyle: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       cardTheme: CardThemeData(
         color: isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,

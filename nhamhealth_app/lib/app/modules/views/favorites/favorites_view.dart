@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
@@ -14,7 +15,6 @@ import 'widgets/favorite_food_card.dart';
 import 'widgets/favorite_post_card.dart';
 import 'widgets/favorites_tab_switcher.dart';
 import 'widgets/food_filter_sheet.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
@@ -45,7 +45,7 @@ class FavoritesView extends GetView<FavoritesController> {
                       Text(
                         'common.favorites'.tr,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

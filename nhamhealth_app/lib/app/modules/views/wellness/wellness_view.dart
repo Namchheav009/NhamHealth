@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
-import '../../controllers/wellness/wellness_controller.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
-import '../../../widgets/app_back_header.dart';
+import '../../controllers/wellness/wellness_controller.dart';
 import 'widgets/ai_insight_card.dart';
 import 'widgets/ai_meal_card.dart';
 import 'widgets/wellness_daily_summary_card.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class WellnessView extends GetView<WellnessController> {
   const WellnessView({super.key});
@@ -96,8 +96,9 @@ class WellnessView extends GetView<WellnessController> {
             child: Text(
               'wellness.daily_title'.tr,
               style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
                 color: context.appText,
               ),
             ),

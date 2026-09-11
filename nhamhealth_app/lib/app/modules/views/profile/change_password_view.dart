@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../controllers/profile/change_password_controller.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class ChangePasswordView extends GetView<ChangePasswordController> {
   const ChangePasswordView({super.key});
@@ -85,26 +85,8 @@ class _PageHeader extends StatelessWidget {
   const _PageHeader();
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: AppBackButton.layoutSize,
-    child: Row(
-      children: [
-        AppBackButton(onPressed: Get.back),
-        const SizedBox(width: AppBackButton.headerGap),
-        Expanded(
-          child: Text(
-            'profile.change_password'.tr,
-            style: TextStyle(
-              color: context.appText,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.45,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) =>
+      AppBackHeader(title: 'profile.change_password'.tr, onBack: Get.back);
 }
 
 class _SecurityIntro extends StatelessWidget {

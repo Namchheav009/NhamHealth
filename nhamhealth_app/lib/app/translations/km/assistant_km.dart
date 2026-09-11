@@ -35,14 +35,13 @@ const Map<String, String> assistantKm = {
   'assistant.where_can_i_find_my_favorite_meals':
       'ខ្ញុំអាចរកអាហារចំណូលចិត្តនៅឯណា?',
   'assistant.what_special_features_are_available': 'មានមុខងារពិសេសអ្វីខ្លះ?',
-  'assistant.guide_me_through_health_monitoring':
-      'ណែនាំខ្ញុំពីរបៀបការតាមដានសុខភាព',
+  'assistant.guide_me_through_health_monitoring': 'ណែនាំខ្ញុំពីការតាមដានសុខភាព',
   'assistant.help_me_configure_my_app_settings':
       'ជួយខ្ញុំរៀបចំការកំណត់កម្មវិធី',
   'assistant.how_do_i_use_nhamhealth_step_by_step':
       'តើខ្ញុំប្រើ NhamHealth ជាជំហានៗដោយរបៀបណា?',
   'assistant.help_me_plan_a_new_health_feature':
-      'ជួយខ្ញុំរៀបចំមុខងារថ្មីសុខភាពថ្មី',
+      'ជួយខ្ញុំរៀបចំមុខងារសុខភាពថ្មី',
   'assistant.my_wellness': 'សុខភាពរបស់ខ្ញុំ',
   'assistant.app_help': 'ជំនួយប្រើកម្មវិធី',
   'assistant.nutrition': 'អាហារូបត្ថម្ភ',

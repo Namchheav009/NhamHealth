@@ -223,7 +223,7 @@ void main() {
     expect(food.hasCompleteNutrition, isTrue);
     expect(food.hasNutritionEstimate, isTrue);
     expect(food.isDatabaseCalculated, isFalse);
-    expect(food.nutritionSourceLabel, 'Database + AI estimate');
+    expect(food.nutritionSourceLabel, 'wellness.database_and_ai_estimate');
   });
 
   test('provides clear per-serving sugar context', () {
@@ -291,5 +291,17 @@ void main() {
     expect(half.sugar, 11);
     expect(half.drinkVolumeMl, 175);
     expect(half.components.single.calories, 90);
+
+    final halfWithZeroSugar = drink.withPortionScale(
+      factor: .5,
+      size: 175,
+      unit: 'ml',
+      sugarFactor: 0.0,
+    );
+    expect(halfWithZeroSugar.sugar, 0);
+    // When sugar drops from 11 to 0, 11g * 4 kcal = 44 kcal reduction: 90 - 44 = 46 kcal
+    expect(halfWithZeroSugar.calories, 46);
+    expect(halfWithZeroSugar.components.single.sugar, 0);
+    expect(halfWithZeroSugar.components.single.calories, 46);
   });
 }

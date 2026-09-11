@@ -32,6 +32,7 @@ const Map<String, String> communityEn = {
   'community.share_count_many': '@count shares',
   'community.likes_a11y': '@count likes. View people who liked this post.',
   'community.like_comment': 'Like comment',
+  'community.edit_description': 'Edit description',
   'community.unlike_comment': 'Unlike comment',
   'community.search_people': 'Search people by name',
   'community.people_filter_a11y': '@name people filter',
@@ -127,6 +128,7 @@ const Map<String, String> communityEn = {
       'This will remove the post from Community and your profile. You cannot undo this action.',
   'community.discussion': 'Discussion',
   'community.tagline': 'Small healthy steps, shared together.',
+  'community.connect': 'Connect',
   'community.unfollow_member_warning':
       'You will stop seeing posts from @name in your following feed.',
   'community.member_since': 'Member since @date',
@@ -247,6 +249,7 @@ const Map<String, String> communityEn = {
   'community.report_review_result': 'Review result',
   'community.report_being_reviewed': 'Our team is reviewing your report.',
   'community.report_resolution': 'Resolution',
+  'community.report_status': 'Report status',
   'community.report_status_pending': 'Pending',
   'community.report_status_review': 'Under review',
   'community.report_status_resolved': 'Resolved',
@@ -263,9 +266,9 @@ const Map<String, String> communityEn = {
       "Don't post unsolicited advertising, scams, or repetitive content.",
   'community.report_guideline_harassment':
       'Be respectful. Hate, threats, bullying, and targeted harassment are not allowed.',
-  'community.report_guideline_inappropriateContent':
+  'community.report_guideline_inappropriate_content':
       'Do not share nudity, violence, or other sensitive content.',
-  'community.report_guideline_falseInformation':
+  'community.report_guideline_false_information':
       'Do not share false or misleading health information.',
   'community.report_guideline_copyright':
       "Respect creators' intellectual property rights.",

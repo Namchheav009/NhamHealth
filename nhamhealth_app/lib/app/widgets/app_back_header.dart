@@ -85,13 +85,18 @@ class AppBackHeader extends StatelessWidget {
     this.backButtonKey,
     this.titleWidget,
     this.trailing,
+    this.centerTitle = false,
   });
+
+  static const double titleFontSize = 18;
+  static const FontWeight titleFontWeight = FontWeight.w700;
 
   final String title;
   final VoidCallback onBack;
   final Key? backButtonKey;
   final Widget? titleWidget;
   final Widget? trailing;
+  final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -107,17 +112,23 @@ class AppBackHeader extends StatelessWidget {
                 titleWidget ??
                 Text(
                   title.trOrSelf,
+                  textAlign: centerTitle ? TextAlign.center : TextAlign.start,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     color: colors.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontSize: titleFontSize,
+                    fontWeight: titleFontWeight,
                   ),
                 ),
           ),
-          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+          if (trailing != null) ...[
+            const SizedBox(width: 12),
+            trailing!,
+          ] else if (centerTitle) ...[
+            const SizedBox(width: AppBackButton.layoutSize),
+          ],
         ],
       ),
     );

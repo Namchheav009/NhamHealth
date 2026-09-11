@@ -88,23 +88,17 @@ class NotificationItem {
 
   /// Moderation updates are sent by the Nham Health service, rather than the
   /// individual administrator who performed the audit action.
-  String get displayTitle =>
-      kind == NotificationKind.system ? 'Nham Health' : title;
   String get displayTitle {
     final raw = kind == NotificationKind.system ? 'Nham Health' : title;
     return localizeNotificationTitle(raw);
   }
 
   String get displayMessage {
-    if (kind != NotificationKind.system ||
-        title.trim().toLowerCase() == 'nham health') {
-      return message;
-    }
-    return '$title — $message';
-    final raw = (kind != NotificationKind.system ||
-            title.trim().toLowerCase() == 'nham health')
-        ? message
-        : '$title — $message';
+    final raw =
+        (kind != NotificationKind.system ||
+                title.trim().toLowerCase() == 'nham health')
+            ? message
+            : '$title — $message';
     return localizeNotificationMessage(raw);
   }
 

@@ -100,7 +100,7 @@ class _CommunitySharePostPageState extends State<CommunitySharePostPage> {
         'community.share_to_feed'.tr,
         style: TextStyle(
           fontWeight: FontWeight.w700,
-          fontSize: 17,
+          fontSize: 18,
           color: context.appText,
         ),
       ),

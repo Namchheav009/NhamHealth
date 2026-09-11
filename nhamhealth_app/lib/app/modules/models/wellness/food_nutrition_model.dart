@@ -239,42 +239,94 @@ class FoodNutritionModel {
     required double factor,
     required double size,
     required String unit,
+    double? sugarFactor,
   }) {
     final safeFactor = factor.isFinite && factor > 0 ? factor : 1.0;
     final cleanUnit = unit.trim().isEmpty ? servingUnit : unit.trim();
+
+    final baseScaledSugar = sugar * safeFactor;
+    final baseScaledCarbs = carbs * safeFactor;
+    final baseScaledCalories = calories * safeFactor;
+
+    final double scaledSugar;
+    final double scaledCarbs;
+    final double scaledCalories;
+
+    if (sugarFactor != null && sugarFactor.isFinite && sugarFactor >= 0) {
+      scaledSugar = baseScaledSugar * sugarFactor;
+      final deltaSugar = scaledSugar - baseScaledSugar;
+      scaledCarbs = (baseScaledCarbs + deltaSugar).clamp(0.0, double.infinity);
+      scaledCalories = (baseScaledCalories + (deltaSugar * 4.0)).clamp(
+        0.0,
+        double.infinity,
+      );
+    } else {
+      scaledSugar = baseScaledSugar;
+      scaledCarbs = baseScaledCarbs;
+      scaledCalories = baseScaledCalories;
+    }
+
     return FoodNutritionModel.fromJson({
       ...toJson(),
-      'calories': calories * safeFactor,
+      'calories': scaledCalories,
       'protein': protein * safeFactor,
-      'carbs': carbs * safeFactor,
+      'carbs': scaledCarbs,
       'fat': fat * safeFactor,
-      'sugar': sugar * safeFactor,
+      'sugar': scaledSugar,
       'fiber': fiber * safeFactor,
       'sodium': sodium * safeFactor,
       'servingSize': size,
       'servingUnit': cleanUnit,
       'components': components
-          .map(
-            (component) => {
+          .map((component) {
+            final compBaseSugar = component.sugar * safeFactor;
+            final compBaseCarbs = component.carbohydrates * safeFactor;
+            final compBaseCal = component.calories * safeFactor;
+
+            final double compSugar;
+            final double compCarbs;
+            final double compCal;
+
+            if (sugarFactor != null &&
+                sugarFactor.isFinite &&
+                sugarFactor >= 0 &&
+                component.componentType == 'drink') {
+              compSugar = compBaseSugar * sugarFactor;
+              final compDeltaSugar = compSugar - compBaseSugar;
+              compCarbs = (compBaseCarbs + compDeltaSugar).clamp(
+                0.0,
+                double.infinity,
+              );
+              compCal = (compBaseCal + (compDeltaSugar * 4.0)).clamp(
+                0.0,
+                double.infinity,
+              );
+            } else {
+              compSugar = compBaseSugar;
+              compCarbs = compBaseCarbs;
+              compCal = compBaseCal;
+            }
+
+            return {
               ...component.toJson(),
               'estimatedAmount': component.estimatedAmount * safeFactor,
               'liquidVolumeMl': component.liquidVolumeMl * safeFactor,
-              'calories': component.calories * safeFactor,
+              'calories': compCal,
               'protein': component.protein * safeFactor,
-              'carbohydrates': component.carbohydrates * safeFactor,
+              'carbohydrates': compCarbs,
               'fat': component.fat * safeFactor,
-              'sugar': component.sugar * safeFactor,
+              'sugar': compSugar,
               'fiber': component.fiber * safeFactor,
               'sodium': component.sodium * safeFactor,
-            },
-          )
+            };
+          })
           .toList(growable: false),
       'nutrition': {
-        'calories': calories * safeFactor,
+        'calories': scaledCalories,
         'protein': protein * safeFactor,
-        'carbohydrates': carbs * safeFactor,
+        'carbohydrates': scaledCarbs,
         'fat': fat * safeFactor,
-        'sugar': sugar * safeFactor,
+        'sugar': scaledSugar,
         'fiber': fiber * safeFactor,
         'sodium': sodium * safeFactor,
         'source': dataSource,

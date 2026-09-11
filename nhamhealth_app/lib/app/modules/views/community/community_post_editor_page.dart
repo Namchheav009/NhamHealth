@@ -10,8 +10,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../translations/localized_text.dart';
 import '../../../widgets/app_alert.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
@@ -970,7 +970,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   .tr,
               style: TextStyle(
                 color: context.appText,
-                fontSize: 15,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),

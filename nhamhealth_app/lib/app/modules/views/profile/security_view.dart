@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../../widgets/app_alert.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
-import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/app_security_service.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
-import '../../../widgets/pin_keypad_dialog.dart';
-import 'change_password_view.dart';
-import '../../bindings/profile/change_password_binding.dart';
-import '../../../widgets/app_background.dart';
-import '../../../widgets/app_back_header.dart';
-import '../../../widgets/page_skeleton.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import '../../../widgets/app_alert.dart';
+import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/pin_keypad_dialog.dart';
+import '../../bindings/profile/change_password_binding.dart';
+import 'change_password_view.dart';
 
 class SecurityView extends StatefulWidget {
   const SecurityView({
@@ -384,9 +384,9 @@ class _SecurityViewState extends State<SecurityView> {
               child: Text(
                 'profile.password_and_security'.tr,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.35,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                   color: context.appText,
                 ),
               ),

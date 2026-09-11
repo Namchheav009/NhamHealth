@@ -34,6 +34,7 @@ const Map<String, String> communityKm = {
   'community.likes_a11y':
       'មានអ្នកចូលចិត្ត @count នាក់។ មើលអ្នកដែលបានចូលចិត្តការបង្ហោះនេះ។',
   'community.like_comment': 'ចូលចិត្តមតិយោបល់',
+  'community.edit_description': 'កែប្រែការពិពណ៌នា',
   'community.unlike_comment': 'ដកការចូលចិត្តមតិយោបល់',
   'community.search_people': 'ស្វែងរកមនុស្សតាមឈ្មោះ',
   'community.people_filter_a11y': 'តម្រងមនុស្ស៖ @name',
@@ -248,6 +249,7 @@ const Map<String, String> communityKm = {
   'community.report_being_reviewed':
       'ក្រុមការងារកំពុងពិនិត្យរបាយការណ៍របស់អ្នក។',
   'community.report_resolution': 'ដំណោះស្រាយ',
+  'community.report_status': 'ស្ថានភាពរបាយការណ៍',
   'community.report_status_pending': 'កំពុងរង់ចាំ',
   'community.report_status_review': 'កំពុងពិនិត្យ',
   'community.report_status_resolved': 'បានដោះស្រាយ',
@@ -264,9 +266,9 @@ const Map<String, String> communityKm = {
       'កុំបង្ហោះការផ្សាយពាណិជ្ជកម្ម ការបោកប្រាស់ ឬមាតិកាដដែលៗ។',
   'community.report_guideline_harassment':
       'គោរពគ្នា។ ការស្អប់ ការគំរាម និងការយាយីមិនត្រូវបានអនុញ្ញាតទេ។',
-  'community.report_guideline_inappropriateContent':
+  'community.report_guideline_inappropriate_content':
       'កុំចែករំលែកអាក្រាតកាយ អំពើហិង្សា ឬមាតិការសើប។',
-  'community.report_guideline_falseInformation':
+  'community.report_guideline_false_information':
       'កុំចែករំលែកព័ត៌មានសុខភាពមិនពិត ឬបំភាន់។',
   'community.report_guideline_copyright':
       'គោរពសិទ្ធិកម្មសិទ្ធិបញ្ញារបស់អ្នកបង្កើត។',

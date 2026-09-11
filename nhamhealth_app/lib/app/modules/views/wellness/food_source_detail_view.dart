@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/wellness/food_source_detail_controller.dart';
-import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
-import '../../../widgets/app_background.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
+import '../../controllers/wellness/food_source_detail_controller.dart';
 import 'widgets/food_amount_editor_card.dart';
 import 'widgets/food_contribution_card.dart';
 import 'widgets/food_detail_ai_insight_card.dart';
@@ -76,8 +76,9 @@ class FoodSourceDetailView extends GetView<FoodSourceDetailController> {
               child: Text(
                 'common.food_detail'.tr,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                   color: context.appText,
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/profile/help_support_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/help_support_view.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
 void main() {
   tearDown(Get.reset);
@@ -14,7 +15,12 @@ void main() {
     Get.put(HelpSupportController());
 
     await tester.pumpWidget(
-      GetMaterialApp(theme: AppTheme.dark, home: const HelpSupportView()),
+      GetMaterialApp(
+        theme: AppTheme.dark,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const HelpSupportView(),
+      ),
     );
     await tester.pumpAndSettle();
 

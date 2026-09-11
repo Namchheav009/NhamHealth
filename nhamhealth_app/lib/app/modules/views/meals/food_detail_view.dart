@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_back_header.dart';
@@ -7,8 +9,6 @@ import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/food_detail_controller.dart';
 import '../../models/meals/meal_model.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
-import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class FoodDetailView extends GetView<FoodDetailController> {
   const FoodDetailView({super.key});
@@ -159,13 +159,13 @@ class _DetailHeader extends StatelessWidget {
     child: Row(
       children: [
         AppBackButton(onPressed: onBack),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppBackButton.headerGap),
         Expanded(
           child: Text(
             'common.food_detail'.tr,
             style: TextStyle(
               color: context.appText,
-              fontSize: 15,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -569,9 +569,9 @@ class _Tab extends StatelessWidget {
             isLoading && count == 0
                 ? label.trOrSelf
                 : 'meals.label_count'.trParams({
-                    'label': label.trOrSelf,
-                    'count': '$count',
-                  }),
+                  'label': label.trOrSelf,
+                  'count': '$count',
+                }),
             textAlign: TextAlign.center,
             style: TextStyle(
               color:
@@ -900,8 +900,8 @@ bool _isInternalScraperNote(String text) {
       lower.contains('scraped') ||
       lower.contains('source:');
 }
+
 String _format(num value) =>
     value.toDouble() == value.roundToDouble()
         ? value.toInt().toString()
         : value.toStringAsFixed(1);
-

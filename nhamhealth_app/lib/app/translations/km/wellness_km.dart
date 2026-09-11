@@ -49,22 +49,37 @@ const Map<String, String> wellnessKm = {
   'wellness.take_photo': 'ថតរូប',
   'wellness.gallery': 'ជ្រើសរូបភាព',
   'wellness.analyze_food_or_drink': 'វិភាគអាហារ ឬភេសជ្ជៈ',
-  'wellness.tell_us_the_amount': 'ប្រាប់យើងពីបរិមាណ',
+  'wellness.tell_us_the_amount': 'កំណត់បរិមាណអាហារ',
   'wellness.amount_before_analysis_help':
-      'ជ្រើសរើសបរិមាណដែលអ្នកបានញ៉ាំ ឬផឹក មុនពេលវិភាគ។',
+      'កែសម្រួលបរិមាណដែលអ្នកបានទទួលទាន ដើម្បីទទួលបានទិន្នន័យអាហារូបត្ថម្ភកាន់តែច្បាស់លាស់។',
   'wellness.amount_to_analyze': 'បរិមាណត្រូវវិភាគ៖ @amount',
   'wellness.quick_select': 'ជ្រើសរើសរហ័ស',
   'wellness.plate': 'ចាន',
   'wellness.bowl': 'ចានគោម',
   'wellness.cup_size': 'ទំហំពែង',
-  'wellness.how_much_did_you_drink': 'អ្នកបានផឹកប៉ុន្មាន?',
-  'wellness.edit_food_amount': 'កែបរិមាណអាហារ',
-  'wellness.edit_drink_amount': 'កែបរិមាណភេសជ្ជៈ',
-  'wellness.volume_to_analyze': 'បរិមាណត្រូវវិភាគ',
+  'wellness.how_much_did_you_drink': 'តើអ្នកបានទទួលទានប៉ុន្មាន?',
+  'wellness.edit_food_amount': 'កែសម្រួលបរិមាណអាហារ',
+  'wellness.edit_drink_amount': 'កែសម្រួលបរិមាណភេសជ្ជៈ',
+  'wellness.adjust_amount_actually_ate':
+      'កែសម្រួលបរិមាណដែលអ្នកបានទទួលទានជាក់ស្តែង។',
+  'wellness.select_cup_size_and_drink_amount':
+      'ជ្រើសរើសទំហំពែង និងបរិមាណដែលបានទទួលទាន។',
+  'wellness.preview_estimated': 'លទ្ធផលប៉ាន់ស្មាន',
+  'wellness.volume_to_analyse': 'បរិមាណដែលត្រូវវិភាគ',
+  'wellness.portion_of_cup': '@percent% នៃ @cup មីលីលីត្រ',
+  'wellness.sugar_level': 'កម្រិតជាតិស្ករ',
+  'wellness.sugar_percentage': 'ជាតិស្ករ @percent%',
+  'wellness.custom': 'កំណត់ផ្ទាល់ខ្លួន',
+  'wellness.enter_custom_cup_size': 'បញ្ចូលចំណុះពែងផ្ទាល់ខ្លួន (មីលីលីត្រ)',
+  'wellness.nutrition_recalculated_notice':
+      'តម្លៃអាហារូបត្ថម្ភនឹងត្រូវគណនាឡើងវិញ ដោយផ្អែកលើបរិមាណថ្មី។',
+  'wellness.nutrition_recalculated_drink_notice':
+      'តម្លៃអាហារូបត្ថម្ភនឹងត្រូវគណនាឡើងវិញ ផ្អែកលើចំណុះ @volume។',
+  'wellness.volume_to_analyze': 'បរិមាណដែលត្រូវវិភាគ',
   'wellness.nutrition_uses_selected_amount':
-      'អាហារូបត្ថម្ភនឹងត្រូវគណនាតាមបរិមាណ @amount ដែលបានជ្រើស។',
+      'អាហារូបត្ថម្ភនឹងត្រូវគណនាតាមបរិមាណ @amount ដែលបានជ្រើសរើស។',
   'wellness.analyze_this_amount': 'វិភាគបរិមាណនេះ',
-  'wellness.update_amount': 'កែប្រែបរិមាណ',
+  'wellness.update_amount': 'រក្សាទុកបរិមាណ',
   'wellness.continue_analysis': 'បន្តការវិភាគ',
   'wellness.added_to_today': 'បានបន្ថែមសម្រាប់ថ្ងៃនេះ',
   'wellness.water_added_today': 'បានបន្ថែមទឹកសម្រាប់ថ្ងៃនេះ',
@@ -97,10 +112,10 @@ const Map<String, String> wellnessKm = {
   'wellness.plain_water_detected': 'AI បានរកឃើញថាជាទឹកសុទ្ធ',
   'wellness.drink_volume': 'បរិមាណភេសជ្ជៈ',
   'wellness.carbs': 'កាបូអ៊ីដ្រាត',
-  'wellness.serving': 'បរិមាណក្នុងមួយពេលញ៉ាំ',
+  'wellness.serving': 'ចំណែក',
   'wellness.review_this_estimate': 'ពិនិត្យលទ្ធផលប៉ាន់ស្មាន',
   'wellness.ai_nutrition_and_portions_are_estimates_check_the_details_before_adding':
-      'អាហារូបត្ថម្ភ និងបរិមាណពី AI គឺជាការប៉ាន់ស្មាន។ សូមពិនិត្យព័ត៌មានលម្អិតមុនពេលបន្ថែមថាមពល។',
+      'អាហារូបត្ថម្ភ និងបរិមាណពី AI គឺជាការប៉ាន់ស្មាន។ សូមពិនិត្យព័ត៌មានលម្អិតមុនពេលបន្ថែមចូលថ្ងៃនេះ។',
   'wellness.important_information': 'ព័ត៌មានសំខាន់',
   'wellness.ai_nutrition_results_are_estimates_for_general_wellness_only_they_are_not_medical_advice_a_diagnosis_or_an_official_nutrition_label':
       'លទ្ធផលអាហារូបត្ថម្ភពី AI គ្រាន់តែជាការប៉ាន់ស្មានសម្រាប់សុខុមាលភាពទូទៅ។ វាមិនមែនជាដំបូន្មានវេជ្ជសាស្ត្រ ការធ្វើរោគវិនិច្ឆ័យ ឬស្លាកអាហារូបត្ថម្ភផ្លូវការទេ។',
@@ -184,15 +199,15 @@ const Map<String, String> wellnessKm = {
   'wellness.tell_ai_what_you_ate_and_choose_the_amount_for_a_better_estimate':
       'ប្រាប់ AI អំពីអាហារដែលអ្នកបានញ៉ាំ និងជ្រើសបរិមាណ ដើម្បីប៉ាន់ស្មានបានកាន់តែប្រសើរ។',
   'wellness.open_ai_meal_auto_fill': 'បើកបំពេញបញ្ជីអាហារដោយ AI',
-  'wellness.edit_intake': 'កែបរិមាណដែលបានញ៉ាំ',
+  'wellness.edit_intake': 'កែសម្រួលបរិមាណទទួលទាន',
   'wellness.youre_on_track_today': '✨ ថ្ងៃនេះអ្នកកំពុងធ្វើបានល្អ',
-  'wellness.edit_amount': 'កែបរិមាណ',
+  'wellness.edit_amount': 'កែសម្រួលបរិមាណ',
   'wellness.re_analyze_with_ai': 'វិភាគឡើងវិញជាមួយ AI',
-  'wellness.hide_manual_edit': 'លាក់ការកែដោយខ្លួនឯង',
-  'wellness.edit_manually': 'កែដោយខ្លួនឯង',
-  'wellness.edit_amount_manually': 'កែបរិមាណដោយខ្លួនឯង',
+  'wellness.hide_manual_edit': 'លាក់ការកែសម្រួលដោយផ្ទាល់',
+  'wellness.edit_manually': 'កែសម្រួលដោយផ្ទាល់',
+  'wellness.edit_amount_manually': 'កែសម្រួលបរិមាណដោយផ្ទាល់',
   'wellness.this_drink_added_a_lot_of_sugar_with_little_fiber_or_protein_main_source_of_sugar_today_pairs_better_with_water_or_fruit':
-      'ភេសជ្ជៈនេះបន្ថែមស្ករច្រើន ប៉ុន្តែមានជាតិសរសៃ និងប្រូតេអ៊ីនតិច។\n• ប្រភពជាតិស្ករសំខាន់បំផុតថ្ងៃនេះ\n• សមជាងបើជ្រើសទឹក ឬផ្លែឈើជាមួយ',
+      'ភេសជ្ជៈនេះមានជាតិស្ករច្រើន ប៉ុន្តែមានជាតិសរសៃ និងប្រូតេអ៊ីនតិច។\n• ជាប្រភពជាតិស្ករចម្បងសម្រាប់ថ្ងៃនេះ\n• គួរពិសាទឹកបរិសុទ្ធ ឬផ្លែឈើបន្ថែម',
   'wellness.contribution_today': 'ចំណែកក្នុងថ្ងៃនេះ',
   'wellness.watch_sugar': '⚖️ ប្រយ័ត្នជាតិស្ករ',
   'wellness.milk_tea_is_okay_sometimes_but_sugar_is_a_bit_high_for_one_drink_balance_it_with_water_and_a_lighter_next_choice':
@@ -215,13 +230,13 @@ const Map<String, String> wellnessKm = {
   'wellness.unable_to_load_your_daily_wellness_data':
       'មិនអាចផ្ទុកទិន្នន័យសុខភាពប្រចាំថ្ងៃបាន។',
   'wellness.food_analysis_failed_please_try_another_photo':
-      'វិភាគអាហារមិនបាន។ សូមសាកល្បងរូបថតផ្សេង។',
+      'មិនអាចវិភាគអាហារបានទេ។ សូមសាកល្បងថតរូបថ្មី ឬប្តូររូបថតផ្សេង។',
   'wellness.food_added': 'បានបន្ថែមអាហារ',
   'wellness.could_not_save_food': 'មិនអាចរក្សាទុកអាហារបានទេ',
   'wellness.could_not_save_correction': 'មិនអាចរក្សាទុកការកែតម្រូវបានទេ',
   'wellness.could_not_save_feedback': 'មិនអាចរក្សាទុកការបញ្ជាក់បានទេ',
   'wellness.your_nutrition_was_not_stored_please_check_the_server_and_try_again':
-      'ព័ត៌មានអាហារូបត្ថម្ភមិនត្រូវបានរក្សាទុក។ សូមពិនិត្យម៉ាស៊ីនមេ ហើយព្យាយាមម្តងទៀត។',
+      'មិនអាចរក្សាទុកព័ត៌មានអាហារូបត្ថម្ភបានទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។',
   'wellness.food_confirmed': 'បានបញ្ជាក់អាហារ',
   'wellness.thanks_your_confirmation_helps_improve_future_results':
       'សូមអរគុណ—ការបញ្ជាក់របស់អ្នកជួយកែលម្អលទ្ធផលនាពេលអនាគត។',

@@ -60,6 +60,7 @@ class AiFoodController extends GetxController {
   final foodUnit = 'plate'.obs;
   final drinkCupMl = 350.0.obs;
   final drinkConsumedFraction = 1.0.obs;
+  final drinkSugarPercentage = 100.obs;
   int _scanGeneration = 0;
   FoodNutritionModel? _baseNutrition;
 
@@ -78,6 +79,26 @@ class AiFoodController extends GetxController {
             ? value.toStringAsFixed(0)
             : value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
     return '$formatted $selectedAmountUnit';
+  }
+
+  double get estimatedCalories {
+    final currentNutrition = nutrition.value ?? _baseNutrition;
+    if (currentNutrition != null) {
+      return currentNutrition.calories;
+    }
+    if (inputKind.value == AiFoodInputKind.drink) {
+      final sugarRatio = drinkSugarPercentage.value / 100.0;
+      return (120.0 * (selectedAmount / 350.0) * (0.4 + 0.6 * sugarRatio));
+    }
+    return 400.0 * foodAmount.value;
+  }
+
+  int get estimatedGrams {
+    final currentNutrition = nutrition.value ?? _baseNutrition;
+    if (currentNutrition != null && currentNutrition.servingSize > 0) {
+      return (currentNutrition.servingSize * foodAmount.value).round();
+    }
+    return (350.0 * foodAmount.value).round();
   }
 
   bool get canAnalyze =>
@@ -109,6 +130,10 @@ class AiFoodController extends GetxController {
 
   void setDrinkConsumedFraction(double value) {
     drinkConsumedFraction.value = value.clamp(.25, 1.0);
+  }
+
+  void setDrinkSugarPercentage(int value) {
+    drinkSugarPercentage.value = value.clamp(0, 200);
   }
 
   @override
@@ -604,6 +629,7 @@ class AiFoodController extends GetxController {
     foodUnit.value = 'plate';
     drinkCupMl.value = 350;
     drinkConsumedFraction.value = 1;
+    drinkSugarPercentage.value = 100;
   }
 
   void clearResult() {
@@ -676,6 +702,7 @@ class AiFoodController extends GetxController {
       factor: requestedMl / baselineMl,
       size: requestedMl,
       unit: 'ml',
+      sugarFactor: drinkSugarPercentage.value / 100.0,
     );
   }
 

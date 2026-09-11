@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/wellness/calories_controller.dart';
-import '../../../theme/app_spacing.dart';
 import '../../../theme/app_colors.dart';
-import '../../../widgets/app_background.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
+import '../../controllers/wellness/calories_controller.dart';
+import 'widgets/calories_ai_insight_card.dart';
 import 'widgets/calories_intake_editor.dart';
 import 'widgets/calories_progress_card.dart';
-import 'widgets/calories_ai_insight_card.dart';
 import 'widgets/food_sources_card.dart';
 
 class CaloriesView extends GetView<CaloriesController> {
@@ -80,8 +80,9 @@ class CaloriesView extends GetView<CaloriesController> {
               child: Text(
                 'common.calories'.tr,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                   color: context.appText,
                 ),
               ),

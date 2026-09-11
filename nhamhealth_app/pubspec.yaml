@@ -104,6 +104,7 @@ flutter:
     - assets/animations/live_chatbot.json
     - assets/animations/food.json
     - assets/animations/Cybersecurity.json
+    - "assets/animations/Customer Support.json"
     - assets/ai/
     - assets/images/profile/profile.jpg
 flutter_launcher_icons:

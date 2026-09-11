@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -10,7 +11,6 @@ import '../../controllers/meals/meal_controller.dart';
 import 'widgets/meal_card.dart';
 import 'widgets/meal_category.dart';
 import 'widgets/meal_search_bar.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AllMealsView extends GetView<MealController> {
   const AllMealsView({super.key});
@@ -74,9 +74,9 @@ class AllMealsView extends GetView<MealController> {
                     'meals.all'.tr,
                     style: TextStyle(
                       color: context.appText,
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -.4,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -.2,
                     ),
                   ),
                   Text(

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
-import '../../controllers/wellness/water_controller.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_background.dart';
 import '../../../widgets/app_back_header.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import '../../../widgets/app_background.dart';
+import '../../controllers/wellness/water_controller.dart';
 
 class WaterView extends GetView<WaterController> {
   const WaterView({super.key});
@@ -69,8 +69,9 @@ class WaterView extends GetView<WaterController> {
                   'common.water'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                     color: context.appText,
                   ),
                 ),
