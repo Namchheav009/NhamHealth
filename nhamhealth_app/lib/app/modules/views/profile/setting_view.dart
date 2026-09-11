@@ -314,14 +314,6 @@ class SettingsView extends GetView<SettingsController> {
                   : 'settings.language_english'.tr,
           onTap: controller.openLanguage,
         ),
-        _divider(context),
-
-        _SettingsItem(
-          icon: Icons.notifications_active_outlined,
-          title: 'profile.test_notification_alert'.tr,
-          subtitle: 'profile.test_notification_alert_desc'.tr,
-          onTap: () => controller.openDynamicNotificationStudio(context),
-        ),
       ],
     );
   }

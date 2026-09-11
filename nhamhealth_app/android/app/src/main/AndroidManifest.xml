@@ -8,18 +8,13 @@
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
-    <application
-        android:label="NhamHealth"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false"
-        android:usesCleartextTraffic="false">
+    <application android:label="Nham Health" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:usesCleartextTraffic="false">
 
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="nhamhealth_notifications" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="nhamhealth_notifications" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/nhamhealth_notification_green" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@mipmap/ic_launcher" />
 
-        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:taskAffinity="" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
+        <activity android:name=".MainActivity" android:label="Nham Health" android:exported="true" android:launchMode="singleTop" android:taskAffinity="" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
 
             <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme" />
 

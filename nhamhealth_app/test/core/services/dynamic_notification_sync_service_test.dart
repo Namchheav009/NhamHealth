@@ -68,20 +68,4 @@ void main() {
     await expectLater(service.syncNow(), completes);
   });
 
-  test('triggerDynamicScenario completes cleanly for all presets', () async {
-    final authService = _FakeAuthService();
-    final repository = _FakeNotificationsRepository();
-    final service = DynamicNotificationSyncService(
-      authService: authService,
-      repository: repository,
-    );
-    addTearDown(service.stopSync);
-
-    for (final preset in DynamicAlertPreset.values) {
-      await expectLater(
-        service.triggerDynamicScenario(preset, delay: Duration.zero),
-        completes,
-      );
-    }
-  });
 }

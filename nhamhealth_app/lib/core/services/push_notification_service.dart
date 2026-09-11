@@ -143,34 +143,6 @@ class PushNotificationService {
     );
   }
 
-  Future<void> showLocalTestNotification({
-    String title = 'Kun Kaknika',
-    String body = 'Shared an instant: "How cute 🫣🫶"',
-    String? subText = 'c.zen_03',
-    String? avatarUrl,
-    Duration delay = Duration.zero,
-  }) async {
-    if (delay > Duration.zero) {
-      await Future<void>.delayed(delay);
-    }
-    if (isSupported) {
-      try {
-        await _androidNotifications.invokeMethod<void>('showNotification', {
-          'title': title,
-          'body': body,
-          'subText': subText,
-          'avatarUrl': avatarUrl,
-          'referenceType': 'AI_FOOD',
-          'referenceId': '1',
-        });
-        return;
-      } on Object catch (error) {
-        debugPrint('Native test notification unavailable: $error');
-      }
-    }
-    AppAlert.notification(title: title, message: body);
-  }
-
   Future<void> showDynamicNotification({
     required String title,
     required String body,

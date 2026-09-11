@@ -123,9 +123,10 @@ class MainActivity : FlutterFragmentActivity() {
         )
 
         notificationExecutor.execute {
-            val largeIconBitmap = loadBitmap(avatarUrl) ?: getDefaultAvatarBitmap()
+            val largeIconBitmap = loadBitmap(avatarUrl) ?: getDefaultLogoBitmap()
             val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
+                .setColor(ContextCompat.getColor(this, R.color.nhamhealth_notification_green))
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -180,16 +181,25 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
-    private fun getDefaultAvatarBitmap(): Bitmap? {
+    private fun getDefaultLogoBitmap(): Bitmap? {
         return try {
             val drawable = ContextCompat.getDrawable(this, R.mipmap.ic_launcher) ?: return null
-            val width = drawable.intrinsicWidth.coerceAtLeast(128)
-            val height = drawable.intrinsicHeight.coerceAtLeast(128)
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val size = 192
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = ContextCompat.getColor(
+                    this@MainActivity,
+                    R.color.nhamhealth_logo_background,
+                )
+            }
+            val bounds = RectF(0f, 0f, size.toFloat(), size.toFloat())
+            canvas.drawRoundRect(bounds, 38f, 38f, backgroundPaint)
+
+            val inset = 20
+            drawable.setBounds(inset, inset, size - inset, size - inset)
             drawable.draw(canvas)
-            toCircleBitmap(bitmap)
+            bitmap
         } catch (_: Exception) {
             null
         }

@@ -1,20 +1,4 @@
 const Map<String, String> profileEn = {
-  'profile.test_notification_alert': 'Dynamic Real-Time Alerts',
-  'profile.test_notification_alert_desc':
-      'Lock screen and floating banner alerts across all devices',
-  'profile.alert_scheduled_title': 'Alert Scheduled (3s)',
-  'profile.alert_scheduled_desc':
-      'Lock phone or swipe to Home now to see the banner!',
-  'profile.dynamic_notification_title': 'Dynamic Notification Studio',
-  'profile.dynamic_notification_desc':
-      'Trigger real-time lock screen and heads-up banner alerts on your device.',
-  'profile.alert_community_comment': 'Community Comment Alert',
-  'profile.alert_community_like': 'Community Like Alert',
-  'profile.alert_meal_reminder': 'Meal & Hydration Reminder',
-  'profile.alert_broadcast': 'Admin Broadcast Alert',
-  'profile.alert_custom': 'Custom Notification Alert',
-  'profile.alert_sent_toast':
-      'Alert scheduled in 3 seconds! Lock your phone or swipe Home now.',
   'profile.save_failed': "Profile couldn't be saved",
   'profile.protection_enabled': 'App protection enabled',
   'profile.pin_biometrics_ready': 'Your PIN and biometric unlock are ready.',

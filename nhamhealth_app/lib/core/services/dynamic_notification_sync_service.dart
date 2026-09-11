@@ -9,13 +9,6 @@ import '../../app/modules/repositories/notifications/notifications_repository.da
 import 'auth_service.dart';
 import 'push_notification_service.dart';
 
-enum DynamicAlertPreset {
-  communityComment,
-  communityLike,
-  mealReminder,
-  adminBroadcast,
-}
-
 class DynamicNotificationSyncService extends GetxService with WidgetsBindingObserver {
   DynamicNotificationSyncService({
     required AuthService authService,
@@ -123,89 +116,4 @@ class DynamicNotificationSyncService extends GetxService with WidgetsBindingObse
     );
   }
 
-  Future<void> triggerDynamicScenario(
-    DynamicAlertPreset preset, {
-    Duration delay = const Duration(seconds: 3),
-  }) async {
-    final pushService =
-        PushNotificationService.instance ??
-        PushNotificationService(authService: _authService);
-
-    switch (preset) {
-      case DynamicAlertPreset.communityComment:
-        await pushService.showDynamicNotification(
-          title: 'Kun Kaknika',
-          body: 'Commented: "How cute 🫣🫶"',
-          subText: 'c.zen_03',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-          referenceType: 'POST',
-          referenceId: '1',
-          delay: delay,
-        );
-        break;
-
-      case DynamicAlertPreset.communityLike:
-        await pushService.showDynamicNotification(
-          title: 'Sophea Chan',
-          body: 'Liked your healthy recipe: "Avocado Toast & Poached Egg"',
-          subText: 'sophea.healthy',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-          referenceType: 'POST',
-          referenceId: '2',
-          delay: delay,
-        );
-        break;
-
-      case DynamicAlertPreset.mealReminder:
-        await pushService.showDynamicNotification(
-          title: 'Time for Lunch! 🥗',
-          body: 'Keep your healthy streak going. Log your meal in AI Food Check.',
-          subText: 'NhamHealth Nutrition',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop&q=80',
-          referenceType: 'AI_FOOD',
-          delay: delay,
-        );
-        break;
-
-      case DynamicAlertPreset.adminBroadcast:
-        await pushService.showDynamicNotification(
-          title: '📢 Community Health Challenge',
-          body: 'The 7-Day Clean Eating Challenge has started! Tap to join the community.',
-          subText: 'Official Broadcast',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=200&auto=format&fit=crop&q=80',
-          referenceType: 'POST',
-          referenceId: '1',
-          delay: delay,
-        );
-        break;
-    }
-  }
-
-  Future<void> triggerCustomDynamicAlert({
-    required String title,
-    required String body,
-    String? subText,
-    String? avatarUrl,
-    String? referenceType,
-    String? referenceId,
-    Duration delay = const Duration(seconds: 3),
-  }) async {
-    final pushService =
-        PushNotificationService.instance ??
-        PushNotificationService(authService: _authService);
-
-    await pushService.showDynamicNotification(
-      title: title,
-      body: body,
-      subText: subText,
-      avatarUrl: avatarUrl,
-      referenceType: referenceType,
-      referenceId: referenceId,
-      delay: delay,
-    );
-  }
 }

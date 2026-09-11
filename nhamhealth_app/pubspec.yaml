@@ -78,7 +78,8 @@ flutter:
 
   assets:
     - assets/images/background/bg.png
-    - assets/icons/logo.png
+    - assets/icons/primary_logo.png
+    - assets/icons/launcher_logo.png
     - assets/images/onboarding/onboarding1.png
     - assets/images/onboarding/onboarding2.png
     - assets/images/onboarding/vagetables.png
@@ -105,12 +106,13 @@ flutter:
     - assets/animations/Cybersecurity.json
     - assets/ai/
     - assets/images/profile/profile.jpg
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: false
-  image_path: assets/icons/logo.png
+  image_path: assets/icons/launcher_legacy.png
   adaptive_icon_background: "#FFFFFF"
-  # adaptive_icon_foreground: assets/app_icon_fg.png
+  adaptive_icon_foreground: assets/icons/launcher_foreground.png
+  adaptive_icon_foreground_inset: 0
   min_sdk_android: 21
 
   # To add assets to your application, add an assets section, like this:

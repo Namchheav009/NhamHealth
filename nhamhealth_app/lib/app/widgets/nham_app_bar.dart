@@ -36,7 +36,7 @@ class NhamAppBar extends StatelessWidget {
           child: Row(
             children: [
               Image.asset(
-                'assets/icons/logo.png',
+                'assets/icons/primary_logo.png',
                 width: 42,
                 height: 42,
                 fit: BoxFit.contain,

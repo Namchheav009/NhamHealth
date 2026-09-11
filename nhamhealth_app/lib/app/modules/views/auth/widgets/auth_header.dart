@@ -16,7 +16,7 @@ class AuthHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset(
-          'assets/icons/logo.png',
+          'assets/icons/primary_logo.png',
           width: logoSize,
           height: logoSize,
           fit: BoxFit.contain,

@@ -84,7 +84,7 @@ class SplashView extends GetView<SplashController> {
           ],
         ),
         child: Image.asset(
-          'assets/icons/logo.png',
+          'assets/icons/primary_logo.png',
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         ),
