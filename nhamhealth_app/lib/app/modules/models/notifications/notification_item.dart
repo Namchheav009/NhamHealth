@@ -94,11 +94,18 @@ class NotificationItem {
   }
 
   String get displayMessage {
+<<<<<<< HEAD
     final raw =
         (kind != NotificationKind.system ||
                 title.trim().toLowerCase() == 'nham health')
             ? message
             : '$title — $message';
+=======
+    final raw = (kind != NotificationKind.system ||
+            title.trim().toLowerCase() == 'nham health')
+        ? message
+        : '$title — $message';
+>>>>>>> 3972198f3fc99839fe6db5f4ace71294f671133a
     return localizeNotificationMessage(raw);
   }
 
