@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/models/meals/meal_model.dart';
 import 'package:nhamhealth_flutter/app/modules/views/meals/widgets/meal_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/meals/widgets/meal_idea_card.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/app/widgets/app_search_bar.dart';
 
 void main() {
@@ -25,10 +26,13 @@ void main() {
         isFavorite: favorite,
       );
 
-  Widget app(Widget child) => GetMaterialApp(
-    theme: AppTheme.light,
-    home: Scaffold(body: Center(child: child)),
-  );
+  Widget app(Widget child, {Locale locale = const Locale('en', 'US')}) =>
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: locale,
+        home: Scaffold(body: Center(child: child)),
+      );
 
   testWidgets('popular meal card fits the readable phone card width', (
     tester,
@@ -44,7 +48,7 @@ void main() {
     );
 
     expect(find.text('High Protein Salad'), findsOneWidget);
-    expect(find.text('High Protein'), findsOneWidget);
+    expect(find.text('High Protein'), findsNWidgets(2));
     expect(find.text('380 kcal'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -108,7 +112,7 @@ void main() {
       ),
     );
 
-    expect(tester.getSize(find.byType(AppSearchBar)).height, 56);
+    expect(tester.getSize(find.byType(AppSearchBar)).height, 54);
     expect(find.text('Search meals and healthy ideas'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -149,5 +153,75 @@ void main() {
     expect(result.cookingTimeMinutes, 25);
     expect(result.proteinGrams, 28);
     expect(result.recommendationReason, contains('BMI'));
+  });
+
+  testWidgets('MealCard localizes Bai Sach Chrouk to Khmer', (tester) async {
+    final baiSachChrouk = MealModel(
+      id: 1,
+      name: 'Bai Sach Chrouk',
+      calories: 1108,
+      image: fallbackImage,
+      category: 'Breakfast',
+      categoryId: 1,
+      cookingTimeMinutes: 20,
+    );
+
+    await tester.pumpWidget(
+      app(
+        SizedBox(
+          width: 180,
+          height: 240,
+          child: MealCard(meal: baiSachChrouk, onTap: () {}, onFavorite: () {}),
+        ),
+        locale: const Locale('km'),
+      ),
+    );
+
+    expect(find.text('បាយសាច់ជ្រូក'), findsOneWidget);
+    expect(find.text('អាហារពេលព្រឹក'), findsNWidgets(2));
+    expect(find.text('1108 កាឡូរី'), findsOneWidget);
+    expect(find.text('20 នាទី'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MealIdeaCard localizes Bai Sach Chrouk and reason to Khmer', (
+    tester,
+  ) async {
+    final baiSachChrouk = MealModel(
+      id: 1,
+      name: 'Bai Sach Chrouk',
+      calories: 1108,
+      image: fallbackImage,
+      category: 'Breakfast',
+      categoryId: 1,
+      cookingTimeMinutes: 20,
+      recommendationReason:
+          'A balanced, varied option selected for your daily wellness goals.',
+    );
+
+    await tester.pumpWidget(
+      app(
+        SizedBox(
+          width: 360,
+          child: MealIdeaCard(
+            meal: baiSachChrouk,
+            onTap: () {},
+            onFavorite: () {},
+          ),
+        ),
+        locale: const Locale('km'),
+      ),
+    );
+
+    expect(find.text('បាយសាច់ជ្រូក'), findsOneWidget);
+    expect(
+      find.text(
+        'ជម្រើសអាហារមានតុល្យភាព និងចម្រុះមុខ ត្រូវបានជ្រើសរើសសម្រាប់គោលដៅសុខុមាលភាពប្រចាំថ្ងៃរបស់អ្នក។',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('1108 កាឡូរី'), findsOneWidget);
+    expect(find.text('20 នាទី'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

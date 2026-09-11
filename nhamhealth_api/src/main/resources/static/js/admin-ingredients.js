@@ -39,7 +39,9 @@
         const keyword = searchInput.value.trim().toLowerCase();
         const type = typeFilter.value;
         rows().forEach((row) => {
-            const matchesName = !keyword || row.dataset.name.toLowerCase().includes(keyword);
+            const matchesName = !keyword
+                || (row.dataset.name || '').toLowerCase().includes(keyword)
+                || (row.dataset.nameKm || '').toLowerCase().includes(keyword);
             const matchesType = type === 'all' || (row.dataset.type || '').toLowerCase() === type;
             row.hidden = !(matchesName && matchesType);
         });
@@ -54,6 +56,8 @@
         editingIngredientId = null;
         currentImageUrl = null;
         form.reset();
+        if (form.elements.ingredientNameKm) form.elements.ingredientNameKm.value = '';
+        if (form.elements.descriptionKm) form.elements.descriptionKm.value = '';
         imageFile.required = false;
         imageHelp.textContent = 'Optional. JPG, PNG, or WebP; maximum 5 MB.';
         document.getElementById('ingredientModalTitle').textContent = 'Add Ingredient';
@@ -67,10 +71,12 @@
         editingIngredientId = row.dataset.id;
         currentImageUrl = row.dataset.imageUrl || null;
         form.reset();
-        form.elements.ingredientName.value = row.dataset.name;
+        form.elements.ingredientName.value = row.dataset.name || '';
+        if (form.elements.ingredientNameKm) form.elements.ingredientNameKm.value = row.dataset.nameKm || '';
         form.elements.ingredientType.value = row.dataset.type || '';
         form.elements.defaultUnit.value = row.dataset.unit || '';
         form.elements.description.value = row.dataset.description || '';
+        if (form.elements.descriptionKm) form.elements.descriptionKm.value = row.dataset.descriptionKm || '';
         imageFile.required = false;
         imageHelp.textContent = 'Leave empty to keep the current image. JPG, PNG, or WebP; maximum 5 MB.';
         document.getElementById('ingredientModalTitle').textContent = 'Edit Ingredient';
@@ -128,9 +134,11 @@
         const selectedImage = formData.get('imageFile');
         const payload = {
             ingredientName: formData.get('ingredientName').trim(),
+            ingredientNameKm: formData.get('ingredientNameKm')?.trim() || null,
             ingredientType: formData.get('ingredientType').trim(),
-            defaultUnit: formData.get('defaultUnit').trim(),
-            description: formData.get('description').trim(),
+            defaultUnit: formData.get('defaultUnit')?.trim() || null,
+            description: formData.get('description')?.trim() || null,
+            descriptionKm: formData.get('descriptionKm')?.trim() || null,
             imageUrl: currentImageUrl
         };
 
@@ -177,9 +185,9 @@
     }
 
     function exportIngredients() {
-        const header = ['Ingredient', 'Type', 'Default unit', 'Description', 'Image URL'];
+        const header = ['Ingredient', 'Ingredient (Khmer)', 'Type', 'Default unit', 'Description', 'Description (Khmer)', 'Image URL'];
         const data = rows().filter((row) => !row.hidden)
-            .map((row) => [row.dataset.name, row.dataset.type, row.dataset.unit, row.dataset.description, row.dataset.imageUrl]);
+            .map((row) => [row.dataset.name, row.dataset.nameKm, row.dataset.type, row.dataset.unit, row.dataset.description, row.dataset.descriptionKm, row.dataset.imageUrl]);
         const csv = [header, ...data]
             .map((line) => line.map((value) => `"${String(value || '').replaceAll('"', '""')}"`).join(','))
             .join('\r\n');

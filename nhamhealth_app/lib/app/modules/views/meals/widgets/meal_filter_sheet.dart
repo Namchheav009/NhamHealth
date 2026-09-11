@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/meals/meal_controller.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class MealFilterButton extends GetView<MealController> {
   const MealFilterButton({super.key});
@@ -103,7 +103,9 @@ class _MealFilterSheet extends GetView<MealController> {
                       index++
                     )
                       ChoiceChip(
-                        label: Text(controller.categories[index].name.trOrSelf),
+                        label: Text(
+                          localizeCategory(controller.categories[index].name),
+                        ),
                         selected: controller.selectedCategory.value == index,
                         onSelected: (_) => controller.selectCategory(index),
                       ),
@@ -119,7 +121,9 @@ class _MealFilterSheet extends GetView<MealController> {
                   values: const [null, 400, 600],
                   label:
                       (value) =>
-                          value == null ? 'common.any'.tr : '≤ $value kcal',
+                          value == null
+                              ? 'common.any'.tr
+                              : '≤ ${localizeCalories(value)}',
                   onSelected: controller.setMaxCalories,
                 ),
               ),
@@ -132,7 +136,9 @@ class _MealFilterSheet extends GetView<MealController> {
                   values: const [null, 20, 30],
                   label:
                       (value) =>
-                          value == null ? 'common.any'.tr : '≤ $value min',
+                          value == null
+                              ? 'common.any'.tr
+                              : '≤ ${localizeCookingTime(value)}',
                   onSelected: controller.setMaxCookingMinutes,
                 ),
               ),

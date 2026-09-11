@@ -2,8 +2,9 @@ package com.nhamhealth.nhamhealth_api.controller.admin;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,7 +18,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMoodRequest;
 import com.nhamhealth.nhamhealth_api.entity.Mood;
+import com.nhamhealth.nhamhealth_api.entity.MoodTranslation;
+import com.nhamhealth.nhamhealth_api.repository.translation.MoodTranslationRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
+import com.nhamhealth.nhamhealth_api.service.wellness.MoodAdminService;
 
 import jakarta.validation.Valid;
 
@@ -25,9 +29,16 @@ import jakarta.validation.Valid;
 public class MoodAdminController {
 
     private final MoodRepository moodRepository;
+    private final MoodTranslationRepository moodTranslationRepository;
+    private final MoodAdminService moodAdminService;
 
-    public MoodAdminController(MoodRepository moodRepository) {
+    public MoodAdminController(
+            MoodRepository moodRepository,
+            MoodTranslationRepository moodTranslationRepository,
+            MoodAdminService moodAdminService) {
         this.moodRepository = moodRepository;
+        this.moodTranslationRepository = moodTranslationRepository;
+        this.moodAdminService = moodAdminService;
     }
 
     @GetMapping("/admin/moods")
@@ -36,8 +47,14 @@ public class MoodAdminController {
         int total = moods.size();
         long active = moods.stream().filter(mood -> Boolean.TRUE.equals(mood.getIsActive())).count();
 
+        Map<Integer, MoodTranslation> kmTranslations = moodTranslationRepository
+                .findByLanguageCode("km")
+                .stream()
+                .collect(Collectors.toMap(t -> t.getMood().getMoodId(), Function.identity(), (a, b) -> a));
+
         model.addAttribute("pageTitle", "Moods");
         model.addAttribute("moods", moods);
+        model.addAttribute("kmTranslations", kmTranslations);
         model.addAttribute("totalMoods", total);
         model.addAttribute("activeMoods", active);
         model.addAttribute("inactiveMoods", total - active);
@@ -48,58 +65,33 @@ public class MoodAdminController {
     @PostMapping("/admin/moods")
     @ResponseBody
     public ResponseEntity<?> createMood(@Valid @RequestBody AdminMoodRequest request) {
-        if (moodRepository.findByMoodNameIgnoreCase(request.moodName().trim()).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "A mood with this name already exists"));
+        try {
+            return ResponseEntity.ok(moodAdminService.create(request));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
-        Mood mood = new Mood();
-        apply(mood, request);
-        return ResponseEntity.ok(toResponse(moodRepository.saveAndFlush(mood)));
     }
 
     @PutMapping("/admin/moods/{moodId}")
     @ResponseBody
     public ResponseEntity<?> updateMood(@PathVariable Integer moodId, @Valid @RequestBody AdminMoodRequest request) {
-        return moodRepository.findById(moodId)
-                .<ResponseEntity<?>>map(mood -> {
-                    boolean duplicate = moodRepository.findByMoodNameIgnoreCase(request.moodName().trim())
-                            .filter(existing -> !existing.getMoodId().equals(moodId)).isPresent();
-                    if (duplicate) {
-                        return ResponseEntity.badRequest().body(Map.of("message", "A mood with this name already exists"));
-                    }
-                    apply(mood, request);
-                    return ResponseEntity.ok(toResponse(moodRepository.saveAndFlush(mood)));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(moodAdminService.update(moodId, request));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
     }
 
     @DeleteMapping("/admin/moods/{moodId}")
     @ResponseBody
     public ResponseEntity<?> deleteMood(@PathVariable Integer moodId) {
-        if (!moodRepository.existsById(moodId)) {
-            return ResponseEntity.notFound().build();
-        }
         try {
-            moodRepository.deleteById(moodId);
-            moodRepository.flush();
+            moodAdminService.delete(moodId);
             return ResponseEntity.noContent().build();
-        } catch (DataIntegrityViolationException exception) {
-            return ResponseEntity.status(409).body(Map.of(
-                    "message", "This mood is used by wellness or AI records. Mark it inactive instead."));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(Map.of("message", exception.getMessage()));
         }
-    }
-
-    private void apply(Mood mood, AdminMoodRequest request) {
-        mood.setMoodName(request.moodName().trim());
-        mood.setEmojiCode(request.emojiCode() == null || request.emojiCode().isBlank()
-                ? null : request.emojiCode().trim());
-        mood.setIsActive(request.active() == null || request.active());
-    }
-
-    private Map<String, Object> toResponse(Mood mood) {
-        return Map.of(
-                "id", mood.getMoodId(),
-                "moodName", mood.getMoodName(),
-                "emojiCode", mood.getEmojiCode() == null ? "" : mood.getEmojiCode(),
-                "active", Boolean.TRUE.equals(mood.getIsActive()));
     }
 }

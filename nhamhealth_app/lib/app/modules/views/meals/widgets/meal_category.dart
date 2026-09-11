@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/meals/meal_controller.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class MealCategory extends GetView<MealController> {
   const MealCategory({super.key});
@@ -27,7 +27,7 @@ class MealCategory extends GetView<MealController> {
               button: true,
               selected: selected,
               label: 'meals.show_category_meals'.trParams({
-                'category': category.name.trOrSelf,
+                'category': localizeCategory(category.name),
               }),
               child: InkWell(
                 key: ValueKey<int>(category.id),
@@ -54,7 +54,7 @@ class MealCategory extends GetView<MealController> {
                     boxShadow: selected ? context.appTileShadow : null,
                   ),
                   child: Text(
-                    category.name.trOrSelf,
+                    localizeCategory(category.name),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

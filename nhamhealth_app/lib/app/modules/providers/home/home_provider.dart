@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
@@ -36,11 +37,16 @@ class HomeProvider {
       );
     }
 
+    final lang = Get.locale?.languageCode ?? 'en';
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/moods').replace(
+      queryParameters: {'lang': lang},
+    );
     final response = await _client
         .get(
-          Uri.parse('${ApiConfig.baseUrl}/api/v1/moods'),
+          uri,
           headers: {
             'Accept': 'application/json',
+            'Accept-Language': lang,
             'Authorization': 'Bearer $token',
           },
         )

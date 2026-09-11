@@ -1,6 +1,8 @@
 import re
 from datetime import datetime, timezone
 
+from .nutrition_estimator import estimate_recipe_nutrition
+
 
 MAX_STEP_LENGTH = 255
 
@@ -72,6 +74,9 @@ def normalize_recipe(recipe: dict) -> dict:
                 }
             )
 
+    if recipe.get("calories") is None or recipe.get("proteinGrams") is None:
+        estimate_recipe_nutrition(recipe)
+
     return {
         "mealName": " ".join((recipe.get("mealName") or "").split()),
         "khmerName": recipe.get("khmerName"),
@@ -86,7 +91,7 @@ def normalize_recipe(recipe: dict) -> dict:
         "proteinGrams": recipe.get("proteinGrams"),
         "carbohydrateGrams": recipe.get("carbohydrateGrams"),
         "fatGrams": recipe.get("fatGrams"),
-        "nutritionBasis": recipe.get("nutritionBasis") or "UNKNOWN",
+        "nutritionBasis": recipe.get("nutritionBasis") or "PER_SERVING",
         "servings": recipe.get("servings"),
         "cookingTimeMinutes": recipe.get("cookingTimeMinutes"),
         "prepTimeMinutes": recipe.get("prepTimeMinutes"),

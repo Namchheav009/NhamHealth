@@ -7,11 +7,19 @@ class MealRepository {
 
   final MealProvider _provider;
 
-  Future<List<MealModel>> getMeals({String keyword = '', int categoryId = 0}) =>
-      _provider.getMeals(keyword: keyword, categoryId: categoryId);
+  Future<List<MealModel>> getMeals({
+    String keyword = '',
+    int categoryId = 0,
+    String? languageCode,
+  }) => _provider.getMeals(
+    keyword: keyword,
+    categoryId: categoryId,
+    languageCode: languageCode,
+  );
   Future<MealModel> getMealDetail(int mealId, {String languageCode = 'en'}) =>
       _provider.getMealDetail(mealId, languageCode: languageCode);
-  Future<List<MealCategoryModel>> getCategories() => _provider.getCategories();
+  Future<List<MealCategoryModel>> getCategories({String? languageCode}) =>
+      _provider.getCategories(languageCode: languageCode);
   Future<List<MealModel>> getPersonalizedMealIdeas({bool refresh = false}) =>
       _provider.getPersonalizedMealIdeas(refresh: refresh);
   Future<Set<int>> getFavoriteMealIds() => _provider.getFavoriteMealIds();

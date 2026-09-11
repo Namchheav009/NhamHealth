@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/recommended_meal_model.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class RecommendedMealCard extends StatelessWidget {
   const RecommendedMealCard({
@@ -103,7 +104,7 @@ class RecommendedMealCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            meal.name,
+                            localizeDishName(meal.name),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -124,7 +125,7 @@ class RecommendedMealCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              '${meal.calories} kcal',
+                              localizeCalories(meal.calories),
                               maxLines: 1,
                               style: TextStyle(
                                 color: context.appMutedText,

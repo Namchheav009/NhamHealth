@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/meals/meal_model.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class MealIdeaCard extends StatelessWidget {
   const MealIdeaCard({
@@ -19,7 +20,7 @@ class MealIdeaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 154,
+      height: 158,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(18),
@@ -37,7 +38,7 @@ class MealIdeaCard extends StatelessWidget {
               Expanded(
                 flex: 6,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                  padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -46,7 +47,7 @@ class MealIdeaCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              meal.name,
+                              localizeDishName(meal.name),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -76,10 +77,13 @@ class MealIdeaCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         meal.recommendationReason.isNotEmpty
-                            ? meal.recommendationReason
+                            ? localizeRecommendationReason(
+                              meal.recommendationReason,
+                            )
                             : [
-                              if (meal.difficulty.isNotEmpty) meal.difficulty,
-                              meal.category,
+                              if (meal.difficulty.isNotEmpty)
+                                localizeDifficulty(meal.difficulty),
+                              localizeCategory(meal.category),
                               'meals.healthy'.tr,
                             ].join('  •  '),
                         maxLines: 2,
@@ -98,7 +102,7 @@ class MealIdeaCard extends StatelessWidget {
                           _Metric(
                             icon: Icons.local_fire_department_rounded,
                             iconColor: AppColors.accentOrange,
-                            label: '${meal.calories} kcal',
+                            label: localizeCalories(meal.calories),
                           ),
                           if (meal.proteinGrams case final protein?)
                             if (protein > 0)
@@ -113,7 +117,7 @@ class MealIdeaCard extends StatelessWidget {
                             _Metric(
                               icon: Icons.schedule_rounded,
                               iconColor: context.appMutedText,
-                              label: '$minutes min',
+                              label: localizeCookingTime(minutes),
                             ),
                         ],
                       ),

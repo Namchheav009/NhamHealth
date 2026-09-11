@@ -8,6 +8,7 @@ import '../../../widgets/page_skeleton.dart';
 import '../../controllers/meals/food_detail_controller.dart';
 import '../../models/meals/meal_model.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class FoodDetailView extends GetView<FoodDetailController> {
   const FoodDetailView({super.key});
@@ -64,20 +65,15 @@ class FoodDetailView extends GetView<FoodDetailController> {
                   isFavorite: controller.isFavorite.value,
                   onFavorite: controller.toggleFavorite,
                 ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _LanguageSelector(
-                    selected: controller.languageCode.value,
-                    onSelected: controller.selectLanguage,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _Hero(meal: meal),
                 const SizedBox(height: 22),
                 _Introduction(meal: meal),
                 const SizedBox(height: 22),
-                _Nutrition(meal: meal),
+                _Nutrition(
+                  meal: meal,
+                  isLoading: !controller.isDetailLoaded.value,
+                ),
                 const SizedBox(height: 22),
                 _Stats(meal: meal),
                 const SizedBox(height: 24),
@@ -85,6 +81,7 @@ class FoodDetailView extends GetView<FoodDetailController> {
                   selected: controller.selectedContentTab.value,
                   ingredientCount: meal.ingredients.length,
                   stepCount: meal.steps.length,
+                  isLoading: !controller.isDetailLoaded.value,
                   onSelected: controller.selectContentTab,
                 ),
                 const SizedBox(height: 18),
@@ -104,39 +101,6 @@ class FoodDetailView extends GetView<FoodDetailController> {
       ),
     );
   }
-}
-
-class _LanguageSelector extends StatelessWidget {
-  const _LanguageSelector({required this.selected, required this.onSelected});
-  final String selected;
-  final ValueChanged<String> onSelected;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(3),
-    decoration: BoxDecoration(
-      color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: context.appBorder),
-    ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      _LanguageOption(label: 'EN', selected: selected == 'en', onTap: () => onSelected('en')),
-      _LanguageOption(label: 'ខ្មែរ', selected: selected == 'km', onTap: () => onSelected('km')),
-    ]),
-  );
-}
-
-class _LanguageOption extends StatelessWidget {
-  const _LanguageOption({required this.label, required this.selected, required this.onTap});
-  final String label; final bool selected; final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap, borderRadius: BorderRadius.circular(15),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-      decoration: BoxDecoration(color: selected ? context.appColorScheme.primary : Colors.transparent, borderRadius: BorderRadius.circular(15)),
-      child: Text(label, style: TextStyle(color: selected ? context.appColorScheme.onPrimary : context.appMutedText, fontSize: 12, fontWeight: FontWeight.w700)),
-    ),
-  );
 }
 
 class _Hero extends StatelessWidget {
@@ -259,7 +223,7 @@ class _Category extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          category,
+          localizeCategory(category),
           style: TextStyle(
             color: context.appColorScheme.primary,
             fontSize: 12,
@@ -297,7 +261,7 @@ class _Introduction extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        meal.name,
+        localizeDishName(meal.name),
         style: TextStyle(
           color: context.appText,
           fontSize: 27,
@@ -309,7 +273,7 @@ class _Introduction extends StatelessWidget {
       Text(
         meal.description.isEmpty
             ? 'meals.nourishing_choice'.tr
-            : meal.description,
+            : localizeMealDescription(meal.description),
         style: TextStyle(
           color: context.appMutedText,
           fontSize: 13,
@@ -321,8 +285,9 @@ class _Introduction extends StatelessWidget {
 }
 
 class _Nutrition extends StatelessWidget {
-  const _Nutrition({required this.meal});
+  const _Nutrition({required this.meal, this.isLoading = false});
   final MealModel meal;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +328,9 @@ class _Nutrition extends StatelessWidget {
         Expanded(
           child:
               nutrition.isEmpty
-                  ? const SizedBox(height: 58)
+                  ? (isLoading
+                      ? const _NutritionSkeleton()
+                      : const SizedBox(height: 58))
                   : Column(
                     children: nutrition
                         .map(
@@ -374,6 +341,30 @@ class _Nutrition extends StatelessWidget {
                   ),
         ),
       ],
+    );
+  }
+}
+
+class _NutritionSkeleton extends StatelessWidget {
+  const _NutritionSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        3,
+        (_) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Container(
+            height: 12,
+            decoration: BoxDecoration(
+              color: context.appBorder.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -389,9 +380,9 @@ class _NutritionRow extends StatelessWidget {
     child: Row(
       children: [
         SizedBox(
-          width: 68,
+          width: 80,
           child: Text(
-            item.name.toUpperCase(),
+            localizeNutrient(item.name).toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -452,10 +443,7 @@ class _Stats extends StatelessWidget {
         _Stat(
           icon: Icons.local_fire_department_outlined,
           label: 'common.difficulty',
-          value:
-              meal.difficulty.isEmpty
-                  ? 'meals.not_specified'.tr
-                  : meal.difficulty,
+          value: localizeDifficulty(meal.difficulty),
         ),
         const _StatDivider(),
         _Stat(
@@ -515,11 +503,13 @@ class _Tabs extends StatelessWidget {
     required this.selected,
     required this.ingredientCount,
     required this.stepCount,
+    this.isLoading = false,
     required this.onSelected,
   });
   final int selected;
   final int ingredientCount;
   final int stepCount;
+  final bool isLoading;
   final ValueChanged<int> onSelected;
 
   @override
@@ -535,12 +525,14 @@ class _Tabs extends StatelessWidget {
         _Tab(
           label: 'common.ingredients',
           count: ingredientCount,
+          isLoading: isLoading,
           selected: selected == 0,
           onTap: () => onSelected(0),
         ),
         _Tab(
           label: 'meals.how_to_make',
           count: stepCount,
+          isLoading: isLoading,
           selected: selected == 1,
           onTap: () => onSelected(1),
         ),
@@ -553,11 +545,13 @@ class _Tab extends StatelessWidget {
   const _Tab({
     required this.label,
     required this.count,
+    this.isLoading = false,
     required this.selected,
     required this.onTap,
   });
   final String label;
   final int count;
+  final bool isLoading;
   final bool selected;
   final VoidCallback onTap;
 
@@ -572,10 +566,12 @@ class _Tab extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            'meals.label_count'.trParams({
-              'label': label.trOrSelf,
-              'count': '$count',
-            }),
+            isLoading && count == 0
+                ? label.trOrSelf
+                : 'meals.label_count'.trParams({
+                    'label': label.trOrSelf,
+                    'count': '$count',
+                  }),
             textAlign: TextAlign.center,
             style: TextStyle(
               color:
@@ -655,7 +651,7 @@ class _IngredientRow extends StatelessWidget {
                 item.preparationNote.isEmpty
                     ? item.name
                     : '${item.name}, ${item.preparationNote}',
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: context.appText,
@@ -666,7 +662,7 @@ class _IngredientRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Container(
-              constraints: const BoxConstraints(minWidth: 54),
+              constraints: const BoxConstraints(minWidth: 54, maxWidth: 110),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               decoration: BoxDecoration(
                 color: context.appSoftGreen,
@@ -675,6 +671,8 @@ class _IngredientRow extends StatelessWidget {
               child: Text(
                 _ingredientAmount(item),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: context.appColorScheme.primary,
                   fontSize: 12,
@@ -883,11 +881,27 @@ List<MealNutritionModel> _keyNutrition(List<MealNutritionModel> source) {
   return selected;
 }
 
-String _ingredientAmount(MealIngredientModel item) =>
-    item.quantity == null
-        ? (item.description.isEmpty ? '—' : item.description)
-        : '${_format(item.quantity!)} ${item.unit}'.trim();
+String _ingredientAmount(MealIngredientModel item) {
+  if (item.quantity != null) {
+    final formattedQty = _format(item.quantity!);
+    final unit = item.unit.trim();
+    return unit.isEmpty ? formattedQty : '$formattedQty $unit';
+  }
+  final unit = item.unit.trim();
+  if (unit.isNotEmpty && unit.length <= 15 && !_isInternalScraperNote(unit)) {
+    return unit;
+  }
+  return '—';
+}
+
+bool _isInternalScraperNote(String text) {
+  final lower = text.toLowerCase();
+  return lower.contains('auto-created') ||
+      lower.contains('scraped') ||
+      lower.contains('source:');
+}
 String _format(num value) =>
     value.toDouble() == value.roundToDouble()
         ? value.toInt().toString()
         : value.toStringAsFixed(1);
+

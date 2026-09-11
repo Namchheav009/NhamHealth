@@ -26,6 +26,9 @@ class Settings:
     request_timeout_seconds: int = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "25"))
     max_image_bytes: int = int(os.getenv("MAX_IMAGE_BYTES", "5242880"))
     max_recipes: int = int(os.getenv("MAX_RECIPES", "5"))
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    gemini_base_url: str = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
 
 
 settings = Settings()

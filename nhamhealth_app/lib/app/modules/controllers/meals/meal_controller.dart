@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../routes/app_routes.dart';
@@ -13,9 +14,13 @@ import '../../models/meals/meal_model.dart';
 import '../../repositories/meals/meal_repository.dart';
 
 class MealController extends GetxController with WidgetsBindingObserver {
-  MealController({required this.repository});
+  MealController({
+    required this.repository,
+    AppLocaleService? localeService,
+  }) : _localeService = localeService;
 
   final MealRepository repository;
+  final AppLocaleService? _localeService;
   final selectedCategory = 0.obs;
   final currentSlide = 0.obs;
   final selectedBottomIndex = 1.obs;
@@ -35,9 +40,18 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   Timer? _slideTimer;
   Timer? _searchTimer;
+  Worker? _localeWorker;
   int _mealRequestVersion = 0;
   bool _refreshInProgress = false;
   Set<int> _favoriteMealIds = const <int>{};
+
+  AppLocaleService? get _effectiveLocaleService {
+    if (_localeService != null) return _localeService;
+    if (Get.isRegistered<AppLocaleService>()) {
+      return Get.find<AppLocaleService>();
+    }
+    return null;
+  }
 
   final categories = <MealCategoryModel>[MealCategoryModel.all].obs;
 
@@ -94,6 +108,14 @@ class MealController extends GetxController with WidgetsBindingObserver {
       searchQuery.value = query;
     }
     startSlideShow();
+    final localeService = _effectiveLocaleService;
+    if (localeService != null) {
+      _localeWorker = ever(localeService.currentLocale, (_) {
+        unawaited(_loadCategories());
+        loadMeals();
+        unawaited(loadPersonalizedIdeas(refresh: true));
+      });
+    }
     unawaited(_loadCategories());
     unawaited(_loadFavoriteMealIds());
     unawaited(loadPersonalizedIdeas());
@@ -164,9 +186,13 @@ class MealController extends GetxController with WidgetsBindingObserver {
       isLoading.value = true;
       errorMessage.value = null;
 
+      final lang = _effectiveLocaleService?.currentLanguageCode ??
+          Get.locale?.languageCode ??
+          'en';
       final loadedMeals = await repository.getMeals(
         keyword: searchQuery.value,
         categoryId: categoryId,
+        languageCode: lang,
       );
       if (requestVersion != _mealRequestVersion) return;
       for (final meal in loadedMeals) {
@@ -183,7 +209,10 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _loadCategories() async {
     try {
-      final loaded = await repository.getCategories();
+      final lang = _effectiveLocaleService?.currentLanguageCode ??
+          Get.locale?.languageCode ??
+          'en';
+      final loaded = await repository.getCategories(languageCode: lang);
       categories.assignAll([MealCategoryModel.all, ...loaded]);
       if (selectedCategory.value >= categories.length) {
         selectedCategory.value = 0;
@@ -398,6 +427,7 @@ class MealController extends GetxController with WidgetsBindingObserver {
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    _localeWorker?.dispose();
     _slideTimer?.cancel();
     _searchTimer?.cancel();
     slideController.dispose();

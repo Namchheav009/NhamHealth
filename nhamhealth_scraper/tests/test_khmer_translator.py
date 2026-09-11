@@ -8,12 +8,16 @@ from translators.culinary_glossary import (
     DISH_NAMES,
 )
 from translators.khmer_translator import KhmerTranslator
+from translators.translation_cache import translation_cache
 from translators.validator import validate_translation, contains_khmer
 
 
 class KhmerTranslatorTests(unittest.TestCase):
     def setUp(self):
         self.translator = KhmerTranslator()
+        # Ensure base tests test offline glossary & fallback by default
+        self.translator.gemini_api_key = ""
+        translation_cache._cache = {}
         self.sample_recipe = {
             "mealName": "Fish Amok",
             "description": "Traditional Cambodian steamed fish curry",
@@ -78,7 +82,7 @@ class KhmerTranslatorTests(unittest.TestCase):
         self.assertEqual(first_ing["quantity"], 300)
         self.assertEqual(first_ing["unit"], "g")
         self.assertEqual(first_ing["name"], "សាច់ទ្រូងមាន់")
-        self.assertEqual(first_ing["note"], "ហាន់ឲ្យម៉ត់")
+        self.assertEqual(first_ing["note"], PREPARATION_NOTES["chop finely"])
 
         second_ing = km["ingredients"][1]
         self.assertEqual(second_ing["quantity"], 2)
@@ -188,6 +192,100 @@ class KhmerTranslatorTests(unittest.TestCase):
             self.assertEqual(result["translationError"], "Network offline")
             self.assertIsNone(result["translations"]["km"])
             self.assertEqual(result["translations"]["en"]["mealName"], "Fish Amok")
+
+    def test_gemini_recipe_translation_success(self):
+        """Verify Gemini structured recipe translation parses and preserves quantities."""
+        self.translator.gemini_api_key = "fake-gemini-key"
+        gemini_mock_response = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "text": (
+                                    '{\n'
+                                    '  "mealName": "អាម៉ុកត្រី",\n'
+                                    '  "description": "ការីត្រីចំហុយបុរាណខ្មែរ",\n'
+                                    '  "category": "អាហារថ្ងៃត្រង់",\n'
+                                    '  "ingredients": [\n'
+                                    '    {"name": "សាច់ទ្រូងមាន់", "note": "ហាន់ឱ្យម៉ត់"},\n'
+                                    '    {"name": "ទឹកត្រី", "note": null}\n'
+                                    '  ],\n'
+                                    '  "steps": [\n'
+                                    '    "ច្របល់ត្រីជាមួយគ្រឿងការីឱ្យសព្វ។",\n'
+                                    '    "ចំហុយរយៈពេល ២០ នាទី។"\n'
+                                    '  ],\n'
+                                    '  "tags": ["ម្ហូបខ្មែរ"]\n'
+                                    '}'
+                                )
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.ok = True
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = gemini_mock_response
+
+        with patch.object(self.translator.session, "post", return_value=mock_resp):
+            result = self.translator.translate(dict(self.sample_recipe))
+
+        self.assertEqual(result["translationStatus"], "COMPLETED")
+        self.assertEqual(result["translations"]["km"]["mealName"], "អាម៉ុកត្រី")
+        self.assertEqual(result["translations"]["km"]["category"], "អាហារថ្ងៃត្រង់")
+        self.assertEqual(len(result["translations"]["km"]["ingredients"]), 2)
+        # Verify strict preservation of quantities and units
+        self.assertEqual(result["translations"]["km"]["ingredients"][0]["quantity"], 300)
+        self.assertEqual(result["translations"]["km"]["ingredients"][0]["unit"], "g")
+        self.assertEqual(result["translations"]["km"]["ingredients"][0]["name"], "សាច់ទ្រូងមាន់")
+        self.assertEqual(result["translations"]["km"]["ingredients"][1]["quantity"], 2)
+        self.assertEqual(result["translations"]["km"]["ingredients"][1]["unit"], "tbsp")
+
+    def test_gemini_fallback_on_error(self):
+        """Verify fallback to standard translation if Gemini returns an error."""
+        self.translator.gemini_api_key = "fake-gemini-key"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.ok = False
+        mock_resp.status_code = 429
+        mock_resp.text = "Quota exceeded"
+
+        fallback_result = {
+            "mealName": "អាម៉ុកត្រី",
+            "description": "ការីត្រី",
+            "category": "អាហារថ្ងៃត្រង់",
+            "ingredients": [
+                {"name": "សាច់ទ្រូងមាន់", "quantity": 300, "unit": "g", "note": "ហាន់ឱ្យម៉ត់"},
+                {"name": "ទឹកត្រី", "quantity": 2, "unit": "tbsp", "note": None},
+            ],
+            "steps": ["ចំហុយត្រី។", "ទទួលទាន។"],
+            "tags": [],
+        }
+
+        with patch.object(self.translator.session, "post", return_value=mock_resp):
+            with patch.object(self.translator, "_translate_to_khmer", return_value=fallback_result) as mock_fallback:
+                result = self.translator.translate(dict(self.sample_recipe))
+                mock_fallback.assert_called_once()
+                self.assertEqual(result["translationStatus"], "COMPLETED")
+                self.assertEqual(result["translations"]["km"]["mealName"], "អាម៉ុកត្រី")
+
+    def test_gemini_single_text_translation(self):
+        """Verify _translate_gemini_text translates individual phrases."""
+        self.translator.gemini_api_key = "fake-gemini-key"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.ok = True
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "candidates": [
+                {"content": {"parts": [{"text": "បុកល្ហុង"}]}}
+            ]
+        }
+
+        with patch.object(self.translator.session, "post", return_value=mock_resp):
+            res = self.translator._translate_gemini_text("green papaya salad")
+            self.assertEqual(res, "បុកល្ហុង")
 
 
 if __name__ == "__main__":

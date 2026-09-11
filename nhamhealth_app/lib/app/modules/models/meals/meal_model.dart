@@ -190,7 +190,7 @@ class MealIngredientModel {
     required String baseUrl,
   }) => MealIngredientModel(
     name: (json['name'] as String? ?? '').trim(),
-    description: (json['description'] as String? ?? '').trim(),
+    description: _cleanDescription((json['description'] as String? ?? '').trim()),
     image: MealModel._resolveImageUrl(
       (json['imageUrl'] as String? ?? '').trim(),
       baseUrl,
@@ -199,6 +199,15 @@ class MealIngredientModel {
     unit: (json['unit'] as String? ?? '').trim(),
     preparationNote: (json['preparationNote'] as String? ?? '').trim(),
   );
+
+  static String _cleanDescription(String text) {
+    final lower = text.toLowerCase();
+    if (lower.contains('auto-created') ||
+        lower.contains('scraped recipe source')) {
+      return '';
+    }
+    return text;
+  }
 
   String get detail {
     final value = quantity;

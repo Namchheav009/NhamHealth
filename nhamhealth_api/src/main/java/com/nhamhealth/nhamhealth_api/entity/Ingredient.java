@@ -38,6 +38,10 @@ public class Ingredient {
         return ingredientId;
     }
 
+    public void setIngredientId(Integer ingredientId) {
+        this.ingredientId = ingredientId;
+    }
+
     public String getIngredientName() {
         return ingredientName;
     }

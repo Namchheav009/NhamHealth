@@ -59,6 +59,9 @@
         if (!form.elements.moodName.value.trim()) {
             form.elements.moodName.value = preset.dataset.name || '';
         }
+        if (!form.elements.moodNameKm.value.trim() && preset.dataset.nameKm) {
+            form.elements.moodNameKm.value = preset.dataset.nameKm || '';
+        }
         updateEmojiPresetSelection();
         form.elements.moodName.focus();
     }
@@ -101,7 +104,8 @@
         const status = statusFilter?.value || 'all';
         let count = 0;
         rows().forEach((row) => {
-            const show = (!query || row.dataset.name.includes(query) || (row.dataset.emoji || '').includes(query))
+            const km = (row.dataset.nameKm || '').toLowerCase();
+            const show = (!query || row.dataset.name.includes(query) || km.includes(query) || (row.dataset.emoji || '').includes(query))
                 && (status === 'all' || row.dataset.status === status);
             row.hidden = !show;
             if (show) count += 1;
@@ -138,6 +142,7 @@
         Object.assign(row.dataset, {
             id: String(item.id),
             name: item.moodName.toLowerCase(),
+            nameKm: item.moodNameKm || '',
             emoji: item.emojiCode || '',
             status: active ? 'active' : 'inactive'
         });
@@ -148,9 +153,19 @@
         const avatar = document.createElement('span');
         avatar.className = 'mood-avatar';
         avatar.textContent = emojiFromCode(item.emojiCode, '\u2022');
+        const textContainer = document.createElement('div');
         const name = document.createElement('strong');
         name.textContent = item.moodName;
-        nameBox.append(avatar, name);
+        textContainer.appendChild(name);
+        if (item.moodNameKm) {
+            const km = document.createElement('small');
+            km.className = 'mood-name-km';
+            km.setAttribute('lang', 'km');
+            km.style.cssText = 'display:block;color:var(--text-muted,#6b7280);font-size:0.85rem;margin-top:2px;';
+            km.textContent = item.moodNameKm;
+            textContainer.appendChild(km);
+        }
+        nameBox.append(avatar, textContainer);
         nameCell.appendChild(nameBox);
 
         const emojiCell = document.createElement('td');
@@ -211,6 +226,7 @@
         if (editingId) {
             form.elements.moodId.value = editingId;
             form.elements.moodName.value = row.querySelector('.mood-name strong')?.textContent.trim() || '';
+            form.elements.moodNameKm.value = row.dataset.nameKm || row.querySelector('.mood-name-km')?.textContent.trim() || '';
             form.elements.emojiCode.value = row.dataset.emoji || '';
             form.elements.status.value = row.dataset.status || 'active';
             byId('moodModalTitle').textContent = 'Edit mood';
@@ -249,6 +265,7 @@
         const data = new FormData(form);
         const payload = {
             moodName: data.get('moodName').trim(),
+            moodNameKm: data.get('moodNameKm')?.trim() || null,
             emojiCode: data.get('emojiCode').trim(),
             active: data.get('status') === 'active'
         };

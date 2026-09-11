@@ -11,16 +11,23 @@ import jakarta.persistence.EntityManager;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminIngredientDto;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
+import com.nhamhealth.nhamhealth_api.entity.IngredientTranslation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.IngredientTranslationRepository;
 
 @Service
 public class IngredientAdminService {
 
     private final IngredientRepository ingredientRepository;
+    private final IngredientTranslationRepository ingredientTranslationRepository;
     private final EntityManager entityManager;
 
-    public IngredientAdminService(IngredientRepository ingredientRepository, EntityManager entityManager) {
+    public IngredientAdminService(
+            IngredientRepository ingredientRepository,
+            IngredientTranslationRepository ingredientTranslationRepository,
+            EntityManager entityManager) {
         this.ingredientRepository = ingredientRepository;
+        this.ingredientTranslationRepository = ingredientTranslationRepository;
         this.entityManager = entityManager;
     }
 
@@ -32,7 +39,25 @@ public class IngredientAdminService {
         }
         Ingredient ingredient = new Ingredient();
         apply(ingredient, request);
-        return toDto(ingredientRepository.save(ingredient));
+        Ingredient saved = ingredientRepository.save(ingredient);
+
+        IngredientTranslation en = new IngredientTranslation();
+        en.setIngredient(saved);
+        en.setLanguageCode("en");
+        en.setName(saved.getIngredientName());
+        en.setDescription(saved.getDescription());
+        ingredientTranslationRepository.save(en);
+
+        if (request.ingredientNameKm() != null && !request.ingredientNameKm().isBlank()) {
+            IngredientTranslation km = new IngredientTranslation();
+            km.setIngredient(saved);
+            km.setLanguageCode("km");
+            km.setName(request.ingredientNameKm().trim());
+            km.setDescription(blankToNull(request.descriptionKm()));
+            ingredientTranslationRepository.save(km);
+        }
+
+        return toDto(saved);
     }
 
     @Transactional
@@ -43,7 +68,36 @@ public class IngredientAdminService {
                 .filter(existing -> !existing.getIngredientId().equals(ingredientId))
                 .ifPresent(existing -> { throw new IllegalArgumentException("An ingredient with this name already exists"); });
         apply(ingredient, request);
-        return toDto(ingredientRepository.save(ingredient));
+        Ingredient saved = ingredientRepository.save(ingredient);
+
+        IngredientTranslation en = ingredientTranslationRepository
+                .findByIngredientIngredientIdAndLanguageCode(ingredientId, "en")
+                .orElseGet(() -> {
+                    IngredientTranslation t = new IngredientTranslation();
+                    t.setIngredient(saved);
+                    t.setLanguageCode("en");
+                    return t;
+                });
+        en.setName(saved.getIngredientName());
+        en.setDescription(saved.getDescription());
+        ingredientTranslationRepository.save(en);
+
+        var kmOpt = ingredientTranslationRepository.findByIngredientIngredientIdAndLanguageCode(ingredientId, "km");
+        if (request.ingredientNameKm() != null && !request.ingredientNameKm().isBlank()) {
+            IngredientTranslation km = kmOpt.orElseGet(() -> {
+                IngredientTranslation t = new IngredientTranslation();
+                t.setIngredient(saved);
+                t.setLanguageCode("km");
+                return t;
+            });
+            km.setName(request.ingredientNameKm().trim());
+            km.setDescription(blankToNull(request.descriptionKm()));
+            ingredientTranslationRepository.save(km);
+        } else {
+            kmOpt.ifPresent(ingredientTranslationRepository::delete);
+        }
+
+        return toDto(saved);
     }
 
     @Transactional
@@ -56,6 +110,10 @@ public class IngredientAdminService {
         if (mealReferences.longValue() > 0) {
             throw new IllegalArgumentException("This ingredient is used by meals and cannot be deleted");
         }
+        ingredientTranslationRepository.findByIngredientIngredientIdAndLanguageCode(ingredientId, "en")
+                .ifPresent(ingredientTranslationRepository::delete);
+        ingredientTranslationRepository.findByIngredientIngredientIdAndLanguageCode(ingredientId, "km")
+                .ifPresent(ingredientTranslationRepository::delete);
         ingredientRepository.delete(ingredient);
     }
 
@@ -98,8 +156,17 @@ public class IngredientAdminService {
     }
 
     private AdminIngredientDto toDto(Ingredient ingredient) {
+        IngredientTranslation km = ingredientTranslationRepository
+                .findByIngredientIngredientIdAndLanguageCode(ingredient.getIngredientId(), "km")
+                .orElse(null);
         return new AdminIngredientDto(
-                ingredient.getIngredientId(), ingredient.getIngredientName(), ingredient.getIngredientType(),
-                ingredient.getDefaultUnit(), ingredient.getDescription(), ingredient.getImageUrl());
+                ingredient.getIngredientId(),
+                ingredient.getIngredientName(),
+                km == null ? null : km.getName(),
+                ingredient.getIngredientType(),
+                ingredient.getDefaultUnit(),
+                ingredient.getDescription(),
+                km == null ? null : km.getDescription(),
+                ingredient.getImageUrl());
     }
 }

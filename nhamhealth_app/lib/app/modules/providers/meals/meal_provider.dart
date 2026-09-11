@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
@@ -18,10 +19,13 @@ class MealProvider {
   Future<List<MealModel>> getMeals({
     String keyword = '',
     int categoryId = 0,
+    String? languageCode,
   }) async {
     final query = <String, String>{};
     if (keyword.trim().isNotEmpty) query['keyword'] = keyword.trim();
     if (categoryId != 0) query['categoryId'] = '$categoryId';
+    final lang = languageCode ?? Get.locale?.languageCode ?? 'en';
+    query['lang'] = lang;
     final uri = Uri.parse(
       '${ApiConfig.baseUrl}/api/v1/meals',
     ).replace(queryParameters: query);
@@ -41,10 +45,11 @@ class MealProvider {
     }
   }
 
-  Future<List<MealCategoryModel>> getCategories() async {
-    final payload = await _getList(
-      Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories'),
-    );
+  Future<List<MealCategoryModel>> getCategories({String? languageCode}) async {
+    final lang = languageCode ?? Get.locale?.languageCode ?? 'en';
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-categories')
+        .replace(queryParameters: {'lang': lang});
+    final payload = await _getList(uri);
     return payload.map(MealCategoryModel.fromJson).toList(growable: false);
   }
 

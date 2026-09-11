@@ -164,10 +164,16 @@ def main():
                 if recipe.get("translationStatus") == "COMPLETED"
                 else f"FAILED ({recipe.get('translationError')})"
             )
+            cal = recipe.get("calories")
+            pro = recipe.get("proteinGrams")
+            carb = recipe.get("carbohydrateGrams")
+            fat = recipe.get("fatGrams")
+            nutr_str = f"{cal} kcal · {pro}g protein · {carb}g carbs · {fat}g fat (per serving)"
             print(f"\n{recipe.get('mealName')}")
             print("- Scrape: OK")
             print(f"- Ingredients: {len(recipe.get('ingredients') or [])}")
             print(f"- Steps: {len(recipe.get('steps') or [])}")
+            print(f"- Nutrition: {nutr_str}")
             print("- English: OK")
             print(f"- Khmer translation: {trans_status}")
             print(f"- Image: {image_status}")

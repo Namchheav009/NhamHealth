@@ -1,8 +1,16 @@
+import 'package:get/get.dart';
+
 class MoodModel {
-  const MoodModel({required this.id, required this.name, required this.emoji});
+  const MoodModel({
+    required this.id,
+    required this.name,
+    this.nameKm,
+    required this.emoji,
+  });
 
   final int id;
   final String name;
+  final String? nameKm;
   final String emoji;
 
   static String _emojiFromCode(String value) {
@@ -40,9 +48,15 @@ class MoodModel {
       throw const FormatException('Mood data is incomplete.');
     }
 
+    final rawNameKm = json['moodNameKm'] as String?;
+    final nameKm = rawNameKm != null && rawNameKm.trim().isNotEmpty ? rawNameKm.trim() : null;
+    final isKm = Get.locale?.languageCode == 'km';
+    final resolvedName = (isKm && nameKm != null) ? nameKm : name.trim();
+
     return MoodModel(
       id: id.toInt(),
-      name: name.trim(),
+      name: resolvedName,
+      nameKm: nameKm,
       emoji: _emojiFromCode(json['emojiCode'] as String? ?? ''),
     );
   }

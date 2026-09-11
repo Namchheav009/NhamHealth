@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/meals/meal_model.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class MealCard extends StatelessWidget {
   final MealModel meal;
@@ -56,7 +57,7 @@ class MealCard extends StatelessWidget {
                     Positioned(
                       left: 12,
                       top: 12,
-                      child: _MealBadge(label: meal.category),
+                      child: _MealBadge(label: localizeCategory(meal.category)),
                     ),
                     Positioned(
                       right: 12,
@@ -80,7 +81,7 @@ class MealCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              '${meal.calories} kcal',
+                              localizeCalories(meal.calories),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -125,7 +126,7 @@ class MealCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        meal.name,
+                        localizeDishName(meal.name),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -138,12 +139,13 @@ class MealCard extends StatelessWidget {
                       // const SizedBox(height: 8),
                       const Spacer(),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _MealTag(label: meal.category),
+                          Flexible(
+                            child: _MealTag(label: localizeCategory(meal.category)),
+                          ),
                           if (meal.cookingTimeMinutes case final minutes?) ...[
                             const SizedBox(width: 6),
-                            _MealTag(label: '$minutes min'),
+                            _MealTag(label: localizeCookingTime(minutes)),
                           ],
                         ],
                       ),

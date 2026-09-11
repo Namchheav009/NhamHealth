@@ -166,6 +166,7 @@ public class ScrapedMealImportService {
                 false, imageUrl, resolved, orderedSteps.stream().map(s -> new AdminRecipeStepRequest(s.instruction(), s.instructionKm())).toList()));
         Meal meal = meals.findById(saved.mealId()).orElseThrow();
         meal.setProteinGramsCached(perServing(request.proteinGrams(), request));
+        meals.save(meal);
         for (var entry : amounts.entrySet()) {
             MealNutrition row = new MealNutrition();
             row.setMeal(meal);
@@ -187,7 +188,7 @@ public class ScrapedMealImportService {
         ingredient.setIngredientName(name);
         ingredient.setIngredientType("SCRAPED_PENDING_REVIEW");
         ingredient.setDefaultUnit(unit == null || unit.isBlank() ? null : unit.trim());
-        ingredient.setDescription("Auto-created from reviewed scraped recipe source: " + sourceName.trim());
+        ingredient.setDescription(null);
         Ingredient saved = ingredients.save(ingredient);
         warnings.add("Created ingredient catalog entry pending review: " + name);
         return saved;
@@ -249,10 +250,12 @@ public class ScrapedMealImportService {
     }
 
     static BigDecimal perServing(BigDecimal value, ScrapedMealImportRequest request) {
-        if (value == null) return null;
-        return switch (request.nutritionBasis()) {
+        if (value == null || request.nutritionBasis() == null) return null;
+        return switch (request.nutritionBasis().toUpperCase(Locale.ROOT)) {
             case "PER_SERVING" -> value;
-            case "WHOLE_RECIPE" -> value.divide(BigDecimal.valueOf(request.servings()), 4, RoundingMode.HALF_UP);
+            case "WHOLE_RECIPE" -> (request.servings() != null && request.servings() > 0)
+                    ? value.divide(BigDecimal.valueOf(request.servings()), 4, RoundingMode.HALF_UP)
+                    : value;
             default -> null;
         };
     }

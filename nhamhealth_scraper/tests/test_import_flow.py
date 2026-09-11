@@ -80,9 +80,20 @@ class ImportFlowTests(unittest.TestCase):
             self.assertEqual("image/webp", files["image"][2])
             self.assertTrue(files["image"][1].closed)
 
-    def test_missing_calories_and_protein_are_errors(self):
+    def test_missing_calories_and_protein_are_auto_estimated(self):
         self.recipe["calories"] = None
         self.recipe["proteinGrams"] = None
+        errors, warnings = validate_recipe(self.recipe)
+        self.assertFalse(any("calories" in error for error in errors))
+        self.assertFalse(any("proteinGrams" in error for error in errors))
+        self.assertIsNotNone(self.recipe["calories"])
+        self.assertGreater(self.recipe["calories"], 0)
+        self.assertIsNotNone(self.recipe["proteinGrams"])
+        self.assertGreater(self.recipe["proteinGrams"], 0)
+
+    def test_negative_calories_and_protein_are_errors(self):
+        self.recipe["calories"] = -10
+        self.recipe["proteinGrams"] = -5
         errors, _ = validate_recipe(self.recipe)
         self.assertTrue(any("calories" in error for error in errors))
         self.assertTrue(any("proteinGrams" in error for error in errors))

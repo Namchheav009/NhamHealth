@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup, Tag
 
 from .config import HEADERS, settings
 from .ingredient_parser import parse_ingredient_line
+from .nutrition_estimator import estimate_recipe_nutrition
 
 
 KHMER_RE = re.compile(r"[\u1780-\u17FF]")
@@ -381,5 +382,8 @@ def scrape_recipe(url: str) -> dict:
         for key, value in fallback.items():
             if recipe.get(key) in (None, "", [], "UNKNOWN"):
                 recipe[key] = value
+
+    if recipe.get("calories") is None or recipe.get("proteinGrams") is None:
+        estimate_recipe_nutrition(recipe)
 
     return recipe

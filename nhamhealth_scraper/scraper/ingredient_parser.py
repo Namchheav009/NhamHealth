@@ -39,6 +39,8 @@ UNIT_ALIASES = {
     "leaves": "leaf",
     "egg": "piece",
     "eggs": "piece",
+    "bunch": "bunch",
+    "bunches": "bunch",
 }
 
 UNIT_PATTERN = "|".join(

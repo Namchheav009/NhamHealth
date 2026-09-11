@@ -48,5 +48,19 @@ void main() {
       expect(codedMood.emoji, '\u{1F642}');
       expect(emptyMood.emoji, isEmpty);
     });
+
+    test('parses moodNameKm and preserves English name by default', () {
+      final mood = MoodModel.fromJson({
+        'id': 6,
+        'moodName': 'Happy',
+        'moodNameKm': 'សប្បាយរីករាយ',
+        'emojiCode': '1F604',
+      });
+
+      expect(mood.id, 6);
+      expect(mood.name, 'Happy');
+      expect(mood.nameKm, 'សប្បាយរីករាយ');
+      expect(mood.emoji, '\u{1F604}');
+    });
   });
 }

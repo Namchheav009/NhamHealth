@@ -4,6 +4,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 from PIL import Image
 
+from .nutrition_estimator import estimate_recipe_nutrition
+
 
 def validate_recipe(recipe: dict, *, require_image: bool = True) -> tuple[list[str], list[str]]:
     """Returns (errors, warnings) using limits Codex found in your backend."""
@@ -62,14 +64,7 @@ def validate_recipe(recipe: dict, *, require_image: bool = True) -> tuple[list[s
         errors.append("Difficulty must be EASY, MEDIUM, HARD or NOT_SPECIFIED.")
     if recipe.get("nutritionBasis") not in {"UNKNOWN", "PER_SERVING", "PER_100G", "WHOLE_RECIPE"}:
         errors.append("Unknown nutrition basis.")
-    for field in ("calories", "proteinGrams"):
-        value = recipe.get(field)
-        if value is None:
-            errors.append(f"{field} is required and must be provided.")
-        elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-            errors.append(f"{field} must be a non-negative number.")
-
-    for field in ("carbohydrateGrams", "fatGrams"):
+    for field in ("calories", "proteinGrams", "carbohydrateGrams", "fatGrams"):
         value = recipe.get(field)
         if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))
                                   or not math.isfinite(value) or value < 0):
@@ -115,10 +110,13 @@ def validate_recipe(recipe: dict, *, require_image: bool = True) -> tuple[list[s
                 f"Step {step.get('stepNumber')} is longer than 255 characters."
             )
 
+    if (recipe.get("calories") is None or recipe.get("proteinGrams") is None) and recipe.get("ingredients"):
+        estimate_recipe_nutrition(recipe)
+
     if recipe.get("calories") is None:
-        warnings.append(
-            "Calories are missing. Leave them unknown; do not change them to 0."
-        )
+        errors.append("calories is required and must be provided.")
+    if recipe.get("proteinGrams") is None:
+        errors.append("proteinGrams is required and must be provided.")
 
     if not recipe.get("categoryName"):
         errors.append(

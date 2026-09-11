@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../controllers/meals/meal_controller.dart';
 import '../../providers/meals/meal_provider.dart';
@@ -15,7 +16,13 @@ class MealBinding extends Bindings {
       () => MealRepository(provider: Get.find<MealProvider>()),
     );
     Get.lazyPut<MealController>(
-      () => MealController(repository: Get.find<MealRepository>()),
+      () => MealController(
+        repository: Get.find<MealRepository>(),
+        localeService:
+            Get.isRegistered<AppLocaleService>()
+                ? Get.find<AppLocaleService>()
+                : null,
+      ),
     );
   }
 }

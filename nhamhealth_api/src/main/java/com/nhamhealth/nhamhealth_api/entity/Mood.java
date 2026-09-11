@@ -39,6 +39,10 @@ public class Mood {
         return moodId;
     }
 
+    public void setMoodId(Integer moodId) {
+        this.moodId = moodId;
+    }
+
     public String getMoodName() {
         return moodName;
     }

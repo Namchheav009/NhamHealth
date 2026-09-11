@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../controllers/meals/food_detail_controller.dart';
+import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../providers/meals/meal_provider.dart';
 import '../../repositories/meals/meal_repository.dart';
@@ -19,7 +20,13 @@ class FoodDetailBinding extends Bindings {
       );
     }
     Get.lazyPut<FoodDetailController>(
-      () => FoodDetailController(repository: Get.find<MealRepository>()),
+      () => FoodDetailController(
+        repository: Get.find<MealRepository>(),
+        localeService:
+            Get.isRegistered<AppLocaleService>()
+                ? Get.find<AppLocaleService>()
+                : null,
+      ),
     );
   }
 }

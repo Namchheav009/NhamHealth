@@ -159,13 +159,19 @@ class ScrapedMealImportServiceTests {
         assertThrows(IllegalArgumentException.class, () -> ScrapedMealImportService.canonicalSourceUrl("file:///tmp/recipe"));
     }
 
-    @Test void missingCaloriesFailsValidation() {
-        String invalid = PAYLOAD.replace("\"calories\":500,", "");
+    @Test void missingCaloriesAndProteinSucceedsValidation() {
+        String withoutNutrition = PAYLOAD.replace("\"calories\":500,", "").replace("\"proteinGrams\":25,", "");
+        var result = service.importMeal(withoutNutrition, photo);
+        assertNotNull(result.get("mealId"));
+    }
+
+    @Test void negativeCaloriesFailsValidation() {
+        String invalid = PAYLOAD.replace("\"calories\":500,", "\"calories\":-10,");
         assertThrows(IllegalArgumentException.class, () -> service.importMeal(invalid, photo));
     }
 
-    @Test void missingProteinFailsValidation() {
-        String invalid = PAYLOAD.replace("\"proteinGrams\":25,", "");
+    @Test void negativeProteinFailsValidation() {
+        String invalid = PAYLOAD.replace("\"proteinGrams\":25,", "\"proteinGrams\":-5,");
         assertThrows(IllegalArgumentException.class, () -> service.importMeal(invalid, photo));
     }
 }

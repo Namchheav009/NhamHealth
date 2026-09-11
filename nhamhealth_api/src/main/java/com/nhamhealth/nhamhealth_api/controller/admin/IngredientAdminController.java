@@ -22,7 +22,12 @@ import jakarta.validation.Valid;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AdminIngredientDto;
 import com.nhamhealth.nhamhealth_api.entity.Ingredient;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import com.nhamhealth.nhamhealth_api.entity.IngredientTranslation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.IngredientTranslationRepository;
 import com.nhamhealth.nhamhealth_api.service.catalog.IngredientAdminService;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
@@ -32,24 +37,32 @@ public class IngredientAdminController {
     private final IngredientRepository ingredientRepository;
     private final IngredientAdminService ingredientAdminService;
     private final ProfileImageStorageService profileImageStorageService;
+    private final IngredientTranslationRepository ingredientTranslationRepository;
 
     public IngredientAdminController(
             IngredientRepository ingredientRepository,
             IngredientAdminService ingredientAdminService,
-            ProfileImageStorageService profileImageStorageService) {
+            ProfileImageStorageService profileImageStorageService,
+            IngredientTranslationRepository ingredientTranslationRepository) {
         this.ingredientRepository = ingredientRepository;
         this.ingredientAdminService = ingredientAdminService;
         this.profileImageStorageService = profileImageStorageService;
+        this.ingredientTranslationRepository = ingredientTranslationRepository;
     }
 
     @GetMapping("/admin/ingredients")
     public String ingredients(Authentication authentication, Model model) {
         List<Ingredient> ingredients = ingredientRepository.findAllByOrderByIngredientNameAsc();
+        Map<Integer, IngredientTranslation> kmTranslations = ingredientTranslationRepository
+                .findByLanguageCode("km")
+                .stream()
+                .collect(Collectors.toMap(t -> t.getIngredient().getIngredientId(), Function.identity(), (a, b) -> a));
 
         model.addAttribute("pageTitle", "Ingredients");
         model.addAttribute("activePage", "ingredients");
         model.addAttribute("adminName", authentication.getName());
         model.addAttribute("ingredients", ingredients);
+        model.addAttribute("kmTranslations", kmTranslations);
         model.addAttribute("totalIngredients", ingredientRepository.count());
         return "admin/ingredients";
     }

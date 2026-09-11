@@ -72,12 +72,15 @@
                         </tr>
                         </thead>
                         <tbody id="ingredientRows">
-                        <tr th:each="ingredient, iter : ${ingredients}" th:data-id="${ingredient.ingredientId}" th:data-name="${ingredient.ingredientName}" th:data-type="${ingredient.ingredientType}" th:data-unit="${ingredient.defaultUnit}" th:data-description="${ingredient.description}" th:data-image-url="${ingredient.imageUrl}">
+                        <tr th:each="ingredient, iter : ${ingredients}" th:data-id="${ingredient.ingredientId}" th:data-name="${ingredient.ingredientName}" th:data-name-km="${kmTranslations[ingredient.ingredientId] != null ? kmTranslations[ingredient.ingredientId].name : ''}" th:data-type="${ingredient.ingredientType}" th:data-unit="${ingredient.defaultUnit}" th:data-description="${ingredient.description}" th:data-description-km="${kmTranslations[ingredient.ingredientId] != null ? kmTranslations[ingredient.ingredientId].description : ''}" th:data-image-url="${ingredient.imageUrl}">
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="ingredient-name">
                                     <span class="ingredient-icon"><img th:if="${ingredient.imageUrl != null}" th:src="${ingredient.imageUrl}" th:alt="${ingredient.ingredientName}"><i th:unless="${ingredient.imageUrl != null}" class="bi bi-flower1"></i></span>
-                                    <span th:text="${ingredient.ingredientName}">Spinach</span>
+                                    <div>
+                                        <span th:text="${ingredient.ingredientName}">Spinach</span>
+                                        <small class="ingredient-name-km" th:if="${kmTranslations[ingredient.ingredientId] != null and kmTranslations[ingredient.ingredientId].name != null and !kmTranslations[ingredient.ingredientId].name.isBlank()}" th:text="${kmTranslations[ingredient.ingredientId].name}" lang="km" style="display:block;color:var(--text-muted,#6b7280);font-size:0.85rem;margin-top:2px;">ស្ពៃពួយឡេង</small>
+                                    </div>
                                 </div>
                             </td>
                             <td>
@@ -124,8 +127,12 @@
         <form id="ingredientForm">
             <div class="modal-body">
                 <div class="field">
-                    <label for="ingredientName">Ingredient name</label>
+                    <label for="ingredientName">Ingredient name (English)</label>
                     <input id="ingredientName" name="ingredientName" type="text" maxlength="100" required>
+                </div>
+                <div class="field">
+                    <label for="ingredientNameKm">Ingredient name (ខ្មែរ)</label>
+                    <input id="ingredientNameKm" name="ingredientNameKm" type="text" maxlength="100" lang="km" placeholder="ឈ្មោះគ្រឿងផ្សំជាភាសាខ្មែរ">
                 </div>
                 <div class="field">
                     <label for="ingredientType">Type</label>
@@ -136,14 +143,18 @@
                     <label for="defaultUnit">Default unit</label>
                     <input id="defaultUnit" name="defaultUnit" type="text" maxlength="30" placeholder="Example: g, cup, tbsp">
                 </div>
-                <div class="field">
+                <div class="field full">
                     <label for="ingredientImageFile">Ingredient image</label>
                     <input id="ingredientImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp">
                     <span class="field-help" id="ingredientImageHelp">Optional. JPG, PNG, or WebP; maximum 5 MB.</span>
                 </div>
                 <div class="field full">
-                    <label for="ingredientDescription">Description</label>
+                    <label for="ingredientDescription">Description (English)</label>
                     <textarea id="ingredientDescription" name="description" maxlength="255" placeholder="Ingredient description..."></textarea>
+                </div>
+                <div class="field full">
+                    <label for="ingredientDescriptionKm">Description (ខ្មែរ)</label>
+                    <textarea id="ingredientDescriptionKm" name="descriptionKm" maxlength="1000" lang="km" placeholder="ការពិពណ៌នាគ្រឿងផ្សំជាភាសាខ្មែរ..."></textarea>
                 </div>
             </div>
             <div class="modal-actions">
