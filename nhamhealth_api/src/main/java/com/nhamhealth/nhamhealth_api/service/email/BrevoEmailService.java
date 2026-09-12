@@ -9,52 +9,53 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 /**
- * Service for sending transactional emails via the Brevo (Sendinblue) HTTP API v3.
+ * Service for sending transactional emails via the Brevo (Sendinblue) HTTP API
+ * v3.
  */
 @Service
 public class BrevoEmailService {
 
-    private final RestClient restClient;
-    private final String apiKey;
-    private final String senderEmail;
-    private final String senderName;
+        private final RestClient restClient;
+        private final String apiKey;
+        private final String senderEmail;
+        private final String senderName;
 
-    public BrevoEmailService(
-            @Value("${BREVO_API_KEY:}") String apiKey,
-            @Value("${BREVO_SENDER_EMAIL:}") String senderEmail,
-            @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName) {
+        public BrevoEmailService(
+                        @Value("${BREVO_API_KEY:}") String apiKey,
+                        @Value("${BREVO_SENDER_EMAIL:}") String senderEmail,
+                        @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName) {
 
-        this.apiKey = apiKey;
-        this.senderEmail = senderEmail;
-        this.senderName = senderName;
+                this.apiKey = apiKey;
+                this.senderEmail = senderEmail;
+                this.senderName = senderName;
 
-        this.restClient = RestClient.builder()
-                .baseUrl("https://api.brevo.com/v3")
-                .build();
-    }
+                this.restClient = RestClient.builder()
+                                .baseUrl("https://api.brevo.com/v3")
+                                .build();
+        }
 
-    public void sendEmail(
-            String to,
-            String subject,
-            String plainText,
-            String htmlContent) {
+        public void sendEmail(
+                        String to,
+                        String subject,
+                        String plainText,
+                        String htmlContent) {
 
-        Map<String, Object> payload = Map.of(
-                "sender", Map.of(
-                        "name", senderName,
-                        "email", senderEmail),
-                "to", List.of(
-                        Map.of("email", to)),
-                "subject", subject,
-                "textContent", plainText,
-                "htmlContent", htmlContent);
+                Map<String, Object> payload = Map.of(
+                                "sender", Map.of(
+                                                "name", senderName,
+                                                "email", senderEmail),
+                                "to", List.of(
+                                                Map.of("email", to)),
+                                "subject", subject,
+                                "textContent", plainText,
+                                "htmlContent", htmlContent);
 
-        restClient.post()
-                .uri("/smtp/email")
-                .header("api-key", apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity();
-    }
+                restClient.post()
+                                .uri("/smtp/email")
+                                .header("api-key", apiKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(payload)
+                                .retrieve()
+                                .toBodilessEntity();
+        }
 }

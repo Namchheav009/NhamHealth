@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
-import '../../../theme/app_colors.dart';
-
 import '../../controllers/profile/help_support_controller.dart';
-import '../../../theme/app_spacing.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class HelpSupportView extends GetView<HelpSupportController> {
   const HelpSupportView({super.key});
@@ -40,17 +40,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
                       const SizedBox(height: 26),
 
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15),
-                        child: Text(
-                          'profile.contact_support'.tr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.appText,
-                          ),
-                        ),
-                      ),
+                      _buildSectionHeader(context, 'profile.contact_support'),
 
                       const SizedBox(height: 12),
 
@@ -58,16 +48,9 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
                       const SizedBox(height: 26),
 
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15),
-                        child: Text(
-                          'profile.frequently_asked_questions'.tr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.appText,
-                          ),
-                        ),
+                      _buildSectionHeader(
+                        context,
+                        'profile.frequently_asked_questions',
                       ),
 
                       const SizedBox(height: 14),
@@ -81,6 +64,31 @@ class HelpSupportView extends GetView<HelpSupportController> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Row(
+      children: [
+        Container(
+          width: 3.5,
+          height: 16,
+          decoration: BoxDecoration(
+            color: green,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title.tr,
+          style: TextStyle(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: context.appText,
+          ),
+        ),
+      ],
     );
   }
 
@@ -119,7 +127,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
           ),
 
           Padding(
-            padding: const EdgeInsets.only(left: 64),
+            padding: const EdgeInsets.only(left: 70),
             child: Divider(height: 1, thickness: 0.7, color: context.appBorder),
           ),
 
@@ -168,30 +176,52 @@ class _SupportHero extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     key: const ValueKey<String>('help-support-hero'),
     width: double.infinity,
-    padding: const EdgeInsets.all(18),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     decoration: BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [context.appSoftGreen, context.appSurfaceLow],
+        colors: [
+          context.appSoftGreen.withValues(alpha: 0.88),
+          context.appSurfaceLow,
+        ],
       ),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: context.appBorder),
+      border: Border.all(
+        color: HelpSupportView.green.withValues(alpha: 0.22),
+        width: 1.2,
+      ),
       boxShadow: context.appTileShadow,
     ),
     child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: context.appSelectedSurface,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.support_agent_rounded,
-            color: context.appColorScheme.primary,
-            size: 27,
+        SizedBox(
+          width: 76,
+          height: 76,
+          child: Lottie.asset(
+            'assets/animations/Customer Support.json',
+            fit: BoxFit.contain,
+            repeat: true,
+            animate:
+                !Get.testMode &&
+                !WidgetsBinding.instance.runtimeType.toString().contains(
+                  'Test',
+                ),
+            errorBuilder:
+                (context, error, stackTrace) => Container(
+                  width: 76,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_rounded,
+                    color: HelpSupportView.green,
+                    size: 36,
+                  ),
+                ),
           ),
         ),
         const SizedBox(width: 14),
@@ -203,17 +233,19 @@ class _SupportHero extends StatelessWidget {
                 'profile.how_can_we_help'.tr,
                 style: TextStyle(
                   color: context.appText,
-                  fontSize: 17,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 'profile.contact_us_or_find_quick_answers_below'.tr,
                 style: TextStyle(
                   color: context.appMutedText,
-                  fontSize: 12.5,
-                  height: 1.4,
+                  fontSize: 13,
+                  height: 1.35,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -247,60 +279,57 @@ class _ContactItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          height: 62,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            child: Row(
-              children: [
-                Container(
-                  width: 39,
-                  height: 39,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: context.appSoftGreen,
-                  ),
-                  child: Icon(icon, size: 21, color: HelpSupportView.green),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.appSoftGreen,
                 ),
+                child: Icon(icon, size: 21, color: HelpSupportView.green),
+              ),
 
-                const SizedBox(width: 13),
+              const SizedBox(width: 14),
 
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title.trOrSelf,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1,
-                          fontWeight: FontWeight.w600,
-                          color: context.appText,
-                        ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title.trOrSelf,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
+                        color: context.appText,
                       ),
+                    ),
 
-                      const SizedBox(height: 6),
+                    const SizedBox(height: 4),
 
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1,
-                          color: context.appMutedText,
-                        ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: context.appMutedText,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: context.appMutedText,
-                  size: 21,
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.appMutedText,
+                size: 22,
+              ),
+            ],
           ),
         ),
       ),
@@ -339,8 +368,9 @@ class _FaqItem extends StatelessWidget {
         border: Border.all(
           color:
               expanded
-                  ? context.appColorScheme.primary.withValues(alpha: 0.45)
+                  ? HelpSupportView.green.withValues(alpha: 0.5)
                   : context.appBorder,
+          width: expanded ? 1.2 : 1,
         ),
         boxShadow: context.appTileShadow,
       ),
@@ -348,60 +378,57 @@ class _FaqItem extends StatelessWidget {
         children: [
           InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 62),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 13,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 27,
-                      height: 27,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.appSoftGreen,
-                      ),
-                      child: const Icon(
-                        Icons.help_outline_rounded,
-                        color: HelpSupportView.green,
-                        size: 16,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context.appSoftGreen,
+                    ),
+                    child: const Icon(
+                      Icons.help_outline_rounded,
+                      color: HelpSupportView.green,
+                      size: 18,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Text(
+                      question.trOrSelf,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
+                        color: context.appText,
                       ),
                     ),
+                  ),
 
-                    const SizedBox(width: 12),
+                  const SizedBox(width: 8),
 
-                    Expanded(
-                      child: Text(
-                        question.trOrSelf,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.25,
-                          fontWeight: FontWeight.w600,
-                          color: context.appText,
-                        ),
-                      ),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 22,
+                      color:
+                          expanded
+                              ? HelpSupportView.green
+                              : context.appMutedText,
                     ),
-
-                    AnimatedRotation(
-                      turns: expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 180),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color:
-                            expanded
-                                ? HelpSupportView.green
-                                : context.appMutedText,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -414,26 +441,26 @@ class _FaqItem extends StatelessWidget {
             firstChild: const SizedBox.shrink(),
 
             secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(54, 0, 18, 14),
-              child: Column(
-                children: [
-                  Divider(height: 1, thickness: 0.7, color: context.appBorder),
-
-                  const SizedBox(height: 11),
-
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      answer.trOrSelf,
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.45,
-                        fontWeight: FontWeight.w400,
-                        color: context.appMutedText,
-                      ),
-                    ),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  answer.trOrSelf,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.5,
+                    fontWeight: FontWeight.w400,
+                    color: context.appText.withValues(alpha: 0.88),
                   ),
-                ],
+                ),
               ),
             ),
           ),

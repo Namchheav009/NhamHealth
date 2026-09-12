@@ -23,8 +23,8 @@ import com.nhamhealth.nhamhealth_api.exception.PasswordResetException;
 import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 import com.nhamhealth.nhamhealth_api.service.email.BrevoEmailService;
+import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
 @Service
 public class RegistrationVerificationService {

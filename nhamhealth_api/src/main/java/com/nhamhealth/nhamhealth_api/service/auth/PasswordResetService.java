@@ -28,8 +28,8 @@ import com.nhamhealth.nhamhealth_api.repository.auth.PasswordResetTokenRepositor
 import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 import com.nhamhealth.nhamhealth_api.service.email.BrevoEmailService;
+import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
 
 @Service
 public class PasswordResetService {
