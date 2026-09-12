@@ -3,6 +3,7 @@ package com.nhamhealth.nhamhealth_api.service.email;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -29,12 +30,12 @@ public class BrevoEmailService {
                         @Value("${BREVO_API_KEY:}") String apiKey,
                         @Value("${BREVO_SENDER_EMAIL:}") String senderEmail,
                         @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName,
-                        JavaMailSender mailSender) {
+                        ObjectProvider<JavaMailSender> mailSenderProvider) {
 
                 this.apiKey = apiKey;
                 this.senderEmail = senderEmail;
                 this.senderName = senderName;
-                this.mailSender = mailSender;
+                this.mailSender = mailSenderProvider.getIfAvailable();
 
                 this.restClient = RestClient.builder()
                                 .baseUrl("https://api.brevo.com/v3")
@@ -82,6 +83,10 @@ public class BrevoEmailService {
 
         private void sendWithSmtp(String to, String subject, String plainText, String htmlContent) {
                 try {
+                        if (mailSender == null) {
+                                throw new IllegalStateException(
+                                                "Gmail SMTP is not configured; set GMAIL_USERNAME and GMAIL_APP_PASSWORD");
+                        }
                         MimeMessage message = mailSender.createMimeMessage();
                         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
                         if (senderEmail != null && !senderEmail.isBlank()) {
