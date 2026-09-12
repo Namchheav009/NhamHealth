@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "280488574348",
-    "project_id": "nhamhealth-744a3",
-    "storage_bucket": "nhamhealth-744a3.firebasestorage.app"
+    "project_number": "611017206029",
+    "project_id": "nhamhealth-3990e",
+    "storage_bucket": "nhamhealth-3990e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:280488574348:android:a39d03eb3bb7e517bd6aa9",
+        "mobilesdk_app_id": "1:611017206029:android:9dd717ac4c07187f1aa844",
         "android_client_info": {
           "package_name": "com.example.nhamhealth_flutter"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "611017206029-543g2q4ln1un84ja4erhttlfakd3ld96.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyC378cY_QNGeON9ITh9GvEgNdUjyl7ym3s"
+          "current_key": "AIzaSyBXbCYp1n9Ufqn0GH2NFW0JFzY_4EsQbqs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "611017206029-543g2q4ln1un84ja4erhttlfakd3ld96.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -1060,12 +1060,6 @@ class EditProfileController extends GetxController {
     );
   }
 
-  void _showInputError(String message) {
-    unawaited(
-      AppAlert.error(title: 'profile.check_this_value', message: message),
-    );
-  }
-
   Future<void> _showTextEditor({
     required String title,
     required String initialValue,

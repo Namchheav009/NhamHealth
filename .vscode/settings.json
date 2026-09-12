@@ -13,10 +13,14 @@
   "java.import.exclusions": [
     "**/.dart_tool/**",
     "**/build/**",
-    "**/.m2-repository/**"
+    "**/.m2-repository/**",
+    "**/nhamhealth_app/**"
   ],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true,
+  "java.import.gradle.enabled": false,
+  "gradle.autoDetect": "off",
+  "gradle.nestedProjects": false,
   "files.exclude": {
     "**/.dart_tool": true,
     "**/build": true,
@@ -32,5 +36,9 @@
     "**/.m2-repository": true,
     ".m2": true,
     ".dart_appdata": true
+  },
+  "files.associations": {
+    "*.gradle": "groovy"
   }
 }
+
