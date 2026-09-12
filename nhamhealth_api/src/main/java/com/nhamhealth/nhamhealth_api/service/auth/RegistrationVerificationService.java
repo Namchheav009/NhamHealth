@@ -325,6 +325,9 @@ public class RegistrationVerificationService {
         }
     }
 
+    /**
+     * Dispatches the verification code via Brevo transactional email.
+     */
     private void deliver(String email, String code, boolean isLogin) {
         try {
             brevoEmailService.sendEmail(
@@ -341,7 +344,7 @@ public class RegistrationVerificationService {
                 LOGGER.warn("==================================================================");
                 return;
             }
-                throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
+            throw new PasswordResetException(HttpStatus.SERVICE_UNAVAILABLE,
                     "We could not send the verification email. Please try again shortly");
         }
     }

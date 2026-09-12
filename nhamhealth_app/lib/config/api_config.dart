@@ -18,6 +18,7 @@ abstract final class ApiConfig {
       return configured;
     }
 
+    // Production default endpoint deployed on Render
     if (kReleaseMode) {
       return 'https://nhamhealth.onrender.com';
     }

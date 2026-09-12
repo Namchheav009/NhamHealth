@@ -155,6 +155,9 @@ public class EmailChangeVerificationService {
                 });
     }
 
+    /**
+     * Dispatches email change verification code via Brevo transactional email.
+     */
     private void deliver(String email, String code) {
         try {
             String plainText = "Your NhamHealth email-change verification code is %s. It expires in 5 minutes."

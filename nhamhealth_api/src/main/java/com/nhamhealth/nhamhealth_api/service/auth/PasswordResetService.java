@@ -272,6 +272,9 @@ public class PasswordResetService {
                 .forEach(code -> code.setStatus("USED"));
     }
 
+    /**
+     * Dispatches password reset code via Brevo transactional email.
+     */
     private void sendResetEmail(String email, String code) {
         try {
             brevoEmailService.sendEmail(

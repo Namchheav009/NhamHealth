@@ -8,6 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Service for sending transactional emails via the Brevo (Sendinblue) HTTP API v3.
+ */
 @Service
 public class BrevoEmailService {
 
