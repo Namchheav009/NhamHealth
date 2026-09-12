@@ -694,8 +694,9 @@ class EditProfileController extends GetxController {
                                     hasError: errorText.value.isNotEmpty,
                                     onChanged: (value) {
                                       code.value = value;
-                                      if (errorText.value.isNotEmpty)
+                                      if (errorText.value.isNotEmpty) {
                                         errorText.value = '';
+                                      }
                                     },
                                   ),
                                   if (errorText.value.isNotEmpty)
