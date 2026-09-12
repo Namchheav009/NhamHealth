@@ -117,6 +117,9 @@ spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags
 spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=60s
 
 # Gmail SMTP (set GMAIL_USERNAME and GMAIL_APP_PASSWORD in your environment)
+BREVO_API_KEY=${BREVO_API_KEY:}
+BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL:}
+BREVO_SENDER_NAME=${BREVO_SENDER_NAME:NhamHealth}
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=${GMAIL_USERNAME:}

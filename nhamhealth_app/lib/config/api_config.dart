@@ -19,9 +19,7 @@ abstract final class ApiConfig {
     }
 
     if (kReleaseMode) {
-      throw StateError(
-        'API_BASE_URL must be provided when building a release.',
-      );
+      return 'https://nhamhealth.onrender.com';
     }
 
     if (kIsWeb) {

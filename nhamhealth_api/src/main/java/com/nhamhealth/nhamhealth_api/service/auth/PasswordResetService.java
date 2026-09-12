@@ -1,6 +1,5 @@
 package com.nhamhealth.nhamhealth_api.service.auth;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,13 +11,9 @@ import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +29,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.nhamhealth.nhamhealth_api.service.email.BrevoEmailService;
 
 @Service
 public class PasswordResetService {
@@ -49,7 +42,7 @@ public class PasswordResetService {
     private final VerificationCodeRepository verificationCodeRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final BrevoEmailService brevoEmailService;
     private final PlasgateSmsService smsService;
     private final SecureRandom secureRandom = new SecureRandom();
     private final String mailFrom;
@@ -67,7 +60,7 @@ public class PasswordResetService {
             VerificationCodeRepository verificationCodeRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             PlasgateSmsService smsService,
             @Value("${app.mail.from:${spring.mail.username:}}") String mailFrom,
             @Value("${app.auth.otp.expiration:PT5M}") Duration codeTtl,
@@ -81,7 +74,7 @@ public class PasswordResetService {
         this.verificationCodeRepository = verificationCodeRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
-        this.mailSenderProvider = mailSenderProvider;
+        this.brevoEmailService = brevoEmailService;
         this.smsService = smsService;
         this.mailFrom = mailFrom;
         this.codeTtl = codeTtl;
@@ -98,7 +91,7 @@ public class PasswordResetService {
             VerificationCodeRepository verificationCodeRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            BrevoEmailService brevoEmailService,
             PlasgateSmsService smsService,
             String mailFrom,
             Duration codeTtl,
@@ -107,7 +100,7 @@ public class PasswordResetService {
             int maximumAttempts,
             RefreshTokenService refreshTokenService) {
         this(userRepository, userProfileRepository, verificationCodeRepository,
-                passwordResetTokenRepository, passwordEncoder, mailSenderProvider,
+                passwordResetTokenRepository, passwordEncoder, brevoEmailService,
                 smsService, mailFrom, codeTtl, tokenTtl, resendCooldown, maximumAttempts,
                 refreshTokenService, false);
     }
@@ -280,34 +273,14 @@ public class PasswordResetService {
     }
 
     private void sendResetEmail(String email, String code) {
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null || mailFrom.isBlank()) {
-            if (fallbackToConsole) {
-                LOGGER.warn("==================================================================");
-                LOGGER.warn(" [EMAIL FALLBACK OTP] Password reset code for {}: {}", email, code);
-                LOGGER.warn("==================================================================");
-                return;
-            }
-            throw new PasswordResetException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "Email delivery is not configured on the server");
-        }
-
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    message, true, StandardCharsets.UTF_8.name());
-            if (!mailFrom.isBlank()) {
-                helper.setFrom(mailFrom, "NhamHealth");
-            }
-            helper.setTo(email);
-            helper.setSubject(PasswordResetEmailTemplate.subject(code));
-            helper.setText(
+            brevoEmailService.sendEmail(
+                    email,
+                    PasswordResetEmailTemplate.subject(code),
                     PasswordResetEmailTemplate.plainText(code),
                     PasswordResetEmailTemplate.html(code));
-            mailSender.send(message);
             LOGGER.info("Password reset email successfully sent to {}", email);
-        } catch (MailException | MessagingException | UnsupportedEncodingException exception) {
+        } catch (Exception exception) {
             LOGGER.error("Could not deliver a password reset email to {}", email, exception);
             if (fallbackToConsole) {
                 LOGGER.warn("==================================================================");
