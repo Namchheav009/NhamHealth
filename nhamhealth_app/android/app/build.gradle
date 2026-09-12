@@ -41,11 +41,14 @@ if (googleServerClientId &&
 
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
+def releaseKeystoreAvailable = false
 
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(
         new FileInputStream(keystorePropertiesFile)
     )
+    def configuredStoreFile = keystoreProperties["storeFile"]
+    releaseKeystoreAvailable = configuredStoreFile && file(configuredStoreFile).exists()
 }
 
 
@@ -110,7 +113,12 @@ android {
 
    buildTypes {
     release {
-        signingConfig = signingConfigs.release
+        // Local/CI APKs remain installable when the private production key is
+        // unavailable. Play Store builds should always provide key.properties
+        // and the referenced keystore.
+        signingConfig = releaseKeystoreAvailable
+                ? signingConfigs.release
+                : signingConfigs.debug
         }
     }
 }
