@@ -154,8 +154,7 @@ public class PlasgateSmsService {
             return result;
         } catch (RestClientResponseException error) {
             String responseBody = error.getResponseBodyAsString();
-            if (error.getStatusCode().value() == 400
-                    && responseBody.toLowerCase(Locale.ROOT).contains("invalid sender")) {
+            if (isInvalidSenderResponse(responseBody)) {
                 log.warn("PlasGate rejected unapproved sender '{}' for recipient {}", sender, maskPhone(recipient));
                 return SendResult.INVALID_SENDER;
             }
@@ -172,10 +171,20 @@ public class PlasgateSmsService {
         if (response == null || response.isBlank()) {
             return SendResult.FAILED;
         }
-        if (response.toLowerCase(Locale.ROOT).contains("invalid sender")) {
+        if (isInvalidSenderResponse(response)) {
             return SendResult.INVALID_SENDER;
         }
         return hasAcceptedQueueId(response) ? SendResult.SENT : SendResult.FAILED;
+    }
+
+    private boolean isInvalidSenderResponse(String response) {
+        if (response == null) {
+            return false;
+        }
+        String normalized = response.toLowerCase(Locale.ROOT);
+        return normalized.contains("invalid sender")
+                || normalized.contains("sender id")
+                || normalized.contains("sender_id");
     }
 
     static boolean hasAcceptedQueueId(String response) {

@@ -194,29 +194,22 @@ public class PasswordResetService {
         String destination = isPhone ? smsService.normalizePhoneNumber(requestedIdentity)
                 : normalizeEmail(requestedIdentity);
 
-        VerificationCode latestCode = verificationCodeRepository
-                .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, PURPOSE)
-                .orElseThrow(this::invalidCode);
-
         LocalDateTime now = LocalDateTime.now();
         String normalizedCode = rawCode == null ? "" : rawCode.trim();
-        VerificationCode verificationCode = latestCode;
 
-        // Email delivery order is not guaranteed. If a resend arrives before
-        // the earlier message, accept that recently superseded code while it
-        // is still within its original short expiration window.
-        if (!passwordEncoder.matches(normalizedCode, latestCode.getCodeHash())) {
-            verificationCode = verificationCodeRepository
-                    .findByDestinationIgnoreCaseAndPurposeAndStatus(
-                            destination, PURPOSE, "SUPERSEDED")
-                    .stream()
-                    .filter(candidate -> candidate.getExpiresAt().isAfter(now))
-                    .filter(candidate -> candidate.getCreatedAt().isAfter(now.minus(codeTtl)))
-                    .filter(candidate -> passwordEncoder.matches(
-                            normalizedCode, candidate.getCodeHash()))
-                    .findFirst()
-                    .orElse(latestCode);
-        }
+        // A keyboard submit and button tap (or two server instances) can race
+        // and create two PENDING records. Email delivery can also arrive out
+        // of order after a resend. Accept any matching, still-live active code
+        // instead of assuming the newest database row is the email being read.
+        var activeCodes = verificationCodeRepository
+                .findByDestinationIgnoreCaseAndPurposeAndStatusInOrderByCreatedAtDesc(
+                        destination, PURPOSE, java.util.List.of("PENDING", "SUPERSEDED"));
+        VerificationCode verificationCode = activeCodes.stream()
+                .filter(candidate -> candidate.getExpiresAt().isAfter(now))
+                .filter(candidate -> candidate.getCreatedAt().isAfter(now.minus(codeTtl)))
+                .filter(candidate -> passwordEncoder.matches(normalizedCode, candidate.getCodeHash()))
+                .findFirst()
+                .orElseGet(() -> activeCodes.stream().findFirst().orElseThrow(this::invalidCode));
 
         if (!"PENDING".equals(verificationCode.getStatus())
                 && !"SUPERSEDED".equals(verificationCode.getStatus())) {

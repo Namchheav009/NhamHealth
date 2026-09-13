@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -29,6 +30,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.jayway.jsonpath.JsonPath;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.VerificationCode;
+import com.nhamhealth.nhamhealth_api.repository.auth.VerificationCodeRepository;
 import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
@@ -55,6 +58,9 @@ class PasswordResetFlowTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private VerificationCodeRepository verificationCodeRepository;
 
     @MockitoBean
     private JavaMailSender mailSender;
@@ -150,7 +156,25 @@ class PasswordResetFlowTests {
         verifyNoInteractions(mailSender);
     }
 
-    private void createUser(String email, String password) {
+    @Test
+    void eitherActiveCodeIsAcceptedWhenDuplicateRequestsRace() throws Exception {
+        String email = "reset-race-" + UUID.randomUUID() + "@example.com";
+        User user = createUser(email, "OldPassword123!");
+        LocalDateTime now = LocalDateTime.now();
+
+        savePendingCode(user, email, "123456", now.minusSeconds(1));
+        savePendingCode(user, email, "654321", now);
+
+        mockMvc.perform(post("/api/v1/auth/verify-reset-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"%s","code":"123456"}
+                                """.formatted(email)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resetToken").isNotEmpty());
+    }
+
+    private User createUser(String email, String password) {
         Role role = roleRepository.findByRoleNameIgnoreCase("USER").orElseGet(() -> {
             Role createdRole = new Role();
             createdRole.setRoleName("USER");
@@ -163,7 +187,21 @@ class PasswordResetFlowTests {
         user.setRole(role);
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
-        userRepository.save(user);
+        return userRepository.save(user);
+    }
+
+    private void savePendingCode(User user, String email, String code, LocalDateTime createdAt) {
+        VerificationCode verificationCode = new VerificationCode();
+        verificationCode.setUser(user);
+        verificationCode.setDestination(email);
+        verificationCode.setDeliveryMethod("EMAIL");
+        verificationCode.setPurpose("PASSWORD_RESET");
+        verificationCode.setCodeHash(passwordEncoder.encode(code));
+        verificationCode.setExpiresAt(createdAt.plusMinutes(5));
+        verificationCode.setAttemptCount(0);
+        verificationCode.setStatus("PENDING");
+        verificationCode.setCreatedAt(createdAt);
+        verificationCodeRepository.save(verificationCode);
     }
 
     private String readContent(Part part) throws Exception {

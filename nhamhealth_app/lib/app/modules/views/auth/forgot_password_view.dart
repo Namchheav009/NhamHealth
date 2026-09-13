@@ -19,6 +19,7 @@ class ForgotPasswordController extends GetxController {
   final RxnString submitError = RxnString();
 
   Future<void> sendCode() async {
+    if (isLoading.value) return;
     FocusManager.instance.primaryFocus?.unfocus();
     identifierError.value = null;
     submitError.value = null;
