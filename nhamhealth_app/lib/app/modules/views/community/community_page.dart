@@ -961,7 +961,6 @@ class CommunityPage extends GetView<CommunityController> {
         onRelationshipTap: () => _toggleAuthorRelationship(post),
         onViewDetails: () => _showComments(post),
         onLike: () => controller.togglePostLike(post),
-        onFavorite: () => controller.togglePostSaved(post),
         onShowLikes: () => _showPostLikers(post),
         onComment: () => _showComments(post),
         onShare: () => _showShareOptions(post),
@@ -1080,6 +1079,16 @@ class CommunityPage extends GetView<CommunityController> {
             isOwner
                 ? [
                   _CommunityOption(
+                    _CommunityPostAction.save,
+                    (post.isSaved
+                            ? 'common.remove_from_favorites'
+                            : 'common.add_to_favorites')
+                        .tr,
+                    post.isSaved
+                        ? Icons.bookmark_remove_rounded
+                        : Icons.bookmark_add_outlined,
+                  ),
+                  _CommunityOption(
                     _CommunityPostAction.edit,
                     'community.edit_post'.tr,
                     Icons.edit_outlined,
@@ -1092,6 +1101,16 @@ class CommunityPage extends GetView<CommunityController> {
                   ),
                 ]
                 : [
+                  _CommunityOption(
+                    _CommunityPostAction.save,
+                    (post.isSaved
+                            ? 'common.remove_from_favorites'
+                            : 'common.add_to_favorites')
+                        .tr,
+                    post.isSaved
+                        ? Icons.bookmark_remove_rounded
+                        : Icons.bookmark_add_outlined,
+                  ),
                   _CommunityOption(
                     _CommunityPostAction.report,
                     'community.report_post'.tr,
@@ -1114,6 +1133,10 @@ class CommunityPage extends GetView<CommunityController> {
     CommunityPost post,
   ) async {
     switch (action) {
+      case _CommunityPostAction.save:
+        await controller.togglePostSaved(post);
+        return;
+
       case _CommunityPostAction.edit:
         await _showEditPost(post);
         return;
@@ -1488,7 +1511,7 @@ class _PeopleSearchFieldState extends State<_PeopleSearchField> {
   }
 }
 
-enum _CommunityPostAction { edit, delete, report }
+enum _CommunityPostAction { save, edit, delete, report }
 
 class _CommunityOption {
   const _CommunityOption(

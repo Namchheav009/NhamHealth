@@ -50,9 +50,50 @@ class CommunityReportController extends GetxController {
       selectedReport.value = report;
       return report;
     } on Object catch (error) {
+      final message = error.toString().replaceFirst('Exception: ', '').trim();
+      final normalized = message.toLowerCase();
       errorMessage.value =
-          error.toString().replaceFirst('Exception: ', '').trim();
+          normalized == 'conflict' ||
+                  normalized.contains('already reported') ||
+                  normalized.contains('already submitted')
+              ? 'community.report_already_submitted'.tr
+              : message;
       return null;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  Future<bool> submitProfileReport(int userId) async {
+    final reason = selectedReason.value;
+    if (reason == null || isSubmitting.value) return false;
+    isSubmitting.value = true;
+    errorMessage.value = null;
+    try {
+      final reasonId = switch (reason) {
+        CommunityPostReportReason.spam => 101,
+        CommunityPostReportReason.harassment => 102,
+        CommunityPostReportReason.inappropriateContent => 105,
+        CommunityPostReportReason.falseInformation => 104,
+        CommunityPostReportReason.copyright => 199,
+        CommunityPostReportReason.other => 199,
+      };
+      await _repository.reportProfile(
+        userId: userId,
+        reasonId: reasonId,
+        description: description.value,
+      );
+      return true;
+    } on Object catch (error) {
+      final message = error.toString().replaceFirst('Exception: ', '').trim();
+      final normalized = message.toLowerCase();
+      errorMessage.value =
+          normalized == 'conflict' ||
+                  normalized.contains('already reported') ||
+                  normalized.contains('already submitted')
+              ? 'community.report_profile_already_submitted'.tr
+              : message;
+      return false;
     } finally {
       isSubmitting.value = false;
     }

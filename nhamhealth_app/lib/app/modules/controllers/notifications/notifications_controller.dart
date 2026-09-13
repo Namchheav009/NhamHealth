@@ -14,11 +14,13 @@ class NotificationsController extends GetxController {
   final Stream<NotificationRealtimeEvent>? realtimeEvents;
   final notifications = <NotificationItem>[].obs;
   final isLoading = false.obs;
+  final isMarkingAllRead = false.obs;
   Timer? _refreshTimer;
   StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
   bool _requestInFlight = false;
   bool _hasLoaded = false;
   bool _reloadRequested = false;
+  final Set<int> _knownNotificationIds = <int>{};
 
   static const refreshInterval = Duration(seconds: 5);
 
@@ -59,16 +61,21 @@ class NotificationsController extends GetxController {
     try {
       if (!silent) isLoading.value = true;
       final result = await repository.getNotifications();
-      final existingIds = notifications.map((item) => item.id).toSet();
       final newItems =
           _hasLoaded
-              ? result.where((item) => !existingIds.contains(item.id)).toList()
+              ? result
+                  .where(
+                    (item) =>
+                        item.isUnread &&
+                        !_knownNotificationIds.contains(item.id),
+                  )
+                  .toList()
               : const <NotificationItem>[];
+      _knownNotificationIds.addAll(result.map((item) => item.id));
       notifications.assignAll(result);
       _hasLoaded = true;
       if (silent && announceNew && newItems.isNotEmpty) {
         final newest = newItems.first;
-        AppAlert.notification(title: newest.title, message: newest.message);
         AppAlert.notification(
           title: newest.displayTitle,
           message: newest.displayMessage,
@@ -109,12 +116,15 @@ class NotificationsController extends GetxController {
     }
   }
 
-  Future<void> markAllRead() async {
+  Future<bool> markAllRead() async {
     final repository = this.repository;
     final unreadItems = unread;
-    if (repository == null || unreadItems.isEmpty) return;
+    if (repository == null || unreadItems.isEmpty || isMarkingAllRead.value) {
+      return false;
+    }
 
     final previous = List<NotificationItem>.from(notifications);
+    isMarkingAllRead.value = true;
     notifications.assignAll(
       notifications.map((item) => item.copyWith(isUnread: false)),
     );
@@ -122,12 +132,16 @@ class NotificationsController extends GetxController {
       for (final item in unreadItems) {
         await repository.markRead(item.id);
       }
+      return true;
     } on Object catch (error) {
       notifications.assignAll(previous);
       AppAlert.error(
         title: 'notifications.not_updated',
         message: error.toString(),
       );
+      return false;
+    } finally {
+      isMarkingAllRead.value = false;
     }
   }
 

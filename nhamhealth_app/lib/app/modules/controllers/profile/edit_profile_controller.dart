@@ -38,6 +38,10 @@ class EditProfileController extends GetxController {
   final isEmailVerified = false.obs;
   final phone = ''.obs;
   final isPhoneVerified = false.obs;
+  late String _savedEmail;
+  late String _savedPhone;
+  late bool _savedEmailVerified;
+  late bool _savedPhoneVerified;
 
   final Rxn<DateTime> dateOfBirth = Rxn<DateTime>();
   final gender = ''.obs;
@@ -121,6 +125,10 @@ class EditProfileController extends GetxController {
               ? dashboard.gender!.trim()
               : '';
     }
+    _savedEmail = email.value.trim().toLowerCase();
+    _savedPhone = phone.value.trim();
+    _savedEmailVerified = isEmailVerified.value;
+    _savedPhoneVerified = isPhoneVerified.value;
   }
 
   void goBack() {
@@ -153,6 +161,13 @@ class EditProfileController extends GetxController {
       await AppAlert.actionError(
         title: 'common.check_your_email',
         message: 'auth.invalid_email',
+      );
+      return;
+    }
+    if (emailAddress.isNotEmpty && !isEmailVerified.value) {
+      await AppAlert.actionError(
+        title: 'profile.verification_required',
+        message: 'profile.verify_email',
       );
       return;
     }
@@ -221,24 +236,33 @@ class EditProfileController extends GetxController {
     }
   }
 
-  Future<void> editFullName() async {
-    await _showTextEditor(
-      title: 'profile.full_name',
-      subtitle: 'profile.enter_your_full_name_before_saving_your_profile',
-      initialValue: fullName.value,
-      icon: Icons.person_outline_rounded,
-      prefixIcon: Icons.person_outline_rounded,
-      maxLength: 70,
-      validator: (val) {
-        if (val.trim().length < 2) {
-          return 'profile.enter_your_full_name_before_saving_your_profile';
-        }
-        return null;
-      },
-      onSaved: (value) {
-        fullName.value = value;
-      },
-    );
+  void updateFullName(String value) => fullName.value = value;
+
+  void updateEmail(String value) {
+    email.value = value;
+    isEmailVerified.value =
+        value.trim().toLowerCase() == _savedEmail && _savedEmailVerified;
+  }
+
+  void updatePhone(String value) {
+    phone.value = value;
+    isPhoneVerified.value =
+        _phoneComparisonKey(value) == _phoneComparisonKey(_savedPhone) &&
+        _savedPhoneVerified;
+  }
+
+  Future<void> verifyCurrentEmail([String? value]) async {
+    if (isContactVerificationBusy.value) return;
+    final emailAddress = (value ?? email.value).trim().toLowerCase();
+    if (!GetUtils.isEmail(emailAddress)) {
+      await AppAlert.error(
+        title: 'common.check_your_email',
+        message: 'auth.invalid_email',
+      );
+      return;
+    }
+    email.value = emailAddress;
+    await _verifyEmailChange(emailAddress);
   }
 
   Future<void> pickProfileImage() async {
@@ -366,6 +390,8 @@ class EditProfileController extends GetxController {
         onVerified: (verifiedEmail) {
           email.value = verifiedEmail;
           isEmailVerified.value = true;
+          _savedEmail = verifiedEmail.trim().toLowerCase();
+          _savedEmailVerified = true;
           profileController.email.value = verifiedEmail;
           verificationDetail.value = 'profile.email_verified_save';
         },
@@ -796,6 +822,10 @@ class EditProfileController extends GetxController {
                                                       }
                                                       isPhoneVerified.value =
                                                           true;
+                                                      _savedPhone =
+                                                          phone.value.trim();
+                                                      _savedPhoneVerified =
+                                                          true;
                                                       verificationDetail.value =
                                                           'profile.phone_verified_save';
                                                       if (dialogCtx.mounted) {
@@ -901,91 +931,31 @@ class EditProfileController extends GetxController {
     }
   }
 
-  Future<void> editHeight() async {
-    await _showTextEditor(
-      title: 'profile.height',
-      labelText: 'profile.height_cm',
-      subtitle: 'Enter your height in centimeters.',
-      initialValue: height.value > 0 ? height.value.toStringAsFixed(0) : '',
-      icon: Icons.straighten_rounded,
-      prefixIcon: Icons.straighten_rounded,
-      exampleText: 'Example: 170 cm',
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      validator: (val) {
-        final number = double.tryParse(val);
-        if (number == null || number < 50 || number > 300) {
-          return 'Enter a height between 50 and 300 cm.';
-        }
-        return null;
-      },
-      onSaved: (value) {
-        final number = double.tryParse(value);
-        if (number != null && number >= 50 && number <= 300) {
-          height.value = number;
-        }
-      },
+  void updateHeight(String value) {
+    final number = double.tryParse(value);
+    height.value = number != null && number >= 50 && number <= 300 ? number : 0;
+  }
+
+  void updateAge(String value) {
+    final number = int.tryParse(value);
+    if (number == null || number <= 0 || number > 120) {
+      age.value = 0;
+      return;
+    }
+
+    age.value = number;
+    final current = dateOfBirth.value ?? DateTime.now();
+    final year = DateTime.now().year - number;
+    dateOfBirth.value = DateTime(
+      year,
+      current.month,
+      current.day.clamp(1, DateTime(year, current.month + 1, 0).day).toInt(),
     );
   }
 
-  Future<void> editAge() async {
-    await _showTextEditor(
-      title: 'profile.age',
-      labelText: 'profile.age_years',
-      subtitle: 'Enter your age in years.',
-      initialValue: age.value > 0 ? age.value.toString() : '',
-      icon: Icons.cake_outlined,
-      prefixIcon: Icons.cake_outlined,
-      exampleText: 'Example: 25 years',
-      keyboardType: TextInputType.number,
-      validator: (val) {
-        final number = int.tryParse(val);
-        if (number == null || number <= 0 || number > 120) {
-          return 'Enter an age between 1 and 120 years.';
-        }
-        return null;
-      },
-      onSaved: (value) {
-        final number = int.tryParse(value);
-        if (number != null && number > 0 && number <= 120) {
-          age.value = number;
-          final current = dateOfBirth.value ?? DateTime.now();
-          final year = DateTime.now().year - number;
-          dateOfBirth.value = DateTime(
-            year,
-            current.month,
-            current.day
-                .clamp(1, DateTime(year, current.month + 1, 0).day)
-                .toInt(),
-          );
-        }
-      },
-    );
-  }
-
-  Future<void> editWeight() async {
-    await _showTextEditor(
-      title: 'profile.weight',
-      labelText: 'profile.weight_kg',
-      subtitle: 'Enter your weight in kilograms.',
-      initialValue: weight.value > 0 ? weight.value.toStringAsFixed(0) : '',
-      icon: Icons.scale_outlined,
-      prefixIcon: Icons.scale_outlined,
-      exampleText: 'Example: 65 kg',
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      validator: (val) {
-        final number = double.tryParse(val);
-        if (number == null || number < 10 || number > 500) {
-          return 'Enter a weight between 10 and 500 kg.';
-        }
-        return null;
-      },
-      onSaved: (value) {
-        final number = double.tryParse(value);
-        if (number != null && number >= 10 && number <= 500) {
-          weight.value = number;
-        }
-      },
-    );
+  void updateWeight(String value) {
+    final number = double.tryParse(value);
+    weight.value = number != null && number >= 10 && number <= 500 ? number : 0;
   }
 
   Future<void> selectDateOfBirth(BuildContext context) async {

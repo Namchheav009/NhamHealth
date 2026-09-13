@@ -219,6 +219,25 @@ const Map<String, String> communityKm = {
   'community.saved_post': 'ការបង្ហោះដែលបានរក្សាទុក',
   'community.report_post_title': 'រាយការណ៍ការបង្ហោះ',
   'community.report_private': 'របាយការណ៍របស់អ្នកជាឯកជន ហើយនឹងត្រូវបានពិនិត្យ។',
+  'community.report_examples_include': 'ឧទាហរណ៍រួមមាន៖',
+  'community.report_example_spam_1': 'ផ្សព្វផ្សាយផលិតផល ឬសេវាកម្មដែលមិនពាក់ព័ន្ធ',
+  'community.report_example_spam_2': 'មាតិកាដដែលៗ ឬស្ទួន',
+  'community.report_example_spam_3': 'ការចូលរួមក្លែងក្លាយ ឬការផ្សាយពាណិជ្ជកម្មមិនបានស្នើសុំ',
+  'community.report_example_harassment_1': 'ការគំរាម ការសម្លុត ឬការប្រមាថចំគោលដៅ',
+  'community.report_example_harassment_2': 'ភាសាស្អប់ខ្ពើម ឬរើសអើង',
+  'community.report_example_harassment_3': 'ការទាក់ទងដែលមិនចង់បានម្តងហើយម្តងទៀត',
+  'community.report_example_inappropriate_1': 'អំពើហិង្សាធ្ងន់ធ្ងរ ឬមាតិកាផ្លូវភេទ',
+  'community.report_example_inappropriate_2': 'មាតិកាដែលអាចបង្កគ្រោះថ្នាក់ដល់អ្នកដទៃ',
+  'community.report_example_inappropriate_3': 'រូបភាពរំខាន ឬរសើបខ្លាំង',
+  'community.report_example_false_1': 'ការអះអាងសុខភាព ឬអាហារូបត្ថម្ភបំភាន់',
+  'community.report_example_false_2': 'ព័ត៌មានប្រឌិតដែលបង្ហាញថាបានផ្ទៀងផ្ទាត់',
+  'community.report_example_false_3': 'ដំបូន្មានគ្រោះថ្នាក់ដោយគ្មានភស្តុតាងទុកចិត្តបាន',
+  'community.report_example_copyright_1': 'ប្រើស្នាដៃអ្នកដទៃដោយគ្មានការអនុញ្ញាត',
+  'community.report_example_copyright_2': 'បង្ហោះរូបថត ឬរូបមន្តដែលមានសិទ្ធិការពារឡើងវិញ',
+  'community.report_example_copyright_3': 'អះអាងស្នាដៃអ្នកបង្កើតផ្សេងថាជារបស់ខ្លួន',
+  'community.report_example_other_1': 'មាតិកាដែលធ្វើឱ្យសមាជិកសហគមន៍ប្រឈមហានិភ័យ',
+  'community.report_example_other_2': 'ការប៉ុនប៉ងគេចវេះច្បាប់សហគមន៍',
+  'community.report_example_other_3': 'ការបំពានគោលការណ៍សហគមន៍ច្បាស់លាស់ផ្សេងទៀត',
   'community.report_more_details': 'ផ្តល់ព័ត៌មានលម្អិតបន្ថែម',
   'community.report_details_help':
       'សូមប្រាប់យើងបន្ថែមអំពីបញ្ហា ដើម្បីជួយឱ្យការពិនិត្យកាន់តែលឿន។',
@@ -237,8 +256,14 @@ const Map<String, String> communityKm = {
   'community.report_thank_you': 'សូមអរគុណ!',
   'community.report_success_message':
       'របាយការណ៍របស់អ្នកត្រូវបានដាក់ស្នើដោយជោគជ័យ។',
+  'community.report_already_submitted':
+      'អ្នកបានរាយការណ៍ការបង្ហោះនេះរួចហើយ។ ក្រុមការងាររបស់យើងនឹងពិនិត្យរបាយការណ៍ដែលមានស្រាប់។',
+  'community.report_profile_already_submitted':
+      'អ្នកបានរាយការណ៍ប្រវត្តិរូបនេះរួចហើយ។ ក្រុមការងាររបស់យើងនឹងពិនិត្យរបាយការណ៍ដែលមានស្រាប់។',
   'community.report_review_guidelines_message':
       'ក្រុមការងាររបស់យើងនឹងពិនិត្យ និងចាត់វិធានការ ប្រសិនបើវាបំពានគោលការណ៍សហគមន៍។',
+  'community.report_profile_review_guidelines_message':
+      'ក្រុមការងាររបស់យើងនឹងពិនិត្យប្រវត្តិរូបនេះ និងចាត់វិធានការ ប្រសិនបើវាបំពានគោលការណ៍សហគមន៍។',
   'community.view_my_reports': 'មើលរបាយការណ៍របស់ខ្ញុំ',
   'community.my_reports': 'របាយការណ៍របស់ខ្ញុំ',
   'community.report_empty': 'អ្នកមិនទាន់បានដាក់ស្នើរបាយការណ៍ទេ។',
@@ -262,6 +287,7 @@ const Map<String, String> communityKm = {
   'community.report_reason_copyright': 'កម្មសិទ្ធិបញ្ញា',
   'community.report_reason_other': 'ផ្សេងទៀត',
   'community.community_guidelines': 'គោលការណ៍សហគមន៍',
+  'community.view_community_guidelines': 'មើលគោលការណ៍សហគមន៍',
   'community.report_guideline_spam':
       'កុំបង្ហោះការផ្សាយពាណិជ្ជកម្ម ការបោកប្រាស់ ឬមាតិកាដដែលៗ។',
   'community.report_guideline_harassment':

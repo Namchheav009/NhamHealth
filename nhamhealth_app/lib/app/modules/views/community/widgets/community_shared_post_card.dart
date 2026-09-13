@@ -33,21 +33,31 @@ class CommunitySharedPostCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: compact ? 18 : 20,
-                  backgroundColor: context.appSoftGreen,
-                  backgroundImage:
-                      post.authorAvatarUrl.isEmpty
-                          ? null
-                          : NetworkImage(post.authorAvatarUrl),
-                  child:
-                      post.authorAvatarUrl.isEmpty
-                          ? const Icon(
+                ClipOval(
+                  child: SizedBox.square(
+                    dimension: compact ? 36 : 40,
+                    child: ColoredBox(
+                      color: context.appSoftGreen,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          const Icon(
                             Icons.person_outline_rounded,
                             color: Color(0xFF08A936),
                             size: 20,
-                          )
-                          : null,
+                          ),
+                          if (post.authorAvatarUrl.isNotEmpty)
+                            Image.network(
+                              post.authorAvatarUrl,
+                              fit: BoxFit.cover,
+                              cacheWidth: 120,
+                              errorBuilder:
+                                  (_, _, _) => const SizedBox.shrink(),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 9),
                 Expanded(

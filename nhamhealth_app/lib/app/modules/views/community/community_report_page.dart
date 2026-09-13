@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
@@ -51,7 +52,10 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
       widget.subject.toLowerCase() == 'post' && widget.commentId == null;
   @override
   Widget build(BuildContext context) => _Page(
-    title: 'community.report_post_title'.tr,
+    title:
+        widget.profileUserId != null
+            ? 'community.report_profile'.tr
+            : 'community.report_post_title'.tr,
     child: Column(
       children: [
         _Card(
@@ -85,7 +89,11 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
           child: Obx(
             () => Column(
               children: [
-                for (final reason in CommunityPostReportReason.values)
+                for (final reason in CommunityPostReportReason.values.where(
+                  (reason) =>
+                      widget.profileUserId == null ||
+                      reason != CommunityPostReportReason.copyright,
+                ))
                   _Reason(
                     reason: reason,
                     selected: controller.selectedReason.value == reason,
@@ -107,10 +115,11 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
   Future<void> next() async {
     final reason = controller.selectedReason.value;
     if (reason == null) return;
-    if (isPost) {
+    if (isPost || widget.profileUserId != null) {
       await Get.to<void>(
-        () => CommunityReportDetailsStepPage(
-          postId: widget.postId!,
+        () => CommunityReportReasonInfoPage(
+          postId: isPost ? widget.postId : null,
+          profileUserId: widget.profileUserId,
           controller: controller,
         ),
       );
@@ -152,13 +161,96 @@ class _CommunityReportPageState extends State<CommunityReportPage> {
   }
 }
 
-class CommunityReportDetailsStepPage extends StatefulWidget {
-  const CommunityReportDetailsStepPage({
-    required this.postId,
+class CommunityReportReasonInfoPage extends StatelessWidget {
+  const CommunityReportReasonInfoPage({
+    this.postId,
+    this.profileUserId,
     required this.controller,
     super.key,
-  });
-  final String postId;
+  }) : assert(postId != null || profileUserId != null);
+
+  final String? postId;
+  final int? profileUserId;
+  final CommunityReportController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = controller.selectedReason.value!;
+    return _Page(
+      title:
+          profileUserId != null
+              ? 'community.report_profile'.tr
+              : 'community.report_post_title'.tr,
+      step: 1,
+      child: _Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: _reasonColor(reason).withValues(alpha: .14),
+                  child: Icon(
+                    _reasonIcon(reason),
+                    color: _reasonColor(reason),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(reason.labelKey.tr, style: _title(context)),
+                      const SizedBox(height: 5),
+                      Text(reason.guidelineKey.tr, style: _muted(context)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Text('community.report_examples_include'.tr, style: _label(context)),
+            const SizedBox(height: 10),
+            for (final example in _reasonExamples(reason))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('•  ', style: _muted(context)),
+                    Expanded(child: Text(example.tr, style: _muted(context))),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 18),
+            _Buttons(
+              onBack: Get.back,
+              onNext:
+                  () => Get.to<void>(
+                    () => CommunityReportDetailsStepPage(
+                      postId: postId,
+                      profileUserId: profileUserId,
+                      controller: controller,
+                    ),
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CommunityReportDetailsStepPage extends StatefulWidget {
+  const CommunityReportDetailsStepPage({
+    this.postId,
+    this.profileUserId,
+    required this.controller,
+    super.key,
+  }) : assert(postId != null || profileUserId != null);
+  final String? postId;
+  final int? profileUserId;
   final CommunityReportController controller;
   @override
   State<CommunityReportDetailsStepPage> createState() => _DetailsState();
@@ -176,7 +268,10 @@ class _DetailsState extends State<CommunityReportDetailsStepPage> {
 
   @override
   Widget build(BuildContext context) => _Page(
-    title: 'community.report_post_title'.tr,
+    title:
+        widget.profileUserId != null
+            ? 'community.report_profile'.tr
+            : 'community.report_post_title'.tr,
     step: 2,
     child: _Card(
       child: Column(
@@ -201,9 +296,14 @@ class _DetailsState extends State<CommunityReportDetailsStepPage> {
               ),
             ),
           ),
-          Text('community.report_add_screenshots'.tr, style: _label(context)),
-          const SizedBox(height: 10),
-          _AttachmentPicker(controller: widget.controller),
+          if (widget.postId != null) ...[
+            Text(
+              'community.report_add_screenshots'.tr,
+              style: _label(context),
+            ),
+            const SizedBox(height: 10),
+            _AttachmentPicker(controller: widget.controller),
+          ],
           const SizedBox(height: 18),
           _Buttons(
             onBack: Get.back,
@@ -212,6 +312,7 @@ class _DetailsState extends State<CommunityReportDetailsStepPage> {
               Get.to<void>(
                 () => CommunityReportReviewPage(
                   postId: widget.postId,
+                  profileUserId: widget.profileUserId,
                   controller: widget.controller,
                 ),
               );
@@ -225,15 +326,20 @@ class _DetailsState extends State<CommunityReportDetailsStepPage> {
 
 class CommunityReportReviewPage extends StatelessWidget {
   const CommunityReportReviewPage({
-    required this.postId,
+    this.postId,
+    this.profileUserId,
     required this.controller,
     super.key,
-  });
-  final String postId;
+  }) : assert(postId != null || profileUserId != null);
+  final String? postId;
+  final int? profileUserId;
   final CommunityReportController controller;
   @override
   Widget build(BuildContext context) => _Page(
-    title: 'community.report_post_title'.tr,
+    title:
+        profileUserId != null
+            ? 'community.report_profile'.tr
+            : 'community.report_post_title'.tr,
     step: 3,
     child: _Card(
       child: Column(
@@ -250,6 +356,7 @@ class CommunityReportReviewPage extends StatelessWidget {
             change: () {
               Get.back<void>();
               Get.back<void>();
+              Get.back<void>();
             },
           ),
           _Review(
@@ -261,22 +368,52 @@ class CommunityReportReviewPage extends StatelessWidget {
                     : controller.description.value,
             change: Get.back,
           ),
-          _Review(
-            icon: Icons.image_outlined,
-            label: 'community.report_attachments'.tr,
-            value: 'community.report_image_count'.trParams({
-              'count': '${controller.attachments.length}',
-            }),
-            change: Get.back,
-          ),
+          if (postId != null)
+            _Review(
+              icon: Icons.image_outlined,
+              label: 'community.report_attachments'.tr,
+              value: 'community.report_image_count'.trParams({
+                'count': '${controller.attachments.length}',
+              }),
+              change: Get.back,
+            ),
           const SizedBox(height: 18),
           Obx(
             () => Column(
               children: [
                 if (controller.errorMessage.value case final message?) ...[
-                  Text(
-                    message,
-                    style: const TextStyle(color: Colors.redAccent),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.appDangerSurface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 19,
+                          color: context.appOnDangerSurface,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            message,
+                            style: TextStyle(
+                              color: context.appOnDangerSurface,
+                              fontSize: 12,
+                              height: 1.35,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -298,10 +435,18 @@ class CommunityReportReviewPage extends StatelessWidget {
                         label: 'community.submit_report'.tr,
                         loading: controller.isSubmitting.value,
                         onTap: () async {
-                          if (await controller.submitReport(postId) != null) {
+                          final submitted =
+                              postId != null
+                                  ? await controller.submitReport(postId!) !=
+                                      null
+                                  : await controller.submitProfileReport(
+                                    profileUserId!,
+                                  );
+                          if (submitted) {
                             Get.off<void>(
                               () => CommunityReportSuccessPage(
                                 controller: controller,
+                                isProfile: profileUserId != null,
                               ),
                             );
                           }
@@ -328,8 +473,14 @@ class CommunityReportReviewPage extends StatelessWidget {
 }
 
 class CommunityReportSuccessPage extends StatelessWidget {
-  const CommunityReportSuccessPage({required this.controller, super.key});
+  const CommunityReportSuccessPage({
+    required this.controller,
+    this.isProfile = false,
+    super.key,
+  });
   final CommunityReportController controller;
+  final bool isProfile;
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: context.appBackground,
@@ -344,44 +495,99 @@ class CommunityReportSuccessPage extends StatelessWidget {
               padding: AppSpacing.pagePaddingFor(context),
               child: Column(
                 children: [
-                  const Spacer(),
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFE0F9EA),
-                    ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      size: 76,
-                      color: _green,
-                    ),
+                  AppBackHeader(
+                    title: 'community.report_submitted'.tr,
+                    centerTitle: true,
+                    onBack: () {
+                      controller.resetForm();
+                      Get.offAllNamed<void>(AppRoutes.community);
+                    },
                   ),
                   const SizedBox(height: 26),
+                  SizedBox(
+                    width: 178,
+                    height: 178,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 144,
+                          height: 144,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color:
+                                context.appIsDark
+                                    ? context.appSoftGreen
+                                    : const Color(0xFFE2F9ED),
+                          ),
+                        ),
+                        Lottie.asset(
+                          'assets/animations/Report Plane.json',
+                          width: 178,
+                          height: 178,
+                          fit: BoxFit.contain,
+                          repeat: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     'community.report_thank_you'.tr,
-                    style: _title(context).copyWith(fontSize: 25),
+                    style: _title(context).copyWith(fontSize: 23),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'community.report_success_message'.tr,
-                    textAlign: TextAlign.center,
-                    style: _muted(context).copyWith(fontSize: 15),
+                  const SizedBox(height: 7),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: Text(
+                      'community.report_success_message'.tr,
+                      textAlign: TextAlign.center,
+                      style: _muted(context).copyWith(
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  _Card(
+                  const SizedBox(height: 22),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.appElevatedSurface,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: context.appBorder),
+                      boxShadow: context.appTileShadow,
+                    ),
                     child: Row(
                       children: [
-                        const CircleAvatar(
-                          backgroundColor: Color(0xFFE5F9ED),
-                          child: Icon(Icons.shield_outlined, color: _green),
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: context.appSoftGreen,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.shield_outlined,
+                            color: _green,
+                            size: 25,
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 13),
                         Expanded(
                           child: Text(
-                            'community.report_review_guidelines_message'.tr,
-                            style: _label(context),
+                            (isProfile
+                                    ? 'community.report_profile_review_guidelines_message'
+                                    : 'community.report_review_guidelines_message')
+                                .tr,
+                            style: _label(context).copyWith(
+                              fontSize: 13,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                       ],
@@ -400,8 +606,21 @@ class CommunityReportSuccessPage extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: OutlinedButton(
-                      onPressed: () => Get.offNamed<void>(AppRoutes.myReports),
-                      child: Text('community.view_my_reports'.tr),
+                      onPressed:
+                          () => Get.toNamed<void>(
+                            AppRoutes.communityGuidelines,
+                          ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _green,
+                        side: BorderSide(color: context.appBorder),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                      child: Text(
+                        'community.view_community_guidelines'.tr,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -2275,6 +2494,39 @@ TextStyle _label(BuildContext c) =>
     TextStyle(color: c.appText, fontSize: 14, fontWeight: FontWeight.w700);
 TextStyle _muted(BuildContext c) =>
     TextStyle(color: c.appMutedText, fontSize: 12, height: 1.4);
+List<String> _reasonExamples(CommunityPostReportReason reason) => switch (reason) {
+  CommunityPostReportReason.spam => const [
+    'community.report_example_spam_1',
+    'community.report_example_spam_2',
+    'community.report_example_spam_3',
+  ],
+  CommunityPostReportReason.harassment => const [
+    'community.report_example_harassment_1',
+    'community.report_example_harassment_2',
+    'community.report_example_harassment_3',
+  ],
+  CommunityPostReportReason.inappropriateContent => const [
+    'community.report_example_inappropriate_1',
+    'community.report_example_inappropriate_2',
+    'community.report_example_inappropriate_3',
+  ],
+  CommunityPostReportReason.falseInformation => const [
+    'community.report_example_false_1',
+    'community.report_example_false_2',
+    'community.report_example_false_3',
+  ],
+  CommunityPostReportReason.copyright => const [
+    'community.report_example_copyright_1',
+    'community.report_example_copyright_2',
+    'community.report_example_copyright_3',
+  ],
+  CommunityPostReportReason.other => const [
+    'community.report_example_other_1',
+    'community.report_example_other_2',
+    'community.report_example_other_3',
+  ],
+};
+
 IconData _reasonIcon(CommunityPostReportReason r) => switch (r) {
   CommunityPostReportReason.spam => Icons.warning_amber_rounded,
   CommunityPostReportReason.harassment => Icons.person_outline_rounded,

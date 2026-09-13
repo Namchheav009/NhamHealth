@@ -1321,14 +1321,26 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     );
   }
 
-  Widget _avatar(String url, {required double radius}) => CircleAvatar(
-    radius: radius,
-    backgroundColor: context.appSoftGreen,
-    backgroundImage: url.isEmpty ? null : NetworkImage(url),
-    child:
-        url.isEmpty
-            ? const Icon(Icons.person_outline_rounded, color: _green)
-            : null,
+  Widget _avatar(String url, {required double radius}) => ClipOval(
+    child: SizedBox.square(
+      dimension: radius * 2,
+      child: ColoredBox(
+        color: context.appSoftGreen,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Icon(Icons.person_outline_rounded, color: _green),
+            if (url.isNotEmpty)
+              Image.network(
+                url,
+                fit: BoxFit.cover,
+                cacheWidth: 120,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+          ],
+        ),
+      ),
+    ),
   );
 
   String _commentAge(String value) {

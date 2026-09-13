@@ -26,6 +26,20 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
   static const infoBorder = Color(0xFFDBEAFE);
   static const infoBlue = Color(0xFF2563EB);
 
+  Color _selectedSurface(BuildContext context) =>
+      context.appIsDark
+          ? Color.alphaBlend(green.withValues(alpha: .18), context.appSurfaceLow)
+          : mintSelected;
+
+  Color _previewSurface(BuildContext context) =>
+      context.appIsDark ? context.appSoftGreen : mintBackground;
+
+  Color _previewBorder(BuildContext context) =>
+      context.appIsDark ? green.withValues(alpha: .45) : mintBorder;
+
+  Color _accentText(BuildContext context) =>
+      context.appIsDark ? const Color(0xFF5EE09A) : greenDark;
+
   late final TextEditingController _foodAmountTextController;
 
   @override
@@ -349,7 +363,7 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
 
     return Expanded(
       child: Material(
-        color: isSelected ? mintSelected : context.appSurfaceLow,
+        color: isSelected ? _selectedSurface(context) : context.appSurfaceLow,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: () => _onQuickFoodAmountSelected(value),
@@ -452,7 +466,10 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
           data: SliderTheme.of(context).copyWith(
             trackHeight: 6,
             activeTrackColor: green,
-            inactiveTrackColor: const Color(0xFFE5E7EB),
+            inactiveTrackColor:
+                context.appIsDark
+                    ? context.appColorScheme.surfaceContainerHighest
+                    : const Color(0xFFE5E7EB),
             thumbColor: green,
             overlayColor: green.withValues(alpha: .14),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
@@ -477,7 +494,7 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                      color: active ? greenDark : context.appMutedText,
+                      color: active ? _accentText(context) : context.appMutedText,
                     ),
                   );
                 }).toList(),
@@ -501,7 +518,10 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
                   child: Padding(
                     padding: EdgeInsets.only(right: sugar == 100 ? 0 : 7),
                     child: Material(
-                      color: isSelected ? mintSelected : context.appSurfaceLow,
+                      color:
+                          isSelected
+                              ? _selectedSurface(context)
+                              : context.appSurfaceLow,
                       borderRadius: BorderRadius.circular(10),
                       child: InkWell(
                         onTap:
@@ -571,7 +591,7 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
   }) {
     return Expanded(
       child: Material(
-        color: isSelected ? mintSelected : context.appSurfaceLow,
+        color: isSelected ? _selectedSurface(context) : context.appSurfaceLow,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -616,7 +636,10 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? greenDark : context.appMutedText,
+                      color:
+                          isSelected
+                              ? _accentText(context)
+                              : context.appMutedText,
                     ),
                   ),
                 ],
@@ -640,9 +663,9 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: mintBackground,
+        color: _previewSurface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: mintBorder),
+        border: Border.all(color: _previewBorder(context)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -651,9 +674,9 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appElevatedSurface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: mintBorder),
+              border: Border.all(color: _previewBorder(context)),
             ),
             clipBehavior: Clip.antiAlias,
             child:
@@ -673,8 +696,8 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: greenDark,
+                  style: TextStyle(
+                    color: _accentText(context),
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -723,20 +746,35 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
-        color: infoBackground,
+        color:
+            context.appIsDark
+                ? const Color(0xFF102A43)
+                : infoBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: infoBorder),
+        border: Border.all(
+          color:
+              context.appIsDark
+                  ? const Color(0xFF315A7D)
+                  : infoBorder,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: infoBlue, size: 19),
+          Icon(
+            Icons.info_outline_rounded,
+            color: context.appIsDark ? const Color(0xFF93C5FD) : infoBlue,
+            size: 19,
+          ),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFF1E40AF),
+              style: TextStyle(
+                color:
+                    context.appIsDark
+                        ? const Color(0xFFBFDBFE)
+                        : const Color(0xFF1E40AF),
                 fontSize: 12,
                 height: 1.35,
                 fontWeight: FontWeight.w500,
@@ -785,6 +823,7 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
                 onPressed: () => Navigator.of(context).pop(true),
                 style: FilledButton.styleFrom(
                   backgroundColor: green,
+                  foregroundColor: context.appOnBrand,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

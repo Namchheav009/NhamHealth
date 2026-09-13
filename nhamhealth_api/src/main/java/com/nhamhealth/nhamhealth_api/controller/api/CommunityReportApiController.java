@@ -6,12 +6,12 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import com.nhamhealth.nhamhealth_api.dto.request.CreatePostReportRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.CreateReportRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.ReportResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.PageResponse;
 import com.nhamhealth.nhamhealth_api.entity.ReportType;
 import com.nhamhealth.nhamhealth_api.service.community.ReportModerationService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Collection;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -56,11 +56,11 @@ public class CommunityReportApiController {
   }
 
   @GetMapping("/reports/me")
-  public Page<ReportResponse> mine(
+  public PageResponse<ReportResponse> mine(
       @AuthenticationPrincipal Jwt jwt,
       @PageableDefault(size = 50, sort = "createdAt", direction = Sort.Direction.DESC)
           Pageable pageable) {
-    return service.mine(userId(jwt), pageable);
+    return PageResponse.from(service.mine(userId(jwt), pageable));
   }
 
   @GetMapping("/reports/{id}")

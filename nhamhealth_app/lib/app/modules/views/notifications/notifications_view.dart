@@ -134,8 +134,18 @@ class _NotificationsHeader extends StatelessWidget {
                   ? const SizedBox(width: 44)
                   : IconButton(
                     tooltip: 'notifications.mark_all_read'.tr,
-                    onPressed: controller.markAllRead,
-                    icon: const Icon(Icons.done_all_rounded),
+                    onPressed:
+                        controller.isMarkingAllRead.value
+                            ? null
+                            : controller.markAllRead,
+                    icon:
+                        controller.isMarkingAllRead.value
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Icon(Icons.done_all_rounded),
                     color: AppColors.primaryGreen,
                   ),
         ),
@@ -348,11 +358,17 @@ class _NhamHealthNotificationAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(7),
       child: Image.asset(
-        'assets/icons/logo.png',
+        'assets/icons/primary_logo.png',
         fit: BoxFit.contain,
         semanticLabel: 'Nham Health',
+        errorBuilder:
+            (_, _, _) => const Icon(
+              Icons.health_and_safety_rounded,
+              color: AppColors.primaryGreen,
+              size: 30,
+            ),
       ),
     );
   }

@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../config/api_config.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
@@ -33,7 +37,7 @@ class EditProfileView extends GetView<EditProfileController> {
 
                     const SizedBox(height: 12),
 
-                    // _buildProfileHeader(context),
+                    _buildProfileHeader(context),
                     const SizedBox(height: 12),
 
                     _buildPersonalInformation(context),
@@ -88,6 +92,135 @@ class EditProfileView extends GetView<EditProfileController> {
   // -----------------------------------------
   // PROFILE HEADER
   // -----------------------------------------
+
+  Widget _buildProfileHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
+      ),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Obx(() {
+                final image = _editAvatarImage();
+                return CircleAvatar(
+                  radius: 38,
+                  backgroundColor: context.appSoftGreen,
+                  backgroundImage: image,
+                  child:
+                      image == null
+                          ? const Icon(
+                            Icons.person_outline_rounded,
+                            size: 39,
+                            color: green,
+                          )
+                          : null,
+                );
+              }),
+              Positioned(
+                right: -2,
+                bottom: -1,
+                child: Material(
+                  color: context.appSurface,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: controller.pickProfileImage,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: green),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 17,
+                        color: green,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Obx(() {
+              final name = controller.fullName.value.trim();
+              final email = controller.email.value.trim();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name.isEmpty ? controller.profileName.value : name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    email.isEmpty ? controller.profileEmail.value : email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.appSoftGreen,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      controller.membership.value.trOrSelf,
+                      style: const TextStyle(
+                        color: green,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ImageProvider<Object>? _editAvatarImage() {
+    final localPath = controller.profileImagePath.value.trim();
+    if (localPath.isNotEmpty) return FileImage(File(localPath));
+
+    final remotePath =
+        controller.profileController.authenticatedUser.value?.profileImageUrl
+            ?.trim();
+    if (remotePath == null || remotePath.isEmpty) return null;
+    final url =
+        remotePath.startsWith('http://') || remotePath.startsWith('https://')
+            ? remotePath
+            : '${ApiConfig.baseUrl}${remotePath.startsWith('/') ? '' : '/'}$remotePath';
+    return NetworkImage(url);
+  }
 
   // Widget _buildProfileHeader(BuildContext context) {
   //   return Container(
@@ -249,25 +382,32 @@ class EditProfileView extends GetView<EditProfileController> {
       child: Obx(
         () => Column(
           children: [
-            EditInfoRow(
+            InlineEditInfoRow(
               icon: Icons.person_outline_rounded,
               iconColor: green,
               iconBackground: const Color(0xFFE9F8EC),
               label: 'profile.full_name',
-              value: controller.fullName.value,
-              onTap: controller.editFullName,
+              initialValue: controller.fullName.value,
+              hintText: 'profile.full_name'.tr,
+              maxLength: 70,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(r"[a-zA-Z\u1780-\u17FF\s'-]"),
+                ),
+              ],
+              onChanged: controller.updateFullName,
             ),
 
-            EditInfoRow(
+            InlineEditInfoRow(
               icon: Icons.email_outlined,
               iconColor: const Color(0xFF5275F5),
               iconBackground: const Color(0xFFEEF1FF),
               label: 'profile.email',
-              value: controller.email.value,
-              onTap:
-                  controller.isContactVerificationBusy.value
-                      ? null
-                      : controller.editEmail,
+              initialValue: controller.email.value,
+              hintText: 'profile.email'.tr,
+              keyboardType: TextInputType.emailAddress,
+              onChanged: controller.updateEmail,
+              onFieldSubmitted: controller.verifyCurrentEmail,
               trailing:
                   controller.isContactVerificationBusy.value &&
                           controller.verifyingContactType.value == 'email'
@@ -279,22 +419,24 @@ class EditProfileView extends GetView<EditProfileController> {
                       : controller.email.value.isNotEmpty &&
                           controller.isEmailVerified.value
                       ? _verifiedBadge()
-                      : null,
+                      : controller.email.value.trim().isEmpty
+                      ? null
+                      : _verifyButton(controller.verifyCurrentEmail),
             ),
 
-            EditInfoRow(
+            InlineEditInfoRow(
               icon: Icons.phone_outlined,
               iconColor: green,
               iconBackground: const Color(0xFFE9F8EC),
               label: 'profile.phone',
-              value:
-                  controller.phone.value.isEmpty
-                      ? 'Not set'
-                      : controller.phone.value,
-              onTap:
-                  controller.isContactVerificationBusy.value
-                      ? null
-                      : controller.editPhone,
+              initialValue: controller.phone.value,
+              hintText: 'profile.not_set'.tr,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ()-]')),
+              ],
+              onChanged: controller.updatePhone,
+              onFieldSubmitted: (_) => controller.verifyPhone(),
               trailing:
                   controller.isContactVerificationBusy.value &&
                           controller.verifyingContactType.value == 'phone'
@@ -303,44 +445,12 @@ class EditProfileView extends GetView<EditProfileController> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                      : controller.phone.value.isEmpty
-                      ? null
-                      : controller.isPhoneVerified.value
+                      : controller.phone.value.isNotEmpty &&
+                          controller.isPhoneVerified.value
                       ? _verifiedBadge()
-                      : InkWell(
-                        onTap: controller.verifyPhone,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF4E5),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFFF9800)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.verified_outlined,
-                                size: 12,
-                                color: Color(0xFFE65100),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'profile.verify'.tr,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFE65100),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      : controller.phone.value.trim().isEmpty
+                      ? null
+                      : _verifyButton(controller.verifyPhone),
             ),
 
             if (controller.verificationDetail.value.isNotEmpty)
@@ -433,6 +543,29 @@ class EditProfileView extends GetView<EditProfileController> {
     );
   }
 
+  Widget _verifyButton(VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4E5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFFF9800)),
+        ),
+        child: Text(
+          'profile.verify'.tr,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFE65100),
+          ),
+        ),
+      ),
+    );
+  }
+
   // -----------------------------------------
   // BODY AND HEALTH
   // -----------------------------------------
@@ -474,43 +607,61 @@ class EditProfileView extends GetView<EditProfileController> {
             child: Obx(
               () => Column(
                 children: [
-                  EditInfoRow(
+                  InlineEditInfoRow(
                     icon: Icons.person_outline_rounded,
                     iconColor: green,
                     iconBackground: const Color(0xFFE9F8EC),
                     label: 'profile.age',
-                    value:
+                    initialValue:
                         controller.age.value > 0
-                            ? 'profile.value_years'.trParams({
-                              'value': '${controller.age.value}',
-                            })
-                            : 'Not set',
-                    onTap: controller.editAge,
+                            ? controller.age.value.toString()
+                            : '',
+                    hintText: 'profile.not_set'.tr,
+                    suffixText: 'profile.years'.tr,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: controller.updateAge,
                   ),
 
-                  EditInfoRow(
+                  InlineEditInfoRow(
                     icon: Icons.accessibility_new_rounded,
                     iconColor: const Color(0xFF5275F5),
                     iconBackground: const Color(0xFFEDF1FF),
                     label: 'profile.height',
-                    value:
+                    initialValue:
                         controller.height.value > 0
-                            ? '${controller.height.value.toStringAsFixed(0)} cm'
-                            : 'Not set',
-                    onTap: controller.editHeight,
+                            ? controller.height.value.toStringAsFixed(0)
+                            : '',
+                    hintText: 'profile.not_set'.tr,
+                    suffixText: 'cm',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                    onChanged: controller.updateHeight,
                   ),
 
-                  EditInfoRow(
+                  InlineEditInfoRow(
                     icon: Icons.monitor_weight_outlined,
                     iconColor: const Color(0xFF3D315B),
                     iconBackground: const Color(0xFFF0ECFF),
                     label: 'profile.weight',
-                    value:
+                    initialValue:
                         controller.weight.value > 0
-                            ? '${controller.weight.value.toStringAsFixed(0)} kg'
-                            : 'Not set',
+                            ? controller.weight.value.toStringAsFixed(0)
+                            : '',
+                    hintText: 'profile.not_set'.tr,
+                    suffixText: 'kg',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
                     showDivider: false,
-                    onTap: controller.editWeight,
+                    onChanged: controller.updateWeight,
                   ),
                 ],
               ),

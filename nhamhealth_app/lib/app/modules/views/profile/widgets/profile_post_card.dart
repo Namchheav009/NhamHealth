@@ -77,16 +77,34 @@ class ProfilePostCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: green.withValues(alpha: .24)),
                     ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: context.appSoftGreen,
-                      foregroundImage: _avatarImage,
-                      child: Text(
-                        _initials,
-                        style: const TextStyle(
-                          color: green,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                    child: ClipOval(
+                      child: SizedBox.square(
+                        dimension: 40,
+                        child: ColoredBox(
+                          color: context.appSoftGreen,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Center(
+                                child: Text(
+                                  _initials,
+                                  style: const TextStyle(
+                                    color: green,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              if (_avatarUrl case final url?)
+                                Image.network(
+                                  url,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 120,
+                                  errorBuilder:
+                                      (_, _, _) => const SizedBox.shrink(),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -316,14 +334,12 @@ class ProfilePostCard extends StatelessWidget {
     );
   }
 
-  ImageProvider<Object>? get _avatarImage {
+  String? get _avatarUrl {
     final value = (authorAvatarUrl ?? post.authorAvatarUrl).trim();
     if (value.isEmpty) return null;
-    final imageUrl =
-        value.startsWith('http://') || value.startsWith('https://')
-            ? value
-            : '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
-    return NetworkImage(imageUrl);
+    return value.startsWith('http://') || value.startsWith('https://')
+        ? value
+        : '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
 
   List<String> get _imageUrls =>

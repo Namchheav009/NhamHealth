@@ -219,6 +219,25 @@ const Map<String, String> communityEn = {
   'community.saved_post': 'Saved post',
   'community.report_post_title': 'Report post',
   'community.report_private': 'Your report is private and will be reviewed.',
+  'community.report_examples_include': 'Examples include:',
+  'community.report_example_spam_1': 'Promoting unrelated products or services',
+  'community.report_example_spam_2': 'Repeated or duplicate content',
+  'community.report_example_spam_3': 'Fake engagement or unsolicited advertising',
+  'community.report_example_harassment_1': 'Threats, bullying, or targeted insults',
+  'community.report_example_harassment_2': 'Hateful or discriminatory language',
+  'community.report_example_harassment_3': 'Repeated unwanted contact',
+  'community.report_example_inappropriate_1': 'Graphic violence or sexual content',
+  'community.report_example_inappropriate_2': 'Content that may endanger others',
+  'community.report_example_inappropriate_3': 'Disturbing or highly sensitive media',
+  'community.report_example_false_1': 'Misleading health or nutrition claims',
+  'community.report_example_false_2': 'Fabricated facts presented as verified',
+  'community.report_example_false_3': 'Dangerous advice without reliable evidence',
+  'community.report_example_copyright_1': 'Using someone else’s work without permission',
+  'community.report_example_copyright_2': 'Reposting protected photos or recipes',
+  'community.report_example_copyright_3': 'Claiming another creator’s work as your own',
+  'community.report_example_other_1': 'Content that puts community members at risk',
+  'community.report_example_other_2': 'Attempts to evade community rules',
+  'community.report_example_other_3': 'Another clear Community Guidelines violation',
   'community.report_more_details': 'Provide more details',
   'community.report_details_help':
       'Please tell us more about the issue. This helps us review your report faster.',
@@ -238,8 +257,14 @@ const Map<String, String> communityEn = {
   'community.report_thank_you': 'Thank you!',
   'community.report_success_message':
       'Your report has been submitted successfully.',
+  'community.report_already_submitted':
+      'You have already reported this post. Our team will review your existing report.',
+  'community.report_profile_already_submitted':
+      'You have already reported this profile. Our team will review your existing report.',
   'community.report_review_guidelines_message':
       'Our team will review this post and take action if it violates our Community Guidelines.',
+  'community.report_profile_review_guidelines_message':
+      'Our team will review this profile and take action if it violates our Community Guidelines.',
   'community.view_my_reports': 'View My Reports',
   'community.my_reports': 'My Reports',
   'community.report_empty': 'You have not submitted any reports yet.',
@@ -262,6 +287,7 @@ const Map<String, String> communityEn = {
   'community.report_reason_copyright': 'Copyright',
   'community.report_reason_other': 'Other',
   'community.community_guidelines': 'Community Guidelines',
+  'community.view_community_guidelines': 'View Community Guidelines',
   'community.report_guideline_spam':
       "Don't post unsolicited advertising, scams, or repetitive content.",
   'community.report_guideline_harassment':
@@ -289,7 +315,7 @@ const Map<String, String> communityEn = {
   'community.report_what_happens_next': 'What happens next?',
   'community.report_what_happens_next_desc':
       'Our team will review the reported content against our Community Guidelines. This usually takes 1–3 days.',
-  'community.report_delete': 'Delete this report',
+  'community.report_delete': 'Delete report',
   'community.report_delete_confirm':
       'Are you sure you want to delete this report?',
   'community.report_delete_desc':

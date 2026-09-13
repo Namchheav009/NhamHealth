@@ -43,11 +43,11 @@ public class ReportApiController {
   }
 
   @GetMapping("/my")
-  public Page<ReportResponse> mine(
+  public PageResponse<ReportResponse> mine(
       @AuthenticationPrincipal Jwt jwt,
       @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
           Pageable pageable) {
-    return service.mine(userId(jwt), pageable);
+    return PageResponse.from(service.mine(userId(jwt), pageable));
   }
 
   @PostMapping("/appeals")

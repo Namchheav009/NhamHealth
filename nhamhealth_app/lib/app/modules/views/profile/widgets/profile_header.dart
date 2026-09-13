@@ -591,10 +591,10 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) => SafeArea(
     top: false,
     child: Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 22),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -610,29 +610,29 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Center(
             child: Text(
               'profile.photo'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.appText,
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Center(
             child: Text(
               'profile.manage_photo'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(color: context.appMutedText, fontSize: 14),
+              style: TextStyle(color: context.appMutedText, fontSize: 12),
             ),
           ),
-          const SizedBox(height: 18),
-          Center(child: SizedBox(width: 92, height: 92, child: image)),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Center(child: SizedBox(width: 72, height: 72, child: image)),
+          const SizedBox(height: 14),
           _PhotoAction(
             icon: Icons.visibility_outlined,
             title: 'profile.view_current_photo'.tr,
@@ -642,7 +642,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
             enabled: true,
             onTap: onView,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _PhotoAction(
             icon: Icons.image_outlined,
             title: 'profile.choose_new_photo'.tr,
@@ -651,7 +651,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
             background: const Color(0xFFEAF2FF),
             onTap: onChoose,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _PhotoAction(
             icon: Icons.delete_outline_rounded,
             title: 'profile.remove_current_photo'.tr,
@@ -661,7 +661,7 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
             enabled: true,
             onTap: onRemove,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             child: TextButton(
@@ -673,14 +673,14 @@ class _ProfilePhotoOptionsSheet extends StatelessWidget {
                         : const Color(0xFFF5F5F7),
                 foregroundColor:
                     context.appIsDark ? context.appText : Colors.black87,
-                minimumSize: const Size.fromHeight(56),
+                minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: Text(
                 'common.cancel'.tr,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -715,7 +715,7 @@ class _PhotoAction extends StatelessWidget {
     child: Material(
       color: context.appIsDark ? context.appElevatedSurface : Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color:
               context.appIsDark ? context.appBorder : const Color(0xFFE5E5E5),
@@ -729,21 +729,27 @@ class _PhotoAction extends StatelessWidget {
                   await onTap();
                 }
                 : null,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: background,
-                  borderRadius: BorderRadius.circular(14),
+                  color:
+                      context.appIsDark
+                          ? Color.alphaBlend(
+                            background.withValues(alpha: .18),
+                            context.appElevatedSurface,
+                          )
+                          : background,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon, color: color, size: 23),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -752,22 +758,22 @@ class _PhotoAction extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: color,
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
                         color: context.appMutedText,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: context.appMutedText, size: 30),
+              Icon(Icons.chevron_right, color: context.appMutedText, size: 24),
             ],
           ),
         ),
