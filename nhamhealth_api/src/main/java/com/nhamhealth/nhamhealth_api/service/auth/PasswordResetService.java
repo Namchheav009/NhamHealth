@@ -167,10 +167,20 @@ public class PasswordResetService {
         if ("SMS".equals(deliveryMethod)) {
             String message = String.format(Locale.ROOT,
                     "Your NhamHealth verification code is %s. It expires in 5 minutes.", rawCode);
-            if (!smsService.sendSms(destination, message)) {
+            boolean sent;
+            try {
+                sent = smsService.sendSms(destination, message);
+            } catch (RuntimeException exception) {
+                LOGGER.error("SMS gateway failed for password reset to {}",
+                        PlasgateSmsService.maskPhone(destination), exception);
                 throw new PasswordResetException(
                         HttpStatus.SERVICE_UNAVAILABLE,
-                        "We could not send the SMS verification code. Please try again shortly");
+                        "The SMS service could not send your code. Check the gateway configuration and try again");
+            }
+            if (!sent) {
+                throw new PasswordResetException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "The SMS gateway rejected the verification message. Check its sender ID, balance, and trusted server IP");
             }
         } else {
             sendResetEmail(destination, rawCode);
@@ -184,13 +194,32 @@ public class PasswordResetService {
         String destination = isPhone ? smsService.normalizePhoneNumber(requestedIdentity)
                 : normalizeEmail(requestedIdentity);
 
-        VerificationCode verificationCode = verificationCodeRepository
+        VerificationCode latestCode = verificationCodeRepository
                 .findFirstByDestinationIgnoreCaseAndPurposeOrderByCreatedAtDesc(destination, PURPOSE)
                 .orElseThrow(this::invalidCode);
 
         LocalDateTime now = LocalDateTime.now();
+        String normalizedCode = rawCode == null ? "" : rawCode.trim();
+        VerificationCode verificationCode = latestCode;
 
-        if (!"PENDING".equals(verificationCode.getStatus())) {
+        // Email delivery order is not guaranteed. If a resend arrives before
+        // the earlier message, accept that recently superseded code while it
+        // is still within its original short expiration window.
+        if (!passwordEncoder.matches(normalizedCode, latestCode.getCodeHash())) {
+            verificationCode = verificationCodeRepository
+                    .findByDestinationIgnoreCaseAndPurposeAndStatus(
+                            destination, PURPOSE, "SUPERSEDED")
+                    .stream()
+                    .filter(candidate -> candidate.getExpiresAt().isAfter(now))
+                    .filter(candidate -> candidate.getCreatedAt().isAfter(now.minus(codeTtl)))
+                    .filter(candidate -> passwordEncoder.matches(
+                            normalizedCode, candidate.getCodeHash()))
+                    .findFirst()
+                    .orElse(latestCode);
+        }
+
+        if (!"PENDING".equals(verificationCode.getStatus())
+                && !"SUPERSEDED".equals(verificationCode.getStatus())) {
             throw invalidCode();
         }
         if (verificationCode.getExpiresAt().isBefore(now)) {
@@ -207,7 +236,7 @@ public class PasswordResetService {
                     "Too many incorrect attempts. Request a new code");
         }
 
-        if (!passwordEncoder.matches(rawCode.trim(), verificationCode.getCodeHash())) {
+        if (!passwordEncoder.matches(normalizedCode, verificationCode.getCodeHash())) {
             int attempts = verificationCode.getAttemptCount() + 1;
             verificationCode.setAttemptCount(attempts);
             if (attempts >= maximumAttempts) {
@@ -225,6 +254,13 @@ public class PasswordResetService {
         verificationCode.setVerifiedAt(now);
         verificationCode.setStatus("VERIFIED");
         verificationCodeRepository.save(verificationCode);
+        Integer verifiedCodeId = verificationCode.getVerificationId();
+        verificationCodeRepository
+                .findByDestinationIgnoreCaseAndPurposeAndStatus(
+                        destination, PURPOSE, "PENDING")
+                .stream()
+                .filter(code -> !code.getVerificationId().equals(verifiedCodeId))
+                .forEach(code -> code.setStatus("SUPERSEDED"));
 
         User user = verificationCode.getUser();
         passwordResetTokenRepository.findByUserAndUsedAtIsNull(user).forEach(token -> token.setUsedAt(now));

@@ -476,13 +476,20 @@ class AuthService {
         (path.contains('/auth/login') ||
             path.contains('/auth/register') ||
             path.contains('/auth/verify'));
+    final isPasswordRecovery =
+        path != null &&
+        (path.contains('/auth/forgot-password') ||
+            path.contains('/auth/verify-reset-code') ||
+            path.contains('/auth/reset-password'));
 
     return switch (response.statusCode) {
       301 || 302 || 303 || 307 || 308 =>
         'The API redirected the request to a web page. Restart the API '
             'and verify API_BASE_URL (${ApiConfig.baseUrl}).',
       400 =>
-        isAuthEndpoint
+        isPasswordRecovery
+            ? 'The password recovery request was rejected by the server.'
+            : isAuthEndpoint
             ? 'The sign-in request was rejected by the server.'
             : 'The request was rejected by the server.',
       401 =>
@@ -495,7 +502,9 @@ class AuthService {
             ? 'The sign-in endpoint was not found. Verify API_BASE_URL (${ApiConfig.baseUrl}).'
             : 'The requested resource was not found.',
       500 =>
-        isAuthEndpoint
+        isPasswordRecovery
+            ? 'The server could not complete password recovery. Check the API logs.'
+            : isAuthEndpoint
             ? 'The server could not complete sign in. Check the API logs.'
             : 'The server encountered an error. Check the API logs.',
       502 ||

@@ -98,14 +98,17 @@ class VerificationController extends GetxController {
       return;
     }
 
+    final submittedCode = code.value;
     hasError.value = false;
+    // Set this before changing focus. Some Android keyboards submit when focus
+    // is dismissed, which could otherwise start a second verification request.
+    isLoading.value = true;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
-      isLoading.value = true;
       if (isRegistration.value) {
         final response = await _authService.verifyRegistration(
           email: userEmail.value,
-          code: code.value,
+          code: submittedCode,
         );
         final security = Get.find<AppSecurityService>();
         security.syncPinState(response.user.hasPin);
@@ -114,7 +117,7 @@ class VerificationController extends GetxController {
       } else if (isLogin.value) {
         final response = await _authService.verifyLogin(
           email: userEmail.value,
-          code: code.value,
+          code: submittedCode,
         );
         final security = Get.find<AppSecurityService>();
         security.syncPinState(response.user.hasPin);
@@ -123,7 +126,7 @@ class VerificationController extends GetxController {
       } else {
         final resetToken = await _authService.verifyPasswordResetCode(
           email: userEmail.value,
-          code: code.value,
+          code: submittedCode,
         );
         _countdownTimer?.cancel();
         Get.off(

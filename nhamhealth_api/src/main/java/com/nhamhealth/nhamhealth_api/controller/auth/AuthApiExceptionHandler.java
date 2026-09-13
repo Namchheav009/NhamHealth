@@ -46,6 +46,12 @@ public class AuthApiExceptionHandler {
                 .body(new AuthErrorResponse(exception.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<AuthErrorResponse> handleInvalidArgument(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new AuthErrorResponse(exception.getMessage()));
+    }
+
     @ExceptionHandler(DataAccessException.class)
     ResponseEntity<AuthErrorResponse> handleDatabaseFailure(DataAccessException exception) {
         LOGGER.error("Authentication database request failed", exception);
@@ -58,6 +64,6 @@ public class AuthApiExceptionHandler {
     ResponseEntity<AuthErrorResponse> handleUnexpectedFailure(Exception exception) {
         LOGGER.error("Unexpected authentication API failure", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new AuthErrorResponse("The server could not complete sign in"));
+                .body(new AuthErrorResponse("The server could not complete the authentication request"));
     }
 }
