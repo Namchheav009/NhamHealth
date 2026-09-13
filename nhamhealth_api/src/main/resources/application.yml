@@ -9,3 +9,14 @@ spring:
       keepalive-time: ${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:60000}
       connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:30000}
       initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:30000}
+
+app:
+  sms:
+    plasgate:
+      enabled: ${PLASGATE_SMS_ENABLED:true}
+      fallback-to-console: ${PLASGATE_SMS_FALLBACK_TO_CONSOLE:false}
+      base-url: ${PLASGATE_BASE_URL:https://cloudapi.plasgate.com}
+      private-key: ${PLASGATE_PRIVATE_KEY:}
+      secret-key: ${PLASGATE_SECRET_KEY:}
+      sender-id: ${PLASGATE_SENDER_ID:PlasGateUAT}
+      fallback-sender-id: ${PLASGATE_FALLBACK_SENDER_ID:}
