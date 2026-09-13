@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/profile/change_password_controller.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
+import 'package:nhamhealth_flutter/app/modules/models/auth/login_response.dart';
 
 void main() {
   test('PIN or biometrics must approve a valid password update', () async {
@@ -31,10 +32,11 @@ class _RecordingAuthService extends AuthService {
   int changePasswordCalls = 0;
 
   @override
-  Future<void> changePassword({
+  Future<LoginResponse> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
     changePasswordCalls++;
+    throw UnimplementedError();
   }
 }

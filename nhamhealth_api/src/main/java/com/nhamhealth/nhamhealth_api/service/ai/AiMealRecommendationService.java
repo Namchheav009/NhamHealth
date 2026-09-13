@@ -318,7 +318,8 @@ public class AiMealRecommendationService {
                         "topP", 0.9,
                         "maxOutputTokens", textMaxTokens));
         String responseBody = client.post()
-                .uri(normalizedBaseUrl() + "/models/" + targetModel + ":generateContent?key=" + apiKey)
+                .uri(normalizedBaseUrl() + "/models/" + targetModel + ":generateContent")
+                .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(body).retrieve().body(String.class);

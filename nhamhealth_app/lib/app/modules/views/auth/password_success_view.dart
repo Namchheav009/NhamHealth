@@ -7,7 +7,7 @@ import 'widgets/auth_flow_scaffold.dart';
 import 'widgets/social_login_button.dart';
 
 class PasswordSuccessController extends GetxController {
-  void backToLogin() => Get.offAllNamed(AppRoutes.login);
+  void continueToApp() => Get.offAllNamed(AppRoutes.home);
 }
 
 class PasswordSuccessView extends StatelessWidget {
@@ -36,9 +36,9 @@ class PasswordSuccessView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           AuthPrimaryButton(
-            label: 'auth.back_to_sign_in',
+            label: 'auth.continue_to_app',
             loading: false,
-            onPressed: controller.backToLogin,
+            onPressed: controller.continueToApp,
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
 import '../../views/auth/forgot_password_view.dart';
@@ -104,6 +105,7 @@ class ChangePasswordController extends GetxController {
         title: 'profile.password_updated',
         message: 'profile.your_password_has_been_updated',
       );
+      Get.offAllNamed<void>(AppRoutes.home);
     } on AuthException catch (error) {
       await AppAlert.actionError(
         title: 'profile.could_not_update_password',

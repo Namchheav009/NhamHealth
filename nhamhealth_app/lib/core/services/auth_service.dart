@@ -93,17 +93,23 @@ class AuthService {
     return resetToken;
   }
 
-  Future<void> resetPassword({
+  Future<LoginResponse> resetPassword({
     required String resetToken,
     required String newPassword,
   }) async {
-    await _postJson('/api/v1/auth/reset-password', {
+    final payload = await _postJson('/api/v1/auth/reset-password', {
       'resetToken': resetToken,
       'newPassword': newPassword,
     });
+    final response = LoginResponse.fromJson(payload);
+    await _tokenStorage.saveTokens(
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    );
+    return response;
   }
 
-  Future<void> changePassword({
+  Future<LoginResponse> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
@@ -113,10 +119,16 @@ class AuthService {
         'Your session has expired. Please sign in again.',
       );
     }
-    await _postJson('/api/v1/auth/change-password', {
+    final payload = await _postJson('/api/v1/auth/change-password', {
       'currentPassword': currentPassword,
       'newPassword': newPassword,
     }, accessToken: token);
+    final response = LoginResponse.fromJson(payload);
+    await _tokenStorage.saveTokens(
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    );
+    return response;
   }
 
   Future<void> setAppPin(String pin) async {

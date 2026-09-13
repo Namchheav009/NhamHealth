@@ -4,6 +4,7 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    
     {
       "name": "NhamHealth API (Supabase)",
       "cwd": "nhamhealth_api",
@@ -34,15 +35,19 @@
       ]
     },
     {
-      "name": "nhamhealth_app (profile mode)",
+      "name": "NhamHealth App (physical phone, local API, profile)",
       "cwd": "nhamhealth_app",
       "request": "launch",
       "type": "dart",
       "flutterMode": "profile",
-      "toolArgs": ["--dart-define-from-file=config/google_oauth.json"]
+      "preLaunchTask": "Configure physical phone API",
+      "toolArgs": [
+        "--dart-define-from-file=config/google_oauth.json",
+        "--dart-define-from-file=config/local_api.json"
+      ]
     },
     {
-      "name": "nhamhealth_app (release mode)",
+      "name": "NhamHealth App (production Render, release)",
       "cwd": "nhamhealth_app",
       "request": "launch",
       "type": "dart",

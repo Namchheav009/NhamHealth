@@ -46,6 +46,7 @@ const Map<String, String> authEn = {
   'auth.passwords_do_not_match_try_again': 'Passwords do not match. Try again.',
   'auth.reset_password': 'Reset password',
   'auth.back_to_sign_in': 'Back to sign in',
+  'auth.continue_to_app': 'Continue to app',
   'auth.password_changed': 'Password changed!',
   'auth.your_account_is_ready_to_use_again':
       'Your account is ready to use again.',

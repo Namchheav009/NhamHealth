@@ -271,6 +271,25 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                     passResult.completionTokens(),
                     (System.nanoTime() - startedAt) / 1_000_000);
         } catch (ResponseStatusException error) {
+            log.warn("Gemini vision analysis failed with status: {}", safeMessage(error));
+            if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
+                log.info("Attempting secondary fallback to NVIDIA vision provider after status exception");
+                try {
+                    AiFoodModelResult fallbackResult = nvidiaFallback.analyze(image, contentType);
+                    String fallbackReason = fallbackResult.response().reason();
+                    if (!fallbackResult.response().foodDetected()
+                            && fallbackReason != null
+                            && fallbackReason.toLowerCase(java.util.Locale.ROOT)
+                                    .contains("provider could not return")) {
+                        throw new IllegalArgumentException(
+                                "The backup vision provider returned an incomplete result.");
+                    }
+                    return fallbackResult;
+                } catch (Exception nvidiaError) {
+                    log.error("Both Gemini and NVIDIA vision providers failed: {}",
+                            safeMessage(nvidiaError));
+                }
+            }
             throw error;
         } catch (Exception error) {
             log.warn("Gemini vision analysis failed: {}", safeMessage(error));

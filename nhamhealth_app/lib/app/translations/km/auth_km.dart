@@ -49,6 +49,7 @@ const Map<String, String> authKm = {
       'ពាក្យសម្ងាត់មិនដូចគ្នាទេ។ សូមព្យាយាមម្តងទៀត។',
   'auth.reset_password': 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ',
   'auth.back_to_sign_in': 'ត្រឡប់ទៅចូលគណនី',
+  'auth.continue_to_app': 'បន្តទៅកម្មវិធី',
   'auth.password_changed': 'បានប្តូរពាក្យសម្ងាត់!',
   'auth.your_account_is_ready_to_use_again': 'គណនីរបស់អ្នកអាចប្រើបានម្តងទៀត។',
   'auth.your_password_has_been_reset_successfully':

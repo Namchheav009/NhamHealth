@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -113,6 +114,45 @@ class GeminiFoodVisionServiceTests {
                 ResponseStatusException.class, () -> service.analyze(jpeg(), "image/jpeg"));
 
         assertEquals(503, error.getStatusCode().value());
+    }
+
+    @Test
+    void fallsBackToNvidiaWhenGeminiCredentialsRejected() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/", exchange -> {
+            try {
+                send(exchange, 401, "{\"error\":{\"code\":401,\"message\":\"Request had invalid authentication credentials.\"}}");
+            } catch (IOException ignored) {
+            }
+        });
+        server.start();
+
+        try {
+            NvidiaFoodVisionService mockNvidia = org.mockito.Mockito.mock(NvidiaFoodVisionService.class);
+            org.mockito.Mockito.when(mockNvidia.isConfigured()).thenReturn(true);
+            ObjectMapper mapper = new ObjectMapper();
+            FoodVisionResult normalized = new FoodVisionResultValidator().validateAndNormalize(
+                    mapper.readValue(VALID_VISION_JSON, FoodVisionResult.class));
+            org.mockito.Mockito.when(mockNvidia.analyze(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(new AiFoodModelResult(normalized, "meta/llama-3.2-11b-vision-instruct", "test", false, 10, 10, 50));
+
+            GeminiFoodVisionService service = new GeminiFoodVisionService(
+                    "http://localhost:" + server.getAddress().getPort(),
+                    "invalid-key",
+                    "gemini-3.8-flash",
+                    "gemini-3.7-flash",
+                    "prompt-v1",
+                    4096,
+                    mapper,
+                    new FoodVisionResultValidator(),
+                    mockNvidia);
+
+            AiFoodModelResult result = service.analyze(jpeg(), "image/jpeg");
+            assertEquals("Egg fried rice", result.response().mealName());
+            assertEquals("meta/llama-3.2-11b-vision-instruct", result.modelName());
+        } finally {
+            server.stop(0);
+        }
     }
 
     private static String geminiResponse(ObjectMapper mapper, String text) throws Exception {

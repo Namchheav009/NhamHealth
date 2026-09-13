@@ -340,7 +340,18 @@ void main() {
           'newPassword': 'NewPassword123!',
         });
         return http.Response(
-          jsonEncode({'message': 'Password reset successfully'}),
+          jsonEncode({
+            'accessToken': 'new-access-token',
+            'tokenType': 'Bearer',
+            'expiresIn': 900,
+            'refreshToken': 'new-refresh-token',
+            'refreshExpiresIn': 2592000,
+            'user': {
+              'id': 1,
+              'email': 'user@example.com',
+              'role': 'USER',
+            },
+          }),
           200,
         );
       }),

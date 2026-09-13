@@ -243,7 +243,7 @@ public class PasswordResetService {
     }
 
     @Transactional
-    public void resetPassword(String rawToken, String newPassword) {
+    public Integer resetPassword(String rawToken, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository
                 .findByTokenHashAndUsedAtIsNull(sha256(rawToken))
                 .orElseThrow(() -> new PasswordResetException(
@@ -270,6 +270,7 @@ public class PasswordResetService {
         verificationCodeRepository
                 .findByUserAndPurposeAndStatus(user, PURPOSE, "VERIFIED")
                 .forEach(code -> code.setStatus("USED"));
+        return user.getUserId();
     }
 
     /**

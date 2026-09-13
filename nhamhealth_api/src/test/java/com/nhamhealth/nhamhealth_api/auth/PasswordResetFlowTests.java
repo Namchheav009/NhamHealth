@@ -120,9 +120,11 @@ class PasswordResetFlowTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"resetToken":"%s","newPassword":"NewPassword123!"}
-                                """.formatted(resetToken)))
+                """.formatted(resetToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Password reset successfully"));
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.user.email").value(email));
 
         User updatedUser = userRepository.findByEmailIgnoreCase(email).orElseThrow();
         assertTrue(passwordEncoder.matches("NewPassword123!", updatedUser.getPasswordHash()));

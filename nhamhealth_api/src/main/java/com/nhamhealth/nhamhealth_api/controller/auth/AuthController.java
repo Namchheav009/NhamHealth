@@ -24,6 +24,7 @@ import com.nhamhealth.nhamhealth_api.dto.request.ResetPasswordRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyPasswordResetCodeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.VerifyRegistrationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AuthErrorResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AuthResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AuthenticatedUserResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.LoginChallengeResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.MessageResponse;
@@ -171,9 +172,10 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        passwordResetService.resetPassword(request.resetToken(), request.newPassword());
-        return new MessageResponse("Password reset successfully");
+    public AuthResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        Integer userId = passwordResetService.resetPassword(
+                request.resetToken(), request.newPassword());
+        return authService.startSession(userId);
     }
 
     @PostMapping("/verify-registration")
@@ -206,9 +208,9 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request) {
         try {
             Number userId = jwt.getClaim("userId");
-            authService.changePassword(userId.intValue(), request);
+            AuthResponse response = authService.changePassword(userId.intValue(), request);
             userNotifications.passwordChanged(userId.intValue());
-            return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(new AuthErrorResponse(exception.getMessage()));
         }

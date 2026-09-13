@@ -342,7 +342,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(Integer userId, ChangePasswordRequest request) {
+    public AuthResponse changePassword(Integer userId, ChangePasswordRequest request) {
         User user = requireActiveUser(userId);
 
         if (user.getPasswordHash() == null
@@ -356,6 +356,15 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         refreshTokenService.revokeAll(user);
+        return issueToken(AppUserPrincipal.from(user));
+    }
+
+    @Transactional
+    public AuthResponse startSession(Integer userId) {
+        User user = requireActiveUser(userId);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+        return issueToken(AppUserPrincipal.from(user));
     }
 
     @Transactional(noRollbackFor = com.nhamhealth.nhamhealth_api.exception.PasswordResetException.class)
