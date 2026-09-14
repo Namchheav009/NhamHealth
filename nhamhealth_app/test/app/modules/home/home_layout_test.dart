@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_mo
 import 'package:nhamhealth_flutter/app/modules/models/home/daily_summary_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/home_dashboard_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/nutrition_progress_model.dart';
+import 'package:nhamhealth_flutter/app/modules/models/home/recommended_meal_model.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
@@ -171,6 +172,30 @@ void main() {
     expect(controller.dashboard.value!.dailySummary.calories.value, '250');
     expect(repository.lastRequestedDate, isNotNull);
     expect(repository.lastRequestedDate!.day, controller.selectedDay.value.day);
+  });
+
+  test('dashboard refresh preserves user-requested meal recommendations', () async {
+    final controller = HomeController(repository: _RefreshingHomeRepository());
+    await controller.loadDashboard();
+    const meal = RecommendedMealModel(
+      id: 7,
+      name: 'Selected meal',
+      image: '',
+      calories: 320,
+      cookingTime: '20 min',
+      moodId: 2,
+    );
+    final current = controller.dashboard.value!;
+    controller.dashboard.value = HomeDashboardModel(
+      userName: current.userName,
+      dailySummary: current.dailySummary,
+      recommendedMeals: const [meal],
+    );
+
+    await controller.loadDashboard();
+
+    expect(controller.dashboard.value!.dailySummary.calories.value, '250');
+    expect(controller.dashboard.value!.recommendedMeals, const [meal]);
   });
 
   test('home startup refreshes a stale initial wellness snapshot', () async {

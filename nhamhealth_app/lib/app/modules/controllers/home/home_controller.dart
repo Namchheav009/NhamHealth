@@ -70,12 +70,9 @@ class HomeController extends GetxController {
       const Duration(seconds: 5),
       (_) => loadUnreadNotificationCount(),
     );
-    if (dashboard.value != null) {
-      _clearRecommendedMeals();
-    }
-    // An initial dashboard is only a fast first-paint snapshot. Always refresh
-    // it so Home reflects nutrition saved before or during this session.
-    loadDashboard();
+    // Refresh dashboard data only. Mood selection and AI recommendations are
+    // intentionally user-triggered through Select Mood -> Suggest Meals.
+    unawaited(loadDashboard());
   }
 
   Future<void> loadUnreadNotificationCount() async {
@@ -158,7 +155,18 @@ class HomeController extends GetxController {
         selectedDay.value.month,
         selectedDay.value.day,
       );
-      dashboard.value = await repository.getHomeDashboard(date: requestedDate);
+      final displayedRecommendations =
+          dashboard.value?.recommendedMeals ?? const [];
+      final refreshedDashboard = await repository.getHomeDashboard(
+        date: requestedDate,
+      );
+      // Dashboard refreshes update wellness data, but must not erase meals the
+      // user explicitly requested during this Home session.
+      dashboard.value = HomeDashboardModel(
+        userName: refreshedDashboard.userName,
+        dailySummary: refreshedDashboard.dailySummary,
+        recommendedMeals: displayedRecommendations,
+      );
       final value = dashboard.value;
       if (value != null) {
         _summariesByDay[_dayKey(requestedDate)] = value.dailySummary;
@@ -290,7 +298,17 @@ class HomeController extends GetxController {
   void selectMood(int moodId) {
     selectedMoodId.value = moodId;
     moodValidationPulse.value = 0;
-    _clearRecommendedMeals();
+    _clearRecommendationForMoodChange();
+  }
+
+  void _clearRecommendationForMoodChange() {
+    final current = dashboard.value;
+    if (current == null || current.recommendedMeals.isEmpty) return;
+    dashboard.value = HomeDashboardModel(
+      userName: current.userName,
+      dailySummary: current.dailySummary,
+      recommendedMeals: const [],
+    );
   }
 
   void selectBottomMenu(int index) {
@@ -384,21 +402,14 @@ class HomeController extends GetxController {
       moodValidationPulse.value++;
       return;
     }
-    await loadRecommendedMeals(moodId: moodId, generateIfEmpty: true);
+    // The generate endpoint is idempotent when refresh=false: it returns today's
+    // existing recommendation or creates one. Keeping this to one request avoids
+    // a GET-then-POST race and leaves enough time for the server-side fallback.
+    await loadRecommendedMeals(moodId: moodId, generate: true);
   }
 
   Future<void> refreshMeals() async {
     await Future.wait([loadDashboard(), loadMoods()]);
-  }
-
-  void _clearRecommendedMeals() {
-    final current = dashboard.value;
-    if (current == null || current.recommendedMeals.isEmpty) return;
-    dashboard.value = HomeDashboardModel(
-      userName: current.userName,
-      dailySummary: current.dailySummary,
-      recommendedMeals: const [],
-    );
   }
 
   Future<void> loadRecommendedMeals({
@@ -417,8 +428,7 @@ class HomeController extends GetxController {
               )
               : await repository.getRecommendedMeals(moodId: moodId);
 
-      // Existing recommendations return quickly. Only wait for the AI service
-      // when this mood does not have any saved suggestions yet.
+      // Retained for callers that explicitly want a read-first workflow.
       if (meals.isEmpty && generateIfEmpty && moodId != null) {
         meals = await repository.generateRecommendedMeals(moodId: moodId);
       }

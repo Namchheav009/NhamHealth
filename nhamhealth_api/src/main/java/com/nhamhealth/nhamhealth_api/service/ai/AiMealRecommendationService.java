@@ -101,8 +101,8 @@ public class AiMealRecommendationService {
             AiUserHealthProfileService userHealthProfileService,
             @Value("${app.ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${app.ai.gemini.api-key:}") String apiKey,
-            @Value("${app.ai.gemini.model:gemini-3.8-flash}") String model,
-            @Value("${app.ai.gemini.fallback-model:gemini-flash-latest}") String fallbackModel,
+            @Value("${app.ai.gemini.recommendation-model:${app.ai.gemini.model:gemini-3.7-flash}}") String model,
+            @Value("${app.ai.gemini.recommendation-fallback-model:${app.ai.gemini.fallback-model:gemini-3.5-flash}}") String fallbackModel,
             @Value("${app.ai.gemini.text-max-tokens:4096}") int textMaxTokens,
             GeminiRateLimitGuard rateLimitGuard) {
         this.recommendationRepository = recommendationRepository;
@@ -116,14 +116,17 @@ public class AiMealRecommendationService {
         this.userHealthProfileService = userHealthProfileService;
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
-        requestFactory.setReadTimeout(Duration.ofSeconds(45));
+        // Mobile callers wait 45 seconds. Bound each model attempt so both
+        // Gemini candidates plus the deterministic catalog fallback complete
+        // before the client gives up.
+        requestFactory.setReadTimeout(Duration.ofSeconds(15));
         this.client = RestClient.builder().requestFactory(requestFactory).build();
         this.mapper = new ObjectMapper();
         this.baseUrl = baseUrl == null ? "" : baseUrl.trim();
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "gemini-3.8-flash" : model.trim();
+        this.model = model == null || model.isBlank() ? "gemini-3.7-flash" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
-                ? "gemini-flash-latest" : fallbackModel.trim();
+                ? "gemini-3.5-flash" : fallbackModel.trim();
         this.textMaxTokens = Math.max(1_200, Math.min(textMaxTokens, 8_192));
         this.rateLimitGuard = rateLimitGuard;
     }
@@ -147,7 +150,7 @@ public class AiMealRecommendationService {
         this(recommendationRepository, itemRepository, mealRepository, moodRepository,
                 userRepository, favoriteRepository, dailySummaryRepository,
                 dailyNutrientRepository, userHealthProfileService, baseUrl, apiKey,
-                model, "gemini-flash-latest", textMaxTokens,
+                model, "gemini-3.5-flash", textMaxTokens,
                 new GeminiRateLimitGuard(Duration.ofMinutes(1), System::nanoTime));
     }
 
@@ -169,7 +172,11 @@ public class AiMealRecommendationService {
                     : recommendationRepository
                             .findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
                                     userId, moodId, "ready", LocalDate.now().atStartOfDay());
-            if (existing.isPresent()) return existing;
+            if (existing.isPresent() && hasPublishedItems(existing.get())) return existing;
+            if (existing.isPresent()) {
+                log.info("Ignoring empty or stale recommendation {} and generating a replacement",
+                        existing.get().getRecommendationId());
+            }
         }
 
         List<Meal> catalog = mealRepository.findAllByIsPublishedTrueOrderByMealNameAsc();
@@ -208,7 +215,7 @@ public class AiMealRecommendationService {
         recommendation.setMood(mood);
         recommendation.setRequestText(mood == null
                 ? "Personalize meals using the user's wellness profile, BMI, and daily nutrition."
-                : "Automatically recommend meals for mood: " + mood.getMoodName());
+                : "User-requested meal recommendation for mood: " + mood.getMoodName());
         recommendation.setResponseText(limit(decision.summary(), 255));
         recommendation.setStatus("ready");
         recommendation.setCreatedAt(now);
@@ -227,6 +234,15 @@ public class AiMealRecommendationService {
         }
         itemRepository.flush();
         return Optional.of(recommendation);
+    }
+
+    private boolean hasPublishedItems(AiRecommendation recommendation) {
+        return itemRepository
+                .findAllByRecommendationRecommendationIdOrderByRankOrderAsc(
+                        recommendation.getRecommendationId())
+                .stream()
+                .map(AiRecommendationItem::getMeal)
+                .anyMatch(meal -> meal != null && Boolean.TRUE.equals(meal.getIsPublished()));
     }
 
     private ModelDecision askModel(Mood mood, List<Meal> meals, RecommendationContext context) {
@@ -254,38 +270,34 @@ public class AiMealRecommendationService {
                     "userContext", context,
                     "catalog", catalog));
             Exception lastError = null;
-            for (String candidateModel : distinctModels(model, fallbackModel, "gemini-flash-latest")) {
-                for (int attempt = 1; attempt <= 2; attempt++) {
-                    try {
-                        return requestModelDecision(input, candidateModel, attempt);
-                    } catch (RestClientResponseException error) {
-                        lastError = error;
-                        if (isAuthenticationFailure(error)) {
-                            log.error("Gemini meal ranking rejected its API credentials; using deterministic fallback");
-                            return null;
-                        }
-                        int status = error.getStatusCode().value();
-                        if (status == 429) {
-                            rateLimitGuard.recordRateLimit();
-                            log.warn("Gemini meal ranking is rate-limited (HTTP 429); using "
-                                    + "deterministic fallback");
-                            return null;
-                        }
-                        if (status >= 500 && attempt == 1) continue;
-                        break;
-                    } catch (ResourceAccessException error) {
-                        lastError = error;
-                        if (attempt == 1) continue;
-                        break;
-                    } catch (Exception error) {
-                        lastError = error;
-                        if (attempt == 1) {
-                            log.warn("Gemini meal ranking returned invalid JSON; retrying once: {}",
-                                    error.getMessage());
-                            continue;
-                        }
-                        break;
+            for (String candidateModel : distinctModels(model, fallbackModel)) {
+                // One request per model keeps a single button press within the
+                // provider RPM budget and the mobile request deadline.
+                if (!rateLimitGuard.tryAcquire()) {
+                    log.info("Skipping Gemini meal ranking because the local request budget is exhausted; "
+                            + "using deterministic fallback");
+                    return null;
+                }
+                try {
+                    return requestModelDecision(input, candidateModel, 1);
+                } catch (RestClientResponseException error) {
+                    lastError = error;
+                    if (isAuthenticationFailure(error)) {
+                        log.error("Gemini meal ranking rejected its API credentials; using deterministic fallback");
+                        return null;
                     }
+                    int status = error.getStatusCode().value();
+                    if (status == 429) {
+                        rateLimitGuard.recordRateLimit();
+                        log.warn("Gemini meal ranking is rate-limited (HTTP 429); using deterministic fallback");
+                        return null;
+                    }
+                } catch (ResourceAccessException error) {
+                    lastError = error;
+                } catch (Exception error) {
+                    lastError = error;
+                    log.warn("Gemini meal ranking returned an invalid result from {}: {}",
+                            candidateModel, conciseFailure(error));
                 }
             }
             throw lastError == null ? new IllegalStateException("AI meal ranking failed.") : lastError;

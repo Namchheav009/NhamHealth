@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
@@ -53,8 +54,10 @@ class GeminiFoodVisionServiceTests {
                     null);
 
             AiFoodModelResult result = service.analyze(jpeg(), "image/jpeg");
+            AiFoodModelResult repeated = service.analyze(jpeg(), "image/jpeg");
 
             assertEquals(1, requests.get());
+            assertSame(result, repeated);
             assertEquals("Egg fried rice", result.response().mealName());
             assertEquals(1, result.response().components().size());
             assertEquals("gemini-3.8-flash", result.modelName());
