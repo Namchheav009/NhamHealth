@@ -49,6 +49,8 @@ class ProfileController extends GetxController {
   final friends = <CommunityPerson>[].obs;
   final unreadNotificationCount = 0.obs;
   Timer? _notificationCountTimer;
+  Timer? _profileRefreshTimer;
+  bool _profileRefreshInFlight = false;
   StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
 
   final name = 'My Profile'.obs;
@@ -112,6 +114,13 @@ class ProfileController extends GetxController {
       const Duration(seconds: 5),
       (_) => loadUnreadNotificationCount(),
     );
+    if (!Get.testMode) {
+      _profileRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (Get.currentRoute == AppRoutes.profile) {
+          unawaited(_refreshProfileSilently());
+        }
+      });
+    }
     _notificationSubscription = _realtimeEvents?.listen(
       (_) => loadUnreadNotificationCount(),
     );
@@ -154,6 +163,27 @@ class ProfileController extends GetxController {
 
   Future<void> refreshProfile() => loadProfile();
 
+  Future<void> _refreshProfileSilently() async {
+    if (_profileRefreshInFlight) return;
+    _profileRefreshInFlight = true;
+    try {
+      final profileDashboard = await _repository.getDashboard();
+      final results = await Future.wait<dynamic>([
+        _repository.getMyPosts(),
+        _communityRepository.getPersonProfile(profileDashboard.userId),
+      ]);
+      _applyDashboard(profileDashboard);
+      posts.assignAll(results[0] as List<CommunityPost>);
+      final communityProfile = results[1] as CommunityPersonProfile;
+      followerCount.value = communityProfile.followers;
+      followingCount.value = communityProfile.following;
+    } on Object {
+      // Preserve visible profile data until the next live refresh succeeds.
+    } finally {
+      _profileRefreshInFlight = false;
+    }
+  }
+
   Future<CommunityPost> updatePost({
     required CommunityPost post,
     String? mealName,
@@ -194,7 +224,11 @@ class ProfileController extends GetxController {
   }
 
   Future<void> deletePost(CommunityPost post) async {
-    await _repository.deletePost(post.id);
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      throw CommunityException('community.post_delete_unavailable'.tr);
+    }
+    await _communityRepository.deletePost(recipeId);
     posts.removeWhere((item) => item.id == post.id);
   }
 
@@ -522,6 +556,7 @@ class ProfileController extends GetxController {
   @override
   void onClose() {
     _notificationCountTimer?.cancel();
+    _profileRefreshTimer?.cancel();
     _notificationSubscription?.cancel();
     super.onClose();
   }

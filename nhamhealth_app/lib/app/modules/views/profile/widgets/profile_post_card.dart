@@ -6,6 +6,7 @@ import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
 import '../../community/widgets/community_shared_post_card.dart';
+import '../../community/widgets/community_recipe_sheet.dart';
 import 'package:get/get.dart';
 
 class ProfilePostCard extends StatelessWidget {
@@ -27,6 +28,7 @@ class ProfilePostCard extends StatelessWidget {
     required this.onComment,
     required this.onShare,
     this.onFavorite,
+    this.showRecipeButton = true,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onComment;
   final VoidCallback onShare;
   final VoidCallback? onFavorite;
+  final bool showRecipeButton;
 
   static const green = Color(0xFF009B46);
 
@@ -287,6 +290,14 @@ class ProfilePostCard extends StatelessWidget {
               ),
             ],
 
+            if (showRecipeButton &&
+                (post.ingredients.isNotEmpty || post.steps.isNotEmpty)) ...[
+              const SizedBox(height: 11),
+              _ViewRecipeButton(
+                onTap: () => showCommunityRecipeSheet(context, post),
+              ),
+            ],
+
             if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
               const SizedBox(height: 10),
               _EngagementSummary(post: post, onTap: onShowLikes),
@@ -304,7 +315,10 @@ class ProfilePostCard extends StatelessWidget {
                         post.isLiked
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
-                    value: post.isLiked ? 'community.liked'.tr : 'community.like'.tr,
+                    value:
+                        post.isLiked
+                            ? 'community.liked'.tr
+                            : 'community.like'.tr,
                     color:
                         post.isLiked
                             ? const Color(0xFFE64657)
@@ -424,27 +438,41 @@ class ProfilePostCard extends StatelessWidget {
       final difference = DateTime.now().difference(date);
       if (difference.inMinutes < 1) return 'community.just_now'.tr;
       if (difference.inHours < 1) {
-        return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+        return 'community.minutes_ago'.trParams({
+          'count': '${difference.inMinutes}',
+        });
       }
       if (difference.inDays < 1) {
-        return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});
+        return 'community.hours_ago'.trParams({
+          'count': '${difference.inHours}',
+        });
       }
       if (difference.inDays == 1) return 'community.yesterday'.tr;
       return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
     }
     final raw = post.ageLabel.trim();
-    if (raw.isEmpty || raw.toLowerCase() == 'just now') return 'community.just_now'.tr;
+    if (raw.isEmpty || raw.toLowerCase() == 'just now')
+      return 'community.just_now'.tr;
     if (raw.toLowerCase() == 'recently') return 'community.recently'.tr;
     if (raw.toLowerCase() == 'yesterday') return 'community.yesterday'.tr;
-    final minMatch = RegExp(r'^(\d+)\s*m\s*ago$', caseSensitive: false).firstMatch(raw);
+    final minMatch = RegExp(
+      r'^(\d+)\s*m\s*ago$',
+      caseSensitive: false,
+    ).firstMatch(raw);
     if (minMatch != null) {
       return 'community.minutes_ago'.trParams({'count': minMatch.group(1)!});
     }
-    final hourMatch = RegExp(r'^(\d+)\s*h\s*ago$', caseSensitive: false).firstMatch(raw);
+    final hourMatch = RegExp(
+      r'^(\d+)\s*h\s*ago$',
+      caseSensitive: false,
+    ).firstMatch(raw);
     if (hourMatch != null) {
       return 'community.hours_ago'.trParams({'count': hourMatch.group(1)!});
     }
-    final dayMatch = RegExp(r'^(\d+)\s*d\s*ago$', caseSensitive: false).firstMatch(raw);
+    final dayMatch = RegExp(
+      r'^(\d+)\s*d\s*ago$',
+      caseSensitive: false,
+    ).firstMatch(raw);
     if (dayMatch != null) {
       return 'community.days_ago'.trParams({'count': dayMatch.group(1)!});
     }
@@ -471,6 +499,73 @@ class ProfilePostCard extends StatelessWidget {
     if (lower == 'friend') return 'community.friend'.tr;
     return trimmed;
   }
+}
+
+class _ViewRecipeButton extends StatelessWidget {
+  const _ViewRecipeButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: context.appSubtleSurface,
+    borderRadius: BorderRadius.circular(14),
+    child: InkWell(
+      key: const ValueKey<String>('view-full-recipe-button'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.menu_book_rounded,
+                size: 19,
+                color: ProfilePostCard.green,
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'community.view_full_recipe'.tr,
+                    style: const TextStyle(
+                      color: ProfilePostCard.green,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    'community.recipe_button_help'.tr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: context.appMutedText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: ProfilePostCard.green,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 String _compactCount(int value) {

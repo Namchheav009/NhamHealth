@@ -12,11 +12,13 @@ void main() {
       'followingAuthor': true,
       'liked': true,
       'saved': true,
+      'mealId': 84,
     });
 
     expect(post.isFollowingAuthor, isTrue);
     expect(post.isLiked, isTrue);
     expect(post.isSaved, isTrue);
+    expect(post.mealId, 84);
   });
 
   test('continues to read normalized Flutter relationship flags', () {

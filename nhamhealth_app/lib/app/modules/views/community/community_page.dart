@@ -12,6 +12,7 @@ import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/post_delete_confirmation.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/community/community_controller.dart';
 import '../../repositories/community/community_repository.dart';
@@ -994,14 +995,17 @@ class CommunityPage extends GetView<CommunityController> {
                 status == 'FOLLOW'));
 
     if (isMutualFollow) return 'community.friend'.tr;
-    if (status == 'FOLLOWING' || post.isFollowingAuthor) return 'community.following'.tr;
+    if (status == 'FOLLOWING' || post.isFollowingAuthor)
+      return 'community.following'.tr;
     if (status == 'FOLLOW' ||
         status == 'FOLLOW_BACK' ||
         status == 'FOLLOWS_YOU') {
       return 'community.follow'.tr;
     }
 
-    return post.isFollowingAuthor ? 'community.following'.tr : 'community.follow'.tr;
+    return post.isFollowingAuthor
+        ? 'community.following'.tr
+        : 'community.follow'.tr;
   }
 
   Future<void> _toggleAuthorRelationship(CommunityPost post) async {
@@ -1203,33 +1207,23 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Future<void> _confirmDeletePost(CommunityPost post) async {
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text('community.delete_post_question'.tr),
-        content: Text('community.delete_post_warning'.tr),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text('common.cancel'.tr),
-          ),
-          FilledButton(
-            onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD94545),
-            ),
-            child: Text('common.delete'.tr),
-          ),
-        ],
-      ),
+    final confirmed = await confirmPostDeletion(
+      messageKey: 'community.delete_post_warning',
     );
 
     if (confirmed != true) return;
 
     try {
       await controller.deletePost(post);
-      Get.snackbar('community.post_deleted'.tr, 'community.post_removed'.tr);
+      await AppAlert.actionSuccess(
+        title: 'community.post_deleted',
+        message: 'community.post_removed',
+      );
     } on Object catch (error) {
-      Get.snackbar('community.could_not_delete_post'.tr, error.toString());
+      await AppAlert.actionError(
+        title: 'community.could_not_delete_post',
+        message: error.toString(),
+      );
     }
   }
 

@@ -11,6 +11,7 @@ import '../../../widgets/page_skeleton.dart';
 import '../../controllers/favorites/favorites_controller.dart';
 import '../../models/favorites/favorite_food.dart';
 import '../../models/meals/meal_model.dart';
+import '../../models/recipes/community_recipe.dart';
 import 'widgets/favorite_food_card.dart';
 import 'widgets/favorite_post_card.dart';
 import 'widgets/favorites_tab_switcher.dart';
@@ -32,7 +33,7 @@ class FavoritesView extends GetView<FavoritesController> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.pageHorizontalFor(context),
-                8,
+                12,
                 AppSpacing.pageHorizontalFor(context),
                 0,
               ),
@@ -51,14 +52,14 @@ class FavoritesView extends GetView<FavoritesController> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
                   Obx(
                     () => FavoritesTabSwitcher(
                       selected: controller.selectedTab.value,
                       onChanged: controller.selectTab,
                     ),
                   ),
-                  const SizedBox(height: 17),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: Obx(
                       () =>
@@ -81,7 +82,7 @@ class FavoritesView extends GetView<FavoritesController> {
     children: [
       _sectionHeader(
         context,
-        'Favorite foods',
+        'favorites.favorite_foods',
         Icons.filter_list_rounded,
         onTap: _showFoodFilter,
       ),
@@ -113,20 +114,22 @@ class FavoritesView extends GetView<FavoritesController> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final columns = switch (constraints.maxWidth) {
-                  < 330 => 2,
-                  < AppSpacing.tabletBreakpoint => 3,
+                  < 600 => 2,
+                  < 900 => 3,
                   _ => 4,
                 };
+                final spacing = constraints.maxWidth >= 600 ? 12.0 : 10.0;
                 final cardWidth =
-                    (constraints.maxWidth - ((columns - 1) * 8)) / columns;
+                    (constraints.maxWidth - ((columns - 1) * spacing)) /
+                    columns;
                 return GridView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 24),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 10,
-                    mainAxisExtent: cardWidth * 1.48,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    mainAxisExtent: cardWidth * 1.38,
                   ),
                   itemCount: visible.length,
                   itemBuilder:
@@ -150,7 +153,7 @@ class FavoritesView extends GetView<FavoritesController> {
     children: [
       _sectionHeader(
         context,
-        'Favorite Posts',
+        'favorites.favorite_posts',
         Icons.calendar_today_outlined,
         postMenu: true,
       ),
@@ -183,20 +186,18 @@ class FavoritesView extends GetView<FavoritesController> {
               padding: const EdgeInsets.only(bottom: 24),
               itemCount: visible.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder:
-                  (_, index) => FavoritePostCard(
-                    post: visible[index],
-                    onOpen:
-                        visible[index].postId == null
-                            ? null
-                            : () => _openPost(visible[index].postId!),
-                    onRemove: () => controller.removePost(visible[index].id),
-                  ),
+              itemBuilder: (_, index) => _postCard(visible[index]),
             ),
           );
         }),
       ),
     ],
+  );
+
+  Widget _postCard(CommunityRecipe post) => FavoritePostCard(
+    post: post,
+    onOpen: post.postId == null ? null : () => _openPost(post.postId!),
+    onRemove: () => controller.removePost(post.id),
   );
 
   Widget _sectionHeader(
@@ -229,13 +230,13 @@ class FavoritesView extends GetView<FavoritesController> {
                 _sortMenuItem(
                   context,
                   FavoritePostSort.newest,
-                  'Newest',
+                  'favorites.newest',
                   Icons.access_time_rounded,
                 ),
                 _sortMenuItem(
                   context,
                   FavoritePostSort.oldest,
-                  'Oldest',
+                  'favorites.oldest',
                   Icons.schedule_rounded,
                 ),
               ],

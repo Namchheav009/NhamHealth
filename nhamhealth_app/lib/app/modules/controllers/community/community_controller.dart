@@ -47,8 +47,9 @@ class CommunityController extends GetxController {
   Set<int> _knownCommunityNotificationIds = const {};
   bool _notificationsInitialized = false;
   bool _notificationRequestInFlight = false;
+  bool _feedRefreshInFlight = false;
   static const notificationRefreshInterval = Duration(seconds: 5);
-  static const feedRefreshInterval = Duration(seconds: 10);
+  static const feedRefreshInterval = Duration(seconds: 3);
   final section = CommunitySection.feed.obs;
   final feedFilter = CommunityFeedFilter.forYou.obs;
   final friendsView = FriendsView.friends.obs;
@@ -268,10 +269,14 @@ class CommunityController extends GetxController {
   /// Keeps the Community feed current when another signed-in user publishes a
   /// meal through the Spring Boot recipe endpoint.
   Future<void> _refreshPosts() async {
+    if (_feedRefreshInFlight) return;
+    _feedRefreshInFlight = true;
     try {
       posts.assignAll(await _repository.getPosts());
     } on Object {
       // Keep the existing feed visible until the next successful refresh.
+    } finally {
+      _feedRefreshInFlight = false;
     }
   }
 
@@ -308,7 +313,15 @@ class CommunityController extends GetxController {
   }
 
   Future<void> togglePostSaved(CommunityPost post) async {
-    final updated = await _repository.toggleSaved(post.id);
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      Get.snackbar(
+        'common.favorites_unavailable'.tr,
+        'This post cannot be saved right now.',
+      );
+      return;
+    }
+    final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
   }
@@ -434,7 +447,11 @@ class CommunityController extends GetxController {
   }
 
   Future<void> deletePost(CommunityPost post) async {
-    await _repository.deletePost(post.id);
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      throw CommunityException('community.post_delete_unavailable'.tr);
+    }
+    await _repository.deletePost(recipeId);
     posts.removeWhere((item) => item.id == post.id);
     commentsByPost.remove(post.id);
   }

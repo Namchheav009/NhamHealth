@@ -530,7 +530,7 @@ public class CommunityService {
                         : recipe.getCategory().getCategoryId(),
                 recipe == null || isShared || recipe.getCategory() == null ? ""
                         : recipe.getCategory().getCategoryName(),
-                null, "", null,
+                null, "", recipe == null ? null : recipe.getRecipeId(),
                 !isShared && recipe != null
                         && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
                 recipe == null ? List.of()

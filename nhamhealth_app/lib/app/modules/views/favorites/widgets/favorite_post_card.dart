@@ -21,89 +21,103 @@ class FavoritePostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: context.appElevatedSurface.withValues(alpha: .96),
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(22),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: onOpen,
       child: Container(
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: context.appBorder),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: context.appBorder.withValues(alpha: .9)),
+          boxShadow: context.appTileShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _header(context),
-            const SizedBox(height: 10),
-            Text(
-              post.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: context.appText,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 10, 0),
+              child: _header(context),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 13, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      height: 1.25,
+                      letterSpacing: -.2,
+                      fontWeight: FontWeight.w800,
+                      color: context.appText,
+                    ),
+                  ),
+                  if (post.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Text(
+                      post.description,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.42,
+                        color: context.appText,
+                      ),
+                    ),
+                  ],
+                  if (post.tags.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 6,
+                      children: post.tags.map((tag) => _Tag(tag)).toList(),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (post.description.trim().isNotEmpty) ...[
-              const SizedBox(height: 5),
-              Text(
-                post.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.35,
-                  color: context.appMutedText,
-                ),
-              ),
-            ],
-            if (post.tags.isNotEmpty) ...[
-              const SizedBox(height: 9),
-              Wrap(
-                spacing: 7,
-                runSpacing: 5,
-                children: post.tags.map((tag) => _Tag(tag)).toList(),
-              ),
-            ],
-            if (post.imageUrl.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: AspectRatio(
-                  aspectRatio: 1.75,
-                  child: CachedNetworkImage(
-                    imageUrl: post.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder:
-                        (_, _) => ColoredBox(
-                          color: context.appMutedSurface,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+            if (post.imageUrl.isNotEmpty)
+              AspectRatio(
+                aspectRatio: 4 / 3,
+                child: CachedNetworkImage(
+                  imageUrl: post.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder:
+                      (_, _) => ColoredBox(
+                        color: context.appMutedSurface,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                    errorWidget: (_, _, _) => const _ImageFallback(),
-                  ),
+                      ),
+                  errorWidget: (_, _, _) => const _ImageFallback(),
                 ),
               ),
-            ],
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                if (post.cookingTimeMinutes != null)
-                  _Meta(
-                    Icons.schedule_rounded,
-                    '${post.cookingTimeMinutes} min',
-                  ),
-                if (post.servings != null)
-                  _Meta(Icons.people_outline_rounded, '${post.servings}'),
-                if (post.difficulty.isNotEmpty)
-                  _Meta(
-                    Icons.signal_cellular_alt_rounded,
-                    post.difficulty.trOrSelf,
-                  ),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 11, 16, 14),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 7,
+                children: [
+                  if (post.cookingTimeMinutes != null)
+                    _Meta(
+                      Icons.schedule_rounded,
+                      '${post.cookingTimeMinutes} ${'meals.minutes_short'.tr}',
+                    ),
+                  if (post.servings != null)
+                    _Meta(
+                      Icons.people_outline_rounded,
+                      'meals.servings_count'.trParams({
+                        'count': '${post.servings}',
+                      }),
+                    ),
+                  if (post.difficulty.isNotEmpty)
+                    _Meta(
+                      Icons.signal_cellular_alt_rounded,
+                      _localizedDifficulty(post.difficulty),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
@@ -113,14 +127,7 @@ class FavoritePostCard extends StatelessWidget {
 
   Widget _header(BuildContext context) => Row(
     children: [
-      CircleAvatar(
-        radius: 20,
-        backgroundColor: context.appSoftGreen,
-        child: const Icon(
-          Icons.person_outline_rounded,
-          color: AppColors.primaryGreen,
-        ),
-      ),
+      _AuthorAvatar(imageUrl: post.authorAvatarUrl),
       const SizedBox(width: 9),
       Expanded(
         child: Column(
@@ -131,15 +138,16 @@ class FavoritePostCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                letterSpacing: -.1,
+                fontWeight: FontWeight.w800,
                 color: context.appText,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               _savedDate,
-              style: TextStyle(fontSize: 10, color: context.appMutedText),
+              style: TextStyle(fontSize: 12, color: context.appMutedText),
             ),
           ],
         ),
@@ -162,6 +170,37 @@ class FavoritePostCard extends StatelessWidget {
     return '${local.day.toString().padLeft(2, '0')}/'
         '${local.month.toString().padLeft(2, '0')}/${local.year}';
   }
+
+  String _localizedDifficulty(String value) {
+    final normalized = value.trim().toUpperCase();
+    return switch (normalized) {
+      'EASY' => 'meals.easy'.tr,
+      'MEDIUM' => 'common.medium'.tr,
+      'HARD' => 'meals.hard'.tr,
+      _ => value.trOrSelf,
+    };
+  }
+}
+
+class _AuthorAvatar extends StatelessWidget {
+  const _AuthorAvatar({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) => CircleAvatar(
+    radius: 22,
+    backgroundColor: context.appSoftGreen,
+    foregroundImage:
+        imageUrl.trim().isEmpty ? null : CachedNetworkImageProvider(imageUrl),
+    child:
+        imageUrl.trim().isEmpty
+            ? const Icon(
+              Icons.person_outline_rounded,
+              color: AppColors.primaryGreen,
+            )
+            : null,
+  );
 }
 
 class _Tag extends StatelessWidget {
@@ -170,17 +209,17 @@ class _Tag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
       color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
     ),
     child: Text(
       text.startsWith('#') ? text : '#$text',
       style: TextStyle(
         color: context.appColorScheme.primary,
-        fontSize: 9,
-        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
       ),
     ),
   );
@@ -193,17 +232,17 @@ class _Meta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     decoration: BoxDecoration(
       color: context.appSubtleSurface,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: context.appMutedText),
-        const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 10, color: context.appMutedText)),
+        Icon(icon, size: 16, color: context.appMutedText),
+        const SizedBox(width: 5),
+        Text(text, style: TextStyle(fontSize: 12, color: context.appMutedText)),
       ],
     ),
   );

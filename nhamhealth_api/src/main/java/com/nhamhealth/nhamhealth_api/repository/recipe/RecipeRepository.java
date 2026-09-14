@@ -8,4 +8,5 @@ import java.util.List;
 public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     List<Recipe> findByStatusOrderByPublishedAtDesc(String status);
     List<Recipe> findByAuthorUserIdOrderByUpdatedAtDesc(Integer userId);
+    List<Recipe> findBySharedFromRecipeId(Integer recipeId);
 }

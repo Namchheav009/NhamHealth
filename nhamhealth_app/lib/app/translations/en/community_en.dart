@@ -25,6 +25,8 @@ const Map<String, String> communityEn = {
   'community.post_deleted': 'Post deleted',
   'community.post_removed': 'Your post has been removed.',
   'community.could_not_delete_post': 'Could not delete post',
+  'community.post_delete_unavailable':
+      'This post cannot be deleted right now. Please refresh and try again.',
   'community.comments': 'Comments',
   'community.comment_count_one': '@count comment',
   'community.comment_count_many': '@count comments',
@@ -110,6 +112,16 @@ const Map<String, String> communityEn = {
   'community.done': 'Done',
   'community.done_count': 'Done (@count)',
   'community.continue_to_ingredients': 'Continue to ingredients',
+  'community.basic_info': 'Basic info',
+  'community.ingredients': 'Ingredients',
+  'community.share_your_meal': 'Let’s share your meal!',
+  'community.basic_info_help': 'Add the basic information about your meal',
+  'community.prefill_from_favorites_short': 'Prefill from favorites',
+  'community.ingredients_help':
+      'Optional — add them if you want to share the full recipe.',
+  'community.cooking_steps_help':
+      'Optional — add steps only when they help explain your meal.',
+  'community.clear_all': 'Clear all',
   'community.new_meal': 'New meal',
   'community.edit_meal': 'Edit meal',
   'community.choose_favorites': 'Choose from favorites',
@@ -142,6 +154,10 @@ const Map<String, String> communityEn = {
   'community.change_photo': 'Change photo',
   'community.add_cover_photo': 'Add a cover photo',
   'community.cover_photo_help': 'A clear photo helps your meal stand out',
+  'community.add_photo': 'Add a photo',
+  'community.cover_photo_help_short': 'Show the beauty of your meal',
+  'community.good_food_caption': 'Good food\nbrings good mood!',
+  'community.cover': 'Cover',
   'community.meal_category': 'Meal category',
   'community.select_meal_category': 'Select a meal category.',
   'community.choose_meal_category': 'Choose meal category',
@@ -195,6 +211,8 @@ const Map<String, String> communityEn = {
   'community.be_the_first_to_comment': 'Be the first to comment.',
   'community.recipe_details': 'Recipe details',
   'community.how_to_cook': 'How to Cook',
+  'community.view_full_recipe': 'View Full Recipe',
+  'community.recipe_button_help': 'Ingredients and cooking steps',
   'community.comment_options': 'Comment options',
   'community.comments_are_turned_off_for_this_post':
       'Comments are turned off for this post.',
@@ -222,22 +240,33 @@ const Map<String, String> communityEn = {
   'community.report_examples_include': 'Examples include:',
   'community.report_example_spam_1': 'Promoting unrelated products or services',
   'community.report_example_spam_2': 'Repeated or duplicate content',
-  'community.report_example_spam_3': 'Fake engagement or unsolicited advertising',
-  'community.report_example_harassment_1': 'Threats, bullying, or targeted insults',
+  'community.report_example_spam_3':
+      'Fake engagement or unsolicited advertising',
+  'community.report_example_harassment_1':
+      'Threats, bullying, or targeted insults',
   'community.report_example_harassment_2': 'Hateful or discriminatory language',
   'community.report_example_harassment_3': 'Repeated unwanted contact',
-  'community.report_example_inappropriate_1': 'Graphic violence or sexual content',
-  'community.report_example_inappropriate_2': 'Content that may endanger others',
-  'community.report_example_inappropriate_3': 'Disturbing or highly sensitive media',
+  'community.report_example_inappropriate_1':
+      'Graphic violence or sexual content',
+  'community.report_example_inappropriate_2':
+      'Content that may endanger others',
+  'community.report_example_inappropriate_3':
+      'Disturbing or highly sensitive media',
   'community.report_example_false_1': 'Misleading health or nutrition claims',
   'community.report_example_false_2': 'Fabricated facts presented as verified',
-  'community.report_example_false_3': 'Dangerous advice without reliable evidence',
-  'community.report_example_copyright_1': 'Using someone else’s work without permission',
-  'community.report_example_copyright_2': 'Reposting protected photos or recipes',
-  'community.report_example_copyright_3': 'Claiming another creator’s work as your own',
-  'community.report_example_other_1': 'Content that puts community members at risk',
+  'community.report_example_false_3':
+      'Dangerous advice without reliable evidence',
+  'community.report_example_copyright_1':
+      'Using someone else’s work without permission',
+  'community.report_example_copyright_2':
+      'Reposting protected photos or recipes',
+  'community.report_example_copyright_3':
+      'Claiming another creator’s work as your own',
+  'community.report_example_other_1':
+      'Content that puts community members at risk',
   'community.report_example_other_2': 'Attempts to evade community rules',
-  'community.report_example_other_3': 'Another clear Community Guidelines violation',
+  'community.report_example_other_3':
+      'Another clear Community Guidelines violation',
   'community.report_more_details': 'Provide more details',
   'community.report_details_help':
       'Please tell us more about the issue. This helps us review your report faster.',
