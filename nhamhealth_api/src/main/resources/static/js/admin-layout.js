@@ -45,6 +45,79 @@
         window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
     }
 
+    const themePreferenceKey = 'nhamHealthAdminTheme';
+    const themeToggleBtn = document.getElementById('adminThemeToggle');
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    const getSystemTheme = () => (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    const updateThemeIcon = (effectiveTheme) => {
+        if (!themeToggleBtn) return;
+        const icon = themeToggleBtn.querySelector('i');
+        if (icon) {
+            icon.className = effectiveTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        }
+        const label = effectiveTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        themeToggleBtn.setAttribute('aria-label', label);
+        themeToggleBtn.title = label;
+    };
+
+    window.adminTheme = {
+        getPreference: () => {
+            try {
+                return window.localStorage.getItem(themePreferenceKey) || document.documentElement.getAttribute('data-theme-preference') || 'system';
+            } catch (_) {
+                return document.documentElement.getAttribute('data-theme-preference') || 'system';
+            }
+        },
+        getEffective: (pref) => {
+            const p = pref || window.adminTheme.getPreference();
+            return p === 'system' ? getSystemTheme() : p;
+        },
+        apply: (preference, persistServer = false) => {
+            const pref = preference || 'system';
+            const effective = pref === 'system' ? getSystemTheme() : pref;
+            document.documentElement.setAttribute('data-theme', effective);
+            document.documentElement.setAttribute('data-theme-preference', pref);
+            try {
+                window.localStorage.setItem(themePreferenceKey, pref);
+            } catch (_) {}
+            updateThemeIcon(effective);
+
+            const themeSelect = document.getElementById('theme');
+            if (themeSelect && themeSelect.value !== pref) {
+                themeSelect.value = pref;
+            }
+
+            if (persistServer) {
+                const body = new URLSearchParams({ theme: pref });
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+                fetch('/admin/settings/theme', { method: 'POST', headers, body }).catch(() => {});
+            }
+        }
+    };
+
+    // Initial sync
+    window.adminTheme.apply(window.adminTheme.getPreference(), false);
+
+    // Watch OS system theme changes
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (window.adminTheme.getPreference() === 'system') {
+                window.adminTheme.apply('system', false);
+            }
+        });
+    }
+
+    // Topbar quick toggle
+    themeToggleBtn?.addEventListener('click', () => {
+        const currentEffective = document.documentElement.getAttribute('data-theme') || getSystemTheme();
+        const nextTheme = currentEffective === 'dark' ? 'light' : 'dark';
+        window.adminTheme.apply(nextTheme, true);
+    });
+
     const menuToggle = document.getElementById('menuToggle');
     const overlay = document.getElementById('sidebarOverlay');
     const sidebar = document.getElementById('sidebar');

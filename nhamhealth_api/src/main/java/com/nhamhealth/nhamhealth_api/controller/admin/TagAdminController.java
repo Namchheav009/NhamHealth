@@ -42,7 +42,7 @@ public class TagAdminController {
 
         model.addAttribute("pageTitle", "Tags");
         model.addAttribute("activePage", "tags");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("tags", tags);
         model.addAttribute("totalTags", tags.size());
         model.addAttribute("activeTags", activeTags);

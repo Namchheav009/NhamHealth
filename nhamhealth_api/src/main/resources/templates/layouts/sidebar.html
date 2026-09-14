@@ -1,4 +1,20 @@
 <aside id="sidebar" class="sidebar" th:fragment="sidebar(activePage)">
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    (function () {
+        try {
+            var serverTheme = /*[[${adminTheme != null ? adminTheme : 'system'}]]*/ 'system';
+            var localTheme = window.localStorage ? window.localStorage.getItem('nhamHealthAdminTheme') : null;
+            var pref = localTheme || serverTheme || 'system';
+            var effective = pref === 'system'
+                ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : pref;
+            document.documentElement.setAttribute('data-theme', effective);
+            document.documentElement.setAttribute('data-theme-preference', pref);
+        } catch (e) {}
+    })();
+    /*]]>*/
+    </script>
     <a class="brand" th:href="@{/admin/dashboard}">
         <span class="brand-logo"><i class="bi bi-heart-pulse-fill"></i></span>
         <span>

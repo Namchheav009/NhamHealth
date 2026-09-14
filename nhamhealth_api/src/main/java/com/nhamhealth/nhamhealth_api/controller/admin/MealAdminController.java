@@ -44,7 +44,7 @@ public class MealAdminController {
     public String mealsPage(Authentication authentication, Model model) {
         model.addAttribute("pageTitle", "Meals");
         model.addAttribute("activePage", "meals");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("mealCategories", mealAdminService.getActiveCategories());
         model.addAttribute("mealTags", mealAdminService.getMealTags());
         model.addAttribute("mealTotal", mealAdminService.getMealCount());

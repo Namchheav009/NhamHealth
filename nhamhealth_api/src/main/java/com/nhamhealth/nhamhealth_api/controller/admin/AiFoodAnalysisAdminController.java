@@ -50,7 +50,7 @@ public class AiFoodAnalysisAdminController {
 
         model.addAttribute("pageTitle", "AI Food Analyses");
         model.addAttribute("activePage", "ai-food-analyses");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("aiAnalyses", analyses);
         model.addAttribute("users", users);
         model.addAttribute("analysisStatuses", statuses);

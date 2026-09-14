@@ -71,7 +71,7 @@ public class UserAdminController {
             @Valid @RequestBody AdminUpdateUserRequest request,
             Authentication authentication) {
         try {
-            return ResponseEntity.ok(adminUserService.updateUser(userId, request, authentication.getName()));
+            return ResponseEntity.ok(adminUserService.updateUser(userId, request, authentication != null ? authentication.getName() : null));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }

@@ -71,7 +71,7 @@ public class AiRecommendationAdminController {
 
         model.addAttribute("pageTitle", "AI Recommendations");
         model.addAttribute("activePage", "ai-recommendations");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("aiRecs", recs);
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("moods", moodRepository.findAllByOrderByMoodNameAsc());

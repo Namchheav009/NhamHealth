@@ -65,7 +65,7 @@ public class MealCategoryAdminController {
 
         model.addAttribute("pageTitle", "Meal Categories");
         model.addAttribute("activePage", "meal-categories");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("mealCategories", categories);
         model.addAttribute("kmTranslations", kmTranslations);
         model.addAttribute("mealCounts", mealCounts);

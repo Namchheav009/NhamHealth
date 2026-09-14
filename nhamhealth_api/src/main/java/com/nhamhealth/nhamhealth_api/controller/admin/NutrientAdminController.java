@@ -59,7 +59,7 @@ public class NutrientAdminController {
 
         model.addAttribute("pageTitle", "Nutrients");
         model.addAttribute("activePage", "nutrients");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("nutrients", nutrients);
         model.addAttribute("totalNutrients", (int) totalNutrients);
         model.addAttribute("activeNutrients", activeNutrients);

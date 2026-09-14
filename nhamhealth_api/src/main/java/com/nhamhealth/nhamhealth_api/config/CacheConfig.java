@@ -50,43 +50,31 @@ public class CacheConfig {
                                 .recordStats());
 
                 // Reference data tier (rarely changes): 1 hour TTL, max 200 items
-                var referenceDataCache = Caffeine.newBuilder()
-                                .maximumSize(200)
-                                .expireAfterWrite(Duration.ofHours(1))
-                                .recordStats()
-                                .build();
-                manager.registerCustomCache(CACHE_MEAL_CATEGORIES, referenceDataCache);
-                manager.registerCustomCache(CACHE_ACTIVE_MEAL_CATEGORIES, referenceDataCache);
-                manager.registerCustomCache(CACHE_TAGS, referenceDataCache);
-                manager.registerCustomCache(CACHE_SERVING_SIZES, referenceDataCache);
-                manager.registerCustomCache(CACHE_NUTRIENTS, referenceDataCache);
-                manager.registerCustomCache(CACHE_MEAL_TAG_NAMES, referenceDataCache);
+                manager.registerCustomCache(CACHE_MEAL_CATEGORIES, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_ACTIVE_MEAL_CATEGORIES, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_TAGS, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_SERVING_SIZES, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_NUTRIENTS, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_MEAL_TAG_NAMES, buildCache(200, Duration.ofHours(1)));
 
                 // Food catalog search results: 30 minutes TTL, max 1000 items
-                var foodSearchCache = Caffeine.newBuilder()
-                                .maximumSize(1000)
-                                .expireAfterWrite(Duration.ofMinutes(30))
-                                .recordStats()
-                                .build();
-                manager.registerCustomCache(CACHE_FOOD_SEARCH, foodSearchCache);
+                manager.registerCustomCache(CACHE_FOOD_SEARCH, buildCache(1000, Duration.ofMinutes(30)));
 
                 // Meal catalog and details: 15 minutes TTL, max 500 items
-                var mealCache = Caffeine.newBuilder()
-                                .maximumSize(500)
-                                .expireAfterWrite(Duration.ofMinutes(15))
-                                .recordStats()
-                                .build();
-                manager.registerCustomCache(CACHE_MEALS, mealCache);
-                manager.registerCustomCache(CACHE_MEAL_DETAIL, mealCache);
+                manager.registerCustomCache(CACHE_MEALS, buildCache(500, Duration.ofMinutes(15)));
+                manager.registerCustomCache(CACHE_MEAL_DETAIL, buildCache(500, Duration.ofMinutes(15)));
 
                 // Admin dashboard: 2 minutes TTL, max 20 items
-                var adminDashboardCache = Caffeine.newBuilder()
-                                .maximumSize(20)
-                                .expireAfterWrite(Duration.ofMinutes(2))
-                                .recordStats()
-                                .build();
-                manager.registerCustomCache(CACHE_ADMIN_DASHBOARD, adminDashboardCache);
+                manager.registerCustomCache(CACHE_ADMIN_DASHBOARD, buildCache(20, Duration.ofMinutes(2)));
 
                 return manager;
+        }
+
+        private com.github.benmanes.caffeine.cache.Cache<Object, Object> buildCache(long maxSize, Duration ttl) {
+                return Caffeine.newBuilder()
+                                .maximumSize(maxSize)
+                                .expireAfterWrite(ttl)
+                                .recordStats()
+                                .build();
         }
 }

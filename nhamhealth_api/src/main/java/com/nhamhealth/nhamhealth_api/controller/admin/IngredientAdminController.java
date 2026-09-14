@@ -60,7 +60,7 @@ public class IngredientAdminController {
 
         model.addAttribute("pageTitle", "Ingredients");
         model.addAttribute("activePage", "ingredients");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("ingredients", ingredients);
         model.addAttribute("kmTranslations", kmTranslations);
         model.addAttribute("totalIngredients", ingredientRepository.count());

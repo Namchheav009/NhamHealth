@@ -50,7 +50,7 @@ public class AiFoodSuggestionAdminController {
 
         model.addAttribute("pageTitle", "AI Food Suggestions");
         model.addAttribute("activePage", "ai-food-suggestions");
-        model.addAttribute("adminName", authentication.getName());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("aiSuggestions", suggestions);
         model.addAttribute("aiAnalyses", analysisRepository.findAllByOrderByCreatedAtDesc());
         model.addAttribute("suggestionTypes", types);

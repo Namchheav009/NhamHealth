@@ -27,7 +27,7 @@ public class RecipeAdminController {
     @GetMapping("/admin/community-recipes")
     public String page(Authentication authentication, Model model) {
         model.addAttribute("pageTitle", "Community Recipes"); model.addAttribute("activePage", "community-recipes");
-        model.addAttribute("adminName", authentication.getName()); model.addAttribute("recipes", recipes.adminRecipes());
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin"); model.addAttribute("recipes", recipes.adminRecipes());
         model.addAttribute("users", users.findAll());
         return "admin/community-recipes";
     }

@@ -20,6 +20,8 @@ import com.nhamhealth.nhamhealth_api.dto.request.AdminServingSizeRequest;
 import com.nhamhealth.nhamhealth_api.entity.ServingSize;
 import com.nhamhealth.nhamhealth_api.repository.catalog.ServingSizeRepository;
 
+import org.springframework.security.core.Authentication;
+
 import jakarta.validation.Valid;
 
 @Controller
@@ -32,13 +34,15 @@ public class ServingSizeAdminController {
     }
 
     @GetMapping("/admin/serving-sizes")
-    public String servingSizes(Model model) {
+    public String servingSizes(Authentication authentication, Model model) {
         List<ServingSize> servingSizes = servingSizeRepository.findAllByOrderByServingSizeNameAsc();
         int total = servingSizes.size();
         long active = servingSizes.stream().filter(s -> Boolean.TRUE.equals(s.getIsActive())).count();
         long inactive = total - active;
 
         model.addAttribute("pageTitle", "Serving Sizes");
+        model.addAttribute("activePage", "serving-sizes");
+        model.addAttribute("adminName", authentication != null ? authentication.getName() : "Admin");
         model.addAttribute("servingSizes", servingSizes);
         model.addAttribute("totalServingSizes", total);
         model.addAttribute("activeServingSizes", active);
