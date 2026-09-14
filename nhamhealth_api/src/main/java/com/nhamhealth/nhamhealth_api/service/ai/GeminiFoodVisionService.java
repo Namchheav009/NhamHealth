@@ -4,12 +4,15 @@ import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
 import java.net.SocketTimeoutException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 
 @Service
@@ -164,13 +169,17 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
     private final int maxTokens;
     private final NvidiaFoodVisionService nvidiaFallback;
     private final GeminiRateLimitGuard rateLimitGuard;
+    private final Cache<String, AiFoodModelResult> recentPositiveResults = Caffeine.newBuilder()
+            .maximumSize(256)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
 
     @Autowired
     public GeminiFoodVisionService(
             @Value("${app.ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${app.ai.gemini.api-key:}") String apiKey,
-            @Value("${app.ai.gemini.model:gemini-3.8-flash}") String model,
-            @Value("${app.ai.gemini.fallback-model:gemini-3.7-flash}") String fallbackModel,
+            @Value("${app.ai.gemini.vision-model:${app.ai.gemini.model:gemini-3.6-flash}}") String model,
+            @Value("${app.ai.gemini.vision-fallback-model:${app.ai.gemini.fallback-model:gemini-3.8-flash}}") String fallbackModel,
             @Value("${app.ai.prompt-version:food-drink-vision-v8}") String promptVersion,
             @Value("${app.ai.gemini.text-max-tokens:8192}") int maxTokens,
             @Autowired(required = false) NvidiaFoodVisionService nvidiaFallback,
@@ -224,7 +233,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.client = RestClient.builder().requestFactory(requestFactory).build();
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "gemini-3.8-flash" : model.trim();
+        this.model = model == null || model.isBlank() ? "gemini-3.5-flash" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
                 ? "gemini-3.7-flash" : fallbackModel.trim();
         this.promptVersion = promptVersion;
@@ -238,10 +247,16 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
     @Override
     public AiFoodModelResult analyze(byte[] image, String contentType) {
         long startedAt = System.nanoTime();
+        String imageKey = imageKey(image);
+        AiFoodModelResult cached = recentPositiveResults.getIfPresent(imageKey);
+        if (cached != null) {
+            log.debug("Reusing recent food vision result for an identical image");
+            return cached;
+        }
         if (!isConfigured()) {
             if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
                 log.info("Gemini API key is not configured; using NVIDIA vision provider fallback");
-                return nvidiaFallback.analyze(image, contentType);
+                return cachePositive(imageKey, nvidiaFallback.analyze(image, contentType));
             }
             throw new ResponseStatusException(SERVICE_UNAVAILABLE,
                     "The food recognition provider is not configured on the API server.");
@@ -250,7 +265,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
                 log.info("Gemini is in rate-limit cooldown ({}s remaining); using NVIDIA vision fallback",
                         rateLimitGuard.remainingSeconds());
-                return nvidiaFallback.analyze(image, contentType);
+                return cachePositive(imageKey, nvidiaFallback.analyze(image, contentType));
             }
             throw new ResponseStatusException(SERVICE_UNAVAILABLE,
                     "The food recognition provider is temporarily rate-limited.");
@@ -262,14 +277,14 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
 
         try {
             GeminiPassResult passResult = executeVisionPass(base64Image, mime);
-            return new AiFoodModelResult(
+            return cachePositive(imageKey, new AiFoodModelResult(
                     passResult.response(),
                     passResult.modelName(),
                     promptVersion,
                     false,
                     passResult.promptTokens(),
                     passResult.completionTokens(),
-                    (System.nanoTime() - startedAt) / 1_000_000);
+                    (System.nanoTime() - startedAt) / 1_000_000));
         } catch (ResponseStatusException error) {
             log.warn("Gemini vision analysis failed with status: {}", safeMessage(error));
             if (nvidiaFallback != null && nvidiaFallback.isConfigured()) {
@@ -284,7 +299,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                         throw new IllegalArgumentException(
                                 "The backup vision provider returned an incomplete result.");
                     }
-                    return fallbackResult;
+                    return cachePositive(imageKey, fallbackResult);
                 } catch (Exception nvidiaError) {
                     log.error("Both Gemini and NVIDIA vision providers failed: {}",
                             safeMessage(nvidiaError));
@@ -305,7 +320,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                         throw new IllegalArgumentException(
                                 "The backup vision provider returned an incomplete result.");
                     }
-                    return fallbackResult;
+                    return cachePositive(imageKey, fallbackResult);
                 } catch (Exception nvidiaError) {
                     log.error("Both Gemini and NVIDIA vision providers failed: {}",
                             safeMessage(nvidiaError));
@@ -314,7 +329,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             logProviderFailure(error);
             if (isRateLimited(error)) {
                 throw new ResponseStatusException(SERVICE_UNAVAILABLE,
-                        "Gemini 3.8 Flash is temporarily rate-limited. Please retry in about one minute.",
+                        "Gemini analysis quota is temporarily exhausted. Try again after the provider quota resets.",
                         error);
             }
             throw new ResponseStatusException(BAD_GATEWAY,
@@ -326,15 +341,40 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         return apiKey != null && !apiKey.isBlank();
     }
 
+    private AiFoodModelResult cachePositive(String imageKey, AiFoodModelResult result) {
+        if (result != null && result.response() != null
+                && result.response().foodDetected()
+                && result.response().components() != null
+                && !result.response().components().isEmpty()) {
+            recentPositiveResults.put(imageKey, result);
+        }
+        return result;
+    }
+
+    private String imageKey(byte[] image) {
+        try {
+            return Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(MessageDigest.getInstance("SHA-256").digest(image));
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 is unavailable", impossible);
+        }
+    }
+
     private GeminiPassResult executeVisionPass(String base64Image, String mime) throws Exception {
         List<String> candidateModels = List.copyOf(new LinkedHashSet<>(List.of(
-                model, fallbackModel, "gemini-flash-latest")));
+                model, fallbackModel)));
         Exception lastError = null;
         RestClientResponseException quotaError = null;
         boolean quotaLimited = false;
 
+        modelAttempts:
         for (String currentModel : candidateModels) {
             for (int attempt = 1; attempt <= 3; attempt++) {
+                if (!rateLimitGuard.tryAcquire()) {
+                    lastError = new IllegalStateException(
+                            "Gemini request budget is temporarily exhausted.");
+                    break modelAttempts;
+                }
                 try {
                     return callGemini(currentModel, base64Image, mime, attempt > 1);
                 } catch (RestClientResponseException error) {

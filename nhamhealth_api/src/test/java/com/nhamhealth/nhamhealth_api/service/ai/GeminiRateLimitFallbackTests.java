@@ -56,7 +56,7 @@ class GeminiRateLimitFallbackTests {
                     guard);
 
             assertSame(expectedVision, visionService.analyze(jpeg(), "image/jpeg"));
-            assertEquals(3, geminiRequests.get(),
+            assertEquals(2, geminiRequests.get(),
                     "Each distinct Gemini model should get one chance before cooldown");
 
             NvidiaFoodNutritionEstimationService nutritionFallback =
@@ -81,7 +81,7 @@ class GeminiRateLimitFallbackTests {
                             guard);
 
             assertSame(expectedNutrition, nutritionService.estimate(List.of(component)));
-            assertEquals(3, geminiRequests.get(),
+            assertEquals(2, geminiRequests.get(),
                     "Nutrition should reuse the rate-limit state learned by vision");
             verify(visionFallback).analyze(any(), any());
             verify(nutritionFallback, times(1)).estimate(List.of(component));
@@ -127,7 +127,7 @@ class GeminiRateLimitFallbackTests {
             assertEquals(503, error.getStatusCode().value());
             assertTrue(error.getReason().contains("Gemini 3.8 Flash"));
             assertTrue(error.getReason().contains("one minute"));
-            assertEquals(3, geminiRequests.get());
+            assertEquals(2, geminiRequests.get());
         } finally {
             server.stop(0);
         }
