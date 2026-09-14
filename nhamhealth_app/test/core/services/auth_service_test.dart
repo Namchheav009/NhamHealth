@@ -260,6 +260,70 @@ void main() {
     expect(storage.accessToken, isNull);
   });
 
+  test('restoreSession refreshes an expired access token', () async {
+    final storage = _MemoryTokenStorage()
+      ..accessToken = 'expired-token'
+      ..refreshToken = 'saved-refresh-token';
+    var step = 0;
+    final service = AuthService(
+      client: MockClient((request) async {
+        step++;
+        if (step == 1) {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/v1/auth/me');
+          expect(request.headers['Authorization'], 'Bearer expired-token');
+          return http.Response('', 401);
+        }
+        if (step == 2) {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/api/v1/auth/refresh');
+          expect(
+            jsonDecode(request.body),
+            {'refreshToken': 'saved-refresh-token'},
+          );
+          return http.Response(
+            jsonEncode({
+              'accessToken': 'new-access-token',
+              'refreshToken': 'new-refresh-token',
+              'tokenType': 'Bearer',
+              'expiresIn': 86400,
+              'user': {
+                'userId': 7,
+                'email': 'user@example.com',
+                'role': 'USER',
+                'fullName': 'Nham User',
+                'profileImageUrl': null,
+              },
+            }),
+            200,
+          );
+        }
+
+        expect(request.method, 'GET');
+        expect(request.url.path, '/api/v1/auth/me');
+        expect(request.headers['Authorization'], 'Bearer new-access-token');
+        return http.Response(
+          jsonEncode({
+            'userId': 7,
+            'email': 'user@example.com',
+            'role': 'USER',
+            'fullName': 'Nham User',
+            'profileImageUrl': null,
+          }),
+          200,
+        );
+      }),
+      tokenStorage: storage,
+    );
+
+    final user = await service.restoreSession();
+
+    expect(step, 3);
+    expect(user?.email, 'user@example.com');
+    expect(storage.accessToken, 'new-access-token');
+    expect(storage.refreshToken, 'new-refresh-token');
+  });
+
   test('logout marks an access-token-only session on the server', () async {
     final storage = _MemoryTokenStorage()..accessToken = 'saved-token';
     final service = AuthService(

@@ -209,23 +209,30 @@ class AuthService {
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
 
   Future<AuthenticatedUser?> restoreSession() async {
-    final token = await _tokenStorage.readAccessToken();
+    var token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) return null;
 
     try {
-      final response = await _client
-          .get(
-            Uri.parse('${ApiConfig.baseUrl}/api/v1/auth/me'),
-            headers: {
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      var response = await _getCurrentUser(token);
 
       if (response.statusCode == 401 || response.statusCode == 403) {
-        await _tokenStorage.clear();
-        return null;
+        final refreshToken = await _tokenStorage.readRefreshToken();
+        if (refreshToken == null || refreshToken.isEmpty) {
+          await _tokenStorage.clear();
+          return null;
+        }
+
+        // Access tokens can expire while the application is closed. Restore
+        // the long-lived session with the saved refresh token before deciding
+        // that the user must sign in again.
+        final refreshed = await _refreshOnce();
+        token = refreshed.accessToken;
+        response = await _getCurrentUser(token);
+
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          await _tokenStorage.clear();
+          return null;
+        }
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return null;
@@ -237,6 +244,18 @@ class AuthService {
     } on Object {
       return null;
     }
+  }
+
+  Future<http.Response> _getCurrentUser(String accessToken) {
+    return _client
+        .get(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/auth/me'),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
   }
 
   Future<void> logout() async {
