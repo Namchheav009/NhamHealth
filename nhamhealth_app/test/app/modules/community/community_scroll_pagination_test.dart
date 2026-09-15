@@ -102,6 +102,31 @@ void main() {
       expect(controller.visiblePosts.length, 10);
     },
   );
+
+  test('Community feed remains available when people loading fails', () async {
+    final authService = _TestAuthService();
+    Get.put<AuthService>(authService);
+    final post = CommunityPost(
+      id: '1',
+      description: 'A healthy community post',
+      mealName: 'Healthy meal',
+      imageUrl: '',
+      author: 'Test User',
+      role: 'USER',
+    );
+    final controller = CommunityController(
+      repository: _FailingPeopleRepository(authService, [post]),
+      authService: authService,
+      homeProvider: _TestHomeProvider(authService),
+    );
+
+    await controller.reload();
+
+    expect(controller.posts, [post]);
+    expect(controller.hasLoaded.value, isTrue);
+    expect(controller.errorMessage.value, isNull);
+    expect(controller.isLoading.value, isFalse);
+  });
 }
 
 class _TestAuthService extends AuthService {
@@ -138,4 +163,16 @@ class _PaginationPostRepository extends CommunityRepository {
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async => {
     for (final view in FriendsView.values) view: const <CommunityPerson>[],
   };
+}
+
+class _FailingPeopleRepository extends _PaginationPostRepository {
+  _FailingPeopleRepository(
+    AuthService authService,
+    List<CommunityPost> posts,
+  ) : super(authService, posts);
+
+  @override
+  Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {
+    throw Exception('People endpoint unavailable');
+  }
 }

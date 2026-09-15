@@ -11,6 +11,7 @@ class CommunityPersonProfile {
     required this.followers,
     required this.following,
     required this.isFollowing,
+    required this.followsViewer,
   });
 
   final int id;
@@ -24,6 +25,7 @@ class CommunityPersonProfile {
   final int followers;
   final int following;
   final bool isFollowing;
+  final bool followsViewer;
 
   factory CommunityPersonProfile.fromJson(Map<String, dynamic> json) =>
       CommunityPersonProfile(
@@ -38,5 +40,6 @@ class CommunityPersonProfile {
         followers: (json['followers'] as num?)?.toInt() ?? 0,
         following: (json['following'] as num?)?.toInt() ?? 0,
         isFollowing: json['followingAuthor'] == true,
+        followsViewer: json['followsViewer'] == true,
       );
 }

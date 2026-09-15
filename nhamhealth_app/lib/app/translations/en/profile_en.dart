@@ -74,6 +74,9 @@ const Map<String, String> profileEn = {
   'profile.remove_current_photo': 'Remove current photo',
   'profile.remove_current_photo_help': 'Delete your current profile photo',
   'profile.my_posts': 'My posts',
+  'profile.photos': 'Photos',
+  'profile.no_photos_yet': 'No photos shared yet.',
+  'profile.open_photo_number': 'Open photo @number',
   'profile.edit_post': 'Edit post',
   'profile.delete_post_warning':
       'This will remove the post from your profile and Community. You cannot undo this action.',

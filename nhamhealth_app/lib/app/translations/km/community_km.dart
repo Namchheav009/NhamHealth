@@ -89,6 +89,7 @@ const Map<String, String> communityKm = {
   'community.no_suggestions_help':
       'អូសចុះក្រោមដើម្បីផ្ទុកឡើងវិញ ហើយពិនិត្យម្ដងទៀតឆាប់ៗនេះ។',
   'community.follow_back': 'តាមដានតប',
+  'community.follows_you': 'តាមដានអ្នក',
   'community.choose_gallery': 'ជ្រើសរើសពីវិចិត្រសាល',
   'community.choose_gallery_help': 'ជ្រើសរើសរូបថតដែលមានស្រាប់',
   'community.take_photo': 'ថតរូប',

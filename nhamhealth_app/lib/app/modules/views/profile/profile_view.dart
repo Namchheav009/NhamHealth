@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../../config/api_config.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
@@ -129,68 +131,161 @@ class ProfileView extends GetView<ProfileController> {
         authorAvatarUrl:
             controller.authenticatedUser.value?.profileImageUrl ?? '',
       ),
-      Row(
-        children: [
-          Text(
-            'profile.my_posts'.tr,
-            style: TextStyle(
-              color: context.appText,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+      Obx(() {
+        final selectedIndex = controller.selectedProfileContentTab.value;
+        return Column(
+          children: [
+            _ProfileContentTabs(
+              selectedIndex: selectedIndex,
+              onChanged: (index) {
+                if (selectedIndex == index) return;
+                controller.selectedProfileContentTab.value = index;
+              },
             ),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: context.appSoftGreen,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              (controller.posts.length == 1
-                      ? 'profile.post_count_one'
-                      : 'profile.post_count_many')
-                  .trParams({'count': '${controller.posts.length}'}),
-              style: const TextStyle(
-                color: Color(0xFF178344),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      if (controller.posts.isEmpty)
-        const _EmptyPosts()
-      else
-        ...controller.posts.map(
-          (post) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: ProfilePostCard(
-              post: post,
-              authorName: controller.name.value,
-              authorAvatarUrl:
-                  controller.authenticatedUser.value?.profileImageUrl ?? '',
-              membership: controller.membership.value,
-              onEdit: () => _showEditPost(post),
-              onDelete: () => _confirmDeletePost(post),
-              onViewDetails: () => _showComments(post),
-              onLike: () => controller.togglePostLike(post),
-              onShowLikes:
-                  () => showPostLikers(
-                    context,
-                    post: post,
-                    repository: Get.find<CommunityRepository>(),
+            const SizedBox(height: 12),
+            if (selectedIndex == 1)
+              _MyPhotosGrid(
+                photos: _profilePhotos,
+                onOpen: (photo) => _showProfilePhoto(context, photo),
+              )
+            else if (controller.posts.isEmpty)
+              const _EmptyPosts()
+            else
+              Column(
+                children:
+                    controller.posts
+                        .map(
+                          (post) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ProfilePostCard(
+                              post: post,
+                              authorName: controller.name.value,
+                              authorAvatarUrl:
+                                  controller
+                                      .authenticatedUser
+                                      .value
+                                      ?.profileImageUrl ??
+                                  '',
+                              membership: controller.membership.value,
+                              onEdit: () => _showEditPost(post),
+                              onDelete: () => _confirmDeletePost(post),
+                              onViewDetails: () => _showComments(post),
+                              onLike: () => controller.togglePostLike(post),
+                              onShowLikes:
+                                  () => showPostLikers(
+                                    context,
+                                    post: post,
+                                    repository:
+                                        Get.find<CommunityRepository>(),
+                                  ),
+                              isLiking: controller.likingPostIds.contains(
+                                post.id,
+                              ),
+                              onComment: () => _showComments(post),
+                              onShare: () => _showShare(post),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
                   ),
-              isLiking: controller.likingPostIds.contains(post.id),
-              onComment: () => _showComments(post),
-              onShare: () => _showShare(post),
-            ),
-          ),
-        ),
+          ],
+        );
+      }),
     ],
   );
+
+  List<_MyProfilePhoto> get _profilePhotos {
+    final seen = <String>{};
+    final photos = <_MyProfilePhoto>[];
+    for (final post in controller.posts) {
+      final urls =
+          post.imageUrls.isNotEmpty
+              ? post.imageUrls
+              : post.imageUrl.isEmpty
+              ? const <String>[]
+              : <String>[post.imageUrl];
+      for (final value in urls) {
+        final url = _resolveProfilePhotoUrl(value);
+        if (url.isNotEmpty && seen.add(url)) {
+          photos.add(_MyProfilePhoto(url: url, post: post));
+        }
+      }
+    }
+    return photos;
+  }
+
+  String _resolveProfilePhotoUrl(String value) {
+    final path = value.trim();
+    if (path.isEmpty ||
+        path.startsWith('http://') ||
+        path.startsWith('https://')) {
+      return path;
+    }
+    return '${ApiConfig.baseUrl}${path.startsWith('/') ? '' : '/'}$path';
+  }
+
+  Future<void> _showProfilePhoto(
+    BuildContext context,
+    _MyProfilePhoto photo,
+  ) =>
+      showDialog<void>(
+        context: context,
+        barrierColor: Colors.black,
+        builder:
+            (dialogContext) => Material(
+              color: Colors.black,
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: InteractiveViewer(
+                        minScale: .8,
+                        maxScale: 4,
+                        child: Center(
+                          child: CachedNetworkImage(
+                            imageUrl: photo.url,
+                            fit: BoxFit.contain,
+                            errorWidget:
+                                (_, _, _) => const Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.white70,
+                                  size: 52,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _MyPhotoPostInformation(
+                        post: photo.post,
+                        authorName: controller.name.value,
+                        onOpenPost: () {
+                          Navigator.of(dialogContext).pop();
+                          _showComments(photo.post);
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: IconButton.filled(
+                        tooltip: 'profile.close_image'.tr,
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
 
   Future<void> _showEditPost(CommunityPost post) async {
     final user = controller.authenticatedUser.value;
@@ -439,6 +534,234 @@ class ProfileView extends GetView<ProfileController> {
     filled: true,
     fillColor: context.appField,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
+}
+
+class _ProfileContentTabs extends StatelessWidget {
+  const _ProfileContentTabs({
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ProfileContentTab(
+          key: const ValueKey<String>('my-profile-tab-all'),
+          label: 'common.all'.tr,
+          selected: selectedIndex == 0,
+          onTap: () => onChanged(0),
+        ),
+        const SizedBox(width: 8),
+        _ProfileContentTab(
+          key: const ValueKey<String>('my-profile-tab-photos'),
+          label: 'profile.photos'.tr,
+          selected: selectedIndex == 1,
+          onTap: () => onChanged(1),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ProfileContentTab extends StatelessWidget {
+  const _ProfileContentTab({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: label,
+    child: Material(
+      color: selected ? context.appSoftGreen : Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? AppColors.primaryGreen : context.appMutedText,
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MyPhotosGrid extends StatelessWidget {
+  const _MyPhotosGrid({required this.photos, required this.onOpen});
+
+  final List<_MyProfilePhoto> photos;
+  final ValueChanged<_MyProfilePhoto> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (photos.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Column(
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 46,
+              color: context.appMutedText,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'profile.no_photos_yet'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.appMutedText, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: photos.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) => Semantics(
+        button: true,
+        label: 'profile.open_photo_number'.trParams({
+          'number': '${index + 1}',
+        }),
+        child: Material(
+          color: context.appMutedSurface,
+          borderRadius: BorderRadius.circular(2),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => onOpen(photos[index]),
+            child: CachedNetworkImage(
+              imageUrl: photos[index].url,
+              fit: BoxFit.cover,
+              placeholder: (_, _) => ColoredBox(color: context.appMutedSurface),
+              errorWidget:
+                  (_, _, _) => Icon(
+                    Icons.broken_image_outlined,
+                    color: context.appMutedText,
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MyProfilePhoto {
+  const _MyProfilePhoto({required this.url, required this.post});
+
+  final String url;
+  final CommunityPost post;
+}
+
+class _MyPhotoPostInformation extends StatelessWidget {
+  const _MyPhotoPostInformation({
+    required this.post,
+    required this.authorName,
+    required this.onOpenPost,
+  });
+
+  final CommunityPost post;
+  final String authorName;
+  final VoidCallback onOpenPost;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
+      14,
+      AppSpacing.pageHorizontalFor(context),
+      18,
+    ),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.black.withValues(alpha: .25), Colors.black87],
+      ),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          button: true,
+          label: '${'community.view_details'.tr}: $authorName',
+          child: InkWell(
+            onTap: onOpenPost,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      authorName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white70,
+                    size: 15,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (post.description.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            post.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Text(
+          '${post.ageLabel}   •   ${(post.likes == 1 ? 'community.like_count_one' : 'community.like_count_many').trParams({'count': '${post.likes}'})}   •   ${(post.comments == 1 ? 'community.comment_count_one' : 'community.comment_count_many').trParams({'count': '${post.comments}'})}',
+          style: const TextStyle(color: Colors.white70, fontSize: 11),
+        ),
+      ],
+    ),
   );
 }
 

@@ -85,6 +85,7 @@ const Map<String, String> communityEn = {
       'Discover people whose wellness journey inspires you.',
   'community.no_suggestions_help': 'Pull to refresh and check again soon.',
   'community.follow_back': 'Follow back',
+  'community.follows_you': 'Follows you',
   'community.choose_gallery': 'Choose from gallery',
   'community.choose_gallery_help': 'Select an existing photo',
   'community.take_photo': 'Take a photo',

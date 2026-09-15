@@ -58,17 +58,26 @@ class MealIdeaCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          InkResponse(
-                            onTap: onFavorite,
-                            radius: 20,
-                            child: Padding(
-                              padding: const EdgeInsets.all(3),
-                              child: Icon(
+                          Tooltip(
+                            message:
                                 meal.isFavorite
-                                    ? Icons.bookmark_rounded
-                                    : Icons.bookmark_border_rounded,
-                                color: AppColors.primaryGreen,
-                                size: 24,
+                                    ? 'common.remove_from_favorites'.tr
+                                    : 'common.add_to_favorites'.tr,
+                            child: InkResponse(
+                              onTap: onFavorite,
+                              radius: 20,
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: Icon(
+                                  meal.isFavorite
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  color:
+                                      meal.isFavorite
+                                          ? AppColors.favoriteRed
+                                          : const Color(0xFF8A8D8B),
+                                  size: 24,
+                                ),
                               ),
                             ),
                           ),

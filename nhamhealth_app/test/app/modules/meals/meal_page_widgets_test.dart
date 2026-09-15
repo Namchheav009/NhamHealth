@@ -73,7 +73,7 @@ void main() {
     expect(find.text('High Protein Salad'), findsOneWidget);
     expect(find.text('Easy  •  High Protein  •  Healthy'), findsOneWidget);
     expect(find.text('15 min'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.bookmark_border_rounded));
+    await tester.tap(find.byIcon(Icons.favorite_border_rounded));
     expect(favoriteTaps, 1);
     expect(tester.takeException(), isNull);
   });

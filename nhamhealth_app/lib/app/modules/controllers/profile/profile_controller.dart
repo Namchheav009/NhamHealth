@@ -42,6 +42,7 @@ class ProfileController extends GetxController {
   final ImagePicker _imagePicker = ImagePicker();
   final Rxn<ProfileDashboardModel> dashboard = Rxn<ProfileDashboardModel>();
   final posts = <CommunityPost>[].obs;
+  final selectedProfileContentTab = 0.obs;
   final followerCount = 0.obs;
   final followingCount = 0.obs;
   final likingPostIds = <String>{}.obs;

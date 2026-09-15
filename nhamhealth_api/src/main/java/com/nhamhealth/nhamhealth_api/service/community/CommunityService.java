@@ -169,7 +169,9 @@ public class CommunityService {
                 visiblePosts,
                 follows.countByFollowingUserUserIdAndStatusIgnoreCase(targetUserId, "ACTIVE"),
                 follows.countByFollowerUserUserIdAndStatusIgnoreCase(targetUserId, "ACTIVE"),
-                followedIds(viewerId).contains(targetUserId));
+                followedIds(viewerId).contains(targetUserId),
+                follows.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
+                        targetUserId, viewerId, "ACTIVE"));
     }
 
     @Transactional(readOnly = true)

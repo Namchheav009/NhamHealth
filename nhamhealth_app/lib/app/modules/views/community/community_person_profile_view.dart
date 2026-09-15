@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
@@ -13,7 +14,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../models/community/community_person_profile.dart';
-import '../../models/community/community_post.dart';
+import '../../controllers/community/community_controller.dart';
 import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
@@ -30,6 +31,8 @@ class CommunityPersonProfileView extends StatefulWidget {
       _CommunityPersonProfileViewState();
 }
 
+enum _ProfileContentTab { all, photos }
+
 class _CommunityPersonProfileViewState
     extends State<CommunityPersonProfileView> {
   final CommunityRepository _repository = Get.find<CommunityRepository>();
@@ -38,7 +41,28 @@ class _CommunityPersonProfileViewState
   String? _error;
   bool _isLoading = true;
   bool _isUpdatingFollow = false;
+  _ProfileContentTab _selectedTab = _ProfileContentTab.all;
   final Set<String> _likingPostIds = <String>{};
+
+  List<_PersonProfilePhoto> get _photos {
+    final seen = <String>{};
+    final photos = <_PersonProfilePhoto>[];
+    for (final post in _posts) {
+      final urls =
+          post.imageUrls.isNotEmpty
+              ? post.imageUrls
+              : post.imageUrl.isEmpty
+              ? const <String>[]
+              : <String>[post.imageUrl];
+      for (final value in urls) {
+        final url = value.trim();
+        if (url.isNotEmpty && seen.add(url)) {
+          photos.add(_PersonProfilePhoto(url: url, post: post));
+        }
+      }
+    }
+    return photos;
+  }
 
   int get _userId {
     final arguments = Get.arguments;
@@ -72,8 +96,9 @@ class _CommunityPersonProfileViewState
         _repository.getPersonPosts(_userId),
       ]);
       if (!mounted) return;
+      final loadedProfile = results[0] as CommunityPersonProfile;
       setState(() {
-        _profile = results[0] as CommunityPersonProfile;
+        _profile = _withLocalFollowState(loadedProfile);
         _posts = results[1] as List<CommunityPost>;
         _isLoading = false;
       });
@@ -120,6 +145,7 @@ class _CommunityPersonProfileViewState
       _isUpdatingFollow = true;
       _profile = _withFollowState(profile, optimisticFollowing);
     });
+    _synchronizeFollowState(profile, optimisticFollowing);
     try {
       final status = await _repository.toggleFollow('${profile.id}');
       if (!mounted) return;
@@ -128,12 +154,14 @@ class _CommunityPersonProfileViewState
         _profile = _withFollowState(profile, isFollowing);
         _isUpdatingFollow = false;
       });
+      _synchronizeFollowState(profile, isFollowing);
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _profile = profile;
         _isUpdatingFollow = false;
       });
+      _synchronizeFollowState(profile, profile.isFollowing);
       unawaited(
         AppAlert.error(
           title: 'community.could_not_update_follow',
@@ -158,7 +186,51 @@ class _CommunityPersonProfileViewState
     followers: (profile.followers + (isFollowing ? 1 : -1)).clamp(0, 1 << 31),
     following: profile.following,
     isFollowing: isFollowing,
+    followsViewer: profile.followsViewer,
   );
+
+  CommunityPersonProfile _withLocalFollowState(CommunityPersonProfile profile) {
+    if (!Get.isRegistered<CommunityController>()) return profile;
+    final status = Get.find<CommunityController>().connectionStatusFor(
+      profile.id,
+    );
+    if (status == null) return profile;
+
+    final isFollowing = status == 'FOLLOWING' || status == 'FRIEND';
+    final followsViewer =
+        status == 'FOLLOWS_YOU' || status == 'FRIEND' || profile.followsViewer;
+    if (isFollowing == profile.isFollowing &&
+        followsViewer == profile.followsViewer) {
+      return profile;
+    }
+
+    return CommunityPersonProfile(
+      id: profile.id,
+      name: profile.name,
+      avatarUrl: profile.avatarUrl,
+      role: profile.role,
+      headline: profile.headline,
+      joinedLabel: profile.joinedLabel,
+      verified: profile.verified,
+      posts: profile.posts,
+      followers: (profile.followers + (isFollowing ? 1 : -1)).clamp(0, 1 << 31),
+      following: profile.following,
+      isFollowing: isFollowing,
+      followsViewer: followsViewer,
+    );
+  }
+
+  void _synchronizeFollowState(
+    CommunityPersonProfile profile,
+    bool isFollowing,
+  ) {
+    if (!Get.isRegistered<CommunityController>()) return;
+    Get.find<CommunityController>().synchronizeFollowState(
+      userId: profile.id,
+      isFollowing: isFollowing,
+      followsViewer: profile.followsViewer,
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -184,9 +256,14 @@ class _CommunityPersonProfileViewState
                     children: [
                       _topBar(context),
                       if (_isLoading)
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-                          child: PageSkeleton.profile(),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.pageHorizontalFor(context),
+                            16,
+                            AppSpacing.pageHorizontalFor(context),
+                            AppSpacing.pageBottom,
+                          ),
+                          child: const PageSkeleton.profile(),
                         )
                       else if (_error != null)
                         _ProfileMessage(
@@ -196,13 +273,12 @@ class _CommunityPersonProfileViewState
                         )
                       else if (_profile != null) ...[
                         _identity(context, _profile!),
-                        _stats(context, _profile!),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
-                          child: _followButton(context, _profile!),
-                        ),
-                        _postTab(context),
-                        _postGrid(context),
+                        const SizedBox(height: 18),
+                        _contentTabs(context),
+                        if (_selectedTab == _ProfileContentTab.all)
+                          _postGrid(context)
+                        else
+                          _photoGrid(context),
                       ],
                     ],
                   ),
@@ -216,7 +292,12 @@ class _CommunityPersonProfileViewState
   );
 
   Widget _topBar(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
+      14,
+      AppSpacing.pageHorizontalFor(context),
+      0,
+    ),
     child: Row(
       children: [
         AppBackButton(onPressed: Get.back),
@@ -253,148 +334,212 @@ class _CommunityPersonProfileViewState
     );
   }
 
-  Widget _identity(BuildContext context, CommunityPersonProfile profile) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        child: Column(
-          children: [
-            Semantics(
-              button: profile.avatarUrl.isNotEmpty,
-              label:
+  Widget _identity(
+    BuildContext context,
+    CommunityPersonProfile profile,
+  ) => Padding(
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
+      12,
+      AppSpacing.pageHorizontalFor(context),
+      0,
+    ),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface.withValues(alpha: .94),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Column(
+        children: [
+          Semantics(
+            button: profile.avatarUrl.isNotEmpty,
+            label:
+                profile.avatarUrl.isEmpty
+                    ? 'profile.photo_with_name'.trParams({'name': profile.name})
+                    : 'profile.view_full_photo_with_name'.trParams({
+                      'name': profile.name,
+                    }),
+            child: Tooltip(
+              message:
                   profile.avatarUrl.isEmpty
-                      ? 'profile.photo_with_name'.trParams({
-                        'name': profile.name,
-                      })
-                      : 'profile.view_full_photo_with_name'.trParams({
-                        'name': profile.name,
-                      }),
-              child: Tooltip(
-                message:
+                      ? 'profile.photo'.tr
+                      : 'profile.view_photo'.tr,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap:
                     profile.avatarUrl.isEmpty
-                        ? 'profile.photo'.tr
-                        : 'profile.view_photo'.tr,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap:
-                      profile.avatarUrl.isEmpty
-                          ? null
-                          : () => _openProfileImage(profile),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF00A857),
-                      shape: BoxShape.circle,
-                    ),
-                    child: CircleAvatar(
-                      radius: 34,
-                      backgroundColor: context.appSoftGreen,
-                      foregroundImage:
-                          profile.avatarUrl.isEmpty
-                              ? null
-                              : CachedNetworkImageProvider(profile.avatarUrl),
-                      child: Text(
-                        _initials(profile.name),
-                        style: TextStyle(
-                          color:
-                              context.appIsDark
-                                  ? context.appColorScheme.primary
-                                  : const Color(0xFF00A857),
-                          fontSize: 21,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        ? null
+                        : () => _openProfileImage(profile),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF00A857),
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 42,
+                    backgroundColor: context.appSoftGreen,
+                    foregroundImage:
+                        profile.avatarUrl.isEmpty
+                            ? null
+                            : CachedNetworkImageProvider(profile.avatarUrl),
+                    child: Text(
+                      _initials(profile.name),
+                      style: TextStyle(
+                        color:
+                            context.appIsDark
+                                ? context.appColorScheme.primary
+                                : const Color(0xFF00A857),
+                        fontSize: 21,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  profile.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 20,
+                    letterSpacing: -.2,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (profile.headline.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              profile.headline,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appMutedText,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (context.appIsDark
+                        ? context.appColorScheme.primary
+                        : const Color(0xFF329342))
+                    .withValues(alpha: context.appIsDark ? .3 : .12),
+              ),
+            ),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(
+                  Icons.person_outline_rounded,
+                  color:
+                      context.appIsDark
+                          ? context.appColorScheme.primary
+                          : const Color(0xFF329342),
+                  size: 13,
+                ),
+                const SizedBox(width: 7),
                 Flexible(
                   child: Text(
-                    profile.name,
+                    _roleLabel(profile.role),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: context.appText,
-                      fontSize: 16,
-                      letterSpacing: -.2,
-                      fontWeight: FontWeight.w800,
+                      color:
+                          context.appIsDark
+                              ? context.appColorScheme.primary
+                              : const Color(0xFF329342),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 7),
+          ),
+          if (profile.followsViewer) ...[
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: context.appSoftGreen,
+                color: context.appMutedSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: (context.appIsDark
-                          ? context.appColorScheme.primary
-                          : const Color(0xFF329342))
-                      .withValues(alpha: context.appIsDark ? .3 : .12),
-                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.person_outline_rounded,
-                    color:
-                        context.appIsDark
-                            ? context.appColorScheme.primary
-                            : const Color(0xFF329342),
+                    Icons.person_add_alt_1_rounded,
                     size: 13,
+                    color: context.appMutedText,
                   ),
-                  const SizedBox(width: 7),
-                  Flexible(
-                    child: Text(
-                      _roleLabel(profile.role),
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color:
-                            context.appIsDark
-                                ? context.appColorScheme.primary
-                                : const Color(0xFF329342),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'community.follows_you'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ),
-            if (profile.joinedLabel.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    color: context.appMutedText,
-                    size: 12,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    'community.member_since'.trParams({
-                      'date': profile.joinedLabel,
-                    }),
-                    style: TextStyle(color: context.appMutedText, fontSize: 11),
-                  ),
-                ],
-              ),
-            ],
           ],
-        ),
-      );
+          if (profile.joinedLabel.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  color: context.appMutedText,
+                  size: 12,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  'community.member_since'.trParams({
+                    'date': profile.joinedLabel,
+                  }),
+                  style: TextStyle(color: context.appMutedText, fontSize: 11),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 18),
+          _stats(context, profile),
+          const SizedBox(height: 14),
+          _followButton(context, profile),
+        ],
+      ),
+    ),
+  );
 
   String _roleLabel(String role) {
     final value = role.trim();
-    if (value.isEmpty || value.toUpperCase() == 'USER') return 'community.member'.tr;
+    if (value.isEmpty || value.toUpperCase() == 'USER') {
+      return 'community.member'.tr;
+    }
     return value
         .toLowerCase()
         .split(RegExp(r'[_\s]+'))
@@ -408,37 +553,61 @@ class _CommunityPersonProfileViewState
   }
 
   Widget _stats(BuildContext context, CommunityPersonProfile profile) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
-            color: context.appElevatedSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: context.appBorder),
-          ),
-          child: Row(
-            children: [
-              _stat(context, _formatCount(profile.posts), 'community.posts'.tr),
-              _divider(context),
-              _stat(context, _formatCount(profile.followers), 'community.followers'.tr),
-              _divider(context),
-              _stat(context, _formatCount(profile.following), 'community.following'.tr),
-            ],
-          ),
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Row(
+          children: [
+            _stat(
+              context,
+              Icons.article_outlined,
+              _formatCount(profile.posts),
+              'community.posts'.tr,
+            ),
+            _divider(context),
+            _stat(
+              context,
+              Icons.people_outline_rounded,
+              _formatCount(profile.followers),
+              'community.followers'.tr,
+            ),
+            _divider(context),
+            _stat(
+              context,
+              Icons.person_add_alt_outlined,
+              _formatCount(profile.following),
+              'community.following'.tr,
+            ),
+          ],
         ),
       );
 
-  Widget _stat(BuildContext context, String value, String label) => Expanded(
+  Widget _stat(
+    BuildContext context,
+    IconData icon,
+    String value,
+    String label,
+  ) => Expanded(
     child: Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 17, color: AppColors.primaryGreen),
+            const SizedBox(width: 5),
+            Text(
+              value,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 3),
         Text(
@@ -481,7 +650,12 @@ class _CommunityPersonProfileViewState
                     : Icons.person_add_alt_1_rounded,
               ),
       label: Text(
-        (profile.isFollowing ? 'community.following' : 'community.follow').tr,
+        (profile.isFollowing
+                ? 'community.following'
+                : profile.followsViewer
+                ? 'community.follow_back'
+                : 'community.follow')
+            .tr,
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor:
@@ -503,33 +677,33 @@ class _CommunityPersonProfileViewState
     ),
   );
 
-  Widget _postTab(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+  Widget _contentTabs(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
+      0,
+      AppSpacing.pageHorizontalFor(context),
+      14,
+    ),
     child: Row(
       children: [
-        Text(
-          'community.posts'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
+        _ProfileTabButton(
+          key: const ValueKey<String>('profile-tab-all'),
+          label: 'common.all'.tr,
+          selected: _selectedTab == _ProfileContentTab.all,
+          onTap: () {
+            if (_selectedTab == _ProfileContentTab.all) return;
+            setState(() => _selectedTab = _ProfileContentTab.all);
+          },
         ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: context.appSoftGreen,
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: Text(
-            '${_posts.length}',
-            style: const TextStyle(
-              color: Color(0xFF1B9650),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+        const SizedBox(width: 8),
+        _ProfileTabButton(
+          key: const ValueKey<String>('profile-tab-photos'),
+          label: 'profile.photos'.tr,
+          selected: _selectedTab == _ProfileContentTab.photos,
+          onTap: () {
+            if (_selectedTab == _ProfileContentTab.photos) return;
+            setState(() => _selectedTab = _ProfileContentTab.photos);
+          },
         ),
       ],
     ),
@@ -543,7 +717,12 @@ class _CommunityPersonProfileViewState
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 42),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontalFor(context),
+        0,
+        AppSpacing.pageHorizontalFor(context),
+        42,
+      ),
       child: Column(
         children: _posts
             .map(
@@ -571,6 +750,111 @@ class _CommunityPersonProfileViewState
             .toList(growable: false),
       ),
     );
+  }
+
+  Widget _photoGrid(BuildContext context) {
+    final photos = _photos;
+    if (photos.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
+        child: Column(
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 46,
+              color: context.appMutedText,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'profile.no_photos_yet'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.appMutedText, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontalFor(context),
+        0,
+        AppSpacing.pageHorizontalFor(context),
+        42,
+      ),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: photos.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemBuilder: (context, index) {
+          final photo = photos[index];
+          final imageUrl = _resolvePhotoUrl(photo.url);
+          return Semantics(
+            button: true,
+            label: 'profile.open_photo_number'.trParams({
+              'number': '${index + 1}',
+            }),
+            child: Material(
+              color: context.appMutedSurface,
+              borderRadius: BorderRadius.circular(2),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => _openPhoto(photo, imageUrl),
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder:
+                      (_, _) => Container(color: context.appMutedSurface),
+                  errorWidget:
+                      (_, _, _) => Icon(
+                        Icons.broken_image_outlined,
+                        color: context.appMutedText,
+                      ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openPhoto(_PersonProfilePhoto photo, String imageUrl) {
+    final profile = _profile;
+    if (profile == null) return;
+    Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder:
+            (_, animation, _) => FadeTransition(
+              opacity: animation,
+              child: _CommunityFullProfileImage(
+                imageUrl: imageUrl,
+                memberName: profile.name,
+                post: photo.post,
+                onOpenPost: () {
+                  Navigator.of(context).pop();
+                  _showComments(photo.post);
+                },
+              ),
+            ),
+      ),
+    );
+  }
+
+  String _resolvePhotoUrl(String value) {
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    return '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
 
   Future<void> _togglePostLike(CommunityPost post) async {
@@ -790,6 +1074,55 @@ class _CommunityPersonProfileViewState
   }
 }
 
+class _PersonProfilePhoto {
+  const _PersonProfilePhoto({required this.url, required this.post});
+
+  final String url;
+  final CommunityPost post;
+}
+
+class _ProfileTabButton extends StatelessWidget {
+  const _ProfileTabButton({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: label,
+    child: Material(
+      color: selected ? context.appSoftGreen : Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selected ? AppColors.primaryGreen : context.appMutedText,
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _PersonPostOptionsSheet extends StatelessWidget {
   const _PersonPostOptionsSheet();
 
@@ -863,10 +1196,14 @@ class _CommunityFullProfileImage extends StatefulWidget {
   const _CommunityFullProfileImage({
     required this.imageUrl,
     required this.memberName,
+    this.post,
+    this.onOpenPost,
   });
 
   final String imageUrl;
   final String memberName;
+  final CommunityPost? post;
+  final VoidCallback? onOpenPost;
 
   @override
   State<_CommunityFullProfileImage> createState() =>
@@ -956,15 +1293,104 @@ class _CommunityFullProfileImageState
           ),
           Positioned(
             right: 12,
-            bottom: 18,
+            bottom: widget.post == null ? 18 : 142,
             child: _CommunityZoomControls(
               onZoomIn: () => _zoom(1.35),
               onZoomOut: () => _zoom(1 / 1.35),
               onReset: _resetZoom,
             ),
           ),
+          if (widget.post case final post?)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _PhotoPostInformation(
+                post: post,
+                authorName: widget.memberName,
+                onOpenPost: widget.onOpenPost,
+              ),
+            ),
         ],
       ),
+    ),
+  );
+}
+
+class _PhotoPostInformation extends StatelessWidget {
+  const _PhotoPostInformation({
+    required this.post,
+    required this.authorName,
+    this.onOpenPost,
+  });
+
+  final CommunityPost post;
+  final String authorName;
+  final VoidCallback? onOpenPost;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.black.withValues(alpha: .25), Colors.black87],
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          button: true,
+          label: '${'community.view_details'.tr}: $authorName',
+          child: InkWell(
+            onTap: onOpenPost,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      authorName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white70,
+                    size: 15,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (post.description.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            post.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Text(
+          '${post.ageLabel}   •   ${(post.likes == 1 ? 'community.like_count_one' : 'community.like_count_many').trParams({'count': '${post.likes}'})}   •   ${(post.comments == 1 ? 'community.comment_count_one' : 'community.comment_count_many').trParams({'count': '${post.comments}'})}',
+          style: const TextStyle(color: Colors.white70, fontSize: 11),
+        ),
+      ],
     ),
   );
 }

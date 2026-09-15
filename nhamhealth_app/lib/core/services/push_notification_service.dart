@@ -102,7 +102,7 @@ class PushNotificationService {
           'notificationId': message.data['notificationId'] ?? '',
           'referenceType': message.data['referenceType'] ?? '',
           'referenceId': message.data['referenceId'] ?? '',
-          'avatarUrl': avatarUrl,
+          'avatarUrl': _absoluteImageUrl(avatarUrl),
           'subText': subText,
         });
       } on Object {
@@ -162,7 +162,7 @@ class PushNotificationService {
           'title': title,
           'body': body,
           'subText': subText,
-          'avatarUrl': avatarUrl,
+          'avatarUrl': _absoluteImageUrl(avatarUrl),
           'referenceType': referenceType ?? '',
           'referenceId': referenceId ?? '',
           'notificationId':
@@ -239,6 +239,13 @@ class PushNotificationService {
 
   void _open(RemoteMessage message) {
     _openData(message.data);
+  }
+
+  String? _absoluteImageUrl(String? value) {
+    final imageUrl = value?.trim();
+    if (imageUrl == null || imageUrl.isEmpty) return null;
+    if (imageUrl.startsWith('/')) return '${ApiConfig.baseUrl}$imageUrl';
+    return imageUrl;
   }
 
   void _openNativeNotification(Object? rawArguments) {

@@ -76,6 +76,9 @@ const Map<String, String> profileKm = {
   'profile.remove_current_photo': 'លុបរូបថតបច្ចុប្បន្ន',
   'profile.remove_current_photo_help': 'លុបរូបថតប្រវត្តិរូបបច្ចុប្បន្នរបស់អ្នក',
   'profile.my_posts': 'ការបង្ហោះរបស់ខ្ញុំ',
+  'profile.photos': 'រូបថត',
+  'profile.no_photos_yet': 'មិនទាន់មានរូបថតដែលបានចែករំលែកទេ។',
+  'profile.open_photo_number': 'បើករូបថតទី @number',
   'profile.edit_post': 'កែប្រែការបង្ហោះ',
   'profile.delete_post_warning':
       'ការបង្ហោះនេះនឹងត្រូវបានលុបពីប្រវត្តិរូប និងសហគមន៍។ អ្នកមិនអាចត្រឡប់សកម្មភាពនេះវិញបានទេ។',

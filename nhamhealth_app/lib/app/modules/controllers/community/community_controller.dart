@@ -258,24 +258,33 @@ class CommunityController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
     displayedPostCount.value = pageSize;
+
+    // The feed is the only request that is required to render Community.
+    // People and top-bar data are enhancements and must not turn a healthy
+    // feed into a full-page error when one of their endpoints is unavailable.
+    final peopleRequest = _refreshPeople();
+    final topBarRequest = _loadTopBarSafely();
     try {
-      final results = await Future.wait<dynamic>([
-        _repository.getPosts(),
-        _repository.getPeople(),
-        loadTopBar(),
-      ]);
-      final newPosts = results[0] as List<CommunityPost>;
+      final newPosts = await _repository.getPosts();
       posts.assignAll(newPosts);
       displayedPostCount.value =
           newPosts.length < pageSize && newPosts.isNotEmpty
               ? newPosts.length
               : pageSize;
-      _replacePeople(results[1] as Map<FriendsView, List<CommunityPerson>>);
       hasLoaded.value = true;
     } on Object catch (error) {
       errorMessage.value = error.toString();
     } finally {
+      await Future.wait<void>([peopleRequest, topBarRequest]);
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadTopBarSafely() async {
+    try {
+      await loadTopBar();
+    } on Object {
+      // Community can still render when session/profile decoration is stale.
     }
   }
 
@@ -359,6 +368,27 @@ class CommunityController extends GetxController {
   }
 
   void selectPeopleFilter(PeopleFilter value) => peopleFilter.value = value;
+
+  void synchronizeFollowState({
+    required int userId,
+    required bool isFollowing,
+    required bool followsViewer,
+  }) {
+    final key = '$userId';
+    connectionStatuses[key] =
+        isFollowing && followsViewer
+            ? 'Friend'
+            : isFollowing
+            ? 'Following'
+            : followsViewer
+            ? 'Follows_you'
+            : 'Follow';
+    _updatePostAuthorFollowState(key, isFollowing);
+  }
+
+  String? connectionStatusFor(int userId) =>
+      connectionStatuses['$userId']?.trim().toUpperCase();
+
   void updateSearch(String value) {
     searchQuery.value = value;
     displayedPostCount.value = pageSize;
@@ -536,16 +566,31 @@ class CommunityController extends GetxController {
     final wasFollowing =
         previousStatus == 'FOLLOWING' || previousStatus == 'FRIEND';
     final optimisticFollowing = !wasFollowing;
+    final followsViewer =
+        previousStatus == 'FOLLOWS_YOU' || previousStatus == 'FRIEND';
 
     connectionStatuses[person.id] =
-        optimisticFollowing ? 'Following' : 'Follow';
+        optimisticFollowing
+            ? followsViewer
+                ? 'Friend'
+                : 'Following'
+            : followsViewer
+            ? 'Follows_you'
+            : 'Follow';
     _updatePostAuthorFollowState(person.id, optimisticFollowing);
     updatingConnectionIds.add(person.id);
 
     try {
       final status = await _repository.toggleFollow(person.id);
       final isFollowing = status == 'FOLLOWING';
-      connectionStatuses[person.id] = isFollowing ? 'Following' : 'Follow';
+      connectionStatuses[person.id] =
+          isFollowing
+              ? followsViewer
+                  ? 'Friend'
+                  : 'Following'
+              : followsViewer
+              ? 'Follows_you'
+              : 'Follow';
       _updatePostAuthorFollowState(person.id, isFollowing);
 
       try {

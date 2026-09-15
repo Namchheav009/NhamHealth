@@ -211,16 +211,71 @@ class _ReportsPlaceholder extends StatelessWidget {
   const _ReportsPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const Column(
-    key: ValueKey<String>('reports-skeleton'),
+  Widget build(BuildContext context) => Column(
+    key: const ValueKey<String>('reports-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _ReportRowPlaceholder(),
-      SizedBox(height: 10),
-      _ReportRowPlaceholder(),
-      SizedBox(height: 10),
-      _ReportRowPlaceholder(),
-      SizedBox(height: 10),
-      _ReportRowPlaceholder(),
+      Container(
+        width: double.infinity,
+        height: 104,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.appSurface.withValues(alpha: .82),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: const Row(
+          children: [
+            _SkeletonBox(width: 42, height: 42, radius: 21),
+            SizedBox(width: 12),
+            Expanded(child: _TextLines(widths: [.58, .94, .72])),
+            SizedBox(width: 12),
+            _SkeletonBox(width: 32, height: 32, radius: 16),
+          ],
+        ),
+      ),
+      const SizedBox(height: 14),
+      const SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: NeverScrollableScrollPhysics(),
+        child: Row(
+          children: [
+            _SkeletonBox(width: 72, height: 34, radius: 17),
+            SizedBox(width: 8),
+            _SkeletonBox(width: 96, height: 34, radius: 17),
+            SizedBox(width: 8),
+            _SkeletonBox(width: 94, height: 34, radius: 17),
+            SizedBox(width: 8),
+            _SkeletonBox(width: 110, height: 34, radius: 17),
+          ],
+        ),
+      ),
+      const SizedBox(height: 14),
+      const _ReportRowPlaceholder(),
+      const SizedBox(height: 10),
+      const _ReportRowPlaceholder(),
+      const SizedBox(height: 10),
+      const _ReportRowPlaceholder(),
+      const SizedBox(height: 16),
+      Container(
+        width: double.infinity,
+        height: 70,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.appSurface.withValues(alpha: .82),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: const Row(
+          children: [
+            _SkeletonBox(width: 38, height: 38, radius: 19),
+            SizedBox(width: 12),
+            Expanded(child: _TextLines(widths: [.4, .78])),
+            SizedBox(width: 12),
+            _SkeletonBox(width: 18, height: 18, radius: 9),
+          ],
+        ),
+      ),
     ],
   );
 }
@@ -231,7 +286,7 @@ class _ReportRowPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    height: 82,
+    height: 108,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: context.appSurface.withValues(alpha: .82),
@@ -240,7 +295,7 @@ class _ReportRowPlaceholder extends StatelessWidget {
     ),
     child: const Row(
       children: [
-        _SkeletonBox(width: 40, height: 40, radius: 20),
+        _SkeletonBox(width: 44, height: 44, radius: 22),
         SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -249,18 +304,24 @@ class _ReportRowPlaceholder extends StatelessWidget {
             children: [
               FractionallySizedBox(
                 widthFactor: .58,
-                child: _SkeletonBox(height: 13, radius: 7),
+                child: _SkeletonBox(height: 14, radius: 7),
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 7),
               FractionallySizedBox(
-                widthFactor: .38,
-                child: _SkeletonBox(height: 10, radius: 5),
+                widthFactor: .84,
+                child: _SkeletonBox(height: 11, radius: 6),
+              ),
+              SizedBox(height: 7),
+              Row(
+                children: [
+                  _SkeletonBox(width: 68, height: 11, radius: 6),
+                  SizedBox(width: 10),
+                  _SkeletonBox(width: 62, height: 22, radius: 11),
+                ],
               ),
             ],
           ),
         ),
-        SizedBox(width: 12),
-        _SkeletonBox(width: 64, height: 26, radius: 13),
         SizedBox(width: 8),
         _SkeletonBox(width: 18, height: 18, radius: 9),
       ],
@@ -516,14 +577,50 @@ class _ProfileHeaderPlaceholder extends StatelessWidget {
   const _ProfileHeaderPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const Column(
-    children: [
-      _SkeletonBox(width: 82, height: 82, radius: 41),
-      SizedBox(height: 13),
-      _SkeletonBox(width: 150, height: 17, radius: 9),
-      SizedBox(height: 9),
-      _SkeletonBox(width: 205, height: 12, radius: 6),
-    ],
+  Widget build(BuildContext context) => Container(
+    height: 164,
+    padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
+    decoration: BoxDecoration(
+      color: context.appSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: const Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: _SkeletonBox(width: 84, height: 84, radius: 42),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: SizedBox(
+                height: 94,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: _SkeletonBox(width: 82, height: 36, radius: 18),
+                    ),
+                    Positioned(
+                      left: 0,
+                      top: 28,
+                      right: 0,
+                      child: _TextLines(widths: [.54, .35, .68]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+        _ProfileSocialStatsPlaceholder(),
+      ],
+    ),
   );
 }
 
@@ -536,22 +633,23 @@ class _ProfilePlaceholder extends StatelessWidget {
       const overview = Column(
         children: [
           _ProfileHeaderPlaceholder(),
-          SizedBox(height: 16),
-          _MetricRow(),
-          SizedBox(height: 14),
-          _SkeletonCard(height: 120),
+          SizedBox(height: 8),
+          _ProfileHealthStatsPlaceholder(),
+          SizedBox(height: 8),
+          _ProfileInsightPlaceholder(),
         ],
       );
       const feed = Column(
         children: [
-          _SkeletonCard(height: 150),
-          SizedBox(height: 14),
+          _ProfileComposerPlaceholder(),
+          _ProfileFeedHeaderPlaceholder(),
+          SizedBox(height: 10),
           _CommunityPostPlaceholder(),
         ],
       );
 
       if (constraints.maxWidth < 820) {
-        return const Column(children: [overview, SizedBox(height: 14), feed]);
+        return const Column(children: [overview, SizedBox(height: 8), feed]);
       }
 
       return const Row(
@@ -567,17 +665,180 @@ class _ProfilePlaceholder extends StatelessWidget {
   );
 }
 
-class _MetricRow extends StatelessWidget {
-  const _MetricRow();
+class _ProfileSocialStatsPlaceholder extends StatelessWidget {
+  const _ProfileSocialStatsPlaceholder();
 
   @override
   Widget build(BuildContext context) => const Row(
     children: [
-      Expanded(child: _SkeletonBox(height: 82, radius: 17)),
-      SizedBox(width: 10),
-      Expanded(child: _SkeletonBox(height: 82, radius: 17)),
-      SizedBox(width: 10),
-      Expanded(child: _SkeletonBox(height: 82, radius: 17)),
+      Expanded(child: _ProfileStatPlaceholder()),
+      SizedBox(width: 8),
+      Expanded(child: _ProfileStatPlaceholder()),
+      SizedBox(width: 8),
+      Expanded(child: _ProfileStatPlaceholder()),
+    ],
+  );
+}
+
+class _ProfileStatPlaceholder extends StatelessWidget {
+  const _ProfileStatPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _SkeletonBox(width: 32, height: 32, radius: 16),
+      SizedBox(width: 5),
+      Flexible(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SkeletonBox(height: 10, radius: 5),
+            SizedBox(height: 4),
+            FractionallySizedBox(
+              widthFactor: .75,
+              child: _SkeletonBox(height: 7, radius: 4),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _ProfileHealthStatsPlaceholder extends StatelessWidget {
+  const _ProfileHealthStatsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 66,
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
+    decoration: BoxDecoration(
+      color: context.appSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(13),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: const Row(
+      children: [
+        Expanded(child: _ProfileHealthStatPlaceholder()),
+        SizedBox(width: 4),
+        Expanded(child: _ProfileHealthStatPlaceholder()),
+        SizedBox(width: 4),
+        Expanded(child: _ProfileHealthStatPlaceholder()),
+        SizedBox(width: 4),
+        Expanded(child: _ProfileHealthStatPlaceholder()),
+      ],
+    ),
+  );
+}
+
+class _ProfileHealthStatPlaceholder extends StatelessWidget {
+  const _ProfileHealthStatPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _SkeletonBox(width: 28, height: 28, radius: 14),
+      SizedBox(width: 4),
+      Flexible(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SkeletonBox(height: 6, radius: 3),
+            SizedBox(height: 3),
+            _SkeletonBox(height: 10, radius: 5),
+            SizedBox(height: 3),
+            FractionallySizedBox(
+              widthFactor: .7,
+              child: _SkeletonBox(height: 6, radius: 3),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _ProfileInsightPlaceholder extends StatelessWidget {
+  const _ProfileInsightPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 76,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: context.appSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: const Row(
+      children: [
+        _SkeletonBox(width: 54, height: 54, radius: 27),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FractionallySizedBox(
+                widthFactor: .58,
+                child: _SkeletonBox(height: 12, radius: 6),
+              ),
+              SizedBox(height: 6),
+              _SkeletonBox(height: 9, radius: 5),
+              SizedBox(height: 5),
+              FractionallySizedBox(
+                widthFactor: .72,
+                child: _SkeletonBox(height: 9, radius: 5),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ProfileComposerPlaceholder extends StatelessWidget {
+  const _ProfileComposerPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            _SkeletonBox(width: 42, height: 42, radius: 21),
+            SizedBox(width: 10),
+            Expanded(child: _SkeletonBox(height: 46, radius: 23)),
+          ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            _SkeletonBox(width: 94, height: 38, radius: 19),
+            SizedBox(width: 8),
+            _SkeletonBox(width: 126, height: 38, radius: 19),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _ProfileFeedHeaderPlaceholder extends StatelessWidget {
+  const _ProfileFeedHeaderPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    children: [
+      _SkeletonBox(width: 92, height: 18, radius: 9),
+      Spacer(),
+      _SkeletonBox(width: 62, height: 26, radius: 13),
     ],
   );
 }
@@ -745,20 +1006,23 @@ class _FavoritesPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final columns = switch (constraints.maxWidth) {
-        < 330 => 2,
-        < AppSpacing.tabletBreakpoint => 3,
+        < 600 => 2,
+        < 900 => 3,
         _ => 4,
       };
+      final spacing = constraints.maxWidth >= 600 ? 12.0 : 10.0;
+      final cardWidth =
+          (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
       return GridView.builder(
         key: const ValueKey<String>('favorites-skeleton-grid'),
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 24),
-        itemCount: 6,
+        itemCount: columns * 3,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 10,
-          childAspectRatio: .68,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          mainAxisExtent: cardWidth * 1.38,
         ),
         itemBuilder: (_, _) => const _FavoriteCardPlaceholder(),
       );
@@ -770,18 +1034,46 @@ class _FavoriteCardPlaceholder extends StatelessWidget {
   const _FavoriteCardPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(child: _SkeletonBox(height: 130, radius: 16)),
-      SizedBox(height: 8),
-      _SkeletonBox(height: 12, radius: 6),
-      SizedBox(height: 6),
-      FractionallySizedBox(
-        widthFactor: .68,
-        child: _SkeletonBox(height: 10, radius: 5),
-      ),
-    ],
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface.withValues(alpha: .94),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: context.appBorder),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: _SkeletonBox(height: double.infinity, radius: 0),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: _SkeletonBox(width: 28, height: 28, radius: 14),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(7, 7, 7, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SkeletonBox(height: 12, radius: 6),
+              SizedBox(height: 6),
+              FractionallySizedBox(
+                widthFactor: .68,
+                child: _SkeletonBox(height: 10, radius: 5),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
   );
 }
 

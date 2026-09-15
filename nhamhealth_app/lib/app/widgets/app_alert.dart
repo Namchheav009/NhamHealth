@@ -8,6 +8,7 @@ import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 import '../theme/app_colors.dart';
 
 abstract final class AppAlert {
+  static const bool _showNotificationBanners = false;
   static Future<void> _transition = Future<void>.value();
   static Future<void> _actionTransition = Future<void>.value();
   static int _latestRequest = 0;
@@ -123,12 +124,15 @@ abstract final class AppAlert {
     }
   }
 
-  /// Notifications intentionally keep their in-app banner. General success
-  /// and error feedback is silent so it does not interrupt the current task.
+  /// Foreground notifications update badges and the Notifications page without
+  /// covering the current screen with a global banner.
   static Future<void> notification({
     required String title,
     required String message,
-  }) => _show(title: title, message: message, tone: _AppAlertTone.success);
+  }) {
+    if (!_showNotificationBanners) return Future<void>.value();
+    return _show(title: title, message: message, tone: _AppAlertTone.success);
+  }
 
   static Future<void> _show({
     required String title,
