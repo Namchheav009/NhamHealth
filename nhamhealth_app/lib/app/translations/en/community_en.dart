@@ -132,6 +132,15 @@ const Map<String, String> communityEn = {
   'community.unfollow_member_warning':
       'You will stop seeing posts from @name in your following feed.',
   'community.member_since': 'Member since @date',
+  'community.joined': 'Joined @date',
+  'community.share_profile': 'Share profile',
+  'community.share_profile_help': 'Send @name’s profile to someone.',
+  'community.share_profile_message': 'View @name’s profile on NhamHealth.',
+  'community.copy_link': 'Copy link',
+  'community.telegram': 'Telegram',
+  'community.whatsapp': 'WhatsApp',
+  'community.more_apps': 'More apps',
+  'community.profile_link_copied': 'Profile link copied',
   'community.posts': 'POSTS',
   'community.report_profile': 'Report profile',
   'community.photo_source_prompt':
