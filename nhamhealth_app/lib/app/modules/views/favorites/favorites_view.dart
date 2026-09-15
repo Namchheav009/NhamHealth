@@ -207,6 +207,7 @@ class FavoritesView extends GetView<FavoritesController> {
     BuildContext context,
     String title,
     IconData icon, {
+    bool postMenu = false,
     VoidCallback? onTap,
   }) => Row(
     children: [
@@ -281,6 +282,22 @@ class FavoritesView extends GetView<FavoritesController> {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ],
+    ),
+  );
+
+  PopupMenuItem<FavoritePostSort> _sortMenuItem(
+    BuildContext context,
+    FavoritePostSort value,
+    String label,
+    IconData icon,
+  ) => PopupMenuItem<FavoritePostSort>(
+    value: value,
+    child: Row(
+      children: [
+        Icon(icon, size: 19, color: context.appColorScheme.onSurface),
+        const SizedBox(width: 10),
+        Text(label.trOrSelf),
       ],
     ),
   );
