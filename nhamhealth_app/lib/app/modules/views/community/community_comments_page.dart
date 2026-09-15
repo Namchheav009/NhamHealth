@@ -614,7 +614,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 child:
                     _loading
                         ? const SingleChildScrollView(
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           padding: EdgeInsets.fromLTRB(
                             AppSpacing.pageHorizontal,
                             4,
@@ -625,6 +627,13 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         )
                         : ListView(
                           controller: _scrollController,
+                          // ignore: deprecated_member_use
+                          cacheExtent: 1200,
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(
+                              decelerationRate: ScrollDecelerationRate.normal,
+                            ),
+                          ),
                           padding: const EdgeInsets.fromLTRB(
                             AppSpacing.pageHorizontal,
                             4,

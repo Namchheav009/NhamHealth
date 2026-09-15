@@ -13,7 +13,6 @@ import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/post_delete_confirmation.dart';
-import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/community/community_controller.dart';
 import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
@@ -36,8 +35,9 @@ class CommunityPage extends GetView<CommunityController> {
 
   @override
   Widget build(BuildContext context) {
-    return ScrollAwareScaffold(
+    return Scaffold(
       backgroundColor: context.appBackground,
+      extendBody: true,
       body: AppBackground(
         child: SafeArea(
           bottom: false,
@@ -64,7 +64,9 @@ class CommunityPage extends GetView<CommunityController> {
                         (controller.posts.isEmpty ||
                             !controller.hasLoaded.value),
                     loading: SingleChildScrollView(
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
                       padding: EdgeInsets.fromLTRB(
                         AppSpacing.pageHorizontalFor(context),
                         6,
@@ -154,8 +156,12 @@ class CommunityPage extends GetView<CommunityController> {
     final isDiscover = view == FriendsView.addFriends;
 
     return ListView(
+      // ignore: deprecated_member_use
+      cacheExtent: 1400,
       physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
+        parent: BouncingScrollPhysics(
+          decelerationRate: ScrollDecelerationRate.normal,
+        ),
       ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.pageHorizontalFor(context),
@@ -211,6 +217,13 @@ class CommunityPage extends GetView<CommunityController> {
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        // ignore: deprecated_member_use
+        cacheExtent: 600,
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(
+            decelerationRate: ScrollDecelerationRate.normal,
+          ),
+        ),
         itemCount: FriendsView.values.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, index) {
@@ -720,37 +733,50 @@ class CommunityPage extends GetView<CommunityController> {
   // ---------------------------------------------------------------------------
 
   Widget _feed(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontalFor(context),
-        0,
-        AppSpacing.pageHorizontalFor(context),
-        115,
-      ),
-      children: [
-        _contentWidth(
-          LayoutBuilder(
-            builder: (_, constraints) {
-              if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
-                return _compactFeed(context);
-              }
-
-              return Row(
-                key: const ValueKey<String>('community-tablet-layout'),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(width: 290, child: _feedControls(context)),
-                  const SizedBox(width: 20),
-                  Expanded(child: _feedPosts(context)),
-                ],
-              );
-            },
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.metrics.axis == Axis.vertical &&
+            notification.metrics.extentAfter < 800) {
+          unawaited(controller.loadMorePosts());
+        }
+        return false;
+      },
+      child: ListView(
+        // ignore: deprecated_member_use
+        cacheExtent: 1400,
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(
+            decelerationRate: ScrollDecelerationRate.normal,
           ),
         ),
-      ],
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.pageHorizontalFor(context),
+          0,
+          AppSpacing.pageHorizontalFor(context),
+          115,
+        ),
+        children: [
+          _contentWidth(
+            LayoutBuilder(
+              builder: (_, constraints) {
+                if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
+                  return _compactFeed(context);
+                }
+
+                return Row(
+                  key: const ValueKey<String>('community-tablet-layout'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 290, child: _feedControls(context)),
+                    const SizedBox(width: 20),
+                    Expanded(child: _feedPosts(context)),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -822,7 +848,11 @@ class CommunityPage extends GetView<CommunityController> {
         height: 42,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(
+              decelerationRate: ScrollDecelerationRate.normal,
+            ),
+          ),
           child: Row(
             children: List.generate(CommunityFeedFilter.values.length, (index) {
               final filter = CommunityFeedFilter.values[index];
@@ -893,27 +923,69 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Widget _feedPosts(BuildContext context, {bool showError = true}) {
-    return Obx(() {
-      final visiblePosts = controller.visiblePosts;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (showError && controller.errorMessage.value != null) ...[
-            _feedErrorBanner(context, controller.errorMessage.value!),
-            const SizedBox(height: 12),
-          ],
-          if (visiblePosts.isEmpty)
-            const CommunityEmptyState(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showError)
+          Obx(() {
+            final error = controller.errorMessage.value;
+            if (error == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _feedErrorBanner(context, error),
+            );
+          }),
+        Obx(() {
+          final visiblePosts = controller.visiblePosts;
+          if (visiblePosts.isEmpty) {
+            return const CommunityEmptyState(
               icon: Icons.dynamic_feed_outlined,
               title: 'community.empty_feed',
               message: 'community.empty_feed_help',
-            )
-          else
-            ...visiblePosts.map(_postCard),
-        ],
-      );
-    });
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < visiblePosts.length; i++)
+                _postCard(visiblePosts[i], i),
+            ],
+          );
+        }),
+        Obx(() {
+          if (!controller.isLoadingMore.value) {
+            return const SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: green,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'community.loading_more_posts'.tr,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: context.appMutedText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   Widget _feedErrorBanner(BuildContext context, String message) {
@@ -952,20 +1024,26 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _postCard(CommunityPost post) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: ProfilePostCard(
-        post: post,
-        onAuthorTap: () => _openAuthorProfile(post),
-        relationshipLabel: _authorRelationshipLabel(post),
-        onRelationshipTap: () => _toggleAuthorRelationship(post),
-        onViewDetails: () => _showComments(post),
-        onLike: () => controller.togglePostLike(post),
-        onShowLikes: () => _showPostLikers(post),
-        onComment: () => _showComments(post),
-        onShare: () => _showShareOptions(post),
-        onOptions: () => _showPostOptions(post),
+  Widget _postCard(CommunityPost post, [int? index]) {
+    return RepaintBoundary(
+      key:
+          index != null
+              ? ValueKey<String>('community-feed-post-$index-${post.id}')
+              : null,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: ProfilePostCard(
+          post: post,
+          onAuthorTap: () => _openAuthorProfile(post),
+          relationshipLabel: _authorRelationshipLabel(post),
+          onRelationshipTap: () => _toggleAuthorRelationship(post),
+          onViewDetails: () => _showComments(post),
+          onLike: () => controller.togglePostLike(post),
+          onShowLikes: () => _showPostLikers(post),
+          onComment: () => _showComments(post),
+          onShare: () => _showShareOptions(post),
+          onOptions: () => _showPostOptions(post),
+        ),
       ),
     );
   }
@@ -995,8 +1073,9 @@ class CommunityPage extends GetView<CommunityController> {
                 status == 'FOLLOW'));
 
     if (isMutualFollow) return 'community.friend'.tr;
-    if (status == 'FOLLOWING' || post.isFollowingAuthor)
+    if (status == 'FOLLOWING' || post.isFollowingAuthor) {
       return 'community.following'.tr;
+    }
     if (status == 'FOLLOW' ||
         status == 'FOLLOW_BACK' ||
         status == 'FOLLOWS_YOU') {

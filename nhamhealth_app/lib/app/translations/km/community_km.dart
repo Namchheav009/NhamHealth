@@ -52,6 +52,8 @@ const Map<String, String> communityKm = {
   'community.empty_feed': 'មិនទាន់មានអ្វីនៅទីនេះទេ',
   'community.empty_feed_help':
       'តាមដានមនុស្សបន្ថែម ឬសាកល្បងតម្រងព័ត៌មានថ្មីៗផ្សេង។',
+  'community.loading_more_posts': 'កំពុងផ្ទុកការបង្ហោះបន្ថែម...',
+  'community.all_posts_loaded': 'អ្នកបានមើលការបង្ហោះទាំងអស់ហើយ',
   'community.delete_post_warning':
       'ការបង្ហោះនេះនឹងត្រូវលុបចេញពីសហគមន៍ ហើយមិនអាចស្ដារវិញបានទេ។',
   'community.view_details': 'មើលព័ត៌មានលម្អិត',

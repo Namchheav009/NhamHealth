@@ -49,6 +49,8 @@ const Map<String, String> communityEn = {
   'community.profile': 'Profile',
   'community.empty_feed': 'Nothing here yet',
   'community.empty_feed_help': 'Follow more people or try another feed filter.',
+  'community.loading_more_posts': 'Loading more posts...',
+  'community.all_posts_loaded': "You're all caught up",
   'community.delete_post_warning':
       'This will remove the post from Community. You cannot undo this action.',
   'community.view_details': 'View details',

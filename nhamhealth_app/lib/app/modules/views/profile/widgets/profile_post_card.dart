@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../models/community/community_post.dart';
-import '../../community/widgets/community_shared_post_card.dart';
 import '../../community/widgets/community_recipe_sheet.dart';
-import 'package:get/get.dart';
+import '../../community/widgets/community_shared_post_card.dart';
 
 class ProfilePostCard extends StatelessWidget {
   const ProfilePostCard({
@@ -451,10 +451,15 @@ class ProfilePostCard extends StatelessWidget {
       return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
     }
     final raw = post.ageLabel.trim();
-    if (raw.isEmpty || raw.toLowerCase() == 'just now')
+    if (raw.isEmpty || raw.toLowerCase() == 'just now') {
       return 'community.just_now'.tr;
-    if (raw.toLowerCase() == 'recently') return 'community.recently'.tr;
-    if (raw.toLowerCase() == 'yesterday') return 'community.yesterday'.tr;
+    }
+    if (raw.toLowerCase() == 'recently') {
+      return 'community.recently'.tr;
+    }
+    if (raw.toLowerCase() == 'yesterday') {
+      return 'community.yesterday'.tr;
+    }
     final minMatch = RegExp(
       r'^(\d+)\s*m\s*ago$',
       caseSensitive: false,
@@ -866,11 +871,6 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page?.toInt() ?? 0;
-      });
-    });
   }
 
   @override
@@ -912,6 +912,12 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
                                 )
                                 : PageView(
                                   controller: _pageController,
+                                  physics: const BouncingScrollPhysics(),
+                                  onPageChanged: (page) {
+                                    if (_currentPage != page) {
+                                      setState(() => _currentPage = page);
+                                    }
+                                  },
                                   children: widget.imageUrls
                                       .map(
                                         (url) => Image.network(
