@@ -16,6 +16,7 @@ import 'widgets/favorite_food_card.dart';
 import 'widgets/favorite_post_card.dart';
 import 'widgets/favorites_tab_switcher.dart';
 import 'widgets/food_filter_sheet.dart';
+import 'widgets/post_filter_sheet.dart';
 
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
@@ -156,6 +157,8 @@ class FavoritesView extends GetView<FavoritesController> {
         'favorites.favorite_posts',
         Icons.calendar_today_outlined,
         postMenu: true,
+        onTap: _showPostFilter,
+
       ),
       const SizedBox(height: 10),
       Expanded(
@@ -205,7 +208,6 @@ class FavoritesView extends GetView<FavoritesController> {
     String title,
     IconData icon, {
     VoidCallback? onTap,
-    bool postMenu = false,
   }) => Row(
     children: [
       Expanded(
@@ -248,37 +250,9 @@ class FavoritesView extends GetView<FavoritesController> {
           borderRadius: BorderRadius.circular(18),
           child: _filterButton(context, icon),
         ),
+
     ],
   );
-
-  PopupMenuItem<FavoritePostSort> _sortMenuItem(
-    BuildContext context,
-    FavoritePostSort value,
-    String label,
-    IconData icon,
-  ) {
-    final selected = controller.postSort.value == value;
-    final primary =
-        context.appIsDark
-            ? context.appColorScheme.primary
-            : const Color(0xFF0AA653);
-    return PopupMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, color: selected ? primary : Colors.grey, size: 21),
-          const SizedBox(width: 10),
-          Text(
-            label.trOrSelf,
-            style: TextStyle(
-              color: selected ? primary : Colors.grey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _filterButton(BuildContext context, IconData icon) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -317,6 +291,18 @@ class FavoritesView extends GetView<FavoritesController> {
         categories: controller.foodCategories.toList(growable: false),
         initialCategories: controller.selectedFoodCategories.toSet(),
         onApply: controller.applyFoodCategories,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black45,
+    );
+  }
+
+  void _showPostFilter() {
+    Get.bottomSheet<void>(
+      PostFilterSheet(
+        initialSort: controller.postSort.value,
+        onApply: controller.setPostSort,
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

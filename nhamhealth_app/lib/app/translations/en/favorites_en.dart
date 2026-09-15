@@ -6,7 +6,9 @@ const Map<String, String> favoritesEn = {
   'favorites.favorite_posts': 'Favorite Posts',
   'favorites.no_foods_match_these_filters': 'No foods match these filters',
   'favorites.newest': 'Newest',
+  'favorites.new': 'New',
   'favorites.oldest': 'Oldest',
   'favorites.category_category': '@category category',
   'favorites.filter_by_category': 'Filter by category',
+  'favorites.filter_by_post': 'Filter by Post',
 };

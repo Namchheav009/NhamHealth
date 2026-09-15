@@ -6,7 +6,9 @@ const Map<String, String> favoritesKm = {
   'favorites.favorite_posts': 'ការបង្ហោះចំណូលចិត្ត',
   'favorites.no_foods_match_these_filters': 'គ្មានអាហារត្រូវនឹងតម្រងទាំងនេះ',
   'favorites.newest': 'ថ្មីបំផុត',
+  'favorites.new': 'ថ្មី',
   'favorites.oldest': 'ចាស់បំផុត',
   'favorites.category_category': 'ប្រភេទ @category',
   'favorites.filter_by_category': 'តម្រងតាមប្រភេទ',
+  'favorites.filter_by_post': 'តម្រងការបង្ហោះ',
 };
