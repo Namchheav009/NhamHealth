@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
@@ -10,7 +13,6 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
-import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../models/community/community_person_profile.dart';
@@ -254,7 +256,7 @@ class _CommunityPersonProfileViewState
                   ),
                   child: Column(
                     children: [
-                      _topBar(context),
+                      _profileHero(context),
                       if (_isLoading)
                         Padding(
                           padding: EdgeInsets.fromLTRB(
@@ -272,6 +274,7 @@ class _CommunityPersonProfileViewState
                           onTap: _loadProfile,
                         )
                       else if (_profile != null) ...[
+<<<<<<< HEAD
                         _identity(context, _profile!),
                         const SizedBox(height: 18),
                         _contentTabs(context),
@@ -279,6 +282,12 @@ class _CommunityPersonProfileViewState
                           _postGrid(context)
                         else
                           _photoGrid(context),
+=======
+                        _profileOverview(context, _profile!),
+                        const SizedBox(height: 24),
+                        _postTab(context),
+                        _postGrid(context),
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
                       ],
                     ],
                   ),
@@ -291,6 +300,7 @@ class _CommunityPersonProfileViewState
     ),
   );
 
+<<<<<<< HEAD
   Widget _topBar(BuildContext context) => Padding(
     padding: EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontalFor(context),
@@ -299,41 +309,81 @@ class _CommunityPersonProfileViewState
       0,
     ),
     child: Row(
+=======
+  Widget _profileHero(BuildContext context) => SizedBox(
+    height: 76,
+    child: Stack(
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
       children: [
-        AppBackButton(onPressed: Get.back),
-        const Spacer(),
-        _profileMenuButton(context),
+        Positioned(
+          top: 12,
+          left: 20,
+          child: IconButton(
+            tooltip: 'common.back'.tr,
+            onPressed: Get.back,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 23,
+            ),
+          ),
+        ),
+        Positioned(top: 12, right: 20, child: _profileMenuButton(context)),
+      ],
+    ),
+  );
+
+  Widget _profileOverview(
+    BuildContext context,
+    CommunityPersonProfile profile,
+  ) => Container(
+    key: const ValueKey<String>('other-profile-card'),
+    margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+    padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface.withValues(alpha: .82),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: context.appBorder.withValues(alpha: .7)),
+      boxShadow: context.appHomeTileShadow,
+    ),
+    child: Column(
+      children: [
+        _identity(context, profile),
+        const SizedBox(height: 14),
+        _stats(context, profile),
+        const SizedBox(height: 14),
+        _profileActions(context, profile),
+        if (profile.headline.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _headline(context, profile.headline),
+        ],
       ],
     ),
   );
 
   Widget _profileMenuButton(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    const shape = CircleBorder();
-
-    return SizedBox.square(
-      dimension: AppBackButton.layoutSize,
-      child: Padding(
-        padding: AppBackButton.outerMargin,
-        child: Material(
-          color: colors.surface.withValues(alpha: .9),
-          shape: shape,
-          elevation: 1,
-          shadowColor: Colors.black.withValues(alpha: .16),
-          child: InkWell(
-            customBorder: shape,
-            onTap: () => _showProfileOptions(context),
-            child: Icon(
-              Icons.more_horiz_rounded,
-              color: colors.primary,
-              size: AppBackButton.iconSize,
-            ),
-          ),
+    return Material(
+      color: context.appElevatedSurface.withValues(alpha: .94),
+      shape: const CircleBorder(),
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: .12),
+      child: IconButton(
+        tooltip: 'common.more_options'.tr,
+        onPressed: () => _showProfileOptions(context),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        icon: Icon(
+          Icons.more_horiz_rounded,
+          color: Theme.of(context).colorScheme.primary,
+          size: 22,
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _identity(
     BuildContext context,
     CommunityPersonProfile profile,
@@ -399,10 +449,52 @@ class _CommunityPersonProfileViewState
                       ),
                     ),
                   ),
+=======
+  Widget _profileAvatar(BuildContext context, CommunityPersonProfile profile) =>
+      Semantics(
+        button: profile.avatarUrl.isNotEmpty,
+        label:
+            profile.avatarUrl.isEmpty
+                ? 'profile.photo_with_name'.trParams({'name': profile.name})
+                : 'profile.view_full_photo_with_name'.trParams({
+                  'name': profile.name,
+                }),
+        child: GestureDetector(
+          key: const ValueKey<String>('other-profile-avatar'),
+          behavior: HitTestBehavior.opaque,
+          onTap:
+              profile.avatarUrl.isEmpty
+                  ? null
+                  : () => _openProfileImage(profile),
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF00A85A), width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 39,
+              backgroundColor: context.appSoftGreen,
+              foregroundImage:
+                  profile.avatarUrl.isEmpty
+                      ? null
+                      : CachedNetworkImageProvider(profile.avatarUrl),
+              child: Text(
+                _initials(profile.name),
+                style: TextStyle(
+                  color:
+                      context.appIsDark
+                          ? context.appColorScheme.primary
+                          : const Color(0xFF008C4B),
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
                 ),
               ),
             ),
           ),
+<<<<<<< HEAD
           const SizedBox(height: 12),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -500,8 +592,99 @@ class _CommunityPersonProfileViewState
                       color: context.appMutedText,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
+=======
+        ),
+      );
+
+  Widget _identity(BuildContext context, CommunityPersonProfile profile) =>
+      Container(
+        key: const ValueKey<String>('other-profile-identity'),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _profileAvatar(context, profile),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  Text(
+                    profile.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 18,
+                      letterSpacing: -.2,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
+                  const SizedBox(height: 5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.appSoftGreen,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            color:
+                                context.appIsDark
+                                    ? context.appColorScheme.primary
+                                    : const Color(0xFF178B4B),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            _roleLabel(profile.role),
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color:
+                                  context.appIsDark
+                                      ? context.appColorScheme.primary
+                                      : const Color(0xFF178B4B),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
+                    ),
+                  ),
+                  if (profile.joinedLabel.isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          color: context.appMutedText,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            _joinedLabel(profile.joinedLabel),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.appMutedText,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -535,6 +718,12 @@ class _CommunityPersonProfileViewState
     ),
   );
 
+  String _joinedLabel(String date) {
+    final joined = 'community.joined'.trParams({'date': date});
+    if (joined != 'community.joined') return joined;
+    return 'community.member_since'.trParams({'date': date});
+  }
+
   String _roleLabel(String role) {
     final value = role.trim();
     if (value.isEmpty || value.toUpperCase() == 'USER') {
@@ -554,31 +743,48 @@ class _CommunityPersonProfileViewState
 
   Widget _stats(BuildContext context, CommunityPersonProfile profile) =>
       Container(
+<<<<<<< HEAD
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           color: context.appElevatedSurface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: context.appBorder),
         ),
+=======
+        key: const ValueKey<String>('other-profile-stats'),
+        padding: const EdgeInsets.symmetric(vertical: 2),
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
         child: Row(
           children: [
             _stat(
               context,
               Icons.article_outlined,
               _formatCount(profile.posts),
+<<<<<<< HEAD
               'community.posts'.tr,
+=======
+              'common.posts'.tr,
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
             ),
             _divider(context),
             _stat(
               context,
+<<<<<<< HEAD
               Icons.people_outline_rounded,
+=======
+              Icons.group_outlined,
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
               _formatCount(profile.followers),
               'community.followers'.tr,
             ),
             _divider(context),
             _stat(
               context,
+<<<<<<< HEAD
               Icons.person_add_alt_outlined,
+=======
+              Icons.person_outline_rounded,
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
               _formatCount(profile.following),
               'community.following'.tr,
             ),
@@ -592,6 +798,7 @@ class _CommunityPersonProfileViewState
     String value,
     String label,
   ) => Expanded(
+<<<<<<< HEAD
     child: Column(
       children: [
         Row(
@@ -615,39 +822,89 @@ class _CommunityPersonProfileViewState
           style: TextStyle(color: context.appMutedText, fontSize: 12),
         ),
       ],
+=======
+    child: Semantics(
+      label: '$value $label',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color:
+                  context.appIsDark
+                      ? context.appColorScheme.primary
+                      : const Color(0xFF009B46),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.appMutedText, fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
     ),
   );
 
-  Widget _divider(BuildContext context) =>
-      Container(width: 1, height: 34, color: context.appBorder);
+  Widget _divider(BuildContext context) => Container(
+    width: 1,
+    height: 30,
+    color: context.appBorder.withValues(alpha: .8),
+  );
 
   Widget _followButton(
     BuildContext context,
     CommunityPersonProfile profile,
   ) => SizedBox(
-    width: double.infinity,
-    height: 46,
+    height: 40,
     child: ElevatedButton.icon(
+      key: const ValueKey<String>('other-profile-follow-button'),
       onPressed: _isUpdatingFollow ? null : _toggleFollow,
       icon:
           _isUpdatingFollow
               ? SizedBox(
-                width: 20,
-                height: 20,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color:
-                      profile.isFollowing
-                          ? (context.appIsDark
-                              ? context.appColorScheme.primary
-                              : const Color(0xFF278A3A))
-                          : Colors.white,
+                  color: Colors.white,
                 ),
               )
               : Icon(
                 profile.isFollowing
                     ? Icons.check_rounded
                     : Icons.person_add_alt_1_rounded,
+                size: 18,
               ),
       label: Text(
         (profile.isFollowing
@@ -658,25 +915,20 @@ class _CommunityPersonProfileViewState
             .tr,
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            profile.isFollowing
-                ? (context.appIsDark
-                    ? context.appElevatedSurface
-                    : const Color(0xFFEAF7EB))
-                : const Color(0xFF359B46),
-        foregroundColor:
-            profile.isFollowing
-                ? (context.appIsDark
-                    ? context.appColorScheme.primary
-                    : const Color(0xFF278A3A))
-                : Colors.white,
+        backgroundColor: const Color(0xFF009B55),
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: const Color(0xFF009B55),
+        disabledForegroundColor: Colors.white,
         elevation: 0,
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        shape: const StadiumBorder(),
       ),
     ),
   );
 
+<<<<<<< HEAD
   Widget _contentTabs(BuildContext context) => Padding(
     padding: EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontalFor(context),
@@ -694,6 +946,293 @@ class _CommunityPersonProfileViewState
             if (_selectedTab == _ProfileContentTab.all) return;
             setState(() => _selectedTab = _ProfileContentTab.all);
           },
+=======
+  Widget _profileActions(
+    BuildContext context,
+    CommunityPersonProfile profile,
+  ) => Align(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 440),
+      child: Row(
+        children: [
+          Expanded(child: _followButton(context, profile)),
+          const SizedBox(width: 10),
+          Tooltip(
+            message: _shareText('community.share_profile', 'Share profile'),
+            child: SizedBox.square(
+              dimension: 40,
+              child: OutlinedButton(
+                key: const ValueKey<String>('other-profile-share-button'),
+                onPressed: () => _showProfileShareSheet(profile),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      context.appIsDark
+                          ? context.appColorScheme.primary
+                          : const Color(0xFF009B55),
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: BorderSide(
+                    color:
+                        context.appIsDark
+                            ? context.appBorder
+                            : const Color(0xFF8BD7B1),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Icon(Icons.ios_share_rounded, size: 18),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Future<void> _showProfileShareSheet(CommunityPersonProfile profile) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+              decoration: BoxDecoration(
+                color: sheetContext.appElevatedSurface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(26),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: sheetContext.appMutedText.withValues(alpha: .3),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      _shareText('community.share_profile', 'Share profile'),
+                      style: TextStyle(
+                        color: sheetContext.appText,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      _shareText(
+                        'community.share_profile_help',
+                        'Send ${profile.name}’s profile to someone.',
+                        params: {'name': profile.name},
+                      ),
+                      style: TextStyle(
+                        color: sheetContext.appMutedText,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ProfileShareAction(
+                          key: const ValueKey<String>('profile-share-copy'),
+                          icon: const Icon(Icons.link_rounded),
+                          iconColor: const Color(0xFF009B55),
+                          label: _shareText('community.copy_link', 'Copy link'),
+                          onTap: () async {
+                            Navigator.of(sheetContext).pop();
+                            await _copyProfileLink(profile);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ProfileShareAction(
+                          key: const ValueKey<String>('profile-share-telegram'),
+                          icon: const _TelegramBrandIcon(),
+                          iconColor: const Color(0xFF229ED9),
+                          label: _shareText('community.telegram', 'Telegram'),
+                          onTap: () async {
+                            Navigator.of(sheetContext).pop();
+                            await _shareViaTelegram(profile);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ProfileShareAction(
+                          key: const ValueKey<String>('profile-share-whatsapp'),
+                          icon: const _WhatsAppBrandIcon(),
+                          iconColor: const Color(0xFF25A95B),
+                          label: _shareText('community.whatsapp', 'WhatsApp'),
+                          onTap: () async {
+                            Navigator.of(sheetContext).pop();
+                            await _shareViaWhatsApp(profile);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ProfileShareAction(
+                          key: const ValueKey<String>('profile-share-more'),
+                          icon: const Icon(Icons.apps_rounded),
+                          iconColor: const Color(0xFF5F6B66),
+                          label: _shareText('community.more_apps', 'More apps'),
+                          onTap: () async {
+                            Navigator.of(sheetContext).pop();
+                            await _shareWithApps(profile);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  String _profileLink(CommunityPersonProfile profile) {
+    final path = AppRoutes.communityPersonProfilePath(profile.id);
+    final base = Uri.base;
+    return base.scheme == 'http' || base.scheme == 'https'
+        ? base.replace(fragment: path).toString()
+        : path;
+  }
+
+  String _profileShareMessage(CommunityPersonProfile profile) => _shareText(
+    'community.share_profile_message',
+    'View ${profile.name}’s profile on NhamHealth.',
+    params: {'name': profile.name},
+  );
+
+  String _shareText(
+    String key,
+    String fallback, {
+    Map<String, String> params = const {},
+  }) {
+    final translated =
+        params.isEmpty
+            ? key.tr
+            : key.trParams(Map<String, String>.from(params));
+    return translated == key ? fallback : translated;
+  }
+
+  Future<void> _copyProfileLink(CommunityPersonProfile profile) async {
+    await Clipboard.setData(ClipboardData(text: _profileLink(profile)));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _shareText('community.profile_link_copied', 'Profile link copied'),
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+
+  Future<void> _shareViaTelegram(CommunityPersonProfile profile) async {
+    final uri = Uri.https('t.me', '/share/url', {
+      'url': _profileLink(profile),
+      'text': _profileShareMessage(profile),
+    });
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      await _shareWithApps(profile);
+    }
+  }
+
+  Future<void> _shareViaWhatsApp(CommunityPersonProfile profile) async {
+    final uri = Uri.https('wa.me', '/', {
+      'text': '${_profileShareMessage(profile)}\n${_profileLink(profile)}',
+    });
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      await _shareWithApps(profile);
+    }
+  }
+
+  Future<void> _shareWithApps(CommunityPersonProfile profile) async {
+    final size = MediaQuery.sizeOf(context);
+    await SharePlus.instance.share(
+      ShareParams(
+        subject: _shareText('community.share_profile', 'Share profile'),
+        text: '${_profileShareMessage(profile)}\n${_profileLink(profile)}',
+        sharePositionOrigin: Rect.fromLTWH(
+          size.width / 2,
+          size.height / 2,
+          1,
+          1,
+        ),
+      ),
+    );
+  }
+
+  Widget _headline(BuildContext context, String headline) => Container(
+    key: const ValueKey<String>('other-profile-headline'),
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.article_outlined,
+          color:
+              context.appIsDark
+                  ? context.appColorScheme.primary
+                  : const Color(0xFF078A50),
+          size: 16,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            headline,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 11,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _postTab(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+    child: Row(
+      children: [
+        Text(
+          'common.posts'.tr,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+>>>>>>> 131e1db40e52f83260ab6fb2aaf1189fccb6d947
         ),
         const SizedBox(width: 8),
         _ProfileTabButton(
@@ -1466,6 +2005,183 @@ class _PersonPostOptionTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProfileShareAction extends StatelessWidget {
+  const _ProfileShareAction({
+    super.key,
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.onTap,
+  });
+
+  final Widget icon;
+  final Color iconColor;
+  final String label;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: context.appSubtleSurface,
+    borderRadius: BorderRadius.circular(16),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color:
+                    context.appIsDark
+                        ? Color.alphaBlend(
+                          iconColor.withValues(alpha: .14),
+                          context.appElevatedSurface,
+                        )
+                        : iconColor.withValues(alpha: .1),
+                shape: BoxShape.circle,
+              ),
+              child: IconTheme(
+                data: IconThemeData(color: iconColor, size: 19),
+                child: Center(child: icon),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                height: 1.15,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _TelegramBrandIcon extends StatelessWidget {
+  const _TelegramBrandIcon();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.square(
+    dimension: 21,
+    child: CustomPaint(painter: _TelegramLogoPainter()),
+  );
+}
+
+class _TelegramLogoPainter extends CustomPainter {
+  const _TelegramLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = const Color(0xFF229ED9)
+          ..style = PaintingStyle.fill;
+    final path =
+        Path()
+          ..moveTo(size.width * .08, size.height * .44)
+          ..lineTo(size.width * .92, size.height * .08)
+          ..lineTo(size.width * .70, size.height * .91)
+          ..lineTo(size.width * .46, size.height * .65)
+          ..lineTo(size.width * .31, size.height * .79)
+          ..lineTo(size.width * .34, size.height * .57)
+          ..close();
+    canvas.drawPath(path, paint);
+
+    final fold =
+        Path()
+          ..moveTo(size.width * .34, size.height * .57)
+          ..lineTo(size.width * .73, size.height * .29)
+          ..lineTo(size.width * .46, size.height * .65);
+    canvas.drawPath(
+      fold,
+      Paint()
+        ..color = Colors.white.withValues(alpha: .9)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _WhatsAppBrandIcon extends StatelessWidget {
+  const _WhatsAppBrandIcon();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.square(
+    dimension: 22,
+    child: CustomPaint(painter: _WhatsAppLogoPainter()),
+  );
+}
+
+class _WhatsAppLogoPainter extends CustomPainter {
+  const _WhatsAppLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final green =
+        Paint()
+          ..color = const Color(0xFF25A95B)
+          ..style = PaintingStyle.fill;
+    final center = Offset(size.width * .5, size.height * .46);
+    canvas.drawCircle(center, size.width * .43, green);
+    final tail =
+        Path()
+          ..moveTo(size.width * .22, size.height * .73)
+          ..lineTo(size.width * .13, size.height * .96)
+          ..lineTo(size.width * .39, size.height * .87)
+          ..close();
+    canvas.drawPath(tail, green);
+
+    final phone =
+        Path()
+          ..moveTo(size.width * .34, size.height * .27)
+          ..cubicTo(
+            size.width * .25,
+            size.height * .39,
+            size.width * .42,
+            size.height * .66,
+            size.width * .65,
+            size.height * .72,
+          )
+          ..cubicTo(
+            size.width * .73,
+            size.height * .74,
+            size.width * .79,
+            size.height * .66,
+            size.width * .75,
+            size.height * .60,
+          );
+    canvas.drawPath(
+      phone,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _ProfileMessage extends StatelessWidget {
