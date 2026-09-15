@@ -29,7 +29,9 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
           title: Text('community.post_title'.tr),
         ),
         body: const SingleChildScrollView(
-          physics: NeverScrollableScrollPhysics(),
+          physics: AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           padding: EdgeInsets.all(16),
           child: PageSkeleton.communityPost(),
         ),

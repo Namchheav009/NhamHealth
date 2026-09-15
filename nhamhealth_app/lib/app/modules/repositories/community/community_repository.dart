@@ -365,10 +365,10 @@ class CommunityRepository {
               contentType: MediaType('application', 'json'),
             ),
           );
-    for (var index = 0; index < imageBytes.take(1).length; index++) {
+    for (var index = 0; index < imageBytes.take(5).length; index++) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          'image',
+          'images',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
         ),
@@ -429,10 +429,10 @@ class CommunityRepository {
               contentType: MediaType('application', 'json'),
             ),
           );
-    for (var index = 0; index < imageBytes.take(1).length; index++) {
+    for (var index = 0; index < imageBytes.take(5).length; index++) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          'image',
+          'images',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
         ),
@@ -445,17 +445,20 @@ class CommunityRepository {
     return getPost(postId);
   }
 
-  Future<void> deletePost(String postId) async {
+  Future<void> deletePost(int recipeId) async {
     final response = await _client.delete(
-      _uri('/api/community/meals/$postId'),
+      _uri('/api/community/meals/$recipeId'),
       headers: await _headers(),
     );
     _ensureSuccess(response);
   }
 
-  Future<CommunityPost> toggleSaved(String postId) async {
+  Future<CommunityPost> toggleSaved(
+    String postId, {
+    required int recipeId,
+  }) async {
     final response = await _client.post(
-      _uri('/api/community/meals/$postId/saved'),
+      _uri('/api/community/meals/$recipeId/saved'),
       headers: await _headers(),
     );
     _ensureSuccess(response);
@@ -681,7 +684,9 @@ class CommunityRepository {
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;
     if (difference.inHours < 1) {
-      return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+      return 'community.minutes_ago'.trParams({
+        'count': '${difference.inMinutes}',
+      });
     }
     if (difference.inDays < 1) {
       return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});

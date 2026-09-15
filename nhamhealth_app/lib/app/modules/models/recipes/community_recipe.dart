@@ -17,6 +17,7 @@ class CommunityRecipe {
     this.aiStatus = 'PENDING',
     this.aiReviewReason = '',
     this.authorName = '',
+    this.authorAvatarUrl = '',
     this.tags = const [],
     this.publishedAt,
     this.createdAt,
@@ -30,7 +31,8 @@ class CommunityRecipe {
       difficulty,
       aiStatus,
       aiReviewReason,
-      authorName;
+      authorName,
+      authorAvatarUrl;
   final int? cookingTimeMinutes, servings, postId, mealId;
   final List<String> tags;
   final DateTime? publishedAt, createdAt, updatedAt;
@@ -55,6 +57,7 @@ class CommunityRecipe {
     aiStatus: '${json['aiStatus'] ?? 'PENDING'}',
     aiReviewReason: '${json['aiReviewReason'] ?? ''}',
     authorName: '${json['authorName'] ?? ''}',
+    authorAvatarUrl: '${json['authorAvatarUrl'] ?? ''}',
     tags: (json['tags'] as List<dynamic>? ?? const [])
         .map((tag) => '$tag')
         .toList(growable: false),

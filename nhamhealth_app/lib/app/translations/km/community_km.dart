@@ -26,6 +26,8 @@ const Map<String, String> communityKm = {
   'community.post_deleted': 'បានលុបការបង្ហោះ',
   'community.post_removed': 'ការបង្ហោះរបស់អ្នកត្រូវបានលុបចេញ។',
   'community.could_not_delete_post': 'មិនអាចលុបការបង្ហោះបានទេ',
+  'community.post_delete_unavailable':
+      'មិនអាចលុបការបង្ហោះនេះបានទេនៅពេលនេះ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្ដងទៀត។',
   'community.comments': 'មតិយោបល់',
   'community.comment_count_one': 'មតិយោបល់ @count',
   'community.comment_count_many': 'មតិយោបល់ @count',
@@ -50,6 +52,8 @@ const Map<String, String> communityKm = {
   'community.empty_feed': 'មិនទាន់មានអ្វីនៅទីនេះទេ',
   'community.empty_feed_help':
       'តាមដានមនុស្សបន្ថែម ឬសាកល្បងតម្រងព័ត៌មានថ្មីៗផ្សេង។',
+  'community.loading_more_posts': 'កំពុងផ្ទុកការបង្ហោះបន្ថែម...',
+  'community.all_posts_loaded': 'អ្នកបានមើលការបង្ហោះទាំងអស់ហើយ',
   'community.delete_post_warning':
       'ការបង្ហោះនេះនឹងត្រូវលុបចេញពីសហគមន៍ ហើយមិនអាចស្ដារវិញបានទេ។',
   'community.view_details': 'មើលព័ត៌មានលម្អិត',
@@ -113,6 +117,16 @@ const Map<String, String> communityKm = {
   'community.done': 'រួចរាល់',
   'community.done_count': 'រួចរាល់ (@count)',
   'community.continue_to_ingredients': 'បន្តទៅគ្រឿងផ្សំ',
+  'community.basic_info': 'ព័ត៌មានមូលដ្ឋាន',
+  'community.ingredients': 'គ្រឿងផ្សំ',
+  'community.share_your_meal': 'តោះចែករំលែកអាហាររបស់អ្នក!',
+  'community.basic_info_help': 'បន្ថែមព័ត៌មានមូលដ្ឋានអំពីអាហាររបស់អ្នក',
+  'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',
+  'community.ingredients_help':
+      'ជាជម្រើស — បន្ថែមគ្រឿងផ្សំ ប្រសិនបើអ្នកចង់ចែករំលែករូបមន្តពេញលេញ។',
+  'community.cooking_steps_help':
+      'ជាជម្រើស — បន្ថែមជំហាននៅពេលវាជួយពន្យល់ពីអាហាររបស់អ្នក។',
+  'community.clear_all': 'លុបទាំងអស់',
   'community.new_meal': 'អាហារថ្មី',
   'community.edit_meal': 'កែសម្រួលអាហារ',
   'community.choose_favorites': 'ជ្រើសរើសពីចំណូលចិត្ត',
@@ -153,6 +167,10 @@ const Map<String, String> communityKm = {
   'community.change_photo': 'ប្តូររូបថត',
   'community.add_cover_photo': 'បន្ថែមរូបភាពគម្រប',
   'community.cover_photo_help': 'រូបថតច្បាស់ជួយឱ្យអាហាររបស់អ្នកលេចធ្លោ',
+  'community.add_photo': 'បន្ថែមរូបថត',
+  'community.cover_photo_help_short': 'បង្ហាញភាពស្រស់ស្អាតនៃអាហាររបស់អ្នក',
+  'community.good_food_caption': 'អាហារឆ្ងាញ់\nនាំមកនូវអារម្មណ៍ល្អ!',
+  'community.cover': 'រូបគម្រប',
   'community.meal_category': 'ប្រភេទអាហារ',
   'community.select_meal_category': 'សូមជ្រើសរើសប្រភេទអាហារ។',
   'community.choose_meal_category': 'ជ្រើសរើសប្រភេទអាហារ',
@@ -204,6 +222,8 @@ const Map<String, String> communityKm = {
   'community.be_the_first_to_comment': 'បញ្ចេញមតិមុនគេ។',
   'community.recipe_details': 'ព័ត៌មានរូបមន្ត',
   'community.how_to_cook': 'របៀបចម្អិន',
+  'community.view_full_recipe': 'មើលរូបមន្តពេញលេញ',
+  'community.recipe_button_help': 'គ្រឿងផ្សំ និងជំហានចម្អិន',
   'community.comment_options': 'ជម្រើសមតិ',
   'community.comments_are_turned_off_for_this_post':
       'ការបញ្ចេញមតិត្រូវបានបិទសម្រាប់ការបង្ហោះនេះ។',
@@ -229,24 +249,36 @@ const Map<String, String> communityKm = {
   'community.report_post_title': 'រាយការណ៍ការបង្ហោះ',
   'community.report_private': 'របាយការណ៍របស់អ្នកជាឯកជន ហើយនឹងត្រូវបានពិនិត្យ។',
   'community.report_examples_include': 'ឧទាហរណ៍រួមមាន៖',
-  'community.report_example_spam_1': 'ផ្សព្វផ្សាយផលិតផល ឬសេវាកម្មដែលមិនពាក់ព័ន្ធ',
+  'community.report_example_spam_1':
+      'ផ្សព្វផ្សាយផលិតផល ឬសេវាកម្មដែលមិនពាក់ព័ន្ធ',
   'community.report_example_spam_2': 'មាតិកាដដែលៗ ឬស្ទួន',
-  'community.report_example_spam_3': 'ការចូលរួមក្លែងក្លាយ ឬការផ្សាយពាណិជ្ជកម្មមិនបានស្នើសុំ',
-  'community.report_example_harassment_1': 'ការគំរាម ការសម្លុត ឬការប្រមាថចំគោលដៅ',
+  'community.report_example_spam_3':
+      'ការចូលរួមក្លែងក្លាយ ឬការផ្សាយពាណិជ្ជកម្មមិនបានស្នើសុំ',
+  'community.report_example_harassment_1':
+      'ការគំរាម ការសម្លុត ឬការប្រមាថចំគោលដៅ',
   'community.report_example_harassment_2': 'ភាសាស្អប់ខ្ពើម ឬរើសអើង',
-  'community.report_example_harassment_3': 'ការទាក់ទងដែលមិនចង់បានម្តងហើយម្តងទៀត',
-  'community.report_example_inappropriate_1': 'អំពើហិង្សាធ្ងន់ធ្ងរ ឬមាតិកាផ្លូវភេទ',
-  'community.report_example_inappropriate_2': 'មាតិកាដែលអាចបង្កគ្រោះថ្នាក់ដល់អ្នកដទៃ',
+  'community.report_example_harassment_3':
+      'ការទាក់ទងដែលមិនចង់បានម្តងហើយម្តងទៀត',
+  'community.report_example_inappropriate_1':
+      'អំពើហិង្សាធ្ងន់ធ្ងរ ឬមាតិកាផ្លូវភេទ',
+  'community.report_example_inappropriate_2':
+      'មាតិកាដែលអាចបង្កគ្រោះថ្នាក់ដល់អ្នកដទៃ',
   'community.report_example_inappropriate_3': 'រូបភាពរំខាន ឬរសើបខ្លាំង',
   'community.report_example_false_1': 'ការអះអាងសុខភាព ឬអាហារូបត្ថម្ភបំភាន់',
   'community.report_example_false_2': 'ព័ត៌មានប្រឌិតដែលបង្ហាញថាបានផ្ទៀងផ្ទាត់',
-  'community.report_example_false_3': 'ដំបូន្មានគ្រោះថ្នាក់ដោយគ្មានភស្តុតាងទុកចិត្តបាន',
-  'community.report_example_copyright_1': 'ប្រើស្នាដៃអ្នកដទៃដោយគ្មានការអនុញ្ញាត',
-  'community.report_example_copyright_2': 'បង្ហោះរូបថត ឬរូបមន្តដែលមានសិទ្ធិការពារឡើងវិញ',
-  'community.report_example_copyright_3': 'អះអាងស្នាដៃអ្នកបង្កើតផ្សេងថាជារបស់ខ្លួន',
-  'community.report_example_other_1': 'មាតិកាដែលធ្វើឱ្យសមាជិកសហគមន៍ប្រឈមហានិភ័យ',
+  'community.report_example_false_3':
+      'ដំបូន្មានគ្រោះថ្នាក់ដោយគ្មានភស្តុតាងទុកចិត្តបាន',
+  'community.report_example_copyright_1':
+      'ប្រើស្នាដៃអ្នកដទៃដោយគ្មានការអនុញ្ញាត',
+  'community.report_example_copyright_2':
+      'បង្ហោះរូបថត ឬរូបមន្តដែលមានសិទ្ធិការពារឡើងវិញ',
+  'community.report_example_copyright_3':
+      'អះអាងស្នាដៃអ្នកបង្កើតផ្សេងថាជារបស់ខ្លួន',
+  'community.report_example_other_1':
+      'មាតិកាដែលធ្វើឱ្យសមាជិកសហគមន៍ប្រឈមហានិភ័យ',
   'community.report_example_other_2': 'ការប៉ុនប៉ងគេចវេះច្បាប់សហគមន៍',
-  'community.report_example_other_3': 'ការបំពានគោលការណ៍សហគមន៍ច្បាស់លាស់ផ្សេងទៀត',
+  'community.report_example_other_3':
+      'ការបំពានគោលការណ៍សហគមន៍ច្បាស់លាស់ផ្សេងទៀត',
   'community.report_more_details': 'ផ្តល់ព័ត៌មានលម្អិតបន្ថែម',
   'community.report_details_help':
       'សូមប្រាប់យើងបន្ថែមអំពីបញ្ហា ដើម្បីជួយឱ្យការពិនិត្យកាន់តែលឿន។',

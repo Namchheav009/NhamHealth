@@ -70,6 +70,10 @@ class FavoritesProvider {
           if (image.startsWith('/')) {
             data['mainImageUrl'] = '${ApiConfig.baseUrl}$image';
           }
+          final avatar = '${data['authorAvatarUrl'] ?? ''}';
+          if (avatar.startsWith('/')) {
+            data['authorAvatarUrl'] = '${ApiConfig.baseUrl}$avatar';
+          }
           return CommunityRecipe.fromJson(data);
         })
         .toList(growable: false);

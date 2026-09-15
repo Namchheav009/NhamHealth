@@ -39,9 +39,18 @@ public class RecipeApiController {
     @GetMapping("/saved") public List<RecipeResponse> saved(@AuthenticationPrincipal Jwt jwt) { return recipes.saved(userId(jwt)); }
     @GetMapping("/{recipeId}") public RecipeResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.detail(userId(jwt), recipeId); }
     @PostMapping(consumes = "multipart/form-data") @ResponseStatus(HttpStatus.CREATED)
-    public RecipeResponse create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestPart("recipe") RecipeRequest recipe, @RequestPart(value = "image", required = false) MultipartFile image) { return recipes.create(userId(jwt), recipe, image); }
+    public RecipeResponse create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestPart("recipe") RecipeRequest recipe,
+            @RequestPart(value = "images", required = false) List<MultipartFile> uploads,
+            @RequestPart(value = "image", required = false) MultipartFile legacyImage) {
+        return recipes.createWithImages(userId(jwt), recipe, mergeImages(uploads, legacyImage));
+    }
     @PutMapping(value = "/{recipeId}", consumes = "multipart/form-data")
-    public RecipeResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId, @Valid @RequestPart("recipe") RecipeRequest recipe, @RequestPart(value = "image", required = false) MultipartFile image) { return recipes.update(userId(jwt), recipeId, recipe, image); }
+    public RecipeResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId,
+            @Valid @RequestPart("recipe") RecipeRequest recipe,
+            @RequestPart(value = "images", required = false) List<MultipartFile> uploads,
+            @RequestPart(value = "image", required = false) MultipartFile legacyImage) {
+        return recipes.updateWithImages(userId(jwt), recipeId, recipe, mergeImages(uploads, legacyImage));
+    }
     @PostMapping(value = "/step-images", consumes = "multipart/form-data")
     public Map<String, String> uploadStepImage(@AuthenticationPrincipal Jwt jwt, @RequestPart("file") MultipartFile file) { userId(jwt); return Map.of("imageUrl", images.storeRecipeStepImage(file)); }
     @PostMapping("/{recipeId}/publish") public RecipeResponse publish(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.publish(userId(jwt), recipeId); }
@@ -49,5 +58,10 @@ public class RecipeApiController {
     public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { recipes.delete(userId(jwt), recipeId); }
     @PostMapping("/{recipeId}/saved") public RecipeResponse save(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.toggleSaved(userId(jwt), recipeId); }
     @DeleteMapping("/{recipeId}/saved") public RecipeResponse unsave(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer recipeId) { return recipes.toggleSaved(userId(jwt), recipeId); }
+    private List<MultipartFile> mergeImages(List<MultipartFile> uploads, MultipartFile legacyImage) {
+        List<MultipartFile> merged = uploads == null ? new java.util.ArrayList<>() : new java.util.ArrayList<>(uploads);
+        if (legacyImage != null && !legacyImage.isEmpty()) merged.add(legacyImage);
+        return merged;
+    }
     private Integer userId(Jwt jwt) { if (jwt == null) throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required."); Number id = jwt.getClaim("userId"); if (id == null) throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID."); return id.intValue(); }
 }

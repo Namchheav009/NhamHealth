@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record RecipeResponse(
-        Integer id, String authorName, String recipeName, String description, String mainImageUrl,
+        Integer id, String authorName, String authorAvatarUrl, String recipeName, String description, String mainImageUrl,
         Integer cookingTimeMinutes, Integer servings, String difficulty, String status,
         String aiStatus, String aiReviewReason,
         LocalDateTime publishedAt, LocalDateTime createdAt, LocalDateTime updatedAt,

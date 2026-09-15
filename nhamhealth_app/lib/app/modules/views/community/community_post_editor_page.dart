@@ -65,7 +65,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   late List<TextEditingController> _steps;
   final _newStep = TextEditingController();
   String _difficulty = 'EASY';
-  Uint8List? _image;
+  static const _maxImages = 5;
+  final List<Uint8List> _images = [];
   List<CommunityTag> _tags = const [];
   List<MealCategoryModel> _mealCategories = const [];
   late final Set<int> _selectedTags;
@@ -304,7 +305,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _name.text = food.name;
     setState(() {
       _selectedFavoriteFood = food;
-      if (imageBytes != null) _image = imageBytes;
+      if (imageBytes != null) _images.add(imageBytes);
       _selectMatchingFavoriteCategory();
     });
   }
@@ -352,14 +353,27 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       _selectedCategoryId != null;
 
   Future<void> _pickImage(ImageSource source) async {
-    final file = await _picker.pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 1800,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    if (mounted) setState(() => _image = bytes);
+    final existingCount = widget.post?.imageUrls.length ?? 0;
+    final remaining = _maxImages - existingCount - _images.length;
+    if (remaining <= 0) return;
+    final files =
+        source == ImageSource.gallery
+            ? await _picker.pickMultiImage(imageQuality: 85, maxWidth: 1800)
+            : <XFile>[
+              if (await _picker.pickImage(
+                    source: source,
+                    imageQuality: 85,
+                    maxWidth: 1800,
+                  )
+                  case final file?)
+                file,
+            ];
+    if (files.isEmpty) return;
+    final selected = <Uint8List>[];
+    for (final file in files.take(remaining)) {
+      selected.add(await file.readAsBytes());
+    }
+    if (mounted) setState(() => _images.addAll(selected));
   }
 
   Future<void> _chooseImage() async {
@@ -502,7 +516,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               instruction: steps[index].text.trim(),
             ),
           ),
-          imageBytes: _image == null ? const [] : [_image!],
+          imageBytes: List.unmodifiable(_images),
           removeImage: false,
           visibility: _visibility,
           allowComments: true,
@@ -894,7 +908,48 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 _editorHeader(),
                 const SizedBox(height: 12),
                 _progressHeader(),
-                const SizedBox(height: 18),
+                const SizedBox(height: 22),
+                if (_currentStep == 0) ...[
+                  Text(
+                    'community.share_your_meal'.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'community.basic_info_help'.tr,
+                    style: TextStyle(color: context.appMutedText, fontSize: 13),
+                  ),
+                  if (widget.post == null)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: _submitting ? null : _chooseFavoriteFood,
+                        icon: const Icon(
+                          Icons.bookmark_outline_rounded,
+                          size: 17,
+                        ),
+                        label: Text(
+                          _selectedFavoriteFood?.name ??
+                              'community.prefill_from_favorites_short'.tr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: green,
+                          visualDensity: VisualDensity.compact,
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                ],
                 if (_currentStep == 0)
                   ..._basicInfoFields()
                 else
@@ -993,25 +1048,28 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }
 
   Widget _progressHeader() => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _progressStep(
         1,
-        'Basic Info',
+        'community.basic_info',
         isActive: _currentStep == 0,
         isComplete: _currentStep == 1,
       ),
       Expanded(
         child: Container(
-          height: 1,
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          color:
-              _currentStep == 1
-                  ? context.appColorScheme.primary
-                  : context.appBorder,
+          height: 4,
+          margin: const EdgeInsets.fromLTRB(8, 10, 8, 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(99),
+            color:
+                _currentStep == 1
+                    ? context.appColorScheme.primary
+                    : context.appBorder,
+          ),
         ),
       ),
-      _progressStep(2, 'Ingredients', isActive: _currentStep == 1),
+      _progressStep(2, 'community.ingredients', isActive: _currentStep == 1),
     ],
   );
 
@@ -1020,7 +1078,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     String label, {
     required bool isActive,
     bool isComplete = false,
-  }) => Row(
+  }) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
       Container(
@@ -1048,9 +1106,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ),
                 ),
       ),
-      const SizedBox(width: 7),
+      const SizedBox(height: 5),
       Text(
-        label,
+        label.tr,
         style: TextStyle(
           color:
               isActive ? context.appColorScheme.primary : context.appMutedText,
@@ -1062,80 +1120,34 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   );
 
   List<Widget> _basicInfoFields() => [
-    Material(
-      color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: _submitting ? null : _chooseFavoriteFood,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-          child: Row(
-            children: [
-              const Icon(Icons.bookmark_rounded, color: green, size: 22),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _selectedFavoriteFood?.name ??
-                          'community.choose_favorites'.tr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _selectedFavoriteFood == null
-                          ? 'community.prefill_from_favorites'.tr
-                          : 'community.favorite_selected_help'.tr,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: green),
-            ],
-          ),
-        ),
-      ),
-    ),
-    const SizedBox(height: 14),
     InkWell(
       onTap: _submitting ? null : _chooseImage,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(18),
       child: CustomPaint(
         foregroundPainter: _DashedRoundedBorder(
           color:
               context.appIsDark
                   ? context.appColorScheme.primary.withValues(alpha: .48)
                   : const Color(0xFFB7DEC7),
-          radius: 30,
+          radius: 18,
         ),
         child: Container(
-          height: 206,
+          height: 210,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: context.appSubtleSurface,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _image != null
-                  ? Image.memory(_image!, fit: BoxFit.cover)
+              _images.isNotEmpty
+                  ? Image.memory(_images.first, fit: BoxFit.cover)
                   : widget.post?.imageUrl.isNotEmpty == true
                   ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
                   : _emptyPhotoPrompt(),
-              if (_image != null || widget.post?.imageUrl.isNotEmpty == true)
+              if (_images.isNotEmpty ||
+                  widget.post?.imageUrl.isNotEmpty == true)
                 Positioned(
                   right: 12,
                   bottom: 12,
@@ -1175,7 +1187,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         ),
       ),
     ),
-    const SizedBox(height: 26),
+    if (_images.isNotEmpty || (widget.post?.imageUrls.isNotEmpty ?? false)) ...[
+      const SizedBox(height: 10),
+      _selectedImageStrip(),
+    ],
+    const SizedBox(height: 18),
     _field(
       _name,
       'Meal name',
@@ -1237,11 +1253,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
     const SizedBox(height: 8),
     Container(
-      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: context.appMutedSurface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         children: [
@@ -1257,44 +1271,233 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _mealCategoryField(),
   ];
 
-  Widget _emptyPhotoPrompt() => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: context.appElevatedSurface,
-            shape: BoxShape.circle,
-            boxShadow: context.appTileShadow,
-          ),
-          child: const Icon(Icons.add_a_photo_outlined, color: green, size: 26),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'community.add_cover_photo'.tr,
-          style: TextStyle(color: context.appText, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'community.cover_photo_help'.tr,
-          style: TextStyle(color: context.appMutedText, fontSize: 12),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.image_outlined, color: context.appMutedText, size: 14),
-            const SizedBox(width: 5),
-            Text(
-              'common.recommended'.tr,
-              style: TextStyle(color: context.appMutedText, fontSize: 11),
+  Widget _emptyPhotoPrompt() => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 330;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: compact ? 20 : 34,
+            top: 42,
+            child: SizedBox(
+              width: compact ? 125 : 150,
+              child: Column(
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: context.appSoftGreen,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add_a_photo_outlined,
+                      color: green,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'community.add_photo'.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'community.cover_photo_help_short'.tr,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: context.appMutedText, fontSize: 11),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
+          Positioned(
+            right: compact ? 10 : 22,
+            top: 17,
+            child: SizedBox(
+              width: compact ? 142 : 166,
+              height: 168,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    right: 0,
+                    top: 38,
+                    child: Transform.rotate(
+                      angle: .15,
+                      child: _samplePhoto(
+                        'assets/images/meals/slideshow2.png',
+                        70,
+                        108,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 28,
+                    top: 0,
+                    child: Transform.rotate(
+                      angle: -.04,
+                      child: _samplePhoto(
+                        'assets/images/meals/slideshow1.png',
+                        88,
+                        88,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    bottom: 4,
+                    child: Transform.rotate(
+                      angle: -.06,
+                      child: _samplePhoto(
+                        'assets/images/meals/healthy_salad.jpg',
+                        105,
+                        122,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            right: 14,
+            bottom: 6,
+            child: Transform.rotate(
+              angle: -.08,
+              child: Text(
+                'community.good_food_caption'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF247842),
+                  fontSize: 13,
+                  height: 1.05,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  Widget _samplePhoto(String asset, double width, double height) => Container(
+    width: width,
+    height: height,
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x26000000),
+          blurRadius: 7,
+          offset: Offset(0, 3),
         ),
       ],
     ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(9),
+      child: Image.asset(asset, fit: BoxFit.cover),
+    ),
+  );
+
+  Widget _selectedImageStrip() {
+    final existing = widget.post?.imageUrls ?? const <String>[];
+    final canAdd = _images.length + existing.length < _maxImages;
+    return SizedBox(
+      height: 76,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: existing.length + _images.length + (canAdd ? 1 : 0),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index < existing.length) {
+            return _imagePreview(
+              child: Image.network(existing[index], fit: BoxFit.cover),
+              label: index == 0 ? 'community.cover'.tr : null,
+            );
+          }
+          final localIndex = index - existing.length;
+          if (localIndex < _images.length) {
+            return _imagePreview(
+              child: Image.memory(_images[localIndex], fit: BoxFit.cover),
+              label: index == 0 ? 'community.cover'.tr : null,
+              onRemove: () => setState(() => _images.removeAt(localIndex)),
+            );
+          }
+          return InkWell(
+            onTap: _chooseImage,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 76,
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: green.withValues(alpha: .35)),
+              ),
+              child: const Icon(
+                Icons.add_photo_alternate_outlined,
+                color: green,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _imagePreview({
+    required Widget child,
+    String? label,
+    VoidCallback? onRemove,
+  }) => Stack(
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(width: 76, height: 76, child: child),
+      ),
+      if (label != null)
+        Positioned(
+          left: 5,
+          bottom: 5,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: green,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      if (onRemove != null)
+        Positioned(
+          right: 3,
+          top: 3,
+          child: InkWell(
+            onTap: onRemove,
+            child: const CircleAvatar(
+              radius: 10,
+              backgroundColor: Color(0xB8000000),
+              child: Icon(Icons.close_rounded, color: Colors.white, size: 14),
+            ),
+          ),
+        ),
+    ],
   );
 
   Widget _mealCategoryField() {
@@ -1573,16 +1776,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   List<Widget> _recipeFields() => [
     _heading(
-      'Ingredients',
-      'Optional — add them if you want to share the full recipe.',
+      'community.ingredients'.tr,
+      'community.ingredients_help'.tr,
       Icons.shopping_basket_outlined,
     ),
     _ingredientComposer(),
     const SizedBox(height: 12),
     _ingredientList(),
     _heading(
-      'How to cook',
-      'Optional — add steps only when they help explain your meal.',
+      'community.how_to_cook'.tr,
+      'community.cooking_steps_help'.tr,
       Icons.restaurant_menu_rounded,
     ),
     _stepComposer(),
@@ -1836,30 +2039,41 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
   );
   Widget _heading(String title, String subtitle, IconData icon) => Padding(
-    padding: const EdgeInsets.only(top: 22, bottom: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    padding: const EdgeInsets.only(top: 18, bottom: 9),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: context.appSoftGreen,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 17, color: green),
-            ),
-            const SizedBox(width: 9),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-          ],
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: context.appSoftGreen,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: green),
         ),
-        const SizedBox(height: 2),
-        Text(subtitle, style: TextStyle(color: context.appMutedText)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: context.appMutedText, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
       ],
     ),
   );
@@ -1873,18 +2087,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           duration: const Duration(milliseconds: 160),
           height: 42,
           decoration: BoxDecoration(
-            color: selected ? green : Colors.transparent,
+            color: selected ? context.appSelectedSurface : Colors.transparent,
             borderRadius: BorderRadius.circular(19),
-            boxShadow:
-                selected
-                    ? const [
-                      BoxShadow(
-                        color: Color(0x123C9C70),
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                    : null,
+            border: Border.all(color: selected ? green : context.appBorder),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1892,13 +2097,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? Colors.white : context.appMutedText,
+                color: selected ? green : context.appMutedText,
               ),
               const SizedBox(width: 5),
               Text(
                 value[0] + value.substring(1).toLowerCase(),
                 style: TextStyle(
-                  color: selected ? Colors.white : context.appText,
+                  color: selected ? green : context.appText,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -2212,6 +2417,25 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   ),
                 ),
               ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {
+                  for (final item in _ingredients) {
+                    item.dispose();
+                  }
+                  setState(_ingredients.clear);
+                },
+                icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                label: Text('community.clear_all'.tr),
+                style: TextButton.styleFrom(
+                  foregroundColor: green,
+                  visualDensity: VisualDensity.compact,
+                  textStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -2238,17 +2462,29 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _ingredientListRow(int index, _IngredientInput item) => SizedBox(
+  Widget _ingredientListRow(int index, _IngredientInput item) => Container(
     height: 44,
+    margin: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    padding: const EdgeInsets.only(left: 8),
+    decoration: BoxDecoration(
+      color: context.appSoftGreen,
+      borderRadius: BorderRadius.circular(14),
+    ),
     child: Row(
       children: [
-        const SizedBox(width: 10),
-        Icon(
-          Icons.drag_indicator_rounded,
-          size: 17,
-          color: context.appMutedText,
+        CircleAvatar(
+          radius: 10,
+          backgroundColor: green,
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
-        const SizedBox(width: 7),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             item.name.text,

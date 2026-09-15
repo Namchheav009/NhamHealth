@@ -15,7 +15,7 @@ void main() {
   });
   tearDown(Get.reset);
 
-  testWidgets('recipe details can be hidden and shown again', (tester) async {
+  testWidgets('full recipe opens from the comments post card', (tester) async {
     await tester.pumpWidget(
       GetMaterialApp(
         home: CommunityCommentsPage(
@@ -41,22 +41,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hide'), findsOneWidget);
-    expect(find.text('Fish'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('recipe-details-toggle')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Show all'), findsOneWidget);
+    expect(find.text('View Full Recipe'), findsOneWidget);
     expect(find.text('Fish'), findsNothing);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('recipe-details-toggle')),
+      find.byKey(const ValueKey<String>('view-full-recipe-button')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Hide'), findsOneWidget);
+    expect(find.text('Recipe details'), findsOneWidget);
     expect(find.text('Fish'), findsOneWidget);
+    expect(find.text('Steam the fish.'), findsOneWidget);
   });
 }
 

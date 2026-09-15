@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/favorite_removal_confirmation.dart';
 
@@ -24,6 +27,7 @@ class FavoritesController extends GetxController {
 
   final posts = <CommunityRecipe>[].obs;
   final isPostsLoading = false.obs;
+  Timer? _realtimeRefreshTimer;
 
   @override
   void onInit() {
@@ -31,6 +35,29 @@ class FavoritesController extends GetxController {
     loadFoods();
     loadFoodCategories();
     loadPosts();
+    if (!Get.testMode) {
+      _realtimeRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (Get.currentRoute == AppRoutes.favorites) {
+          unawaited(_refreshSilently());
+        }
+      });
+    }
+  }
+
+  Future<void> _refreshSilently() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        repository.getFoods(),
+        repository.getFoodCategories(),
+        repository.getPosts(),
+      ]);
+      foods.assignAll(results[0] as List<FavoriteFood>);
+      final categories = results[1] as List<String>;
+      foodCategories.assignAll(['All', ...categories.toSet()]);
+      posts.assignAll(results[2] as List<CommunityRecipe>);
+    } on Object {
+      // Preserve the current favorites until the next live refresh succeeds.
+    }
   }
 
   Future<void> loadFoods() async {
@@ -126,5 +153,11 @@ class FavoritesController extends GetxController {
         message: error.toString(),
       );
     }
+  }
+
+  @override
+  void onClose() {
+    _realtimeRefreshTimer?.cancel();
+    super.onClose();
   }
 }

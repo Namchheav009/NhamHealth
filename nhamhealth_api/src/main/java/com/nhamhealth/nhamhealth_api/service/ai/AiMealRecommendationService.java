@@ -329,12 +329,18 @@ public class AiMealRecommendationService {
                         "temperature", 0.25,
                         "topP", 0.9,
                         "maxOutputTokens", textMaxTokens));
-        String responseBody = client.post()
+        // Some Gemini endpoints/proxies return valid JSON with the generic
+        // application/octet-stream content type. Reading bytes avoids Spring's
+        // String message-converter rejecting an otherwise valid response.
+        byte[] responseBody = client.post()
                 .uri(normalizedBaseUrl() + "/models/" + targetModel + ":generateContent")
                 .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(body).retrieve().body(String.class);
+                .body(body).retrieve().body(byte[].class);
+        if (responseBody == null || responseBody.length == 0) {
+            throw new IllegalArgumentException("Gemini returned an empty ranking response.");
+        }
         JsonNode response = mapper.readTree(responseBody);
         JsonNode parts = response.path("candidates").path(0).path("content").path("parts");
         String content = "";

@@ -33,6 +33,7 @@ import com.nhamhealth.nhamhealth_api.entity.RecipeTag;
 import com.nhamhealth.nhamhealth_api.entity.SavedRecipe;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
 import com.nhamhealth.nhamhealth_api.entity.User;
+import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.repository.recipe.AiRecipeReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
@@ -49,6 +50,7 @@ import java.time.format.DateTimeFormatter;
 import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.UserRecipeAiCheckRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 
 /** The author-owned Community meal-post lifecycle. */
 @Service
@@ -65,6 +67,7 @@ public class RecipeFlowService {
     private final MealRepository meals;
     private final MealCategoryRepository categories;
     private final UserRepository users;
+    private final UserProfileRepository userProfiles;
     private final ProfileImageStorageService images;
     private final EntityManager entityManager;
     private final ModerationActionRepository moderationActions;
@@ -74,12 +77,13 @@ public class RecipeFlowService {
             AiRecipeReviewRepository reviews, UserRecipeAiCheckRepository checks,
             SavedRecipeRepository savedRecipes, PostRepository posts,
             MealRepository meals, MealCategoryRepository categories, UserRepository users,
+            UserProfileRepository userProfiles,
             ProfileImageStorageService images, EntityManager entityManager,
             ModerationActionRepository moderationActions) {
         this.recipes = recipes; this.ingredients = ingredients; this.steps = steps; this.recipeTags = recipeTags;
         this.tags = tags; this.reviews = reviews; this.checks = checks; this.savedRecipes = savedRecipes;
         this.posts = posts; this.meals = meals; this.categories = categories;
-        this.users = users; this.images = images;
+        this.users = users; this.userProfiles = userProfiles; this.images = images;
         this.entityManager = entityManager;
         this.moderationActions = moderationActions;
     }
@@ -124,11 +128,76 @@ public class RecipeFlowService {
     }
 
     @Transactional
+    public RecipeResponse createWithImages(Integer userId, RecipeRequest request, List<MultipartFile> uploads) {
+        List<MultipartFile> files = usableImages(uploads);
+        validateImageCount(files.size());
+        Recipe recipe = new Recipe();
+        recipe.setAuthor(user(userId));
+        recipe.setStatus("DRAFT");
+        LocalDateTime now = LocalDateTime.now();
+        recipe.setCreatedAt(now); recipe.setUpdatedAt(now);
+        apply(recipe, request, files.isEmpty() ? null : files.getFirst(), false);
+        recipe = recipes.saveAndFlush(recipe);
+        replaceRecipeMedia(recipe.getRecipeId(), files);
+        return response(recipe, userId);
+    }
+
+    @Transactional
     public RecipeResponse update(Integer userId, Integer recipeId, RecipeRequest request, MultipartFile image) {
         Recipe recipe = owned(userId, recipeId);
         apply(recipe, request, image, true);
         recipe.setUpdatedAt(LocalDateTime.now());
         return response(recipes.save(recipe), userId);
+    }
+
+    @Transactional
+    public RecipeResponse updateWithImages(Integer userId, Integer recipeId, RecipeRequest request,
+            List<MultipartFile> uploads) {
+        List<MultipartFile> files = usableImages(uploads);
+        validateImageCount(files.size());
+        Recipe recipe = owned(userId, recipeId);
+        apply(recipe, request, files.isEmpty() ? null : files.getFirst(), true);
+        recipe.setUpdatedAt(LocalDateTime.now());
+        recipe = recipes.saveAndFlush(recipe);
+        if (!files.isEmpty()) appendRecipeMedia(recipeId, files);
+        return response(recipe, userId);
+    }
+
+    private List<MultipartFile> usableImages(List<MultipartFile> uploads) {
+        return uploads == null ? List.of() : uploads.stream()
+                .filter(Objects::nonNull).filter(file -> !file.isEmpty()).toList();
+    }
+
+    private void validateImageCount(int count) {
+        if (count > 5) throw new IllegalArgumentException("A post can contain up to 5 images");
+    }
+
+    private void replaceRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
+        deleteByMealPostId("post_media", recipeId);
+        insertRecipeMedia(recipeId, uploads, 0);
+    }
+
+    private void appendRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
+        Number count = (Number) entityManager.createNativeQuery(
+                        "SELECT COUNT(*) FROM post_media WHERE user_meal_post_id = :postId")
+                .setParameter("postId", recipeId)
+                .getSingleResult();
+        int existingCount = count.intValue();
+        validateImageCount(existingCount + uploads.size());
+        insertRecipeMedia(recipeId, uploads, existingCount);
+    }
+
+    private void insertRecipeMedia(Integer recipeId, List<MultipartFile> uploads, int startIndex) {
+        for (int index = 0; index < uploads.size(); index++) {
+            String imageUrl = images.storePostImage(uploads.get(index));
+            entityManager.createNativeQuery("INSERT INTO post_media "
+                            + "(user_meal_post_id, media_type, media_url, display_order) "
+                            + "VALUES (:postId, 'IMAGE', :mediaUrl, :displayOrder)")
+                    .setParameter("postId", recipeId)
+                    .setParameter("mediaUrl", imageUrl)
+                    .setParameter("displayOrder", startIndex + index)
+                    .executeUpdate();
+        }
     }
 
     @Transactional
@@ -147,6 +216,17 @@ public class RecipeFlowService {
     public void delete(Integer userId, Integer recipeId) {
         Recipe recipe = owned(userId, recipeId);
 
+        // Shares retain a foreign key to their original recipe. Remove every
+        // dependent share first so deleting the original cannot violate
+        // fk_user_meal_posts_shared_source. A share contains copied children,
+        // so each one must receive the same dependent-row cleanup.
+        List<Recipe> sharedCopies = recipes.findBySharedFromRecipeId(recipeId);
+        for (Recipe sharedCopy : sharedCopies) {
+            deleteRecipeDependents(sharedCopy.getRecipeId());
+            recipes.delete(sharedCopy);
+        }
+        if (!sharedCopies.isEmpty()) recipes.flush();
+
         // A promoted catalog meal and the meal post reference each other. Clear
         // the post -> meal reference before deleting the derived catalog meal.
         // This also lets the same delete path work for both author and admin
@@ -157,10 +237,18 @@ public class RecipeFlowService {
             recipes.saveAndFlush(recipe);
         }
 
+        deleteRecipeDependents(recipeId);
+
+        promotedMeal.ifPresent(this::deletePromotedMeal);
+        recipes.delete(recipe);
+        recipes.flush();
+    }
+
+    private void deleteRecipeDependents(Integer recipeId) {
         // The Community view uses the meal-post id as its post id. These rows
         // do not have database foreign keys because the parent is a view, but
-        // they must not be left orphaned when an admin permanently removes a
-        // meal post. Reports must precede comments and comment likes.
+        // they must not be left orphaned. Reports must precede comments and
+        // comment likes.
         deleteByMealPostId("post_reports", recipeId);
         entityManager.createNativeQuery("DELETE FROM comment_likes WHERE comment_id IN "
                         + "(SELECT comment_id FROM post_comments WHERE user_meal_post_id = :postId)")
@@ -183,10 +271,6 @@ public class RecipeFlowService {
         steps.deleteByRecipeRecipeId(recipeId);
         recipeTags.deleteByRecipeRecipeId(recipeId);
         entityManager.flush();
-
-        promotedMeal.ifPresent(this::deletePromotedMeal);
-        recipes.delete(recipe);
-        recipes.flush();
     }
 
     private void deletePromotedMeal(Meal meal) {
@@ -333,7 +417,10 @@ public class RecipeFlowService {
     private RecipeResponse response(Recipe recipe, Integer viewerId) {
         Integer postId = "PUBLISHED".equals(recipe.getStatus()) ? recipe.getRecipeId() : null;
         boolean saved = viewerId != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent();
-        return new RecipeResponse(recipe.getRecipeId(), value(recipe.getAuthor().getName()), recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()), recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(), null, "", recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
+        UserProfile authorProfile = userProfiles.findByUser_UserId(recipe.getAuthor().getUserId()).orElse(null);
+        return new RecipeResponse(recipe.getRecipeId(), authorName(recipe.getAuthor(), authorProfile),
+                authorProfile == null ? "" : value(authorProfile.getProfileImageUrl()),
+                recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()), recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(), null, "", recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
                 recipeTags.findByRecipeRecipeId(recipe.getRecipeId()).stream().map(item -> item.getTag().getTagName()).toList(),
                 ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeIngredient(item.getIngredientName(), item.getAmount(), value(item.getUnit()), value(item.getPreparationNote()))).toList(),
                 steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeStep(item.getStepNumber(), value(item.getStepTitle()), item.getInstruction(), value(item.getImageUrl()))).toList(),
@@ -342,6 +429,14 @@ public class RecipeFlowService {
     private Recipe recipe(Integer id) { return recipes.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Recipe not found")); }
     private Recipe owned(Integer userId, Integer recipeId) { Recipe recipe = recipe(recipeId); if (!recipe.getAuthor().getUserId().equals(userId)) throw new ResponseStatusException(FORBIDDEN, "You can only manage your own recipes."); return recipe; }
     private User user(Integer id) { return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found")); }
+    private String authorName(User author, UserProfile profile) {
+        String profileName = profile == null ? "" : value(profile.getFullName()).trim();
+        if (!profileName.isBlank()) return profileName;
+
+        String email = value(author.getEmail());
+        int at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : "Community member";
+    }
     private static String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static String value(String value) { return value == null ? "" : value; }
     private static <T> List<T> list(List<T> value) { return value == null ? List.of() : value; }

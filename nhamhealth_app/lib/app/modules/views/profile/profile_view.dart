@@ -8,6 +8,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/post_delete_confirmation.dart';
 import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
@@ -323,31 +324,21 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Future<void> _confirmDeletePost(CommunityPost post) async {
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text('community.delete_post_question'.tr),
-        content: Text('profile.delete_post_warning'.tr),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text('common.cancel'.tr),
-          ),
-          FilledButton(
-            onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD94545),
-            ),
-            child: Text('common.delete'.tr),
-          ),
-        ],
-      ),
+    final confirmed = await confirmPostDeletion(
+      messageKey: 'profile.delete_post_warning',
     );
     if (confirmed != true) return;
     try {
       await controller.deletePost(post);
-      Get.snackbar('profile.post_deleted'.tr, 'profile.post_removed'.tr);
+      await AppAlert.actionSuccess(
+        title: 'profile.post_deleted',
+        message: 'profile.post_removed',
+      );
     } on Object catch (error) {
-      Get.snackbar('profile.could_not_delete_post'.tr, error.toString());
+      await AppAlert.actionError(
+        title: 'profile.could_not_delete_post',
+        message: error.toString(),
+      );
     }
   }
 

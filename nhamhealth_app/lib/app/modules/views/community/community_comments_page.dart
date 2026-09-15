@@ -13,6 +13,7 @@ import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/post_delete_confirmation.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
@@ -64,9 +65,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   String? _likingCommentId;
   String? _deletingCommentId;
   bool _updatingPost = false;
-  bool _recipeDetailsExpanded = true;
   late CommunityPost _post;
   StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
+  Timer? _discussionRefreshTimer;
+  bool _discussionRefreshInFlight = false;
 
   @override
   void initState() {
@@ -77,6 +79,12 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     _realtimeSubscription = PushNotificationService.instance?.events.listen(
       _handleRealtimeEvent,
     );
+    if (!Get.testMode) {
+      _discussionRefreshTimer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => unawaited(_refreshDiscussion()),
+      );
+    }
   }
 
   @override
@@ -93,6 +101,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     _composerFocus.dispose();
     _scrollController.dispose();
     _realtimeSubscription?.cancel();
+    _discussionRefreshTimer?.cancel();
     super.dispose();
   }
 
@@ -105,6 +114,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _refreshDiscussion() async {
+    if (_discussionRefreshInFlight) return;
+    _discussionRefreshInFlight = true;
     try {
       final results = await Future.wait<dynamic>([
         _repository.getPost(_post.id),
@@ -118,6 +129,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       widget.onPostChanged?.call();
     } on Object {
       // Keep the current discussion visible if a realtime refresh fails.
+    } finally {
+      _discussionRefreshInFlight = false;
     }
   }
 
@@ -445,38 +458,31 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Future<void> _confirmAndDeletePost() async {
     if (_updatingPost) return;
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text('community.delete_post_question'.tr),
-        content: Text('community.delete_post_profile_warning'.tr),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text('common.cancel'.tr),
-          ),
-          FilledButton(
-            onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD94545),
-            ),
-            child: Text('common.delete'.tr),
-          ),
-        ],
-      ),
+    final confirmed = await confirmPostDeletion(
+      messageKey: 'community.delete_post_profile_warning',
     );
     if (confirmed != true || !mounted) return;
 
     setState(() => _updatingPost = true);
     try {
-      await _repository.deletePost(_post.id);
+      final recipeId = _post.mealId;
+      if (recipeId == null) {
+        throw CommunityException('community.post_delete_unavailable'.tr);
+      }
+      await _repository.deletePost(recipeId);
       if (!mounted) return;
       widget.onPostChanged?.call();
       Get.back<void>();
-      Get.snackbar('community.post_deleted'.tr, 'community.post_removed'.tr);
+      await Future<void>.delayed(Duration.zero);
+      await AppAlert.actionSuccess(
+        title: 'community.post_deleted',
+        message: 'community.post_removed',
+      );
     } on Object catch (error) {
-      if (mounted) {
-        Get.snackbar('community.could_not_delete_post'.tr, error.toString());
-      }
+      await AppAlert.actionError(
+        title: 'community.could_not_delete_post',
+        message: error.toString(),
+      );
     } finally {
       if (mounted) setState(() => _updatingPost = false);
     }
@@ -608,7 +614,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 child:
                     _loading
                         ? const SingleChildScrollView(
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           padding: EdgeInsets.fromLTRB(
                             AppSpacing.pageHorizontal,
                             4,
@@ -619,6 +627,13 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                         )
                         : ListView(
                           controller: _scrollController,
+                          // ignore: deprecated_member_use
+                          cacheExtent: 1200,
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(
+                              decelerationRate: ScrollDecelerationRate.normal,
+                            ),
+                          ),
                           padding: const EdgeInsets.fromLTRB(
                             AppSpacing.pageHorizontal,
                             4,
@@ -703,63 +718,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         onOptions: _showPostOptions,
         isLiking: _updatingPost,
       ),
-      if (_post.ingredients.isNotEmpty || _post.steps.isNotEmpty)
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(top: 14),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: context.appSurface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: context.appBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'community.recipe_details'.tr,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    key: const ValueKey<String>('recipe-details-toggle'),
-                    onPressed:
-                        () => setState(
-                          () =>
-                              _recipeDetailsExpanded = !_recipeDetailsExpanded,
-                        ),
-                    icon: Icon(
-                      _recipeDetailsExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                    ),
-                    label: Text(
-                      (_recipeDetailsExpanded
-                              ? 'common.hide'
-                              : 'common.show_all')
-                          .tr,
-                    ),
-                  ),
-                ],
-              ),
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 180),
-                crossFadeState:
-                    _recipeDetailsExpanded
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                firstChild: _recipeDetailsContent(),
-                secondChild: const SizedBox.shrink(),
-              ),
-            ],
-          ),
-        ),
     ],
   );
 
@@ -774,73 +732,6 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       arguments: _post,
     );
   }
-
-  Widget _recipeDetailsContent() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (_post.ingredients.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        Text(
-          'common.ingredients'.tr,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 12),
-        ..._post.ingredients.map(
-          (item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.ingredientName,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                Text(
-                  '${item.amount ?? ''} ${item.unit}',
-                  style: TextStyle(color: context.appColorScheme.primary),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-      if (_post.ingredients.isNotEmpty && _post.steps.isNotEmpty)
-        const Divider(height: 32),
-      if (_post.steps.isNotEmpty) ...[
-        Text(
-          'community.how_to_cook'.tr,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 12),
-        ..._post.steps.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: const Color(0xFF0AAA55),
-                  child: Text(
-                    '${item.stepNumber}',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    item.instruction,
-                    style: const TextStyle(height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ],
-  );
 
   // Kept temporarily as a reference while all post surfaces use the shared card.
   // ignore: unused_element
@@ -1349,7 +1240,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;
     if (difference.inHours < 1) {
-      return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+      return 'community.minutes_ago'.trParams({
+        'count': '${difference.inMinutes}',
+      });
     }
     if (difference.inDays < 1) {
       return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});

@@ -47,8 +47,9 @@ class CommunityController extends GetxController {
   Set<int> _knownCommunityNotificationIds = const {};
   bool _notificationsInitialized = false;
   bool _notificationRequestInFlight = false;
+  bool _feedRefreshInFlight = false;
   static const notificationRefreshInterval = Duration(seconds: 5);
-  static const feedRefreshInterval = Duration(seconds: 10);
+  static const feedRefreshInterval = Duration(seconds: 3);
   final section = CommunitySection.feed.obs;
   final feedFilter = CommunityFeedFilter.forYou.obs;
   final friendsView = FriendsView.friends.obs;
@@ -67,7 +68,11 @@ class CommunityController extends GetxController {
   final commentsByPost = <String, List<CommunityComment>>{}.obs;
   Map<FriendsView, List<CommunityPerson>> _people = const {};
 
-  List<CommunityPost> get visiblePosts {
+  final isLoadingMore = false.obs;
+  final displayedPostCount = 10.obs;
+  static const int pageSize = 10;
+
+  List<CommunityPost> get _allFilteredPosts {
     late final List<CommunityPost> filteredByFeed;
     switch (feedFilter.value) {
       case CommunityFeedFilter.forYou:
@@ -112,6 +117,23 @@ class CommunityController extends GetxController {
         )
         .toList(growable: false);
   }
+
+  List<CommunityPost> get visiblePosts {
+    final all = _allFilteredPosts;
+    if (all.isEmpty) return const [];
+    final count = displayedPostCount.value;
+    if (count <= all.length) {
+      return all.take(count).toList(growable: false);
+    }
+    // Loop posts continuously when users scroll
+    return List.generate(
+      count,
+      (index) => all[index % all.length],
+      growable: false,
+    );
+  }
+
+  bool get hasMorePosts => _allFilteredPosts.isNotEmpty;
 
   int _engagementScore(CommunityPost post) =>
       post.likes + (post.comments * 2) + (post.shares * 3);
@@ -235,19 +257,57 @@ class CommunityController extends GetxController {
   Future<void> reload() async {
     isLoading.value = true;
     errorMessage.value = null;
+    displayedPostCount.value = pageSize;
     try {
       final results = await Future.wait<dynamic>([
         _repository.getPosts(),
         _repository.getPeople(),
         loadTopBar(),
       ]);
-      posts.assignAll(results[0] as List<CommunityPost>);
+      final newPosts = results[0] as List<CommunityPost>;
+      posts.assignAll(newPosts);
+      displayedPostCount.value =
+          newPosts.length < pageSize && newPosts.isNotEmpty
+              ? newPosts.length
+              : pageSize;
       _replacePeople(results[1] as Map<FriendsView, List<CommunityPerson>>);
       hasLoaded.value = true;
     } on Object catch (error) {
       errorMessage.value = error.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> loadMorePosts() async {
+    if (isLoadingMore.value || isLoading.value) return;
+
+    if (hasMorePosts) {
+      isLoadingMore.value = true;
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      final increment =
+          _allFilteredPosts.length < pageSize && _allFilteredPosts.isNotEmpty
+              ? _allFilteredPosts.length
+              : pageSize;
+      displayedPostCount.value += increment;
+      isLoadingMore.value = false;
+      return;
+    }
+
+    // Try fetching newer or additional posts from repository
+    isLoadingMore.value = true;
+    try {
+      final latest = await _repository.getPosts();
+      final currentIds = posts.map((p) => p.id).toSet();
+      final newPosts = latest.where((p) => !currentIds.contains(p.id)).toList();
+      if (newPosts.isNotEmpty) {
+        posts.addAll(newPosts);
+        displayedPostCount.value += pageSize;
+      }
+    } on Object {
+      // Keep existing posts
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 
@@ -268,10 +328,14 @@ class CommunityController extends GetxController {
   /// Keeps the Community feed current when another signed-in user publishes a
   /// meal through the Spring Boot recipe endpoint.
   Future<void> _refreshPosts() async {
+    if (_feedRefreshInFlight) return;
+    _feedRefreshInFlight = true;
     try {
       posts.assignAll(await _repository.getPosts());
     } on Object {
       // Keep the existing feed visible until the next successful refresh.
+    } finally {
+      _feedRefreshInFlight = false;
     }
   }
 
@@ -279,11 +343,13 @@ class CommunityController extends GetxController {
     if (section.value == value) return;
     section.value = value;
     searchQuery.value = '';
+    displayedPostCount.value = pageSize;
   }
 
   void selectFeedFilter(CommunityFeedFilter value) {
     if (feedFilter.value == value) return;
     feedFilter.value = value;
+    displayedPostCount.value = pageSize;
   }
 
   void selectFriendsView(FriendsView value) {
@@ -293,7 +359,11 @@ class CommunityController extends GetxController {
   }
 
   void selectPeopleFilter(PeopleFilter value) => peopleFilter.value = value;
-  void updateSearch(String value) => searchQuery.value = value;
+  void updateSearch(String value) {
+    searchQuery.value = value;
+    displayedPostCount.value = pageSize;
+  }
+
   Future<void> togglePostLike(CommunityPost post) async {
     if (!likingPostIds.add(post.id)) return;
     try {
@@ -308,7 +378,15 @@ class CommunityController extends GetxController {
   }
 
   Future<void> togglePostSaved(CommunityPost post) async {
-    final updated = await _repository.toggleSaved(post.id);
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      Get.snackbar(
+        'common.favorites_unavailable'.tr,
+        'This post cannot be saved right now.',
+      );
+      return;
+    }
+    final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
   }
@@ -434,7 +512,11 @@ class CommunityController extends GetxController {
   }
 
   Future<void> deletePost(CommunityPost post) async {
-    await _repository.deletePost(post.id);
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      throw CommunityException('community.post_delete_unavailable'.tr);
+    }
+    await _repository.deletePost(recipeId);
     posts.removeWhere((item) => item.id == post.id);
     commentsByPost.remove(post.id);
   }
