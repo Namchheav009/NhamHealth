@@ -517,7 +517,10 @@ public class CommunityService {
                 communityDisplayName(post.getUser(), profile),
                 post.getUser().getRoleLabel(), profile == null ? "" : value(profile.getProfileImageUrl(), ""),
                 (isShared ? List.<String>of() : assignedTags.stream().map(TagType::getTagName).toList()),
-                post.getCreatedAt(), likes.countByPostPostId(post.getPostId()),
+                post.getCreatedAt() == null
+                        ? null
+                        : post.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime(),
+                likes.countByPostPostId(post.getPostId()),
                 comments.countByPostPostIdAndStatusIgnoreCase(post.getPostId(), "ACTIVE"),
                 recipe == null ? 0 : recipe.getShareCount(),
                 likes.existsByUserUserIdAndPostPostId(viewerId, post.getPostId()),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -139,14 +140,9 @@ class ProfilePostCard extends StatelessWidget {
 
                           const SizedBox(height: 2),
 
-                          Text(
-                            '${_localizedAge(post)}  •  ${_localizedRole(membership ?? post.role)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: context.appMutedText,
-                            ),
+                          _LivePostMetadata(
+                            post: post,
+                            role: _localizedRole(membership ?? post.role),
                           ),
                         ],
                       ),
@@ -450,58 +446,6 @@ class ProfilePostCard extends StatelessWidget {
         ),
   );
 
-  String _localizedAge(CommunityPost post) {
-    final date = post.createdAt;
-    if (date != null) {
-      final difference = DateTime.now().difference(date);
-      if (difference.inMinutes < 1) return 'community.just_now'.tr;
-      if (difference.inHours < 1) {
-        return 'community.minutes_ago'.trParams({
-          'count': '${difference.inMinutes}',
-        });
-      }
-      if (difference.inDays < 1) {
-        return 'community.hours_ago'.trParams({
-          'count': '${difference.inHours}',
-        });
-      }
-      if (difference.inDays == 1) return 'community.yesterday'.tr;
-      return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
-    }
-    final raw = post.ageLabel.trim();
-    if (raw.isEmpty || raw.toLowerCase() == 'just now') {
-      return 'community.just_now'.tr;
-    }
-    if (raw.toLowerCase() == 'recently') {
-      return 'community.recently'.tr;
-    }
-    if (raw.toLowerCase() == 'yesterday') {
-      return 'community.yesterday'.tr;
-    }
-    final minMatch = RegExp(
-      r'^(\d+)\s*m\s*ago$',
-      caseSensitive: false,
-    ).firstMatch(raw);
-    if (minMatch != null) {
-      return 'community.minutes_ago'.trParams({'count': minMatch.group(1)!});
-    }
-    final hourMatch = RegExp(
-      r'^(\d+)\s*h\s*ago$',
-      caseSensitive: false,
-    ).firstMatch(raw);
-    if (hourMatch != null) {
-      return 'community.hours_ago'.trParams({'count': hourMatch.group(1)!});
-    }
-    final dayMatch = RegExp(
-      r'^(\d+)\s*d\s*ago$',
-      caseSensitive: false,
-    ).firstMatch(raw);
-    if (dayMatch != null) {
-      return 'community.days_ago'.trParams({'count': dayMatch.group(1)!});
-    }
-    return raw;
-  }
-
   String _localizedRole(String? role) {
     final value = (role ?? '').trim();
     if (value.isEmpty ||
@@ -522,6 +466,98 @@ class ProfilePostCard extends StatelessWidget {
     if (lower == 'friend') return 'community.friend'.tr;
     return trimmed;
   }
+}
+
+class _LivePostMetadata extends StatefulWidget {
+  const _LivePostMetadata({required this.post, required this.role});
+
+  final CommunityPost post;
+  final String role;
+
+  @override
+  State<_LivePostMetadata> createState() => _LivePostMetadataState();
+}
+
+class _LivePostMetadataState extends State<_LivePostMetadata> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.post.createdAt != null) {
+      _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _LivePostMetadata oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post.createdAt == widget.post.createdAt) return;
+    _refreshTimer?.cancel();
+    _refreshTimer =
+        widget.post.createdAt == null
+            ? null
+            : Timer.periodic(const Duration(seconds: 30), (_) {
+              if (mounted) setState(() {});
+            });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(
+    '${_localPostAge(widget.post)}  •  ${widget.role}',
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(fontSize: 12, color: context.appMutedText),
+  );
+}
+
+String _localPostAge(CommunityPost post) {
+  final createdAt = post.createdAt?.toLocal();
+  if (createdAt != null) {
+    final difference = DateTime.now().difference(createdAt);
+    if (difference.isNegative || difference.inMinutes < 1) {
+      return 'community.just_now'.tr;
+    }
+    if (difference.inHours < 1) {
+      return 'community.minutes_ago'.trParams({
+        'count': '${difference.inMinutes}',
+      });
+    }
+    if (difference.inDays < 1) {
+      return 'community.hours_ago'.trParams({
+        'count': '${difference.inHours}',
+      });
+    }
+    if (difference.inDays == 1) return 'community.yesterday'.tr;
+    return 'community.days_ago'.trParams({'count': '${difference.inDays}'});
+  }
+
+  final raw = post.ageLabel.trim();
+  if (raw.isEmpty || raw.toLowerCase() == 'just now') {
+    return 'community.just_now'.tr;
+  }
+  if (raw.toLowerCase() == 'recently') return 'community.recently'.tr;
+  if (raw.toLowerCase() == 'yesterday') return 'community.yesterday'.tr;
+
+  final match = RegExp(
+    r'^(\d+)\s*([mhd])\s*ago$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match == null) return raw;
+  final count = match.group(1)!;
+  return switch (match.group(2)!.toLowerCase()) {
+    'm' => 'community.minutes_ago'.trParams({'count': count}),
+    'h' => 'community.hours_ago'.trParams({'count': count}),
+    _ => 'community.days_ago'.trParams({'count': count}),
+  };
 }
 
 class _ViewRecipeButton extends StatelessWidget {
