@@ -547,23 +547,33 @@ class _ProfileContentTabs extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appTileShadow,
+    ),
+    clipBehavior: Clip.antiAlias,
     child: Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        _ProfileContentTab(
-          key: const ValueKey<String>('my-profile-tab-all'),
-          label: 'common.all'.tr,
-          selected: selectedIndex == 0,
-          onTap: () => onChanged(0),
+        Expanded(
+          child: _ProfileContentTab(
+            key: const ValueKey<String>('my-profile-tab-all'),
+            label: 'common.all'.tr,
+            selected: selectedIndex == 0,
+            onTap: () => onChanged(0),
+          ),
         ),
-        const SizedBox(width: 8),
-        _ProfileContentTab(
-          key: const ValueKey<String>('my-profile-tab-photos'),
-          label: 'profile.photos'.tr,
-          selected: selectedIndex == 1,
-          onTap: () => onChanged(1),
+        Container(width: 1, height: 28, color: context.appBorder),
+        Expanded(
+          child: _ProfileContentTab(
+            key: const ValueKey<String>('my-profile-tab-photos'),
+            label: 'profile.photos'.tr,
+            selected: selectedIndex == 1,
+            onTap: () => onChanged(1),
+          ),
         ),
       ],
     ),
@@ -588,19 +598,34 @@ class _ProfileContentTab extends StatelessWidget {
     selected: selected,
     label: label,
     child: Material(
-      color: selected ? context.appSoftGreen : Colors.transparent,
-      borderRadius: BorderRadius.circular(22),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected ? AppColors.primaryGreen : context.appMutedText,
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.fromLTRB(12, 13, 12, 10),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? context.appSoftGreen.withValues(alpha: .45)
+                    : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppColors.primaryGreen : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color:
+                    selected ? AppColors.primaryGreen : context.appMutedText,
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
           ),
         ),

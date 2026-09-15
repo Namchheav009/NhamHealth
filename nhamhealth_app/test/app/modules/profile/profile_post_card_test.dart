@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nhamhealth_flutter/config/api_config.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_shared_post_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/widgets/profile_post_card.dart';
@@ -22,10 +23,10 @@ void main() {
                   post: CommunityPost(
                     id: '1',
                     description: 'A profile post with multiple images.',
-                    imageUrl: 'https://example.invalid/profile-1.jpg',
+                    imageUrl: '/uploads/profile-1.jpg',
                     imageUrls: const [
-                      'https://example.invalid/profile-1.jpg',
-                      'https://example.invalid/profile-2.jpg',
+                      '/uploads/profile-1.jpg',
+                      '/uploads/profile-2.jpg',
                     ],
                     author: 'Profile Member',
                     role: 'Member',
@@ -50,6 +51,16 @@ void main() {
         final carouselSize = tester.getSize(carousel);
         expect(carouselSize.height, carouselSize.width / (5 / 4));
         expect(carouselSize.height, lessThanOrEqualTo(360));
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Image &&
+                widget.image is NetworkImage &&
+                (widget.image as NetworkImage).url ==
+                    '${ApiConfig.baseUrl}/uploads/profile-1.jpg',
+          ),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
       },
     );

@@ -167,9 +167,9 @@ class _PaginationPostRepository extends CommunityRepository {
 
 class _FailingPeopleRepository extends _PaginationPostRepository {
   _FailingPeopleRepository(
-    AuthService authService,
-    List<CommunityPost> posts,
-  ) : super(authService, posts);
+    super.authService,
+    super.posts,
+  );
 
   @override
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {

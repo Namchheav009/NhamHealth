@@ -356,10 +356,28 @@ class ProfilePostCard extends StatelessWidget {
         : '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
 
-  List<String> get _imageUrls =>
-      post.imageUrls.isNotEmpty
-          ? post.imageUrls
-          : (post.imageUrl.isEmpty ? const [] : [post.imageUrl]);
+  List<String> get _imageUrls {
+    final values =
+        post.imageUrls.isNotEmpty
+            ? post.imageUrls
+            : (post.imageUrl.isEmpty ? const <String>[] : [post.imageUrl]);
+    return values
+        .map(_resolveMediaUrl)
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String _resolveMediaUrl(String value) {
+    final path = value.trim();
+    if (path.isEmpty ||
+        path.startsWith('http://') ||
+        path.startsWith('https://') ||
+        path.startsWith('blob:') ||
+        path.startsWith('data:')) {
+      return path;
+    }
+    return '${ApiConfig.baseUrl}${path.startsWith('/') ? '' : '/'}$path';
+  }
 
   Future<void> _showPostOptions(BuildContext context) async {
     final action = await showModalBottomSheet<String>(

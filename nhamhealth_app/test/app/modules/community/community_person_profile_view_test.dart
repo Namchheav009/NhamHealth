@@ -53,6 +53,16 @@ void main() {
     expect(find.text("What's on your healthy mind?"), findsNothing);
     expect(find.text('Photo'), findsNothing);
     expect(find.text('Ask community'), findsNothing);
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Photos'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('profile-tab-all')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('profile-tab-photos')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey<String>('other-profile-card')),
       findsOneWidget,
@@ -91,6 +101,12 @@ void main() {
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
     await tester.tap(
+      find.byKey(const ValueKey<String>('profile-tab-photos')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No photos shared yet.'), findsOneWidget);
+
+    await tester.tap(
       find.byKey(const ValueKey<String>('other-profile-share-button')),
     );
     await tester.pumpAndSettle();
@@ -121,6 +137,7 @@ class _ProfileRepository extends CommunityRepository {
         followers: 2,
         following: 2,
         isFollowing: true,
+        followsViewer: false,
       );
 
   @override
