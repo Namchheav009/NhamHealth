@@ -35,7 +35,7 @@ public class FollowsAdminController {
 
     @GetMapping("/admin/follows")
     public String followsPage(Authentication authentication, Model model) {
-        List<Follow> follows = followRepository.findAllByOrderByRequestedAtDesc();
+        List<Follow> follows = followRepository.findVisibleAdminFollows();
         model.addAttribute("pageTitle", "Follows");
         model.addAttribute("activePage", "follows");
         model.addAttribute("adminName", authentication != null ? authentication.getName() : "admin");
@@ -43,7 +43,8 @@ public class FollowsAdminController {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("totalFollows", follows.size());
         model.addAttribute("mutualConnections", followRepository.countMutualDirections() / 2);
-        model.addAttribute("newThisWeek", followRepository.countByRequestedAtGreaterThanEqual(LocalDateTime.now().minusDays(7)));
+        model.addAttribute("newThisWeek", followRepository.countActiveByRequestedAtGreaterThanEqual(
+                LocalDateTime.now().minusDays(7)));
         return "admin/follows";
     }
 
@@ -58,7 +59,8 @@ public class FollowsAdminController {
         if (follower == null || following == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Select two valid users."));
         }
-        if (followRepository.existsByFollowerUserUserIdAndFollowingUserUserId(followerId, followingId)) {
+        if (followRepository.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
+                followerId, followingId, "ACTIVE") || followRepository.existsBlockedBetween(followerId, followingId)) {
             return ResponseEntity.badRequest().body(Map.of("message", "This follow relationship already exists."));
         }
         Follow follow = new Follow();
@@ -79,6 +81,9 @@ public class FollowsAdminController {
         }
         Follow follow = followRepository.findById(followId).orElse(null);
         if (follow == null) return ResponseEntity.notFound().build();
+        if (follow.getStatus().toUpperCase().startsWith("FOLLOW_")) {
+            return ResponseEntity.status(409).body(Map.of("message", "Connection history cannot be edited as a follow."));
+        }
         follow.setStatus(cleanStatus);
         follow.setRespondedAt(LocalDateTime.now());
         return ResponseEntity.ok(toResponse(followRepository.saveAndFlush(follow)));
@@ -87,7 +92,11 @@ public class FollowsAdminController {
     @DeleteMapping("/admin/follows/{followId}")
     @ResponseBody
     public ResponseEntity<Void> deleteFollow(@PathVariable Integer followId) {
-        if (!followRepository.existsById(followId)) return ResponseEntity.notFound().build();
+        Follow follow = followRepository.findById(followId).orElse(null);
+        if (follow == null) return ResponseEntity.notFound().build();
+        if (follow.getStatus().toUpperCase().startsWith("FOLLOW_")) {
+            return ResponseEntity.status(409).build();
+        }
         followRepository.deleteById(followId);
         return ResponseEntity.noContent().build();
     }

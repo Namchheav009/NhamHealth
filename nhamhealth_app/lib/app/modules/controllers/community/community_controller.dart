@@ -15,7 +15,9 @@ import '../../models/community/community_types.dart';
 import '../../models/notifications/notification_item.dart';
 import '../../providers/home/home_provider.dart';
 import '../../repositories/community/community_repository.dart';
+import '../../repositories/community/follow_connections_repository.dart';
 import '../../repositories/notifications/notifications_repository.dart';
+import '../../providers/community/follow_connections_provider.dart';
 
 export '../../models/community/community_person.dart';
 export '../../models/community/community_post.dart';
@@ -24,11 +26,13 @@ export '../../models/community/community_types.dart';
 class CommunityController extends GetxController {
   CommunityController({
     required CommunityRepository repository,
+    FollowConnectionsRepository? followConnectionsRepository,
     AuthService? authService,
     HomeProvider? homeProvider,
     NotificationsRepository? notificationsRepository,
     Stream<NotificationRealtimeEvent>? realtimeEvents,
   }) : _repository = repository,
+       _followConnectionsRepository = followConnectionsRepository,
        _authService = authService ?? Get.find<AuthService>(),
        _notificationsRepository = notificationsRepository,
        _realtimeEvents = realtimeEvents,
@@ -37,6 +41,7 @@ class CommunityController extends GetxController {
            HomeProvider(authService: authService ?? Get.find<AuthService>());
 
   final CommunityRepository _repository;
+  final FollowConnectionsRepository? _followConnectionsRepository;
   final AuthService _authService;
   final HomeProvider _homeProvider;
   final NotificationsRepository? _notificationsRepository;
@@ -61,6 +66,14 @@ class CommunityController extends GetxController {
   final unreadNotificationCount = 0.obs;
   final connectionStatuses = <String, String>{}.obs;
   final updatingConnectionIds = <String>{}.obs;
+  final isMultiSelectMode = false.obs;
+  final selectedFriendIds = <String>{}.obs;
+  final submittingFollowConnections = false.obs;
+  final friendshipStatuses = <String, String>{}.obs;
+  final followConnectionIds = <String, int>{}.obs;
+  final followConnectionFailures = <String, String>{}.obs;
+  final successfullyRequestedIds = <String>{}.obs;
+  final Rxn<DateTime> followConnectionRetryAt = Rxn<DateTime>();
   final likingPostIds = <String>{}.obs;
   final errorMessage = RxnString();
 
@@ -149,6 +162,8 @@ class CommunityController extends GetxController {
 
   List<CommunityPerson> get people => _people[friendsView.value] ?? const [];
   List<CommunityPerson> get friends => _people[FriendsView.friends] ?? const [];
+  List<CommunityPerson> peopleFor(FriendsView view) =>
+      _people[view] ?? const [];
   List<CommunityPerson> get filteredPeople {
     // Track the existing reactive relationship map so a real-time People
     // refresh rebuilds the view while `_people` remains hot-reload-safe.
@@ -166,6 +181,36 @@ class CommunityController extends GetxController {
   }
 
   int countFor(FriendsView view) => _people[view]?.length ?? 0;
+
+  int get selectedFriendCount => selectedFriendIds.length;
+
+  List<CommunityPerson> get selectedFriends {
+    final selected = selectedFriendIds.toSet();
+    final unique = <String, CommunityPerson>{};
+    for (final person in _people.values.expand((people) => people)) {
+      if (selected.contains(person.id)) unique[person.id] = person;
+    }
+    return unique.values.toList(growable: false);
+  }
+
+  FriendshipStatus friendshipStatusFor(CommunityPerson person) =>
+      FriendshipStatus.fromApi(
+        friendshipStatuses[person.id] ?? person.friendshipStatus,
+      );
+
+  bool canSelectFriend(CommunityPerson person) =>
+      friendshipStatusFor(person).canRequest &&
+      !successfullyRequestedIds.contains(person.id);
+
+  bool get followConnectionCooldownActive {
+    final retryAt = followConnectionRetryAt.value;
+    if (retryAt == null) return false;
+    if (!DateTime.now().isBefore(retryAt)) {
+      followConnectionRetryAt.value = null;
+      return false;
+    }
+    return true;
+  }
 
   @override
   void onInit() {
@@ -209,11 +254,12 @@ class CommunityController extends GetxController {
   Future<void> _refreshPeople() async {
     try {
       _replacePeople(await _repository.getPeople());
-      connectionStatuses.clear();
     } on Object {
       // Keep the current People view until a later refresh succeeds.
     }
   }
+
+  Future<void> refreshPeople() => _refreshPeople();
 
   Future<void> _refreshCommunityNotifications({required bool showAlert}) async {
     final repository = _notificationsRepository;
@@ -365,9 +411,153 @@ class CommunityController extends GetxController {
     friendsView.value = value;
     searchQuery.value = '';
     peopleFilter.value = PeopleFilter.all;
+    if (value != FriendsView.addFriends) exitMultiSelectMode();
   }
 
   void selectPeopleFilter(PeopleFilter value) => peopleFilter.value = value;
+
+  void toggleMultiSelectMode() {
+    if (isMultiSelectMode.value) {
+      exitMultiSelectMode();
+    } else {
+      isMultiSelectMode.value = true;
+      followConnectionFailures.clear();
+    }
+  }
+
+  void exitMultiSelectMode() {
+    isMultiSelectMode.value = false;
+    selectedFriendIds.clear();
+    followConnectionFailures.clear();
+  }
+
+  void toggleFriendSelection(CommunityPerson person) {
+    if (!canSelectFriend(person) || submittingFollowConnections.value) return;
+    if (!selectedFriendIds.remove(person.id)) selectedFriendIds.add(person.id);
+  }
+
+  void selectSingleFriend(CommunityPerson person) {
+    if (!canSelectFriend(person) || submittingFollowConnections.value) return;
+    selectedFriendIds
+      ..clear()
+      ..add(person.id);
+    followConnectionFailures.clear();
+  }
+
+  Future<FollowConnectionBatchSummary> sendSelectedFollowConnections() async {
+    final repository = _followConnectionsRepository;
+    if (repository == null) {
+      return const FollowConnectionBatchSummary(
+        successfulIds: {},
+        failures: {'request': 'Invitations are unavailable.'},
+      );
+    }
+    if (submittingFollowConnections.value || followConnectionCooldownActive) {
+      return FollowConnectionBatchSummary(
+        successfulIds: const {},
+        failures: Map<String, String>.from(followConnectionFailures),
+      );
+    }
+    final pending = selectedFriendIds
+        .where(
+          (id) =>
+              !successfullyRequestedIds.contains(id) &&
+              FriendshipStatus.fromApi(friendshipStatuses[id]).canRequest,
+        )
+        .toList(growable: false);
+    if (pending.isEmpty) {
+      return const FollowConnectionBatchSummary(
+        successfulIds: {},
+        failures: {},
+      );
+    }
+
+    submittingFollowConnections.value = true;
+    followConnectionFailures.clear();
+    final successes = <String>{};
+    final failures = <String, String>{};
+    var nextIndex = 0;
+
+    Future<void> worker() async {
+      while (nextIndex < pending.length) {
+        final id = pending[nextIndex++];
+        if (followConnectionCooldownActive) {
+          failures[id] = 'Rate limit active. Try again after the cooldown.';
+          continue;
+        }
+        try {
+          final result = await repository.create(int.parse(id));
+          final relationship = FriendshipStatus.fromApi(
+            result.relationshipStatus == 'FRIENDS'
+                ? 'FRIENDS'
+                : 'OUTGOING_PENDING',
+          );
+          friendshipStatuses[id] = relationship.apiValue;
+          if (result.id > 0) followConnectionIds[id] = result.id;
+          successfullyRequestedIds.add(id);
+          selectedFriendIds.remove(id);
+          successes.add(id);
+        } on FollowConnectionApiException catch (error) {
+          failures[id] = error.message;
+          if (error.isRateLimited) {
+            followConnectionRetryAt.value = DateTime.now().add(
+              error.retryAfter ?? const Duration(seconds: 60),
+            );
+          }
+        } on Object catch (error) {
+          failures[id] = error.toString();
+        }
+      }
+    }
+
+    try {
+      final workers = List.generate(
+        pending.length < 3 ? pending.length : 3,
+        (_) => worker(),
+      );
+      await Future.wait(workers);
+      followConnectionFailures.assignAll(failures);
+      await _refreshPeople();
+      if (failures.isEmpty) exitMultiSelectMode();
+      return FollowConnectionBatchSummary(
+        successfulIds: successes,
+        failures: failures,
+      );
+    } finally {
+      submittingFollowConnections.value = false;
+    }
+  }
+
+  Future<void> acceptFollowConnection(CommunityPerson person) async {
+    await _respondToFollowConnection(person, accept: true);
+  }
+
+  Future<void> declineFollowConnection(CommunityPerson person) async {
+    await _respondToFollowConnection(person, accept: false);
+  }
+
+  Future<void> _respondToFollowConnection(
+    CommunityPerson person, {
+    required bool accept,
+  }) async {
+    final repository = _followConnectionsRepository;
+    final requestId =
+        followConnectionIds[person.id] ?? person.followConnectionId;
+    if (repository == null || requestId == null) return;
+    if (!updatingConnectionIds.add(person.id)) return;
+    try {
+      if (accept) {
+        await repository.accept(requestId);
+        friendshipStatuses[person.id] = FriendshipStatus.friends.apiValue;
+      } else {
+        await repository.decline(requestId);
+        friendshipStatuses[person.id] = FriendshipStatus.none.apiValue;
+      }
+      await _refreshPeople();
+    } finally {
+      updatingConnectionIds.remove(person.id);
+    }
+  }
 
   void synchronizeFollowState({
     required int userId,
@@ -376,18 +566,17 @@ class CommunityController extends GetxController {
   }) {
     final key = '$userId';
     connectionStatuses[key] =
-        isFollowing && followsViewer
-            ? 'Friend'
-            : isFollowing
-            ? 'Following'
-            : followsViewer
-            ? 'Follows_you'
-            : 'Follow';
+        CommunityConnectionStatus.fromDirections(
+          isFollowing: isFollowing,
+          followsViewer: followsViewer,
+        ).apiValue;
     _updatePostAuthorFollowState(key, isFollowing);
   }
 
-  String? connectionStatusFor(int userId) =>
-      connectionStatuses['$userId']?.trim().toUpperCase();
+  CommunityConnectionStatus? connectionStatusFor(int userId) {
+    final value = connectionStatuses['$userId'];
+    return value == null ? null : CommunityConnectionStatus.fromApi(value);
+  }
 
   void updateSearch(String value) {
     searchQuery.value = value;
@@ -561,36 +750,28 @@ class CommunityController extends GetxController {
     }
 
     final previousLocalStatus = connectionStatuses[person.id];
-    final previousStatus =
-        previousLocalStatus?.toUpperCase() ?? person.connectionStatus;
-    final wasFollowing =
-        previousStatus == 'FOLLOWING' || previousStatus == 'FRIEND';
+    final previousStatus = CommunityConnectionStatus.fromApi(
+      previousLocalStatus ?? person.connectionStatus,
+    );
+    final wasFollowing = previousStatus.isFollowing;
     final optimisticFollowing = !wasFollowing;
-    final followsViewer =
-        previousStatus == 'FOLLOWS_YOU' || previousStatus == 'FRIEND';
+    final followsViewer = previousStatus.followsViewer;
 
     connectionStatuses[person.id] =
-        optimisticFollowing
-            ? followsViewer
-                ? 'Friend'
-                : 'Following'
-            : followsViewer
-            ? 'Follows_you'
-            : 'Follow';
+        CommunityConnectionStatus.fromDirections(
+          isFollowing: optimisticFollowing,
+          followsViewer: followsViewer,
+        ).apiValue;
     _updatePostAuthorFollowState(person.id, optimisticFollowing);
     updatingConnectionIds.add(person.id);
 
     try {
-      final status = await _repository.toggleFollow(person.id);
-      final isFollowing = status == 'FOLLOWING';
-      connectionStatuses[person.id] =
-          isFollowing
-              ? followsViewer
-                  ? 'Friend'
-                  : 'Following'
-              : followsViewer
-              ? 'Follows_you'
-              : 'Follow';
+      final responseStatus = CommunityConnectionStatus.fromApi(
+        await _repository.toggleFollow(person.id),
+      );
+      final status = _withKnownFollowerDirection(responseStatus, followsViewer);
+      final isFollowing = status.isFollowing;
+      connectionStatuses[person.id] = status.apiValue;
       _updatePostAuthorFollowState(person.id, isFollowing);
 
       try {
@@ -625,35 +806,37 @@ class CommunityController extends GetxController {
     final authorIdKey = post.authorId.toString();
     if (updatingConnectionIds.contains(authorIdKey)) return;
 
-    final previousStatus = connectionStatuses[authorIdKey]?.toUpperCase();
-    final wasFollowing =
-        previousStatus == 'FOLLOWING' ||
-        previousStatus == 'FRIEND' ||
-        post.isFollowingAuthor;
+    final previousStatusValue = connectionStatuses[authorIdKey];
+    final previousStatus = CommunityConnectionStatus.fromApi(
+      previousStatusValue,
+    );
+    final wasFollowing = previousStatus.isFollowing || post.isFollowingAuthor;
+    final followsViewer = previousStatus.followsViewer;
 
     final optimisticFollowing = !wasFollowing;
     connectionStatuses[authorIdKey] =
-        optimisticFollowing ? 'Following' : 'Follow';
+        CommunityConnectionStatus.fromDirections(
+          isFollowing: optimisticFollowing,
+          followsViewer: followsViewer,
+        ).apiValue;
     _updatePostAuthorFollowState(authorIdKey, optimisticFollowing);
     updatingConnectionIds.add(authorIdKey);
 
     try {
-      final status = await _repository.toggleFollow(authorIdKey);
-      final normalized = status.trim().toUpperCase();
-      final isFollowing = normalized == 'FOLLOWING' || normalized == 'FRIEND';
+      final responseStatus = CommunityConnectionStatus.fromApi(
+        await _repository.toggleFollow(authorIdKey),
+      );
+      final status = _withKnownFollowerDirection(responseStatus, followsViewer);
+      final isFollowing = status.isFollowing;
 
-      connectionStatuses[authorIdKey] =
-          normalized == 'FRIEND'
-              ? 'Friend'
-              : isFollowing
-              ? 'Following'
-              : 'Follow';
+      connectionStatuses[authorIdKey] = status.apiValue;
       _updatePostAuthorFollowState(authorIdKey, isFollowing);
+      unawaited(_refreshPeople());
     } on Object catch (error) {
-      if (previousStatus == null) {
+      if (previousStatusValue == null) {
         connectionStatuses.remove(authorIdKey);
       } else {
-        connectionStatuses[authorIdKey] = previousStatus;
+        connectionStatuses[authorIdKey] = previousStatusValue;
       }
       _updatePostAuthorFollowState(authorIdKey, wasFollowing);
       unawaited(
@@ -677,8 +860,64 @@ class CommunityController extends GetxController {
   }
 
   void _replacePeople(Map<FriendsView, List<CommunityPerson>> value) {
-    _people = value;
-    connectionStatuses.refresh();
+    final peopleById = <String, CommunityPerson>{};
+    for (final people in value.values) {
+      for (final person in people) {
+        peopleById[person.id] = person;
+      }
+    }
+
+    _people = {
+      FriendsView.friends: peopleById.values
+          .where(
+            (person) => person.connection == CommunityConnectionStatus.friend,
+          )
+          .toList(growable: false),
+      FriendsView.followers: peopleById.values
+          .where(
+            (person) =>
+                person.connection == CommunityConnectionStatus.followsYou,
+          )
+          .toList(growable: false),
+      FriendsView.following: peopleById.values
+          .where(
+            (person) =>
+                person.connection == CommunityConnectionStatus.following,
+          )
+          .toList(growable: false),
+      FriendsView.addFriends: peopleById.values
+          .where(
+            (person) => person.connection != CommunityConnectionStatus.friend,
+          )
+          .toList(growable: false),
+    };
+    final statuses = <String, String>{};
+    final friendStatuses = <String, String>{};
+    final requestIds = <String, int>{};
+    for (final person in peopleById.values) {
+      statuses[person.id] = person.connection.apiValue;
+      friendStatuses[person.id] = person.friendship.apiValue;
+      if (person.followConnectionId != null) {
+        requestIds[person.id] = person.followConnectionId!;
+      }
+    }
+    connectionStatuses.assignAll(statuses);
+    friendshipStatuses.assignAll(friendStatuses);
+    followConnectionIds.assignAll(requestIds);
+  }
+
+  CommunityConnectionStatus _withKnownFollowerDirection(
+    CommunityConnectionStatus status,
+    bool followsViewer,
+  ) {
+    // Older API versions returned only FOLLOWING/NONE. Preserve the inbound
+    // direction so a follow-back still becomes a friend during a rolling
+    // client/server update.
+    if (!followsViewer || status.followsViewer) return status;
+    return CommunityConnectionStatus.fromDirections(
+      isFollowing: status.isFollowing,
+      followsViewer: true,
+    );
   }
 
   @override
@@ -688,4 +927,16 @@ class CommunityController extends GetxController {
     _realtimeSubscription?.cancel();
     super.onClose();
   }
+}
+
+class FollowConnectionBatchSummary {
+  const FollowConnectionBatchSummary({
+    required this.successfulIds,
+    required this.failures,
+  });
+
+  final Set<String> successfulIds;
+  final Map<String, String> failures;
+  bool get isCompleteSuccess => successfulIds.isNotEmpty && failures.isEmpty;
+  bool get isPartialSuccess => successfulIds.isNotEmpty && failures.isNotEmpty;
 }

@@ -6,6 +6,11 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import com.nhamhealth.nhamhealth_api.entity.User;
 
@@ -36,4 +41,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findTop5ByStatusNotOrderByCreatedAtDesc(String status);
 
     List<User> findAllByRole_RoleNameIgnoreCaseAndStatusIgnoreCase(String roleName, String status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select user from User user where user.userId in :ids order by user.userId")
+    List<User> findAllByIdForUpdate(@Param("ids") List<Integer> ids);
 }

@@ -1,3 +1,5 @@
+import 'community_types.dart';
+
 class CommunityPerson {
   const CommunityPerson({
     required this.id,
@@ -7,6 +9,8 @@ class CommunityPerson {
     this.tags = const [],
     this.mutualFriends = 0,
     this.connectionStatus = 'NONE',
+    this.friendshipStatus = 'NONE',
+    this.followConnectionId,
   });
 
   final String id;
@@ -16,6 +20,12 @@ class CommunityPerson {
   final List<String> tags;
   final int mutualFriends;
   final String connectionStatus;
+  final String friendshipStatus;
+  final int? followConnectionId;
+
+  CommunityConnectionStatus get connection =>
+      CommunityConnectionStatus.fromApi(connectionStatus);
+  FriendshipStatus get friendship => FriendshipStatus.fromApi(friendshipStatus);
 
   /// Public community identities must never expose an email address. Older
   /// accounts may still have an email stored as their profile name, so retain
@@ -45,19 +55,21 @@ class CommunityPerson {
         .join(' ');
   }
 
-  factory CommunityPerson.fromJson(Map<String, dynamic> json) =>
-      CommunityPerson(
-        id: '${json['id'] ?? ''}',
-        name: (json['name'] as String? ?? '').trim(),
-        avatarUrl: (json['avatarUrl'] as String? ?? '').trim(),
-        detail: (json['detail'] as String?)?.trim(),
-        tags: (json['tags'] as List<dynamic>? ?? const [])
-            .map((tag) => '$tag')
-            .toList(growable: false),
-        mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
-        connectionStatus:
-            (json['connectionStatus'] as String? ?? 'NONE')
-                .trim()
-                .toUpperCase(),
-      );
+  factory CommunityPerson.fromJson(
+    Map<String, dynamic> json,
+  ) => CommunityPerson(
+    id: '${json['id'] ?? ''}',
+    name: (json['name'] as String? ?? '').trim(),
+    avatarUrl: (json['avatarUrl'] as String? ?? '').trim(),
+    detail: (json['detail'] as String?)?.trim(),
+    tags: (json['tags'] as List<dynamic>? ?? const [])
+        .map((tag) => '$tag')
+        .toList(growable: false),
+    mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
+    connectionStatus:
+        (json['connectionStatus'] as String? ?? 'NONE').trim().toUpperCase(),
+    friendshipStatus:
+        (json['friendshipStatus'] as String? ?? 'NONE').trim().toUpperCase(),
+    followConnectionId: (json['followConnectionId'] as num?)?.toInt(),
+  );
 }

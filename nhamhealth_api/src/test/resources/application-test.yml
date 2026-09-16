@@ -46,6 +46,10 @@ app:
     user-password: User123!
   upload:
     directory: target/test-uploads
+  follow-connections:
+    rate-limit:
+      max-requests: 20
+      window: PT1M
   storage:
     supabase:
       url: ""

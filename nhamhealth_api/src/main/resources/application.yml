@@ -11,6 +11,10 @@ spring:
       initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:30000}
 
 app:
+  follow-connections:
+    rate-limit:
+      max-requests: ${FOLLOW_CONNECTION_RATE_LIMIT_MAX:20}
+      window: ${FOLLOW_CONNECTION_RATE_LIMIT_WINDOW:PT1M}
   ai:
     gemini:
       api-key: ${GEMINI_API_KEY:${APP_AI_GEMINI_API_KEY:}}

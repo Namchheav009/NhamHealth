@@ -1,3 +1,5 @@
+import 'community_types.dart';
+
 class CommunityPersonProfile {
   const CommunityPersonProfile({
     required this.id,
@@ -26,6 +28,12 @@ class CommunityPersonProfile {
   final int following;
   final bool isFollowing;
   final bool followsViewer;
+
+  CommunityConnectionStatus get connection =>
+      CommunityConnectionStatus.fromDirections(
+        isFollowing: isFollowing,
+        followsViewer: followsViewer,
+      );
 
   factory CommunityPersonProfile.fromJson(Map<String, dynamic> json) =>
       CommunityPersonProfile(

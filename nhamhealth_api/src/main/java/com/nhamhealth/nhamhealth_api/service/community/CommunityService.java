@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -82,7 +83,9 @@ public class CommunityService {
     private final RecipeRepository recipes;
     private final SavedRecipeRepository savedRecipes;
     private final ModerationActionRepository moderationActions;
+    private final FollowConnectionService followConnections;
 
+    @Autowired
     public CommunityService(PostRepository posts, PostMediaRepository media,
             PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
             UserRepository users, UserProfileRepository profiles, FollowRepository follows,
@@ -92,7 +95,8 @@ public class CommunityService {
             RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
             RecipeTagRepository recipeTags, RecipeRepository recipes,
             SavedRecipeRepository savedRecipes,
-            ModerationActionRepository moderationActions) {
+            ModerationActionRepository moderationActions,
+            FollowConnectionService followConnections) {
         this.posts = posts;
         this.media = media;
         this.likes = likes;
@@ -111,6 +115,23 @@ public class CommunityService {
         this.recipes = recipes;
         this.savedRecipes = savedRecipes;
         this.moderationActions = moderationActions;
+        this.followConnections = followConnections;
+    }
+
+    /** Kept for focused unit tests that do not exercise follow connections. */
+    CommunityService(PostRepository posts, PostMediaRepository media,
+            PostLikeRepository likes, PostCommentRepository comments, CommentLikeRepository commentLikes,
+            UserRepository users, UserProfileRepository profiles, FollowRepository follows,
+            PostTagRepository postTags, TagTypeRepository tagTypes,
+            ProfileImageStorageService imageStorage,
+            CommunityNotificationService communityNotifications,
+            RecipeIngredientRepository recipeIngredients, RecipeStepRepository recipeSteps,
+            RecipeTagRepository recipeTags, RecipeRepository recipes,
+            SavedRecipeRepository savedRecipes,
+            ModerationActionRepository moderationActions) {
+        this(posts, media, likes, comments, commentLikes, users, profiles, follows,
+                postTags, tagTypes, imageStorage, communityNotifications, recipeIngredients,
+                recipeSteps, recipeTags, recipes, savedRecipes, moderationActions, null);
     }
 
     @Transactional(readOnly = true)
@@ -308,12 +329,16 @@ public class CommunityService {
     @Transactional(readOnly = true)
     public List<CommunityPersonResponse> postLikers(Integer viewerId, Integer postId) {
         visiblePost(viewerId, postId);
-        Set<Integer> following = followedIds(viewerId);
-        Set<Integer> followers = followerIds(viewerId);
+        FollowNetwork network = activeFollowNetwork();
+        Set<Integer> following = network.followingByUser().getOrDefault(viewerId, Set.of());
+        Set<Integer> followers = network.followersByUser().getOrDefault(viewerId, Set.of());
+        Set<Integer> viewerFriends = friendIds(viewerId, network);
+        Map<Integer, FollowConnectionService.PendingRelationship> pending = pendingRelationships(viewerId);
         return likes.findByPostPostIdOrderByCreatedAtDesc(postId).stream()
                 .map(PostLike::getUser)
                 .map(user -> person(user, profiles.findByUser_UserId(user.getUserId()).orElse(null),
-                        following, followers))
+                        following, followers, mutualFriendCount(viewerFriends, user.getUserId(), network),
+                        pending.get(user.getUserId())))
                 .toList();
     }
 
@@ -462,26 +487,41 @@ public class CommunityService {
         Map<Integer, UserProfile> profileMap = new HashMap<>();
         profiles.findByUser_UserIdIn(all.stream().map(User::getUserId).toList())
                 .forEach(profile -> profileMap.put(profile.getUser().getUserId(), profile));
-        Set<Integer> following = followedIds(viewerId);
-        Set<Integer> followers = followerIds(viewerId);
+        FollowNetwork network = activeFollowNetwork();
+        Set<Integer> following = network.followingByUser().getOrDefault(viewerId, Set.of());
+        Set<Integer> followers = network.followersByUser().getOrDefault(viewerId, Set.of());
+        Set<Integer> viewerFriends = friendIds(viewerId, network);
+        Map<Integer, FollowConnectionService.PendingRelationship> pending = pendingRelationships(viewerId);
+        Set<Integer> blocked = blockedUserIds(viewerId);
         return all.stream().filter(user -> !user.getUserId().equals(viewerId))
+                .filter(user -> !blocked.contains(user.getUserId()))
                 .filter(user -> switch (view.toLowerCase(Locale.ROOT)) {
                     case "friends" -> following.contains(user.getUserId()) && followers.contains(user.getUserId());
-                    case "followers" -> followers.contains(user.getUserId());
-                    case "following" -> following.contains(user.getUserId());
-                    default -> true;
+                    case "followers" -> followers.contains(user.getUserId()) && !following.contains(user.getUserId());
+                    case "following" -> following.contains(user.getUserId()) && !followers.contains(user.getUserId());
+                    default -> !(following.contains(user.getUserId()) && followers.contains(user.getUserId()));
                 })
-                .map(user -> person(user, profileMap.get(user.getUserId()), following, followers)).toList();
+                .map(user -> person(user, profileMap.get(user.getUserId()), following, followers,
+                        mutualFriendCount(viewerFriends, user.getUserId(), network),
+                        pending.get(user.getUserId())))
+                .toList();
     }
 
     @Transactional
     public String toggleFollow(Integer viewerId, Integer targetId) {
         if (viewerId.equals(targetId))
             throw new IllegalArgumentException("You cannot follow yourself");
-        Optional<Follow> existing = follows.findByFollowerUserUserIdAndFollowingUserUserId(viewerId, targetId);
+        Optional<Follow> existing = follows
+                .findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                        viewerId, targetId, "ACTIVE");
+        boolean followsViewer = follows.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
+                targetId, viewerId, "ACTIVE");
         if (existing.isPresent()) {
             follows.delete(existing.get());
-            return "NONE";
+            return relationshipStatus(false, followsViewer);
+        }
+        if (follows.existsBlockedBetween(viewerId, targetId)) {
+            return relationshipStatus(false, followsViewer);
         }
         Follow follow = new Follow();
         follow.setFollowerUser(user(viewerId));
@@ -491,7 +531,7 @@ public class CommunityService {
         follow.setRespondedAt(LocalDateTime.now());
         follows.save(follow);
         communityNotifications.followed(follow.getFollowerUser(), follow.getFollowingUser());
-        return "FOLLOWING";
+        return relationshipStatus(true, followsViewer);
     }
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {
@@ -596,15 +636,64 @@ public class CommunityService {
     }
 
     private CommunityPersonResponse person(User user, UserProfile profile, Set<Integer> following,
-            Set<Integer> followers) {
-        boolean mutual = following.contains(user.getUserId()) && followers.contains(user.getUserId());
-        String status = mutual ? "FRIEND"
-                : following.contains(user.getUserId()) ? "FOLLOWING"
-                        : followers.contains(user.getUserId()) ? "FOLLOWS_YOU" : "NONE";
+            Set<Integer> followers, long mutualFriends,
+            FollowConnectionService.PendingRelationship pending) {
+        String status = relationshipStatus(following.contains(user.getUserId()), followers.contains(user.getUserId()));
+        boolean friends = following.contains(user.getUserId()) && followers.contains(user.getUserId());
+        String friendshipStatus = friends ? "FRIENDS" : pending == null ? "NONE" : pending.status();
         return new CommunityPersonResponse(user.getUserId(), communityDisplayName(user, profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                profile == null ? "" : value(profile.getLocationText(), ""), List.of(), mutual ? 1 : 0, status);
+                profile == null ? "" : value(profile.getLocationText(), ""), List.of(), mutualFriends, status,
+                friendshipStatus, pending == null ? null : pending.requestId());
     }
+
+    private Map<Integer, FollowConnectionService.PendingRelationship> pendingRelationships(Integer viewerId) {
+        return followConnections == null ? Map.of() : followConnections.pendingRelationshipsFor(viewerId);
+    }
+
+    private Set<Integer> blockedUserIds(Integer viewerId) {
+        Set<Integer> blocked = new HashSet<>();
+        for (Follow follow : follows.findByStatusIgnoreCase("BLOCKED")) {
+            Integer followerId = follow.getFollowerUser().getUserId();
+            Integer followingId = follow.getFollowingUser().getUserId();
+            if (viewerId.equals(followerId)) blocked.add(followingId);
+            if (viewerId.equals(followingId)) blocked.add(followerId);
+        }
+        return blocked;
+    }
+
+    private String relationshipStatus(boolean following, boolean followsViewer) {
+        if (following && followsViewer) return "FRIEND";
+        if (following) return "FOLLOWING";
+        if (followsViewer) return "FOLLOWS_YOU";
+        return "NONE";
+    }
+
+    private FollowNetwork activeFollowNetwork() {
+        Map<Integer, Set<Integer>> followingByUser = new HashMap<>();
+        Map<Integer, Set<Integer>> followersByUser = new HashMap<>();
+        for (Follow follow : follows.findByStatusIgnoreCase("ACTIVE")) {
+            Integer followerId = follow.getFollowerUser().getUserId();
+            Integer followingId = follow.getFollowingUser().getUserId();
+            followingByUser.computeIfAbsent(followerId, ignored -> new HashSet<>()).add(followingId);
+            followersByUser.computeIfAbsent(followingId, ignored -> new HashSet<>()).add(followerId);
+        }
+        return new FollowNetwork(followingByUser, followersByUser);
+    }
+
+    private Set<Integer> friendIds(Integer userId, FollowNetwork network) {
+        Set<Integer> result = new HashSet<>(network.followingByUser().getOrDefault(userId, Set.of()));
+        result.retainAll(network.followersByUser().getOrDefault(userId, Set.of()));
+        return result;
+    }
+
+    private long mutualFriendCount(Set<Integer> viewerFriends, Integer targetUserId, FollowNetwork network) {
+        Set<Integer> targetFriends = friendIds(targetUserId, network);
+        return viewerFriends.stream().filter(targetFriends::contains).count();
+    }
+
+    private record FollowNetwork(Map<Integer, Set<Integer>> followingByUser,
+            Map<Integer, Set<Integer>> followersByUser) { }
 
     /** A community response exposes a profile name, never an email address. */
     private String communityDisplayName(User user, UserProfile profile) {

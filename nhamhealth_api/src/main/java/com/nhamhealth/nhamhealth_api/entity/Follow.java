@@ -15,6 +15,12 @@ import jakarta.persistence.Table;
 @Table(name = "follows")
 public class Follow {
 
+    // Friend request events share the follows table while ordinary follows
+    // keep their independent ACTIVE/BLOCKED lifecycle.
+    public static final String CONNECTION_PENDING = "FOLLOW_PENDING";
+    public static final String CONNECTION_ACCEPTED = "FOLLOW_ACCEPTED";
+    public static final String CONNECTION_DECLINED = "FOLLOW_DECLINED";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "follow_id")

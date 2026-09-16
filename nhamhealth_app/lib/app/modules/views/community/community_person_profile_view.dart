@@ -15,8 +15,8 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../controllers/community/community_controller.dart';
 import '../../models/community/community_person_profile.dart';
-import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
 import 'community_comments_page.dart';
@@ -108,11 +108,13 @@ class _CommunityPersonProfileViewState
         _repository.getPersonPosts(_userId),
       ]);
       if (!mounted) return;
+      final profile = results[0] as CommunityPersonProfile;
       setState(() {
-        _profile = results[0] as CommunityPersonProfile;
+        _profile = profile;
         _posts = results[1] as List<CommunityPost>;
         _isLoading = false;
       });
+      _synchronizeCommunity(profile);
     } on Object {
       if (!mounted) return;
       setState(() {
@@ -152,18 +154,32 @@ class _CommunityPersonProfileViewState
       if (confirmed != true || !mounted) return;
     }
     final optimisticFollowing = !profile.isFollowing;
+    final optimisticStatus = CommunityConnectionStatus.fromDirections(
+      isFollowing: optimisticFollowing,
+      followsViewer: profile.followsViewer,
+    );
     setState(() {
       _isUpdatingFollow = true;
-      _profile = _withFollowState(profile, optimisticFollowing);
+      _profile = _withConnectionState(profile, optimisticStatus);
     });
     try {
-      final status = await _repository.toggleFollow('${profile.id}');
+      var status = CommunityConnectionStatus.fromApi(
+        await _repository.toggleFollow('${profile.id}'),
+      );
+      // Keep compatibility with API versions that only return FOLLOWING/NONE.
+      if (profile.followsViewer && !status.followsViewer) {
+        status = CommunityConnectionStatus.fromDirections(
+          isFollowing: status.isFollowing,
+          followsViewer: true,
+        );
+      }
       if (!mounted) return;
-      final isFollowing = status == 'FOLLOWING';
+      final updated = _withConnectionState(profile, status);
       setState(() {
-        _profile = _withFollowState(profile, isFollowing);
+        _profile = updated;
         _isUpdatingFollow = false;
       });
+      _synchronizeCommunity(updated, refreshPeople: true);
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
@@ -179,23 +195,44 @@ class _CommunityPersonProfileViewState
     }
   }
 
-  CommunityPersonProfile _withFollowState(
+  CommunityPersonProfile _withConnectionState(
     CommunityPersonProfile profile,
-    bool isFollowing,
-  ) => CommunityPersonProfile(
-    id: profile.id,
-    name: profile.name,
-    avatarUrl: profile.avatarUrl,
-    role: profile.role,
-    headline: profile.headline,
-    joinedLabel: profile.joinedLabel,
-    verified: profile.verified,
-    posts: profile.posts,
-    followers: (profile.followers + (isFollowing ? 1 : -1)).clamp(0, 1 << 31),
-    following: profile.following,
-    isFollowing: isFollowing,
-    followsViewer: profile.followsViewer,
-  );
+    CommunityConnectionStatus status,
+  ) {
+    final followerDelta = switch ((profile.isFollowing, status.isFollowing)) {
+      (false, true) => 1,
+      (true, false) => -1,
+      _ => 0,
+    };
+    return CommunityPersonProfile(
+      id: profile.id,
+      name: profile.name,
+      avatarUrl: profile.avatarUrl,
+      role: profile.role,
+      headline: profile.headline,
+      joinedLabel: profile.joinedLabel,
+      verified: profile.verified,
+      posts: profile.posts,
+      followers: (profile.followers + followerDelta).clamp(0, 1 << 31),
+      following: profile.following,
+      isFollowing: status.isFollowing,
+      followsViewer: status.followsViewer,
+    );
+  }
+
+  void _synchronizeCommunity(
+    CommunityPersonProfile profile, {
+    bool refreshPeople = false,
+  }) {
+    if (!Get.isRegistered<CommunityController>()) return;
+    final controller = Get.find<CommunityController>();
+    controller.synchronizeFollowState(
+      userId: profile.id,
+      isFollowing: profile.isFollowing,
+      followsViewer: profile.followsViewer,
+    );
+    if (refreshPeople) unawaited(controller.refreshPeople());
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -582,46 +619,50 @@ class _CommunityPersonProfileViewState
     color: context.appBorder.withValues(alpha: .8),
   );
 
-  Widget _followButton(
-    BuildContext context,
-    CommunityPersonProfile profile,
-  ) => SizedBox(
-    height: 40,
-    child: ElevatedButton.icon(
-      key: const ValueKey<String>('other-profile-follow-button'),
-      onPressed: _isUpdatingFollow ? null : _toggleFollow,
-      icon:
-          _isUpdatingFollow
-              ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
+  Widget _followButton(BuildContext context, CommunityPersonProfile profile) {
+    final status = profile.connection;
+    final labelKey = switch (status) {
+      CommunityConnectionStatus.friend => 'community.friend',
+      CommunityConnectionStatus.following => 'community.following',
+      CommunityConnectionStatus.followsYou => 'community.follow_back',
+      CommunityConnectionStatus.none => 'community.follow',
+    };
+    return SizedBox(
+      height: 40,
+      child: ElevatedButton.icon(
+        key: const ValueKey<String>('other-profile-follow-button'),
+        onPressed: _isUpdatingFollow ? null : _toggleFollow,
+        icon:
+            _isUpdatingFollow
+                ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                : Icon(
+                  status.isFollowing
+                      ? Icons.check_rounded
+                      : Icons.person_add_alt_1_rounded,
+                  size: 18,
                 ),
-              )
-              : Icon(
-                profile.isFollowing
-                    ? Icons.check_rounded
-                    : Icons.person_add_alt_1_rounded,
-                size: 18,
-              ),
-      label: Text(
-        (profile.isFollowing ? 'community.following' : 'community.follow').tr,
+        label: Text(labelKey.tr),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF009B55),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFF009B55),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          shape: const StadiumBorder(),
+        ),
       ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF009B55),
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFF009B55),
-        disabledForegroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-        shape: const StadiumBorder(),
-      ),
-    ),
-  );
+    );
+  }
 
   Widget _profileActions(
     BuildContext context,
@@ -914,8 +955,7 @@ class _CommunityPersonProfileViewState
             key: const ValueKey<String>('profile-tab-all'),
             label: 'common.all'.tr,
             selected: _selectedTab == _ProfileContentTab.all,
-            onTap:
-                () => setState(() => _selectedTab = _ProfileContentTab.all),
+            onTap: () => setState(() => _selectedTab = _ProfileContentTab.all),
           ),
         ),
         Container(width: 1, height: 28, color: context.appBorder),
@@ -1308,8 +1348,7 @@ class _ProfileTabButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color:
-                    selected ? AppColors.primaryGreen : context.appMutedText,
+                color: selected ? AppColors.primaryGreen : context.appMutedText,
                 fontSize: 14,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),

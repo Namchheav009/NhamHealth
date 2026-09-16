@@ -179,7 +179,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
 
       expect(peopleRepository.followedUserId, '4');
-      expect(controller.connectionStatuses['4'], 'Following');
+      expect(controller.connectionStatuses['4'], 'FOLLOWING');
       expect(find.text('Following'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('people-follow-progress')),

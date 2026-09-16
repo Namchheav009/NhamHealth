@@ -565,7 +565,7 @@ class CommunityRepository {
       _uri('/api/v1/community/people/$userId/follow'),
       headers: await _headers(),
     );
-    return '${_decodeMap(response)['status'] ?? 'NONE'}';
+    return '${_decodeMap(response)['status'] ?? 'NONE'}'.trim().toUpperCase();
   }
 
   CommunityPost _post(Map<String, dynamic> json, {bool justNow = false}) {
@@ -619,6 +619,9 @@ class CommunityRepository {
       mutualFriends: (json['mutualFriends'] as num?)?.toInt() ?? 0,
       connectionStatus:
           '${json['connectionStatus'] ?? 'NONE'}'.trim().toUpperCase(),
+      friendshipStatus:
+          '${json['friendshipStatus'] ?? 'NONE'}'.trim().toUpperCase(),
+      followConnectionId: (json['followConnectionId'] as num?)?.toInt(),
     );
   }
 

@@ -25,4 +25,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     List<Notification> findTop20ByUserUserIdOrderByCreatedAtDesc(Integer userId);
 
     java.util.Optional<Notification> findByNotificationIdAndUserUserId(Integer notificationId, Integer userId);
+
+    boolean existsByUserUserIdAndNotificationTypeIgnoreCaseAndReferenceTypeIgnoreCaseAndReferenceId(
+            Integer userId, String notificationType, String referenceType, Integer referenceId);
 }

@@ -57,6 +57,19 @@ public class CommunityNotificationService {
         send(actor, recipient, "USER", actor.getUserId(), "started following you.");
     }
 
+    public void followConnectionRequested(User actor, User recipient, Integer followId) {
+        if (notifications
+                .existsByUserUserIdAndNotificationTypeIgnoreCaseAndReferenceTypeIgnoreCaseAndReferenceId(
+                        recipient.getUserId(), TYPE, "FOLLOW_CONNECTION", followId)) {
+            return;
+        }
+        send(actor, recipient, "FOLLOW_CONNECTION", followId, "sent you a friend invitation.");
+    }
+
+    public void followConnectionAccepted(User actor, User recipient, Integer followId) {
+        send(actor, recipient, "FOLLOW_CONNECTION_ACCEPTED", followId, "accepted your friend invitation.");
+    }
+
     private void send(User actor, User recipient, String referenceType, Integer referenceId, String message) {
         if (actor.getUserId().equals(recipient.getUserId())) return;
 

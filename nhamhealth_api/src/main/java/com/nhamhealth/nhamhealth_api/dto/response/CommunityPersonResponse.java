@@ -4,4 +4,5 @@ import java.util.List;
 
 public record CommunityPersonResponse(
         Integer id, String name, String avatarUrl, String detail,
-        List<String> tags, long mutualFriends, String connectionStatus) { }
+        List<String> tags, long mutualFriends, String connectionStatus,
+        String friendshipStatus, Integer followConnectionId) { }
