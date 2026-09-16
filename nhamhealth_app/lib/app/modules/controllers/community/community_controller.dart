@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
@@ -75,6 +76,7 @@ class CommunityController extends GetxController {
   final successfullyRequestedIds = <String>{}.obs;
   final Rxn<DateTime> followConnectionRetryAt = Rxn<DateTime>();
   final likingPostIds = <String>{}.obs;
+  final likeUpdates = <String, int>{}.obs;
   final errorMessage = RxnString();
 
   final posts = <CommunityPost>[].obs;
@@ -138,12 +140,19 @@ class CommunityController extends GetxController {
     if (count <= all.length) {
       return all.take(count).toList(growable: false);
     }
-    // Loop posts continuously when users scroll
-    return List.generate(
-      count,
-      (index) => all[index % all.length],
-      growable: false,
-    );
+    // Keep the current page stable while varying each repeated pass.
+    final result = all.toList(growable: true);
+    var cycle = 1;
+    while (result.length < count) {
+      final next = all.toList(growable: true)..shuffle(Random(cycle));
+      if (next.length > 1 && next.first.id == result.last.id) {
+        final first = next.removeAt(0);
+        next.add(first);
+      }
+      result.addAll(next.take(count - result.length));
+      cycle++;
+    }
+    return result;
   }
 
   bool get hasMorePosts => _allFilteredPosts.isNotEmpty;
@@ -339,7 +348,6 @@ class CommunityController extends GetxController {
 
     if (hasMorePosts) {
       isLoadingMore.value = true;
-      await Future<void>.delayed(const Duration(milliseconds: 60));
       final increment =
           _allFilteredPosts.length < pageSize && _allFilteredPosts.isNotEmpty
               ? _allFilteredPosts.length
@@ -585,11 +593,27 @@ class CommunityController extends GetxController {
 
   Future<void> togglePostLike(CommunityPost post) async {
     if (!likingPostIds.add(post.id)) return;
+    post = posts.firstWhereOrNull((item) => item.id == post.id) ?? post;
+    final previousLiked = post.isLiked;
+    final previousLikes = post.likes;
+    post.isLiked = !previousLiked;
+    post.likes = (previousLikes + (previousLiked ? -1 : 1)).clamp(0, 1 << 31);
+    likeUpdates[post.id] = (likeUpdates[post.id] ?? 0) + 1;
     try {
       final updated = await _repository.toggleLike(post.id);
-      final index = posts.indexWhere((item) => item.id == post.id);
-      if (index >= 0) posts[index] = updated;
+      final current = posts.firstWhereOrNull((item) => item.id == post.id);
+      if (current != null) {
+        current.isLiked = updated.isLiked;
+        current.likes = updated.likes;
+        likeUpdates[post.id] = (likeUpdates[post.id] ?? 0) + 1;
+      }
     } on Object catch (error) {
+      final current = posts.firstWhereOrNull((item) => item.id == post.id);
+      if (current != null) {
+        current.isLiked = previousLiked;
+        current.likes = previousLikes;
+        likeUpdates[post.id] = (likeUpdates[post.id] ?? 0) + 1;
+      }
       Get.snackbar('community.could_not_update_like'.tr, error.toString());
     } finally {
       likingPostIds.remove(post.id);

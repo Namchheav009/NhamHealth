@@ -895,35 +895,87 @@ class CommunityPage extends GetView<CommunityController> {
   Widget _feed(BuildContext context) {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification.metrics.axis == Axis.vertical &&
+        if (notification is ScrollUpdateNotification &&
+            notification.metrics.axis == Axis.vertical &&
             notification.metrics.extentAfter < 800) {
           unawaited(controller.loadMorePosts());
         }
         return false;
       },
-      child: ListView(
-        // ignore: deprecated_member_use
-        cacheExtent: 1400,
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(
-            decelerationRate: ScrollDecelerationRate.normal,
-          ),
-        ),
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.pageHorizontalFor(context),
-          0,
-          AppSpacing.pageHorizontalFor(context),
-          115,
-        ),
-        children: [
-          _contentWidth(
-            LayoutBuilder(
-              builder: (_, constraints) {
-                if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
-                  return _compactFeed(context);
-                }
-
-                return Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
+            return Obx(() {
+              final visiblePosts = controller.visiblePosts;
+              final error = controller.errorMessage.value;
+              final loadingMore = controller.isLoadingMore.value;
+              return ListView.builder(
+                // ignore: deprecated_member_use
+                cacheExtent: 700,
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.pageHorizontalFor(context),
+                  0,
+                  AppSpacing.pageHorizontalFor(context),
+                  115,
+                ),
+                itemCount: visiblePosts.length + 1 + (loadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _contentWidth(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (error != null) ...[
+                            _feedErrorBanner(context, error),
+                            const SizedBox(height: 10),
+                          ],
+                          _feedControls(context),
+                          const SizedBox(height: 12),
+                          if (visiblePosts.isEmpty)
+                            const CommunityEmptyState(
+                              icon: Icons.dynamic_feed_outlined,
+                              title: 'community.empty_feed',
+                              message: 'community.empty_feed_help',
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+                  if (index > visiblePosts.length) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(14),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+                  return _contentWidth(
+                    _postCard(visiblePosts[index - 1], index - 1),
+                  );
+                },
+              );
+            });
+          }
+          return ListView(
+            // ignore: deprecated_member_use
+            cacheExtent: 1400,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(
+                decelerationRate: ScrollDecelerationRate.normal,
+              ),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontalFor(context),
+              0,
+              AppSpacing.pageHorizontalFor(context),
+              115,
+            ),
+            children: [
+              _contentWidth(
+                Row(
                   key: const ValueKey<String>('community-tablet-layout'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -931,27 +983,12 @@ class CommunityPage extends GetView<CommunityController> {
                     const SizedBox(width: 20),
                     Expanded(child: _feedPosts(context)),
                   ],
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
-    );
-  }
-
-  Widget _compactFeed(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (controller.errorMessage.value != null) ...[
-          _feedErrorBanner(context, controller.errorMessage.value!),
-          const SizedBox(height: 10),
-        ],
-        _feedControls(context),
-        const SizedBox(height: 12),
-        _feedPosts(context, showError: false),
-      ],
     );
   }
 
@@ -1192,18 +1229,24 @@ class CommunityPage extends GetView<CommunityController> {
               : null,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: ProfilePostCard(
-          post: post,
-          onAuthorTap: () => _openAuthorProfile(post),
-          relationshipLabel: _authorRelationshipLabel(post),
-          onRelationshipTap: () => _toggleAuthorRelationship(post),
-          onViewDetails: () => _showComments(post),
-          onLike: () => controller.togglePostLike(post),
-          onShowLikes: () => _showPostLikers(post),
-          onComment: () => _showComments(post),
-          onShare: () => _showShareOptions(post),
-          onOptions: () => _showPostOptions(post),
-        ),
+        child: Obx(() {
+          controller.likeUpdates[post.id];
+          final current =
+              controller.posts.firstWhereOrNull((item) => item.id == post.id) ??
+              post;
+          return ProfilePostCard(
+            post: current,
+            onAuthorTap: () => _openAuthorProfile(current),
+            relationshipLabel: _authorRelationshipLabel(current),
+            onRelationshipTap: () => _toggleAuthorRelationship(current),
+            onViewDetails: () => _showComments(current),
+            onLike: () => controller.togglePostLike(current),
+            onShowLikes: () => _showPostLikers(current),
+            onComment: () => _showComments(current),
+            onShare: () => _showShareOptions(current),
+            onOptions: () => _showPostOptions(current),
+          );
+        }),
       ),
     );
   }

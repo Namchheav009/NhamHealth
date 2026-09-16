@@ -50,10 +50,23 @@ void main() {
       expect(controller.visiblePosts.length, 20);
       expect(controller.hasMorePosts, isTrue);
 
-      // User scrolls down again -> loops posts continuously
+      // User scrolls down again -> shows a varied pass of existing posts.
       await controller.loadMorePosts();
       expect(controller.visiblePosts.length, 30);
-      expect(controller.visiblePosts[25].id, controller.visiblePosts[0].id);
+      expect(
+        controller.visiblePosts.skip(25).map((post) => post.id).toSet().length,
+        5,
+      );
+      expect(
+        controller.visiblePosts[25].id,
+        isNot(controller.visiblePosts[24].id),
+      );
+      final repeatedOrder =
+          controller.visiblePosts.map((post) => post.id).toList();
+      expect(
+        controller.visiblePosts.map((post) => post.id).toList(),
+        repeatedOrder,
+      );
       expect(controller.hasMorePosts, isTrue);
 
       // Reload resets pagination back to pageSize
@@ -91,7 +104,10 @@ void main() {
       await controller.reload();
       await controller.loadMorePosts();
       expect(controller.visiblePosts.length, 20);
-      expect(controller.visiblePosts[15].id, controller.visiblePosts[0].id);
+      expect(
+        controller.visiblePosts[15].id,
+        isNot(controller.visiblePosts[14].id),
+      );
 
       // Changing feed filter resets to page size
       controller.selectFeedFilter(CommunityFeedFilter.latest);
@@ -166,10 +182,7 @@ class _PaginationPostRepository extends CommunityRepository {
 }
 
 class _FailingPeopleRepository extends _PaginationPostRepository {
-  _FailingPeopleRepository(
-    super.authService,
-    super.posts,
-  );
+  _FailingPeopleRepository(super.authService, super.posts);
 
   @override
   Future<Map<FriendsView, List<CommunityPerson>>> getPeople() async {
