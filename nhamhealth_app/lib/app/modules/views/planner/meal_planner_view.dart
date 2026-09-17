@@ -9,6 +9,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
 import 'planner_shared.dart';
@@ -74,31 +75,36 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _dateCard(context),
-                              if (controller.isLoading.value)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 14),
-                                  child: LinearProgressIndicator(
-                                    color: AppColors.primaryGreen,
+                              if (controller.isLoading.value &&
+                                  controller.plans.isEmpty)
+                                const PageSkeleton.mealPlanner()
+                              else ...[
+                                _dateCard(context),
+                                if (controller.isLoading.value)
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 14),
+                                    child: LinearProgressIndicator(
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                if (controller.errorMessage.value.isNotEmpty ||
+                                    controller
+                                        .recommendationsError
+                                        .value
+                                        .isNotEmpty)
+                                  _error(context),
+                                const SizedBox(height: 16),
+                                _dailyOverview(context),
+                                const SizedBox(height: 20),
+                                _sectionHeading(context),
+                                const SizedBox(height: 12),
+                                ...MealPlanSlot.values.map(
+                                  (slot) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _slotCard(context, slot),
                                   ),
                                 ),
-                              if (controller.errorMessage.value.isNotEmpty ||
-                                  controller
-                                      .recommendationsError
-                                      .value
-                                      .isNotEmpty)
-                                _error(context),
-                              const SizedBox(height: 16),
-                              _dailyOverview(context),
-                              const SizedBox(height: 20),
-                              _sectionHeading(context),
-                              const SizedBox(height: 12),
-                              ...MealPlanSlot.values.map(
-                                (slot) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _slotCard(context, slot),
-                                ),
-                              ),
+                              ],
                             ],
                           ),
                         ),

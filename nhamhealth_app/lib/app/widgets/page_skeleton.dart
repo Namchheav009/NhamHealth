@@ -23,6 +23,12 @@ enum PageSkeletonType {
   reports,
   reportDetail,
   aiFoodAnalysis,
+  mealPlanner,
+  plannerCategories,
+  plannerMeals,
+  plannerDetail,
+  plannerWeek,
+  plannerGrocery,
 }
 
 class PageSkeleton extends StatefulWidget {
@@ -122,6 +128,36 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1600),
   }) : type = PageSkeletonType.aiFoodAnalysis;
 
+  const PageSkeleton.mealPlanner({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.mealPlanner;
+
+  const PageSkeleton.plannerCategories({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerCategories;
+
+  const PageSkeleton.plannerMeals({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerMeals;
+
+  const PageSkeleton.plannerDetail({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerDetail;
+
+  const PageSkeleton.plannerWeek({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerWeek;
+
+  const PageSkeleton.plannerGrocery({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerGrocery;
+
   final PageSkeletonType type;
   final Duration duration;
 
@@ -204,7 +240,173 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.reports => const _ReportsPlaceholder(),
     PageSkeletonType.reportDetail => const _ReportDetailPlaceholder(),
     PageSkeletonType.aiFoodAnalysis => const _AiFoodAnalysisPlaceholder(),
+    PageSkeletonType.mealPlanner => const _MealPlannerPlaceholder(),
+    PageSkeletonType.plannerCategories => const _PlannerCategoriesPlaceholder(),
+    PageSkeletonType.plannerMeals => const _PlannerMealsPlaceholder(),
+    PageSkeletonType.plannerDetail => const _PlannerDetailPlaceholder(),
+    PageSkeletonType.plannerWeek => const _PlannerWeekPlaceholder(),
+    PageSkeletonType.plannerGrocery => const _PlannerGroceryPlaceholder(),
   };
+}
+
+class _MealPlannerPlaceholder extends StatelessWidget {
+  const _MealPlannerPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('meal-planner-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonCard(height: 142),
+      SizedBox(height: 16),
+      _SkeletonCard(height: 126),
+      SizedBox(height: 20),
+      _SkeletonBox(width: 150, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 112),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 112),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 112),
+    ],
+  );
+}
+
+class _PlannerCategoriesPlaceholder extends StatelessWidget {
+  const _PlannerCategoriesPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-categories-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonBox(height: 52, radius: 16),
+      SizedBox(height: 14),
+      _SkeletonChipRow(),
+      SizedBox(height: 22),
+      _SkeletonBox(width: 170, height: 18, radius: 9),
+      SizedBox(height: 14),
+      Row(
+        children: [
+          Expanded(child: _SkeletonCard(height: 158)),
+          SizedBox(width: 12),
+          Expanded(child: _SkeletonCard(height: 158)),
+        ],
+      ),
+      SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(child: _SkeletonCard(height: 158)),
+          SizedBox(width: 12),
+          Expanded(child: _SkeletonCard(height: 158)),
+        ],
+      ),
+    ],
+  );
+}
+
+class _PlannerMealsPlaceholder extends StatelessWidget {
+  const _PlannerMealsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-meals-skeleton'),
+    children: [
+      _SkeletonBox(height: 52, radius: 16),
+      SizedBox(height: 12),
+      _SkeletonChipRow(),
+      SizedBox(height: 18),
+      _SkeletonCard(height: 106),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 106),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 106),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 106),
+    ],
+  );
+}
+
+class _PlannerDetailPlaceholder extends StatelessWidget {
+  const _PlannerDetailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-detail-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonBox(height: 260, radius: 24),
+      SizedBox(height: 20),
+      _SkeletonBox(width: 230, height: 24, radius: 12),
+      SizedBox(height: 10),
+      _SkeletonBox(width: 150, height: 14, radius: 7),
+      SizedBox(height: 20),
+      _SkeletonCard(height: 92),
+      SizedBox(height: 18),
+      _SkeletonBox(width: 120, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 150),
+    ],
+  );
+}
+
+class _PlannerWeekPlaceholder extends StatelessWidget {
+  const _PlannerWeekPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-week-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonCard(height: 92),
+      SizedBox(height: 16),
+      _SkeletonCard(height: 90),
+      SizedBox(height: 18),
+      _SkeletonBox(width: 120, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 126),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 126),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 126),
+    ],
+  );
+}
+
+class _PlannerGroceryPlaceholder extends StatelessWidget {
+  const _PlannerGroceryPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-grocery-skeleton'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonCard(height: 92),
+      SizedBox(height: 20),
+      _SkeletonBox(width: 110, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 178),
+      SizedBox(height: 18),
+      _SkeletonBox(width: 130, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 142),
+    ],
+  );
+}
+
+class _SkeletonChipRow extends StatelessWidget {
+  const _SkeletonChipRow();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: const [
+      _SkeletonBox(width: 64, height: 34, radius: 17),
+      SizedBox(width: 8),
+      _SkeletonBox(width: 86, height: 34, radius: 17),
+      SizedBox(width: 8),
+      Expanded(child: _SkeletonBox(height: 34, radius: 17)),
+    ],
+  );
 }
 
 class _ReportsPlaceholder extends StatelessWidget {
@@ -859,29 +1061,30 @@ class _SkeletonCard extends StatelessWidget {
       border: Border.all(color: context.appBorder),
     ),
     child: LayoutBuilder(
-      builder: (context, constraints) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const FractionallySizedBox(
-            widthFactor: .48,
-            child: _SkeletonBox(height: 15, radius: 8),
+      builder:
+          (context, constraints) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const FractionallySizedBox(
+                widthFactor: .48,
+                child: _SkeletonBox(height: 15, radius: 8),
+              ),
+              if (constraints.maxHeight > 55) ...[
+                const SizedBox(height: 8),
+                const FractionallySizedBox(
+                  widthFactor: .76,
+                  child: _SkeletonBox(height: 12, radius: 6),
+                ),
+              ],
+              if (constraints.maxHeight > 95) ...[
+                const Spacer(),
+                const FractionallySizedBox(
+                  widthFactor: .9,
+                  child: _SkeletonBox(height: 38, radius: 13),
+                ),
+              ],
+            ],
           ),
-          if (constraints.maxHeight > 55) ...[
-            const SizedBox(height: 8),
-            const FractionallySizedBox(
-              widthFactor: .76,
-              child: _SkeletonBox(height: 12, radius: 6),
-            ),
-          ],
-          if (constraints.maxHeight > 95) ...[
-            const Spacer(),
-            const FractionallySizedBox(
-              widthFactor: .9,
-              child: _SkeletonBox(height: 38, radius: 13),
-            ),
-          ],
-        ],
-      ),
     ),
   );
 }

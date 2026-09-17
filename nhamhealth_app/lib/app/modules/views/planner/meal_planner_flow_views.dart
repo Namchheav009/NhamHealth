@@ -8,6 +8,7 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
 import 'planner_shared.dart';
@@ -25,9 +26,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
         MealPlanSlot.breakfast;
     final replace = (Get.arguments as Map?)?['replace'] as PlannedMeal?;
 
-    final adminCategories = controller.categoriesFor(slot);
-
-    return _PlannerScaffold(
+    return Obx(() => _PlannerScaffold(
       header: PlannerPageHeader(
         title:
             replace == null
@@ -39,7 +38,10 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
                   route.settings.name == AppRoutes.mealPlanner || route.isFirst,
             ),
       ),
-      child: Column(
+      child: controller.isLoadingRecommendations.value &&
+              controller.adminRecommendations.isEmpty
+          ? const PageSkeleton.plannerCategories()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search input preview
@@ -123,7 +125,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: adminCategories.length,
+            itemCount: controller.categoriesFor(slot).length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 1.12,
@@ -131,7 +133,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
               mainAxisSpacing: 12,
             ),
             itemBuilder: (_, index) {
-              final category = adminCategories[index];
+              final category = controller.categoriesFor(slot)[index];
               return _CategoryCard(
                 category: category,
                 onTap:
@@ -150,7 +152,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
 
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -279,7 +281,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
     final replace = args['replace'] as PlannedMeal?;
     final query = search.text.trim().toLowerCase();
 
-    final meals =
+    List<PlannedMeal> mealsForCurrentFilters() =>
         controller.suggestionsFor(slot).where((meal) {
           if (categoryId != null && meal.categoryId != categoryId) {
             return false;
@@ -312,7 +314,9 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
           };
         }).toList();
 
-    return _PlannerScaffold(
+    return Obx(() {
+      final meals = mealsForCurrentFilters();
+      return _PlannerScaffold(
       header: PlannerPageHeader(
         title:
             replace == null
@@ -324,7 +328,10 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                   route.settings.name == AppRoutes.mealPlanner || route.isFirst,
             ),
       ),
-      child: Column(
+      child: controller.isLoadingRecommendations.value &&
+              controller.adminRecommendations.isEmpty
+          ? const PageSkeleton.plannerMeals()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search TextField
@@ -580,7 +587,8 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
             ),
         ],
       ),
-    );
+      );
+    });
   }
 }
 
@@ -605,7 +613,7 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
     final meal = args['meal'] as PlannedMeal;
     final replace = args['replace'] as PlannedMeal?;
 
-    return _PlannerScaffold(
+    return Obx(() => _PlannerScaffold(
       bottom: Obx(
         () => PlannerPrimaryButton(
           label:
@@ -636,7 +644,10 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
         ),
       ),
       header: const SizedBox.shrink(),
-      child: Column(
+      child: controller.isLoadingRecommendations.value &&
+              controller.adminRecommendations.isEmpty
+          ? const PageSkeleton.plannerDetail()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hero Food Image with Floating Buttons
@@ -948,7 +959,7 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
           ],
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -1076,7 +1087,9 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
           onPressed: () => Get.toNamed(AppRoutes.mealPlannerGrocery),
         ),
       ),
-      child: Column(
+      child: controller.isLoading.value && controller.plans.isEmpty
+          ? const PageSkeleton.plannerWeek()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _PlannerFlowWeekCard(controller: controller),
@@ -1329,15 +1342,15 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = <String, List<GroceryItem>>{};
-    for (final item in controller.groceryItems) {
-      (grouped[item.category] ??= []).add(item);
-    }
+    return Obx(() {
+      final grouped = <String, List<GroceryItem>>{};
+      for (final item in controller.groceryItems) {
+        (grouped[item.category] ??= []).add(item);
+      }
+      final totalItems = controller.groceryItems.length;
+      final checkedCount = checked.length;
 
-    final totalItems = controller.groceryItems.length;
-    final checkedCount = checked.length;
-
-    return _PlannerScaffold(
+      return _PlannerScaffold(
       header: PlannerPageHeader(
         title: 'planner.grocery_list'.tr,
         trailing:
@@ -1388,7 +1401,9 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                 },
               ),
       child:
-          grouped.isEmpty
+          controller.isLoading.value && controller.plans.isEmpty
+              ? const PageSkeleton.plannerGrocery()
+              : grouped.isEmpty
               ? _EmptyGrocery()
               : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1569,7 +1584,8 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                   }),
                 ],
               ),
-    );
+      );
+    });
   }
 
   IconData _iconForGroceryCategory(String key) {
