@@ -28,7 +28,10 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
 
   Color _selectedSurface(BuildContext context) =>
       context.appIsDark
-          ? Color.alphaBlend(green.withValues(alpha: .18), context.appSurfaceLow)
+          ? Color.alphaBlend(
+            green.withValues(alpha: .18),
+            context.appSurfaceLow,
+          )
           : mintSelected;
 
   Color _previewSurface(BuildContext context) =>
@@ -494,7 +497,8 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                      color: active ? _accentText(context) : context.appMutedText,
+                      color:
+                          active ? _accentText(context) : context.appMutedText,
                     ),
                   );
                 }).toList(),
@@ -746,16 +750,10 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
-        color:
-            context.appIsDark
-                ? const Color(0xFF102A43)
-                : infoBackground,
+        color: context.appIsDark ? const Color(0xFF102A43) : infoBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color:
-              context.appIsDark
-                  ? const Color(0xFF315A7D)
-                  : infoBorder,
+          color: context.appIsDark ? const Color(0xFF315A7D) : infoBorder,
         ),
       ),
       child: Row(

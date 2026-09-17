@@ -195,21 +195,14 @@ class InlineEditInfoRow extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ],
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
             ],
           ),
         ),
         if (showDivider)
           Padding(
             padding: const EdgeInsets.only(left: 57),
-            child: Divider(
-              height: 1,
-              thickness: 0.7,
-              color: context.appBorder,
-            ),
+            child: Divider(height: 1, thickness: 0.7, color: context.appBorder),
           ),
       ],
     );

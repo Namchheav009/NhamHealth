@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/meals/meal_model.dart';
-import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class MealIdeaCard extends StatelessWidget {
   const MealIdeaCard({

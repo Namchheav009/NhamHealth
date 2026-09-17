@@ -38,9 +38,9 @@ class HomeProvider {
     }
 
     final lang = Get.locale?.languageCode ?? 'en';
-    final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/moods').replace(
-      queryParameters: {'lang': lang},
-    );
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/moods',
+    ).replace(queryParameters: {'lang': lang});
     final response = await _client
         .get(
           uri,

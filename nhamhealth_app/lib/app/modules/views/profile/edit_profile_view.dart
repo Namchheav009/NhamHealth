@@ -174,10 +174,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     email.isEmpty ? controller.profileEmail.value : email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.appMutedText,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: context.appMutedText, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   Container(

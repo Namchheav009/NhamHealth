@@ -41,6 +41,7 @@
         </button>
         <div class="nav-group" id="meal-menu">
         <a class="nav-link" th:classappend="${activePage == 'meals'} ? ' active' : ''" th:href="@{/admin/meals}"><i class="bi bi-egg-fried"></i><span>Meals</span></a>
+        <a class="nav-link" th:classappend="${activePage == 'meal-planner'} ? ' active' : ''" th:href="@{/admin/meal-planner}"><i class="bi bi-calendar2-week"></i><span>Meal Planner</span></a>
         <a class="nav-link" th:classappend="${activePage == 'meal-categories'} ? ' active' : ''" th:href="@{/admin/meal-categories}"><i class="bi bi-tags-fill"></i><span>Meal Categories</span></a>
         <a class="nav-link" th:classappend="${activePage == 'ingredients'} ? ' active' : ''" th:href="@{/admin/ingredients}"><i class="bi bi-flower1"></i><span>Ingredients</span></a>
         <a class="nav-link" th:classappend="${activePage == 'nutrients'} ? ' active' : ''" th:href="@{/admin/nutrients}"><i class="bi bi-activity"></i><span>Nutrients</span></a>

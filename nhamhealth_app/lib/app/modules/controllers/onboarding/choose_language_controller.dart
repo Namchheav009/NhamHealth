@@ -23,8 +23,7 @@ class ChooseLanguageController extends GetxController {
   Future<void> selectKhmer() => _selectLanguage(AppLocaleService.khmerLocale);
 
   Future<void> _selectLanguage(Locale locale) async {
-    if (selectedLanguage.value == locale.languageCode &&
-        Get.locale == locale) {
+    if (selectedLanguage.value == locale.languageCode && Get.locale == locale) {
       return;
     }
     selectedLanguage.value = locale.languageCode;

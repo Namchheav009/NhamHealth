@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle + ' | Nham Health Admin'}">
+      Weekly Meal Planner | Nham Health Admin
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin-meal-planner.css(v=3)}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div th:replace="~{layouts/sidebar :: sidebar('meal-planner')}"></div>
+      <main class="main-area">
+        <div th:replace="~{layouts/topbar :: topbar}"></div>
+        <section class="page-content">
+          <div class="page-heading planner-heading">
+            <div>
+              <div class="title-line">
+                <h1>Weekly Meal Planner</h1>
+                <span
+                  >Schedule meals that users can choose for each day</span
+                >
+              </div>
+              <p>
+                Dashboard <i class="bi bi-chevron-right"></i> Meal Management
+                <i class="bi bi-chevron-right"></i> Weekly Meal Planner
+              </p>
+            </div>
+            <div class="heading-actions">
+              <button
+                class="btn btn-secondary"
+                id="openRecommendationModal"
+                type="button"
+                hidden
+              >
+                <i class="bi bi-calendar-plus"></i> Add Recommendation
+              </button>
+              <button
+                class="btn btn-primary"
+                id="openPlannerMealModal"
+                type="button"
+              >
+                <i class="bi bi-plus-lg"></i> Add Meal to Planner
+              </button>
+            </div>
+          </div>
+
+          <div class="stats-grid planner-stats">
+            <article class="stat-card">
+              <div class="stat-icon blue">
+                <i class="bi bi-collection-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Planner meals</span>
+                <strong th:text="${#lists.size(plannerMeals)}">0</strong>
+                <small>Meals available for recommendations</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon green">
+                <i class="bi bi-calendar2-check-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Total scheduled</span>
+                <strong th:text="${totalRecommendations}">0</strong>
+                <small>Across the weekly schedule</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon orange">
+                <i class="bi bi-broadcast"></i>
+              </div>
+              <div class="stat-content">
+                <span>Active visible</span>
+                <strong th:text="${activeRecommendations}">0</strong>
+                <small>Visible in mobile planner</small>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon purple">
+                <i class="bi bi-calendar-week-fill"></i>
+              </div>
+              <div class="stat-content">
+                <span>Days covered</span>
+                <strong th:text="${coveredDays + '/7'}">0/7</strong>
+                <small>Days with active meals</small>
+              </div>
+            </article>
+          </div>
+
+          <article class="panel planner-library-panel" hidden>
+            <div class="panel-header">
+              <div>
+                <h2>Planner Meal Library</h2>
+                <p>
+                  Create meals here for the weekly planner. Active meals can be
+                  scheduled into mobile meal slots.
+                </p>
+              </div>
+              <div class="panel-tools">
+                <div class="table-search-wrap">
+                  <i class="bi bi-search"></i>
+                  <input
+                    class="table-search"
+                    id="librarySearch"
+                    type="search"
+                    placeholder="Search meals..."
+                    aria-label="Search planner meals"
+                  />
+                </div>
+                <select
+                  class="table-filter-pill"
+                  id="libraryStatusFilter"
+                  aria-label="Filter by meal status"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <span
+                  class="library-count"
+                  id="libraryCountText"
+                  th:text="${#lists.size(plannerMeals) + ' meals'}"
+                  >0 meals</span
+                >
+              </div>
+            </div>
+            <div class="planner-library-grid" id="plannerMealLibrary">
+              <article
+                class="planner-meal-card"
+                th:each="meal : ${plannerMeals}"
+                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category.categoryId},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-instructions=${meal.instructionsText},data-tags=${meal.tagsText},data-active=${meal.active}"
+              >
+                <div class="planner-meal-card-image">
+                  <img
+                    th:if="${meal.imageUrl != null and !meal.imageUrl.isBlank()}"
+                    th:src="${meal.imageUrl}"
+                    th:alt="${meal.nameEn}"
+                    loading="lazy"
+                  />
+                  <div
+                    th:unless="${meal.imageUrl != null and !meal.imageUrl.isBlank()}"
+                    class="planner-meal-card-fallback"
+                  >
+                    <i class="bi bi-egg-fried"></i>
+                  </div>
+                  <span
+                    class="planner-meal-card-status"
+                    th:classappend="${meal.active ? ' active' : ' inactive'}"
+                    th:text="${meal.active ? 'Active' : 'Archived'}"
+                    >Active</span
+                  >
+                  <span
+                    class="planner-meal-cook-time"
+                    th:if="${meal.cookingTimeMinutes != null and meal.cookingTimeMinutes > 0}"
+                  >
+                    <i class="bi bi-clock"></i>
+                    <span th:text="${meal.cookingTimeMinutes + 'm'}">15m</span>
+                  </span>
+                </div>
+                <div class="planner-meal-card-body">
+                  <div class="planner-card-top">
+                    <span
+                      class="planner-meal-category"
+                      th:text="${meal.categoryEn}"
+                      >Category</span
+                    >
+                    <span
+                      class="planner-meal-id"
+                      th:text="'#' + ${meal.plannerMealId}"
+                      >#1</span
+                    >
+                  </div>
+                  <h3 th:text="${meal.nameEn}">Meal name</h3>
+                  <small
+                    class="planner-meal-name-km"
+                    th:if="${meal.nameKm != null and !meal.nameKm.isBlank()}"
+                    th:text="${meal.nameKm}"
+                    lang="km"
+                    >ឈ្មោះខ្មែរ</small
+                  >
+                  <p
+                    th:text="${meal.descriptionEn != null and !meal.descriptionEn.isBlank() ? meal.descriptionEn : 'No description provided.'}"
+                  >
+                    Description
+                  </p>
+                  <div class="planner-meal-nutrition">
+                    <div class="nutrition-pill" title="Calories">
+                      <span
+                        class="num"
+                        th:text="${meal.calories != null ? #numbers.formatDecimal(meal.calories, 1, 0) : 0}"
+                        >0</span
+                      >
+                      <span class="label">kcal</span>
+                    </div>
+                    <div class="nutrition-pill" title="Protein">
+                      <span
+                        class="num"
+                        th:text="${meal.proteinGrams != null ? #numbers.formatDecimal(meal.proteinGrams, 1, 0) : 0}"
+                        >0</span
+                      >
+                      <span class="label">Protein</span>
+                    </div>
+                    <div class="nutrition-pill" title="Carbohydrates">
+                      <span
+                        class="num"
+                        th:text="${meal.carbsGrams != null ? #numbers.formatDecimal(meal.carbsGrams, 1, 0) : 0}"
+                        >0</span
+                      >
+                      <span class="label">Carbs</span>
+                    </div>
+                    <div class="nutrition-pill" title="Fat">
+                      <span
+                        class="num"
+                        th:text="${meal.fatGrams != null ? #numbers.formatDecimal(meal.fatGrams, 1, 0) : 0}"
+                        >0</span
+                      >
+                      <span class="label">Fat</span>
+                    </div>
+                  </div>
+                  <div class="planner-meal-card-actions">
+                    <button
+                      type="button"
+                      class="btn planner-card-edit"
+                      data-action="edit-meal"
+                    >
+                      <i class="bi bi-pencil-square"></i> Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary planner-card-schedule"
+                      data-action="schedule-meal"
+                      th:disabled="${!meal.active}"
+                    >
+                      <i class="bi bi-calendar-plus"></i> Schedule
+                    </button>
+                  </div>
+                </div>
+              </article>
+              <div
+                class="planner-library-empty"
+                id="plannerLibraryEmpty"
+                th:style="${#lists.isEmpty(plannerMeals)} ? '' : 'display:none;'"
+              >
+                <i class="bi bi-journal-plus"></i>
+                <h3>No planner meals found</h3>
+                <p>
+                  Create your first meal in the library, or adjust your search
+                  filter.
+                </p>
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  id="createFirstPlannerMeal"
+                >
+                  Create first meal
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel schedule-panel" hidden>
+            <div class="panel-header">
+              <div>
+                <h2>Weekly Schedule</h2>
+                <p>
+                  Visual preview of active meal suggestions throughout the week.
+                </p>
+              </div>
+              <div class="legend">
+                <span><i class="dot breakfast"></i>Breakfast</span>
+                <span><i class="dot lunch"></i>Lunch</span>
+                <span><i class="dot dinner"></i>Dinner</span>
+                <span><i class="dot snack"></i>Snack</span>
+              </div>
+            </div>
+            <div
+              class="schedule-board"
+              id="scheduleBoard"
+              aria-live="polite"
+            ></div>
+          </article>
+
+          <article class="panel table-panel" id="scheduledRecommendations">
+            <div class="panel-header">
+              <div>
+                <h2>Scheduled Recommendations</h2>
+                <p>
+                  Manage all-day meals that users can select in the mobile planner.
+                </p>
+              </div>
+              <div class="panel-tools">
+                <select
+                  class="table-filter-pill"
+                  id="slotFilter"
+                  aria-label="Filter by meal slot"
+                >
+                  <option value="">All slots</option>
+                  <option value="BREAKFAST">Breakfast</option>
+                  <option value="LUNCH">Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                  <option value="SNACK">Snack</option>
+                </select>
+                <select
+                  class="table-filter-pill"
+                  id="statusFilter"
+                  aria-label="Filter by recommendation status"
+                >
+                  <option value="">All status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <div class="table-search-wrap">
+                  <i class="bi bi-search"></i>
+                  <input
+                    class="table-search"
+                    id="recommendationSearch"
+                    type="search"
+                    placeholder="Search scheduled..."
+                    aria-label="Search meal recommendations"
+                  />
+                </div>
+                <button
+                  class="btn btn-secondary"
+                  id="clearRecommendationFilters"
+                  type="button"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th>Meal slot</th>
+                    <th>Recommended meal</th>
+                    <th>Nutrition</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recommendationRows">
+                  <tr
+                    th:each="rec : ${recommendations}"
+                    th:data-id="${rec.recommendationId}"
+                    th:data-meal-id="${rec.plannerMeal.plannerMealId}"
+                    th:data-category-id="${rec.plannerMeal.category.categoryId}"
+                    th:data-meal="${rec.plannerMeal.nameEn}"
+                    th:data-day="${rec.dayOfWeek}"
+                    th:data-slot="${rec.mealSlot}"
+                    th:data-note="${rec.note}"
+                    th:data-active="${rec.active}"
+                    th:data-meal-active="${rec.plannerMeal.active}"
+                    th:data-order="${rec.sortOrder}"
+                    th:data-calories="${rec.plannerMeal.calories}"
+                    th:data-protein="${rec.plannerMeal.proteinGrams}"
+                  >
+                    <td>
+                      <strong
+                        class="day-label"
+                        th:text="${rec.dayOfWeek == 'ALL' ? 'All Day' : #strings.capitalize(#strings.toLowerCase(rec.dayOfWeek))}"
+                        >Monday</strong
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="slot-badge"
+                        th:classappend="${#strings.toLowerCase(rec.mealSlot)}"
+                        th:text="${#strings.capitalize(#strings.toLowerCase(rec.mealSlot))}"
+                        >Breakfast</span
+                      >
+                    </td>
+                    <td>
+                      <div class="meal-cell">
+                        <span class="meal-thumb">
+                          <img
+                            th:if="${rec.plannerMeal.imageUrl != null and !rec.plannerMeal.imageUrl.isBlank()}"
+                            th:src="${rec.plannerMeal.imageUrl}"
+                            alt=""
+                            loading="lazy"
+                          />
+                          <i
+                            th:unless="${rec.plannerMeal.imageUrl != null and !rec.plannerMeal.imageUrl.isBlank()}"
+                            class="bi bi-egg-fried"
+                          ></i>
+                        </span>
+                        <div>
+                          <strong th:text="${rec.plannerMeal.nameEn}"
+                            >Meal</strong
+                          >
+                          <small
+                            th:text="${rec.note != null and !rec.note.isBlank() ? rec.note : 'No admin note'}"
+                            >Note</small
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="nutrition-cell">
+                        <strong th:text="${rec.plannerMeal.calories + ' kcal'}"
+                          >0 kcal</strong
+                        >
+                        <small
+                          th:text="${rec.plannerMeal.proteinGrams + 'g protein'}"
+                        ></small>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="priority-pill" th:text="${rec.sortOrder}"
+                        >0</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="status-badge"
+                        th:classappend="${rec.active and rec.plannerMeal.active ? ' active-status' : ' inactive-status'}"
+                        th:text="${rec.active and rec.plannerMeal.active ? 'Active' : 'Inactive'}"
+                        >Active</span
+                      >
+                    </td>
+                    <td>
+                      <div class="action-group">
+                        <button
+                          class="icon-button small"
+                          data-action="edit-meal"
+                          type="button"
+                          title="Edit meal details"
+                          aria-label="Edit meal details"
+                        >
+                          <i class="bi bi-egg-fried"></i>
+                        </button>
+                        <button
+                          class="icon-button small danger"
+                          data-action="delete"
+                          type="button"
+                          title="Delete recommendation"
+                          aria-label="Delete recommendation"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    th:if="${#lists.isEmpty(recommendations)}"
+                    id="emptyRecommendationRow"
+                  >
+                    <td colspan="7" class="empty-state">
+                      No scheduled recommendations yet. Use “Add Meal to Planner”
+                      to create and schedule the first meal.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+        <footer class="page-footer">
+          <span>© 2026 Nham Health. All rights reserved.</span>
+          <span
+            >Dedicated meal planner catalog for mobile nutrition plans.</span
+          >
+        </footer>
+      </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Schedule Meal Modal -->
+    <div class="modal" id="recommendationModal" aria-hidden="true" hidden>
+      <section
+        class="modal-card planner-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recommendationModalTitle"
+      >
+        <div class="modal-header">
+          <div>
+            <h2 id="recommendationModalTitle">Schedule Meal</h2>
+            <p>
+              Choose where this meal should appear in the mobile user's planner.
+            </p>
+          </div>
+          <button
+            class="close"
+            id="closeRecommendationModal"
+            type="button"
+            aria-label="Close dialog"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <form id="recommendationForm">
+          <div class="modal-body">
+            <div class="field full">
+              <label for="plannerCategory">Meal category <b>*</b></label>
+              <select id="plannerCategory" name="categoryId" required>
+                <option value="">Select a category</option>
+                <option th:each="category : ${mealCategories}"
+                        th:value="${category.categoryId}"
+                        th:text="${category.categoryName}"></option>
+              </select>
+              <small>Choose a category to show its available planner meals.</small>
+            </div>
+            <div class="field full">
+              <label for="plannerMeal">Planner meal <b>*</b></label>
+              <select id="plannerMeal" name="plannerMealId" required>
+                <option value="">Select a planner meal</option>
+                <option
+                  th:each="meal : ${plannerMeals}"
+                  th:if="${meal.active}"
+                  th:value="${meal.plannerMealId}"
+                  th:attr="data-category-id=${meal.category.categoryId}"
+                  th:text="${meal.nameEn + ' · ' + meal.calories + ' kcal'}"
+                >
+                  Meal
+                </option>
+              </select>
+              <small
+                >Only active meals from the planner library can be
+                scheduled.</small
+              >
+            </div>
+            <div class="field">
+              <label for="plannerDay">Weekday <b>*</b></label>
+              <select id="plannerDay" name="dayOfWeek" required>
+                <option value="MONDAY">Monday</option>
+                <option value="TUESDAY">Tuesday</option>
+                <option value="WEDNESDAY">Wednesday</option>
+                <option value="THURSDAY">Thursday</option>
+                <option value="FRIDAY">Friday</option>
+                <option value="SATURDAY">Saturday</option>
+                <option value="SUNDAY">Sunday</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="plannerSlot">Meal time <b>*</b></label>
+              <select id="plannerSlot" name="mealSlot" required>
+                <option value="BREAKFAST">Breakfast</option>
+                <option value="LUNCH">Lunch</option>
+                <option value="DINNER">Dinner</option>
+                <option value="SNACK">Snack</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="plannerOrder">Display priority</label>
+              <input
+                id="plannerOrder"
+                name="sortOrder"
+                type="number"
+                min="0"
+                max="999"
+                value="0"
+                required
+              />
+              <small>Lower numbers appear earlier in the slot.</small>
+            </div>
+            <div class="field">
+              <label for="plannerStatus">Recommendation status</label>
+              <select id="plannerStatus" name="active">
+                <option value="true">Active (Visible)</option>
+                <option value="false">Inactive (Hidden)</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="plannerNote">Recommendation note</label>
+              <textarea
+                id="plannerNote"
+                name="note"
+                maxlength="255"
+                placeholder="Why this meal is recommended for this slot (optional)"
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button
+              class="btn btn-secondary"
+              id="cancelRecommendationModal"
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              class="btn btn-primary"
+              id="saveRecommendationButton"
+              type="submit"
+            >
+              <i class="bi bi-check-lg"></i> Save Recommendation
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <!-- Create/Edit Planner Meal Modal -->
+    <div class="modal" id="plannerMealModal" aria-hidden="true">
+      <section
+        class="modal-card planner-meal-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="plannerMealModalTitle"
+      >
+        <div class="modal-header">
+          <div>
+            <h2 id="plannerMealModalTitle">Create Planner Meal</h2>
+            <p>Build or edit meals available for the weekly planner.</p>
+          </div>
+          <button
+            class="close"
+            id="closePlannerMealModal"
+            type="button"
+            aria-label="Close dialog"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <form id="plannerMealForm">
+          <div class="planner-meal-form-scroll">
+            <div class="planner-form-section">
+              <h3><span>1</span> Meal Information</h3>
+              <div class="planner-meal-form-grid">
+                <div class="field">
+                  <label for="mealNameEn">Meal name (English) <b>*</b></label>
+                  <input
+                    id="mealNameEn"
+                    name="nameEn"
+                    maxlength="150"
+                    required
+                    placeholder="e.g. Oatmeal with fresh fruit"
+                  />
+                </div>
+                <div class="field">
+                  <label for="mealNameKm">Meal name (Khmer)</label>
+                  <input
+                    id="mealNameKm"
+                    name="nameKm"
+                    maxlength="150"
+                    placeholder="e.g. ស្រូវអូតជាមួយផ្លែឈើ"
+                  />
+                </div>
+                <div class="field">
+                  <label for="mealCategoryId">Category <b>*</b></label>
+                  <select id="mealCategoryId" name="categoryId" required>
+                    <option value="">Select a category</option>
+                    <option th:each="category : ${mealCategories}"
+                            th:value="${category.categoryId}"
+                            th:text="${category.categoryName}"></option>
+                  </select>
+                </div>
+                <div class="field full meal-image-field-group">
+                  <div class="meal-image-header">
+                    <label>Meal Photo / Image</label>
+                    <div class="image-mode-tabs" role="tablist">
+                      <button type="button" class="tab-btn active" id="tabUploadImage" data-mode="upload">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload
+                      </button>
+                      <button type="button" class="tab-btn" id="tabUrlImage" data-mode="url">
+                        <i class="bi bi-link-45deg"></i> Image URL
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Upload Mode -->
+                  <div class="image-mode-panel" id="panelUploadImage">
+                    <div class="planner-image-dropzone" id="plannerImageDropzone">
+                      <input type="file" id="mealImageFileInput" accept="image/png,image/jpeg,image/webp,image/jpg" hidden />
+                      <div class="dropzone-content">
+                        <div class="dropzone-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                        <div class="dropzone-text">
+                          <strong>Click to browse</strong> or drag and drop image
+                        </div>
+                        <span class="dropzone-hint">PNG, JPG or WebP (auto-optimized)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- URL Mode -->
+                  <div class="image-mode-panel hidden" id="panelUrlImage">
+                    <div class="url-input-box">
+                      <i class="bi bi-link-45deg"></i>
+                      <input
+                        id="mealImageUrl"
+                        name="imageUrl"
+                        type="url"
+                        maxlength="500"
+                        placeholder="https://images.unsplash.com/... or https://..."
+                      />
+                    </div>
+                    <small class="field-hint">Paste direct image URL from web.</small>
+                  </div>
+
+                  <!-- Live Image Preview Card -->
+                  <div class="planner-image-preview" id="plannerImagePreview" hidden>
+                    <div class="preview-img-box">
+                      <img id="plannerPreviewImg" src="" alt="Meal preview" />
+                    </div>
+                    <div class="preview-info">
+                      <span class="preview-name" id="plannerPreviewName">meal-image.webp</span>
+                      <span class="preview-meta" id="plannerPreviewMeta">Ready to save</span>
+                    </div>
+                    <button type="button" class="btn-clear-img" id="btnClearMealImage" title="Remove image">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="field full">
+                  <label for="mealDescriptionEn">Description (English)</label>
+                  <textarea
+                    id="mealDescriptionEn"
+                    name="descriptionEn"
+                    rows="2"
+                    placeholder="Brief summary of the meal and health benefits."
+                  ></textarea>
+                </div>
+                <div class="field full">
+                  <label for="mealDescriptionKm">Description (Khmer)</label>
+                  <textarea
+                    id="mealDescriptionKm"
+                    name="descriptionKm"
+                    rows="2"
+                    placeholder="ការពិពណ៌នាអំពីអាហារ"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="planner-form-section">
+              <h3><span>2</span> Nutrition Per Serving</h3>
+              <div class="planner-meal-form-grid nutrition-fields">
+                <div class="field">
+                  <label for="mealCalories">Calories (kcal) <b>*</b></label>
+                  <input
+                    id="mealCalories"
+                    name="calories"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="mealProtein">Protein (g) <b>*</b></label>
+                  <input
+                    id="mealProtein"
+                    name="proteinGrams"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="mealCarbs">Carbs (g) <b>*</b></label>
+                  <input
+                    id="mealCarbs"
+                    name="carbsGrams"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="0"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="mealFat">Fat (g) <b>*</b></label>
+                  <input
+                    id="mealFat"
+                    name="fatGrams"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="0"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="planner-form-section">
+              <h3><span>3</span> Ingredients & Cooking Details</h3>
+              <div class="planner-meal-form-grid">
+                <div class="field full">
+                  <label for="mealIngredients">Ingredients list</label>
+                  <textarea
+                    id="mealIngredients"
+                    name="ingredientsText"
+                    rows="4"
+                    placeholder="Oats | 50 | g | ស្រូវអូត&#10;Banana | 1 | piece | ចេក"
+                  ></textarea>
+                  <small
+                    >One ingredient per line: English name | quantity | unit |
+                    Khmer name (optional).</small
+                  >
+                </div>
+                <div class="field full">
+                  <label for="mealInstructions"
+                    >Preparation / cooking steps</label
+                  >
+                  <textarea
+                    id="mealInstructions"
+                    name="instructionsText"
+                    rows="3"
+                    placeholder="Step 1: Boil the water or milk.&#10;Step 2: Add oats and simmer."
+                  ></textarea>
+                  <small>One step per line.</small>
+                </div>
+                <div class="field">
+                  <label for="mealTags">Tags</label>
+                  <input
+                    id="mealTags"
+                    name="tagsText"
+                    maxlength="500"
+                    placeholder="Healthy, High Fiber, Quick"
+                  />
+                  <small>Separate tags with commas.</small>
+                </div>
+                <div class="field">
+                  <label for="mealCookTime">Cooking time (minutes)</label>
+                  <input
+                    id="mealCookTime"
+                    name="cookingTimeMinutes"
+                    type="number"
+                    min="0"
+                    max="1440"
+                    placeholder="15"
+                  />
+                </div>
+                <div class="field full">
+                  <label for="mealActive">Catalog status</label>
+                  <select id="mealActive" name="active">
+                    <option value="true">Active (Can be scheduled)</option>
+                    <option value="false">
+                      Archived (Hidden from scheduling)
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button
+              class="btn btn-secondary"
+              id="cancelPlannerMealModal"
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              class="btn btn-primary"
+              id="savePlannerMealButton"
+              type="submit"
+            >
+              <i class="bi bi-check-lg"></i> Save Meal
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script th:src="@{/js/admin-layout.js}"></script>
+    <script th:src="@{/js/admin-meal-planner.js(v=3)}" defer></script>
+  </body>
+</html>

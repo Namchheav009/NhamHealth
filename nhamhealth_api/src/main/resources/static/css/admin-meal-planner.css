@@ -1,0 +1,1575 @@
+/* ==========================================================================
+   Nham Health Admin - Weekly Meal Planner Stylesheet
+   ========================================================================== */
+
+:root {
+    --planner-green: #08ae61;
+    --planner-green-dark: #07814a;
+    --planner-green-soft: #e8f8ef;
+    --planner-orange: #f59e0b;
+    --planner-orange-soft: #fffbeb;
+    --planner-purple: #8b5cf6;
+    --planner-purple-soft: #f5f3ff;
+    --planner-blue: #3b82f6;
+    --planner-blue-soft: #eff6ff;
+    --planner-rose: #f43f5e;
+    --planner-rose-soft: #fff1f2;
+    --planner-surface: var(--card, #ffffff);
+    --planner-page: var(--page, #f4f7fb);
+    --planner-border: var(--border, #e4ebe6);
+    --planner-text: var(--text, #17212b);
+    --planner-muted: var(--muted, #7a8797);
+    --planner-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    --planner-card-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+html[data-theme="dark"] {
+    --planner-green-soft: rgba(8, 174, 97, 0.16);
+    --planner-orange-soft: rgba(245, 158, 11, 0.16);
+    --planner-purple-soft: rgba(139, 92, 246, 0.16);
+    --planner-blue-soft: rgba(59, 130, 246, 0.16);
+    --planner-rose-soft: rgba(244, 63, 94, 0.16);
+    --planner-surface: #101820;
+    --planner-page: #0a0f15;
+    --planner-border: #233140;
+    --planner-text: #e2e8f0;
+    --planner-muted: #8493a3;
+    --planner-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+    --planner-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   Heading & Page Introduction
+   -------------------------------------------------------------------------- */
+.planner-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.planner-heading .title-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.planner-heading .title-line h1 {
+    margin: 0;
+    font-size: clamp(24px, 2.5vw, 30px);
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    color: var(--planner-text);
+}
+
+.planner-heading .title-line span {
+    color: var(--planner-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.planner-heading p {
+    margin: 6px 0 0;
+    color: var(--planner-muted);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.planner-heading p i {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+.planner-heading .heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   KPI Stats Grid
+   -------------------------------------------------------------------------- */
+.planner-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 108px;
+    padding: 18px 20px;
+    background: var(--planner-surface);
+    border: 1px solid var(--planner-border);
+    border-radius: 16px;
+    box-shadow: var(--planner-shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.stat-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 24px;
+}
+
+.stat-icon.green {
+    color: #07814a;
+    background: var(--planner-green-soft);
+}
+
+.stat-icon.orange {
+    color: #b45309;
+    background: var(--planner-orange-soft);
+}
+
+.stat-icon.purple {
+    color: #7c3aed;
+    background: var(--planner-purple-soft);
+}
+
+.stat-icon.blue {
+    color: #1d4ed8;
+    background: var(--planner-blue-soft);
+}
+
+html[data-theme="dark"] .stat-icon.green {
+    color: #34d399;
+}
+
+html[data-theme="dark"] .stat-icon.orange {
+    color: #fbbf24;
+}
+
+html[data-theme="dark"] .stat-icon.purple {
+    color: #a78bfa;
+}
+
+html[data-theme="dark"] .stat-icon.blue {
+    color: #60a5fa;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.stat-content span {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--planner-muted);
+}
+
+.stat-content strong {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 4px 0 3px;
+    color: var(--planner-text);
+    letter-spacing: -0.02em;
+}
+
+.stat-content small {
+    font-size: 11px;
+    color: var(--planner-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------------------------
+   Panels & Panel Headers
+   -------------------------------------------------------------------------- */
+.panel {
+    background: var(--planner-surface);
+    border: 1px solid var(--planner-border);
+    border-radius: 16px;
+    box-shadow: var(--planner-shadow);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--planner-border);
+    flex-wrap: wrap;
+}
+
+.panel-header h2 {
+    margin: 0 0 3px;
+    font-size: 16px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: var(--planner-text);
+}
+
+.panel-header p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--planner-muted);
+}
+
+.panel-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.table-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.table-search-wrap i {
+    position: absolute;
+    left: 12px;
+    color: var(--planner-muted);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.table-search {
+    height: 38px;
+    width: clamp(180px, 18vw, 240px);
+    padding: 0 12px 0 34px;
+    border: 1px solid var(--planner-border);
+    border-radius: 10px;
+    background: var(--planner-surface);
+    color: var(--planner-text);
+    font-size: 13px;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.table-filter-pill {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--planner-border);
+    border-radius: 10px;
+    background: var(--planner-surface);
+    color: var(--planner-text);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.table-search:focus,
+.table-filter-pill:focus {
+    border-color: var(--planner-green);
+    box-shadow: 0 0 0 3px rgba(8, 174, 97, 0.15);
+}
+
+.library-count {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--planner-green-soft);
+    color: var(--planner-green-dark);
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+html[data-theme="dark"] .library-count {
+    color: #34d399;
+}
+
+/* --------------------------------------------------------------------------
+   Planner Meal Library Grid & Cards
+   -------------------------------------------------------------------------- */
+.planner-library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 340px));
+    gap: 18px;
+    padding: 24px;
+    align-items: stretch;
+}
+
+.planner-library-panel,
+.schedule-panel,
+.table-panel {
+    scroll-margin-top: 76px;
+}
+
+.planner-meal-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--planner-border);
+    border-radius: 16px;
+    background: var(--planner-surface);
+    overflow: hidden;
+    box-shadow: var(--planner-card-shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.planner-meal-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(8, 174, 97, 0.4);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.planner-meal-card-image {
+    position: relative;
+    height: 145px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #e8f8ef 0%, #f4fae8 100%);
+    color: #08ae61;
+    font-size: 2.8rem;
+    overflow: hidden;
+}
+
+html[data-theme="dark"] .planner-meal-card-image {
+    background: linear-gradient(135deg, #13221a 0%, #1a2920 100%);
+    color: #34d399;
+}
+
+.planner-meal-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.planner-meal-card:hover .planner-meal-card-image img {
+    transform: scale(1.04);
+}
+
+.planner-meal-card-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(8px);
+}
+
+.planner-meal-card-status.active {
+    background: rgba(220, 252, 231, 0.95);
+    color: #067647;
+    border: 1px solid rgba(8, 174, 97, 0.25);
+}
+
+.planner-meal-card-status.inactive {
+    background: rgba(254, 243, 242, 0.95);
+    color: #b42318;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.planner-meal-cook-time {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.75);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+}
+
+.planner-meal-card-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.planner-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.planner-meal-category {
+    color: var(--planner-green-dark);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+html[data-theme="dark"] .planner-meal-category {
+    color: #34d399;
+}
+
+.planner-meal-id {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--planner-muted);
+}
+
+.planner-meal-card h3 {
+    margin: 4px 0 2px;
+    font-size: 15px;
+    font-weight: 750;
+    color: var(--planner-text);
+    line-height: 1.35;
+}
+
+.planner-meal-name-km {
+    display: block;
+    font-size: 12px;
+    color: var(--planner-muted);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.planner-meal-card p {
+    margin: 0 0 12px;
+    color: var(--planner-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+.planner-meal-nutrition {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--planner-page);
+    border: 1px solid var(--planner-border);
+    margin-bottom: 14px;
+}
+
+.nutrition-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1px;
+}
+
+.nutrition-pill .num {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--planner-text);
+    line-height: 1.1;
+}
+
+.nutrition-pill .label {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--planner-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.planner-meal-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.planner-meal-card-actions .btn {
+    flex: 1;
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.planner-card-edit {
+    background: var(--planner-surface);
+    border: 1px solid var(--planner-border);
+    color: var(--planner-text);
+}
+
+.planner-card-edit:hover {
+    border-color: var(--planner-green);
+    color: var(--planner-green-dark);
+}
+
+.planner-library-empty {
+    grid-column: 1 / -1;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--planner-muted);
+}
+
+.planner-library-empty i {
+    font-size: 2.8rem;
+    color: var(--planner-green);
+    opacity: 0.8;
+}
+
+.planner-library-empty h3 {
+    margin: 12px 0 6px;
+    color: var(--planner-text);
+    font-size: 17px;
+}
+
+.planner-library-empty p {
+    margin: 0 auto 20px;
+    max-width: 400px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Weekly Schedule Board
+   -------------------------------------------------------------------------- */
+.legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    color: var(--planner-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.dot.breakfast {
+    background: var(--planner-orange);
+}
+
+.dot.lunch {
+    background: var(--planner-green);
+}
+
+.dot.dinner {
+    background: var(--planner-purple);
+}
+
+.dot.snack {
+    background: var(--planner-rose);
+}
+
+.schedule-board {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(160px, 1fr));
+    gap: 10px;
+    overflow-x: auto;
+    padding: 18px 20px;
+    background: var(--planner-page);
+}
+
+.schedule-day {
+    min-height: 190px;
+    border: 1px solid var(--planner-border);
+    border-radius: 14px;
+    background: var(--planner-surface);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.schedule-day header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--planner-border);
+    background: var(--planner-surface);
+}
+
+.schedule-day header .day-name {
+    font-size: 13px;
+    font-weight: 750;
+    color: var(--planner-text);
+}
+
+.schedule-day header .day-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--planner-page);
+    color: var(--planner-muted);
+    border: 1px solid var(--planner-border);
+}
+
+.schedule-day-meals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    flex: 1;
+}
+
+.schedule-meal {
+    width: 100%;
+    border: 1px solid var(--planner-border);
+    border-left-width: 4px;
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--planner-surface);
+    color: var(--planner-text);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.schedule-meal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.09);
+    border-color: var(--planner-green);
+}
+
+.schedule-meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.schedule-meal-header .slot-name {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.schedule-meal.breakfast .slot-name {
+    color: #d97706;
+}
+
+.schedule-meal.lunch .slot-name {
+    color: #059669;
+}
+
+.schedule-meal.dinner .slot-name {
+    color: #7c3aed;
+}
+
+.schedule-meal.snack .slot-name {
+    color: #e11d48;
+}
+
+.schedule-meal.breakfast {
+    border-left-color: var(--planner-orange);
+}
+
+.schedule-meal.lunch {
+    border-left-color: var(--planner-green);
+}
+
+.schedule-meal.dinner {
+    border-left-color: var(--planner-purple);
+}
+
+.schedule-meal.snack {
+    border-left-color: var(--planner-rose);
+}
+
+.schedule-meal strong {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--planner-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.schedule-meal-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--planner-muted);
+}
+
+.schedule-meal-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.schedule-day-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 24px 8px;
+    text-align: center;
+    gap: 8px;
+}
+
+.schedule-day-empty span {
+    font-size: 11.5px;
+    color: var(--planner-muted);
+}
+
+.schedule-day-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: 1px dashed rgba(8, 174, 97, 0.4);
+    background: rgba(8, 174, 97, 0.08);
+    color: var(--planner-green-dark);
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.schedule-day-add-btn:hover {
+    background: rgba(8, 174, 97, 0.16);
+    border-color: var(--planner-green);
+    transform: translateY(-1px);
+}
+
+html[data-theme="dark"] .schedule-day-add-btn {
+    color: #34d399;
+}
+
+/* --------------------------------------------------------------------------
+   Table & Responsive Grid
+   -------------------------------------------------------------------------- */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--planner-border);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.table-responsive th {
+    background: var(--planner-page);
+    color: var(--planner-muted);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.table-responsive tbody tr {
+    transition: background 0.15s ease;
+}
+
+.table-responsive tbody tr:hover {
+    background: rgba(8, 174, 97, 0.03);
+}
+
+html[data-theme="dark"] .table-responsive tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.day-label {
+    font-weight: 750;
+    color: var(--planner-text);
+}
+
+.slot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 750;
+}
+
+.slot-badge.breakfast {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.slot-badge.lunch {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.slot-badge.dinner {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.slot-badge.snack {
+    background: #ffe4e6;
+    color: #9f1239;
+}
+
+html[data-theme="dark"] .slot-badge.breakfast {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+html[data-theme="dark"] .slot-badge.lunch {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+html[data-theme="dark"] .slot-badge.dinner {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+}
+
+html[data-theme="dark"] .slot-badge.snack {
+    background: rgba(244, 63, 94, 0.2);
+    color: #fb7185;
+}
+
+.meal-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 240px;
+}
+
+.meal-thumb {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--planner-green-soft);
+    color: var(--planner-green-dark);
+    font-size: 20px;
+    border: 1px solid var(--planner-border);
+}
+
+.meal-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.meal-cell strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 750;
+    color: var(--planner-text);
+    margin-bottom: 2px;
+}
+
+.meal-cell small {
+    display: block;
+    color: var(--planner-muted);
+    font-size: 11.5px;
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nutrition-cell strong {
+    display: block;
+    font-size: 13px;
+    color: var(--planner-text);
+}
+
+.nutrition-cell small {
+    display: block;
+    color: var(--planner-muted);
+    font-size: 11.5px;
+    margin-top: 2px;
+}
+
+.priority-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: var(--planner-page);
+    border: 1px solid var(--planner-border);
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    font-weight: 750;
+    color: var(--planner-text);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.status-badge.active-status {
+    background: #dcfce7;
+    color: #067647;
+}
+
+.status-badge.inactive-status {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+html[data-theme="dark"] .status-badge.active-status {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+html[data-theme="dark"] .status-badge.inactive-status {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.action-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.icon-button.small {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--planner-border);
+    border-radius: 8px;
+    background: var(--planner-surface);
+    color: var(--planner-text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.icon-button.small:hover {
+    border-color: var(--planner-green);
+    color: var(--planner-green-dark);
+    transform: translateY(-1px);
+}
+
+.icon-button.small.danger:hover {
+    border-color: #ef4444;
+    color: #dc2626;
+    background: #fef2f2;
+}
+
+html[data-theme="dark"] .icon-button.small.danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.empty-state {
+    padding: 48px 20px !important;
+    text-align: center !important;
+    color: var(--planner-muted);
+    font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   Modals & Form Layouts
+   -------------------------------------------------------------------------- */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: none;
+    place-items: center;
+    padding: 20px;
+    background: rgba(7, 26, 40, 0.6);
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+}
+
+.modal.show {
+    display: grid;
+}
+
+.modal-card {
+    background: var(--planner-surface);
+    border: 1px solid var(--planner-border);
+    border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+}
+
+.planner-modal {
+    width: min(650px, calc(100vw - 32px));
+    max-width: 650px;
+}
+
+.planner-meal-modal {
+    width: min(920px, calc(100vw - 32px));
+    max-width: 920px;
+    max-height: min(92vh, 900px);
+    display: flex;
+    flex-direction: column;
+}
+
+.planner-meal-modal form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.planner-meal-form-scroll {
+    overflow-y: auto;
+    padding: 24px;
+    min-height: 0;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--planner-border);
+    background: var(--planner-surface);
+}
+
+.modal-header h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 750;
+    color: var(--planner-text);
+}
+
+.modal-header p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--planner-muted);
+}
+
+.modal-header .close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--planner-border);
+    background: var(--planner-surface);
+    color: var(--planner-muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s ease;
+}
+
+.modal-header .close:hover {
+    color: var(--planner-text);
+    border-color: var(--planner-muted);
+}
+
+.modal-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 24px;
+}
+
+.planner-form-section {
+    margin-bottom: 24px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--planner-border);
+}
+
+.planner-form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.planner-form-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--planner-text);
+}
+
+.planner-form-section h3 span {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--planner-green-soft);
+    color: var(--planner-green-dark);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+html[data-theme="dark"] .planner-form-section h3 span {
+    color: #34d399;
+}
+
+.planner-meal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.planner-meal-form-grid.nutrition-fields {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.field.full {
+    grid-column: 1 / -1;
+}
+
+.field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--planner-text);
+}
+
+.field label b {
+    color: #ef4444;
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--planner-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--planner-surface);
+    color: var(--planner-text);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input,
+.field select {
+    height: 40px;
+}
+
+.field textarea {
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--planner-green);
+    box-shadow: 0 0 0 3px rgba(8, 174, 97, 0.14);
+}
+
+.field small {
+    font-size: 11px;
+    color: var(--planner-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--planner-border);
+    background: var(--planner-page);
+    flex: 0 0 auto;
+}
+
+body.planner-modal-open {
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .planner-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .schedule-board {
+        grid-template-columns: repeat(7, 165px);
+    }
+
+    .planner-meal-form-grid.nutrition-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .planner-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .planner-heading .heading-actions {
+        width: 100%;
+    }
+
+    .planner-heading .heading-actions .btn {
+        flex: 1;
+    }
+
+    .planner-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .planner-library-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .panel-tools {
+        width: 100%;
+    }
+
+    .table-search {
+        width: 100%;
+    }
+
+    .table-search-wrap {
+        width: 100%;
+    }
+
+    .modal {
+        padding: 12px;
+        align-items: flex-start;
+    }
+
+    .modal-card {
+        max-height: calc(100vh - 24px);
+    }
+
+    .modal-body {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    .planner-modal .field.full {
+        grid-column: auto;
+    }
+
+    .planner-meal-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .planner-meal-form-grid.nutrition-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .planner-meal-form-grid .field.full {
+        grid-column: auto;
+    }
+
+    .planner-meal-form-scroll {
+        padding: 16px;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        padding: 14px 16px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Dual-Mode Image Uploader & Preview
+   -------------------------------------------------------------------------- */
+.meal-image-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meal-image-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.meal-image-header label {
+    margin-bottom: 0 !important;
+}
+
+.image-mode-tabs {
+    display: inline-flex;
+    background: var(--planner-page);
+    padding: 3px;
+    border-radius: 9px;
+    border: 1px solid var(--planner-border);
+}
+
+.image-mode-tabs .tab-btn {
+    border: none;
+    background: transparent;
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--planner-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.image-mode-tabs .tab-btn:hover {
+    color: var(--planner-text);
+}
+
+.image-mode-tabs .tab-btn.active {
+    background: var(--planner-green);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(8, 174, 97, 0.25);
+}
+
+.image-mode-panel.hidden {
+    display: none;
+}
+
+.planner-image-dropzone {
+    border: 2px dashed rgba(8, 174, 97, 0.38);
+    border-radius: 12px;
+    padding: 24px 16px;
+    text-align: center;
+    background: rgba(8, 174, 97, 0.03);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.planner-image-dropzone:hover,
+.planner-image-dropzone.dragover {
+    border-color: var(--planner-green);
+    background: rgba(8, 174, 97, 0.08);
+    transform: translateY(-1px);
+}
+
+.planner-image-dropzone .dropzone-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(8, 174, 97, 0.12);
+    color: var(--planner-green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.planner-image-dropzone .dropzone-text {
+    font-size: 13px;
+    color: var(--planner-text);
+    line-height: 1.4;
+}
+
+.planner-image-dropzone .dropzone-text strong {
+    color: var(--planner-green-dark);
+}
+
+.planner-image-dropzone .dropzone-hint {
+    font-size: 11px;
+    color: var(--planner-muted);
+    margin-top: 4px;
+}
+
+.url-input-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--planner-surface);
+    border: 1.5px solid var(--planner-border);
+    border-radius: 10px;
+    padding: 0 12px;
+    transition: border-color 0.15s ease;
+}
+
+.url-input-box:focus-within {
+    border-color: var(--planner-green);
+}
+
+.url-input-box i {
+    color: var(--planner-muted);
+    font-size: 17px;
+    flex-shrink: 0;
+}
+
+.url-input-box input {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    width: 100%;
+    padding: 10px 0 !important;
+    font-size: 13.5px;
+    color: var(--planner-text);
+    box-shadow: none !important;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--planner-muted);
+}
+
+.planner-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--planner-page);
+    border: 1px solid var(--planner-border);
+}
+
+.planner-image-preview[hidden] {
+    display: none !important;
+}
+
+.planner-image-preview .preview-img-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--planner-border);
+    flex-shrink: 0;
+    background: var(--planner-surface);
+}
+
+.planner-image-preview .preview-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.planner-image-preview .preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.planner-image-preview .preview-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--planner-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.planner-image-preview .preview-meta {
+    font-size: 11.5px;
+    color: var(--planner-green-dark);
+    font-weight: 600;
+}
+
+.planner-image-preview .btn-clear-img {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.planner-image-preview .btn-clear-img:hover {
+    background: #ef4444;
+    color: #fff;
+}

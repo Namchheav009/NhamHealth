@@ -581,9 +581,7 @@ String _localPostAge(CommunityPost post) {
       });
     }
     if (difference.inDays < 1) {
-      return 'community.hours_ago'.trParams({
-        'count': '${difference.inHours}',
-      });
+      return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});
     }
     if (difference.inDays == 1) return 'community.yesterday'.tr;
     return 'community.days_ago'.trParams({'count': '${difference.inDays}'});

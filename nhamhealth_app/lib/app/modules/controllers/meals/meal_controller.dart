@@ -14,10 +14,8 @@ import '../../models/meals/meal_model.dart';
 import '../../repositories/meals/meal_repository.dart';
 
 class MealController extends GetxController with WidgetsBindingObserver {
-  MealController({
-    required this.repository,
-    AppLocaleService? localeService,
-  }) : _localeService = localeService;
+  MealController({required this.repository, AppLocaleService? localeService})
+    : _localeService = localeService;
 
   final MealRepository repository;
   final AppLocaleService? _localeService;
@@ -186,7 +184,8 @@ class MealController extends GetxController with WidgetsBindingObserver {
       isLoading.value = true;
       errorMessage.value = null;
 
-      final lang = _effectiveLocaleService?.currentLanguageCode ??
+      final lang =
+          _effectiveLocaleService?.currentLanguageCode ??
           Get.locale?.languageCode ??
           'en';
       final loadedMeals = await repository.getMeals(
@@ -209,7 +208,8 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _loadCategories() async {
     try {
-      final lang = _effectiveLocaleService?.currentLanguageCode ??
+      final lang =
+          _effectiveLocaleService?.currentLanguageCode ??
           Get.locale?.languageCode ??
           'en';
       final loaded = await repository.getCategories(languageCode: lang);

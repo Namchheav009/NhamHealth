@@ -152,42 +152,38 @@ class ProfileView extends GetView<ProfileController> {
               const _EmptyPosts()
             else
               Column(
-                children:
-                    controller.posts
-                        .map(
-                          (post) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ProfilePostCard(
-                              post: post,
-                              authorName: controller.name.value,
-                              authorAvatarUrl:
-                                  controller
-                                      .authenticatedUser
-                                      .value
-                                      ?.profileImageUrl ??
-                                  '',
-                              membership: controller.membership.value,
-                              onEdit: () => _showEditPost(post),
-                              onDelete: () => _confirmDeletePost(post),
-                              onViewDetails: () => _showComments(post),
-                              onLike: () => controller.togglePostLike(post),
-                              onShowLikes:
-                                  () => showPostLikers(
-                                    context,
-                                    post: post,
-                                    repository:
-                                        Get.find<CommunityRepository>(),
-                                  ),
-                              isLiking: controller.likingPostIds.contains(
-                                post.id,
+                children: controller.posts
+                    .map(
+                      (post) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ProfilePostCard(
+                          post: post,
+                          authorName: controller.name.value,
+                          authorAvatarUrl:
+                              controller
+                                  .authenticatedUser
+                                  .value
+                                  ?.profileImageUrl ??
+                              '',
+                          membership: controller.membership.value,
+                          onEdit: () => _showEditPost(post),
+                          onDelete: () => _confirmDeletePost(post),
+                          onViewDetails: () => _showComments(post),
+                          onLike: () => controller.togglePostLike(post),
+                          onShowLikes:
+                              () => showPostLikers(
+                                context,
+                                post: post,
+                                repository: Get.find<CommunityRepository>(),
                               ),
-                              onComment: () => _showComments(post),
-                              onShare: () => _showShare(post),
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
+                          isLiking: controller.likingPostIds.contains(post.id),
+                          onComment: () => _showComments(post),
+                          onShare: () => _showShare(post),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
           ],
         );
       }),
@@ -224,10 +220,7 @@ class ProfileView extends GetView<ProfileController> {
     return '${ApiConfig.baseUrl}${path.startsWith('/') ? '' : '/'}$path';
   }
 
-  Future<void> _showProfilePhoto(
-    BuildContext context,
-    _MyProfilePhoto photo,
-  ) =>
+  Future<void> _showProfilePhoto(BuildContext context, _MyProfilePhoto photo) =>
       showDialog<void>(
         context: context,
         barrierColor: Colors.black,
@@ -621,8 +614,7 @@ class _ProfileContentTab extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color:
-                    selected ? AppColors.primaryGreen : context.appMutedText,
+                color: selected ? AppColors.primaryGreen : context.appMutedText,
                 fontSize: 14,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
@@ -672,30 +664,32 @@ class _MyPhotosGrid extends StatelessWidget {
         crossAxisSpacing: 2,
         mainAxisSpacing: 2,
       ),
-      itemBuilder: (context, index) => Semantics(
-        button: true,
-        label: 'profile.open_photo_number'.trParams({
-          'number': '${index + 1}',
-        }),
-        child: Material(
-          color: context.appMutedSurface,
-          borderRadius: BorderRadius.circular(2),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => onOpen(photos[index]),
-            child: CachedNetworkImage(
-              imageUrl: photos[index].url,
-              fit: BoxFit.cover,
-              placeholder: (_, _) => ColoredBox(color: context.appMutedSurface),
-              errorWidget:
-                  (_, _, _) => Icon(
-                    Icons.broken_image_outlined,
-                    color: context.appMutedText,
-                  ),
+      itemBuilder:
+          (context, index) => Semantics(
+            button: true,
+            label: 'profile.open_photo_number'.trParams({
+              'number': '${index + 1}',
+            }),
+            child: Material(
+              color: context.appMutedSurface,
+              borderRadius: BorderRadius.circular(2),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => onOpen(photos[index]),
+                child: CachedNetworkImage(
+                  imageUrl: photos[index].url,
+                  fit: BoxFit.cover,
+                  placeholder:
+                      (_, _) => ColoredBox(color: context.appMutedSurface),
+                  errorWidget:
+                      (_, _, _) => Icon(
+                        Icons.broken_image_outlined,
+                        color: context.appMutedText,
+                      ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 }
