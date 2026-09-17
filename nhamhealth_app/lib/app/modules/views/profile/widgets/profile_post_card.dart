@@ -30,6 +30,11 @@ class ProfilePostCard extends StatelessWidget {
     required this.onShare,
     this.onFavorite,
     this.showRecipeButton = true,
+    this.onSharedPostTap,
+    this.onSharedAuthorTap,
+    this.sharedRelationshipLabel,
+    this.onSharedRelationshipTap,
+    this.onSharedOptions,
     super.key,
   });
 
@@ -51,6 +56,11 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback? onFavorite;
   final bool showRecipeButton;
+  final VoidCallback? onSharedPostTap;
+  final VoidCallback? onSharedAuthorTap;
+  final String? sharedRelationshipLabel;
+  final VoidCallback? onSharedRelationshipTap;
+  final VoidCallback? onSharedOptions;
 
   static const green = Color(0xFF009B46);
 
@@ -273,7 +283,14 @@ class ProfilePostCard extends StatelessWidget {
 
             if (post.sharedPost != null) ...[
               const SizedBox(height: 12),
-              CommunitySharedPostCard(post: post.sharedPost!),
+              CommunitySharedPostCard(
+                post: post.sharedPost!,
+                onTap: onSharedPostTap,
+                onAuthorTap: onSharedAuthorTap,
+                relationshipLabel: sharedRelationshipLabel,
+                onRelationshipTap: onSharedRelationshipTap,
+                onOptions: onSharedOptions,
+              ),
             ],
 
             if (post.imageBytes != null ||

@@ -1105,26 +1105,40 @@ class _CommunityPersonProfileViewState
       child: Column(
         children: _posts
             .map(
-              (post) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: ProfilePostCard(
-                  post: post,
-                  authorName: _profile?.name,
-                  authorAvatarUrl: _profile?.avatarUrl,
-                  membership: _roleLabel(_profile?.role ?? post.role),
-                  onLike: () => _togglePostLike(post),
-                  onShowLikes:
-                      () => showPostLikers(
-                        context,
-                        post: post,
-                        repository: _repository,
-                      ),
-                  isLiking: _likingPostIds.contains(post.id),
-                  onComment: () => _showComments(post),
-                  onShare: () => _showShare(post),
-                  onOptions: () => _showPostOptions(post),
-                ),
-              ),
+              (post) {
+                final sharedAsPost = post.sharedPost?.toPost();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: ProfilePostCard(
+                    post: post,
+                    authorName: _profile?.name,
+                    authorAvatarUrl: _profile?.avatarUrl,
+                    membership: _roleLabel(_profile?.role ?? post.role),
+                    onLike: () => _togglePostLike(post),
+                    onShowLikes:
+                        () => showPostLikers(
+                          context,
+                          post: post,
+                          repository: _repository,
+                        ),
+                    isLiking: _likingPostIds.contains(post.id),
+                    onComment: () => _showComments(post),
+                    onShare: () => _showShare(post),
+                    onOptions: () => _showPostOptions(post),
+                    onSharedPostTap:
+                        sharedAsPost != null ? () => _showComments(sharedAsPost) : null,
+                    onSharedAuthorTap:
+                        (sharedAsPost != null && sharedAsPost.authorId > 0)
+                            ? () => Get.toNamed<void>(
+                                  AppRoutes.communityPersonProfilePath(sharedAsPost.authorId),
+                                  arguments: sharedAsPost,
+                                )
+                            : null,
+                    onSharedOptions:
+                        sharedAsPost != null ? () => _showPostOptions(sharedAsPost) : null,
+                  ),
+                );
+              },
             )
             .toList(growable: false),
       ),

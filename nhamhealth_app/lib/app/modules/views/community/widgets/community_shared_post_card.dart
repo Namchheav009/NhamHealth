@@ -9,6 +9,10 @@ class CommunitySharedPostCard extends StatelessWidget {
   const CommunitySharedPostCard({
     required this.post,
     this.onTap,
+    this.onAuthorTap,
+    this.relationshipLabel,
+    this.onRelationshipTap,
+    this.onOptions,
     this.compact = false,
     this.showRecipeButton = true,
     super.key,
@@ -16,6 +20,10 @@ class CommunitySharedPostCard extends StatelessWidget {
 
   final CommunitySharedPost post;
   final VoidCallback? onTap;
+  final VoidCallback? onAuthorTap;
+  final String? relationshipLabel;
+  final VoidCallback? onRelationshipTap;
+  final VoidCallback? onOptions;
   final bool compact;
   final bool showRecipeButton;
 
@@ -62,65 +70,107 @@ class CommunitySharedPostCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
               child: Row(
                 children: [
-                  ClipOval(
-                    child: SizedBox.square(
-                      dimension: compact ? 36 : 40,
-                      child: ColoredBox(
-                        color: context.appSoftGreen,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Center(
-                              child: Text(
-                                _initials,
-                                style: const TextStyle(
-                                  color: green,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
+                  InkWell(
+                    onTap: onAuthorTap,
+                    borderRadius: BorderRadius.circular(compact ? 18 : 20),
+                    child: ClipOval(
+                      child: SizedBox.square(
+                        dimension: compact ? 36 : 40,
+                        child: ColoredBox(
+                          color: context.appSoftGreen,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Center(
+                                child: Text(
+                                  _initials,
+                                  style: const TextStyle(
+                                    color: green,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
-                            ),
-                            if (post.authorAvatarUrl.isNotEmpty)
-                              Image.network(
-                                post.authorAvatarUrl,
-                                fit: BoxFit.cover,
-                                cacheWidth: 120,
-                                errorBuilder:
-                                    (_, _, _) => const SizedBox.shrink(),
-                              ),
-                          ],
+                              if (post.authorAvatarUrl.isNotEmpty)
+                                Image.network(
+                                  post.authorAvatarUrl,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 120,
+                                  errorBuilder:
+                                      (_, _, _) => const SizedBox.shrink(),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 9),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.author,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: context.appText,
+                    child: InkWell(
+                      onTap: onAuthorTap,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            post.author,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: context.appText,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${_localSharedAge(post)}  ·  ${_localizedRole(post.role)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: context.appMutedText,
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_localSharedAge(post)}  ·  ${_localizedRole(post.role)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.appMutedText,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
+                  if (relationshipLabel != null &&
+                      relationshipLabel!.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: InkWell(
+                        onTap: onRelationshipTap,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            _localizedRelationship(relationshipLabel!),
+                            style: TextStyle(
+                              color: context.appMutedText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (onOptions != null)
+                    IconButton(
+                      tooltip: 'common.post_options'.tr,
+                      visualDensity: VisualDensity.compact,
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.appMutedSurface,
+                        foregroundColor: context.appMutedText,
+                      ),
+                      icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                      onPressed: onOptions,
+                    ),
                 ],
               ),
             ),
@@ -505,4 +555,14 @@ String _localizedRole(String? role) {
     return 'community.member'.tr;
   }
   return value;
+}
+
+String _localizedRelationship(String label) {
+  final trimmed = label.trim();
+  if (trimmed.isEmpty) return trimmed;
+  final lower = trimmed.toLowerCase();
+  if (lower == 'follow') return 'community.follow'.tr;
+  if (lower == 'following') return 'community.following'.tr;
+  if (lower == 'friend') return 'community.friend'.tr;
+  return trimmed;
 }

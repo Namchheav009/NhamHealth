@@ -400,14 +400,16 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     return deletedIds;
   }
 
-  Future<void> _showPostOptions() async {
+  Future<void> _showPostOptions([CommunityPost? targetPost]) async {
     final currentUserId =
         Get.isRegistered<CommunityController>()
             ? Get.find<CommunityController>().authenticatedUser.value?.id
             : null;
+    final post = targetPost ?? _post;
+
     final isOwner =
-        widget.canEdit ||
-        (currentUserId != null && _post.authorId == currentUserId);
+        (targetPost == null && widget.canEdit) ||
+        (currentUserId != null && post.authorId == currentUserId);
     final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
         title:
@@ -415,27 +417,28 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         actions:
             isOwner
                 ? [
-                  if (widget.onEditPost != null)
+                  if (targetPost == null && widget.onEditPost != null)
                     _CommentOption(
                       _DiscussionAction.edit,
                       'community.edit_post'.tr,
                       Icons.edit_outlined,
                     ),
-                  _CommentOption(
-                    _DiscussionAction.delete,
-                    'community.delete_post'.tr,
-                    Icons.delete_outline_rounded,
-                    isDestructive: true,
-                  ),
+                  if (targetPost == null)
+                    _CommentOption(
+                      _DiscussionAction.delete,
+                      'community.delete_post'.tr,
+                      Icons.delete_outline_rounded,
+                      isDestructive: true,
+                    ),
                 ]
                 : [
                   _CommentOption(
                     _DiscussionAction.save,
-                    (_post.isSaved
+                    (post.isSaved
                             ? 'common.remove_from_favorites'
                             : 'common.add_to_favorites')
                         .tr,
-                    _post.isSaved
+                    post.isSaved
                         ? Icons.bookmark_remove_rounded
                         : Icons.bookmark_add_outlined,
                   ),
@@ -452,7 +455,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     );
     if (!mounted || action == null) return;
     if (action == _DiscussionAction.save) {
-      await _togglePostSaved();
+      if (targetPost == null) {
+        await _togglePostSaved();
+      } else {
+        await _togglePostSavedFor(post);
+      }
       return;
     }
     if (action == _DiscussionAction.edit) {
@@ -468,8 +475,33 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       return;
     }
     await Get.to<void>(
-      () => CommunityReportPage(postId: _post.id, subject: 'post'),
+      () => CommunityReportPage(postId: post.id, subject: 'post'),
     );
+  }
+
+  Future<void> _togglePostSavedFor(CommunityPost post) async {
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      Get.snackbar(
+        'common.favorites_unavailable'.tr,
+        'This post cannot be saved right now.',
+      );
+      return;
+    }
+    try {
+      final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
+      if (!mounted) return;
+      setState(() {
+        post.isSaved = updated.isSaved;
+      });
+      AppAlert.toast(
+        message:
+            (updated.isSaved
+                    ? 'common.saved_to_favorites'
+                    : 'common.removed_from_favorites')
+                .tr,
+      );
+    } catch (_) {}
   }
 
   Future<void> _togglePostSaved() async {
@@ -763,19 +795,67 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     ),
   );
 
-  Widget _postSummary() => Column(
-    children: [
-      ProfilePostCard(
-        post: _post,
-        onAuthorTap: _openAuthorProfile,
-        onLike: _togglePostLike,
-        onComment: _focusComposer,
-        onShare: _showShareOptions,
-        onOptions: _showPostOptions,
-        isLiking: _updatingPost,
-      ),
-    ],
-  );
+  Widget _postSummary() {
+    final sharedAsPost = _post.sharedPost?.toPost();
+    final controller = Get.isRegistered<CommunityController>()
+        ? Get.find<CommunityController>()
+        : null;
+    final currentUserId = controller?.authenticatedUser.value?.id;
+    final isOriginalOwner =
+        sharedAsPost != null &&
+        (sharedAsPost.authorId <= 0 ||
+            (currentUserId != null && sharedAsPost.authorId == currentUserId));
+    final status = (controller != null && sharedAsPost != null && !isOriginalOwner)
+        ? controller.connectionStatusFor(sharedAsPost.authorId)
+        : null;
+    final relLabel = isOriginalOwner || sharedAsPost == null
+        ? null
+        : status == CommunityConnectionStatus.friend
+            ? 'community.friend'.tr
+            : (status == CommunityConnectionStatus.following ||
+                    (status == null && sharedAsPost.isFollowingAuthor))
+                ? 'community.following'.tr
+                : 'community.follow'.tr;
+
+    return Column(
+      children: [
+        ProfilePostCard(
+          post: _post,
+          onAuthorTap: _openAuthorProfile,
+          onLike: _togglePostLike,
+          onComment: _focusComposer,
+          onShare: _showShareOptions,
+          onOptions: _showPostOptions,
+          isLiking: _updatingPost,
+          onSharedPostTap:
+              sharedAsPost != null
+                  ? () => Get.to<void>(
+                        () => CommunityCommentsPage(post: sharedAsPost),
+                        transition: Transition.rightToLeft,
+                      )
+                  : null,
+          onSharedAuthorTap:
+              sharedAsPost != null
+                  ? () {
+                      if (sharedAsPost.authorId > 0) {
+                        Get.toNamed<void>(
+                          AppRoutes.communityPersonProfilePath(sharedAsPost.authorId),
+                          arguments: sharedAsPost,
+                        );
+                      }
+                    }
+                  : null,
+          sharedRelationshipLabel: relLabel,
+          onSharedRelationshipTap:
+              (controller != null && sharedAsPost != null && !isOriginalOwner)
+                  ? () => controller.togglePostAuthorFollow(sharedAsPost)
+                  : null,
+          onSharedOptions:
+              sharedAsPost != null ? () => _showPostOptions(sharedAsPost) : null,
+        ),
+      ],
+    );
+  }
 
   void _openAuthorProfile() {
     if (_post.authorId <= 0) return;
@@ -1513,38 +1593,48 @@ class _CommentOptionsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
-          Container(
-            decoration: BoxDecoration(
-              color: context.appMutedSurface,
+          Material(
+            color: context.appMutedSurface,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: context.appBorder),
+              side: BorderSide(color: context.appBorder),
             ),
             child: Column(
               children: [
                 for (var index = 0; index < actions.length; index++) ...[
-                  ListTile(
+                  InkWell(
                     onTap: () => Get.back(result: actions[index].value),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 2,
-                    ),
-                    leading: Icon(
-                      actions[index].icon,
-                      color:
-                          actions[index].isDestructive
-                              ? const Color(0xFFD94545)
-                              : context.appText,
-                      size: 24,
-                    ),
-                    title: Text(
-                      actions[index].label,
-                      style: TextStyle(
-                        color:
-                            actions[index].isDestructive
-                                ? const Color(0xFFD94545)
-                                : context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            actions[index].icon,
+                            color:
+                                actions[index].isDestructive
+                                    ? const Color(0xFFD94545)
+                                    : context.appText,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              actions[index].label,
+                              style: TextStyle(
+                                color:
+                                    actions[index].isDestructive
+                                        ? const Color(0xFFD94545)
+                                        : context.appText,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

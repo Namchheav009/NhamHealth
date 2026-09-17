@@ -107,6 +107,60 @@ void main() {
     },
   );
 
+  testWidgets(
+    'shared post card displays relationship label and options button and triggers callbacks',
+    (tester) async {
+      var didTapRel = false;
+      var didTapOptions = false;
+      var didTapAuthor = false;
+
+      final sharedPost = CommunitySharedPost(
+        id: '1',
+        authorId: 7,
+        author: 'Smos os trim Bong',
+        role: 'Member',
+        authorAvatarUrl: '',
+        mealName: 'Nom Banh Chok',
+        description: 'Tasty Khmer noodles',
+        imageUrl: '',
+      );
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CommunitySharedPostCard(
+                post: sharedPost,
+                relationshipLabel: 'Friend',
+                onRelationshipTap: () => didTapRel = true,
+                onOptions: () => didTapOptions = true,
+                onAuthorTap: () => didTapAuthor = true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Smos os trim Bong'), findsOneWidget);
+      expect(find.text('Friend'), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
+
+      await tester.tap(find.text('Friend'));
+      await tester.pump();
+      expect(didTapRel, isTrue);
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pump();
+      expect(didTapOptions, isTrue);
+
+      await tester.tap(find.text('Smos os trim Bong'));
+      await tester.pump();
+      expect(didTapAuthor, isTrue);
+    },
+  );
+
   testWidgets('share composer previews the original and submits a message', (
     tester,
   ) async {
