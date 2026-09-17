@@ -173,6 +173,26 @@ class ProfilePostCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (onFavorite != null)
+                  IconButton(
+                    tooltip:
+                        (post.isSaved
+                                ? 'common.remove_from_favorites'
+                                : 'common.add_to_favorites')
+                            .tr,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onFavorite,
+                    icon: Icon(
+                      post.isSaved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 22,
+                      color:
+                          post.isSaved
+                              ? AppColors.primaryGreen
+                              : context.appMutedText,
+                    ),
+                  ),
                 if (onOptions != null || onEdit != null || onDelete != null)
                   IconButton(
                     tooltip: 'common.post_options'.tr,
@@ -212,9 +232,10 @@ class ProfilePostCard extends StatelessWidget {
               ),
             ],
 
-            if (post.cookingTimeMinutes != null ||
-                post.servings != null ||
-                post.difficulty.isNotEmpty) ...[
+            if (post.sharedPost == null &&
+                (post.cookingTimeMinutes != null ||
+                    post.servings != null ||
+                    post.difficulty.isNotEmpty)) ...[
               const SizedBox(height: 12),
               Wrap(
                 spacing: 7,
@@ -241,7 +262,7 @@ class ProfilePostCard extends StatelessWidget {
               ),
             ],
 
-            if (post.tags.isNotEmpty) ...[
+            if (post.sharedPost == null && post.tags.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 7,
@@ -267,6 +288,7 @@ class ProfilePostCard extends StatelessWidget {
             ],
 
             if (showRecipeButton &&
+                post.sharedPost == null &&
                 (post.ingredients.isNotEmpty || post.steps.isNotEmpty)) ...[
               const SizedBox(height: 11),
               _ViewRecipeButton(
@@ -274,115 +296,46 @@ class ProfilePostCard extends StatelessWidget {
               ),
             ],
 
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 2),
+            if (post.likes > 0 || post.comments > 0 || post.shares > 0) ...[
+              const SizedBox(height: 10),
+              _EngagementSummary(post: post, onTap: onShowLikes),
+            ],
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 4),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.appBorder)),
+              ),
               child: Row(
                 children: [
-                  IconButton(
-                    tooltip:
-                        (post.isLiked
-                                ? 'community.liked'
-                                : 'community.like')
-                            .tr,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: isLiking ? null : onLike,
-                    icon: Icon(
-                      post.isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color:
-                          post.isLiked
-                              ? const Color(0xFFE64657)
-                              : context.appMutedText,
-                      size: 22,
-                    ),
+                  _ProfilePostMetric(
+                    icon:
+                        post.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                    value:
+                        post.isLiked
+                            ? 'community.liked'.tr
+                            : 'community.like'.tr,
+                    color:
+                        post.isLiked
+                            ? const Color(0xFFE64657)
+                            : context.appMutedText,
+                    onTap: isLiking ? null : onLike,
                   ),
-                  const SizedBox(width: 4),
-                  InkWell(
-                    key: ValueKey<String>('post-likers-${post.id}'),
-                    onTap: onShowLikes ?? (isLiking ? null : onLike),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 4,
-                      ),
-                      child: Text(
-                        '${post.likes}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.appText,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  InkWell(
+                  const _ProfileMetricDivider(),
+                  _ProfilePostMetric(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    value: 'community.comment'.tr,
+                    color: context.appMutedText,
                     onTap: onComment,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 4,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            size: 20,
-                            color: context.appMutedText,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${post.comments}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: context.appText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip:
-                        (post.isSaved
-                                ? 'common.remove_from_favorites'
-                                : 'common.add_to_favorites')
-                            .tr,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onFavorite,
-                    icon: Icon(
-                      post.isSaved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_border_rounded,
-                      size: 22,
-                      color:
-                          post.isSaved
-                              ? AppColors.primaryGreen
-                              : context.appMutedText,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    tooltip: 'community.share'.tr,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onShare,
-                    icon: Icon(
-                      Icons.shortcut_rounded,
-                      size: 22,
-                      color: context.appMutedText,
-                    ),
+                  const _ProfileMetricDivider(),
+                  _ProfilePostMetric(
+                    icon: Icons.share_outlined,
+                    value: 'community.share'.tr,
+                    color: context.appMutedText,
+                    onTap: onShare,
                   ),
                 ],
               ),

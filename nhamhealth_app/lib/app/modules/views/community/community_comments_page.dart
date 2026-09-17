@@ -14,6 +14,7 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/post_delete_confirmation.dart';
+import '../../controllers/community/community_controller.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
@@ -400,7 +401,12 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _showPostOptions() async {
-    final isOwner = widget.canEdit;
+    final currentUserId = Get.isRegistered<CommunityController>()
+        ? Get.find<CommunityController>().authenticatedUser.value?.id
+        : null;
+    final isOwner =
+        widget.canEdit ||
+        (currentUserId != null && _post.authorId == currentUserId);
     final action = await Get.bottomSheet<_DiscussionAction>(
       _CommentOptionsSheet(
         title:
@@ -423,9 +429,14 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 ]
                 : [
                   _CommentOption(
-                    _DiscussionAction.share,
-                    'community.share_post'.tr,
-                    Icons.reply_rounded,
+                    _DiscussionAction.save,
+                    (_post.isSaved
+                            ? 'common.remove_from_favorites'
+                            : 'common.add_to_favorites')
+                        .tr,
+                    _post.isSaved
+                        ? Icons.bookmark_remove_rounded
+                        : Icons.bookmark_add_outlined,
                   ),
                   _CommentOption(
                     _DiscussionAction.report,
@@ -439,6 +450,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       isScrollControlled: true,
     );
     if (!mounted || action == null) return;
+    if (action == _DiscussionAction.save) {
+      await _togglePostSaved();
+      return;
+    }
     if (action == _DiscussionAction.edit) {
       await _editPost();
       return;
@@ -454,6 +469,46 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     await Get.to<void>(
       () => CommunityReportPage(postId: _post.id, subject: 'post'),
     );
+  }
+
+  Future<void> _togglePostSaved() async {
+    final currentUserId = Get.isRegistered<CommunityController>()
+        ? Get.find<CommunityController>().authenticatedUser.value?.id
+        : null;
+    if (widget.canEdit ||
+        (currentUserId != null && _post.authorId == currentUserId)) {
+      return;
+    }
+    final recipeId = _post.mealId;
+    if (recipeId == null) {
+      Get.snackbar(
+        'common.favorites_unavailable'.tr,
+        'This post cannot be saved right now.',
+      );
+      return;
+    }
+    try {
+      final updated = await _repository.toggleSaved(_post.id, recipeId: recipeId);
+      if (!mounted) return;
+      setState(() => _post = updated.copyWith());
+      widget.onPostChanged?.call();
+      if (Get.isRegistered<CommunityController>()) {
+        final community = Get.find<CommunityController>();
+        final idx = community.posts.indexWhere((item) => item.id == _post.id);
+        if (idx >= 0) {
+          community.posts[idx] = updated;
+          community.posts.refresh();
+        }
+      }
+    } on Object catch (error) {
+      if (!mounted) return;
+      unawaited(
+        AppAlert.error(
+          title: 'common.favorites_unavailable',
+          message: error.toString(),
+        ),
+      );
+    }
   }
 
   Future<void> _confirmAndDeletePost() async {
@@ -1387,7 +1442,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   }
 }
 
-enum _DiscussionAction { reply, report, delete, edit, share }
+enum _DiscussionAction { reply, report, delete, edit, share, save }
 
 class _DiscussionMetricDivider extends StatelessWidget {
   const _DiscussionMetricDivider();
@@ -1425,44 +1480,43 @@ class _CommentOptionsSheet extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        color: context.appSurfaceLow,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Container(
-              width: 42,
-              height: 5,
+              width: 38,
+              height: 4,
               decoration: BoxDecoration(
-                color: context.appMutedText.withValues(alpha: .55),
+                color: context.appMutedText.withValues(alpha: .35),
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           if (title != null) ...[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  title!,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: context.appText,
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                title!,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
           Container(
             decoration: BoxDecoration(
               color: context.appMutedSurface,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: context.appBorder),
             ),
             child: Column(
               children: [
@@ -1470,8 +1524,8 @@ class _CommentOptionsSheet extends StatelessWidget {
                   ListTile(
                     onTap: () => Get.back(result: actions[index].value),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 3,
+                      horizontal: 18,
+                      vertical: 2,
                     ),
                     leading: Icon(
                       actions[index].icon,
@@ -1479,7 +1533,7 @@ class _CommentOptionsSheet extends StatelessWidget {
                           actions[index].isDestructive
                               ? const Color(0xFFD94545)
                               : context.appText,
-                      size: 27,
+                      size: 24,
                     ),
                     title: Text(
                       actions[index].label,
@@ -1488,13 +1542,13 @@ class _CommentOptionsSheet extends StatelessWidget {
                             actions[index].isDestructive
                                 ? const Color(0xFFD94545)
                                 : context.appText,
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   if (index < actions.length - 1)
-                    Divider(height: 1, indent: 64, color: context.appBorder),
+                    Divider(height: 1, indent: 58, color: context.appBorder),
                 ],
               ],
             ),

@@ -38,7 +38,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.text('Profile'), findsNothing);
     expect(find.text('Smos os trim Bong'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
     expect(find.text('Joined September 2026'), findsOneWidget);

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_share_actions.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_shared_post_card.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
@@ -21,18 +22,90 @@ void main() {
         'author': 'Original member',
         'role': 'Member',
         'authorAvatarUrl': '/avatars/7.jpg',
+        'mealName': 'Nom Banh Chok',
         'description': 'Original healthy idea',
         'imageUrl': '/posts/11.jpg',
         'imageUrls': ['/posts/11.jpg'],
         'ageLabel': '2h ago',
+        'cookingTimeMinutes': 45,
+        'servings': 2,
+        'difficulty': 'MEDIUM',
+        'tags': ['NomBanhChok', 'Yummy'],
+        'ingredients': [
+          {'name': 'Rice noodles', 'amount': 200, 'unit': 'g'},
+        ],
+        'steps': [
+          {'stepNumber': 1, 'instruction': 'Cook noodles'},
+        ],
       },
     });
 
     expect(post.sharedPost?.id, '11');
     expect(post.sharedPost?.author, 'Original member');
+    expect(post.sharedPost?.mealName, 'Nom Banh Chok');
     expect(post.sharedPost?.description, 'Original healthy idea');
     expect(post.sharedPost?.imageUrls, ['/posts/11.jpg']);
+    expect(post.sharedPost?.cookingTimeMinutes, 45);
+    expect(post.sharedPost?.servings, 2);
+    expect(post.sharedPost?.difficulty, 'MEDIUM');
+    expect(post.sharedPost?.tags, ['NomBanhChok', 'Yummy']);
+    expect(post.sharedPost?.hasRecipe, isTrue);
   });
+
+  testWidgets(
+    'shared post card displays original post pills, tags, and recipe button',
+    (tester) async {
+      final sharedPost = CommunitySharedPost(
+        id: '11',
+        authorId: 7,
+        author: 'Smos os trim Bong',
+        role: 'Member',
+        authorAvatarUrl: '',
+        mealName: 'នំបាញ់ឆុក',
+        description: 'Tasty Khmer noodles',
+        imageUrl: '',
+        imageUrls: const [
+          'https://example.com/meal1.jpg',
+          'https://example.com/meal2.jpg',
+        ],
+        cookingTimeMinutes: 45,
+        servings: 2,
+        difficulty: 'MEDIUM',
+        tags: const ['NomBanhChok', 'Yummy'],
+        ingredients: const [
+          MealPostIngredient(ingredientName: 'Rice noodles', amount: 200, unit: 'g'),
+        ],
+        steps: const [
+          MealPostStep(stepNumber: 1, instruction: 'Prepare fresh noodles'),
+        ],
+      );
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CommunitySharedPostCard(post: sharedPost),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Smos os trim Bong'), findsOneWidget);
+      expect(find.text('នំបាញ់ឆុក'), findsOneWidget);
+      expect(find.text('45 min'), findsOneWidget);
+      expect(find.text('2 servings'), findsOneWidget);
+      expect(find.text('MEDIUM'), findsOneWidget);
+      expect(find.text('#NomBanhChok'), findsOneWidget);
+      expect(find.text('#Yummy'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('shared-view-full-recipe-button')),
+        findsOneWidget,
+      );
+      expect(find.text('View Full Recipe'), findsOneWidget);
+    },
+  );
 
   testWidgets('share composer previews the original and submits a message', (
     tester,
@@ -49,6 +122,8 @@ void main() {
 
     await tester.pumpWidget(
       GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: CommunitySharePostPage(
           post: post,
           authorName: 'Sharing member',
@@ -92,6 +167,8 @@ void main() {
 
       await tester.pumpWidget(
         GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
           home: CommunitySharePostPage(
             post: post,
             authorName: 'Visal Dev',
@@ -144,6 +221,8 @@ void main() {
 
       await tester.pumpWidget(
         GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
           home: Scaffold(
             body: Center(
               child: Builder(
@@ -225,6 +304,8 @@ void main() {
 
       await tester.pumpWidget(
         GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
           home: Builder(
             builder:
                 (context) => Scaffold(

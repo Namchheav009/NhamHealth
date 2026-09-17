@@ -43,6 +43,16 @@ void main() {
       find.byKey(const ValueKey<String>('profile-tablet-layout')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey<String>('my-profile-tab-all')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.grid_view_rounded), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('my-profile-tab-photos')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.image_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());

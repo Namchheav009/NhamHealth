@@ -140,6 +140,35 @@ void main() {
 
     expect(didRequestLikers, isTrue);
   });
+
+  testWidgets('renders action metrics and header favorite button when provided', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProfilePostCard(
+            post: CommunityPost(
+              id: '4',
+              description: 'A community post.',
+              imageUrl: '',
+              author: 'Profile Member',
+              role: 'Member',
+              isSaved: true,
+            ),
+            onLike: _noop,
+            onComment: _noop,
+            onShare: _noop,
+            onFavorite: _noop,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark_rounded), findsOneWidget);
+  });
 }
 
 void _noop() {}

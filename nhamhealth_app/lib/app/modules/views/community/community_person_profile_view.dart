@@ -294,31 +294,16 @@ class _CommunityPersonProfileViewState
         Positioned(
           top: 10,
           left: 16,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: 'common.back'.tr,
-                onPressed: Get.back,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-                icon: Icon(
-                  Icons.arrow_back_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'profile.title'.tr,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 21,
-                  letterSpacing: -.3,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+          child: IconButton(
+            tooltip: 'common.back'.tr,
+            onPressed: Get.back,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
+            ),
           ),
         ),
         Positioned(top: 10, right: 20, child: _profileMenuButton(context)),
@@ -1208,11 +1193,15 @@ class _CommunityPersonProfileViewState
 
   Future<void> _showPostOptions(CommunityPost post) async {
     final action = await Get.bottomSheet<String>(
-      const _PersonPostOptionsSheet(),
+      _PersonPostOptionsSheet(post: post),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
     );
     if (!mounted || action == null) return;
+    if (action == 'save') {
+      await _togglePostSaved(post);
+      return;
+    }
     if (action == 'details') {
       _openPost(post);
       return;
@@ -1221,6 +1210,47 @@ class _CommunityPersonProfileViewState
       await Get.to<void>(
         () => CommunityReportPage(postId: post.id, subject: 'post'),
         transition: Transition.rightToLeft,
+      );
+    }
+  }
+
+  Future<void> _togglePostSaved(CommunityPost post) async {
+    final currentUserId = Get.isRegistered<CommunityController>()
+        ? Get.find<CommunityController>().authenticatedUser.value?.id
+        : null;
+    if (currentUserId != null && post.authorId == currentUserId) {
+      return;
+    }
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      Get.snackbar(
+        'common.favorites_unavailable'.tr,
+        'This post cannot be saved right now.',
+      );
+      return;
+    }
+    try {
+      final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
+      if (!mounted) return;
+      setState(() {
+        final index = _posts.indexWhere((item) => item.id == post.id);
+        if (index >= 0) _posts[index] = updated;
+      });
+      if (Get.isRegistered<CommunityController>()) {
+        final community = Get.find<CommunityController>();
+        final idx = community.posts.indexWhere((item) => item.id == post.id);
+        if (idx >= 0) {
+          community.posts[idx] = updated;
+          community.posts.refresh();
+        }
+      }
+    } on Object catch (error) {
+      if (!mounted) return;
+      unawaited(
+        AppAlert.error(
+          title: 'common.favorites_unavailable',
+          message: error.toString(),
+        ),
       );
     }
   }
@@ -1439,7 +1469,9 @@ class _PersonProfilePhoto {
 }
 
 class _PersonPostOptionsSheet extends StatelessWidget {
-  const _PersonPostOptionsSheet();
+  const _PersonPostOptionsSheet({required this.post});
+
+  final CommunityPost post;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -1484,21 +1516,39 @@ class _PersonPostOptionsSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: context.appBorder),
             ),
-            child: Column(
-              children: [
-                _PersonPostOptionTile(
-                  icon: Icons.article_outlined,
-                  label: 'community.view_details'.tr,
-                  onTap: () => Get.back(result: 'details'),
-                ),
-                Divider(height: 1, indent: 58, color: context.appBorder),
-                _PersonPostOptionTile(
-                  icon: Icons.flag_outlined,
-                  label: 'community.report_post'.tr,
-                  destructive: true,
-                  onTap: () => Get.back(result: 'report'),
-                ),
-              ],
+            child: Builder(
+              builder: (context) {
+                final currentUserId = Get.isRegistered<CommunityController>()
+                    ? Get.find<CommunityController>().authenticatedUser.value?.id
+                    : null;
+                final isOwner =
+                    currentUserId != null && post.authorId == currentUserId;
+                return Column(
+                  children: [
+                    if (!isOwner) ...[
+                      _PersonPostOptionTile(
+                        icon:
+                            post.isSaved
+                                ? Icons.bookmark_remove_rounded
+                                : Icons.bookmark_add_outlined,
+                        label:
+                            (post.isSaved
+                                    ? 'common.remove_from_favorites'
+                                    : 'common.add_to_favorites')
+                                .tr,
+                        onTap: () => Get.back(result: 'save'),
+                      ),
+                      Divider(height: 1, indent: 58, color: context.appBorder),
+                    ],
+                    _PersonPostOptionTile(
+                      icon: Icons.flag_outlined,
+                      label: 'community.report_post'.tr,
+                      destructive: true,
+                      onTap: () => Get.back(result: 'report'),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -1889,4 +1939,3 @@ class _ProfileMessage extends StatelessWidget {
     ),
   );
 }
-

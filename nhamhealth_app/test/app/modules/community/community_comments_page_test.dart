@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/models/community/community_commen
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_comments_page.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -18,6 +19,8 @@ void main() {
   testWidgets('full recipe opens from the comments post card', (tester) async {
     await tester.pumpWidget(
       GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: CommunityCommentsPage(
           post: CommunityPost(
             id: 'recipe-1',
@@ -51,6 +54,72 @@ void main() {
     expect(find.text('Recipe details'), findsOneWidget);
     expect(find.text('Fish'), findsOneWidget);
     expect(find.text('Steam the fish.'), findsOneWidget);
+  });
+
+  testWidgets('own post options does not show save to favorite', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: CommunityCommentsPage(
+          canEdit: true,
+          onEditPost: (draft) async => CommunityPost(
+            id: 'own-1',
+            description: draft.description,
+            imageUrl: '',
+            author: 'Me',
+            role: 'Member',
+          ),
+          post: CommunityPost(
+            id: 'own-1',
+            description: 'My own recipe post.',
+            imageUrl: '',
+            author: 'Me',
+            role: 'Member',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap more options button
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Post options'), findsOneWidget);
+    expect(find.text('Save to favorites'), findsNothing);
+    expect(find.text('Edit post'), findsOneWidget);
+    expect(find.text('Delete post'), findsOneWidget);
+  });
+
+  testWidgets('other user post options shows save to favorite', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: CommunityCommentsPage(
+          canEdit: false,
+          post: CommunityPost(
+            id: 'other-1',
+            description: 'Other person recipe post.',
+            imageUrl: '',
+            author: 'Other Person',
+            role: 'Member',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap more options button
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('More options'), findsOneWidget);
+    expect(find.text('Save to favorites'), findsOneWidget);
+    expect(find.text('Report post'), findsOneWidget);
+    expect(find.text('Edit post'), findsNothing);
+    expect(find.text('Delete post'), findsNothing);
   });
 }
 

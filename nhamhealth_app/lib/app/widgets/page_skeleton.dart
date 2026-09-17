@@ -851,30 +851,37 @@ class _SkeletonCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: double.infinity,
     height: height,
-    padding: const EdgeInsets.all(17),
+    clipBehavior: Clip.antiAlias,
+    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
     decoration: BoxDecoration(
       color: context.appSurface.withValues(alpha: .82),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: context.appBorder),
     ),
-    child: const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FractionallySizedBox(
-          widthFactor: .48,
-          child: _SkeletonBox(height: 15, radius: 8),
-        ),
-        SizedBox(height: 11),
-        FractionallySizedBox(
-          widthFactor: .76,
-          child: _SkeletonBox(height: 12, radius: 6),
-        ),
-        Spacer(),
-        FractionallySizedBox(
-          widthFactor: .9,
-          child: _SkeletonBox(height: 38, radius: 13),
-        ),
-      ],
+    child: LayoutBuilder(
+      builder: (context, constraints) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const FractionallySizedBox(
+            widthFactor: .48,
+            child: _SkeletonBox(height: 15, radius: 8),
+          ),
+          if (constraints.maxHeight > 55) ...[
+            const SizedBox(height: 8),
+            const FractionallySizedBox(
+              widthFactor: .76,
+              child: _SkeletonBox(height: 12, radius: 6),
+            ),
+          ],
+          if (constraints.maxHeight > 95) ...[
+            const Spacer(),
+            const FractionallySizedBox(
+              widthFactor: .9,
+              child: _SkeletonBox(height: 38, radius: 13),
+            ),
+          ],
+        ],
+      ),
     ),
   );
 }
