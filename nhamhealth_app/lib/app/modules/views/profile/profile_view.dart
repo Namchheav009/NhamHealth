@@ -531,7 +531,7 @@ class ProfileView extends GetView<ProfileController> {
 }
 
 class ProfileContentTabs extends StatelessWidget {
-  const ProfileContentTabs({
+  const ProfileContentTabs({super.key,
     required this.selectedIndex,
     required this.onChanged,
   });

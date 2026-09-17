@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response;
@@ -9,7 +8,6 @@ import 'package:nhamhealth_flutter/app/modules/providers/community/follow_connec
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/follow_connections_repository.dart';
-import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {

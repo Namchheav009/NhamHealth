@@ -16,7 +16,6 @@ import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/post_delete_confirmation.dart';
 import '../../controllers/community/community_controller.dart';
 import '../../models/community/community_comment.dart';
-import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_reply_address.dart';
 import '../../repositories/community/community_repository.dart';
