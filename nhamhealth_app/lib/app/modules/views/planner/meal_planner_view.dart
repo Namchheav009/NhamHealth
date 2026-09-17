@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
@@ -880,13 +881,15 @@ class MealPlannerView extends GetView<MealPlannerController> {
     ),
   );
 
-  void _openSlot(MealPlanSlot slot) {
+  Future<void> _openSlot(MealPlanSlot slot) async {
     if (controller.isLoadingRecommendations.value) {
-      Get.snackbar('planner.loading'.tr, 'planner.loading_admin_meals'.tr);
       return;
     }
     if (controller.recommendationsError.value.isNotEmpty) {
-      Get.snackbar('planner.error'.tr, controller.recommendationsError.value);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: controller.recommendationsError.value,
+      );
       return;
     }
     Get.toNamed(AppRoutes.mealPlannerCategories, arguments: {'slot': slot});
@@ -1126,9 +1129,9 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           Navigator.pop(sheet);
                           final ok = await controller.moveMeal(meal, day);
                           if (!ok) {
-                            Get.snackbar(
-                              'planner.error'.tr,
-                              'planner.save_error'.tr,
+                            await AppAlert.actionError(
+                              title: 'planner.error'.tr,
+                              message: 'planner.save_error'.tr,
                             );
                           }
                         },
@@ -1427,7 +1430,10 @@ class MealPlannerView extends GetView<MealPlannerController> {
 
   Future<void> _generate(BuildContext context) async {
     if (controller.groceryItems.isEmpty) {
-      Get.snackbar('planner.grocery_list'.tr, 'planner.empty_grocery_list'.tr);
+      await AppAlert.actionError(
+        title: 'planner.grocery_list'.tr,
+        message: 'planner.empty_grocery_list'.tr,
+      );
       return;
     }
 

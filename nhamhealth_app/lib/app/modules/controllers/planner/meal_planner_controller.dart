@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import '../../../widgets/app_alert.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 
@@ -181,7 +182,10 @@ class MealPlannerController extends GetxController {
       return true;
     } catch (_) {
       plans[key] = previous;
-      Get.snackbar('planner.error'.tr, 'planner.save_error'.tr);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
       return false;
     } finally {
       isSaving.value = false;
@@ -208,7 +212,10 @@ class MealPlannerController extends GetxController {
       _put(_dateKey(selectedDate), saved);
       return true;
     } catch (_) {
-      Get.snackbar('planner.error'.tr, 'planner.save_error'.tr);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
       return false;
     } finally {
       isSaving.value = false;
@@ -246,6 +253,10 @@ class MealPlannerController extends GetxController {
       _put(key, await provider.updateMeal(planId, servings: servings));
     } catch (_) {
       _put(key, meal);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
     }
   }
 
@@ -261,6 +272,10 @@ class MealPlannerController extends GetxController {
       await provider.deleteMeal(planId);
     } catch (_) {
       _put(key, meal);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
     }
   }
 
