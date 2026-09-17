@@ -14,6 +14,8 @@ import '../../models/home/home_route_arguments.dart';
 import '../../models/home/daily_summary_model.dart';
 import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/mood_model.dart';
+import '../../models/home/recommended_meal_model.dart';
+import '../../models/meals/meal_model.dart';
 import '../../repositories/home/home_repository.dart';
 
 class HomeController extends GetxController {
@@ -338,6 +340,23 @@ class HomeController extends GetxController {
     Get.toNamed<void>(
       AppRoutes.meals,
       arguments: normalizedQuery.isEmpty ? null : {'query': normalizedQuery},
+    );
+  }
+
+  void openRecommendedMeal(RecommendedMealModel meal) {
+    Get.toNamed<void>(
+      AppRoutes.foodDetail,
+      arguments: MealModel(
+        id: meal.id,
+        name: meal.name,
+        calories: meal.calories,
+        image: meal.image,
+        category: '',
+        categoryId: 0,
+        proteinGrams: meal.proteinGrams,
+        recommendationReason: meal.reason,
+        isFavorite: favoriteMealIds.contains(meal.id),
+      ),
     );
   }
 

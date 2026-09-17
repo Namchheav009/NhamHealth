@@ -29,7 +29,7 @@ class PlannerSlotTheme {
     MealPlanSlot.breakfast => const PlannerSlotTheme(
       accent: Color(0xFFD97706),
       soft: Color(0xFFFEF3C7),
-      icon: Icons.wb_sunny_outlined,
+      icon: Icons.wb_sunny_rounded,
     ),
     MealPlanSlot.lunch => const PlannerSlotTheme(
       accent: Color(0xFF059669),
@@ -39,7 +39,7 @@ class PlannerSlotTheme {
     MealPlanSlot.dinner => const PlannerSlotTheme(
       accent: Color(0xFF7C3AED),
       soft: Color(0xFFEDE9FE),
-      icon: Icons.nights_stay_outlined,
+      icon: Icons.nightlight_round,
     ),
     MealPlanSlot.snack => const PlannerSlotTheme(
       accent: Color(0xFFE11D48),
@@ -206,10 +206,7 @@ class PlannerPageHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: titleContent),
-          if (actions != null) ...[
-            const SizedBox(width: 12),
-            actions,
-          ],
+          if (actions != null) ...[const SizedBox(width: 12), actions],
         ],
       ),
     );
@@ -222,24 +219,60 @@ class PlannerPrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final IconData? trailingIcon;
 
   @override
-  Widget build(BuildContext context) => FilledButton.icon(
-    onPressed: onPressed,
-    icon: Icon(icon ?? Icons.add_circle_outline_rounded, size: 20),
-    label: Text(label),
-    style: FilledButton.styleFrom(
-      backgroundColor: AppColors.primaryGreen,
-      foregroundColor: Colors.white,
-      minimumSize: const Size.fromHeight(52),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-    ),
-  );
+  Widget build(BuildContext context) {
+    if (trailingIcon == null) {
+      return FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon ?? Icons.add_circle_outline_rounded, size: 20),
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+        ),
+      );
+    }
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(54),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+      ),
+      child: Row(
+        children: [
+          Icon(icon ?? Icons.add_circle_outline_rounded, size: 20),
+          Expanded(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          Icon(trailingIcon, size: 20),
+        ],
+      ),
+    );
+  }
 }

@@ -56,7 +56,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Weekly Meal Planner'), findsOneWidget);
+    expect(find.text('Meal Planner'), findsOneWidget);
     expect(find.textContaining('0/4'), findsOneWidget);
 
     final breakfastSlot = find.byKey(const ValueKey('planner-slot-breakfast'));

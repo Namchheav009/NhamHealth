@@ -635,99 +635,118 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                   },
         ),
       ),
-      header: PlannerPageHeader(
-        title: 'planner.meal_detail'.tr,
-        onClose:
-            () => Get.until(
-              (route) =>
-                  route.settings.name == AppRoutes.mealPlanner || route.isFirst,
-            ),
-      ),
+      header: const SizedBox.shrink(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hero Food Image with Floating Buttons
-          Stack(
-            fit: StackFit.passthrough,
-            children: [
-              PlannerMealImage(
-                meal: meal,
-                width: double.infinity,
-                height: 285,
-                radius: 22,
-              ),
-              // Floating Favorite Button
-              Positioned(
-                top: 12,
-                right: 12,
-                child: InkWell(
-                  onTap: () => setState(() => favorite = !favorite),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: context.appElevatedSurface.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                      boxShadow: context.appTileShadow,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 280,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    PlannerMealImage(
+                      meal: meal,
+                      width: double.infinity,
+                      height: 280,
+                      radius: 22,
                     ),
-                    child: Icon(
-                      favorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color:
-                          favorite ? Colors.redAccent : AppColors.primaryGreen,
-                      size: 22,
+                    Positioned(
+                      top: 16,
+                      left: 18,
+                      child: _HeroCircleButton(
+                        icon: Icons.arrow_back_rounded,
+                        onTap: Get.back<void>,
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      top: 16,
+                      right: 68,
+                      child: _HeroCircleButton(
+                        icon:
+                            favorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                        color:
+                            favorite ? Colors.redAccent : AppColors.primaryGreen,
+                        onTap: () => setState(() => favorite = !favorite),
+                      ),
+                    ),
+                    Positioned(
+                      top: 16,
+                      right: 18,
+                      child: _HeroCircleButton(
+                        icon: Icons.ios_share_rounded,
+                        onTap:
+                            () => SharePlus.instance.share(
+                              ShareParams(text: plannerMealName(meal)),
+                            ),
+                      ),
+                    ),
+                    if (meal.tags.isNotEmpty)
+                      Positioned(
+                        left: 18,
+                        right: 18,
+                        bottom: 14,
+                        child: Wrap(
+                          spacing: 7,
+                          runSpacing: 6,
+                          children:
+                              meal.tags.take(3).map((tag) => _HeroTag(tag)).toList(),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
           // Meal Name
           Text(
             plannerMealName(meal),
             style: TextStyle(
               color: context.appText,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 8),
 
-          // Tags row
-          if (meal.tags.isNotEmpty)
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children:
-                  meal.tags
-                      .map(
-                        (tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: context.appSoftGreen,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            tag,
-                            style: const TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-            ),
-          const SizedBox(height: 18),
+          Row(
+            children: [
+              if (meal.cookingTimeMinutes != null) ...[
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 18,
+                  color: context.appMutedText,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '${meal.cookingTimeMinutes} min',
+                  style: TextStyle(color: context.appMutedText, fontSize: 12.5),
+                ),
+                const SizedBox(width: 16),
+              ],
+              Icon(
+                Icons.restaurant_rounded,
+                size: 18,
+                color: context.appMutedText,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '${servings.toStringAsFixed(servings == servings.roundToDouble() ? 0 : 1)} ${'planner.serving'.tr}',
+                style: TextStyle(color: context.appMutedText, fontSize: 12.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
 
           // 4 Macro Nutrition Cards Row
           Row(
@@ -738,21 +757,21 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                 color: const Color(0xFFD97706),
                 icon: Icons.local_fire_department_rounded,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               _NutrientCard(
                 value: '${(meal.proteinGrams * servings).toStringAsFixed(0)}g',
                 label: 'planner.protein'.tr,
                 color: const Color(0xFF2563EB),
                 icon: Icons.fitness_center_rounded,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               _NutrientCard(
                 value: '${(meal.carbsGrams * servings).toStringAsFixed(0)}g',
                 label: 'planner.carbs'.tr,
                 color: AppColors.primaryGreen,
                 icon: Icons.grain_rounded,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               _NutrientCard(
                 value: '${(meal.fatGrams * servings).toStringAsFixed(0)}g',
                 label: 'planner.fat'.tr,
@@ -761,7 +780,52 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
+
+          _SectionTitle('planner.servings'.tr),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: context.appBorder),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed:
+                      servings > .5
+                          ? () => setState(() => servings -= .5)
+                          : null,
+                  icon: const Icon(Icons.remove_rounded),
+                  color: AppColors.primaryGreen,
+                ),
+                Expanded(
+                  child: Text(
+                    servings.toStringAsFixed(
+                      servings == servings.roundToDouble() ? 0 : 1,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton.filled(
+                  onPressed: () => setState(() => servings += .5),
+                  icon: const Icon(Icons.add_rounded),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // Description
           _SectionTitle('planner.description'.tr),
@@ -772,83 +836,11 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                 : meal.description.tr,
             style: TextStyle(
               color: context.appMutedText,
-              fontSize: 14,
-              height: 1.55,
+              fontSize: 12.5,
+              height: 1.45,
             ),
           ),
           const SizedBox(height: 20),
-
-          // Servings Stepper
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: context.appElevatedSurface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: context.appBorder.withValues(alpha: 0.8),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'planner.servings'.tr,
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'planner.serving'.tr,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed:
-                      servings > 0.5
-                          ? () => setState(() => servings -= 0.5)
-                          : null,
-                  icon: const Icon(Icons.remove_circle_outline_rounded),
-                  color: context.appMutedText,
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appSoftGreen,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    servings == servings.roundToDouble()
-                        ? servings.toInt().toString()
-                        : servings.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primaryGreen,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => servings += 0.5),
-                  icon: const Icon(Icons.add_circle_outline_rounded),
-                  color: AppColors.primaryGreen,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 22),
 
           // Ingredients Checklist
           _SectionTitle('planner.ingredients'.tr),
@@ -960,6 +952,57 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
   }
 }
 
+class _HeroCircleButton extends StatelessWidget {
+  const _HeroCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.color = AppColors.primaryGreen,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: context.appElevatedSurface.withValues(alpha: 0.94),
+    shape: const CircleBorder(),
+    elevation: 3,
+    child: InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: Icon(icon, color: color, size: 23),
+      ),
+    ),
+  );
+}
+
+class _HeroTag extends StatelessWidget {
+  const _HeroTag(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.56),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
 class _NutrientCard extends StatelessWidget {
   const _NutrientCard({
     required this.value,
@@ -977,22 +1020,22 @@ class _NutrientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
         decoration: BoxDecoration(
           color: context.appElevatedSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: context.appBorder.withValues(alpha: 0.8)),
           boxShadow: context.appTileShadow,
         ),
         child: Column(
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(height: 6),
+            Icon(icon, size: 15, color: color),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 14.5,
+                fontSize: 13,
                 color: context.appText,
               ),
             ),
@@ -1001,7 +1044,7 @@ class _NutrientCard extends StatelessWidget {
               label,
               style: TextStyle(
                 color: context.appMutedText,
-                fontSize: 10.5,
+                fontSize: 9.5,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
@@ -1022,11 +1065,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-    final start = controller.weekStart;
-    final end = controller.weekDays.last;
-    final rangeText =
-        '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}';
-
     return _PlannerScaffold(
       header: PlannerPageHeader(
         title: 'planner.title'.tr,
@@ -1041,129 +1079,7 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Week Navigator Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: context.appElevatedSurface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: context.appBorder.withValues(alpha: 0.8),
-              ),
-              boxShadow: context.appTileShadow,
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => controller.changeWeek(-1),
-                  icon: const Icon(Icons.chevron_left_rounded),
-                  color: context.appText,
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        controller.weekOffset.value == 0
-                            ? 'planner.this_week'.tr
-                            : 'planner.selected_week'.tr,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        rangeText,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => controller.changeWeek(1),
-                  icon: const Icon(Icons.chevron_right_rounded),
-                  color: context.appText,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // 7-Day Quick Pill Row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children:
-                  controller.weekDays.indexed.map((entry) {
-                    final isSelected =
-                        entry.$1 == controller.selectedDayIndex.value;
-                    final dayDate = entry.$2;
-                    final dayName = DateFormat('E').format(dayDate);
-                    final dayNum = dayDate.day.toString();
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => controller.selectDay(entry.$1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primaryGreen
-                                    : context.appElevatedSurface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color:
-                                  isSelected
-                                      ? Colors.transparent
-                                      : context.appBorder,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                dayName,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      isSelected
-                                          ? Colors.white.withValues(alpha: 0.9)
-                                          : context.appMutedText,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                dayNum,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color:
-                                      isSelected
-                                          ? Colors.white
-                                          : context.appText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ),
+          _PlannerFlowWeekCard(controller: controller),
           const SizedBox(height: 16),
 
           // Weekly Progress Banner Card
@@ -1854,6 +1770,145 @@ class _EmptyGrocery extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _PlannerFlowWeekCard extends StatelessWidget {
+  const _PlannerFlowWeekCard({required this.controller});
+
+  final MealPlannerController controller;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
+      boxShadow: context.appTileShadow,
+    ),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            _flowWeekArrow(context, Icons.chevron_left_rounded, -1),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    controller.weekOffset.value == 0
+                        ? 'planner.this_week'.tr
+                        : 'planner.selected_week'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _range(controller.weekStart, controller.weekDays.last),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _flowWeekArrow(context, Icons.chevron_right_rounded, 1),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Divider(height: 1, color: context.appBorder.withValues(alpha: 0.65)),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 60,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: controller.weekDays.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 7),
+            itemBuilder: (_, index) {
+              final date = controller.weekDays[index];
+              final selected = index == controller.selectedDayIndex.value;
+              final hasMeals = controller.mealsFor(date).isNotEmpty;
+              return InkWell(
+                onTap: () => controller.selectDay(index),
+                borderRadius: BorderRadius.circular(16),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 55,
+                  decoration: BoxDecoration(
+                    color:
+                        selected
+                            ? AppColors.primaryGreen
+                            : context.appBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color:
+                          selected
+                              ? AppColors.primaryGreen
+                              : context.appBorder.withValues(alpha: 0.65),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat('E').format(date),
+                        style: TextStyle(
+                          color: selected ? Colors.white : context.appMutedText,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          color: selected ? Colors.white : context.appText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color:
+                              selected
+                                  ? Colors.white
+                                  : (hasMeals
+                                      ? AppColors.primaryGreen
+                                      : Colors.transparent),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _flowWeekArrow(BuildContext context, IconData icon, int amount) =>
+      IconButton(
+        onPressed: () => controller.changeWeek(amount),
+        icon: Icon(icon),
+        color: context.appText,
+        style: IconButton.styleFrom(
+          backgroundColor: context.appBackground,
+          shape: const CircleBorder(),
+        ),
+      );
 }
 
 String _range(DateTime start, DateTime end) =>

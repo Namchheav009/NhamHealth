@@ -115,8 +115,8 @@ class MealPlannerController extends GetxController {
         ),
       );
     }
-    final values = categories.values.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    final values =
+        categories.values.toList()..sort((a, b) => a.name.compareTo(b.name));
     return values;
   }
 
@@ -164,6 +164,38 @@ class MealPlannerController extends GetxController {
     weekOffset.value += amount;
     selectedDayIndex.value = 0;
     unawaited(loadWeek());
+  }
+
+  void goToToday() {
+    final now = DateTime.now();
+    final changed = weekOffset.value != 0;
+    weekOffset.value = 0;
+    selectedDayIndex.value = now.weekday - 1;
+    if (changed) {
+      unawaited(loadWeek());
+    }
+  }
+
+  void goToDate(DateTime target) {
+    final today = DateTime.now();
+    final currentMonday = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(Duration(days: today.weekday - 1));
+    final targetMonday = DateTime(
+      target.year,
+      target.month,
+      target.day,
+    ).subtract(Duration(days: target.weekday - 1));
+    final diffWeeks =
+        (targetMonday.difference(currentMonday).inDays / 7).round();
+    final changed = weekOffset.value != diffWeeks;
+    weekOffset.value = diffWeeks;
+    selectedDayIndex.value = target.weekday - 1;
+    if (changed) {
+      unawaited(loadWeek());
+    }
   }
 
   Future<bool> addMeal(PlannedMeal meal, {double servings = 1}) async {
