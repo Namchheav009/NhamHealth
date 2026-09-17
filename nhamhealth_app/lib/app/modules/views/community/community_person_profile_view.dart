@@ -170,9 +170,9 @@ class _CommunityPersonProfileViewState
         _isUpdatingFollow = false;
       });
       _synchronizeCommunity(updated, refreshPeople: true);
-      if (wasFollowing) {
-        await AppAlert.actionSuccess(
-          title: 'community.unfollowed_title'.tr,
+      if (wasFollowing && mounted) {
+        AppAlert.toast(
+          context: context,
           message: 'community.unfollowed_success'.trParams({
             'name': profile.name,
           }),
@@ -288,25 +288,40 @@ class _CommunityPersonProfileViewState
   );
 
   Widget _profileHero(BuildContext context) => SizedBox(
-    height: 76,
+    height: 64,
     child: Stack(
       children: [
         Positioned(
-          top: 12,
-          left: 20,
-          child: IconButton(
-            tooltip: 'common.back'.tr,
-            onPressed: Get.back,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 23,
-            ),
+          top: 10,
+          left: 16,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'common.back'.tr,
+                onPressed: Get.back,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+                icon: Icon(
+                  Icons.arrow_back_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'profile.title'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 21,
+                  letterSpacing: -.3,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ),
-        Positioned(top: 12, right: 20, child: _profileMenuButton(context)),
+        Positioned(top: 10, right: 20, child: _profileMenuButton(context)),
       ],
     ),
   );
@@ -316,23 +331,21 @@ class _CommunityPersonProfileViewState
     CommunityPersonProfile profile,
   ) => Container(
     key: const ValueKey<String>('other-profile-card'),
-    margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-    padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
+    margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
     decoration: BoxDecoration(
-      color: context.appElevatedSurface.withValues(alpha: .82),
-      borderRadius: BorderRadius.circular(14),
+      color: context.appElevatedSurface.withValues(alpha: .95),
+      borderRadius: BorderRadius.circular(22),
       border: Border.all(color: context.appBorder.withValues(alpha: .7)),
-      boxShadow: context.appHomeTileShadow,
+      boxShadow: context.appTileShadow,
     ),
     child: Column(
       children: [
         _identity(context, profile),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _stats(context, profile),
-        const SizedBox(height: 14),
-        _profileActions(context, profile),
         if (profile.headline.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _headline(context, profile.headline),
         ],
       ],
@@ -380,10 +393,13 @@ class _CommunityPersonProfileViewState
             decoration: BoxDecoration(
               color: context.appElevatedSurface,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF00A85A), width: 2),
+              border: Border.all(
+                color: const Color(0xFF00A85A).withValues(alpha: .5),
+                width: 2,
+              ),
             ),
             child: CircleAvatar(
-              radius: 39,
+              radius: 36,
               backgroundColor: context.appSoftGreen,
               foregroundImage:
                   profile.avatarUrl.isEmpty
@@ -396,7 +412,7 @@ class _CommunityPersonProfileViewState
                       context.appIsDark
                           ? context.appColorScheme.primary
                           : const Color(0xFF008C4B),
-                  fontSize: 21,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -417,43 +433,50 @@ class _CommunityPersonProfileViewState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 10),
-                  Text(
-                    profile.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 18,
-                      letterSpacing: -.2,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          profile.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 19,
+                            letterSpacing: -.2,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _followButton(context, profile),
+                    ],
                   ),
                   const SizedBox(height: 5),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.appSoftGreen,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            color:
-                                context.appIsDark
-                                    ? context.appColorScheme.primary
-                                    : const Color(0xFF178B4B),
-                            size: 12,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.appSoftGreen,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.person_outline_rounded,
+                          color:
+                              context.appIsDark
+                                  ? context.appColorScheme.primary
+                                  : const Color(0xFF178B4B),
+                          size: 12,
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
                             _roleLabel(profile.role),
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -465,8 +488,8 @@ class _CommunityPersonProfileViewState
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   if (profile.joinedLabel.isNotEmpty) ...[
@@ -566,8 +589,8 @@ class _CommunityPersonProfileViewState
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: context.appSoftGreen,
               shape: BoxShape.circle,
@@ -578,10 +601,10 @@ class _CommunityPersonProfileViewState
                   context.appIsDark
                       ? context.appColorScheme.primary
                       : const Color(0xFF009B46),
-              size: 18,
+              size: 19,
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 8),
           Flexible(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -591,17 +614,21 @@ class _CommunityPersonProfileViewState
                   value,
                   style: TextStyle(
                     color: context.appText,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: context.appMutedText, fontSize: 8),
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -614,7 +641,7 @@ class _CommunityPersonProfileViewState
   Widget _divider(BuildContext context) => Container(
     width: 1,
     height: 30,
-    color: context.appBorder.withValues(alpha: .8),
+    color: context.appBorder.withValues(alpha: .6),
   );
 
   Widget _followButton(BuildContext context, CommunityPersonProfile profile) {
@@ -625,38 +652,55 @@ class _CommunityPersonProfileViewState
       CommunityConnectionStatus.followsYou => 'community.follow_back',
       CommunityConnectionStatus.none => 'community.follow',
     };
+    final isFollowing = status.isFollowing;
+    final themeGreen =
+        context.appIsDark
+            ? context.appColorScheme.primary
+            : const Color(0xFF178B4B);
     return SizedBox(
-      height: 40,
-      child: ElevatedButton.icon(
+      height: 36,
+      child: Material(
         key: const ValueKey<String>('other-profile-follow-button'),
-        onPressed: _isUpdatingFollow ? null : _toggleFollow,
-        icon:
-            _isUpdatingFollow
-                ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+        color: isFollowing ? context.appSoftGreen : const Color(0xFF009B55),
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: _isUpdatingFollow ? null : _toggleFollow,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isUpdatingFollow)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: isFollowing ? themeGreen : Colors.white,
+                    ),
+                  )
+                else ...[
+                  Icon(
+                    isFollowing
+                        ? Icons.check_rounded
+                        : Icons.person_add_alt_1_rounded,
+                    size: 16,
+                    color: isFollowing ? themeGreen : Colors.white,
                   ),
-                )
-                : Icon(
-                  status.isFollowing
-                      ? Icons.check_rounded
-                      : Icons.person_add_alt_1_rounded,
-                  size: 18,
+                  const SizedBox(width: 5),
+                ],
+                Text(
+                  labelKey.tr,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isFollowing ? themeGreen : Colors.white,
+                  ),
                 ),
-        label: Text(labelKey.tr),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF009B55),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF009B55),
-          disabledForegroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          shape: const StadiumBorder(),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -905,32 +949,45 @@ class _CommunityPersonProfileViewState
   Widget _headline(BuildContext context, String headline) => Container(
     key: const ValueKey<String>('other-profile-headline'),
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(14),
+      color: context.appSoftGreen.withValues(alpha: .55),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.article_outlined,
-          color:
-              context.appIsDark
-                  ? context.appColorScheme.primary
-                  : const Color(0xFF078A50),
-          size: 16,
+        Text(
+          '“',
+          style: TextStyle(
+            color:
+                context.appIsDark
+                    ? context.appColorScheme.primary
+                    : const Color(0xFF178B4B),
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             headline,
             style: TextStyle(
-              color: context.appMutedText,
-              fontSize: 11,
+              color: context.appText,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
               height: 1.35,
             ),
           ),
+        ),
+        const SizedBox(width: 8),
+        Icon(
+          Icons.eco_rounded,
+          color:
+              context.appIsDark
+                  ? context.appColorScheme.primary.withValues(alpha: .35)
+                  : const Color(0xFF178B4B).withValues(alpha: .35),
+          size: 24,
         ),
       ],
     ),
@@ -939,28 +996,29 @@ class _CommunityPersonProfileViewState
   Widget _contentTabs(BuildContext context) => Container(
     width: double.infinity,
     margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+    padding: const EdgeInsets.all(4),
     decoration: BoxDecoration(
       color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: context.appBorder),
+      borderRadius: BorderRadius.circular(30),
+      border: Border.all(color: context.appBorder.withValues(alpha: .7)),
       boxShadow: context.appTileShadow,
     ),
-    clipBehavior: Clip.antiAlias,
     child: Row(
       children: [
         Expanded(
           child: _ProfileTabButton(
             key: const ValueKey<String>('profile-tab-all'),
             label: 'common.all'.tr,
+            icon: Icons.grid_view_rounded,
             selected: _selectedTab == _ProfileContentTab.all,
             onTap: () => setState(() => _selectedTab = _ProfileContentTab.all),
           ),
         ),
-        Container(width: 1, height: 28, color: context.appBorder),
         Expanded(
           child: _ProfileTabButton(
             key: const ValueKey<String>('profile-tab-photos'),
             label: 'profile.photos'.tr,
+            icon: Icons.image_outlined,
             selected: _selectedTab == _ProfileContentTab.photos,
             onTap:
                 () => setState(() => _selectedTab = _ProfileContentTab.photos),
@@ -1309,53 +1367,68 @@ class _ProfileTabButton extends StatelessWidget {
   const _ProfileTabButton({
     super.key,
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    label: label,
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.fromLTRB(12, 13, 12, 10),
-          decoration: BoxDecoration(
-            color:
-                selected
-                    ? context.appSoftGreen.withValues(alpha: .45)
-                    : Colors.transparent,
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? AppColors.primaryGreen : Colors.transparent,
-                width: 3,
-              ),
+  Widget build(BuildContext context) {
+    final activeColor =
+        context.appIsDark
+            ? context.appColorScheme.primary
+            : const Color(0xFF009B46);
+    final activeBg =
+        context.appIsDark
+            ? context.appSoftGreen.withValues(alpha: .35)
+            : const Color(0xFFDFF6E6);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(26),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? activeBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(26),
             ),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? AppColors.primaryGreen : context.appMutedText,
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected ? activeColor : context.appMutedText,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? activeColor : context.appMutedText,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _PersonProfilePhoto {
@@ -1816,3 +1889,4 @@ class _ProfileMessage extends StatelessWidget {
     ),
   );
 }
+

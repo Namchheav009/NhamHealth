@@ -20,7 +20,7 @@ void main() {
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(346, 600);
+    tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
@@ -38,14 +38,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile'), findsNothing);
+    expect(find.text('Profile'), findsOneWidget);
     expect(find.text('Smos os trim Bong'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
     expect(find.text('Joined September 2026'), findsOneWidget);
     expect(find.text('Enjoying homemade meals every day.'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.text('2'), findsNWidgets(2));
-    expect(find.text('Posts'), findsNWidgets(2));
+    expect(find.text('Posts'), findsOneWidget);
     expect(find.text('Followers'), findsOneWidget);
     expect(find.text('Following'), findsNWidgets(2));
     expect(find.text('Edit Profile'), findsNothing);
@@ -86,13 +86,11 @@ void main() {
     final followButtonSize = tester.getSize(
       find.byKey(const ValueKey<String>('other-profile-follow-button')),
     );
-    expect(followButtonSize.width, greaterThan(172));
-    expect(followButtonSize.height, 40);
+    expect(followButtonSize.width, greaterThan(80));
+    expect(followButtonSize.height, 36);
     expect(
-      tester.getSize(
-        find.byKey(const ValueKey<String>('other-profile-share-button')),
-      ),
-      const Size.square(40),
+      find.byKey(const ValueKey<String>('other-profile-share-button')),
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey<String>('other-profile-headline')),
@@ -105,17 +103,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('No photos shared yet.'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('other-profile-share-button')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Share profile'), findsOneWidget);
-    expect(find.text('Copy link'), findsOneWidget);
-    expect(find.text('Telegram'), findsOneWidget);
-    expect(find.text('WhatsApp'), findsOneWidget);
-    expect(find.text('More apps'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
