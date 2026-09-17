@@ -768,13 +768,14 @@ class CommunityPage extends GetView<CommunityController> {
     );
     if (confirmed == true) {
       await controller.updateConnection(person, view);
-      await AppAlert.actionSuccess(
-        context: context,
-        title: 'community.unfollowed_title',
-        message: 'community.unfollowed_success'.trParams({
-          'name': person.displayName,
-        }),
-      );
+      if (context.mounted) {
+        AppAlert.toast(
+          context: context,
+          message: 'community.unfollowed_success'.trParams({
+            'name': person.displayName,
+          }),
+        );
+      }
     }
   }
 
@@ -795,13 +796,14 @@ class CommunityPage extends GetView<CommunityController> {
     );
     if (confirmed == true) {
       await controller.removeFollower(person);
-      await AppAlert.actionSuccess(
-        context: context,
-        title: 'community.follower_removed',
-        message: 'community.follower_removed_success'.trParams({
-          'name': person.displayName,
-        }),
-      );
+      if (context.mounted) {
+        AppAlert.toast(
+          context: context,
+          message: 'community.follower_removed_success'.trParams({
+            'name': person.displayName,
+          }),
+        );
+      }
     }
   }
 
@@ -1222,8 +1224,7 @@ class CommunityPage extends GetView<CommunityController> {
 
       if (confirmed != true) return;
       await controller.togglePostAuthorFollow(post);
-      await AppAlert.actionSuccess(
-        title: 'community.unfollowed_title',
+      AppAlert.toast(
         message: 'community.unfollowed_success'.trParams({
           'name': post.author,
         }),

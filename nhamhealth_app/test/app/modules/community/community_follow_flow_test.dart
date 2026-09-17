@@ -155,9 +155,8 @@ void main() {
     // Now unfollowed
     expect(controller.connectionStatusFor(2), CommunityConnectionStatus.none);
 
-    // Verify success alert is shown (AppAlert.actionSuccess)
-    expect(find.text('Unfollowed'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey<String>('app-action-alert-confirm')));
+    // Verify non-blocking toast is shown
+    expect(find.text('You have unfollowed Follower.'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 500));
   });
 }

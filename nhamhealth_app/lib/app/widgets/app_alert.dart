@@ -23,6 +23,41 @@ abstract final class AppAlert {
   static Future<void> error({required String title, required String message}) =>
       Future<void>.value();
 
+  /// Displays a subtle, non-blocking floating toast/snackbar at the bottom of the screen.
+  static void toast({
+    required String message,
+    BuildContext? context,
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    final targetContext = context ?? Get.overlayContext ?? Get.context;
+    if (targetContext != null) {
+      final messenger = ScaffoldMessenger.maybeOf(targetContext);
+      if (messenger != null) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                message.tr,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: duration,
+            ),
+          );
+        return;
+      }
+    }
+    Get.rawSnackbar(
+      message: message.tr,
+      duration: duration,
+      snackPosition: SnackPosition.BOTTOM,
+      snackStyle: SnackStyle.FLOATING,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 14,
+    );
+  }
+
   /// Presents blocking feedback for a completed user action.
   ///
   /// This intentionally remains separate from [success] and [error], which are

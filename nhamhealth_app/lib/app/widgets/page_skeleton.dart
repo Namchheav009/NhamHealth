@@ -578,7 +578,6 @@ class _ProfileHeaderPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 164,
     padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
     decoration: BoxDecoration(
       color: context.appSurface.withValues(alpha: .82),
