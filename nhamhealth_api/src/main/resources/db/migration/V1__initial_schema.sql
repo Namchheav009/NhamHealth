@@ -156,7 +156,6 @@ alter table if exists public.verification_codes add constraint FKa4qo6nts1xd94ow
 alter table if exists public.wellness_profiles add constraint FK2fn1lbaw6ip0aj2r3394du1x4 foreign key (user_id) references public.users;
 
 
-
 create view public.community_meal_posts as
 select p.user_meal_post_id as post_id,
        p.author_user_id as user_id,
@@ -170,4 +169,3 @@ select p.user_meal_post_id as post_id,
        p.created_at,
        p.updated_at
 from public.user_meal_posts p;
-

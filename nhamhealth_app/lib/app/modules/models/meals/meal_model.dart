@@ -109,10 +109,16 @@ class MealModel {
           .toList(growable: false),
       languageCode: (json['languageCode'] as String? ?? 'en').trim(),
       tags: (json['tags'] as List<dynamic>? ?? const [])
-          .map((item) => MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) =>
+                MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList(growable: false),
       moods: (json['moods'] as List<dynamic>? ?? const [])
-          .map((item) => MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) =>
+                MealLabelModel.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList(growable: false),
     );
   }
@@ -190,7 +196,9 @@ class MealIngredientModel {
     required String baseUrl,
   }) => MealIngredientModel(
     name: (json['name'] as String? ?? '').trim(),
-    description: _cleanDescription((json['description'] as String? ?? '').trim()),
+    description: _cleanDescription(
+      (json['description'] as String? ?? '').trim(),
+    ),
     image: MealModel._resolveImageUrl(
       (json['imageUrl'] as String? ?? '').trim(),
       baseUrl,

@@ -129,8 +129,9 @@ class FoodDetailController extends GetxController {
         cookingTimeMinutes: model.cookingTimeMinutes,
         difficulty: localizeDifficulty(model.difficulty),
         servings: model.servings,
-        recommendationReason:
-            localizeRecommendationReason(model.recommendationReason),
+        recommendationReason: localizeRecommendationReason(
+          model.recommendationReason,
+        ),
         isFavorite: model.isFavorite,
         ingredients: model.ingredients,
         nutrition: model.nutrition,

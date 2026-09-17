@@ -431,7 +431,9 @@ class ProfileRepository {
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;
     if (difference.inHours < 1) {
-      return 'community.minutes_ago'.trParams({'count': '${difference.inMinutes}'});
+      return 'community.minutes_ago'.trParams({
+        'count': '${difference.inMinutes}',
+      });
     }
     if (difference.inDays < 1) {
       return 'community.hours_ago'.trParams({'count': '${difference.inHours}'});

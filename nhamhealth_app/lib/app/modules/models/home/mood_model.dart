@@ -49,7 +49,10 @@ class MoodModel {
     }
 
     final rawNameKm = json['moodNameKm'] as String?;
-    final nameKm = rawNameKm != null && rawNameKm.trim().isNotEmpty ? rawNameKm.trim() : null;
+    final nameKm =
+        rawNameKm != null && rawNameKm.trim().isNotEmpty
+            ? rawNameKm.trim()
+            : null;
     final isKm = Get.locale?.languageCode == 'km';
     final resolvedName = (isKm && nameKm != null) ? nameKm : name.trim();
 

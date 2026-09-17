@@ -7,6 +7,7 @@ import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
+import '../../../routes/app_routes.dart';
 import '../../controllers/home/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';
@@ -120,6 +121,8 @@ class _HomeDashboardContent extends StatelessWidget {
               SizedBox(height: 14),
               RepaintBoundary(child: GreetingSection()),
               SizedBox(height: 14),
+              RepaintBoundary(child: _MealPlannerCard()),
+              SizedBox(height: 14),
               RepaintBoundary(child: AiRecommendationCard()),
               SizedBox(height: 14),
               RepaintBoundary(child: DailySummaryCard()),
@@ -145,6 +148,8 @@ class _HomeDashboardContent extends StatelessWidget {
                       SizedBox(height: 16),
                       RepaintBoundary(child: GreetingSection()),
                       SizedBox(height: 16),
+                      RepaintBoundary(child: _MealPlannerCard()),
+                      SizedBox(height: 16),
                       RepaintBoundary(child: AiRecommendationCard()),
                     ],
                   ),
@@ -163,6 +168,134 @@ class _HomeDashboardContent extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _MealPlannerCard extends StatelessWidget {
+  const _MealPlannerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.appSurfaceLow,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const ValueKey('home-meal-planner-card'),
+        onTap: () => Get.toNamed<void>(AppRoutes.mealPlanner),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.appBorder),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [context.appSoftGreen, context.appSurfaceLow],
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: Colors.white,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.plan_your_week'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'planner.home_description'.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 5,
+                      children: [
+                        _PlannerBenefit(
+                          icon: Icons.date_range_rounded,
+                          label: 'planner.seven_days'.tr,
+                        ),
+                        _PlannerBenefit(
+                          icon: Icons.shopping_basket_outlined,
+                          label: 'planner.grocery_list'.tr,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: AppColors.primaryGreen,
+                  size: 17,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlannerBenefit extends StatelessWidget {
+  const _PlannerBenefit({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: AppColors.primaryGreen),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            color: context.appMutedText,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

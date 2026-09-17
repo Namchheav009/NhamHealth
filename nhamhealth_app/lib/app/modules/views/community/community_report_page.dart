@@ -191,10 +191,7 @@ class CommunityReportReasonInfoPage extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: _reasonColor(reason).withValues(alpha: .14),
-                  child: Icon(
-                    _reasonIcon(reason),
-                    color: _reasonColor(reason),
-                  ),
+                  child: Icon(_reasonIcon(reason), color: _reasonColor(reason)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -210,7 +207,10 @@ class CommunityReportReasonInfoPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
-            Text('community.report_examples_include'.tr, style: _label(context)),
+            Text(
+              'community.report_examples_include'.tr,
+              style: _label(context),
+            ),
             const SizedBox(height: 10),
             for (final example in _reasonExamples(reason))
               Padding(
@@ -297,10 +297,7 @@ class _DetailsState extends State<CommunityReportDetailsStepPage> {
             ),
           ),
           if (widget.postId != null) ...[
-            Text(
-              'community.report_add_screenshots'.tr,
-              style: _label(context),
-            ),
+            Text('community.report_add_screenshots'.tr, style: _label(context)),
             const SizedBox(height: 10),
             _AttachmentPicker(controller: widget.controller),
           ],
@@ -543,10 +540,9 @@ class CommunityReportSuccessPage extends StatelessWidget {
                     child: Text(
                       'community.report_success_message'.tr,
                       textAlign: TextAlign.center,
-                      style: _muted(context).copyWith(
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
+                      style: _muted(
+                        context,
+                      ).copyWith(fontSize: 14, height: 1.35),
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -584,10 +580,9 @@ class CommunityReportSuccessPage extends StatelessWidget {
                                     ? 'community.report_profile_review_guidelines_message'
                                     : 'community.report_review_guidelines_message')
                                 .tr,
-                            style: _label(context).copyWith(
-                              fontSize: 13,
-                              height: 1.35,
-                            ),
+                            style: _label(
+                              context,
+                            ).copyWith(fontSize: 13, height: 1.35),
                           ),
                         ),
                       ],
@@ -607,9 +602,8 @@ class CommunityReportSuccessPage extends StatelessWidget {
                     height: 50,
                     child: OutlinedButton(
                       onPressed:
-                          () => Get.toNamed<void>(
-                            AppRoutes.communityGuidelines,
-                          ),
+                          () =>
+                              Get.toNamed<void>(AppRoutes.communityGuidelines),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _green,
                         side: BorderSide(color: context.appBorder),
@@ -2494,38 +2488,39 @@ TextStyle _label(BuildContext c) =>
     TextStyle(color: c.appText, fontSize: 14, fontWeight: FontWeight.w700);
 TextStyle _muted(BuildContext c) =>
     TextStyle(color: c.appMutedText, fontSize: 12, height: 1.4);
-List<String> _reasonExamples(CommunityPostReportReason reason) => switch (reason) {
-  CommunityPostReportReason.spam => const [
-    'community.report_example_spam_1',
-    'community.report_example_spam_2',
-    'community.report_example_spam_3',
-  ],
-  CommunityPostReportReason.harassment => const [
-    'community.report_example_harassment_1',
-    'community.report_example_harassment_2',
-    'community.report_example_harassment_3',
-  ],
-  CommunityPostReportReason.inappropriateContent => const [
-    'community.report_example_inappropriate_1',
-    'community.report_example_inappropriate_2',
-    'community.report_example_inappropriate_3',
-  ],
-  CommunityPostReportReason.falseInformation => const [
-    'community.report_example_false_1',
-    'community.report_example_false_2',
-    'community.report_example_false_3',
-  ],
-  CommunityPostReportReason.copyright => const [
-    'community.report_example_copyright_1',
-    'community.report_example_copyright_2',
-    'community.report_example_copyright_3',
-  ],
-  CommunityPostReportReason.other => const [
-    'community.report_example_other_1',
-    'community.report_example_other_2',
-    'community.report_example_other_3',
-  ],
-};
+List<String> _reasonExamples(CommunityPostReportReason reason) =>
+    switch (reason) {
+      CommunityPostReportReason.spam => const [
+        'community.report_example_spam_1',
+        'community.report_example_spam_2',
+        'community.report_example_spam_3',
+      ],
+      CommunityPostReportReason.harassment => const [
+        'community.report_example_harassment_1',
+        'community.report_example_harassment_2',
+        'community.report_example_harassment_3',
+      ],
+      CommunityPostReportReason.inappropriateContent => const [
+        'community.report_example_inappropriate_1',
+        'community.report_example_inappropriate_2',
+        'community.report_example_inappropriate_3',
+      ],
+      CommunityPostReportReason.falseInformation => const [
+        'community.report_example_false_1',
+        'community.report_example_false_2',
+        'community.report_example_false_3',
+      ],
+      CommunityPostReportReason.copyright => const [
+        'community.report_example_copyright_1',
+        'community.report_example_copyright_2',
+        'community.report_example_copyright_3',
+      ],
+      CommunityPostReportReason.other => const [
+        'community.report_example_other_1',
+        'community.report_example_other_2',
+        'community.report_example_other_3',
+      ],
+    };
 
 IconData _reasonIcon(CommunityPostReportReason r) => switch (r) {
   CommunityPostReportReason.spam => Icons.warning_amber_rounded,

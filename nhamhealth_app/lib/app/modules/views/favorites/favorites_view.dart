@@ -158,7 +158,6 @@ class FavoritesView extends GetView<FavoritesController> {
         Icons.calendar_today_outlined,
         postMenu: true,
         onTap: _showPostFilter,
-
       ),
       const SizedBox(height: 10),
       Expanded(
@@ -251,7 +250,6 @@ class FavoritesView extends GetView<FavoritesController> {
           borderRadius: BorderRadius.circular(18),
           child: _filterButton(context, icon),
         ),
-
     ],
   );
 

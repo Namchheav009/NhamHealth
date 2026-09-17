@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -19,7 +20,6 @@ import 'widgets/meal_filter_sheet.dart';
 import 'widgets/meal_idea_card.dart';
 import 'widgets/meal_section_header.dart';
 import 'widgets/meal_slideshow.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class MealView extends GetView<MealController> {
   const MealView({super.key});

@@ -20,6 +20,8 @@ import 'en/onboarding_en.dart';
 import 'km/onboarding_km.dart';
 import 'en/profile_en.dart';
 import 'km/profile_km.dart';
+import 'en/planner_en.dart';
+import 'km/planner_km.dart';
 import 'en/security_en.dart';
 import 'km/security_km.dart';
 import 'en/settings_en.dart';
@@ -39,6 +41,7 @@ final Map<String, String> englishTranslations = {
   ...notificationsEn,
   ...onboardingEn,
   ...profileEn,
+  ...plannerEn,
   ...securityEn,
   ...settingsEn,
   ...wellnessEn,
@@ -56,6 +59,7 @@ final Map<String, String> khmerTranslations = {
   ...notificationsKm,
   ...onboardingKm,
   ...profileKm,
+  ...plannerKm,
   ...securityKm,
   ...settingsKm,
   ...wellnessKm,

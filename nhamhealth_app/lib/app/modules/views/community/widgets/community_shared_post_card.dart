@@ -184,15 +184,24 @@ String _localizedAge(String raw) {
   }
   if (trimmed.toLowerCase() == 'recently') return 'community.recently'.tr;
   if (trimmed.toLowerCase() == 'yesterday') return 'community.yesterday'.tr;
-  final minMatch = RegExp(r'^(\d+)\s*m\s*ago$', caseSensitive: false).firstMatch(trimmed);
+  final minMatch = RegExp(
+    r'^(\d+)\s*m\s*ago$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
   if (minMatch != null) {
     return 'community.minutes_ago'.trParams({'count': minMatch.group(1)!});
   }
-  final hourMatch = RegExp(r'^(\d+)\s*h\s*ago$', caseSensitive: false).firstMatch(trimmed);
+  final hourMatch = RegExp(
+    r'^(\d+)\s*h\s*ago$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
   if (hourMatch != null) {
     return 'community.hours_ago'.trParams({'count': hourMatch.group(1)!});
   }
-  final dayMatch = RegExp(r'^(\d+)\s*d\s*ago$', caseSensitive: false).firstMatch(trimmed);
+  final dayMatch = RegExp(
+    r'^(\d+)\s*d\s*ago$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
   if (dayMatch != null) {
     return 'community.days_ago'.trParams({'count': dayMatch.group(1)!});
   }

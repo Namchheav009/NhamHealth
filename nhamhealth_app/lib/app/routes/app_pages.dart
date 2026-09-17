@@ -20,6 +20,9 @@ import '../modules/bindings/meals/meal_binding.dart';
 import '../modules/bindings/meals/food_detail_binding.dart';
 import '../modules/views/meals/meal_view.dart';
 import '../modules/views/meals/food_detail_view.dart';
+import '../modules/bindings/planner/meal_planner_binding.dart';
+import '../modules/views/planner/meal_planner_view.dart';
+import '../modules/views/planner/meal_planner_flow_views.dart';
 import '../modules/views/notifications/notifications_view.dart';
 import '../modules/bindings/notifications/notifications_binding.dart';
 import '../modules/bindings/favorites/favorites_binding.dart';
@@ -124,6 +127,42 @@ abstract class AppPages {
       binding: MealBinding(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 220),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlanner,
+      page: () => const MealPlannerView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerCategories,
+      page: () => const PlannerCategoryView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerMeals,
+      page: () => const PlannerMealListView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerDetail,
+      page: () => const PlannerMealDetailView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerWeek,
+      page: () => const PlannerWeeklyView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerGrocery,
+      page: () => const PlannerGroceryView(),
+      binding: MealPlannerBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.foodDetail,
