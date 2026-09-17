@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_back_header.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_post_detail_controller.dart';
 import 'community_comments_page.dart';
@@ -18,33 +21,36 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
         post: post,
         canEdit: controller.canEdit,
         onEditPost: controller.canEdit ? controller.updatePost : null,
+        titleKey: 'community.post_title',
       );
     }
 
     if (controller.isLoading.value) {
-      return Scaffold(
-        backgroundColor: context.appBackground,
-        appBar: AppBar(
-          backgroundColor: context.appSurface,
-          title: Text('community.post_title'.tr),
-        ),
-        body: const SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(
+      return _pageShell(
+        context,
+        SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
-          padding: EdgeInsets.all(16),
-          child: PageSkeleton.communityPost(),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.pageHorizontal,
+            4,
+            AppSpacing.pageHorizontal,
+            24,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+              child: PageSkeleton.communityPost(),
+            ),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: context.appBackground,
-      appBar: AppBar(
-        backgroundColor: context.appSurface,
-        title: Text('community.post_title'.tr),
-      ),
-      body: Center(
+    return _pageShell(
+      context,
+      Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -68,4 +74,40 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
       ),
     );
   });
+
+  Widget _pageShell(BuildContext context, Widget body) =>
+      MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.2,
+        child: Scaffold(
+          backgroundColor: context.appBackground,
+          body: AppBackground(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSpacing.maxPaddedContentWidth,
+                      ),
+                      child: Padding(
+                        padding: AppSpacing.topBarPagePadding,
+                        child: AppBackHeader(
+                          title: 'community.post_title'.tr,
+                          onBack: Get.back,
+                          backButtonKey: const ValueKey<String>(
+                            'community-post-back-button',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(child: body),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
 }

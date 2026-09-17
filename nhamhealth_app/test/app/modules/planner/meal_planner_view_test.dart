@@ -68,18 +68,67 @@ void main() {
     expect(find.text('Choose a category'), findsOneWidget);
     await tester.tap(find.text('All'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Oatmeal with banana'));
-    await tester.pumpAndSettle();
-    expect(find.text('Meal Detail'), findsOneWidget);
-    final addButton = find.text('Add to Planner');
-    await tester.ensureVisible(addButton);
-    await tester.tap(addButton);
+    final mealCard = find.ancestor(
+      of: find.text('Oatmeal with banana'),
+      matching: find.byType(InkWell),
+    );
+    final quickAdd = find.descendant(
+      of: mealCard,
+      matching: find.byIcon(Icons.add_rounded),
+    );
+    await tester.tap(quickAdd);
     await tester.pumpAndSettle();
 
     expect(find.text('Oatmeal with banana'), findsOneWidget);
-    expect(find.textContaining('1/4'), findsOneWidget);
+    expect(find.textContaining('0/4'), findsOneWidget);
     expect(find.text('360'), findsOneWidget);
     Get.closeAllSnackbars();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('meal options are scrollable on a short screen', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(381, 700);
+    addTearDown(tester.view.reset);
+
+    final controller = Get.put(MealPlannerController());
+    await controller.addMeal(
+      const PlannedMeal(
+        id: 101,
+        name: 'Scrambled Egg & Avocado Breakfast',
+        calories: 470,
+        slot: MealPlanSlot.breakfast,
+        ingredients: ['Egg', 'Avocado'],
+      ),
+    );
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealPlannerView(),
+      ),
+    );
+
+    final slot = find.byKey(const ValueKey('planner-slot-breakfast'));
+    await tester.drag(find.byType(ListView), const Offset(0, -360));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(slot);
+    await tester.pumpAndSettle();
+    await tester.tap(slot);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mark as eaten'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.drag(
+      find.byType(SingleChildScrollView).last,
+      const Offset(0, -350),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Remove meal'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

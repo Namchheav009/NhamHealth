@@ -85,7 +85,12 @@ void main() {
         getPages: [
           GetPage<void>(
             name: '/community/posts/:postId',
-            page: () => Text('Post ${Get.parameters['postId']}'),
+            page: () {
+              final arguments = Map<String, dynamic>.from(Get.arguments as Map);
+              return Text(
+                'Post ${Get.parameters['postId']}: ${arguments['action']}',
+              );
+            },
           ),
         ],
         home: const NotificationsView(),
@@ -102,7 +107,7 @@ void main() {
     await tester.tap(find.textContaining('Maya Chen', findRichText: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Post 42'), findsOneWidget);
+    expect(find.text('Post 42: comment'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

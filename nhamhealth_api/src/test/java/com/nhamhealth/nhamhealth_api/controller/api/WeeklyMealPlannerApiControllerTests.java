@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
+import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 
@@ -22,6 +23,9 @@ class WeeklyMealPlannerApiControllerTests {
         meal.setNameEn("Grilled fish");
         meal.setNameKm("ត្រីអាំង");
         meal.setCategoryEn("Dinner");
+        MealCategory category = new MealCategory();
+        category.setCategoryId(7);
+        meal.setCategory(category);
         meal.setCalories(new BigDecimal("510"));
         meal.setProteinGrams(new BigDecimal("38"));
         meal.setCarbsGrams(BigDecimal.ZERO);

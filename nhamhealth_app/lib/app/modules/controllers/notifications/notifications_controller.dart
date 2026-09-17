@@ -148,7 +148,10 @@ class NotificationsController extends GetxController {
   Future<void> open(NotificationItem item) async {
     await markRead(item);
     if (item.referenceType == 'POST' && item.referenceId != null) {
-      await Get.toNamed<void>(AppRoutes.communityPostPath(item.referenceId!));
+      await Get.toNamed<void>(
+        AppRoutes.communityPostPath(item.referenceId!),
+        arguments: {'source': 'notification', 'action': item.action.name},
+      );
       return;
     }
     if (item.referenceType == 'USER' && item.referenceId != null) {

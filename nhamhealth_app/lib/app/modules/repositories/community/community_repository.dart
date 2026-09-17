@@ -36,10 +36,9 @@ class CommunityRepository {
   }
 
   Future<CommunityPost> getPost(String postId) async {
-    final response = await _client.get(
-      _uri('/api/v1/community/posts/$postId'),
-      headers: await _headers(),
-    );
+    final response = await _client
+        .get(_uri('/api/v1/community/posts/$postId'), headers: await _headers())
+        .timeout(const Duration(seconds: 15));
     return _post(_decodeMap(response));
   }
 
@@ -634,7 +633,9 @@ class CommunityRepository {
   }
 
   Future<List<dynamic>> _getList(String path) async {
-    final response = await _client.get(_uri(path), headers: await _headers());
+    final response = await _client
+        .get(_uri(path), headers: await _headers())
+        .timeout(const Duration(seconds: 15));
     _ensureSuccess(response);
     final decoded = jsonDecode(response.body);
     if (decoded is! List) {

@@ -151,4 +151,28 @@ void main() {
       expect(oats.quantity, 100);
     },
   );
+
+  test('adherence progress counts eaten meals but not skipped meals', () async {
+    final controller = withAdminMeals();
+    final breakfast = controller.suggestionsFor(MealPlanSlot.breakfast).first;
+    final lunch = controller.suggestionsFor(MealPlanSlot.lunch).first;
+    await controller.addMeal(breakfast);
+    await controller.addMeal(lunch);
+
+    expect(controller.adherenceProgress, 0);
+    await controller.changeStatus(
+      controller.mealFor(MealPlanSlot.breakfast)!,
+      MealPlanStatus.eaten,
+    );
+    await controller.changeStatus(
+      controller.mealFor(MealPlanSlot.lunch)!,
+      MealPlanStatus.skipped,
+    );
+
+    expect(controller.eatenMeals, 1);
+    expect(controller.skippedMeals, 1);
+    expect(controller.dailyMealGoal, 4);
+    expect(controller.dailyGoalComplete, isFalse);
+    expect(controller.adherenceProgress, 0.25);
+  });
 }

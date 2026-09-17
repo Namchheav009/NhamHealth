@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 enum MealPlanSlot { breakfast, lunch, dinner, snack }
 
+enum MealPlanStatus { planned, eaten, skipped }
+
 extension MealPlanSlotUi on MealPlanSlot {
   String get labelKey => switch (this) {
     MealPlanSlot.breakfast => 'planner.breakfast',
@@ -48,6 +50,9 @@ class PlannedMeal {
     this.planId,
     this.planDate,
     this.servings = 1,
+    this.status = MealPlanStatus.planned,
+    this.completedAt,
+    this.actualServings,
     this.proteinGrams = 0,
     this.carbsGrams = 0,
     this.fatGrams = 0,
@@ -71,6 +76,9 @@ class PlannedMeal {
   final double carbsGrams;
   final double fatGrams;
   final double servings;
+  final MealPlanStatus status;
+  final DateTime? completedAt;
+  final double? actualServings;
   final int? categoryId;
   final MealPlanSlot slot;
   final List<String> ingredients;
@@ -90,6 +98,11 @@ class PlannedMeal {
     DateTime? planDate,
     MealPlanSlot? slot,
     double? servings,
+    MealPlanStatus? status,
+    DateTime? completedAt,
+    double? actualServings,
+    bool clearCompletedAt = false,
+    bool clearActualServings = false,
   }) => PlannedMeal(
     id: id,
     planId: planId ?? this.planId,
@@ -100,6 +113,10 @@ class PlannedMeal {
     carbsGrams: carbsGrams,
     fatGrams: fatGrams,
     servings: servings ?? this.servings,
+    status: status ?? this.status,
+    completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
+    actualServings:
+        clearActualServings ? null : (actualServings ?? this.actualServings),
     slot: slot ?? this.slot,
     ingredients: ingredients,
     ingredientDetails: ingredientDetails,
@@ -137,6 +154,12 @@ class PlannedMeal {
       carbsGrams: (json['carbsGrams'] as num?)?.toDouble() ?? 0,
       fatGrams: (json['fatGrams'] as num?)?.toDouble() ?? 0,
       servings: (json['servings'] as num?)?.toDouble() ?? 1,
+      status: MealPlanStatus.values.firstWhere(
+        (status) => status.name == '${json['status'] ?? 'PLANNED'}'.toLowerCase(),
+        orElse: () => MealPlanStatus.planned,
+      ),
+      completedAt: DateTime.tryParse('${json['completedAt'] ?? ''}'),
+      actualServings: (json['actualServings'] as num?)?.toDouble(),
       slot: MealPlanSlot.values.firstWhere(
         (slot) => slot.name == slotName,
         orElse: () => MealPlanSlot.snack,

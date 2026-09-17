@@ -12,7 +12,6 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
-import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/post_delete_confirmation.dart';
 import '../../controllers/community/community_controller.dart';
 import '../../models/community/community_comment.dart';
@@ -35,12 +34,14 @@ class CommunityCommentsPage extends StatefulWidget {
     this.canEdit = false,
     this.onEditPost,
     this.onShareToFeed,
+    this.titleKey = 'community.comments',
     super.key,
   });
 
   final CommunityPost post;
   final VoidCallback? onPostChanged;
   final bool canEdit;
+  final String titleKey;
   final Future<CommunityPost> Function(CommunityPostDraft draft)? onEditPost;
   final Future<void> Function(
     String message,
@@ -400,9 +401,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _showPostOptions() async {
-    final currentUserId = Get.isRegistered<CommunityController>()
-        ? Get.find<CommunityController>().authenticatedUser.value?.id
-        : null;
+    final currentUserId =
+        Get.isRegistered<CommunityController>()
+            ? Get.find<CommunityController>().authenticatedUser.value?.id
+            : null;
     final isOwner =
         widget.canEdit ||
         (currentUserId != null && _post.authorId == currentUserId);
@@ -471,9 +473,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   Future<void> _togglePostSaved() async {
-    final currentUserId = Get.isRegistered<CommunityController>()
-        ? Get.find<CommunityController>().authenticatedUser.value?.id
-        : null;
+    final currentUserId =
+        Get.isRegistered<CommunityController>()
+            ? Get.find<CommunityController>().authenticatedUser.value?.id
+            : null;
     if (widget.canEdit ||
         (currentUserId != null && _post.authorId == currentUserId)) {
       return;
@@ -487,7 +490,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       return;
     }
     try {
-      final updated = await _repository.toggleSaved(_post.id, recipeId: recipeId);
+      final updated = await _repository.toggleSaved(
+        _post.id,
+        recipeId: recipeId,
+      );
       if (!mounted) return;
       setState(() => _post = updated.copyWith());
       widget.onPostChanged?.call();
@@ -651,7 +657,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                 child: Padding(
                   padding: AppSpacing.topBarPagePadding,
                   child: AppBackHeader(
-                    title: 'community.comments'.tr,
+                    title: widget.titleKey.tr,
                     onBack: Get.back,
                     backButtonKey: const ValueKey<String>(
                       'comments-back-button',
@@ -665,93 +671,89 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
               child: RefreshIndicator(
                 color: _green,
                 onRefresh: _loadComments,
-                child:
-                    _loading
-                        ? const SingleChildScrollView(
-                          physics: AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
-                          ),
-                          padding: EdgeInsets.fromLTRB(
-                            AppSpacing.pageHorizontal,
-                            4,
-                            AppSpacing.pageHorizontal,
-                            24,
-                          ),
-                          child: PageSkeleton.comments(),
-                        )
-                        : ListView(
-                          controller: _scrollController,
-                          // ignore: deprecated_member_use
-                          cacheExtent: 1200,
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(
-                              decelerationRate: ScrollDecelerationRate.normal,
-                            ),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.pageHorizontal,
-                            4,
-                            AppSpacing.pageHorizontal,
-                            24,
-                          ),
+                child: ListView(
+                  controller: _scrollController,
+                  // ignore: deprecated_member_use
+                  cacheExtent: 1200,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(
+                      decelerationRate: ScrollDecelerationRate.normal,
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.pageHorizontal,
+                    4,
+                    AppSpacing.pageHorizontal,
+                    24,
+                  ),
+                  children: [
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: AppSpacing.maxContentWidth,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: AppSpacing.maxContentWidth,
+                            _postSummary(),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Text(
+                                  (_post.comments == 1
+                                          ? 'community.comment_count_one'
+                                          : 'community.comment_count_many')
+                                      .trParams({'count': '${_post.comments}'}),
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _postSummary(),
-                                    const SizedBox(height: 24),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          (_post.comments == 1
-                                                  ? 'community.comment_count_one'
-                                                  : 'community.comment_count_many')
-                                              .trParams({
-                                                'count': '${_post.comments}',
-                                              }),
-                                          style: const TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        Text(
-                                          'community.discussion'.tr,
-                                          style: TextStyle(
-                                            color: _green,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 14),
-                                    if (_comments.isEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 38,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'community.be_the_first_to_comment'
-                                                .tr,
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      ..._threadWidgets(),
-                                  ],
+                                const Spacer(),
+                                Text(
+                                  'community.discussion'.tr,
+                                  style: TextStyle(
+                                    color: _green,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
+                            const SizedBox(height: 14),
+                            if (_loading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 38),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 26,
+                                    height: 26,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: _green,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else if (_comments.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 38,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'community.be_the_first_to_comment'.tr,
+                                  ),
+                                ),
+                              )
+                            else
+                              ..._threadWidgets(),
                           ],
                         ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             _composer(),

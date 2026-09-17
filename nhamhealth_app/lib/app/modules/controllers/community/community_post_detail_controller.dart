@@ -13,9 +13,12 @@ class CommunityPostDetailController extends GetxController {
     required String postId,
     required CommunityRepository repository,
     required AuthService authService,
+    CommunityPost? initialPost,
   }) : _postId = postId.trim(),
        _repository = repository,
-       _authService = authService;
+       _authService = authService {
+    post.value = initialPost;
+  }
 
   final String _postId;
   final CommunityRepository _repository;
@@ -51,16 +54,23 @@ class CommunityPostDetailController extends GetxController {
 
     isLoading.value = true;
     errorMessage.value = null;
+    final session = _authService.restoreSession();
     try {
-      final results = await Future.wait<Object?>([
-        _repository.getPost(_postId),
-        _authService.restoreSession(),
-      ]);
-      post.value = results[0] as CommunityPost;
-      user.value = results[1] as AuthenticatedUser?;
+      // Publish the post as soon as it is available so notification taps can
+      // show the comments page without waiting for session restoration.
+      post.value ??= await _repository.getPost(_postId);
     } on Object catch (error) {
       post.value = null;
       errorMessage.value = error.toString();
+      isLoading.value = false;
+      return;
+    }
+
+    try {
+      user.value = await session;
+    } on Object {
+      // Reading the discussion does not require profile ownership metadata.
+      user.value = null;
     } finally {
       isLoading.value = false;
     }

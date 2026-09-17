@@ -32,6 +32,9 @@ public class MealPlan {
     @Column(name = "plan_date", nullable = false) private LocalDate planDate;
     @Column(name = "meal_type", nullable = false, length = 20) private String mealType;
     @Column(name = "servings", nullable = false, precision = 6, scale = 2) private BigDecimal servings;
+    @Column(name = "status", nullable = false, length = 20) private String status = "PLANNED";
+    @Column(name = "completed_at") private LocalDateTime completedAt;
+    @Column(name = "actual_servings", precision = 6, scale = 2) private BigDecimal actualServings;
     @Column(name = "created_at", nullable = false, updatable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
 
@@ -50,4 +53,10 @@ public class MealPlan {
     public void setMealType(String mealType) { this.mealType = mealType; }
     public BigDecimal getServings() { return servings; }
     public void setServings(BigDecimal servings) { this.servings = servings; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public BigDecimal getActualServings() { return actualServings; }
+    public void setActualServings(BigDecimal actualServings) { this.actualServings = actualServings; }
 }

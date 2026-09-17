@@ -46,6 +46,8 @@ class MealPlannerProvider {
     DateTime? date,
     int? mealId,
     double? servings,
+    MealPlanStatus? status,
+    double? actualServings,
   }) => _send(
     'PUT',
     Uri.parse(
@@ -55,6 +57,8 @@ class MealPlannerProvider {
       if (date != null) 'planDate': _date(date),
       if (mealId != null) 'plannerMealId': mealId,
       if (servings != null) 'servings': servings,
+      if (status != null) 'status': status.name.toUpperCase(),
+      if (actualServings != null) 'actualServings': actualServings,
     },
   );
   Future<void> deleteMeal(int planId) async {

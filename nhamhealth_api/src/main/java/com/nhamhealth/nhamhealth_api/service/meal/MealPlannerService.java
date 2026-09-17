@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 
@@ -25,6 +26,7 @@ import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 @Service
 public class MealPlannerService {
     private static final List<String> TYPES = List.of("BREAKFAST", "LUNCH", "DINNER", "SNACK");
+    private static final List<String> STATUSES = List.of("PLANNED", "EATEN", "SKIPPED");
     private final MealPlanRepository plans;
     private final PlannerMealRepository plannerMeals;
     private final WeeklyMealRecommendationRepository recommendations;
@@ -59,6 +61,9 @@ public class MealPlannerService {
                 });
         plan.setPlannerMeal(meal);
         plan.setServings(request.servings());
+        plan.setStatus("PLANNED");
+        plan.setCompletedAt(null);
+        plan.setActualServings(null);
         return response(plans.save(plan), lang);
     }
 
@@ -73,8 +78,24 @@ public class MealPlannerService {
         }
         if (request.plannerMealId() != null) {
             plan.setPlannerMeal(activePlannerMeal(request.plannerMealId()));
+            plan.setStatus("PLANNED");
+            plan.setCompletedAt(null);
+            plan.setActualServings(null);
         }
         if (request.servings() != null) plan.setServings(request.servings());
+        if (request.status() != null) {
+            String status = status(request.status());
+            plan.setStatus(status);
+            plan.setCompletedAt("EATEN".equals(status) ? LocalDateTime.now() : null);
+            plan.setActualServings("EATEN".equals(status)
+                    ? (request.actualServings() == null ? plan.getServings() : request.actualServings())
+                    : null);
+        } else if (request.actualServings() != null) {
+            if (!"EATEN".equals(plan.getStatus())) {
+                throw new ResponseStatusException(BAD_REQUEST, "Actual servings require EATEN status.");
+            }
+            plan.setActualServings(request.actualServings());
+        }
         if (request.planDate() != null && !request.planDate().equals(plan.getPlanDate())) {
             var conflict = plans.findByUserUserIdAndPlanDateAndMealType(
                     userId, request.planDate(), plan.getMealType())
@@ -111,10 +132,18 @@ public class MealPlannerService {
         if (!TYPES.contains(normalized)) throw new ResponseStatusException(BAD_REQUEST, "Invalid meal type.");
         return normalized;
     }
+    private String status(String value) {
+        String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+        if (!STATUSES.contains(normalized)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Invalid meal plan status.");
+        }
+        return normalized;
+    }
 
     private MealPlanResponse response(MealPlan plan, String lang) {
         PlannerMeal detail = plan.getPlannerMeal();
         return new MealPlanResponse(plan.getMealPlanId(), plan.getPlanDate(), plan.getMealType(), plan.getServings(),
+                plan.getStatus(), plan.getCompletedAt(), plan.getActualServings(),
                 detail.getPlannerMealId(), detail.name(lang), detail.getCategory().getCategoryId(),
                 detail.category(lang),
                 detail.getImageUrl(), detail.getCalories(), detail.getProteinGrams(),

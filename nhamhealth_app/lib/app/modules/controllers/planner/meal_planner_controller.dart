@@ -55,6 +55,15 @@ class MealPlannerController extends GetxController {
       selectedMeals.fold(0, (sum, m) => sum + m.fatGrams * m.servings);
   int get completedSlots =>
       selectedMeals.map((meal) => meal.slot).toSet().length;
+  int get eatenMeals =>
+      selectedMeals.where((meal) => meal.status == MealPlanStatus.eaten).length;
+  int get skippedMeals =>
+      selectedMeals
+          .where((meal) => meal.status == MealPlanStatus.skipped)
+          .length;
+  int get dailyMealGoal => MealPlanSlot.values.length;
+  bool get dailyGoalComplete => eatenMeals == dailyMealGoal;
+  double get adherenceProgress => eatenMeals / dailyMealGoal;
   Iterable<PlannedMeal> get _currentWeekMeals =>
       weekDays.expand((date) => mealsFor(date));
   int get weeklyMealCount => _currentWeekMeals.length;
@@ -289,6 +298,41 @@ class MealPlannerController extends GetxController {
         title: 'planner.error'.tr,
         message: 'planner.save_error'.tr,
       );
+    }
+  }
+
+  Future<void> changeStatus(PlannedMeal meal, MealPlanStatus status) async {
+    if (isSaving.value || meal.status == status) return;
+    final key = _dateKey(meal.planDate ?? selectedDate);
+    final updated = meal.copyWith(
+      status: status,
+      completedAt: status == MealPlanStatus.eaten ? DateTime.now() : null,
+      actualServings: status == MealPlanStatus.eaten ? meal.servings : null,
+      clearCompletedAt: status != MealPlanStatus.eaten,
+      clearActualServings: status != MealPlanStatus.eaten,
+    );
+    _put(key, updated);
+    final provider = _provider;
+    final planId = meal.planId;
+    if (provider == null || planId == null) return;
+    isSaving.value = true;
+    try {
+      _put(
+        key,
+        await provider.updateMeal(
+          planId,
+          status: status,
+          actualServings: status == MealPlanStatus.eaten ? meal.servings : null,
+        ),
+      );
+    } catch (_) {
+      _put(key, meal);
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
+    } finally {
+      isSaving.value = false;
     }
   }
 

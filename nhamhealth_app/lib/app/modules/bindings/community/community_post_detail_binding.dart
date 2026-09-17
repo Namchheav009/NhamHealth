@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../controllers/community/community_post_detail_controller.dart';
+import '../../models/community/community_post.dart';
 import '../../repositories/community/community_repository.dart';
 
 class CommunityPostDetailBinding extends Bindings {
@@ -17,6 +18,10 @@ class CommunityPostDetailBinding extends Bindings {
         postId: Get.parameters['postId'] ?? '',
         repository: Get.find<CommunityRepository>(),
         authService: Get.find<AuthService>(),
+        initialPost:
+            Get.arguments is CommunityPost
+                ? Get.arguments as CommunityPost
+                : null,
       ),
     );
   }

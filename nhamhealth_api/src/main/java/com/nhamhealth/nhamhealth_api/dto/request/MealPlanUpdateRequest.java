@@ -9,5 +9,7 @@ import jakarta.validation.constraints.DecimalMin;
 public record MealPlanUpdateRequest(
         LocalDate planDate,
         Integer plannerMealId,
-        @DecimalMin("0.25") @DecimalMax("20") BigDecimal servings) {
+        @DecimalMin("0.25") @DecimalMax("20") BigDecimal servings,
+        String status,
+        @DecimalMin("0.25") @DecimalMax("20") BigDecimal actualServings) {
 }
