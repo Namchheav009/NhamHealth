@@ -596,12 +596,12 @@ public class CommunityService {
                 null, "", recipe == null ? null : recipe.getRecipeId(),
                 !isShared && recipe != null
                         && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent(),
-                recipe == null ? List.of()
+                recipe == null || isShared ? List.of()
                         : recipeIngredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId())
                                 .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
                                         item.getIngredientName(), item.getAmount(), value(item.getUnit(), "")))
                                 .toList(),
-                recipe == null ? List.of()
+                recipe == null || isShared ? List.of()
                         : recipeSteps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId())
                                 .stream().map(item -> new CommunityPostResponse.MealPostStep(
                                         item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), "")))
@@ -612,20 +612,41 @@ public class CommunityService {
     private CommunityPostResponse.SharedPost sharedPost(Recipe source) {
         Recipe original = originalSharedSource(source);
         UserProfile profile = profiles.findByUser_UserId(original.getAuthor().getUserId()).orElse(null);
-        List<String> imageUrls = posts.findByRecipeRecipeId(original.getRecipeId())
+        Optional<Post> originalPost = posts.findByRecipeRecipeId(original.getRecipeId());
+        List<String> imageUrls = originalPost
                 .map(post -> media.findByPostPostIdOrderByDisplayOrder(post.getPostId()).stream()
                         .map(PostMedia::getMediaUrl).toList())
                 .orElse(List.of());
         String imageUrl = imageUrls.isEmpty() ? value(original.getMainImageUrl(), "") : imageUrls.getFirst();
         if (imageUrls.isEmpty() && !imageUrl.isBlank())
             imageUrls = List.of(imageUrl);
+        List<String> tags = recipeTags.findByRecipeRecipeId(original.getRecipeId())
+                .stream().map(rt -> rt.getTag().getTagName()).toList();
+        List<CommunityPostResponse.MealPostIngredient> ingredients = recipeIngredients
+                .findByRecipeRecipeIdOrderByDisplayOrderAsc(original.getRecipeId())
+                .stream().map(item -> new CommunityPostResponse.MealPostIngredient(
+                        item.getIngredientName(), item.getAmount(), value(item.getUnit(), "")))
+                .toList();
+        List<CommunityPostResponse.MealPostStep> steps = recipeSteps
+                .findByRecipeRecipeIdOrderByStepNumberAsc(original.getRecipeId())
+                .stream().map(item -> new CommunityPostResponse.MealPostStep(
+                        item.getStepNumber(), item.getInstruction(), value(item.getImageUrl(), "")))
+                .toList();
+        java.time.LocalDateTime createdAt = originalPost.map(Post::getCreatedAt).orElse(original.getCreatedAt());
+        java.time.OffsetDateTime createdOffset = createdAt == null
+                ? null
+                : createdAt.atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime();
+        String description = originalPost.map(Post::getCaption).filter(c -> !c.isBlank())
+                .orElse(value(original.getDescription(), ""));
         return new CommunityPostResponse.SharedPost(
                 original.getRecipeId(), original.getAuthor().getUserId(),
                 communityDisplayName(original.getAuthor(), profile),
                 original.getAuthor().getRoleLabel(),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                value(original.getRecipeName(), ""), value(original.getDescription(), ""),
-                imageUrl, imageUrls, "Original post", original.getShareCount());
+                value(original.getRecipeName(), ""), description,
+                imageUrl, imageUrls, "Just now", createdOffset, original.getShareCount(),
+                original.getCookingTimeMinutes(), original.getServings(), value(original.getDifficulty(), ""),
+                tags, ingredients, steps);
     }
 
     private Recipe originalSharedSource(Recipe recipe) {

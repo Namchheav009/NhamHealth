@@ -135,7 +135,7 @@ class ProfileView extends GetView<ProfileController> {
         final selectedIndex = controller.selectedProfileContentTab.value;
         return Column(
           children: [
-            _ProfileContentTabs(
+            ProfileContentTabs(
               selectedIndex: selectedIndex,
               onChanged: (index) {
                 if (selectedIndex == index) return;
@@ -530,8 +530,8 @@ class ProfileView extends GetView<ProfileController> {
   );
 }
 
-class _ProfileContentTabs extends StatelessWidget {
-  const _ProfileContentTabs({
+class ProfileContentTabs extends StatelessWidget {
+  const ProfileContentTabs({
     required this.selectedIndex,
     required this.onChanged,
   });
@@ -542,28 +542,29 @@ class _ProfileContentTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
+    padding: const EdgeInsets.all(4),
     decoration: BoxDecoration(
       color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: context.appBorder),
+      borderRadius: BorderRadius.circular(30),
+      border: Border.all(color: context.appBorder.withValues(alpha: .7)),
       boxShadow: context.appTileShadow,
     ),
-    clipBehavior: Clip.antiAlias,
     child: Row(
       children: [
         Expanded(
-          child: _ProfileContentTab(
+          child: _ProfileTabButton(
             key: const ValueKey<String>('my-profile-tab-all'),
             label: 'common.all'.tr,
+            icon: Icons.grid_view_rounded,
             selected: selectedIndex == 0,
             onTap: () => onChanged(0),
           ),
         ),
-        Container(width: 1, height: 28, color: context.appBorder),
         Expanded(
-          child: _ProfileContentTab(
+          child: _ProfileTabButton(
             key: const ValueKey<String>('my-profile-tab-photos'),
             label: 'profile.photos'.tr,
+            icon: Icons.image_outlined,
             selected: selectedIndex == 1,
             onTap: () => onChanged(1),
           ),
@@ -573,57 +574,72 @@ class _ProfileContentTabs extends StatelessWidget {
   );
 }
 
-class _ProfileContentTab extends StatelessWidget {
-  const _ProfileContentTab({
+class _ProfileTabButton extends StatelessWidget {
+  const _ProfileTabButton({
     super.key,
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    label: label,
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.fromLTRB(12, 13, 12, 10),
-          decoration: BoxDecoration(
-            color:
-                selected
-                    ? context.appSoftGreen.withValues(alpha: .45)
-                    : Colors.transparent,
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? AppColors.primaryGreen : Colors.transparent,
-                width: 3,
-              ),
+  Widget build(BuildContext context) {
+    final activeColor =
+        context.appIsDark
+            ? context.appColorScheme.primary
+            : const Color(0xFF009B46);
+    final activeBg =
+        context.appIsDark
+            ? context.appSoftGreen.withValues(alpha: .35)
+            : const Color(0xFFDFF6E6);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(26),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? activeBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(26),
             ),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? AppColors.primaryGreen : context.appMutedText,
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected ? activeColor : context.appMutedText,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? activeColor : context.appMutedText,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _MyPhotosGrid extends StatelessWidget {

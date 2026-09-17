@@ -621,6 +621,10 @@ class CommunityController extends GetxController {
   }
 
   Future<void> togglePostSaved(CommunityPost post) async {
+    final currentUserId = authenticatedUser.value?.id;
+    if (currentUserId != null && post.authorId == currentUserId) {
+      return;
+    }
     final recipeId = post.mealId;
     if (recipeId == null) {
       Get.snackbar(

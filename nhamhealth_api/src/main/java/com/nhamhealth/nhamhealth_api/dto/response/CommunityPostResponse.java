@@ -18,5 +18,7 @@ public record CommunityPostResponse(
     public record SharedPost(
             Integer id, Integer authorId, String author, String role, String authorAvatarUrl,
             String mealName, String description, String imageUrl, List<String> imageUrls, String ageLabel,
-            long shares) { }
+            OffsetDateTime createdAt,
+            long shares, Integer cookingTimeMinutes, Integer servings, String difficulty,
+            List<String> tags, List<MealPostIngredient> ingredients, List<MealPostStep> steps) { }
 }

@@ -1747,12 +1747,13 @@ class _CommunityOptionsSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: context.appMutedSurface,
+            Material(
+              color: context.appMutedSurface,
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: context.appBorder),
+                side: BorderSide(color: context.appBorder),
               ),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
                   for (var index = 0; index < actions.length; index++) ...[

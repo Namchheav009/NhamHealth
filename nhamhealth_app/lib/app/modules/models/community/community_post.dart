@@ -270,7 +270,15 @@ class CommunitySharedPost {
     required this.imageUrl,
     this.imageUrls = const [],
     this.ageLabel = 'Recently',
+    this.createdAt,
     this.shares = 0,
+    this.cookingTimeMinutes,
+    this.servings,
+    this.difficulty = '',
+    this.tags = const [],
+    this.ingredients = const [],
+    this.steps = const [],
+    this.mealId,
   });
 
   final String id;
@@ -283,7 +291,39 @@ class CommunitySharedPost {
   final String imageUrl;
   final List<String> imageUrls;
   final String ageLabel;
+  final DateTime? createdAt;
   final int shares;
+  final int? cookingTimeMinutes;
+  final int? servings;
+  final String difficulty;
+  final List<String> tags;
+  final List<MealPostIngredient> ingredients;
+  final List<MealPostStep> steps;
+  final int? mealId;
+
+  bool get hasRecipe => ingredients.isNotEmpty || steps.isNotEmpty;
+
+  CommunityPost toPost() => CommunityPost(
+    id: id,
+    authorId: authorId,
+    author: author,
+    role: role,
+    authorAvatarUrl: authorAvatarUrl,
+    mealName: mealName,
+    description: description,
+    imageUrl: imageUrl,
+    imageUrls: imageUrls,
+    ageLabel: ageLabel,
+    createdAt: createdAt,
+    shares: shares,
+    cookingTimeMinutes: cookingTimeMinutes,
+    servings: servings,
+    difficulty: difficulty,
+    tags: tags,
+    ingredients: ingredients,
+    steps: steps,
+    mealId: mealId,
+  );
 
   factory CommunitySharedPost.fromJson(Map<String, dynamic> json) {
     final imageUrls = (json['imageUrls'] as List<dynamic>? ?? const [])
@@ -307,7 +347,26 @@ class CommunitySharedPost {
               ? const []
               : [imageUrl],
       ageLabel: (json['ageLabel'] as String? ?? 'Recently').trim(),
+      createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal(),
       shares: (json['shares'] as num?)?.toInt() ?? 0,
+      cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
+      servings: (json['servings'] as num?)?.toInt(),
+      difficulty: (json['difficulty'] as String? ?? '').trim(),
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .map((tag) => '$tag')
+          .toList(growable: false),
+      ingredients: (json['ingredients'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                MealPostIngredient.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(growable: false),
+      steps: (json['steps'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((item) => MealPostStep.fromJson(Map<String, dynamic>.from(item)))
+          .toList(growable: false),
+      mealId: (json['mealId'] as num?)?.toInt(),
     );
   }
 
@@ -324,7 +383,16 @@ class CommunitySharedPost {
         imageUrl: post.sharedPost?.imageUrl ?? post.imageUrl,
         imageUrls: post.sharedPost?.imageUrls ?? post.imageUrls,
         ageLabel: post.sharedPost?.ageLabel ?? post.ageLabel,
+        createdAt: post.sharedPost?.createdAt ?? post.createdAt,
         shares: post.sharedPost?.shares ?? post.shares,
+        cookingTimeMinutes:
+            post.sharedPost?.cookingTimeMinutes ?? post.cookingTimeMinutes,
+        servings: post.sharedPost?.servings ?? post.servings,
+        difficulty: post.sharedPost?.difficulty ?? post.difficulty,
+        tags: post.sharedPost?.tags ?? post.tags,
+        ingredients: post.sharedPost?.ingredients ?? post.ingredients,
+        steps: post.sharedPost?.steps ?? post.steps,
+        mealId: post.sharedPost?.mealId ?? post.mealId,
       );
 }
 
