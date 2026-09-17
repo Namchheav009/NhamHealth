@@ -568,6 +568,14 @@ class CommunityRepository {
     return '${_decodeMap(response)['status'] ?? 'NONE'}'.trim().toUpperCase();
   }
 
+  Future<void> removeFollower(String followerId) async {
+    final response = await _client.delete(
+      _uri('/api/v1/community/followers/$followerId'),
+      headers: await _headers(),
+    );
+    _ensureSuccess(response);
+  }
+
   CommunityPost _post(Map<String, dynamic> json, {bool justNow = false}) {
     json['imageUrl'] = _absoluteUrl('${json['imageUrl'] ?? ''}');
     json['imageUrls'] = (json['imageUrls'] as List<dynamic>? ?? const [])

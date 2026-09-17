@@ -128,35 +128,25 @@ class _CommunityPersonProfileViewState
     final profile = _profile;
     if (profile == null || _isUpdatingFollow) return;
     if (profile.isFollowing) {
-      final confirmed = await Get.dialog<bool>(
-        AlertDialog(
-          title: Text('community.unfollow_member_question'.tr),
-          content: Text(
-            'community.unfollow_member_warning'.trParams({
-              'name': profile.name,
-            }),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(result: false),
-              child: Text('common.cancel'.tr),
-            ),
-            FilledButton(
-              onPressed: () => Get.back(result: true),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF278A3A),
-              ),
-              child: Text('community.unfollow'.tr),
-            ),
-          ],
-        ),
+      final confirmed = await AppAlert.confirmAction(
+        context: context,
+        title: 'community.unfollow_member_question',
+        message: 'community.unfollow_member_warning'.trParams({
+          'name': profile.name,
+        }),
+        confirmText: 'community.unfollow',
+        cancelText: 'common.cancel',
+        icon: Icons.person_remove_rounded,
+        confirmButtonColor: const Color(0xFF278A3A),
       );
       if (confirmed != true || !mounted) return;
     }
-    final optimisticFollowing = !profile.isFollowing;
+    final wasFollowing = profile.isFollowing;
+    final optimisticFollowing = !wasFollowing;
+    final followsViewer = wasFollowing ? false : profile.followsViewer;
     final optimisticStatus = CommunityConnectionStatus.fromDirections(
       isFollowing: optimisticFollowing,
-      followsViewer: profile.followsViewer,
+      followsViewer: followsViewer,
     );
     setState(() {
       _isUpdatingFollow = true;
@@ -167,7 +157,7 @@ class _CommunityPersonProfileViewState
         await _repository.toggleFollow('${profile.id}'),
       );
       // Keep compatibility with API versions that only return FOLLOWING/NONE.
-      if (profile.followsViewer && !status.followsViewer) {
+      if (status.isFollowing && profile.followsViewer && !status.followsViewer) {
         status = CommunityConnectionStatus.fromDirections(
           isFollowing: status.isFollowing,
           followsViewer: true,
@@ -180,6 +170,14 @@ class _CommunityPersonProfileViewState
         _isUpdatingFollow = false;
       });
       _synchronizeCommunity(updated, refreshPeople: true);
+      if (wasFollowing) {
+        await AppAlert.actionSuccess(
+          title: 'community.unfollowed_title'.tr,
+          message: 'community.unfollowed_success'.trParams({
+            'name': profile.name,
+          }),
+        );
+      }
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
