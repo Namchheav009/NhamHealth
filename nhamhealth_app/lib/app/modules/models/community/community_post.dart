@@ -259,7 +259,7 @@ class MealPostStep {
 }
 
 class CommunitySharedPost {
-  const CommunitySharedPost({
+  CommunitySharedPost({
     required this.id,
     required this.authorId,
     required this.author,
@@ -272,6 +272,7 @@ class CommunitySharedPost {
     this.ageLabel = 'Recently',
     this.createdAt,
     this.shares = 0,
+    this.isFollowingAuthor = false,
     this.cookingTimeMinutes,
     this.servings,
     this.difficulty = '',
@@ -293,6 +294,7 @@ class CommunitySharedPost {
   final String ageLabel;
   final DateTime? createdAt;
   final int shares;
+  bool isFollowingAuthor;
   final int? cookingTimeMinutes;
   final int? servings;
   final String difficulty;
@@ -316,6 +318,7 @@ class CommunitySharedPost {
     ageLabel: ageLabel,
     createdAt: createdAt,
     shares: shares,
+    isFollowingAuthor: isFollowingAuthor,
     cookingTimeMinutes: cookingTimeMinutes,
     servings: servings,
     difficulty: difficulty,
@@ -349,6 +352,8 @@ class CommunitySharedPost {
       ageLabel: (json['ageLabel'] as String? ?? 'Recently').trim(),
       createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal(),
       shares: (json['shares'] as num?)?.toInt() ?? 0,
+      isFollowingAuthor:
+          json['isFollowingAuthor'] == true || json['following'] == true,
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
       servings: (json['servings'] as num?)?.toInt(),
       difficulty: (json['difficulty'] as String? ?? '').trim(),
@@ -385,6 +390,8 @@ class CommunitySharedPost {
         ageLabel: post.sharedPost?.ageLabel ?? post.ageLabel,
         createdAt: post.sharedPost?.createdAt ?? post.createdAt,
         shares: post.sharedPost?.shares ?? post.shares,
+        isFollowingAuthor:
+            post.sharedPost?.isFollowingAuthor ?? post.isFollowingAuthor,
         cookingTimeMinutes:
             post.sharedPost?.cookingTimeMinutes ?? post.cookingTimeMinutes,
         servings: post.sharedPost?.servings ?? post.servings,

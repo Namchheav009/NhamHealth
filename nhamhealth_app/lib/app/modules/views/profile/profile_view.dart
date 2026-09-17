@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../config/api_config.dart';
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
@@ -179,6 +180,17 @@ class ProfileView extends GetView<ProfileController> {
                           isLiking: controller.likingPostIds.contains(post.id),
                           onComment: () => _showComments(post),
                           onShare: () => _showShare(post),
+                          onSharedPostTap:
+                              post.sharedPost != null
+                                  ? () => _showComments(post.sharedPost!.toPost())
+                                  : null,
+                          onSharedAuthorTap:
+                              (post.sharedPost != null && post.sharedPost!.authorId > 0)
+                                  ? () => Get.toNamed<void>(
+                                        AppRoutes.communityPersonProfilePath(post.sharedPost!.authorId),
+                                        arguments: post.sharedPost!.toPost(),
+                                      )
+                                  : null,
                         ),
                       ),
                     )

@@ -908,8 +908,13 @@ class CommunityController extends GetxController {
   void _updatePostAuthorFollowState(String personIdValue, bool isFollowing) {
     final personId = int.tryParse(personIdValue);
     if (personId == null) return;
-    for (final post in posts.where((post) => post.authorId == personId)) {
-      post.isFollowingAuthor = isFollowing;
+    for (final post in posts) {
+      if (post.authorId == personId) {
+        post.isFollowingAuthor = isFollowing;
+      }
+      if (post.sharedPost?.authorId == personId) {
+        post.sharedPost?.isFollowingAuthor = isFollowing;
+      }
     }
     posts.refresh();
   }

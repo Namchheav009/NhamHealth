@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/config/api_config.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_shared_post_card.dart';
@@ -80,7 +81,7 @@ void main() {
                 imageUrl: '',
                 author: 'Sharing member',
                 role: 'Member',
-                sharedPost: const CommunitySharedPost(
+                sharedPost: CommunitySharedPost(
                   id: '1',
                   authorId: 7,
                   author: 'Original member',
@@ -168,6 +169,71 @@ void main() {
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
     expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_rounded), findsOneWidget);
+  });
+
+  testWidgets('forwards shared post relationship, options, and tap actions to CommunitySharedPostCard', (
+    tester,
+  ) async {
+    var didTapSharedRel = false;
+    var didTapSharedOptions = false;
+    var didTapSharedAuthor = false;
+    var didTapSharedPost = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ProfilePostCard(
+              post: CommunityPost(
+                id: '20',
+                description: 'Shared by user',
+                imageUrl: '',
+                author: 'Sharing user',
+                role: 'Member',
+                sharedPost: CommunitySharedPost(
+                  id: '10',
+                  authorId: 99,
+                  author: 'Original creator',
+                  role: 'Member',
+                  authorAvatarUrl: '',
+                  description: 'Original food post',
+                  imageUrl: '',
+                ),
+              ),
+              onLike: _noop,
+              onComment: _noop,
+              onShare: _noop,
+              sharedRelationshipLabel: 'Friend',
+              onSharedRelationshipTap: () => didTapSharedRel = true,
+              onSharedOptions: () => didTapSharedOptions = true,
+              onSharedAuthorTap: () => didTapSharedAuthor = true,
+              onSharedPostTap: () => didTapSharedPost = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(CommunitySharedPostCard), findsOneWidget);
+    expect(find.text('Original creator'), findsOneWidget);
+    expect(find.text('community.friend'.tr), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
+
+    await tester.tap(find.text('community.friend'.tr));
+    await tester.pump();
+    expect(didTapSharedRel, isTrue);
+
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pump();
+    expect(didTapSharedOptions, isTrue);
+
+    await tester.tap(find.text('Original creator'));
+    await tester.pump();
+    expect(didTapSharedAuthor, isTrue);
+
+    await tester.tap(find.text('Original food post'));
+    await tester.pump();
+    expect(didTapSharedPost, isTrue);
   });
 }
 

@@ -1153,6 +1153,7 @@ class CommunityPage extends GetView<CommunityController> {
           final current =
               controller.posts.firstWhereOrNull((item) => item.id == post.id) ??
               post;
+          final sharedAsPost = current.sharedPost?.toPost();
           return ProfilePostCard(
             post: current,
             onAuthorTap: () => _openAuthorProfile(current),
@@ -1164,6 +1165,24 @@ class CommunityPage extends GetView<CommunityController> {
             onComment: () => _showComments(current),
             onShare: () => _showShareOptions(current),
             onOptions: () => _showPostOptions(current),
+            onSharedPostTap:
+                sharedAsPost != null ? () => _showComments(sharedAsPost) : null,
+            onSharedAuthorTap:
+                sharedAsPost != null
+                    ? () => _openAuthorProfile(sharedAsPost)
+                    : null,
+            sharedRelationshipLabel:
+                sharedAsPost != null
+                    ? _authorRelationshipLabel(sharedAsPost)
+                    : null,
+            onSharedRelationshipTap:
+                sharedAsPost != null
+                    ? () => _toggleAuthorRelationship(sharedAsPost)
+                    : null,
+            onSharedOptions:
+                sharedAsPost != null
+                    ? () => _showPostOptions(sharedAsPost)
+                    : null,
           );
         }),
       ),
