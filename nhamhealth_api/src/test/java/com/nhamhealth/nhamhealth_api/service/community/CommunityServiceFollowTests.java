@@ -47,20 +47,68 @@ class CommunityServiceFollowTests {
                 2, 1, "ACTIVE")).thenReturn(true);
 
         assertEquals("FRIEND", dependencies.service.toggleFollow(1, 2));
+        verify(dependencies.communityNotifications).followedBack(viewer, target);
+    }
+
+    @Test
+    void followingSomeoneWhoDoesNotFollowViewerSendsFollowed() {
+        Dependencies dependencies = new Dependencies();
+        User viewer = user(1, "Viewer");
+        User target = user(2, "Target");
+        when(dependencies.users.findById(1)).thenReturn(Optional.of(viewer));
+        when(dependencies.users.findById(2)).thenReturn(Optional.of(target));
+        when(dependencies.follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                1, 2, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(dependencies.follows.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
+                2, 1, "ACTIVE")).thenReturn(false);
+
+        assertEquals("FOLLOWING", dependencies.service.toggleFollow(1, 2));
         verify(dependencies.communityNotifications).followed(viewer, target);
     }
 
     @Test
-    void unfollowingFriendKeepsInboundFollowerStatus() {
+    void unfollowingFriendRemovesBothFollowsSoTheyMustAddBackToBeFriend() {
+        Dependencies dependencies = new Dependencies();
+        Follow existing = follow(user(1, "Viewer"), user(2, "Target"));
+        Follow reverse = follow(user(2, "Target"), user(1, "Viewer"));
+        when(dependencies.follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                1, 2, "ACTIVE"))
+                .thenReturn(Optional.of(existing));
+        when(dependencies.follows.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
+                2, 1, "ACTIVE")).thenReturn(true);
+        when(dependencies.follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                2, 1, "ACTIVE"))
+                .thenReturn(Optional.of(reverse));
+
+        assertEquals("NONE", dependencies.service.toggleFollow(1, 2));
+        verify(dependencies.follows).delete(existing);
+        verify(dependencies.follows).delete(reverse);
+    }
+
+    @Test
+    void unfollowingOneWayFollowingDeletesOnlyViewerFollow() {
         Dependencies dependencies = new Dependencies();
         Follow existing = follow(user(1, "Viewer"), user(2, "Target"));
         when(dependencies.follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
                 1, 2, "ACTIVE"))
                 .thenReturn(Optional.of(existing));
         when(dependencies.follows.existsByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCase(
-                2, 1, "ACTIVE")).thenReturn(true);
+                2, 1, "ACTIVE")).thenReturn(false);
 
-        assertEquals("FOLLOWS_YOU", dependencies.service.toggleFollow(1, 2));
+        assertEquals("NONE", dependencies.service.toggleFollow(1, 2));
+        verify(dependencies.follows).delete(existing);
+    }
+
+    @Test
+    void removeFollowerDeletesInboundFollow() {
+        Dependencies dependencies = new Dependencies();
+        Follow existing = follow(user(5, "Follower Only"), user(1, "Viewer"));
+        when(dependencies.follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                5, 1, "ACTIVE"))
+                .thenReturn(Optional.of(existing));
+
+        dependencies.service.removeFollower(1, 5);
         verify(dependencies.follows).delete(existing);
     }
 
@@ -91,7 +139,7 @@ class CommunityServiceFollowTests {
 
         assertEquals(1, response.mutualFriends());
         assertEquals("NONE", response.connectionStatus());
-        assertEquals(List.of(2, 4, 5), discover.stream().map(CommunityPersonResponse::id).toList());
+        assertEquals(List.of(2, 3, 4, 5), discover.stream().map(CommunityPersonResponse::id).toList());
         assertEquals(List.of(3), dependencies.service.people(1, "friends").stream()
                 .map(CommunityPersonResponse::id).toList());
         assertEquals(List.of(5), dependencies.service.people(1, "followers").stream()

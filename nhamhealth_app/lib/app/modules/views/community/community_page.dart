@@ -13,6 +13,7 @@ import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/post_delete_confirmation.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/community/community_controller.dart';
 import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
@@ -35,7 +36,7 @@ class CommunityPage extends GetView<CommunityController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScrollAwareScaffold(
       backgroundColor: context.appBackground,
       extendBody: true,
       body: AppBackground(
@@ -87,7 +88,7 @@ class CommunityPage extends GetView<CommunityController> {
           ),
         ),
       ),
-      bottomNavigationBar: Obx(() => _communityBottomBar(context)),
+      bottomNavigationBar: _bottomNav(),
     );
   }
 
@@ -167,7 +168,7 @@ class CommunityPage extends GetView<CommunityController> {
         AppSpacing.pageHorizontalFor(context),
         10,
         AppSpacing.pageHorizontalFor(context),
-        controller.isMultiSelectMode.value ? 190 : 115,
+        115,
       ),
       children: [
         _contentWidth(
@@ -190,7 +191,6 @@ class CommunityPage extends GetView<CommunityController> {
                 const SizedBox(height: 10),
                 _peopleFilters(context),
                 const SizedBox(height: 10),
-                _multiSelectControl(context),
               ],
               const SizedBox(height: 18),
               _peopleResults(context, view),
@@ -311,7 +311,7 @@ class CommunityPage extends GetView<CommunityController> {
           _peopleFilterOption(
             context: context,
             icon: Icons.people_alt_rounded,
-            label: 'community.mutual_friends'.tr,
+            label: 'community.mutual_connections'.tr,
             filter: PeopleFilter.mutualFriends,
           ),
         ],
@@ -377,52 +377,6 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _multiSelectControl(BuildContext context) {
-    final enabled = controller.isMultiSelectMode.value;
-    final help = Text(
-      enabled
-          ? 'community.selected_count'.trParams({
-            'count': '${controller.selectedFriendCount}',
-          })
-          : 'community.select_multiple_help'.tr,
-      style: TextStyle(
-        color: context.appMutedText,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-    final action = TextButton.icon(
-      key: const ValueKey<String>('friend-select-multiple'),
-      onPressed:
-          controller.submittingFollowConnections.value
-              ? null
-              : controller.toggleMultiSelectMode,
-      icon: Icon(
-        enabled ? Icons.close_rounded : Icons.library_add_check_rounded,
-        size: 18,
-      ),
-      label: Text(
-        enabled ? 'common.cancel'.tr : 'community.select_multiple'.tr,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        if (constraints.maxWidth < 420) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              help,
-              Align(alignment: Alignment.centerRight, child: action),
-            ],
-          );
-        }
-        return Row(children: [Expanded(child: help), action]);
-      },
-    );
-  }
-
   Widget _peopleResults(BuildContext context, FriendsView view) {
     final people = controller.filteredPeople;
     final hasQuery = controller.searchQuery.value.trim().isNotEmpty;
@@ -477,7 +431,6 @@ class CommunityPage extends GetView<CommunityController> {
     FriendsView view, {
     bool addBottomMargin = true,
   }) {
-    final selected = controller.selectedFriendIds.contains(person.id);
     return Container(
       key: ValueKey<String>('people-card-${person.id}'),
       margin: EdgeInsets.only(bottom: addBottomMargin ? 10 : 0),
@@ -486,12 +439,9 @@ class CommunityPage extends GetView<CommunityController> {
         borderRadius: BorderRadius.circular(_cardRadius),
         border: Border.all(
           color:
-              selected
-                  ? green
-                  : view == FriendsView.addFriends
+              view == FriendsView.addFriends
                   ? green.withValues(alpha: .20)
                   : context.appBorder,
-          width: selected ? 2 : 1,
         ),
         boxShadow: context.appTileShadow,
       ),
@@ -642,41 +592,32 @@ class CommunityPage extends GetView<CommunityController> {
   Widget _personAction(
     BuildContext context,
     CommunityPerson person,
-    FriendsView view, {
-    bool includeFollowConnection = true,
-  }) {
-    if (view == FriendsView.addFriends && includeFollowConnection) {
-      return Column(
-        children: [
-          _followConnectionAction(context, person),
-          const SizedBox(height: 8),
-          _personAction(context, person, view, includeFollowConnection: false),
-        ],
-      );
-    }
+    FriendsView view,
+  ) {
     final status = _effectiveConnectionStatus(person);
-    final isFriend =
-        status == CommunityConnectionStatus.friend ||
-        view == FriendsView.friends;
     final isUpdating = controller.updatingConnectionIds.contains(person.id);
-
-    if (isFriend) {
-      return SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: _profileButton(context, person, expandedLabel: true),
-      );
-    }
-
-    final isFollowing = status == CommunityConnectionStatus.following;
+    final isFollowing = status.isFollowing;
+    final isFriend = status == CommunityConnectionStatus.friend;
+    final isFollowBack =
+        !isFollowing &&
+        (view == FriendsView.followers ||
+            status == CommunityConnectionStatus.followsYou);
 
     final label =
-        isFollowing
+        isFriend
+            ? 'community.friends'.tr
+            : isFollowing
             ? 'community.following'.tr
-            : view == FriendsView.followers ||
-                status == CommunityConnectionStatus.followsYou
+            : isFollowBack
             ? 'community.follow_back'.tr
             : 'community.follow'.tr;
+
+    final icon =
+        isFriend
+            ? Icons.people_alt_rounded
+            : isFollowing
+            ? Icons.check_rounded
+            : Icons.person_add_alt_1_rounded;
 
     final followButton =
         isFollowing
@@ -685,20 +626,23 @@ class CommunityPage extends GetView<CommunityController> {
               onPressed:
                   isUpdating
                       ? null
-                      : () => controller.updateConnection(person, view),
+                      : () => _confirmUnfollowPerson(context, person, view),
               style: OutlinedButton.styleFrom(
-                foregroundColor: green,
+                foregroundColor: isFriend ? const Color(0xFF1B6B2E) : green,
                 backgroundColor: context.appSurfaceLow.withValues(alpha: .72),
-                side: BorderSide(color: green.withValues(alpha: .34)),
+                side: BorderSide(
+                  color: (isFriend ? const Color(0xFF1B6B2E) : green)
+                      .withValues(alpha: .34),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: _followButtonContent(
-                label: 'common.following'.tr,
-                icon: Icons.check_rounded,
+                label: label,
+                icon: icon,
                 isLoading: isUpdating,
-                spinnerColor: green,
+                spinnerColor: isFriend ? const Color(0xFF1B6B2E) : green,
               ),
             )
             : FilledButton(
@@ -717,11 +661,13 @@ class CommunityPage extends GetView<CommunityController> {
               ),
               child: _followButtonContent(
                 label: label,
-                icon: Icons.person_add_alt_1_rounded,
+                icon: icon,
                 isLoading: isUpdating,
                 spinnerColor: Colors.white,
               ),
             );
+
+    final isFollowerView = view == FriendsView.followers && status.followsViewer;
 
     return SizedBox(
       height: 40,
@@ -730,102 +676,22 @@ class CommunityPage extends GetView<CommunityController> {
           Expanded(flex: 4, child: _profileButton(context, person)),
           const SizedBox(width: 8),
           Expanded(flex: 5, child: followButton),
-        ],
-      ),
-    );
-  }
-
-  Widget _followConnectionAction(BuildContext context, CommunityPerson person) {
-    final status = controller.friendshipStatusFor(person);
-    final isUpdating = controller.updatingConnectionIds.contains(person.id);
-    final selected = controller.selectedFriendIds.contains(person.id);
-
-    if (status == FriendshipStatus.blocked) return const SizedBox.shrink();
-    if (status == FriendshipStatus.incomingPending) {
-      return SizedBox(
-        height: 40,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: ValueKey<String>('friend-decline-${person.id}'),
-                onPressed:
-                    isUpdating
-                        ? null
-                        : () => controller.declineFollowConnection(person),
-                child: Text('community.decline'.tr),
+          if (isFollowerView) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              key: ValueKey<String>('remove-follower-${person.id}'),
+              icon: Icon(
+                Icons.more_vert_rounded,
+                size: 18,
+                color: context.appMutedText,
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: FilledButton(
-                key: ValueKey<String>('friend-accept-${person.id}'),
-                onPressed:
-                    isUpdating
-                        ? null
-                        : () => controller.acceptFollowConnection(person),
-                style: FilledButton.styleFrom(backgroundColor: green),
-                child:
-                    isUpdating
-                        ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : Text('community.accept'.tr),
-              ),
+              tooltip: 'community.remove_follower'.tr,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
+              onPressed: () => _confirmRemoveFollower(context, person),
             ),
           ],
-        ),
-      );
-    }
-
-    final label = switch (status) {
-      FriendshipStatus.outgoingPending => 'community.requested'.tr,
-      FriendshipStatus.friends => 'community.friends'.tr,
-      _ when controller.isMultiSelectMode.value =>
-        selected ? 'community.selected'.tr : 'community.select_friend'.tr,
-      _ => 'community.add_friend'.tr,
-    };
-    final enabled =
-        status == FriendshipStatus.none &&
-        !isUpdating &&
-        !controller.submittingFollowConnections.value &&
-        !controller.followConnectionCooldownActive;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 40,
-      child: OutlinedButton.icon(
-        key: ValueKey<String>('friend-action-${person.id}'),
-        onPressed:
-            !enabled
-                ? null
-                : controller.isMultiSelectMode.value
-                ? () => controller.toggleFriendSelection(person)
-                : () async {
-                  controller.selectSingleFriend(person);
-                  await _confirmAndSendFollowConnections(context);
-                },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: green,
-          backgroundColor: selected ? context.appSoftGreen : null,
-          side: BorderSide(color: green.withValues(alpha: .42)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        icon: Icon(
-          status == FriendshipStatus.outgoingPending ||
-                  status == FriendshipStatus.friends ||
-                  selected
-              ? Icons.check_rounded
-              : Icons.person_add_alt_1_rounded,
-          size: 18,
-        ),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }
@@ -864,11 +730,7 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _profileButton(
-    BuildContext context,
-    CommunityPerson person, {
-    bool expandedLabel = false,
-  }) {
+  Widget _profileButton(BuildContext context, CommunityPerson person) {
     return OutlinedButton.icon(
       key: ValueKey<String>('people-profile-${person.id}'),
       onPressed: () => _openPersonProfile(person),
@@ -880,12 +742,67 @@ class CommunityPage extends GetView<CommunityController> {
       ),
       icon: const Icon(Icons.person_outline_rounded, size: 17),
       label: Text(
-        (expandedLabel ? 'community.view_profile' : 'community.profile').tr,
+        'community.profile'.tr,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
     );
+  }
+
+  Future<void> _confirmUnfollowPerson(
+    BuildContext context,
+    CommunityPerson person,
+    FriendsView view,
+  ) async {
+    final confirmed = await AppAlert.confirmAction(
+      context: context,
+      title: 'community.unfollow_member_question',
+      message: 'community.unfollow_member_warning'.trParams({
+        'name': person.displayName,
+      }),
+      confirmText: 'community.unfollow',
+      cancelText: 'common.cancel',
+      icon: Icons.person_remove_rounded,
+      confirmButtonColor: const Color(0xFF278A3A),
+    );
+    if (confirmed == true) {
+      await controller.updateConnection(person, view);
+      await AppAlert.actionSuccess(
+        context: context,
+        title: 'community.unfollowed_title',
+        message: 'community.unfollowed_success'.trParams({
+          'name': person.displayName,
+        }),
+      );
+    }
+  }
+
+  Future<void> _confirmRemoveFollower(
+    BuildContext context,
+    CommunityPerson person,
+  ) async {
+    final confirmed = await AppAlert.confirmAction(
+      context: context,
+      title: 'community.remove_follower',
+      message: 'community.remove_follower_prompt'.trParams({
+        'name': person.displayName,
+      }),
+      confirmText: 'community.remove_follower',
+      cancelText: 'common.cancel',
+      icon: Icons.person_remove_rounded,
+      confirmButtonColor: Colors.red.shade700,
+    );
+    if (confirmed == true) {
+      await controller.removeFollower(person);
+      await AppAlert.actionSuccess(
+        context: context,
+        title: 'community.follower_removed',
+        message: 'community.follower_removed_success'.trParams({
+          'name': person.displayName,
+        }),
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -1292,28 +1209,26 @@ class CommunityPage extends GetView<CommunityController> {
     final isFollowing = status?.isFollowing ?? post.isFollowingAuthor;
 
     if (isFollowing) {
-      final confirmed = await Get.dialog<bool>(
-        AlertDialog(
-          title: Text('community.unfollow'.tr),
-          content: Text(
-            'community.unfollow_person_question'.trParams({
-              'name': post.author,
-            }),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(result: false),
-              child: Text('common.cancel'.tr),
-            ),
-            FilledButton(
-              onPressed: () => Get.back(result: true),
-              child: Text('community.unfollow'.tr),
-            ),
-          ],
-        ),
+      final confirmed = await AppAlert.confirmAction(
+        title: 'community.unfollow_member_question',
+        message: 'community.unfollow_member_warning'.trParams({
+          'name': post.author,
+        }),
+        confirmText: 'community.unfollow',
+        cancelText: 'common.cancel',
+        icon: Icons.person_remove_rounded,
+        confirmButtonColor: const Color(0xFF278A3A),
       );
 
       if (confirmed != true) return;
+      await controller.togglePostAuthorFollow(post);
+      await AppAlert.actionSuccess(
+        title: 'community.unfollowed_title',
+        message: 'community.unfollowed_success'.trParams({
+          'name': post.author,
+        }),
+      );
+      return;
     }
 
     await controller.togglePostAuthorFollow(post);
@@ -1672,247 +1587,6 @@ class CommunityPage extends GetView<CommunityController> {
   // ---------------------------------------------------------------------------
   // Bottom navigation
   // ---------------------------------------------------------------------------
-
-  Widget _communityBottomBar(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (controller.section.value == CommunitySection.people &&
-            controller.friendsView.value == FriendsView.addFriends &&
-            controller.isMultiSelectMode.value)
-          _selectionSubmitBar(context),
-        _bottomNav(),
-      ],
-    );
-  }
-
-  Widget _selectionSubmitBar(BuildContext context) {
-    final count = controller.selectedFriendCount;
-    return SafeArea(
-      top: false,
-      bottom: false,
-      minimum: EdgeInsets.symmetric(
-        horizontal: AppSpacing.pageHorizontalFor(context),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppSpacing.maxWidePaddedContentWidth,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: FilledButton.icon(
-              key: const ValueKey<String>('add-selected-friends'),
-              onPressed:
-                  count == 0 ||
-                          controller.submittingFollowConnections.value ||
-                          controller.followConnectionCooldownActive
-                      ? null
-                      : () => _confirmAndSendFollowConnections(context),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-                backgroundColor: green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon:
-                  controller.submittingFollowConnections.value
-                      ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : const Icon(Icons.group_add_rounded),
-              label: Text(
-                'community.add_x_friends'.trParams({'count': '$count'}),
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _confirmAndSendFollowConnections(BuildContext context) async {
-    final selected = controller.selectedFriends;
-    if (selected.isEmpty) return;
-    final wasMultiSelect = controller.isMultiSelectMode.value;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: context.appSurfaceLow,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder:
-          (sheetContext) => FractionallySizedBox(
-            heightFactor: .72,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                20 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'community.confirm_follow_connections'.tr,
-                    style: Theme.of(sheetContext).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'community.confirm_follow_connections_help'.trParams({
-                      'count': '${selected.length}',
-                    }),
-                    style: TextStyle(color: sheetContext.appMutedText),
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: selected.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (_, index) {
-                        final person = selected[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: sheetContext.appSoftGreen,
-                            foregroundColor: green,
-                            child: Text(_initials(person.displayName)),
-                          ),
-                          title: Text(
-                            person.displayName,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle:
-                              person.detail?.trim().isNotEmpty == true
-                                  ? Text(person.detail!.trim())
-                                  : null,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          key: const ValueKey<String>(
-                            'cancel-follow-connections',
-                          ),
-                          onPressed:
-                              () => Navigator.of(sheetContext).pop(false),
-                          child: Text('common.cancel'.tr),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          key: const ValueKey<String>(
-                            'confirm-follow-connections',
-                          ),
-                          onPressed: () => Navigator.of(sheetContext).pop(true),
-                          style: FilledButton.styleFrom(backgroundColor: green),
-                          child: Text('community.send_requests'.tr),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-    );
-    if (confirmed != true) {
-      if (!wasMultiSelect) controller.selectedFriendIds.clear();
-      return;
-    }
-
-    final names = {
-      for (final person in selected) person.id: person.displayName,
-    };
-    final summary = await controller.sendSelectedFollowConnections();
-    if (!context.mounted) return;
-    if (summary.failures.isNotEmpty) {
-      await _showFollowConnectionFailures(context, summary, names);
-    } else if (summary.successfulIds.isNotEmpty) {
-      await AppAlert.actionSuccess(
-        title: 'community.requests_sent'.tr,
-        message: 'community.requests_sent_count'.trParams({
-          'count': '${summary.successfulIds.length}',
-        }),
-      );
-    }
-  }
-
-  Future<void> _showFollowConnectionFailures(
-    BuildContext context,
-    FollowConnectionBatchSummary summary,
-    Map<String, String> names,
-  ) {
-    return showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      backgroundColor: context.appSurfaceLow,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder:
-          (sheetContext) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  summary.isPartialSuccess
-                      ? 'community.some_requests_failed'.tr
-                      : 'community.requests_failed'.tr,
-                  style: Theme.of(
-                    sheetContext,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                if (summary.successfulIds.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'community.requests_sent_count'.trParams({
-                      'count': '${summary.successfulIds.length}',
-                    }),
-                    style: const TextStyle(color: green),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                ...summary.failures.entries.map(
-                  (failure) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
-                      Icons.error_outline_rounded,
-                      color: Colors.red,
-                    ),
-                    title: Text(names[failure.key] ?? failure.key),
-                    subtitle: Text(failure.value),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(),
-                  style: FilledButton.styleFrom(backgroundColor: green),
-                  child: Text('common.ok'.tr),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 
   Widget _bottomNav() => SafeArea(
     top: false,

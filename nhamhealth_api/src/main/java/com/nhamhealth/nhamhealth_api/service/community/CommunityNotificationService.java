@@ -57,6 +57,10 @@ public class CommunityNotificationService {
         send(actor, recipient, "USER", actor.getUserId(), "started following you.");
     }
 
+    public void followedBack(User actor, User recipient) {
+        send(actor, recipient, "USER", actor.getUserId(), "followed you back. You are now friends!");
+    }
+
     public void followConnectionRequested(User actor, User recipient, Integer followId) {
         if (notifications
                 .existsByUserUserIdAndNotificationTypeIgnoreCaseAndReferenceTypeIgnoreCaseAndReferenceId(

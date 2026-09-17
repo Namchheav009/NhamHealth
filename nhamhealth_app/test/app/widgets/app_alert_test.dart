@@ -13,10 +13,9 @@ void main() {
     Get.reset();
   });
 
-  testWidgets('shows, replaces, and dismisses an accessible alert', (
+  testWidgets('notification completes silently when banners are disabled', (
     tester,
   ) async {
-    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       GetMaterialApp(
         translations: AppTranslations(),
@@ -30,40 +29,8 @@ void main() {
       message: 'Your photo is available on your dashboard.',
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-
-    expect(find.text('Profile saved'), findsOneWidget);
-    expect(
-      find.text('Your photo is available on your dashboard.'),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel(
-        'Success: Profile saved. Your photo is available on your dashboard.',
-      ),
-      findsOneWidget,
-    );
-
-    final replacement = AppAlert.notification(
-      title: 'Latest alert',
-      message: 'This message should remain visible.',
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    await replacement;
-    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Profile saved'), findsNothing);
-    expect(find.text('Latest alert'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('Dismiss notification'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Latest alert'), findsNothing);
-
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-    semantics.dispose();
   });
 
   testWidgets('shows and confirms a SweetAlert-style action dialog', (
@@ -104,6 +71,45 @@ void main() {
     await tester.pumpAndSettle();
     await alert;
     expect(find.text('Password updated'), findsNothing);
+    semantics.dispose();
+  });
+
+  testWidgets('shows and confirms branded confirmAction dialog', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const Scaffold(body: SizedBox.expand()),
+      ),
+    );
+
+    final confirmFuture = AppAlert.confirmAction(
+      title: 'community.unfollow_member_question',
+      message: 'community.unfollow_member_warning',
+      confirmText: 'community.unfollow_button',
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey<String>('app-confirm-alert-cancel')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('app-confirm-alert-confirm')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('app-confirm-alert-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    final result = await confirmFuture;
+    expect(result, isTrue);
     semantics.dispose();
   });
 }

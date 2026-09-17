@@ -165,44 +165,6 @@ void main() {
       expect(discover.map((person) => person.id), containsAll(['2', '3']));
       expect(controller.canSelectFriend(discover.first), isTrue);
       controller.onClose();
-    },
-  );
-
-  testWidgets('cancelling confirmation sends no requests', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-
-    final auth = _FriendAuthService();
-    final requests = _FakeFollowConnectionsRepository();
-    Get.put<AuthService>(auth);
-    final controller = Get.put(
-      CommunityController(
-        repository: _FriendCommunityRepository(auth, requests),
-        followConnectionsRepository: requests,
-        authService: auth,
-        homeProvider: _FriendHomeProvider(auth),
-      ),
-    );
-    controller.selectSection(CommunitySection.people);
-    controller.selectFriendsView(FriendsView.addFriends);
-
-    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
-    await tester.pump(const Duration(milliseconds: 800));
-    await tester.tap(find.byKey(const ValueKey<String>('friend-action-2')));
-    await tester.pump(const Duration(milliseconds: 500));
-
-    expect(
-      find.byKey(const ValueKey<String>('confirm-follow-connections')),
-      findsOneWidget,
-    );
-    expect(requests.createCalls, isEmpty);
-    final cancel = find.byKey(
-      const ValueKey<String>('cancel-follow-connections'),
-    );
-    tester.widget<OutlinedButton>(cancel).onPressed!();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(requests.createCalls, isEmpty);
   });
 }
 

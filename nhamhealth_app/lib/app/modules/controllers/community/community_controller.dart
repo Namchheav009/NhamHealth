@@ -768,8 +768,7 @@ class CommunityController extends GetxController {
     CommunityPerson person,
     FriendsView view,
   ) async {
-    if (view == FriendsView.friends ||
-        updatingConnectionIds.contains(person.id)) {
+    if (updatingConnectionIds.contains(person.id)) {
       return;
     }
 
@@ -779,7 +778,8 @@ class CommunityController extends GetxController {
     );
     final wasFollowing = previousStatus.isFollowing;
     final optimisticFollowing = !wasFollowing;
-    final followsViewer = previousStatus.followsViewer;
+    // When unfollowing, both follow directions are severed so they must add each other back to be friends.
+    final followsViewer = wasFollowing ? false : previousStatus.followsViewer;
 
     connectionStatuses[person.id] =
         CommunityConnectionStatus.fromDirections(
@@ -821,6 +821,32 @@ class CommunityController extends GetxController {
     }
   }
 
+  Future<void> removeFollower(CommunityPerson person) async {
+    if (updatingConnectionIds.contains(person.id)) return;
+    updatingConnectionIds.add(person.id);
+    try {
+      await _repository.removeFollower(person.id);
+      final currentStatus = CommunityConnectionStatus.fromApi(
+        connectionStatuses[person.id] ?? person.connectionStatus,
+      );
+      final updatedStatus = CommunityConnectionStatus.fromDirections(
+        isFollowing: currentStatus.isFollowing,
+        followsViewer: false,
+      );
+      connectionStatuses[person.id] = updatedStatus.apiValue;
+      await _refreshPeople();
+    } on Object catch (error) {
+      unawaited(
+        AppAlert.error(
+          title: 'community.could_not_update_follow',
+          message: error.toString(),
+        ),
+      );
+    } finally {
+      updatingConnectionIds.remove(person.id);
+    }
+  }
+
   Future<void> togglePostAuthorFollow(CommunityPost post) async {
     if (post.authorId <= 0) return;
 
@@ -835,9 +861,10 @@ class CommunityController extends GetxController {
       previousStatusValue,
     );
     final wasFollowing = previousStatus.isFollowing || post.isFollowingAuthor;
-    final followsViewer = previousStatus.followsViewer;
-
     final optimisticFollowing = !wasFollowing;
+    // When unfollowing, both follow directions are severed so they must add each other back to be friends.
+    final followsViewer = wasFollowing ? false : previousStatus.followsViewer;
+
     connectionStatuses[authorIdKey] =
         CommunityConnectionStatus.fromDirections(
           isFollowing: optimisticFollowing,
@@ -909,11 +936,8 @@ class CommunityController extends GetxController {
                 person.connection == CommunityConnectionStatus.following,
           )
           .toList(growable: false),
-      FriendsView.addFriends: peopleById.values
-          .where(
-            (person) => person.connection != CommunityConnectionStatus.friend,
-          )
-          .toList(growable: false),
+      FriendsView.addFriends: value[FriendsView.addFriends] ??
+          peopleById.values.toList(growable: false),
     };
     final statuses = <String, String>{};
     final friendStatuses = <String, String>{};
@@ -934,6 +958,8 @@ class CommunityController extends GetxController {
     CommunityConnectionStatus status,
     bool followsViewer,
   ) {
+    // When not following (unfollowed), relationship is completely severed to NONE.
+    if (!status.isFollowing) return status;
     // Older API versions returned only FOLLOWING/NONE. Preserve the inbound
     // direction so a follow-back still becomes a friend during a rolling
     // client/server update.

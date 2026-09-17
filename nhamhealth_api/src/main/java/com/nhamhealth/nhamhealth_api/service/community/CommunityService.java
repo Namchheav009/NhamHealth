@@ -499,7 +499,7 @@ public class CommunityService {
                     case "friends" -> following.contains(user.getUserId()) && followers.contains(user.getUserId());
                     case "followers" -> followers.contains(user.getUserId()) && !following.contains(user.getUserId());
                     case "following" -> following.contains(user.getUserId()) && !followers.contains(user.getUserId());
-                    default -> !(following.contains(user.getUserId()) && followers.contains(user.getUserId()));
+                    default -> true;
                 })
                 .map(user -> person(user, profileMap.get(user.getUserId()), following, followers,
                         mutualFriendCount(viewerFriends, user.getUserId(), network),
@@ -518,7 +518,11 @@ public class CommunityService {
                 targetId, viewerId, "ACTIVE");
         if (existing.isPresent()) {
             follows.delete(existing.get());
-            return relationshipStatus(false, followsViewer);
+            if (followsViewer) {
+                follows.findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                        targetId, viewerId, "ACTIVE").ifPresent(follows::delete);
+            }
+            return relationshipStatus(false, false);
         }
         if (follows.existsBlockedBetween(viewerId, targetId)) {
             return relationshipStatus(false, followsViewer);
@@ -530,8 +534,22 @@ public class CommunityService {
         follow.setRequestedAt(LocalDateTime.now());
         follow.setRespondedAt(LocalDateTime.now());
         follows.save(follow);
-        communityNotifications.followed(follow.getFollowerUser(), follow.getFollowingUser());
+        if (followsViewer) {
+            communityNotifications.followedBack(follow.getFollowerUser(), follow.getFollowingUser());
+        } else {
+            communityNotifications.followed(follow.getFollowerUser(), follow.getFollowingUser());
+        }
         return relationshipStatus(true, followsViewer);
+    }
+
+    @Transactional
+    public void removeFollower(Integer viewerId, Integer followerUserId) {
+        if (viewerId.equals(followerUserId))
+            throw new IllegalArgumentException("You cannot remove yourself");
+        Optional<Follow> existing = follows
+                .findFirstByFollowerUserUserIdAndFollowingUserUserIdAndStatusIgnoreCaseOrderByFollowIdAsc(
+                        followerUserId, viewerId, "ACTIVE");
+        existing.ifPresent(follows::delete);
     }
 
     private CommunityPostResponse response(Post post, Integer viewerId, Set<Integer> followed) {

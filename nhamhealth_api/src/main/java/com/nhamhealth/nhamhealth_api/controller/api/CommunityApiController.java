@@ -164,6 +164,13 @@ public class CommunityApiController {
         return Map.of("status", service.toggleFollow(userId(jwt), targetUserId));
     }
 
+    @DeleteMapping("/followers/{followerUserId}")
+    public Map<String, String> removeFollower(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer followerUserId) {
+        service.removeFollower(userId(jwt), followerUserId);
+        return Map.of("status", "REMOVED");
+    }
+
     private Integer userId(Jwt jwt) {
         if (jwt == null) throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
         Number value = jwt.getClaim("userId");

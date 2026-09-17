@@ -31,29 +31,93 @@ abstract final class AppAlert {
     required String title,
     required String message,
     String confirmText = 'common.ok',
+    BuildContext? context,
   }) => _showActionDialog(
     title: title,
     message: message,
     tone: _AppActionAlertTone.success,
     confirmText: confirmText,
+    context: context,
   );
 
   static Future<void> actionError({
     required String title,
     required String message,
     String confirmText = 'common.ok',
+    BuildContext? context,
   }) => _showActionDialog(
     title: title,
     message: message,
     tone: _AppActionAlertTone.error,
     confirmText: confirmText,
+    context: context,
   );
+
+  /// Presents a branded confirmation dialog with Cancel and Confirm buttons.
+  static Future<bool> confirmAction({
+    required String title,
+    required String message,
+    String confirmText = 'common.confirm',
+    String cancelText = 'common.cancel',
+    IconData icon = Icons.person_remove_rounded,
+    Color? iconColor,
+    Color? confirmButtonColor,
+    BuildContext? context,
+  }) async {
+    await _closeActiveAlert();
+    final targetContext = context ?? Get.overlayContext ?? Get.context;
+    if (targetContext == null || !targetContext.mounted) return false;
+    final disableAnimations =
+        MediaQuery.maybeOf(targetContext)?.disableAnimations ?? false;
+    try {
+      final result = await showGeneralDialog<bool>(
+        context: targetContext,
+        barrierDismissible: true,
+        barrierLabel: 'common.alert_dialog'.tr,
+        barrierColor: Colors.black.withValues(alpha: 0.48),
+        transitionDuration:
+            disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 260),
+        pageBuilder: (dialogContext, animation, secondaryAnimation) {
+          _activeDialogContext = dialogContext;
+          return _AppConfirmAlertOverlay(
+            title: title,
+            message: message,
+            confirmText: confirmText,
+            cancelText: cancelText,
+            icon: icon,
+            iconColor: iconColor ?? AppColors.primaryGreen,
+            confirmButtonColor: confirmButtonColor ?? AppColors.primaryGreen,
+          );
+        },
+        transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.9, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      );
+      return result == true;
+    } finally {
+      _activeDialogContext = null;
+    }
+  }
 
   static Future<void> _showActionDialog({
     required String title,
     required String message,
     required _AppActionAlertTone tone,
     required String confirmText,
+    BuildContext? context,
   }) {
     final operation = _actionTransition.then<void>(
       (_) => _presentActionDialog(
@@ -61,6 +125,7 @@ abstract final class AppAlert {
         message: message,
         tone: tone,
         confirmText: confirmText,
+        context: context,
       ),
       onError:
           (_, _) => _presentActionDialog(
@@ -68,6 +133,7 @@ abstract final class AppAlert {
             message: message,
             tone: tone,
             confirmText: confirmText,
+            context: context,
           ),
     );
     _actionTransition = operation.then<void>((_) {}, onError: (_, _) {});
@@ -79,15 +145,16 @@ abstract final class AppAlert {
     required String message,
     required _AppActionAlertTone tone,
     required String confirmText,
+    BuildContext? context,
   }) async {
     await _closeActiveAlert();
-    final context = Get.overlayContext ?? Get.context;
-    if (context == null || !context.mounted) return;
+    final targetContext = context ?? Get.overlayContext ?? Get.context;
+    if (targetContext == null || !targetContext.mounted) return;
     final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+        MediaQuery.maybeOf(targetContext)?.disableAnimations ?? false;
     try {
       await showGeneralDialog<void>(
-        context: context,
+        context: targetContext,
         barrierDismissible: false,
         barrierLabel: 'common.alert_dialog'.tr,
         barrierColor: Colors.black.withValues(alpha: 0.48),
@@ -95,8 +162,8 @@ abstract final class AppAlert {
             disableAnimations
                 ? Duration.zero
                 : const Duration(milliseconds: 260),
-        pageBuilder: (context, animation, secondaryAnimation) {
-          _activeDialogContext = context;
+        pageBuilder: (dialogContext, animation, secondaryAnimation) {
+          _activeDialogContext = dialogContext;
           return _AppActionAlertOverlay(
             title: title,
             message: message,
@@ -104,7 +171,7 @@ abstract final class AppAlert {
             confirmText: confirmText,
           );
         },
-        transitionBuilder: (context, animation, secondaryAnimation, child) {
+        transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
           final curved = CurvedAnimation(
             parent: animation,
             curve: Curves.easeOutBack,
@@ -373,6 +440,184 @@ class _AppActionAlertOverlay extends StatelessWidget {
                               ),
                               child: Text(confirmText.trOrSelf),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppConfirmAlertOverlay extends StatelessWidget {
+  const _AppConfirmAlertOverlay({
+    required this.title,
+    required this.message,
+    required this.confirmText,
+    required this.cancelText,
+    required this.icon,
+    required this.iconColor,
+    required this.confirmButtonColor,
+  });
+
+  final String title;
+  final String message;
+  final String confirmText;
+  final String cancelText;
+  final IconData icon;
+  final Color iconColor;
+  final Color confirmButtonColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizedTitle = title.trOrSelf;
+    final localizedMessage = message.trOrSelf;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: const SizedBox.expand(),
+          ),
+          SafeArea(
+            minimum: const EdgeInsets.all(22),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Semantics(
+                  container: true,
+                  scopesRoute: true,
+                  namesRoute: true,
+                  explicitChildNodes: true,
+                  label: '$localizedTitle. $localizedMessage',
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 424),
+                    child: Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(minHeight: 250),
+                      padding: const EdgeInsets.fromLTRB(24, 29, 24, 28),
+                      decoration: BoxDecoration(
+                        color: context.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 32,
+                            offset: const Offset(0, 16),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: context.appElevatedSurface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.16),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Icon(icon, color: iconColor, size: 34),
+                          ),
+                          const SizedBox(height: 25),
+                          Text(
+                            localizedTitle,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: context.appText,
+                              fontSize: 20,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (localizedMessage.trim().isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              localizedMessage,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 14,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 27),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50,
+                                  child: OutlinedButton(
+                                    key: const ValueKey<String>(
+                                      'app-confirm-alert-cancel',
+                                    ),
+                                    onPressed:
+                                        () => Navigator.of(context).pop(false),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: context.appMutedText,
+                                      side: BorderSide(
+                                        color: context.appBorder.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    child: Text(cancelText.trOrSelf),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50,
+                                  child: FilledButton(
+                                    key: const ValueKey<String>(
+                                      'app-confirm-alert-confirm',
+                                    ),
+                                    onPressed:
+                                        () => Navigator.of(context).pop(true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: confirmButtonColor,
+                                      foregroundColor: Colors.white,
+                                      elevation: 4,
+                                      shadowColor: confirmButtonColor
+                                          .withValues(alpha: 0.38),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    child: Text(confirmText.trOrSelf),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
