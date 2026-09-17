@@ -3,7 +3,6 @@ package com.nhamhealth.nhamhealth_api.service.meal;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,21 +34,40 @@ public class MealPlannerService {
     public MealPlannerService(MealPlanRepository plans, PlannerMealRepository plannerMeals,
             WeeklyMealRecommendationRepository recommendations,
             UserRepository users) {
-        this.plans = plans; this.plannerMeals = plannerMeals;
-        this.recommendations = recommendations; this.users = users;
+        this.plans = plans;
+        this.plannerMeals = plannerMeals;
+        this.recommendations = recommendations;
+        this.users = users;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MealPlanResponse> range(Integer userId, LocalDate start, LocalDate end, String lang) {
+        LocalDate effectiveStart = start != null ? start : LocalDate.now();
+        LocalDate effectiveEnd = end != null ? end : effectiveStart.plusDays(6);
+        if (effectiveEnd.isBefore(effectiveStart)) {
+            LocalDate tmp = effectiveStart;
+            effectiveStart = effectiveEnd;
+            effectiveEnd = tmp;
+        }
+        return plans.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(
+                userId, effectiveStart, effectiveEnd).stream().map(p -> response(p, lang)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MealPlanResponse> day(Integer userId, LocalDate date, String lang) {
+        LocalDate target = date != null ? date : LocalDate.now();
+        return range(userId, target, target, lang);
     }
 
     @Transactional(readOnly = true)
     public List<MealPlanResponse> week(Integer userId, LocalDate start, String lang) {
         LocalDate monday = start.minusDays(start.getDayOfWeek().getValue() - 1L);
-        return plans.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(
-                userId, monday, monday.plusDays(6)).stream().map(p -> response(p, lang)).toList();
+        return range(userId, monday, monday.plusDays(6), lang);
     }
 
     @Transactional
     public MealPlanResponse addOrReplace(Integer userId, MealPlanRequest request, String lang) {
         String type = type(request.mealType());
-        requireRecommendation(request.planDate(), type, request.plannerMealId());
         PlannerMeal meal = activePlannerMeal(request.plannerMealId());
         MealPlan plan = plans.findByUserUserIdAndPlanDateAndMealType(userId, request.planDate(), type)
                 .orElseGet(() -> {
@@ -71,18 +89,15 @@ public class MealPlannerService {
     public MealPlanResponse update(Integer userId, Integer id, MealPlanUpdateRequest request, String lang) {
         MealPlan plan = owned(id, userId);
         LocalDate targetDate = request.planDate() == null ? plan.getPlanDate() : request.planDate();
-        Integer targetMealId = request.plannerMealId() == null
-                ? plan.getPlannerMeal().getPlannerMealId() : request.plannerMealId();
-        if (request.plannerMealId() != null || !targetDate.equals(plan.getPlanDate())) {
-            requireRecommendation(targetDate, plan.getMealType(), targetMealId);
-        }
         if (request.plannerMealId() != null) {
             plan.setPlannerMeal(activePlannerMeal(request.plannerMealId()));
             plan.setStatus("PLANNED");
             plan.setCompletedAt(null);
             plan.setActualServings(null);
         }
-        if (request.servings() != null) plan.setServings(request.servings());
+        if (request.servings() != null) {
+            plan.setServings(request.servings());
+        }
         if (request.status() != null) {
             String status = status(request.status());
             plan.setStatus(status);
@@ -110,28 +125,28 @@ public class MealPlannerService {
     }
 
     @Transactional
-    public void remove(Integer userId, Integer id) { plans.delete(owned(id, userId)); }
+    public void remove(Integer userId, Integer id) {
+        plans.delete(owned(id, userId));
+    }
 
     private MealPlan owned(Integer id, Integer userId) {
         return plans.findByMealPlanIdAndUserUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Meal plan not found."));
     }
+
     private PlannerMeal activePlannerMeal(Integer id) {
         return plannerMeals.findById(id).filter(m -> Boolean.TRUE.equals(m.getActive()))
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Planner meal not found."));
     }
-    private void requireRecommendation(LocalDate date, String type, Integer mealId) {
-        if (!recommendations.existsByActiveTrueAndDayOfWeekInAndMealSlotAndPlannerMealPlannerMealIdAndPlannerMealActiveTrue(
-                List.of("ALL", date.getDayOfWeek().name()), type, mealId)) {
-            throw new ResponseStatusException(BAD_REQUEST,
-                    "This meal is not an active admin recommendation for the selected day and slot.");
-        }
-    }
+
     private String type(String value) {
         String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
-        if (!TYPES.contains(normalized)) throw new ResponseStatusException(BAD_REQUEST, "Invalid meal type.");
+        if (!TYPES.contains(normalized)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Invalid meal type.");
+        }
         return normalized;
     }
+
     private String status(String value) {
         String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
         if (!STATUSES.contains(normalized)) {

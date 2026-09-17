@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_alert.dart';
@@ -7,14 +8,26 @@ import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 
 class MealPlannerController extends GetxController {
-  MealPlannerController({MealPlannerProvider? provider}) : _provider = provider;
+  MealPlannerController({
+    MealPlannerProvider? provider,
+    FlutterSecureStorage? storage,
+  }) : _provider = provider,
+       _storage = storage ?? const FlutterSecureStorage();
+
+  static const _storageDaysKey = 'meal_planner_days_count';
+  static const _storageStartDateKey = 'meal_planner_start_date';
+
   final MealPlannerProvider? _provider;
+  final FlutterSecureStorage _storage;
   final selectedDayIndex = 0.obs;
   final weekOffset = 0.obs;
+  final planDaysCount = 7.obs;
+  final customStartDate = Rxn<DateTime>();
   final plans = <String, List<PlannedMeal>>{}.obs;
   final adminRecommendations = <PlannedMeal>[].obs;
   final isLoading = false.obs;
   final isLoadingRecommendations = false.obs;
+  final isLoadingDay = false.obs;
   final isSaving = false.obs;
   final errorMessage = ''.obs;
   final recommendationsError = ''.obs;
@@ -24,9 +37,42 @@ class MealPlannerController extends GetxController {
     super.onInit();
     selectedDayIndex.value = DateTime.now().weekday - 1;
     unawaited(refreshPlanner());
+    unawaited(_initPlanner());
   }
 
-  DateTime get weekStart {
+  Future<void> _initPlanner() async {
+    try {
+      final savedDays = await _storage.read(key: _storageDaysKey);
+      if (savedDays != null) {
+        final parsed = int.tryParse(savedDays);
+        if (parsed != null && parsed >= 3 && parsed <= 7) {
+          planDaysCount.value = parsed;
+        }
+      }
+      final savedStart = await _storage.read(key: _storageStartDateKey);
+      if (savedStart != null) {
+        final parsedDate = DateTime.tryParse(savedStart);
+        if (parsedDate != null) {
+          customStartDate.value = DateTime(
+            parsedDate.year,
+            parsedDate.month,
+            parsedDate.day,
+          );
+        }
+      }
+    } catch (_) {
+      // Secure storage read error ignored
+    }
+    if (selectedDayIndex.value >= planDaysCount.value) {
+      selectedDayIndex.value = 0;
+    }
+    await refreshPlanner();
+  }
+
+  DateTime get planStartDate {
+    if (customStartDate.value != null) {
+      return customStartDate.value!;
+    }
     final today = DateTime.now();
     final monday = today.subtract(Duration(days: today.weekday - 1));
     return DateTime(
@@ -36,9 +82,24 @@ class MealPlannerController extends GetxController {
     ).add(Duration(days: weekOffset.value * 7));
   }
 
-  List<DateTime> get weekDays =>
-      List.generate(7, (index) => weekStart.add(Duration(days: index)));
-  DateTime get selectedDate => weekDays[selectedDayIndex.value];
+  DateTime get planEndDate =>
+      planStartDate.add(Duration(days: planDaysCount.value - 1));
+
+  List<DateTime> get planDays => List.generate(
+    planDaysCount.value,
+    (index) => planStartDate.add(Duration(days: index)),
+  );
+
+  DateTime get weekStart => planStartDate;
+  List<DateTime> get weekDays => planDays;
+
+  DateTime get selectedDate {
+    if (selectedDayIndex.value >= planDays.length) {
+      selectedDayIndex.value = planDays.length - 1;
+    }
+    return planDays[selectedDayIndex.value];
+  }
+
   List<PlannedMeal> get selectedMeals =>
       plans[_dateKey(selectedDate)] ?? const [];
   List<PlannedMeal> mealsFor(DateTime date) =>
@@ -64,15 +125,20 @@ class MealPlannerController extends GetxController {
   int get dailyMealGoal => MealPlanSlot.values.length;
   bool get dailyGoalComplete => eatenMeals == dailyMealGoal;
   double get adherenceProgress => eatenMeals / dailyMealGoal;
-  Iterable<PlannedMeal> get _currentWeekMeals =>
-      weekDays.expand((date) => mealsFor(date));
-  int get weeklyMealCount => _currentWeekMeals.length;
-  double get weeklyProgress => weeklyMealCount / 28;
-  bool get weekIsEmpty => weeklyMealCount == 0;
+  Iterable<PlannedMeal> get _currentPlanMeals =>
+      planDays.expand((date) => mealsFor(date));
+  int get planMealCount => _currentPlanMeals.length;
+  double get planProgress =>
+      planMealCount / (planDaysCount.value * dailyMealGoal);
+  bool get planIsEmpty => planMealCount == 0;
+
+  int get weeklyMealCount => planMealCount;
+  double get weeklyProgress => planProgress;
+  bool get weekIsEmpty => planIsEmpty;
 
   List<GroceryItem> get groceryItems {
     final combined = <String, GroceryItem>{};
-    for (final meal in _currentWeekMeals) {
+    for (final meal in _currentPlanMeals) {
       final ingredients =
           meal.ingredientDetails.isEmpty
               ? meal.ingredients.map((name) => PlannerIngredient(name: name))
@@ -98,16 +164,14 @@ class MealPlannerController extends GetxController {
   }
 
   List<PlannedMeal> suggestionsFor(MealPlanSlot slot) {
-    final curated =
-        adminRecommendations
-            .where(
-              (meal) =>
-                  meal.slot == slot &&
-                  (meal.recommendedWeekday == null ||
-                      meal.recommendedWeekday == selectedDate.weekday),
-            )
-            .toList();
-    return curated;
+    return adminRecommendations
+        .where(
+          (meal) =>
+              meal.slot == slot &&
+              (meal.recommendedWeekday == null ||
+                  meal.recommendedWeekday == selectedDate.weekday),
+        )
+        .toList();
   }
 
   List<PlannerMealCategory> categoriesFor(MealPlanSlot slot) {
@@ -151,14 +215,40 @@ class MealPlannerController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final meals = await _provider.getWeek(weekStart);
-      for (final day in weekDays) {
+      for (final day in planDays) {
         plans.remove(_dateKey(day));
+        plans[_dateKey(day)] = <PlannedMeal>[];
+      }
+      List<PlannedMeal> meals;
+      try {
+        meals = await _provider.getRange(
+          start: planStartDate,
+          end: planEndDate,
+          days: planDaysCount.value,
+        );
+      } catch (_) {
+        final mondays =
+            planDays.map((d) {
+              final day = DateTime(d.year, d.month, d.day);
+              return day.subtract(Duration(days: day.weekday - 1));
+            }).toSet();
+        meals = [];
+        for (final monday in mondays) {
+          meals.addAll(await _provider.getWeek(monday));
+        }
       }
       for (final meal in meals) {
         final date = meal.planDate;
         if (date != null) {
-          plans[_dateKey(date)] = [...plans[_dateKey(date)] ?? const [], meal];
+          final key = _dateKey(date);
+          final existing = plans[key] ?? const [];
+          if (!existing.any(
+            (m) =>
+                (m.planId != null && m.planId == meal.planId) ||
+                (m.slot == meal.slot && m.id == meal.id),
+          )) {
+            plans[key] = [...existing, meal];
+          }
         }
       }
     } catch (_) {
@@ -168,42 +258,132 @@ class MealPlannerController extends GetxController {
     }
   }
 
-  void selectDay(int index) => selectedDayIndex.value = index;
+  Future<void> loadPlan() => loadWeek();
+
+  Future<void> selectDay(int index, {bool force = false}) async {
+    if (index >= 0 && index < planDays.length) {
+      selectedDayIndex.value = index;
+      await loadDayMeals(selectedDate, force: force);
+    }
+  }
+
+  Future<void> loadDayMeals(DateTime date, {bool force = false}) async {
+    if (_provider == null) return;
+    final key = _dateKey(date);
+    if (!force && plans.containsKey(key) && plans[key]!.isNotEmpty) {
+      return;
+    }
+    isLoadingDay.value = true;
+    try {
+      final dayMeals = await _provider.getDay(date);
+      plans[key] = dayMeals;
+      final dayRecs = await _provider.getRecommendations(date: date);
+      if (dayRecs.isNotEmpty) {
+        for (final rec in dayRecs) {
+          if (!adminRecommendations.any((m) => m.id == rec.id)) {
+            adminRecommendations.add(rec);
+          }
+        }
+      }
+    } catch (_) {
+      // Keep existing local plans if request fails
+    } finally {
+      isLoadingDay.value = false;
+    }
+  }
+
+  void setPlanDaysCount(int count) {
+    final clamped = count.clamp(3, 7);
+    if (planDaysCount.value == clamped) return;
+    planDaysCount.value = clamped;
+    if (selectedDayIndex.value >= clamped) {
+      selectedDayIndex.value = clamped - 1;
+    }
+    unawaited(_persistSettings());
+    unawaited(loadWeek());
+  }
+
   void changeWeek(int amount) {
-    weekOffset.value += amount;
+    if (customStartDate.value != null) {
+      customStartDate.value = customStartDate.value!.add(
+        Duration(days: amount * planDaysCount.value),
+      );
+    } else {
+      weekOffset.value += amount;
+    }
     selectedDayIndex.value = 0;
+    unawaited(_persistSettings());
     unawaited(loadWeek());
   }
 
   void goToToday() {
     final now = DateTime.now();
-    final changed = weekOffset.value != 0;
+    final today = DateTime(now.year, now.month, now.day);
+    customStartDate.value = null;
     weekOffset.value = 0;
-    selectedDayIndex.value = now.weekday - 1;
-    if (changed) {
+    unawaited(_storage.delete(key: _storageStartDateKey));
+    final idx = planDays.indexWhere(
+      (d) =>
+          d.year == today.year && d.month == today.month && d.day == today.day,
+    );
+    selectedDayIndex.value = idx >= 0 ? idx : 0;
+    unawaited(loadWeek());
+  }
+
+  void goToDate(DateTime target) {
+    final normalized = DateTime(target.year, target.month, target.day);
+    if (planDaysCount.value == 7 && customStartDate.value == null) {
+      final today = DateTime.now();
+      final currentMonday = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).subtract(Duration(days: today.weekday - 1));
+      final targetMonday = normalized.subtract(
+        Duration(days: normalized.weekday - 1),
+      );
+      final diffWeeks =
+          (targetMonday.difference(currentMonday).inDays / 7).round();
+      final changed = weekOffset.value != diffWeeks;
+      weekOffset.value = diffWeeks;
+      selectedDayIndex.value = normalized.weekday - 1;
+      if (changed) {
+        unawaited(loadWeek());
+      }
+    } else {
+      customStartDate.value = normalized;
+      selectedDayIndex.value = 0;
+      unawaited(_persistSettings());
       unawaited(loadWeek());
     }
   }
 
-  void goToDate(DateTime target) {
-    final today = DateTime.now();
-    final currentMonday = DateTime(
-      today.year,
-      today.month,
-      today.day,
-    ).subtract(Duration(days: today.weekday - 1));
-    final targetMonday = DateTime(
-      target.year,
-      target.month,
-      target.day,
-    ).subtract(Duration(days: target.weekday - 1));
-    final diffWeeks =
-        (targetMonday.difference(currentMonday).inDays / 7).round();
-    final changed = weekOffset.value != diffWeeks;
-    weekOffset.value = diffWeeks;
-    selectedDayIndex.value = target.weekday - 1;
-    if (changed) {
-      unawaited(loadWeek());
+  void setCustomPlanRange({required DateTime start, int? days}) {
+    customStartDate.value = DateTime(start.year, start.month, start.day);
+    if (days != null) {
+      planDaysCount.value = days.clamp(3, 7);
+    }
+    selectedDayIndex.value = 0;
+    unawaited(_persistSettings());
+    unawaited(loadWeek());
+  }
+
+  Future<void> _persistSettings() async {
+    try {
+      await _storage.write(
+        key: _storageDaysKey,
+        value: '${planDaysCount.value}',
+      );
+      if (customStartDate.value != null) {
+        await _storage.write(
+          key: _storageStartDateKey,
+          value: customStartDate.value!.toIso8601String(),
+        );
+      } else {
+        await _storage.delete(key: _storageStartDateKey);
+      }
+    } catch (_) {
+      // Secure storage write error ignored
     }
   }
 

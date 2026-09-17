@@ -15,11 +15,48 @@ class MealPlannerProvider {
   final http.Client _client;
   String get _lang => Get.locale?.languageCode ?? 'en';
 
-  Future<List<PlannedMeal>> getRecommendations() => _getList(
+  Future<List<PlannedMeal>> getRecommendations({
+    DateTime? date,
+    String? dayOfWeek,
+  }) {
+    final query = <String, String>{'lang': _lang};
+    if (dayOfWeek != null && dayOfWeek.isNotEmpty) {
+      query['dayOfWeek'] = dayOfWeek;
+    } else if (date != null) {
+      query['date'] = _date(date);
+    }
+    return _getList(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/meal-planner/recommendations',
+      ).replace(queryParameters: query),
+    );
+  }
+
+  Future<List<PlannedMeal>> getRange({
+    required DateTime start,
+    DateTime? end,
+    int? days,
+  }) {
+    final query = <String, String>{'startDate': _date(start), 'lang': _lang};
+    if (end != null) {
+      query['endDate'] = _date(end);
+    }
+    if (days != null && days > 0) {
+      query['days'] = days.toString();
+    }
+    return _getList(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/meal-plans',
+      ).replace(queryParameters: query),
+    );
+  }
+
+  Future<List<PlannedMeal>> getDay(DateTime date) => _getList(
     Uri.parse(
-      '${ApiConfig.baseUrl}/api/v1/meal-planner/recommendations',
-    ).replace(queryParameters: {'lang': _lang}),
+      '${ApiConfig.baseUrl}/api/v1/meal-plans/day',
+    ).replace(queryParameters: {'date': _date(date), 'lang': _lang}),
   );
+
   Future<List<PlannedMeal>> getWeek(DateTime start) => _getList(
     Uri.parse(
       '${ApiConfig.baseUrl}/api/v1/meal-plans/week',

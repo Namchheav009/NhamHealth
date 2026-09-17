@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 
@@ -40,7 +40,7 @@ class WeeklyMealPlannerApiControllerTests {
         when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
                 .thenReturn(List.of(recommendation));
 
-        var response = new WeeklyMealPlannerApiController(repository).recommendations("km");
+        var response = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
         assertEquals(1, response.getBody().size());
         assertEquals(42, response.getBody().getFirst().plannerMealId());
         assertEquals("ត្រីអាំង", response.getBody().getFirst().mealName());
@@ -48,5 +48,36 @@ class WeeklyMealPlannerApiControllerTests {
         assertEquals(BigDecimal.ONE, response.getBody().getFirst().ingredients().getFirst().quantity());
         assertEquals("FRIDAY", response.getBody().getFirst().dayOfWeek());
         assertEquals("DINNER", response.getBody().getFirst().mealSlot());
+    }
+
+    @Test
+    void filtersRecommendationsByDayOfWeek() {
+        WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+        PlannerMeal meal = new PlannerMeal();
+        meal.setPlannerMealId(99);
+        meal.setNameEn("Chicken Salad");
+        meal.setNameKm("ញាំមាន់");
+        MealCategory category = new MealCategory();
+        category.setCategoryId(3);
+        meal.setCategory(category);
+        meal.setCalories(new BigDecimal("350"));
+        meal.setProteinGrams(new BigDecimal("30"));
+        meal.setCarbsGrams(BigDecimal.ZERO);
+        meal.setFatGrams(BigDecimal.ZERO);
+        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+        recommendation.setPlannerMeal(meal);
+        recommendation.setDayOfWeek("MONDAY");
+        recommendation.setMealSlot("LUNCH");
+        recommendation.setSortOrder(1);
+
+        when(repository
+                .findAllByActiveTrueAndPlannerMealActiveTrueAndDayOfWeekInOrderBySortOrderAscRecommendationIdAsc(
+                        List.of("ALL", "MONDAY")))
+                .thenReturn(List.of(recommendation));
+
+        var response = new WeeklyMealPlannerApiController(repository).recommendations("MONDAY", null, "en");
+        assertEquals(1, response.getBody().size());
+        assertEquals(99, response.getBody().getFirst().plannerMealId());
+        assertEquals("Chicken Salad", response.getBody().getFirst().mealName());
     }
 }

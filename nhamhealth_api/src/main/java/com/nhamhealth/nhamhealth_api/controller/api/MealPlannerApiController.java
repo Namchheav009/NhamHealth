@@ -30,32 +30,61 @@ import jakarta.validation.Valid;
 @RequestMapping({ "/api/v1/meal-plans", "/api/meal-plans" })
 public class MealPlannerApiController {
     private final MealPlannerService planner;
-    public MealPlannerApiController(MealPlannerService planner) { this.planner = planner; }
+
+    public MealPlannerApiController(MealPlannerService planner) {
+        this.planner = planner;
+    }
+
+    @GetMapping
+    public List<MealPlanResponse> range(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) Integer days,
+            @RequestParam(defaultValue = "en") String lang) {
+        LocalDate effectiveEnd = endDate != null ? endDate
+                : (days != null && days > 0 ? startDate.plusDays(days - 1L) : startDate.plusDays(6));
+        return planner.range(userId(jwt), startDate, effectiveEnd, lang);
+    }
+
+    @GetMapping("/day")
+    public List<MealPlanResponse> day(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam LocalDate date,
+            @RequestParam(defaultValue = "en") String lang) {
+        return planner.day(userId(jwt), date, lang);
+    }
 
     @GetMapping("/week")
     public List<MealPlanResponse> week(@AuthenticationPrincipal Jwt jwt,
             @RequestParam LocalDate startDate, @RequestParam(defaultValue = "en") String lang) {
         return planner.week(userId(jwt), startDate, lang);
     }
+
     @PostMapping
     public MealPlanResponse add(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody MealPlanRequest request,
             @RequestParam(defaultValue = "en") String lang) {
         return planner.addOrReplace(userId(jwt), request, lang);
     }
+
     @PutMapping("/{id}")
     public MealPlanResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer id,
             @Valid @RequestBody MealPlanUpdateRequest request, @RequestParam(defaultValue = "en") String lang) {
         return planner.update(userId(jwt), id, request, lang);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remove(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer id) {
         planner.remove(userId(jwt), id);
         return ResponseEntity.noContent().build();
     }
+
     private Integer userId(Jwt jwt) {
-        if (jwt == null) throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
+        if (jwt == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
+        }
         Number id = jwt.getClaim("userId");
-        if (id == null) throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID.");
+        if (id == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID.");
+        }
         return id.intValue();
     }
 }

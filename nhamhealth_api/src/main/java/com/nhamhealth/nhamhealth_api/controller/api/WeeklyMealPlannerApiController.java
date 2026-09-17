@@ -1,6 +1,8 @@
 package com.nhamhealth.nhamhealth_api.controller.api;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +29,29 @@ public class WeeklyMealPlannerApiController {
     @GetMapping("/recommendations")
     @Transactional(readOnly = true)
     public ResponseEntity<List<WeeklyMealRecommendationResponse>> recommendations(
+            @RequestParam(required = false) String dayOfWeek,
+            @RequestParam(required = false) LocalDate date,
             @RequestParam(defaultValue = "en") String lang) {
-        return ResponseEntity.ok(recommendations
-                .findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc()
-                .stream().map(row -> response(row, lang)).toList());
+        String targetDay = dayOfWeek;
+        if ((targetDay == null || targetDay.isBlank()) && date != null) {
+            targetDay = date.getDayOfWeek().name();
+        }
+
+        List<WeeklyMealRecommendation> list;
+        if (targetDay != null && !targetDay.isBlank()) {
+            list = recommendations
+                    .findAllByActiveTrueAndPlannerMealActiveTrueAndDayOfWeekInOrderBySortOrderAscRecommendationIdAsc(
+                            List.of("ALL", targetDay.trim().toUpperCase(Locale.ROOT)));
+        } else {
+            list = recommendations
+                    .findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc();
+        }
+
+        return ResponseEntity.ok(list.stream().map(row -> response(row, lang)).toList());
+    }
+
+    public ResponseEntity<List<WeeklyMealRecommendationResponse>> recommendations(String lang) {
+        return recommendations(null, null, lang);
     }
 
     private WeeklyMealRecommendationResponse response(WeeklyMealRecommendation row, String lang) {

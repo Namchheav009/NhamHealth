@@ -195,28 +195,93 @@ class MealPlannerView extends GetView<MealPlannerController> {
                 context: context,
               ),
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'planner.this_week'.tr,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                child: InkWell(
+                  key: const ValueKey('planner-week-picker-button'),
+                  onTap: () => _pickWeekDate(context),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'planner.detail'.tr,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.tune_rounded,
+                              size: 13,
+                              color: AppColors.primaryGreen,
+                            ),
+                            if (controller.weekOffset.value != 0 ||
+                                controller.customStartDate.value != null) ...[
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () => controller.goToToday(),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryGreen.withValues(
+                                      alpha: 0.14,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'planner.today'.tr,
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}',
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_drop_down_rounded,
+                              size: 18,
+                              color: context.appMutedText,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
               _weekArrowButton(
@@ -231,35 +296,319 @@ class MealPlannerView extends GetView<MealPlannerController> {
           const SizedBox(height: 11),
           SizedBox(
             height: 64,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: List.generate(7, (index) {
-                  final date = controller.weekDays[index];
-                  final isSelected = index == controller.selectedDayIndex.value;
-                  final hasMeals = controller.mealsFor(date).isNotEmpty;
-                  return SizedBox(
-                    width: 62,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: index == 6 ? 0 : 7),
-                      child: _dayPill(
-                        context: context,
-                        index: index,
-                        date: date,
-                        dayName: _days[index].tr,
-                        isSelected: isSelected,
-                        hasMeals: hasMeals,
-                        onTap: () => controller.selectDay(index),
+            child:
+                controller.planDays.length <= 5
+                    ? Row(
+                      children: List.generate(controller.planDays.length, (
+                        index,
+                      ) {
+                        final date = controller.planDays[index];
+                        final isSelected =
+                            index == controller.selectedDayIndex.value;
+                        final hasMeals = controller.mealsFor(date).isNotEmpty;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right:
+                                  index == controller.planDays.length - 1
+                                      ? 0
+                                      : 6,
+                            ),
+                            child: _dayPill(
+                              context: context,
+                              index: index,
+                              date: date,
+                              dayName: _days[date.weekday - 1].tr,
+                              isSelected: isSelected,
+                              hasMeals: hasMeals,
+                              onTap: () => controller.selectDay(index),
+                            ),
+                          ),
+                        );
+                      }),
+                    )
+                    : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: List.generate(controller.planDays.length, (
+                          index,
+                        ) {
+                          final date = controller.planDays[index];
+                          final isSelected =
+                              index == controller.selectedDayIndex.value;
+                          final hasMeals = controller.mealsFor(date).isNotEmpty;
+                          return SizedBox(
+                            width: 62,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right:
+                                    index == controller.planDays.length - 1
+                                        ? 0
+                                        : 7,
+                              ),
+                              child: _dayPill(
+                                context: context,
+                                index: index,
+                                date: date,
+                                dayName: _days[date.weekday - 1].tr,
+                                isSelected: isSelected,
+                                hasMeals: hasMeals,
+                                onTap: () => controller.selectDay(index),
+                              ),
+                            ),
+                          );
+                        }),
                       ),
                     ),
-                  );
-                }),
-              ),
-            ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _pickWeekDate(BuildContext context) async {
+    DateTime selectedStart = controller.planStartDate;
+    int selectedDays = controller.planDaysCount.value;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: context.appSurfaceLow,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder:
+          (sheetContext) => StatefulBuilder(
+            builder: (context, setSheetState) {
+              final previewEnd = selectedStart.add(
+                Duration(days: selectedDays - 1),
+              );
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: context.appBorder,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'planner.custom_plan'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'planner.choose_duration'.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'planner.duration'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children:
+                          [3, 4, 5, 6, 7].map((days) {
+                            final isSel = selectedDays == days;
+                            return InkWell(
+                              key: ValueKey('modal-duration-$days'),
+                              onTap:
+                                  () =>
+                                      setSheetState(() => selectedDays = days),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 9,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSel
+                                          ? AppColors.primaryGreen
+                                          : context.appElevatedSurface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color:
+                                        isSel
+                                            ? AppColors.primaryGreen
+                                            : context.appBorder.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                  ),
+                                ),
+                                child: Text(
+                                  '$days${'planner.days_short'.tr}',
+                                  style: TextStyle(
+                                    color:
+                                        isSel ? Colors.white : context.appText,
+                                    fontSize: 13,
+                                    fontWeight:
+                                        isSel
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'planner.start_date'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: sheetContext,
+                          initialDate: selectedStart,
+                          firstDate: DateTime(now.year - 2),
+                          lastDate: DateTime(now.year + 2, 12, 31),
+                          helpText: 'planner.select_date'.tr,
+                          cancelText: 'planner.cancel'.tr,
+                          confirmText: 'planner.select'.tr,
+                          builder: (pickerContext, child) {
+                            final isDark =
+                                Theme.of(pickerContext).brightness ==
+                                Brightness.dark;
+                            return Theme(
+                              data: Theme.of(pickerContext).copyWith(
+                                colorScheme: ColorScheme.fromSeed(
+                                  seedColor: AppColors.primaryGreen,
+                                  primary: AppColors.primaryGreen,
+                                  onPrimary: Colors.white,
+                                  surface: pickerContext.appElevatedSurface,
+                                  onSurface: pickerContext.appText,
+                                  brightness:
+                                      isDark
+                                          ? Brightness.dark
+                                          : Brightness.light,
+                                ),
+                              ),
+                              child: child ?? const SizedBox.shrink(),
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setSheetState(() => selectedStart = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.appElevatedSurface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: context.appBorder.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 18,
+                              color: AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                DateFormat(
+                                  'EEEE, d MMMM yyyy',
+                                ).format(selectedStart),
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.edit_calendar_rounded,
+                              size: 18,
+                              color: context.appMutedText,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: AppColors.primaryGreen,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${DateFormat('d MMM').format(selectedStart)} – ${DateFormat('d MMM yyyy').format(previewEnd)} ($selectedDays ${'planner.days_short'.tr.trim()})',
+                              style: const TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    PlannerPrimaryButton(
+                      label: 'planner.apply'.tr,
+                      icon: Icons.check_circle_outline_rounded,
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        controller.setCustomPlanRange(
+                          start: selectedStart,
+                          days: selectedDays,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
     );
   }
 
@@ -578,15 +927,37 @@ class MealPlannerView extends GetView<MealPlannerController> {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            'planner.meals_for_date'.trParams({
-              'date': DateFormat('EEE, d MMM').format(controller.selectedDate),
-            }),
-            style: TextStyle(
-              color: context.appText,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  'planner.meals_for_date'.trParams({
+                    'date': DateFormat(
+                      'EEE, d MMM',
+                    ).format(controller.selectedDate),
+                  }),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (controller.isLoadingDay.value) ...[
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primaryGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         TextButton.icon(
@@ -925,7 +1296,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
       );
       return;
     }
-    Get.toNamed(AppRoutes.mealPlannerCategories, arguments: {'slot': slot});
+    Get.toNamed(AppRoutes.mealPlannerMeals, arguments: {'slot': slot});
   }
 
   Future<void> _showMealOptionsSheet(BuildContext context, PlannedMeal meal) =>
