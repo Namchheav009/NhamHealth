@@ -88,6 +88,8 @@ void main() {
     );
     expect(followButtonSize.width, greaterThan(80));
     expect(followButtonSize.height, 36);
+    expect(followButtonSize.width, greaterThan(70));
+    expect(followButtonSize.height, 28);
     expect(
       find.byKey(const ValueKey<String>('other-profile-share-button')),
       findsNothing,

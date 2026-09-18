@@ -428,7 +428,7 @@ class _CommunityPersonProfileViewState
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: context.appText,
-                            fontSize: 19,
+                            fontSize: 18,
                             letterSpacing: -.2,
                             fontWeight: FontWeight.w800,
                           ),
@@ -643,25 +643,30 @@ class _CommunityPersonProfileViewState
             ? context.appColorScheme.primary
             : const Color(0xFF178B4B);
     return SizedBox(
-      height: 36,
+      height: 28,
       child: Material(
         key: const ValueKey<String>('other-profile-follow-button'),
         color: isFollowing ? context.appSoftGreen : const Color(0xFF009B55),
-        borderRadius: BorderRadius.circular(20),
+        shape: StadiumBorder(
+          side:
+              isFollowing
+                  ? BorderSide(color: themeGreen.withValues(alpha: .25))
+                  : BorderSide.none,
+        ),
         child: InkWell(
           onTap: _isUpdatingFollow ? null : _toggleFollow,
-          borderRadius: BorderRadius.circular(20),
+          customBorder: const StadiumBorder(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (_isUpdatingFollow)
                   SizedBox(
-                    width: 14,
-                    height: 14,
+                    width: 12,
+                    height: 12,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1.8,
                       color: isFollowing ? themeGreen : Colors.white,
                     ),
                   )
@@ -670,17 +675,21 @@ class _CommunityPersonProfileViewState
                     isFollowing
                         ? Icons.check_rounded
                         : Icons.person_add_alt_1_rounded,
-                    size: 16,
+                    size: 13,
                     color: isFollowing ? themeGreen : Colors.white,
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 4),
                 ],
-                Text(
-                  labelKey.tr,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isFollowing ? themeGreen : Colors.white,
+                Flexible(
+                  child: Text(
+                    labelKey.tr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isFollowing ? themeGreen : Colors.white,
+                    ),
                   ),
                 ),
               ],
