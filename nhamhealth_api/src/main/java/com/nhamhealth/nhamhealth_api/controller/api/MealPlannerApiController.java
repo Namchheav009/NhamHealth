@@ -65,6 +65,13 @@ public class MealPlannerApiController {
         return planner.addOrReplace(userId(jwt), request, lang);
     }
 
+    @PostMapping("/bulk")
+    public List<MealPlanResponse> bulkAdd(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody List<MealPlanRequest> requests,
+            @RequestParam(defaultValue = "en") String lang) {
+        return planner.bulkAddOrReplace(userId(jwt), requests, lang);
+    }
+
     @PutMapping("/{id}")
     public MealPlanResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer id,
             @Valid @RequestBody MealPlanUpdateRequest request, @RequestParam(defaultValue = "en") String lang) {

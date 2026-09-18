@@ -29,6 +29,7 @@ enum PageSkeletonType {
   plannerDetail,
   plannerWeek,
   plannerGrocery,
+  plannerSlots,
 }
 
 class PageSkeleton extends StatefulWidget {
@@ -158,6 +159,11 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.plannerGrocery;
 
+  const PageSkeleton.plannerSlots({
+    super.key,
+    this.duration = const Duration(milliseconds: 1550),
+  }) : type = PageSkeletonType.plannerSlots;
+
   final PageSkeletonType type;
   final Duration duration;
 
@@ -246,6 +252,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.plannerDetail => const _PlannerDetailPlaceholder(),
     PageSkeletonType.plannerWeek => const _PlannerWeekPlaceholder(),
     PageSkeletonType.plannerGrocery => const _PlannerGroceryPlaceholder(),
+    PageSkeletonType.plannerSlots => const _PlannerSlotsPlaceholder(),
   };
 }
 
@@ -391,6 +398,60 @@ class _PlannerGroceryPlaceholder extends StatelessWidget {
       SizedBox(height: 12),
       _SkeletonCard(height: 142),
     ],
+  );
+}
+
+class _PlannerSlotsPlaceholder extends StatelessWidget {
+  const _PlannerSlotsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('planner-slots-skeleton'),
+    children: [
+      _PlannerSlotCardSkeleton(),
+      SizedBox(height: 12),
+      _PlannerSlotCardSkeleton(),
+      SizedBox(height: 12),
+      _PlannerSlotCardSkeleton(),
+      SizedBox(height: 12),
+      _PlannerSlotCardSkeleton(),
+    ],
+  );
+}
+
+class _PlannerSlotCardSkeleton extends StatelessWidget {
+  const _PlannerSlotCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: context.appBorder.withValues(alpha: 0.8)),
+    ),
+    child: const Row(
+      children: [
+        _SkeletonBox(width: 60, height: 60, radius: 14),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _SkeletonBox(width: 72, height: 12, radius: 6),
+              SizedBox(height: 7),
+              _SkeletonBox(width: 140, height: 15, radius: 7),
+              SizedBox(height: 7),
+              _SkeletonBox(width: 110, height: 11, radius: 5),
+            ],
+          ),
+        ),
+        SizedBox(width: 8),
+        _SkeletonBox(width: 24, height: 24, radius: 12),
+      ],
+    ),
   );
 }
 

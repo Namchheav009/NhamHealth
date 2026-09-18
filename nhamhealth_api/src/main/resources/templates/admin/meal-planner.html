@@ -142,7 +142,7 @@
               <article
                 class="planner-meal-card"
                 th:each="meal : ${plannerMeals}"
-                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category.categoryId},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-ingredients-km=${meal.ingredientsTextKm},data-instructions=${meal.instructionsText},data-instructions-km=${meal.instructionsTextKm},data-tags=${meal.tagsText},data-tags-km=${meal.tagsTextKm},data-active=${meal.active}"
+                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category?.categoryId},data-category-ids=${meal.categoryIdsString},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-ingredients-km=${meal.ingredientsTextKm},data-instructions=${meal.instructionsText},data-instructions-km=${meal.instructionsTextKm},data-tags=${meal.tagsText},data-tags-km=${meal.tagsTextKm},data-active=${meal.active}"
               >
                 <div class="planner-meal-card-image">
                   <img
@@ -173,11 +173,20 @@
                 </div>
                 <div class="planner-meal-card-body">
                   <div class="planner-card-top">
-                    <span
-                      class="planner-meal-category"
-                      th:text="${meal.categoryEn}"
-                      >Category</span
-                    >
+                    <div class="planner-card-categories">
+                      <span
+                        th:each="cat : ${meal.categories}"
+                        class="planner-meal-category"
+                        th:text="${cat.categoryName}"
+                        >Category</span
+                      >
+                      <span
+                        th:if="${meal.categories == null or meal.categories.isEmpty()}"
+                        class="planner-meal-category"
+                        th:text="${meal.categoryEn}"
+                        >Category</span
+                      >
+                    </div>
                     <span
                       class="planner-meal-id"
                       th:text="'#' + ${meal.plannerMealId}"
@@ -530,7 +539,7 @@
                   th:each="meal : ${plannerMeals}"
                   th:if="${meal.active}"
                   th:value="${meal.plannerMealId}"
-                  th:attr="data-category-id=${meal.category.categoryId}"
+                  th:attr="data-category-id=${meal.category?.categoryId},data-category-ids=${meal.categoryIdsString}"
                   th:text="${meal.nameEn + ' · ' + meal.calories + ' kcal'}"
                 >
                   Meal
@@ -658,16 +667,51 @@
                     placeholder="e.g. ស្រូវអូតជាមួយផ្លែឈើ"
                   />
                 </div>
-                <div class="field">
-                  <label for="mealCategoryId">Category <b>*</b></label>
-                  <select id="mealCategoryId" name="categoryId" required>
-                    <option value="">Select a category</option>
-                    <option
+                <div class="field full meal-categories-field">
+                  <label
+                    >Categories <b>*</b>
+                    <span
+                      class="field-hint"
+                      style="
+                        font-weight: 500;
+                        color: var(--planner-muted);
+                        font-size: 11px;
+                      "
+                      >(Choose 1 or more categories for this food)</span
+                    ></label
+                  >
+                  <div class="category-chip-grid" id="mealCategoriesPicker">
+                    <label
                       th:each="category : ${mealCategories}"
-                      th:value="${category.categoryId}"
-                      th:text="${category.categoryName}"
-                    ></option>
-                  </select>
+                      class="category-pill-label"
+                    >
+                      <input
+                        type="checkbox"
+                        class="meal-category-cb"
+                        th:value="${category.categoryId}"
+                        th:data-name="${category.categoryName}"
+                      />
+                      <span class="category-pill-badge">
+                        <i class="bi bi-tag"></i>
+                        <span th:text="${category.categoryName}"
+                          >Breakfast</span
+                        >
+                      </span>
+                    </label>
+                  </div>
+                  <input type="hidden" id="mealCategoryId" name="categoryId" />
+                  <span
+                    id="mealCategoryError"
+                    class="category-error-text"
+                    style="
+                      display: none;
+                      color: #ef4444;
+                      font-size: 11.5px;
+                      font-weight: 600;
+                      margin-top: 4px;
+                    "
+                    >Please select at least one category.</span
+                  >
                 </div>
                 <div class="field full meal-image-field-group">
                   <div class="meal-image-header">

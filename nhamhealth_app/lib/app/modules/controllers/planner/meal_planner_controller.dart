@@ -536,6 +536,11 @@ class MealPlannerController extends GetxController {
 
   Future<void> changeStatus(PlannedMeal meal, MealPlanStatus status) async {
     if (isSaving.value || meal.status == status) return;
+    final isMarkingEaten =
+        status == MealPlanStatus.eaten && meal.status != MealPlanStatus.eaten;
+    final isMarkingSkipped =
+        status == MealPlanStatus.skipped &&
+        meal.status != MealPlanStatus.skipped;
     final key = _dateKey(meal.planDate ?? selectedDate);
     final updated = meal.copyWith(
       status: status,
@@ -545,6 +550,15 @@ class MealPlannerController extends GetxController {
       clearActualServings: status != MealPlanStatus.eaten,
     );
     _put(key, updated);
+
+    if (isMarkingEaten) {
+      HapticFeedback.lightImpact();
+      AppAlert.toast(message: 'planner.meal_marked_eaten'.tr);
+    } else if (isMarkingSkipped) {
+      HapticFeedback.selectionClick();
+      AppAlert.toast(message: 'planner.meal_marked_skipped'.tr);
+    }
+
     final provider = _provider;
     final planId = meal.planId;
     if (provider == null || planId == null) return;
@@ -634,6 +648,7 @@ class MealPlannerController extends GetxController {
     isSaving.value = true;
     var filledCount = 0;
     try {
+      final bulkPayload = <Map<String, dynamic>>[];
       for (final entry in emptySlots) {
         final slotRecs =
             adminRecommendations.where((m) => m.slot == entry.slot).toList();
@@ -658,22 +673,32 @@ class MealPlannerController extends GetxController {
           servings: 1,
         );
         _put(key, optimistic);
+        bulkPayload.add({
+          'planDate': _dateKey(entry.date),
+          'mealType': entry.slot.name.toUpperCase(),
+          'plannerMealId': selectedRec.id,
+          'servings': 1.0,
+        });
+        filledCount++;
+      }
 
-        if (_provider != null) {
-          try {
-            final saved = await _provider.saveMeal(entry.date, selectedRec, 1);
-            _put(key, saved);
-            filledCount++;
-          } catch (_) {
-            filledCount++;
+      if (_provider != null && bulkPayload.isNotEmpty) {
+        try {
+          final savedMeals = await _provider.saveBulkMeals(bulkPayload);
+          for (final saved in savedMeals) {
+            final date = saved.planDate;
+            if (date != null) {
+              _put(_dateKey(date), saved);
+            }
           }
-        } else {
-          filledCount++;
+        } catch (_) {
+          // Fallback to optimistic state if bulk network call fails
         }
       }
       plans.refresh();
 
       if (filledCount > 0) {
+        HapticFeedback.mediumImpact();
         AppAlert.toast(
           message: 'planner.auto_fill_success'.trParams({
             'count': '$filledCount',
@@ -732,6 +757,7 @@ class MealPlannerController extends GetxController {
       return false;
     }
     await Clipboard.setData(ClipboardData(text: text));
+    HapticFeedback.selectionClick();
     AppAlert.toast(message: 'planner.grocery_copied');
     return true;
   }

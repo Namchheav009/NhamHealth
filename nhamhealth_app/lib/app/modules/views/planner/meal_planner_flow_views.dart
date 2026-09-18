@@ -106,6 +106,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
                                       color: context.appText,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12.5,
+                                      height: 1.3,
                                     ),
                                   ),
                                 ),
@@ -124,6 +125,7 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.2,
+                        height: 1.35,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -239,6 +241,7 @@ class _CategoryCard extends StatelessWidget {
                 fontWeight: FontWeight.w800,
                 fontSize: 13.5,
                 color: context.appText,
+                height: 1.35,
               ),
             ),
             const SizedBox(height: 4),
@@ -297,7 +300,8 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
       final meals =
           controller.suggestionsFor(slot).where((meal) {
             if (selectedCategoryId != null &&
-                meal.categoryId != selectedCategoryId) {
+                meal.categoryId != selectedCategoryId &&
+                !meal.categoryIds.contains(selectedCategoryId)) {
               return false;
             }
             if (query.isNotEmpty &&
@@ -775,6 +779,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                             color: context.appText,
                                             fontWeight: FontWeight.w800,
                                             fontSize: 15,
+                                            height: 1.35,
                                           ),
                                         ),
                                         const SizedBox(height: 6),
@@ -814,6 +819,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w700,
+                                                              height: 1.25,
                                                             ),
                                                           ),
                                                         ),
@@ -828,6 +834,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                             color: context.appMutedText,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
+                                            height: 1.3,
                                           ),
                                         ),
                                       ],
@@ -1186,6 +1193,7 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.3,
+                        height: 1.35,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1368,6 +1376,7 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                                           color: context.appText,
                                           fontSize: 13.5,
                                           fontWeight: FontWeight.w600,
+                                          height: 1.35,
                                         ),
                                       ),
                                     ),
@@ -1535,6 +1544,7 @@ class _NutrientCard extends StatelessWidget {
                 color: context.appMutedText,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w600,
+                height: 1.25,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1803,6 +1813,7 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.w600,
                                                   color: context.appMutedText,
+                                                  height: 1.35,
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -2521,7 +2532,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
         Divider(height: 1, color: context.appBorder.withValues(alpha: 0.65)),
         const SizedBox(height: 10),
         SizedBox(
-          height: 60,
+          height: 62,
           child:
               controller.weekDays.length <= 5
                   ? Row(
@@ -2532,6 +2543,15 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       final selected =
                           index == controller.selectedDayIndex.value;
                       final hasMeals = controller.mealsFor(date).isNotEmpty;
+                      const weekDayKeys = [
+                        'planner.mon',
+                        'planner.tue',
+                        'planner.wed',
+                        'planner.thu',
+                        'planner.fri',
+                        'planner.sat',
+                        'planner.sun',
+                      ];
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(
@@ -2562,7 +2582,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    DateFormat('E').format(date),
+                                    weekDayKeys[date.weekday - 1].tr,
                                     style: TextStyle(
                                       color:
                                           selected
@@ -2570,6 +2590,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                               : context.appMutedText,
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
+                                      height: 1.3,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -2582,6 +2603,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                               : context.appText,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
+                                      height: 1.2,
                                     ),
                                   ),
                                   Container(
@@ -2615,12 +2637,21 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       final selected =
                           index == controller.selectedDayIndex.value;
                       final hasMeals = controller.mealsFor(date).isNotEmpty;
+                      const weekDayKeys = [
+                        'planner.mon',
+                        'planner.tue',
+                        'planner.wed',
+                        'planner.thu',
+                        'planner.fri',
+                        'planner.sat',
+                        'planner.sun',
+                      ];
                       return InkWell(
                         onTap: () => controller.selectDay(index),
                         borderRadius: BorderRadius.circular(16),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
-                          width: 55,
+                          width: 58,
                           decoration: BoxDecoration(
                             color:
                                 selected
@@ -2640,7 +2671,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                DateFormat('E').format(date),
+                                weekDayKeys[date.weekday - 1].tr,
                                 style: TextStyle(
                                   color:
                                       selected
@@ -2648,6 +2679,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                           : context.appMutedText,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
+                                  height: 1.3,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -2658,6 +2690,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                       selected ? Colors.white : context.appText,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
+                                  height: 1.2,
                                 ),
                               ),
                               Container(

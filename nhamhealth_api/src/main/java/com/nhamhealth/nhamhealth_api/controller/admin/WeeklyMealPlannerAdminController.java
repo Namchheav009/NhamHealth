@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,10 +30,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.nhamhealth.nhamhealth_api.dto.request.PlannerMealRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.WeeklyMealRecommendationRequest;
-import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
-import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
+import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
+import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
@@ -73,13 +75,15 @@ public class WeeklyMealPlannerAdminController {
         model.addAttribute("totalRecommendations", rows.size());
         model.addAttribute("activeRecommendations", rows.stream()
                 .filter(row -> Boolean.TRUE.equals(row.getActive())
-                        && Boolean.TRUE.equals(row.getPlannerMeal().getActive())).count());
+                        && Boolean.TRUE.equals(row.getPlannerMeal().getActive()))
+                .count());
         List<WeeklyMealRecommendation> activeRows = rows.stream()
                 .filter(row -> Boolean.TRUE.equals(row.getActive())
-                        && Boolean.TRUE.equals(row.getPlannerMeal().getActive())).toList();
+                        && Boolean.TRUE.equals(row.getPlannerMeal().getActive()))
+                .toList();
         model.addAttribute("coveredDays", activeRows.stream()
                 .anyMatch(row -> "ALL".equals(row.getDayOfWeek())) ? 7
-                : activeRows.stream().map(WeeklyMealRecommendation::getDayOfWeek).distinct().count());
+                        : activeRows.stream().map(WeeklyMealRecommendation::getDayOfWeek).distinct().count());
         return "admin/meal-planner";
     }
 
@@ -98,7 +102,8 @@ public class WeeklyMealPlannerAdminController {
     }
 
     @PostMapping("/admin/meal-planner/meals")
-    @ResponseBody @Transactional
+    @ResponseBody
+    @Transactional
     public ResponseEntity<?> createMeal(@Valid @RequestBody PlannerMealRequest request, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String error = bindingResult.getFieldErrors().stream()
@@ -108,7 +113,8 @@ public class WeeklyMealPlannerAdminController {
         }
         try {
             String error = validateMeal(request);
-            if (error != null) return bad(error);
+            if (error != null)
+                return bad(error);
             PlannerMeal meal = new PlannerMeal();
             applyMeal(meal, request);
             meal = plannerMeals.save(meal);
@@ -120,7 +126,8 @@ public class WeeklyMealPlannerAdminController {
     }
 
     @PutMapping("/admin/meal-planner/meals/{id}")
-    @ResponseBody @Transactional
+    @ResponseBody
+    @Transactional
     public ResponseEntity<?> updateMeal(
             @PathVariable Integer id,
             @Valid @RequestBody PlannerMealRequest request,
@@ -133,21 +140,27 @@ public class WeeklyMealPlannerAdminController {
         }
         try {
             PlannerMeal meal = plannerMeals.findById(id).orElse(null);
-            if (meal == null) return ResponseEntity.notFound().build();
+            if (meal == null)
+                return ResponseEntity.notFound().build();
             String error = validateMeal(request);
-            if (error != null) return bad(error);
+            if (error != null)
+                return bad(error);
             applyMeal(meal, request);
-            return ResponseEntity.ok(mealResponse(plannerMeals.save(meal)));
+            meal = plannerMeals.save(meal);
+            createRecommendationsForEveryDay(meal);
+            return ResponseEntity.ok(mealResponse(meal));
         } catch (Exception ex) {
             return bad("Failed to update meal: " + ex.getMessage());
         }
     }
 
     @PostMapping("/admin/meal-planner/recommendations")
-    @ResponseBody @Transactional
+    @ResponseBody
+    @Transactional
     public ResponseEntity<?> create(@RequestBody WeeklyMealRecommendationRequest request) {
         Validation validation = validate(request, null);
-        if (validation.error() != null) return bad(validation.error());
+        if (validation.error() != null)
+            return bad(validation.error());
         WeeklyMealRecommendation row = new WeeklyMealRecommendation();
         apply(row, request, validation.meal());
         row.setCreatedAt(LocalDateTime.now());
@@ -155,21 +168,26 @@ public class WeeklyMealPlannerAdminController {
     }
 
     @PutMapping("/admin/meal-planner/recommendations/{id}")
-    @ResponseBody @Transactional
+    @ResponseBody
+    @Transactional
     public ResponseEntity<?> update(@PathVariable Integer id,
             @RequestBody WeeklyMealRecommendationRequest request) {
         WeeklyMealRecommendation row = recommendations.findById(id).orElse(null);
-        if (row == null) return ResponseEntity.notFound().build();
+        if (row == null)
+            return ResponseEntity.notFound().build();
         Validation validation = validate(request, id);
-        if (validation.error() != null) return bad(validation.error());
+        if (validation.error() != null)
+            return bad(validation.error());
         apply(row, request, validation.meal());
         return ResponseEntity.ok(toResponse(recommendations.save(row)));
     }
 
     @DeleteMapping("/admin/meal-planner/recommendations/{id}")
-    @ResponseBody @Transactional
+    @ResponseBody
+    @Transactional
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (!recommendations.existsById(id)) return ResponseEntity.notFound().build();
+        if (!recommendations.existsById(id))
+            return ResponseEntity.notFound().build();
         recommendations.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -183,12 +201,17 @@ public class WeeklyMealPlannerAdminController {
         String day = normalize(request.dayOfWeek());
         String slot = normalize(request.mealSlot());
         if (!"ALL".equals(day)) {
-            try { DayOfWeek.valueOf(day); }
-            catch (RuntimeException ex) { return new Validation(null, "Select a valid weekday."); }
+            try {
+                DayOfWeek.valueOf(day);
+            } catch (RuntimeException ex) {
+                return new Validation(null, "Select a valid weekday.");
+            }
         }
-        if (!SLOTS.contains(slot)) return new Validation(null, "Select a valid meal slot.");
+        if (!SLOTS.contains(slot))
+            return new Validation(null, "Select a valid meal slot.");
         boolean duplicate = currentId == null
-                ? recommendations.existsByDayOfWeekAndMealSlotAndPlannerMealPlannerMealId(day, slot, meal.getPlannerMealId())
+                ? recommendations.existsByDayOfWeekAndMealSlotAndPlannerMealPlannerMealId(day, slot,
+                        meal.getPlannerMealId())
                 : recommendations.existsByDayOfWeekAndMealSlotAndPlannerMealPlannerMealIdAndRecommendationIdNot(
                         day, slot, meal.getPlannerMealId(), currentId);
         return duplicate ? new Validation(null, "This meal is already recommended for that day and slot.")
@@ -209,9 +232,19 @@ public class WeeklyMealPlannerAdminController {
     private String validateMeal(PlannerMealRequest request) {
         if (request == null || request.nameEn() == null || request.nameEn().isBlank())
             return "Enter an English meal name.";
-        MealCategory category = request.categoryId() == null ? null : mealCategories.findById(request.categoryId()).orElse(null);
-        if (category == null || !Boolean.TRUE.equals(category.getIsActive())) return "Select an active meal category.";
-        if (request.nameEn().trim().length() > 150) return "Meal name is too long.";
+        List<Integer> catIds = request.categoryIds() != null && !request.categoryIds().isEmpty()
+                ? request.categoryIds()
+                : (request.categoryId() != null ? List.of(request.categoryId()) : List.of());
+        if (catIds.isEmpty())
+            return "Select at least one active meal category.";
+        for (Integer cid : catIds) {
+            MealCategory category = mealCategories.findById(cid).orElse(null);
+            if (category == null || !Boolean.TRUE.equals(category.getIsActive())) {
+                return "Select active meal categories.";
+            }
+        }
+        if (request.nameEn().trim().length() > 150)
+            return "Meal name is too long.";
         if (request.calories() == null || request.proteinGrams() == null
                 || request.carbsGrams() == null || request.fatGrams() == null
                 || request.calories().signum() < 0 || request.proteinGrams().signum() < 0
@@ -223,11 +256,22 @@ public class WeeklyMealPlannerAdminController {
     }
 
     private void applyMeal(PlannerMeal meal, PlannerMealRequest request) {
-        MealCategory category = mealCategories.findById(request.categoryId()).orElseThrow();
+        List<Integer> catIds = request.categoryIds() != null && !request.categoryIds().isEmpty()
+                ? request.categoryIds()
+                : (request.categoryId() != null ? List.of(request.categoryId()) : List.of());
+        List<MealCategory> selectedCats = catIds.stream()
+                .map(id -> mealCategories.findById(id).orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
+        if (selectedCats.isEmpty()) {
+            throw new IllegalArgumentException("No valid categories provided.");
+        }
+        MealCategory primaryCategory = selectedCats.getFirst();
         meal.setNameEn(request.nameEn().trim());
         meal.setNameKm(clean(request.nameKm()));
-        meal.setCategory(category);
-        meal.setCategoryEn(category.getCategoryName());
+        meal.setCategory(primaryCategory);
+        meal.setCategories(new HashSet<>(selectedCats));
+        meal.setCategoryEn(selectedCats.stream().map(MealCategory::getCategoryName).collect(Collectors.joining(", ")));
         meal.setCategoryKm(null);
         meal.setDescriptionEn(clean(request.descriptionEn()));
         meal.setDescriptionKm(clean(request.descriptionKm()));
@@ -247,32 +291,60 @@ public class WeeklyMealPlannerAdminController {
     }
 
     private void createRecommendationsForEveryDay(PlannerMeal meal) {
-        String slot = slotForCategory(meal.getCategory().getCategoryName());
+        Set<String> slots = new HashSet<>();
+        if (meal.getCategories() != null && !meal.getCategories().isEmpty()) {
+            for (MealCategory cat : meal.getCategories()) {
+                slots.add(slotForCategory(cat.getCategoryName()));
+            }
+        } else if (meal.getCategory() != null) {
+            slots.add(slotForCategory(meal.getCategory().getCategoryName()));
+        } else {
+            slots.add("LUNCH");
+        }
+
         LocalDateTime now = LocalDateTime.now();
-        WeeklyMealRecommendation row = new WeeklyMealRecommendation();
-        row.setPlannerMeal(meal);
-        row.setMeal(null);
-        row.setDayOfWeek("ALL");
-        row.setMealSlot(slot);
-        row.setActive(Boolean.TRUE.equals(meal.getActive()));
-        row.setSortOrder(0);
-        row.setCreatedAt(now);
-        row.setUpdatedAt(now);
-        recommendations.save(row);
+        for (String slot : slots) {
+            if (!recommendations.existsByDayOfWeekAndMealSlotAndPlannerMealPlannerMealId("ALL", slot,
+                    meal.getPlannerMealId())) {
+                WeeklyMealRecommendation row = new WeeklyMealRecommendation();
+                row.setPlannerMeal(meal);
+                row.setMeal(null);
+                row.setDayOfWeek("ALL");
+                row.setMealSlot(slot);
+                row.setActive(Boolean.TRUE.equals(meal.getActive()));
+                row.setSortOrder(0);
+                row.setCreatedAt(now);
+                row.setUpdatedAt(now);
+                recommendations.save(row);
+            }
+        }
     }
 
     private String slotForCategory(String categoryName) {
         String value = categoryName == null ? "" : categoryName.toUpperCase(Locale.ROOT);
-        if (value.contains("BREAKFAST")) return "BREAKFAST";
-        if (value.contains("DINNER")) return "DINNER";
-        if (value.contains("SNACK")) return "SNACK";
+        if (value.contains("BREAKFAST"))
+            return "BREAKFAST";
+        if (value.contains("DINNER"))
+            return "DINNER";
+        if (value.contains("SNACK") || value.contains("DESSERT"))
+            return "SNACK";
         return "LUNCH";
     }
 
     private Map<String, Object> mealResponse(PlannerMeal meal) {
-        return Map.of("id", meal.getPlannerMealId(), "name", meal.getNameEn(),
+        List<Integer> categoryIds = meal.getCategories() != null && !meal.getCategories().isEmpty()
+                ? meal.getCategories().stream().map(MealCategory::getCategoryId).toList()
+                : (meal.getCategory() != null ? List.of(meal.getCategory().getCategoryId()) : List.of());
+        List<String> categoryNames = meal.getCategories() != null && !meal.getCategories().isEmpty()
+                ? meal.getCategories().stream().map(MealCategory::getCategoryName).toList()
+                : (meal.getCategory() != null ? List.of(meal.getCategory().getCategoryName()) : List.of());
+        return Map.of(
+                "id", meal.getPlannerMealId(),
+                "name", meal.getNameEn(),
                 "categoryId", meal.getCategory().getCategoryId(),
                 "categoryName", meal.getCategory().getCategoryName(),
+                "categoryIds", categoryIds,
+                "categoryNames", categoryNames,
                 "calories", meal.getCalories(),
                 "active", Boolean.TRUE.equals(meal.getActive()));
     }
@@ -290,8 +362,9 @@ public class WeeklyMealPlannerAdminController {
     }
 
     private Comparator<WeeklyMealRecommendation> scheduleOrder() {
-        return Comparator.comparingInt((WeeklyMealRecommendation row) ->
-                    "ALL".equals(row.getDayOfWeek()) ? 0 : DayOfWeek.valueOf(row.getDayOfWeek()).getValue())
+        return Comparator
+                .comparingInt((WeeklyMealRecommendation row) -> "ALL".equals(row.getDayOfWeek()) ? 0
+                        : DayOfWeek.valueOf(row.getDayOfWeek()).getValue())
                 .thenComparingInt(row -> List.of("BREAKFAST", "LUNCH", "DINNER", "SNACK").indexOf(row.getMealSlot()))
                 .thenComparing(WeeklyMealRecommendation::getSortOrder)
                 .thenComparing(WeeklyMealRecommendation::getRecommendationId);
@@ -301,7 +374,14 @@ public class WeeklyMealPlannerAdminController {
         return ResponseEntity.badRequest().body(Map.of("message", message));
     }
 
-    private String normalize(String value) { return value == null ? "" : value.trim().toUpperCase(); }
-    private String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
-    private record Validation(PlannerMeal meal, String error) { }
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toUpperCase();
+    }
+
+    private String clean(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private record Validation(PlannerMeal meal, String error) {
+    }
 }

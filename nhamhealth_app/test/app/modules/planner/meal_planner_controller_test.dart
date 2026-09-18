@@ -494,4 +494,122 @@ void main() {
       expect(copied, isTrue);
     },
   );
+
+  test(
+    'MealPlannerProvider saveBulkMeals calls bulk endpoint with list payload',
+    () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/meal-plans/bulk') {
+          expect(request.method, 'POST');
+          final decoded = jsonDecode(request.body) as List;
+          expect(decoded.length, 2);
+          return http.Response(
+            jsonEncode([
+              {
+                'planId': 301,
+                'planDate': '2026-10-01',
+                'mealType': 'BREAKFAST',
+                'plannerMealId': 101,
+                'mealName': 'Bulk Oat',
+                'calories': 350,
+                'servings': 1,
+              },
+              {
+                'planId': 302,
+                'planDate': '2026-10-01',
+                'mealType': 'LUNCH',
+                'plannerMealId': 102,
+                'mealName': 'Bulk Rice',
+                'calories': 550,
+                'servings': 1,
+              },
+            ]),
+            200,
+          );
+        }
+        return http.Response('[]', 404);
+      });
+
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+
+      final result = await provider.saveBulkMeals([
+        {
+          'planDate': '2026-10-01',
+          'mealType': 'BREAKFAST',
+          'plannerMealId': 101,
+          'servings': 1.0,
+        },
+        {
+          'planDate': '2026-10-01',
+          'mealType': 'LUNCH',
+          'plannerMealId': 102,
+          'servings': 1.0,
+        },
+      ]);
+
+      expect(result.length, 2);
+      expect(result[0].planId, 301);
+      expect(result[1].planId, 302);
+    },
+  );
+
+  test(
+    'autoFillPlan sends all empty slots via a single saveBulkMeals call',
+    () async {
+      var bulkCallCount = 0;
+      var singleSaveCallCount = 0;
+      var capturedBulkItems = <dynamic>[];
+
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/meal-plans/bulk') {
+          bulkCallCount++;
+          final decoded = jsonDecode(request.body) as List;
+          capturedBulkItems = decoded;
+          return http.Response(
+            jsonEncode(
+              decoded
+                  .map(
+                    (item) => {
+                      'planId': 999,
+                      'planDate': item['planDate'],
+                      'mealType': item['mealType'],
+                      'plannerMealId': item['plannerMealId'],
+                      'mealName': 'Saved Bulk Meal',
+                      'calories': 400,
+                      'servings': item['servings'],
+                    },
+                  )
+                  .toList(),
+            ),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/meal-plans' &&
+            request.method == 'POST') {
+          singleSaveCallCount++;
+          return http.Response('{}', 200);
+        }
+        return http.Response('[]', 200);
+      });
+
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+
+      final base = withAdminMeals();
+      final controller = MealPlannerController(provider: provider);
+      controller.adminRecommendations.addAll(base.adminRecommendations);
+      controller.setPlanDaysCount(3);
+
+      final filled = await controller.autoFillPlan();
+      expect(filled, greaterThan(0));
+      expect(bulkCallCount, 1);
+      expect(singleSaveCallCount, 0);
+      expect(capturedBulkItems.isNotEmpty, isTrue);
+    },
+  );
 }

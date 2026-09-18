@@ -57,6 +57,7 @@ class PlannedMeal {
     this.carbsGrams = 0,
     this.fatGrams = 0,
     this.categoryId,
+    this.categoryIds = const [],
     this.category = '',
     this.description = '',
     this.cookingTimeMinutes,
@@ -80,6 +81,7 @@ class PlannedMeal {
   final DateTime? completedAt;
   final double? actualServings;
   final int? categoryId;
+  final List<int> categoryIds;
   final MealPlanSlot slot;
   final List<String> ingredients;
   final List<PlannerIngredient> ingredientDetails;
@@ -103,6 +105,7 @@ class PlannedMeal {
     double? actualServings,
     bool clearCompletedAt = false,
     bool clearActualServings = false,
+    List<int>? categoryIds,
   }) => PlannedMeal(
     id: id,
     planId: planId ?? this.planId,
@@ -122,6 +125,7 @@ class PlannedMeal {
     ingredientDetails: ingredientDetails,
     category: category,
     categoryId: categoryId,
+    categoryIds: categoryIds ?? this.categoryIds,
     description: description,
     cookingTimeMinutes: cookingTimeMinutes,
     difficulty: difficulty,
@@ -155,7 +159,8 @@ class PlannedMeal {
       fatGrams: (json['fatGrams'] as num?)?.toDouble() ?? 0,
       servings: (json['servings'] as num?)?.toDouble() ?? 1,
       status: MealPlanStatus.values.firstWhere(
-        (status) => status.name == '${json['status'] ?? 'PLANNED'}'.toLowerCase(),
+        (status) =>
+            status.name == '${json['status'] ?? 'PLANNED'}'.toLowerCase(),
         orElse: () => MealPlanStatus.planned,
       ),
       completedAt: DateTime.tryParse('${json['completedAt'] ?? ''}'),
@@ -167,6 +172,9 @@ class PlannedMeal {
       ingredients: details.map((item) => item.name).toList(growable: false),
       ingredientDetails: details,
       categoryId: (json['categoryId'] as num?)?.toInt(),
+      categoryIds: (json['categoryIds'] as List<dynamic>? ?? const [])
+          .map((e) => (e as num).toInt())
+          .toList(growable: false),
       category: '${json['category'] ?? ''}'.trim(),
       description: '${json['description'] ?? ''}'.trim(),
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),

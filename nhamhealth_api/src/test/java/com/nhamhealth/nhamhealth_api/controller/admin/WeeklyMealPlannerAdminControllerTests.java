@@ -76,6 +76,7 @@ class WeeklyMealPlannerAdminControllerTests {
         meal.setInstructionsTextKm("ដាំទឹក រួចស្ងោរស្រូវអូត");
         meal.setTagsText("Healthy, Oats");
         meal.setTagsTextKm("សុខភាព, ស្រូវអូត");
+        meal.setCategories(new java.util.HashSet<>(java.util.List.of(category)));
         meal.setActive(true);
 
         WeeklyMealRecommendation rec = new WeeklyMealRecommendation();
@@ -100,6 +101,55 @@ class WeeklyMealPlannerAdminControllerTests {
                 .andExpect(content().string(containsString("Tags (Khmer)")))
                 .andExpect(content().string(containsString("data-ingredients-km=")))
                 .andExpect(content().string(containsString("data-instructions-km=")))
-                .andExpect(content().string(containsString("data-tags-km=")));
+                .andExpect(content().string(containsString("data-tags-km=")))
+                .andExpect(content().string(containsString("data-category-ids=\"1\"")));
+    }
+
+    @Test
+    void createMealWithMultipleCategoriesCreatesRecommendationsForEveryCategorySlot() throws Exception {
+        MealCategory cat1 = new MealCategory();
+        cat1.setCategoryId(1);
+        cat1.setCategoryName("Breakfast");
+        cat1.setIsActive(true);
+
+        MealCategory cat2 = new MealCategory();
+        cat2.setCategoryId(2);
+        cat2.setCategoryName("Lunch");
+        cat2.setIsActive(true);
+
+        when(mealCategories.findById(1)).thenReturn(java.util.Optional.of(cat1));
+        when(mealCategories.findById(2)).thenReturn(java.util.Optional.of(cat2));
+
+        when(plannerMeals.save(org.mockito.ArgumentMatchers.any(PlannerMeal.class))).thenAnswer(inv -> {
+            PlannerMeal m = inv.getArgument(0);
+            m.setPlannerMealId(101);
+            return m;
+        });
+
+        String jsonPayload = """
+                {
+                    "nameEn": "Multi Category Wrap",
+                    "categoryIds": [1, 2],
+                    "calories": 450,
+                    "proteinGrams": 25,
+                    "carbsGrams": 40,
+                    "fatGrams": 15
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post("/admin/meal-planner/meals")
+                .with(user("admin").roles("ADMIN"))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(
+                        org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.id").value(101))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.categoryIds.length()").value(2));
+
+        org.mockito.Mockito.verify(recommendations, org.mockito.Mockito.atLeast(2))
+                .save(org.mockito.ArgumentMatchers.any(WeeklyMealRecommendation.class));
     }
 }

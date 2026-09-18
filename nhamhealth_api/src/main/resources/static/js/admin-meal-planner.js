@@ -120,7 +120,8 @@
     }
     if (plannerPreviewImg) plannerPreviewImg.src = url;
     if (plannerPreviewName) plannerPreviewName.textContent = name || "image";
-    if (plannerPreviewMeta) plannerPreviewMeta.textContent = meta || "Ready to save";
+    if (plannerPreviewMeta)
+      plannerPreviewMeta.textContent = meta || "Ready to save";
     if (plannerImagePreview) plannerImagePreview.hidden = false;
   }
 
@@ -135,12 +136,19 @@
         element.src = objectUrl;
       });
       const maxDimension = 1600;
-      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(image.naturalWidth, image.naturalHeight),
+      );
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
+      canvas
+        .getContext("2d")
+        .drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/webp", 0.82),
+      );
       if (!blob) return file;
       return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {
         type: "image/webp",
@@ -163,7 +171,8 @@
       body: data,
     });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.message || "Unable to upload meal image.");
+    if (!response.ok)
+      throw new Error(body.message || "Unable to upload meal image.");
     return body.imageUrl || body.mainImageUrl;
   }
 
@@ -331,15 +340,27 @@
     const categoryId = plannerCategory?.value || "";
     [...(plannerMeal?.options || [])].forEach((option) => {
       if (!option.value) return;
-      const matches = option.dataset.categoryId === categoryId;
+      const ids = (
+        option.dataset.categoryIds ||
+        option.dataset.categoryId ||
+        ""
+      )
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const matches = !categoryId || ids.includes(categoryId);
       option.hidden = !matches;
       option.disabled = !matches;
     });
     if (plannerMeal) {
       plannerMeal.disabled = !categoryId;
-      plannerMeal.value = selectedMealId && plannerMeal.querySelector(
-        `option[value="${selectedMealId}"]:not([disabled])`,
-      ) ? selectedMealId : "";
+      plannerMeal.value =
+        selectedMealId &&
+        plannerMeal.querySelector(
+          `option[value="${selectedMealId}"]:not([disabled])`,
+        )
+          ? selectedMealId
+          : "";
     }
   }
 
@@ -474,9 +495,41 @@
     document.body.classList.toggle("planner-modal-open", open);
   }
 
+  function getSelectedCategoryIds() {
+    return [...mealForm.querySelectorAll(".meal-category-cb:checked")].map(
+      (cb) => Number(cb.value),
+    );
+  }
+
+  function setSelectedCategoryIds(ids = []) {
+    const idSet = new Set(ids.map(Number));
+    mealForm.querySelectorAll(".meal-category-cb").forEach((cb) => {
+      cb.checked = idSet.has(Number(cb.value));
+    });
+    const first = ids[0] || "";
+    if (mealForm.elements.categoryId) {
+      mealForm.elements.categoryId.value = first;
+    }
+  }
+
+  mealForm?.querySelectorAll(".meal-category-cb").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const selected = getSelectedCategoryIds();
+      const err = document.getElementById("mealCategoryError");
+      if (err && selected.length > 0) err.style.display = "none";
+      if (mealForm.elements.categoryId) {
+        mealForm.elements.categoryId.value = selected[0] || "";
+      }
+    });
+  });
+
   function openMealCreate() {
     editingMealId = null;
     mealForm.reset();
+    setSelectedCategoryIds([]);
+    document
+      .getElementById("mealCategoryError")
+      ?.style?.setProperty("display", "none");
     clearImageState();
     switchImageMode("upload");
     ["calories", "proteinGrams", "carbsGrams", "fatGrams"].forEach((name) => {
@@ -514,12 +567,31 @@
       active: "active",
     };
     Object.entries(fields).forEach(([field, attribute]) => {
-      mealForm.elements[field].value = card.dataset[attribute] || "";
+      if (mealForm.elements[field]) {
+        mealForm.elements[field].value = card.dataset[attribute] || "";
+      }
     });
+
+    const rawCategoryIds = (
+      card.dataset.categoryIds ||
+      card.dataset.categoryId ||
+      ""
+    )
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setSelectedCategoryIds(rawCategoryIds);
+    document
+      .getElementById("mealCategoryError")
+      ?.style?.setProperty("display", "none");
 
     const currentImg = card.dataset.imageUrl;
     if (currentImg) {
-      showPreview(currentImg, currentImg.split("/").pop() || "Meal Image", "Current image");
+      showPreview(
+        currentImg,
+        currentImg.split("/").pop() || "Meal Image",
+        "Current image",
+      );
       switchImageMode("url");
     } else {
       switchImageMode("upload");
@@ -534,12 +606,26 @@
     setMealModal(false);
     editingMealId = null;
     mealForm.reset();
+    setSelectedCategoryIds([]);
+    document
+      .getElementById("mealCategoryError")
+      ?.style?.setProperty("display", "none");
     clearImageState();
   }
 
   mealForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!mealForm.checkValidity()) return mealForm.reportValidity();
+
+    const selectedCategoryIds = getSelectedCategoryIds();
+    const categoryError = document.getElementById("mealCategoryError");
+    if (selectedCategoryIds.length === 0) {
+      if (categoryError) categoryError.style.display = "block";
+      categoryError?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    if (categoryError) categoryError.style.display = "none";
+
     const data = Object.fromEntries(new FormData(mealForm).entries());
     let finalImageUrl = (data.imageUrl || "").trim();
 
@@ -549,16 +635,19 @@
     try {
       // If a local image was picked to upload, upload it first
       if (pendingImageFile) {
-        mealSaveButton.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Uploading Image...';
+        mealSaveButton.innerHTML =
+          '<i class="bi bi-cloud-arrow-up"></i> Uploading Image...';
         finalImageUrl = await uploadImageFile(pendingImageFile);
       }
 
-      mealSaveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving Meal...';
+      mealSaveButton.innerHTML =
+        '<i class="bi bi-hourglass-split"></i> Saving Meal...';
 
       const payload = {
         nameEn: (data.nameEn || "").trim(),
         nameKm: (data.nameKm || "").trim(),
-        categoryId: Number(data.categoryId),
+        categoryId: selectedCategoryIds[0],
+        categoryIds: selectedCategoryIds,
         descriptionEn: (data.descriptionEn || "").trim(),
         descriptionKm: (data.descriptionKm || "").trim(),
         imageUrl: finalImageUrl || null,
@@ -723,7 +812,11 @@
     pendingImageFile = file;
     if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
     previewObjectUrl = URL.createObjectURL(file);
-    showPreview(previewObjectUrl, file.name, `${Math.round(file.size / 1024)} KB · Ready to upload`);
+    showPreview(
+      previewObjectUrl,
+      file.name,
+      `${Math.round(file.size / 1024)} KB · Ready to upload`,
+    );
     if (mealImageUrlInput) mealImageUrlInput.value = "";
   }
 
@@ -733,7 +826,11 @@
     if (url) {
       pendingImageFile = null;
       if (mealImageFileInput) mealImageFileInput.value = "";
-      showPreview(url, url.split("/").pop() || "Web Image", "External URL preview");
+      showPreview(
+        url,
+        url.split("/").pop() || "Web Image",
+        "External URL preview",
+      );
     } else if (!pendingImageFile) {
       showPreview(null);
     }

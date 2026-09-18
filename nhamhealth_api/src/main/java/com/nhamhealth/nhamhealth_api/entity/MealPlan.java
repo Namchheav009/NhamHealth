@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -18,8 +19,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "meal_plans", uniqueConstraints = @UniqueConstraint(name = "uk_meal_plans_user_date_type", columnNames = {
-        "user_id", "plan_date", "meal_type" }))
+@Table(name = "meal_plans", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_meal_plans_user_date_type", columnNames = {
+                "user_id", "plan_date", "meal_type" })
+}, indexes = {
+        @Index(name = "idx_meal_plans_user_week", columnList = "user_id, plan_date"),
+        @Index(name = "idx_meal_plans_user_date_status", columnList = "user_id, plan_date, status"),
+        @Index(name = "idx_meal_plans_planner_meal", columnList = "planner_meal_id")
+})
 public class MealPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

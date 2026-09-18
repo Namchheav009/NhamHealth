@@ -98,12 +98,17 @@ class MealPlannerView extends GetView<MealPlannerController> {
                                 const SizedBox(height: 20),
                                 _sectionHeading(context),
                                 const SizedBox(height: 12),
-                                ...MealPlanSlot.values.map(
-                                  (slot) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _slotCard(context, slot),
+                                if (controller.isLoadingDay.value)
+                                  const PageSkeleton.plannerSlots()
+                                else
+                                  ...MealPlanSlot.values.map(
+                                    (slot) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
+                                      child: _slotCard(context, slot),
+                                    ),
                                   ),
-                                ),
                               ],
                             ],
                           ),
@@ -798,7 +803,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 60,
+        height: 62,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryGreen : context.appBackground,
           borderRadius: BorderRadius.circular(16),
@@ -831,6 +836,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
                         : context.appMutedText,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
+                height: 1.3,
               ),
             ),
             const SizedBox(height: 2),
@@ -840,6 +846,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
                 color: isSelected ? Colors.white : context.appText,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
+                height: 1.2,
               ),
             ),
             const SizedBox(height: 3),
@@ -931,8 +938,8 @@ class MealPlannerView extends GetView<MealPlannerController> {
                 ),
               ),
               SizedBox(
-                width: 52,
-                height: 52,
+                width: 56,
+                height: 56,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -952,16 +959,24 @@ class MealPlannerView extends GetView<MealPlannerController> {
                             color: AppColors.primaryGreen,
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
+                            height: 1.1,
                           ),
                         ),
-                        Text(
-                          _plannerLabel('planner.adherence', 'adherence'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: context.appMutedText,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w600,
-                            height: 1.1,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              _plannerLabel('planner.adherence', 'adherence'),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.25,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1025,6 +1040,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
               color: context.appMutedText,
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
+              height: 1.3,
             ),
           ),
         ],
@@ -1069,6 +1085,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
             color: context.appMutedText,
             fontSize: 11,
             fontWeight: FontWeight.w500,
+            height: 1.3,
           ),
         ),
       ],
@@ -1079,175 +1096,22 @@ class MealPlannerView extends GetView<MealPlannerController> {
     return Row(
       children: [
         Expanded(
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  'planner.meals_for_date'.trParams({
-                    'date': DateFormat(
-                      'EEE, d MMM',
-                    ).format(controller.selectedDate),
-                  }),
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              if (controller.isLoadingDay.value) ...[
-                const SizedBox(width: 8),
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primaryGreen,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            'planner.meals_for_date'.trParams({
+              'date': DateFormat('EEE, d MMM').format(controller.selectedDate),
+            }),
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              height: 1.35,
+            ),
           ),
-        ),
-        TextButton.icon(
-          onPressed: () => _showEditDaySheet(context),
-          icon: const Icon(Icons.edit_outlined, size: 16),
-          label: Text('planner.edit_day'.tr),
         ),
       ],
     );
   }
-
-  Future<void> _showEditDaySheet(BuildContext context) =>
-      showModalBottomSheet<void>(
-        context: context,
-        useSafeArea: true,
-        isScrollControlled: true,
-        backgroundColor: context.appSurfaceLow,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        builder:
-            (sheet) => Padding(
-              padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 48,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: context.appBorder,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'planner.meals_for_date'.trParams({
-                      'date': DateFormat(
-                        'EEE, d MMM',
-                      ).format(controller.selectedDate),
-                    }),
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.appBorder),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children:
-                          MealPlanSlot.values.indexed.map((entry) {
-                            final index = entry.$1;
-                            final slot = entry.$2;
-                            final meal = controller.mealFor(slot);
-                            final slotTheme = PlannerSlotTheme.of(slot);
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 3,
-                                  ),
-                                  leading:
-                                      meal == null
-                                          ? CircleAvatar(
-                                            backgroundColor: slotTheme.soft,
-                                            child: Icon(
-                                              slotTheme.icon,
-                                              color: slotTheme.accent,
-                                              size: 21,
-                                            ),
-                                          )
-                                          : PlannerMealImage(
-                                            meal: meal,
-                                            width: 44,
-                                            height: 44,
-                                            radius: 11,
-                                          ),
-                                  title: Text(
-                                    slot.labelKey.tr,
-                                    style: TextStyle(
-                                      color: context.appText,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    meal == null
-                                        ? '+ ${'planner.add_meal'.tr}'
-                                        : plannerMealName(meal),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color:
-                                          meal == null
-                                              ? AppColors.primaryGreen
-                                              : context.appMutedText,
-                                    ),
-                                  ),
-                                  trailing: Icon(
-                                    meal == null
-                                        ? Icons.add_circle_rounded
-                                        : Icons.edit_outlined,
-                                    color: AppColors.primaryGreen,
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(sheet);
-                                    if (meal == null) {
-                                      _openSlot(slot);
-                                    } else {
-                                      _showMealOptionsSheet(context, meal);
-                                    }
-                                  },
-                                ),
-                                if (index < MealPlanSlot.values.length - 1)
-                                  Divider(
-                                    height: 1,
-                                    indent: 60,
-                                    color: context.appBorder,
-                                  ),
-                              ],
-                            );
-                          }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-      );
 
   Widget _slotCard(BuildContext context, MealPlanSlot slot) {
     final meal = controller.mealFor(slot);
@@ -1305,6 +1169,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           color: context.appText,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
+                          height: 1.35,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -1314,6 +1179,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           color: AppColors.primaryGreen,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
+                          height: 1.3,
                         ),
                       ),
                     ] else ...[
@@ -1333,12 +1199,17 @@ class MealPlannerView extends GetView<MealPlannerController> {
                             ),
                           ),
                           const SizedBox(width: 5),
-                          Text(
-                            slot.labelKey.tr,
-                            style: TextStyle(
-                              color: context.appMutedText,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              slot.labelKey.tr,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.25,
+                              ),
                             ),
                           ),
                         ],
@@ -1352,15 +1223,19 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           color: context.appText,
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
+                          height: 1.35,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         '${(meal.calories * meal.servings).round()} ${'planner.kcal'.tr}  •  ${(meal.proteinGrams * meal.servings).toStringAsFixed(0)}g ${'planner.protein'.tr}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: context.appMutedText,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,
+                          height: 1.3,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -1389,19 +1264,46 @@ class MealPlannerView extends GetView<MealPlannerController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
+                      tooltip:
+                          meal.status == MealPlanStatus.eaten
+                              ? 'planner.eaten'.tr
+                              : 'planner.mark_as_eaten'.tr,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(32, 32),
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        if (meal.status != MealPlanStatus.eaten) {
+                          controller.changeStatus(meal, MealPlanStatus.eaten);
+                        } else {
+                          _showMealOptionsSheet(context, meal);
+                        }
+                      },
+                      icon: Icon(
+                        meal.status == MealPlanStatus.eaten
+                            ? Icons.check_circle_rounded
+                            : Icons.check_circle_outline_rounded,
+                        color:
+                            meal.status == MealPlanStatus.eaten
+                                ? AppColors.primaryGreen
+                                : context.appMutedText.withValues(alpha: 0.8),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(32, 32),
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      visualDensity: VisualDensity.compact,
                       onPressed: () => _showMealOptionsSheet(context, meal),
                       icon: const Icon(Icons.more_horiz_rounded),
                       color: context.appMutedText,
                       iconSize: 22,
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: context.appMutedText,
-                      size: 20,
                     ),
                   ],
                 ),
@@ -1631,7 +1533,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
       ),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
@@ -1641,12 +1543,17 @@ class MealPlannerView extends GetView<MealPlannerController> {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+              ),
             ),
           ),
         ],
@@ -1672,7 +1579,8 @@ class MealPlannerView extends GetView<MealPlannerController> {
       style: TextStyle(
         color: danger ? const Color(0xFFEF4444) : context.appText,
         fontWeight: FontWeight.w700,
-        fontSize: 14,
+        fontSize: 14.5,
+        height: 1.35,
       ),
     ),
     onTap: tap,

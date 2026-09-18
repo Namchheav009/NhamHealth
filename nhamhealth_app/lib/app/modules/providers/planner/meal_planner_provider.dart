@@ -78,6 +78,38 @@ class MealPlannerProvider {
       'servings': servings,
     },
   );
+
+  Future<List<PlannedMeal>> saveBulkMeals(
+    List<Map<String, dynamic>> items,
+  ) async {
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final response = await _client
+        .post(
+          Uri.parse(
+            '${ApiConfig.baseUrl}/api/v1/meal-plans/bulk',
+          ).replace(queryParameters: {'lang': _lang}),
+          headers: headers,
+          body: jsonEncode(items),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const MealPlannerProviderException(
+        'Unable to update meal planner in bulk.',
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! List) {
+      throw const MealPlannerProviderException(
+        'Bulk meal planner response is incomplete.',
+      );
+    }
+    return payload
+        .map((e) => PlannedMeal.fromJson(Map<String, dynamic>.from(e as Map)))
+        .where((m) => m.id > 0)
+        .toList();
+  }
+
   Future<PlannedMeal> updateMeal(
     int planId, {
     DateTime? date,

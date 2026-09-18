@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -83,6 +84,19 @@ public class MealPlannerService {
         plan.setCompletedAt(null);
         plan.setActualServings(null);
         return response(plans.save(plan), lang);
+    }
+
+    @Transactional
+    public List<MealPlanResponse> bulkAddOrReplace(Integer userId, List<MealPlanRequest> requests, String lang) {
+        if (requests == null || requests.isEmpty()) {
+            return List.of();
+        }
+        List<MealPlanResponse> results = new ArrayList<>(requests.size());
+        for (MealPlanRequest request : requests) {
+            results.add(addOrReplace(userId, request, lang));
+            plans.flush();
+        }
+        return results;
     }
 
     @Transactional

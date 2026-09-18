@@ -153,4 +153,35 @@ class MealPlannerServiceTests {
         assertEquals(List.of("Step 1: Pan fry salmon."), enResult.getFirst().instructions());
         assertEquals(List.of("Omega3", "Keto"), enResult.getFirst().tags());
     }
+
+    @Test
+    void bulkAddOrReplaceStoresMultipleMealsInSingleCall() {
+        LocalDate d1 = LocalDate.of(2026, 9, 21);
+        LocalDate d2 = LocalDate.of(2026, 9, 22);
+        PlannerMeal meal1 = sampleMeal(10);
+        PlannerMeal meal2 = sampleMeal(20);
+
+        when(plannerMeals.findById(10)).thenReturn(Optional.of(meal1));
+        when(plannerMeals.findById(20)).thenReturn(Optional.of(meal2));
+        when(users.getReferenceById(1)).thenReturn(new User());
+        when(plans.findByUserUserIdAndPlanDateAndMealType(1, d1, "BREAKFAST")).thenReturn(Optional.empty());
+        when(plans.findByUserUserIdAndPlanDateAndMealType(1, d2, "LUNCH")).thenReturn(Optional.empty());
+        when(plans.save(any(MealPlan.class))).thenAnswer(invocation -> {
+            MealPlan p = invocation.getArgument(0);
+            p.setMealPlanId(999);
+            return p;
+        });
+
+        List<MealPlanRequest> batch = List.of(
+                new MealPlanRequest(d1, "BREAKFAST", 10, BigDecimal.ONE),
+                new MealPlanRequest(d2, "LUNCH", 20, new BigDecimal("2.0")));
+
+        var results = service.bulkAddOrReplace(1, batch, "en");
+
+        assertEquals(2, results.size());
+        assertEquals(d1, results.get(0).planDate());
+        assertEquals("BREAKFAST", results.get(0).mealType());
+        assertEquals(d2, results.get(1).planDate());
+        assertEquals("LUNCH", results.get(1).mealType());
+    }
 }

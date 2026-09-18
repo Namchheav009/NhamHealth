@@ -2373,6 +2373,9 @@ create table public.planner_meals (
     ingredients_text text,
     instructions_text text,
     tags_text varchar(500),
+    ingredients_text_km text,
+    instructions_text_km text,
+    tags_text_km varchar(500),
     is_active boolean not null default true,
     created_at timestamp(6) not null,
     updated_at timestamp(6) not null,
@@ -2527,3 +2530,35 @@ add
     );
 
 create index idx_meal_plans_user_date_status on public.meal_plans (user_id, plan_date, status);
+
+-- ============================================================================
+-- Original migration: V2__add_planner_meal_khmer_details.sql
+-- ============================================================================
+alter table public.planner_meals
+    add column if not exists ingredients_text_km text,
+    add column if not exists instructions_text_km text,
+    add column if not exists tags_text_km varchar(500);
+
+-- ============================================================================
+-- Original migration: V3__add_planner_meal_categories.sql
+-- ============================================================================
+create table if not exists public.planner_meal_categories (
+    planner_meal_id integer not null references public.planner_meals(planner_meal_id) on delete cascade,
+    category_id integer not null references public.meal_categories(category_id) on delete cascade,
+    primary key (planner_meal_id, category_id)
+);
+
+create index if not exists idx_planner_meal_categories_category on public.planner_meal_categories(category_id);
+
+alter table public.planner_meal_categories enable row level security;
+
+-- Backfill from existing primary category_id
+insert into
+    public.planner_meal_categories (planner_meal_id, category_id)
+select
+    planner_meal_id,
+    category_id
+from
+    public.planner_meals
+where
+    category_id is not null on conflict do nothing;

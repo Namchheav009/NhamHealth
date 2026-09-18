@@ -23,5 +23,19 @@ public record WeeklyMealRecommendationResponse(
         List<String> instructions,
         List<String> tags,
         String note,
-        Integer sortOrder) {
+        Integer sortOrder,
+        List<Integer> categoryIds) {
+
+    public WeeklyMealRecommendationResponse(
+            Integer id, String dayOfWeek, String mealSlot, Integer plannerMealId,
+            String mealName, String imageUrl, BigDecimal calories, BigDecimal proteinGrams,
+            BigDecimal carbsGrams, BigDecimal fatGrams, Integer categoryId, String category,
+            String description, Integer cookingTimeMinutes, String difficulty,
+            List<MealPlanResponse.IngredientItem> ingredients, List<String> instructions,
+            List<String> tags, String note, Integer sortOrder) {
+        this(id, dayOfWeek, mealSlot, plannerMealId, mealName, imageUrl, calories, proteinGrams,
+                carbsGrams, fatGrams, categoryId, category, description, cookingTimeMinutes,
+                difficulty, ingredients, instructions, tags, note, sortOrder,
+                categoryId != null ? List.of(categoryId) : List.of());
+    }
 }

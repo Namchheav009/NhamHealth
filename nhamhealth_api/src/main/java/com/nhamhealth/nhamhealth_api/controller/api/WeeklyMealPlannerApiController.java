@@ -56,6 +56,9 @@ public class WeeklyMealPlannerApiController {
 
     private WeeklyMealRecommendationResponse response(WeeklyMealRecommendation row, String lang) {
         PlannerMeal meal = row.getPlannerMeal();
+        List<Integer> categoryIds = meal.getCategoryIds() != null
+                ? meal.getCategoryIds().stream().sorted().toList()
+                : (meal.getCategory() != null ? List.of(meal.getCategory().getCategoryId()) : List.of());
         return new WeeklyMealRecommendationResponse(
                 row.getRecommendationId(), row.getDayOfWeek(), row.getMealSlot(),
                 meal.getPlannerMealId(), meal.name(lang), meal.getImageUrl(),
@@ -64,6 +67,6 @@ public class WeeklyMealPlannerApiController {
                 meal.category(lang), meal.description(lang),
                 meal.getCookingTimeMinutes(), "", PlannerMealContent.ingredients(meal, lang),
                 PlannerMealContent.instructions(meal, lang), PlannerMealContent.tags(meal, lang),
-                row.getNote(), row.getSortOrder());
+                row.getNote(), row.getSortOrder(), categoryIds);
     }
 }

@@ -8,7 +8,12 @@ import '../../../widgets/app_back_header.dart';
 import '../../models/planner/meal_plan.dart';
 
 String plannerImageUrl(String value) {
-  if (value.isEmpty || value.startsWith('http')) return value;
+  if (value.isEmpty ||
+      value.startsWith('http') ||
+      value.startsWith('assets/') ||
+      value.startsWith('package:')) {
+    return value;
+  }
   return '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
 }
 
@@ -63,59 +68,76 @@ class PlannerMealImage extends StatelessWidget {
   final double height;
   final double radius;
 
+  static const String fallbackMealAsset =
+      'assets/images/meals/healthy_salad.jpg';
+
+  Widget _buildFallback(PlannerSlotTheme theme, BuildContext context) {
+    return Image.asset(
+      fallbackMealAsset,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      errorBuilder:
+          (_, _, _) => Container(
+            width: width,
+            height: height,
+            color:
+                context.appIsDark
+                    ? theme.soft.withValues(alpha: 0.15)
+                    : theme.soft,
+            child: Center(
+              child: Icon(theme.icon, color: theme.accent, size: 26),
+            ),
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final url = plannerImageUrl(meal.imageUrl);
+    final rawUrl = meal.imageUrl.trim();
     final theme = PlannerSlotTheme.of(meal.slot);
+
+    Widget imageWidget;
+    if (rawUrl.isEmpty) {
+      imageWidget = _buildFallback(theme, context);
+    } else if (rawUrl.startsWith('assets/') || rawUrl.startsWith('package:')) {
+      imageWidget = Image.asset(
+        rawUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _buildFallback(theme, context),
+      );
+    } else {
+      final url = plannerImageUrl(rawUrl);
+      imageWidget = CachedNetworkImage(
+        imageUrl: url,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 150),
+        placeholder:
+            (_, _) => Container(
+              width: width,
+              height: height,
+              color:
+                  context.appIsDark
+                      ? theme.soft.withValues(alpha: 0.12)
+                      : theme.soft,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: theme.accent,
+                ),
+              ),
+            ),
+        errorWidget: (_, _, _) => _buildFallback(theme, context),
+      );
+    }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child:
-            url.isEmpty
-                ? Container(
-                  color:
-                      context.appIsDark
-                          ? theme.soft.withValues(alpha: 0.15)
-                          : theme.soft,
-                  child: Center(
-                    child: Icon(theme.icon, color: theme.accent, size: 26),
-                  ),
-                )
-                : CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  placeholder:
-                      (_, _) => Container(
-                        color:
-                            context.appIsDark
-                                ? theme.soft.withValues(alpha: 0.12)
-                                : theme.soft,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: theme.accent,
-                          ),
-                        ),
-                      ),
-                  errorWidget:
-                      (_, _, _) => Container(
-                        color:
-                            context.appIsDark
-                                ? theme.soft.withValues(alpha: 0.15)
-                                : theme.soft,
-                        child: Center(
-                          child: Icon(
-                            theme.icon,
-                            color: theme.accent,
-                            size: 26,
-                          ),
-                        ),
-                      ),
-                ),
-      ),
+      child: SizedBox(width: width, height: height, child: imageWidget),
     );
   }
 }
@@ -151,6 +173,7 @@ class PlannerPageHeader extends StatelessWidget {
             color: context.appText,
             fontSize: AppBackHeader.titleFontSize,
             fontWeight: AppBackHeader.titleFontWeight,
+            height: 1.35,
           ),
         ),
         if (subtitle != null) ...[
@@ -164,6 +187,7 @@ class PlannerPageHeader extends StatelessWidget {
               color: context.appMutedText,
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
+              height: 1.3,
             ),
           ),
         ],
@@ -242,7 +266,11 @@ class PlannerPrimaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 15,
+            height: 1.35,
+          ),
         ),
       );
     }
@@ -267,6 +295,7 @@ class PlannerPrimaryButton extends StatelessWidget {
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
+                height: 1.35,
               ),
             ),
           ),
