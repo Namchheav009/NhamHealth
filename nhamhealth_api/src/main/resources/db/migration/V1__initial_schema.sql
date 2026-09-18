@@ -598,65 +598,65 @@ create table public.wellness_profiles (
     primary key (wellness_profile_id)
 );
 
-create index public.idx_ai_recipe_reviews_meal_post_created on public.ai_recipe_reviews (user_meal_post_id, created_at);
+create index idx_ai_recipe_reviews_meal_post_created on public.ai_recipe_reviews (user_meal_post_id, created_at);
 
-create index public.idx_ai_recipe_reviews_status on public.ai_recipe_reviews (status);
+create index idx_ai_recipe_reviews_status on public.ai_recipe_reviews (status);
 
-create index public.idx_daily_wellness_user_date on public.daily_wellness_summaries (user_id, summary_date);
+create index idx_daily_wellness_user_date on public.daily_wellness_summaries (user_id, summary_date);
 
-create index public.idx_daily_wellness_mood_id on public.daily_wellness_summaries (mood_id);
+create index idx_daily_wellness_mood_id on public.daily_wellness_summaries (mood_id);
 
-create index public.idx_meal_favorites_meal_id on public.meal_favorites (meal_id);
+create index idx_meal_favorites_meal_id on public.meal_favorites (meal_id);
 
-create index public.idx_meal_favorites_user_id on public.meal_favorites (user_id);
+create index idx_meal_favorites_user_id on public.meal_favorites (user_id);
 
-create index public.idx_meal_ingredients_meal_id on public.meal_ingredients (meal_id);
+create index idx_meal_ingredients_meal_id on public.meal_ingredients (meal_id);
 
-create index public.idx_meal_ingredients_ingredient_id on public.meal_ingredients (ingredient_id);
+create index idx_meal_ingredients_ingredient_id on public.meal_ingredients (ingredient_id);
 
-create index public.idx_meal_logs_user_logged_at on public.meal_logs (user_id, logged_at);
+create index idx_meal_logs_user_logged_at on public.meal_logs (user_id, logged_at);
 
-create index public.idx_meal_logs_meal_id on public.meal_logs (meal_id);
+create index idx_meal_logs_meal_id on public.meal_logs (meal_id);
 
-create index public.idx_meal_logs_serving_size_id on public.meal_logs (serving_size_id);
+create index idx_meal_logs_serving_size_id on public.meal_logs (serving_size_id);
 
-create index public.idx_meal_tags_meal_id on public.meal_tags (meal_id);
+create index idx_meal_tags_meal_id on public.meal_tags (meal_id);
 
-create index public.idx_meal_tags_tag_id on public.meal_tags (tag_id);
+create index idx_meal_tags_tag_id on public.meal_tags (tag_id);
 
-create index public.idx_meals_category_id on public.meals (category_id);
+create index idx_meals_category_id on public.meals (category_id);
 
-create index public.idx_meals_created_by_user_id on public.meals (created_by_user_id);
+create index idx_meals_created_by_user_id on public.meals (created_by_user_id);
 
-create index public.idx_meals_updated_at on public.meals (updated_at);
+create index idx_meals_updated_at on public.meals (updated_at);
 
-create index public.idx_notifications_user_created_at on public.notifications (user_id, created_at);
+create index idx_notifications_user_created_at on public.notifications (user_id, created_at);
 
-create index public.idx_notifications_actor_user_id on public.notifications (actor_user_id);
+create index idx_notifications_actor_user_id on public.notifications (actor_user_id);
 
-create index public.idx_post_comments_post_id_created_at on public.post_comments (user_meal_post_id, created_at);
+create index idx_post_comments_post_id_created_at on public.post_comments (user_meal_post_id, created_at);
 
-create index public.idx_post_comments_user_id on public.post_comments (user_id);
+create index idx_post_comments_user_id on public.post_comments (user_id);
 
-create index public.idx_post_comments_parent_comment_id on public.post_comments (parent_comment_id);
+create index idx_post_comments_parent_comment_id on public.post_comments (parent_comment_id);
 
-create index public.idx_recipe_ingredients_meal_post_order on public.recipe_ingredients (user_meal_post_id, display_order);
+create index idx_recipe_ingredients_meal_post_order on public.recipe_ingredients (user_meal_post_id, display_order);
 
-create index public.idx_recipe_steps_meal_post_id on public.recipe_steps (user_meal_post_id);
+create index idx_recipe_steps_meal_post_id on public.recipe_steps (user_meal_post_id);
 
-create index public.idx_recipe_steps_meal_post_order on public.recipe_steps (user_meal_post_id, step_number);
+create index idx_recipe_steps_meal_post_order on public.recipe_steps (user_meal_post_id, step_number);
 
-create index public.idx_recipe_tags_tag_id on public.recipe_tags (tag_id);
+create index idx_recipe_tags_tag_id on public.recipe_tags (tag_id);
 
-create index public.idx_saved_recipes_meal_post_id on public.saved_recipes (user_meal_post_id);
+create index idx_saved_recipes_meal_post_id on public.saved_recipes (user_meal_post_id);
 
-create index public.idx_user_meal_posts_author_user_id on public.user_meal_posts (author_user_id);
+create index idx_user_meal_posts_author_user_id on public.user_meal_posts (author_user_id);
 
-create index public.idx_user_meal_posts_status_updated_at on public.user_meal_posts (status, updated_at);
+create index idx_user_meal_posts_status_updated_at on public.user_meal_posts (status, updated_at);
 
-create index public.idx_user_recipe_ai_checks_user_created on public.user_recipe_ai_checks (user_id, created_at);
+create index idx_user_recipe_ai_checks_user_created on public.user_recipe_ai_checks (user_id, created_at);
 
-create index public.idx_user_recipe_ai_checks_meal_post_created on public.user_recipe_ai_checks (user_meal_post_id, created_at);
+create index idx_user_recipe_ai_checks_meal_post_created on public.user_recipe_ai_checks (user_meal_post_id, created_at);
 
 alter table
     if exists public.ai_food_analyses
@@ -1032,7 +1032,7 @@ from
 -- ============================================================================
 -- Upgrade databases created from the earlier consolidated baseline. Fresh
 -- databases already use user_meal_posts and therefore skip the rename block.
-do $ $ begin if to_regclass('public.recipes') is not null then drop view if exists public.community_meal_posts;
+do $$ begin if to_regclass('public.recipes') is not null then drop view if exists public.community_meal_posts;
 
 alter table
     public.recipes rename to user_meal_posts;
@@ -1081,7 +1081,7 @@ alter table
 
 end if;
 
-end $ $;
+end $$;
 
 create
 or replace view public.community_meal_posts as
@@ -1113,7 +1113,7 @@ add
 
 create index if not exists idx_user_meal_posts_category_id on public.user_meal_posts (category_id);
 
-do $ $ begin if not exists (
+do $$ begin if not exists (
     select
         1
     from
@@ -1128,7 +1128,7 @@ add
 
 end if;
 
-end $ $;
+end $$;
 
 -- ============================================================================
 -- Original migration: V4__add_shared_source_to_user_meal_posts.sql
@@ -1140,7 +1140,7 @@ add
 
 create index if not exists idx_user_meal_posts_shared_source on public.user_meal_posts (shared_from_user_meal_post_id);
 
-do $ $ begin if not exists (
+do $$ begin if not exists (
     select
         1
     from
@@ -1155,7 +1155,7 @@ add
 
 end if;
 
-end $ $;
+end $$;
 
 -- ============================================================================
 -- Original migration: V5__add_share_count_to_user_meal_posts.sql
@@ -1264,7 +1264,7 @@ create index idx_profile_reports_status_created on public.user_profile_reports (
 -- Some upgraded databases kept the legacy post_id column after comments were
 -- moved to user_meal_posts. Hibernate writes user_meal_post_id, so a remaining
 -- NOT NULL post_id makes every new comment fail.
-do $ $ begin if exists (
+do $$ begin if exists (
     select
         1
     from
@@ -1320,7 +1320,7 @@ end if;
 
 end if;
 
-end $ $;
+end $$;
 
 create index if not exists idx_post_comments_post_id_created_at on public.post_comments (user_meal_post_id, created_at);
 
@@ -1400,7 +1400,7 @@ REVOKE ALL ON TABLE scraped_meal_sources
 FROM
     PUBLIC;
 
-DO $ $ BEGIN IF EXISTS (
+DO $$ BEGIN IF EXISTS (
     SELECT
         1
     FROM
@@ -1426,7 +1426,7 @@ FROM
 
 END IF;
 
-END $ $;
+END $$;
 
 -- ============================================================================
 -- Original migration: V17__add_profile_report_review_fields.sql
@@ -2146,7 +2146,7 @@ set
 -- user_meal_post_id. New meal-post media writes user_meal_post_id, so the
 -- legacy column must no longer be mandatory. Keep it for compatibility with
 -- old installations and remove only its obsolete NOT NULL requirement.
-do $ $ begin if exists (
+do $$ begin if exists (
     select
         1
     from
@@ -2186,7 +2186,7 @@ end if;
 
 end if;
 
-end $ $;
+end $$;
 
 create index if not exists idx_post_media_meal_post_order on public.post_media (user_meal_post_id, display_order);
 
