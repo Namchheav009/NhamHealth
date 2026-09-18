@@ -277,7 +277,7 @@
       if (!userId) return;
       const confirmed = await alerts.confirmDelete({
         title: "Delete user?",
-        text: `Disable and remove ${name} from user management? Their historical activity will be retained for audit integrity.`,
+        text: `Permanently delete ${name} and all associated data from the database? This action cannot be undone.`,
         confirmButtonText: "Yes, delete user!",
       });
       if (!confirmed) return;
@@ -327,7 +327,7 @@
           }
         }
 
-        await alerts.success("User deleted", `${name} has been deleted.`);
+        await alerts.success("User deleted", `${name} and all associated data have been permanently deleted from the database.`);
       } catch (error) {
         await alerts.error(error.message || "Unable to delete this user.");
         button.disabled = false;

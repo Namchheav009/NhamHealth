@@ -20,12 +20,17 @@ import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
 import com.nhamhealth.nhamhealth_api.entity.WellnessProfile;
+import com.nhamhealth.nhamhealth_api.entity.Recipe;
 import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
+import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
 import com.nhamhealth.nhamhealth_api.service.auth.RefreshTokenService;
+import com.nhamhealth.nhamhealth_api.service.recipe.RecipeFlowService;
 import com.nhamhealth.nhamhealth_api.service.sms.PlasgateSmsService;
+
+import jakarta.persistence.EntityManager;
 
 @Service
 public class AdminUserService {
@@ -37,6 +42,9 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final PlasgateSmsService smsService;
+    private final RecipeRepository recipeRepository;
+    private final RecipeFlowService recipeFlowService;
+    private final EntityManager entityManager;
 
     public AdminUserService(
             UserRepository userRepository,
@@ -45,7 +53,10 @@ public class AdminUserService {
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
-            PlasgateSmsService smsService) {
+            PlasgateSmsService smsService,
+            RecipeRepository recipeRepository,
+            RecipeFlowService recipeFlowService,
+            EntityManager entityManager) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.wellnessProfileRepository = wellnessProfileRepository;
@@ -53,6 +64,9 @@ public class AdminUserService {
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
         this.smsService = smsService;
+        this.recipeRepository = recipeRepository;
+        this.recipeFlowService = recipeFlowService;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -178,7 +192,11 @@ public class AdminUserService {
     }
 
     @Transactional
-    @CacheEvict(value = "adminDashboard", allEntries = true)
+    @CacheEvict(value = {
+            "adminDashboard", "mealCategories", "activeMealCategories", "tags",
+            "mealTagNames", "servingSizes", "nutrients", "foodCorrectionMatches",
+            "foodSearch", "meals", "mealDetail", "moods"
+    }, allEntries = true)
     public void deleteUser(Integer userId, String currentAdminIdentifier) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User account was not found"));
@@ -188,15 +206,198 @@ public class AdminUserService {
             throw new IllegalArgumentException("You cannot delete your own account");
         }
 
-        // Keep the row so its related audit and activity records retain a valid
-        // foreign key. Deleted users are excluded by loadUsers(), and only ACTIVE
-        // users can authenticate, so this immediately removes portal and account
-        // access without requiring every user-owned table to be manually purged.
-        user.setStatus("DELETED");
-        user.setIsVerified(false);
-        user.setVerifiedAt(null);
-        userRepository.saveAndFlush(user);
+        // 1. Revoke refresh tokens and sessions
         refreshTokenService.revokeAll(user);
+        entityManager.createNativeQuery("DELETE FROM refresh_tokens WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 2. Delete recipes authored by this user
+        // Delete shares first, then original recipes, cascading all media, steps, ingredients, etc.
+        List<Recipe> userRecipes = recipeRepository.findByAuthorUserIdOrderByUpdatedAtDesc(userId);
+        List<Recipe> sharedRecipes = userRecipes.stream()
+                .filter(r -> r.getSharedFrom() != null)
+                .toList();
+        List<Recipe> originalRecipes = userRecipes.stream()
+                .filter(r -> r.getSharedFrom() == null)
+                .toList();
+
+        for (Recipe r : sharedRecipes) {
+            recipeFlowService.adminDelete(r.getRecipeId());
+        }
+        for (Recipe r : originalRecipes) {
+            recipeFlowService.adminDelete(r.getRecipeId());
+        }
+        entityManager.flush();
+
+        // Fallback cleanup in case any orphaned post reference remained
+        entityManager.createNativeQuery("DELETE FROM user_meal_posts WHERE author_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 3. User recipe AI checks where user was the creator
+        entityManager.createNativeQuery("DELETE FROM user_recipe_ai_checks WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 4. User interactions on other posts:
+        // Delete comment likes and reports on comments written by this user
+        entityManager.createNativeQuery("DELETE FROM comment_likes WHERE comment_id IN "
+                + "(SELECT comment_id FROM post_comments WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM post_reports WHERE comment_id IN "
+                + "(SELECT comment_id FROM post_comments WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // Unlink replies to this user's comments to maintain tree integrity
+        entityManager.createNativeQuery("UPDATE post_comments SET parent_comment_id = NULL WHERE parent_comment_id IN "
+                + "(SELECT comment_id FROM post_comments WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // Delete comments made by this user
+        entityManager.createNativeQuery("DELETE FROM post_comments WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // Delete user's likes, favorites, saved recipes on any post
+        entityManager.createNativeQuery("DELETE FROM comment_likes WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM post_likes WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM post_favorites WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM saved_recipes WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 5. Social relationships and notifications
+        entityManager.createNativeQuery("DELETE FROM follows WHERE follower_user_id = :userId OR following_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM notifications WHERE user_id = :userId OR actor_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM push_notification_devices WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 6. Meal planning & favorites
+        entityManager.createNativeQuery("DELETE FROM meal_plans WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM meal_favorites WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 7. Daily wellness summaries and nutrient totals
+        entityManager.createNativeQuery("DELETE FROM daily_nutrient_totals WHERE daily_summary_id IN "
+                + "(SELECT daily_summary_id FROM daily_wellness_summaries WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM daily_wellness_summaries WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 8. AI food analyses and suggestions / nutrients
+        entityManager.createNativeQuery("DELETE FROM ai_food_analysis_nutrients WHERE ai_food_analysis_id IN "
+                + "(SELECT ai_food_analysis_id FROM ai_food_analyses WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM ai_food_suggestions WHERE ai_food_analysis_id IN "
+                + "(SELECT ai_food_analysis_id FROM ai_food_analyses WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM ai_food_analyses WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 9. AI recommendations and items
+        entityManager.createNativeQuery("DELETE FROM ai_recommendation_items WHERE recommendation_id IN "
+                + "(SELECT recommendation_id FROM ai_recommendations WHERE user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM ai_recommendations WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 10. Unlink any meals created by this user
+        entityManager.createNativeQuery("UPDATE meals SET created_by_user_id = NULL WHERE created_by_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 11. Moderation & reports
+        entityManager.createNativeQuery("DELETE FROM user_profile_reports WHERE reported_user_id = :userId OR reported_by_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE user_profile_reports SET reviewed_by_user_id = NULL WHERE reviewed_by_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("DELETE FROM post_reports WHERE reported_by_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE post_reports SET reviewed_by_user_id = NULL WHERE reviewed_by_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("DELETE FROM report_attachments WHERE report_id IN "
+                + "(SELECT report_id FROM reports WHERE reporter_user_id = :userId OR reported_user_id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM reports WHERE reporter_user_id = :userId OR reported_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE reports SET reviewed_by = NULL WHERE reviewed_by = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("DELETE FROM moderation_actions WHERE target_user_id = :userId OR admin_user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE moderation_actions SET reversed_by = NULL WHERE reversed_by = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("DELETE FROM moderation_appeals WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE moderation_appeals SET reviewed_by = NULL WHERE reviewed_by = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 12. User settings, verification codes, reset tokens, auth providers, wellness & user profiles
+        entityManager.createNativeQuery("DELETE FROM user_settings WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM verification_codes WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM password_reset_tokens WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM user_auth_providers WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM wellness_profiles WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM user_profiles WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        // 13. Permanently delete the user row from users table
+        entityManager.createNativeQuery("DELETE FROM users WHERE user_id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.flush();
+        entityManager.clear();
     }
 
     @Transactional

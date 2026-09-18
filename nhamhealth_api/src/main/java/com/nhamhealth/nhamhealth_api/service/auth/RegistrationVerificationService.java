@@ -329,6 +329,9 @@ public class RegistrationVerificationService {
      * Dispatches the verification code via Brevo transactional email.
      */
     private void deliver(String email, String code, boolean isLogin) {
+        LOGGER.info("==================================================================");
+        LOGGER.info(" [OTP CODE GENERATED] Destination: {} | Code: {}", email, code);
+        LOGGER.info("==================================================================");
         try {
             brevoEmailService.sendEmail(
                     email,
