@@ -30,9 +30,9 @@ public class BrevoEmailService {
     private final JavaMailSender mailSender;
 
     public BrevoEmailService(
-            @Value("${BREVO_API_KEY:}") String apiKey,
-            @Value("${BREVO_SENDER_EMAIL:${app.mail.from:${spring.mail.username:no-reply@nhamhealth.local}}}") String senderEmail,
-            @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName,
+            @Value("${BREVO_API_KEY:${brevo.api-key:}}") String apiKey,
+            @Value("${BREVO_SENDER_EMAIL:${brevo.sender-email:${app.mail.from:${spring.mail.username:nhamhealth.info@gmail.com}}}}") String senderEmail,
+            @Value("${BREVO_SENDER_NAME:${brevo.sender-name:NhamHealth}}") String senderName,
             ObjectProvider<JavaMailSender> mailSenderProvider) {
 
         this.apiKey = apiKey;
@@ -65,6 +65,7 @@ public class BrevoEmailService {
                         LOGGER.info("Email successfully sent to {} via Brevo API fallback", to);
                         return;
                     } catch (Exception brevoEx) {
+                        LOGGER.error("Brevo API fallback also failed for {}: {}", to, brevoEx.getMessage());
                         brevoEx.addSuppressed(smtpEx);
                         throw brevoEx;
                     }
@@ -94,13 +95,18 @@ public class BrevoEmailService {
                 "textContent", plainText,
                 "htmlContent", htmlContent);
 
-        restClient.post()
-                .uri("/smtp/email")
-                .header("api-key", apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            restClient.post()
+                    .uri("/smtp/email")
+                    .header("api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (org.springframework.web.client.RestClientResponseException ex) {
+            LOGGER.error("Brevo API error {} when sending to {}: {}", ex.getStatusCode(), to, ex.getResponseBodyAsString());
+            throw new IllegalStateException("Brevo email API failed: " + ex.getResponseBodyAsString(), ex);
+        }
     }
 
     private void sendWithSmtp(String to, String subject, String plainText, String htmlContent) {

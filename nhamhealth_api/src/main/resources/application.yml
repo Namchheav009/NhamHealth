@@ -15,8 +15,27 @@ spring:
     baseline-version: 0
     connect-retries: 5
     connect-retries-interval: 10s
+  mail:
+    host: ${SPRING_MAIL_HOST:${MAIL_HOST:smtp.gmail.com}}
+    port: ${SPRING_MAIL_PORT:${MAIL_PORT:587}}
+    username: ${SPRING_MAIL_USERNAME:${GMAIL_USERNAME:${MAIL_USERNAME:nhamhealth.info@gmail.com}}}
+    password: ${SPRING_MAIL_PASSWORD:${GMAIL_APP_PASSWORD:${MAIL_PASSWORD:}}}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    default-encoding: UTF-8
 
 app:
+  mail:
+    from: ${APP_MAIL_FROM:${MAIL_FROM:nhamhealth.info@gmail.com}}
+    fallback-to-console: ${APP_MAIL_FALLBACK_TO_CONSOLE:false}
   follow-connections:
     rate-limit:
       max-requests: ${FOLLOW_CONNECTION_RATE_LIMIT_MAX:20}
@@ -49,4 +68,13 @@ app:
       private-key: ${PLASGATE_PRIVATE_KEY:}
       secret-key: ${PLASGATE_SECRET_KEY:}
       sender-id: ${PLASGATE_SENDER_ID:PlasGateUAT}
-      fallback-sender-id: ${PLASGATE_FALLBACK_SENDER_ID:}
+      fallback-sender-id: ${PLASGATE_FALLBACK_SENDER_ID:SMS Info}
+
+brevo:
+  api-key: ${BREVO_API_KEY:${APP_BREVO_API_KEY:}}
+  sender-email: ${BREVO_SENDER_EMAIL:${APP_MAIL_FROM:nhamhealth.info@gmail.com}}
+  sender-name: ${BREVO_SENDER_NAME:NhamHealth}
+
+BREVO_API_KEY: ${BREVO_API_KEY:${APP_BREVO_API_KEY:}}
+BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:${APP_MAIL_FROM:nhamhealth.info@gmail.com}}
+BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:NhamHealth}
