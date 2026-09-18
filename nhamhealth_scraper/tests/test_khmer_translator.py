@@ -73,6 +73,19 @@ class KhmerTranslatorTests(unittest.TestCase):
         self.assertEqual(self.translator.translate_meal_name("Fish Amok"), "អាម៉ុកត្រី")
         self.assertEqual(self.translator.translate_meal_name("Bai Sach Chrouk"), "បាយសាច់ជ្រូក")
 
+    def test_required_translation_fallbacks(self):
+        """Verify required fallbacks: pandan -> ស្លឹកតើយ, Bobor Sach Moan -> បបរសាច់មាន់, Bok L'hong -> បុកល្ហុង."""
+        self.assertEqual(self.translator.translate_ingredient_name("pandan"), "ស្លឹកតើយ")
+        self.assertEqual(self.translator.translate_ingredient_name("pandan leaf"), "ស្លឹកតើយ")
+        self.assertEqual(self.translator.translate_meal_name("Bobor Sach Moan"), "បបរសាច់មាន់")
+        self.assertEqual(self.translator.translate_meal_name("Bok L'hong"), "បុកល្ហុង")
+        self.assertEqual(self.translator.translate_meal_name("Bok L’hong"), "បុកល្ហុង")
+
+    def test_unknown_words_fail_cleanly_without_inventing_translations(self):
+        """Ensure translator does not invent translations for unknown terms when offline."""
+        with self.assertRaises(RuntimeError):
+            self.translator._engine_translate("xyznonexistentfoodterm123")
+
     def test_translate_preserves_quantities_and_units(self):
         """Verify requirements 3 & 4: 300 g chicken breast -> 300 g សាច់ទ្រូងមាន់."""
         translated = self.translator.translate(dict(self.sample_recipe))

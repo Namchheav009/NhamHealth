@@ -41,7 +41,38 @@ UNIT_ALIASES = {
     "eggs": "piece",
     "bunch": "bunch",
     "bunches": "bunch",
+    "pinch": "pinch",
+    "pinches": "pinch",
+    "slice": "slice",
+    "slices": "slice",
+    "thumb": "thumb",
+    "thumbs": "thumb",
+    "handful": "handful",
+    "handfuls": "handful",
+    "section": "section",
+    "sections": "section",
+    "can": "can",
+    "cans": "can",
+    "fillet": "fillet",
+    "fillets": "fillet",
+    "strip": "strip",
+    "strips": "strip",
 }
+
+AMBIGUOUS_UNITS = {"thumb", "handful", "pinch", "section", "piece", "slice"}
+
+
+def _is_ambiguous_ingredient(name: str, unit: str | None, quantity: float | None) -> bool:
+    """Identify ambiguous quantities, informal measurements, or multi-ingredient lines."""
+    if quantity is None:
+        return True
+    if unit in AMBIGUOUS_UNITS:
+        return True
+    name_lower = name.lower()
+    if " and " in name_lower or " or " in name_lower or " & " in name_lower:
+        return True
+    return False
+
 
 UNIT_PATTERN = "|".join(
     sorted((re.escape(k) for k in UNIT_ALIASES), key=len, reverse=True)
@@ -128,14 +159,22 @@ def parse_ingredient_line(original_text: str) -> list[dict]:
             if matched_unit in {"egg", "eggs"} and not name.strip():
                 name = matched_unit
 
+            ing_name = name.strip()
+            qty = _parse_quantity(m.group("qty"))
+            unit_val = UNIT_ALIASES.get(matched_unit, matched_unit)
+
             results.append(
                 {
                     "ingredientName": name.strip(),
                     "quantity": _parse_quantity(m.group("qty")),
                     "unit": UNIT_ALIASES.get(matched_unit, matched_unit),
+                    "ingredientName": ing_name,
+                    "quantity": qty,
+                    "unit": unit_val,
                     "preparationNote": _clean_note(note if comma else explanation),
                     "originalIngredientText": original_text.strip(),
                     "needsReview": False,
+                    "needsReview": _is_ambiguous_ingredient(ing_name, unit_val, qty),
                 }
             )
             continue
@@ -155,14 +194,22 @@ def parse_ingredient_line(original_text: str) -> list[dict]:
             if tail.startswith(","):
                 tail = tail[1:].strip()
 
+            ing_name = m.group("name").strip()
+            qty = _parse_quantity(m.group("qty"))
+            unit_val = UNIT_ALIASES.get(m.group("unit").lower(), m.group("unit").lower())
+
             results.append(
                 {
                     "ingredientName": m.group("name").strip(),
                     "quantity": _parse_quantity(m.group("qty")),
                     "unit": UNIT_ALIASES.get(m.group("unit").lower(), m.group("unit").lower()),
+                    "ingredientName": ing_name,
+                    "quantity": qty,
+                    "unit": unit_val,
                     "preparationNote": _clean_note(tail or explanation),
                     "originalIngredientText": original_text.strip(),
                     "needsReview": False,
+                    "needsReview": _is_ambiguous_ingredient(ing_name, unit_val, qty),
                 }
             )
             continue

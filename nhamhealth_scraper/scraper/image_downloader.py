@@ -28,7 +28,7 @@ def prepare_local_image(image_path: str, meal_name: str) -> str:
         raise ValueError("Choose a JPG, PNG or WebP meal photograph.")
     output = Path("images") / f"{slugify(meal_name)}.webp"
     output.parent.mkdir(parents=True, exist_ok=True)
-    return str(_to_webp(path.read_bytes(), output, settings.max_image_bytes))
+    return _to_webp(path.read_bytes(), output, settings.max_image_bytes).as_posix()
 
 
 def _to_webp(image_bytes: bytes, output_path: Path, max_bytes: int) -> Path:
@@ -95,10 +95,8 @@ def download_and_prepare_image(
 
     output_path = output_dir / f"{slugify(meal_name)}.webp"
 
-    return str(
-        _to_webp(
-            content,
-            output_path,
-            settings.max_image_bytes,
-        )
-    )
+    return _to_webp(
+        content,
+        output_path,
+        settings.max_image_bytes,
+    ).as_posix()

@@ -44,7 +44,7 @@ class KhmerTranslator:
         ) or os.getenv("GEMINI_API_KEY", "")
         self.gemini_model = (
             getattr(settings, "gemini_model", None) if settings else None
-        ) or os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+        ) or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
         self.gemini_base_url = (
             getattr(settings, "gemini_base_url", None) if settings else None
         ) or os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
@@ -52,10 +52,9 @@ class KhmerTranslator:
         # Candidate models tried in sequence if one encounters 429 quota or 404
         self.candidate_models = list(dict.fromkeys([
             self.gemini_model,
-            "gemini-2.0-flash-lite",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.6-flash",
+            "gemini-2.5-flash",
         ]))
 
     def translate(self, recipe: dict, force: bool = False) -> dict:
@@ -399,14 +398,20 @@ class KhmerTranslator:
     def _lookup_dish_name_glossary(self, name: str) -> str | None:
         """Return the DISH_NAMES glossary entry for a meal name, or None if not found."""
         cleaned = name.strip()
+        cleaned = " ".join((name or "").strip().split())
         if not cleaned:
             return None
         lower = cleaned.lower()
+        # Normalize typographic quotes and apostrophes
+        normalized = cleaned.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+        lower = normalized.lower()
         if lower in DISH_NAMES:
             return DISH_NAMES[lower]
         for separator in ("—", "-", ":", "|"):
             if separator in cleaned:
                 parts = [p.strip() for p in cleaned.split(separator) if p.strip()]
+            if separator in normalized:
+                parts = [p.strip() for p in normalized.split(separator) if p.strip()]
                 # Try the full compound first (longest match)
                 compound = " — ".join(parts).lower()
                 if compound in DISH_NAMES:
@@ -419,6 +424,7 @@ class KhmerTranslator:
     def translate_meal_name(self, name: str) -> str:
         """Translate meal name using glossary first, then translation engine."""
         cleaned = name.strip()
+        cleaned = " ".join((name or "").strip().split())
         if not cleaned:
             return ""
 
@@ -432,6 +438,11 @@ class KhmerTranslator:
             res = DISH_NAMES[lower]
             translation_cache.set(cleaned, res, category="meal_names")
             return res
+        # Check glossary with normalized apostrophes/dashes
+        glossary_res = self._lookup_dish_name_glossary(cleaned)
+        if glossary_res:
+            translation_cache.set(cleaned, glossary_res, category="meal_names")
+            return glossary_res
 
         # Check if the name has an em-dash or separator (e.g. "Amok Trey — Fish Amok ...")
         for separator in ("—", "-", ":", "|"):
@@ -452,6 +463,7 @@ class KhmerTranslator:
     def translate_ingredient_name(self, name: str) -> str:
         """Translate ingredient name preserving culinary accuracy."""
         cleaned = name.strip()
+        cleaned = " ".join((name or "").strip().split())
         if not cleaned:
             return ""
 
@@ -460,6 +472,8 @@ class KhmerTranslator:
             return cached
 
         lower = cleaned.lower()
+        normalized = cleaned.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+        lower = normalized.lower()
         # Direct lookup in culinary glossary
         if lower in INGREDIENTS:
             res = INGREDIENTS[lower]

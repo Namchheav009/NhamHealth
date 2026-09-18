@@ -69,7 +69,11 @@ class ImportFlowTests(unittest.TestCase):
         response.json.return_value = {"mealId": 7}
         with patch("scraper.importer.settings", SimpleNamespace(spring_import_token="test-token", spring_import_url="http://localhost/import")), \
                 patch("scraper.importer.requests.post", return_value=response) as post:
-            self.assertEqual({"mealId": 7}, import_recipe(self.recipe))
+            result = import_recipe(self.recipe)
+            self.assertEqual(7, result["mealId"])
+            self.assertEqual("Test meal", result["mealName"])
+            self.assertEqual("https://example.com/recipe", result["sourceUrl"])
+            self.assertFalse(result["skipped"])
             files = post.call_args.kwargs["files"]
             payload = json.loads(files["recipe"][1])
             self.assertFalse(payload["published"])
@@ -187,6 +191,16 @@ class ImportFlowTests(unittest.TestCase):
         self.assertGreater(len(chunks), 1)
         self.assertTrue(all(0 < len(chunk) <= 255 for chunk in chunks))
         self.assertEqual(" ".join(instruction.split()), " ".join(chunks))
+
+    def test_duplicate_returns_skipped_response(self):
+        response = Mock(ok=False, status_code=409, content=b"Conflict")
+        with patch("scraper.importer.settings", SimpleNamespace(spring_import_token="test-token", spring_import_url="http://localhost/import")), \
+                patch("scraper.importer.requests.post", return_value=response):
+            result = import_recipe(self.recipe)
+            self.assertTrue(result["skipped"])
+            self.assertEqual("Test meal", result["mealName"])
+            self.assertEqual("https://example.com/recipe", result["sourceUrl"])
+            self.assertIn("already imported", result["reason"])
 
 
 if __name__ == "__main__":

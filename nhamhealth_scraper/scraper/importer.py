@@ -138,14 +138,31 @@ def import_recipe(recipe: dict) -> dict:
         raise ValueError("Import validation failed: " + "; ".join(errors))
     if any(item.get("needsReview") for item in recipe.get("ingredients", [])):
         raise ValueError("Review flagged ingredients and set needsReview=false before importing saved JSON.")
+    flagged = [
+        item.get("originalIngredientText") or item.get("ingredientName")
+        for item in recipe.get("ingredients", [])
+        if item.get("needsReview")
+    ]
+    if flagged:
+        raise ValueError(
+            f"Review flagged ingredients and set needsReview=false before importing: {', '.join(str(f) for f in flagged[:3])}"
+        )
     import_token = _get_import_token()
     image_path = recipe.get("localImagePath")
+
+    if (not image_path or not Path(image_path).is_file()) and recipe.get("sourceImageUrl"):
+        try:
+            from .image_downloader import download_and_prepare_image
+            image_path = download_and_prepare_image(recipe["sourceImageUrl"], recipe["mealName"])
+            recipe["localImagePath"] = image_path
+        except Exception:
+            pass
 
     files = {"recipe": (None, json.dumps(_api_recipe_payload(recipe), ensure_ascii=False), "application/json")}
     handles = []
 
     try:
-        if image_path:
+        if image_path and Path(image_path).is_file():
             path = Path(image_path)
             handle = path.open("rb")
             handles.append(handle)
@@ -167,6 +184,7 @@ def import_recipe(recipe: dict) -> dict:
         if response.status_code == 409:
             return {
                 "mealName": recipe.get("mealName"),
+                "sourceUrl": recipe.get("sourceUrl"),
                 "skipped": True,
                 "reason": "Meal name or source URL is already imported.",
             }
@@ -175,11 +193,26 @@ def import_recipe(recipe: dict) -> dict:
 
         if response.content:
             try:
-                return response.json()
+                res_data = response.json()
+                if isinstance(res_data, dict):
+                    res_data.setdefault("mealName", recipe.get("mealName"))
+                    res_data.setdefault("sourceUrl", recipe.get("sourceUrl"))
+                    res_data.setdefault("skipped", False)
+                return res_data
             except ValueError:
-                return {"message": response.text}
+                return {
+                    "message": response.text,
+                    "mealName": recipe.get("mealName"),
+                    "sourceUrl": recipe.get("sourceUrl"),
+                    "skipped": False,
+                }
 
-        return {"message": "Imported successfully."}
+        return {
+            "message": "Imported successfully.",
+            "mealName": recipe.get("mealName"),
+            "sourceUrl": recipe.get("sourceUrl"),
+            "skipped": False,
+        }
 
     finally:
         for handle in handles:

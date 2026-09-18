@@ -49,9 +49,7 @@ The current source produces Bai Sach Chrouk, its Khmer title, Breakfast, 4 servi
 20 minutes cooking time, EASY difficulty, 16 parsed ingredient entries and 5 steps.
 Cooking time excludes the source's preparation and overnight marinating time.
 
-**The source image is an SVG illustration, not a meal photograph.** It is rejected
-with `imageDownloadError`. During scraping this is a warning: JSON is saved and
-the run succeeds if the recipe data is valid. Import accepts missing photos for drafts but rejects invalid supplied photos. CairoSVG and Windows Cairo DLLs are no longer needed.
+**Meal photos are downloaded automatically.** The scraper extracts the high-resolution WebP meal photograph from the recipe, converts/optimizes it, and saves it to `images/<meal-name>.webp`. When importing with `--import-api`, the photo is uploaded directly to your storage (Supabase or local) and attached to the meal so it displays in NhamHealth immediately. If you wish to replace a photo with a custom file, you can still use `--image-file`.
 
 ## 2. Review and optionally provide a real meal photo
 
