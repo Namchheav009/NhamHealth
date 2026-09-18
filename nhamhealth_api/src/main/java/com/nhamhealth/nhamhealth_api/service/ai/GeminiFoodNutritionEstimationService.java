@@ -145,7 +145,8 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model == null || model.isBlank() ? "gemini-3.5-flash" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
-                ? "gemini-3.7-flash" : fallbackModel.trim();
+                ? "gemini-3.7-flash"
+                : fallbackModel.trim();
         this.maxTokens = Math.max(1_200, Math.min(maxTokens, 8_192));
         this.mapper = mapper;
         this.nvidiaFallback = nvidiaFallback;
@@ -181,12 +182,13 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             Exception lastError = null;
             boolean quotaLimited = false;
 
-            modelAttempts:
-            for (String currentModel : candidateModels) {
+            modelAttempts: for (String currentModel : candidateModels) {
                 for (int attempt = 1; attempt <= 3; attempt++) {
                     if (!rateLimitGuard.tryAcquire()) {
-                        lastError = new IllegalStateException(
-                                "Gemini request budget is temporarily exhausted.");
+                        if (lastError == null) {
+                            lastError = new IllegalStateException(
+                                    "Gemini request budget is temporarily exhausted.");
+                        }
                         break modelAttempts;
                     }
                     try {
@@ -200,6 +202,12 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
                         if (status == 429) {
                             quotaLimited = true;
                             log.warn("Gemini nutrition model {} is rate-limited; trying the next Gemini model",
+                                    currentModel);
+                            break;
+                        }
+                        if (status == 503) {
+                            log.warn(
+                                    "Gemini nutrition model {} returned 503 Service Unavailable (high demand); trying fallback model",
                                     currentModel);
                             break;
                         }
@@ -232,7 +240,8 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
                 }
             }
 
-            if (quotaLimited) rateLimitGuard.recordRateLimit();
+            if (quotaLimited)
+                rateLimitGuard.recordRateLimit();
 
             if (nvidiaFallback != null) {
                 log.warn("Gemini nutrition estimation failed; trying NVIDIA fallback: {}",
@@ -346,7 +355,8 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
 
     private List<FoodComponentNutritionEstimate> validate(
             List<FoodComponentNutritionEstimate> estimates, int componentCount) {
-        if (estimates == null || estimates.size() != componentCount) return List.of();
+        if (estimates == null || estimates.size() != componentCount)
+            return List.of();
         List<FoodComponentNutritionEstimate> valid = new ArrayList<>(componentCount);
         Set<Integer> indexes = new HashSet<>();
         for (FoodComponentNutritionEstimate estimate : estimates) {
@@ -370,7 +380,8 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
                 estimate.confidence()
         };
         for (double value : values) {
-            if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) return false;
+            if (Double.isNaN(value) || Double.isInfinite(value) || value < 0)
+                return false;
         }
         return estimate.confidence() <= 1.0 && estimate.sugar() <= estimate.carbohydrates() + 2.0;
     }
@@ -380,14 +391,16 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
             Thread.sleep(750L * (1L << Math.min(attempt - 1, 2)));
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            if (originalError instanceof RuntimeException runtime) throw runtime;
+            if (originalError instanceof RuntimeException runtime)
+                throw runtime;
             throw new IllegalStateException(originalError);
         }
     }
 
     private String safeMessage(Throwable error) {
         String message = error.getMessage();
-        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        if (message == null || message.isBlank())
+            return error.getClass().getSimpleName();
         message = message.replaceAll("[\\r\\n\\t]+", " ");
         return message.length() <= 200 ? message : message.substring(0, 200);
     }

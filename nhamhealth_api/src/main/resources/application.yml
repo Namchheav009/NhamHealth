@@ -23,7 +23,7 @@ app:
       model: ${GEMINI_MODEL:gemini-3.5-flash}
       fallback-model: ${GEMINI_FALLBACK_MODEL:gemini-3.7-flash}
 
-      vision-model: ${GEMINI_VISION_MODEL:gemini-3.6-flash}
+      vision-model: ${GEMINI_VISION_MODEL:gemini-3.5-flash}
       vision-fallback-model: ${GEMINI_VISION_FALLBACK_MODEL:gemini-3.8-flash}
 
       nutrition-model: ${GEMINI_NUTRITION_MODEL:gemini-3.5-flash}
@@ -33,7 +33,7 @@ app:
       recommendation-fallback-model: ${GEMINI_RECOMMENDATION_FALLBACK_MODEL:gemini-3.5-flash}
 
       text-max-tokens: ${GEMINI_TEXT_MAX_TOKENS:8192}
-      rate-limit-cooldown: ${GEMINI_RATE_LIMIT_COOLDOWN:PT10M}
+      rate-limit-cooldown: ${GEMINI_RATE_LIMIT_COOLDOWN:PT1M}
 
   sms:
     plasgate:

@@ -88,7 +88,7 @@ class NvidiaFoodVisionServiceTests {
             AiFoodModelResult result = service.analyze(jpeg(), "image/jpeg");
 
             assertEquals("Egg fried rice", result.response().mealName());
-            assertEquals("nvidia/nemotron-nano-12b-v2-vl",
+            assertEquals("meta/llama-3.2-11b-vision-instruct",
                     mapper.readTree(requestBodies.get(1)).path("model").asText());
         } finally {
             server.stop(0);
@@ -528,7 +528,7 @@ class NvidiaFoodVisionServiceTests {
     }
 
     private static byte[] jpeg() {
-        return new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+        return new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF };
     }
 
     private static String completion(ObjectMapper mapper, String content, String finishReason)

@@ -3,7 +3,6 @@ package com.nhamhealth.nhamhealth_api.service.ai;
 import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
-import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -22,9 +21,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -235,7 +233,8 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model == null || model.isBlank() ? "gemini-3.5-flash" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
-                ? "gemini-3.7-flash" : fallbackModel.trim();
+                ? "gemini-3.7-flash"
+                : fallbackModel.trim();
         this.promptVersion = promptVersion;
         this.maxTokens = Math.max(1_200, Math.min(maxTokens, 8_192));
         this.mapper = mapper;
@@ -272,7 +271,8 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         }
 
         String mime = contentType != null && contentType.startsWith("image/")
-                ? contentType : MediaType.IMAGE_JPEG_VALUE;
+                ? contentType
+                : MediaType.IMAGE_JPEG_VALUE;
         String base64Image = Base64.getEncoder().encodeToString(image);
 
         try {
@@ -367,12 +367,13 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         RestClientResponseException quotaError = null;
         boolean quotaLimited = false;
 
-        modelAttempts:
-        for (String currentModel : candidateModels) {
+        modelAttempts: for (String currentModel : candidateModels) {
             for (int attempt = 1; attempt <= 3; attempt++) {
                 if (!rateLimitGuard.tryAcquire()) {
-                    lastError = new IllegalStateException(
-                            "Gemini request budget is temporarily exhausted.");
+                    if (lastError == null) {
+                        lastError = new IllegalStateException(
+                                "Gemini request budget is temporarily exhausted.");
+                    }
                     break modelAttempts;
                 }
                 try {
@@ -392,6 +393,12 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                                 currentModel);
                         break;
                     }
+                    if (status == 503) {
+                        log.warn(
+                                "Gemini vision model {} returned 503 Service Unavailable (high demand); trying fallback model",
+                                currentModel);
+                        break;
+                    }
                     if (status >= 500) {
                         log.warn("Gemini model {} returned HTTP {}; attempt {}/3", currentModel, status, attempt);
                         if (attempt < 3) {
@@ -402,7 +409,8 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                     break; // Move to next candidate model
                 } catch (ResourceAccessException error) {
                     lastError = error;
-                    log.warn("Gemini model {} network issue; attempt {}/3: {}", currentModel, attempt, error.getMessage());
+                    log.warn("Gemini model {} network issue; attempt {}/3: {}", currentModel, attempt,
+                            error.getMessage());
                     if (attempt < 3) {
                         pauseBeforeRetry(attempt, error);
                         continue;
@@ -421,9 +429,11 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             }
         }
 
-        if (quotaLimited) rateLimitGuard.recordRateLimit();
+        if (quotaLimited)
+            rateLimitGuard.recordRateLimit();
 
-        if (quotaError != null) throw quotaError;
+        if (quotaError != null)
+            throw quotaError;
         throw lastError != null ? lastError : new IllegalStateException("All Gemini vision passes failed.");
     }
 
@@ -540,23 +550,27 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             Thread.sleep(750L * (1L << Math.min(attempt - 1, 2)));
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            if (originalError instanceof RuntimeException runtime) throw runtime;
+            if (originalError instanceof RuntimeException runtime)
+                throw runtime;
             throw new IllegalStateException(originalError);
         }
     }
 
     private void logProviderFailure(Exception error) {
         Throwable root = error;
-        while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+        while (root.getCause() != null && root.getCause() != root)
+            root = root.getCause();
         if (root instanceof RestClientResponseException providerError) {
             log.error("Gemini food vision request failed with HTTP {} {}",
                     providerError.getStatusCode().value(), providerError.getStatusText());
             return;
         }
         String message = root.getMessage();
-        if (message == null || message.isBlank()) message = "No provider detail was returned.";
+        if (message == null || message.isBlank())
+            message = "No provider detail was returned.";
         message = message.replaceAll("[\\r\\n\\t]+", " ");
-        if (message.length() > 300) message = message.substring(0, 300);
+        if (message.length() > 300)
+            message = message.substring(0, 300);
         log.error("Gemini food vision request failed at {}: {}", root.getClass().getSimpleName(), message);
     }
 
@@ -566,7 +580,8 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
                     + " " + providerError.getStatusText();
         }
         String message = error.getMessage();
-        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        if (message == null || message.isBlank())
+            return error.getClass().getSimpleName();
         message = message.replaceAll("[\\r\\n\\t]+", " ");
         return message.length() <= 200 ? message : message.substring(0, 200);
     }
@@ -575,7 +590,12 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
         Throwable current = error;
         while (current != null && current.getCause() != current) {
             if (current instanceof RestClientResponseException providerError
-                    && providerError.getStatusCode().value() == 429) return true;
+                    && providerError.getStatusCode().value() == 429)
+                return true;
+            if (current instanceof IllegalStateException
+                    && current.getMessage() != null
+                    && current.getMessage().contains("budget is temporarily exhausted"))
+                return true;
             current = current.getCause();
         }
         return false;
