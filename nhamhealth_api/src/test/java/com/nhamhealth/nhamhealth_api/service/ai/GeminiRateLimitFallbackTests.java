@@ -125,8 +125,7 @@ class GeminiRateLimitFallbackTests {
                     () -> service.analyze(jpeg(), "image/jpeg"));
 
             assertEquals(503, error.getStatusCode().value());
-            assertTrue(error.getReason().contains("Gemini 3.8 Flash"));
-            assertTrue(error.getReason().contains("one minute"));
+            assertTrue(error.getReason().contains("Gemini analysis quota is temporarily exhausted"));
             assertEquals(2, geminiRequests.get());
         } finally {
             server.stop(0);

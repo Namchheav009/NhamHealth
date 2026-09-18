@@ -12,7 +12,7 @@ spring:
     open-in-view: false
   cache:
     type: caffeine
-    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches,foodSearch,meals,mealDetail
+    cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches,foodSearch,meals,mealDetail,moods
     caffeine:
       spec: maximumSize=500,expireAfterWrite=600s
     properties:
@@ -31,6 +31,8 @@ server:
   port: 0
 
 app:
+  mail:
+    from: no-reply@nhamhealth.local
   auth:
     jwt:
       secret: test-only-jwt-secret-that-is-at-least-32-characters

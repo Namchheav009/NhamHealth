@@ -160,6 +160,7 @@ abstract final class AppAlert {
         message: message,
         tone: tone,
         confirmText: confirmText,
+        // ignore: use_build_context_synchronously
         context: context,
       ),
       onError:
@@ -168,6 +169,7 @@ abstract final class AppAlert {
             message: message,
             tone: tone,
             confirmText: confirmText,
+            // ignore: use_build_context_synchronously
             context: context,
           ),
     );

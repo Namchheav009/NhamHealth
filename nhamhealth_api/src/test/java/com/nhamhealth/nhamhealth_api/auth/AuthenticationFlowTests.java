@@ -104,6 +104,9 @@ class AuthenticationFlowTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService loginAttemptService;
+
     @MockitoBean
     private GoogleTokenVerifier googleTokenVerifier;
 
@@ -113,6 +116,8 @@ class AuthenticationFlowTests {
 
     @BeforeEach
     void createTestAccounts() {
+        loginAttemptService.reset();
+        verificationCodeRepository.deleteAll();
         emailMessage = new MimeMessage(Session.getInstance(new Properties()));
         when(mailSender.createMimeMessage()).thenReturn(emailMessage);
         Role adminRole = findOrCreateRole("ADMIN");
@@ -957,17 +962,14 @@ class AuthenticationFlowTests {
     }
 
     private void createUserIfMissing(String email, String password, Role role) {
-        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-            return;
-        }
-
-        User user = new User();
+        User user = userRepository.findByEmailIgnoreCase(email).orElseGet(User::new);
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
         user.setStatus("ACTIVE");
         user.setIsVerified(true);
         user.setVerifiedAt(LocalDateTime.now());
+        user.setLoginOtpRequired(false);
         userRepository.save(user);
     }
 }

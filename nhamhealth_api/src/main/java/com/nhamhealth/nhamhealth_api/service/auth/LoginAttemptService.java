@@ -67,6 +67,10 @@ public class LoginAttemptService {
         attempts.remove(normalize(email));
     }
 
+    public void reset() {
+        attempts.clear();
+    }
+
     private String normalize(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
     }

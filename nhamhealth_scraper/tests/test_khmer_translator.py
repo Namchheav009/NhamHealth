@@ -141,7 +141,8 @@ class KhmerTranslatorTests(unittest.TestCase):
             },
         }
 
-        with patch.object(self.translator, "_translate_to_khmer", return_value={"mealName": "អាម៉ុកត្រីថ្មី", "ingredients": [], "steps": []}) as mock_translate:
+        with patch.object(self.translator, "_translate_to_khmer", return_value={"mealName": "អាម៉ុកត្រីថ្មី", "ingredients": [], "steps": []}) as mock_translate, \
+             patch.object(self.translator, "_lookup_dish_name_glossary", return_value=None):
             result = self.translator.translate(recipe, force=True)
             mock_translate.assert_called_once()
             self.assertEqual(result["translations"]["km"]["mealName"], "អាម៉ុកត្រីថ្មី")

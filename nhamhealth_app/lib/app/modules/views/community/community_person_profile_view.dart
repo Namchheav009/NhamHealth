@@ -691,48 +691,6 @@ class _CommunityPersonProfileViewState
     );
   }
 
-  Widget _profileActions(
-    BuildContext context,
-    CommunityPersonProfile profile,
-  ) => Align(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 440),
-      child: Row(
-        children: [
-          Expanded(child: _followButton(context, profile)),
-          const SizedBox(width: 10),
-          Tooltip(
-            message: _shareText('community.share_profile', 'Share profile'),
-            child: SizedBox.square(
-              dimension: 40,
-              child: OutlinedButton(
-                key: const ValueKey<String>('other-profile-share-button'),
-                onPressed: () => _showProfileShareSheet(profile),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor:
-                      context.appIsDark
-                          ? context.appColorScheme.primary
-                          : const Color(0xFF009B55),
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  side: BorderSide(
-                    color:
-                        context.appIsDark
-                            ? context.appBorder
-                            : const Color(0xFF8BD7B1),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Icon(Icons.ios_share_rounded, size: 18),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 
   Future<void> _showProfileShareSheet(CommunityPersonProfile profile) async {
     await showModalBottomSheet<void>(
@@ -782,7 +740,7 @@ class _CommunityPersonProfileViewState
                     child: Text(
                       _shareText(
                         'community.share_profile_help',
-                        'Send ${profile.name}’s profile to someone.',
+                        'Send ${profile.name}â€™s profile to someone.',
                         params: {'name': profile.name},
                       ),
                       style: TextStyle(
@@ -864,7 +822,7 @@ class _CommunityPersonProfileViewState
 
   String _profileShareMessage(CommunityPersonProfile profile) => _shareText(
     'community.share_profile_message',
-    'View ${profile.name}’s profile on NhamHealth.',
+    'View ${profile.name}â€™s profile on NhamHealth.',
     params: {'name': profile.name},
   );
 
@@ -942,7 +900,7 @@ class _CommunityPersonProfileViewState
     child: Row(
       children: [
         Text(
-          '“',
+          'â€œ',
           style: TextStyle(
             color:
                 context.appIsDark
@@ -1318,37 +1276,72 @@ class _CommunityPersonProfileViewState
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: sheetContext.appBorder),
                     ),
-                    child: ListTile(
-                      onTap: () {
-                        Navigator.of(sheetContext).pop();
-                        final profile = _profile;
-                        if (profile == null) return;
-                        Get.to<void>(
-                          () => CommunityReportPage(
-                            subject: 'profile',
-                            profileUserId: profile.id,
-                            subjectName: profile.name,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            final profile = _profile;
+                            if (profile == null) return;
+                            _showProfileShareSheet(profile);
+                          },
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 2,
                           ),
-                          transition: Transition.rightToLeft,
-                        );
-                      },
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 2,
-                      ),
-                      leading: const Icon(
-                        Icons.flag_outlined,
-                        color: Color(0xFFD94545),
-                        size: 24,
-                      ),
-                      title: Text(
-                        'community.report_profile'.tr,
-                        style: TextStyle(
-                          color: Color(0xFFD94545),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                          leading: Icon(
+                            Icons.ios_share_rounded,
+                            color: sheetContext.appText,
+                            size: 24,
+                          ),
+                          title: Text(
+                            'community.share_profile'.tr,
+                            style: TextStyle(
+                              color: sheetContext.appText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: sheetContext.appBorder,
+                        ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            final profile = _profile;
+                            if (profile == null) return;
+                            Get.to<void>(
+                              () => CommunityReportPage(
+                                subject: 'profile',
+                                profileUserId: profile.id,
+                                subjectName: profile.name,
+                              ),
+                              transition: Transition.rightToLeft,
+                            );
+                          },
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 2,
+                          ),
+                          leading: const Icon(
+                            Icons.flag_outlined,
+                            color: Color(0xFFD94545),
+                            size: 24,
+                          ),
+                          title: Text(
+                            'community.report_profile'.tr,
+                            style: const TextStyle(
+                              color: Color(0xFFD94545),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

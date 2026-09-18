@@ -20,84 +20,84 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class BrevoEmailService {
 
-        private final RestClient restClient;
-        private final String apiKey;
-        private final String senderEmail;
-        private final String senderName;
-        private final JavaMailSender mailSender;
+    private final RestClient restClient;
+    private final String apiKey;
+    private final String senderEmail;
+    private final String senderName;
+    private final JavaMailSender mailSender;
 
-        public BrevoEmailService(
-                        @Value("${BREVO_API_KEY:}") String apiKey,
-                        @Value("${BREVO_SENDER_EMAIL:}") String senderEmail,
-                        @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName,
-                        ObjectProvider<JavaMailSender> mailSenderProvider) {
+    public BrevoEmailService(
+            @Value("${BREVO_API_KEY:}") String apiKey,
+            @Value("${BREVO_SENDER_EMAIL:${app.mail.from:${spring.mail.username:no-reply@nhamhealth.local}}}") String senderEmail,
+            @Value("${BREVO_SENDER_NAME:NhamHealth}") String senderName,
+            ObjectProvider<JavaMailSender> mailSenderProvider) {
 
-                this.apiKey = apiKey;
-                this.senderEmail = senderEmail;
-                this.senderName = senderName;
-                this.mailSender = mailSenderProvider.getIfAvailable();
+        this.apiKey = apiKey;
+        this.senderEmail = senderEmail;
+        this.senderName = senderName;
+        this.mailSender = mailSenderProvider.getIfAvailable();
 
-                this.restClient = RestClient.builder()
-                                .baseUrl("https://api.brevo.com/v3")
-                                .build();
+        this.restClient = RestClient.builder()
+                .baseUrl("https://api.brevo.com/v3")
+                .build();
+    }
+
+    public void sendEmail(
+            String to,
+            String subject,
+            String plainText,
+            String htmlContent) {
+
+        if (apiKey == null || apiKey.isBlank() || senderEmail == null || senderEmail.isBlank()) {
+            sendWithSmtp(to, subject, plainText, htmlContent);
+            return;
         }
 
-        public void sendEmail(
-                        String to,
-                        String subject,
-                        String plainText,
-                        String htmlContent) {
+        Map<String, Object> payload = Map.of(
+                "sender", Map.of(
+                        "name", senderName,
+                        "email", senderEmail),
+                "to", List.of(
+                        Map.of("email", to)),
+                "subject", subject,
+                "textContent", plainText,
+                "htmlContent", htmlContent);
 
-                if (apiKey == null || apiKey.isBlank() || senderEmail == null || senderEmail.isBlank()) {
-                        sendWithSmtp(to, subject, plainText, htmlContent);
-                        return;
-                }
-
-                Map<String, Object> payload = Map.of(
-                                "sender", Map.of(
-                                                "name", senderName,
-                                                "email", senderEmail),
-                                "to", List.of(
-                                                Map.of("email", to)),
-                                "subject", subject,
-                                "textContent", plainText,
-                                "htmlContent", htmlContent);
-
-                try {
-                        restClient.post()
-                                        .uri("/smtp/email")
-                                        .header("api-key", apiKey)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body(payload)
-                                        .retrieve()
-                                        .toBodilessEntity();
-                } catch (RuntimeException brevoFailure) {
-                        try {
-                                sendWithSmtp(to, subject, plainText, htmlContent);
-                        } catch (RuntimeException smtpFailure) {
-                                smtpFailure.addSuppressed(brevoFailure);
-                                throw smtpFailure;
-                        }
-                }
+        try {
+            restClient.post()
+                    .uri("/smtp/email")
+                    .header("api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RuntimeException brevoFailure) {
+            try {
+                sendWithSmtp(to, subject, plainText, htmlContent);
+            } catch (RuntimeException smtpFailure) {
+                smtpFailure.addSuppressed(brevoFailure);
+                throw smtpFailure;
+            }
         }
+    }
 
-        private void sendWithSmtp(String to, String subject, String plainText, String htmlContent) {
-                try {
-                        if (mailSender == null) {
-                                throw new IllegalStateException(
-                                                "Gmail SMTP is not configured; set GMAIL_USERNAME and GMAIL_APP_PASSWORD");
-                        }
-                        MimeMessage message = mailSender.createMimeMessage();
-                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                        if (senderEmail != null && !senderEmail.isBlank()) {
-                                helper.setFrom(senderEmail, senderName);
-                        }
-                        helper.setTo(to);
-                        helper.setSubject(subject);
-                        helper.setText(plainText, htmlContent);
-                        mailSender.send(message);
-                } catch (Exception exception) {
-                        throw new IllegalStateException("Could not send transactional email through Gmail SMTP", exception);
-                }
+    private void sendWithSmtp(String to, String subject, String plainText, String htmlContent) {
+        try {
+            if (mailSender == null) {
+                throw new IllegalStateException(
+                        "Gmail SMTP is not configured; set GMAIL_USERNAME and GMAIL_APP_PASSWORD");
+            }
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            String from = (senderEmail != null && !senderEmail.isBlank())
+                    ? senderEmail : "no-reply@nhamhealth.local";
+            helper.setFrom(from, senderName);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(plainText, htmlContent);
+            mailSender.send(message);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Could not send transactional email through Gmail SMTP", exception);
         }
+    }
 }
