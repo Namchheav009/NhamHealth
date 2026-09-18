@@ -29,6 +29,10 @@ import com.nhamhealth.nhamhealth_api.service.admin.AdminDashboardService;
 import com.nhamhealth.nhamhealth_api.service.admin.AdminDashboardService.DashboardSnapshot;
 import com.nhamhealth.nhamhealth_api.service.admin.AdminUserService;
 
+import com.nhamhealth.nhamhealth_api.entity.WellnessProfile;
+import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
+import java.math.BigDecimal;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserAdminControllerTests {
@@ -41,6 +45,9 @@ class UserAdminControllerTests {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
+
+    @Autowired
+    private WellnessProfileRepository wellnessProfileRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -90,10 +97,9 @@ class UserAdminControllerTests {
                     .with(csrf()))
                     .andExpect(status().isNoContent());
 
-            // DB status is DELETED
-            User updated = userRepository.findById(targetUserId).orElseThrow();
-            assertThat(updated.getStatus()).isEqualTo("DELETED");
-            assertThat(updated.getIsVerified()).isFalse();
+            // DB record and profile are completely deleted from the database
+            assertThat(userRepository.findById(targetUserId)).isEmpty();
+            assertThat(userProfileRepository.findByUser_UserId(targetUserId)).isEmpty();
 
             // Excluded from admin users list
             boolean inUserList = adminUserService.loadUsers().users().stream()
@@ -149,8 +155,8 @@ class UserAdminControllerTests {
                     .with(csrf()))
                     .andExpect(status().isNoContent());
 
-            User updated = userRepository.findById(phoneUserId).orElseThrow();
-            assertThat(updated.getStatus()).isEqualTo("DELETED");
+            assertThat(userRepository.findById(phoneUserId)).isEmpty();
+            assertThat(userProfileRepository.findByUser_UserId(phoneUserId)).isEmpty();
 
             boolean inUserList = adminUserService.loadUsers().users().stream()
                     .anyMatch(u -> u.id().equals(phoneUserId));
@@ -177,5 +183,43 @@ class UserAdminControllerTests {
                 .andExpect(content().string(containsString("name=\"_csrf\"")))
                 .andExpect(content().string(containsString("class=\"actions-column\"")))
                 .andExpect(content().string(containsString("delete-user")));
+    }
+
+    @Test
+    void adminDeleteUserRemovesUserAndAllAssociatedDataFromDatabase() throws Exception {
+        User target = new User();
+        target.setEmail("purgealltest@example.com");
+        target.setRole(userRole);
+        target.setStatus("ACTIVE");
+        target.setIsVerified(true);
+        target.setPasswordHash("$2a$10$dummyhashfortestonly12345678901234567890123456789012");
+        target = userRepository.saveAndFlush(target);
+
+        UserProfile profile = new UserProfile();
+        profile.setUser(target);
+        profile.setFullName("Purge All Test User");
+        profile.setCreatedAt(LocalDateTime.now());
+        profile.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.saveAndFlush(profile);
+
+        WellnessProfile wellnessProfile = new WellnessProfile();
+        wellnessProfile.setUser(target);
+        wellnessProfile.setHeightCm(new BigDecimal("175.5"));
+        wellnessProfile.setWeightKg(new BigDecimal("70.0"));
+        wellnessProfile.setActivityLevel("MODERATE");
+        wellnessProfile.setCreatedAt(LocalDateTime.now());
+        wellnessProfile.setUpdatedAt(LocalDateTime.now());
+        wellnessProfileRepository.saveAndFlush(wellnessProfile);
+
+        Integer targetUserId = target.getUserId();
+
+        mockMvc.perform(delete("/admin/users/{userId}", targetUserId)
+                .with(user("admin@nhamhealth.local").roles("ADMIN"))
+                .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(userRepository.findById(targetUserId)).isEmpty();
+        assertThat(userProfileRepository.findByUser_UserId(targetUserId)).isEmpty();
+        assertThat(wellnessProfileRepository.findByUser_UserId(targetUserId)).isEmpty();
     }
 }

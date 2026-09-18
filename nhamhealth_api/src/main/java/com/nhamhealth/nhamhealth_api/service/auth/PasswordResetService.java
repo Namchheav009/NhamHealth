@@ -306,6 +306,9 @@ public class PasswordResetService {
      * Dispatches password reset code via Brevo transactional email.
      */
     private void sendResetEmail(String email, String code) {
+        LOGGER.info("==================================================================");
+        LOGGER.info(" [OTP CODE GENERATED] Destination: {} | Reset Code: {}", email, code);
+        LOGGER.info("==================================================================");
         try {
             brevoEmailService.sendEmail(
                     email,

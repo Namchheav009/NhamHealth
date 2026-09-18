@@ -630,10 +630,8 @@ class AuthenticationFlowTests {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        var deletedUser = userRepository.findById(userId).orElseThrow();
-        assertEquals("DELETED", deletedUser.getStatus());
-        assertFalse(deletedUser.getIsVerified());
-        assertTrue(userProfileRepository.findByUser_UserId(userId).isPresent());
+        assertTrue(userRepository.findById(userId).isEmpty());
+        assertTrue(userProfileRepository.findByUser_UserId(userId).isEmpty());
 
         mockMvc.perform(get("/admin/users").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())

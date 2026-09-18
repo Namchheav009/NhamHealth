@@ -159,6 +159,9 @@ public class EmailChangeVerificationService {
      * Dispatches email change verification code via Brevo transactional email.
      */
     private void deliver(String email, String code) {
+        LOGGER.info("==================================================================");
+        LOGGER.info(" [OTP CODE GENERATED] Destination: {} | Code: {}", email, code);
+        LOGGER.info("==================================================================");
         try {
             String plainText = "Your NhamHealth email-change verification code is %s. It expires in 5 minutes."
                     .formatted(code);

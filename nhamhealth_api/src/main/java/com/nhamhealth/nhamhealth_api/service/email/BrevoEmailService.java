@@ -3,22 +3,25 @@ package com.nhamhealth.nhamhealth_api.service.email;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import jakarta.mail.internet.MimeMessage;
 
 /**
- * Service for sending transactional emails via the Brevo (Sendinblue) HTTP API
- * v3.
+ * Service for sending transactional emails via Gmail SMTP or Brevo HTTP API v3.
  */
 @Service
 public class BrevoEmailService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrevoEmailService.class);
 
     private final RestClient restClient;
     private final String apiKey;
@@ -48,11 +51,39 @@ public class BrevoEmailService {
             String plainText,
             String htmlContent) {
 
-        if (apiKey == null || apiKey.isBlank() || senderEmail == null || senderEmail.isBlank()) {
-            sendWithSmtp(to, subject, plainText, htmlContent);
+        // Try Gmail SMTP first for best deliverability and primary inbox placement
+        if (mailSender != null) {
+            try {
+                sendWithSmtp(to, subject, plainText, htmlContent);
+                LOGGER.info("Email successfully sent to {} via SMTP", to);
+                return;
+            } catch (Exception smtpEx) {
+                LOGGER.warn("SMTP email delivery failed to {}: {}. Attempting Brevo API fallback...", to, smtpEx.getMessage());
+                if (apiKey != null && !apiKey.isBlank()) {
+                    try {
+                        sendWithBrevo(to, subject, plainText, htmlContent);
+                        LOGGER.info("Email successfully sent to {} via Brevo API fallback", to);
+                        return;
+                    } catch (Exception brevoEx) {
+                        brevoEx.addSuppressed(smtpEx);
+                        throw brevoEx;
+                    }
+                }
+                throw (smtpEx instanceof RuntimeException re) ? re : new IllegalStateException(smtpEx);
+            }
+        }
+
+        // If mailSender is not available, try Brevo API
+        if (apiKey != null && !apiKey.isBlank()) {
+            sendWithBrevo(to, subject, plainText, htmlContent);
+            LOGGER.info("Email successfully sent to {} via Brevo API", to);
             return;
         }
 
+        throw new IllegalStateException("Neither SMTP nor Brevo API is configured for sending email");
+    }
+
+    private void sendWithBrevo(String to, String subject, String plainText, String htmlContent) {
         Map<String, Object> payload = Map.of(
                 "sender", Map.of(
                         "name", senderName,
@@ -63,22 +94,13 @@ public class BrevoEmailService {
                 "textContent", plainText,
                 "htmlContent", htmlContent);
 
-        try {
-            restClient.post()
-                    .uri("/smtp/email")
-                    .header("api-key", apiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (RuntimeException brevoFailure) {
-            try {
-                sendWithSmtp(to, subject, plainText, htmlContent);
-            } catch (RuntimeException smtpFailure) {
-                smtpFailure.addSuppressed(brevoFailure);
-                throw smtpFailure;
-            }
-        }
+        restClient.post()
+                .uri("/smtp/email")
+                .header("api-key", apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private void sendWithSmtp(String to, String subject, String plainText, String htmlContent) {
@@ -97,7 +119,7 @@ public class BrevoEmailService {
             helper.setText(plainText, htmlContent);
             mailSender.send(message);
         } catch (Exception exception) {
-            throw new IllegalStateException("Could not send transactional email through Gmail SMTP", exception);
+            throw new IllegalStateException("Could not send transactional email through Gmail SMTP: " + exception.getMessage(), exception);
         }
     }
 }
