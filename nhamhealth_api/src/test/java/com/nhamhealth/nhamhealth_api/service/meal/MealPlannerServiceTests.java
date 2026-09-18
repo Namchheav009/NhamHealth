@@ -122,4 +122,35 @@ class MealPlannerServiceTests {
         assertEquals(20, response.plannerMealId());
         assertEquals(new BigDecimal("2"), response.servings());
     }
+
+    @Test
+    void rangeReturnsLocalizedInstructionsAndTagsForKhmer() {
+        LocalDate date = LocalDate.of(2026, 9, 20);
+        MealPlan plan = new MealPlan();
+        plan.setMealPlanId(1);
+        plan.setPlanDate(date);
+        plan.setMealType("DINNER");
+        plan.setServings(BigDecimal.ONE);
+        plan.setStatus("PLANNED");
+
+        PlannerMeal meal = sampleMeal(10);
+        meal.setInstructionsText("Step 1: Pan fry salmon.");
+        meal.setInstructionsTextKm("ជំហានទី ១៖ ចៀនត្រីសាល់ម៉ុង។");
+        meal.setTagsText("Omega3, Keto");
+        meal.setTagsTextKm("អូមេហ្គា៣, គីតូ");
+        plan.setPlannerMeal(meal);
+
+        when(plans.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(1, date, date))
+                .thenReturn(List.of(plan));
+
+        var kmResult = service.range(1, date, date, "km");
+        assertEquals(1, kmResult.size());
+        assertEquals(List.of("ជំហានទី ១៖ ចៀនត្រីសាល់ម៉ុង។"), kmResult.getFirst().instructions());
+        assertEquals(List.of("អូមេហ្គា៣", "គីតូ"), kmResult.getFirst().tags());
+
+        var enResult = service.range(1, date, date, "en");
+        assertEquals(1, enResult.size());
+        assertEquals(List.of("Step 1: Pan fry salmon."), enResult.getFirst().instructions());
+        assertEquals(List.of("Omega3", "Keto"), enResult.getFirst().tags());
+    }
 }

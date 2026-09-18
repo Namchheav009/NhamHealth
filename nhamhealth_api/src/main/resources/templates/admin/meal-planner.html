@@ -32,9 +32,7 @@
             <div>
               <div class="title-line">
                 <h1>Weekly Meal Planner</h1>
-                <span
-                  >Schedule meals that users can choose for each day</span
-                >
+                <span>Schedule meals that users can choose for each day</span>
               </div>
               <p>
                 Dashboard <i class="bi bi-chevron-right"></i> Meal Management
@@ -144,7 +142,7 @@
               <article
                 class="planner-meal-card"
                 th:each="meal : ${plannerMeals}"
-                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category.categoryId},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-instructions=${meal.instructionsText},data-tags=${meal.tagsText},data-active=${meal.active}"
+                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category.categoryId},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-ingredients-km=${meal.ingredientsTextKm},data-instructions=${meal.instructionsText},data-instructions-km=${meal.instructionsTextKm},data-tags=${meal.tagsText},data-tags-km=${meal.tagsTextKm},data-active=${meal.active}"
               >
                 <div class="planner-meal-card-image">
                   <img
@@ -301,7 +299,8 @@
               <div>
                 <h2>Scheduled Recommendations</h2>
                 <p>
-                  Manage all-day meals that users can select in the mobile planner.
+                  Manage all-day meals that users can select in the mobile
+                  planner.
                 </p>
               </div>
               <div class="panel-tools">
@@ -464,8 +463,8 @@
                     id="emptyRecommendationRow"
                   >
                     <td colspan="7" class="empty-state">
-                      No scheduled recommendations yet. Use “Add Meal to Planner”
-                      to create and schedule the first meal.
+                      No scheduled recommendations yet. Use “Add Meal to
+                      Planner” to create and schedule the first meal.
                     </td>
                   </tr>
                 </tbody>
@@ -513,11 +512,15 @@
               <label for="plannerCategory">Meal category <b>*</b></label>
               <select id="plannerCategory" name="categoryId" required>
                 <option value="">Select a category</option>
-                <option th:each="category : ${mealCategories}"
-                        th:value="${category.categoryId}"
-                        th:text="${category.categoryName}"></option>
+                <option
+                  th:each="category : ${mealCategories}"
+                  th:value="${category.categoryId}"
+                  th:text="${category.categoryName}"
+                ></option>
               </select>
-              <small>Choose a category to show its available planner meals.</small>
+              <small
+                >Choose a category to show its available planner meals.</small
+              >
             </div>
             <div class="field full">
               <label for="plannerMeal">Planner meal <b>*</b></label>
@@ -659,19 +662,31 @@
                   <label for="mealCategoryId">Category <b>*</b></label>
                   <select id="mealCategoryId" name="categoryId" required>
                     <option value="">Select a category</option>
-                    <option th:each="category : ${mealCategories}"
-                            th:value="${category.categoryId}"
-                            th:text="${category.categoryName}"></option>
+                    <option
+                      th:each="category : ${mealCategories}"
+                      th:value="${category.categoryId}"
+                      th:text="${category.categoryName}"
+                    ></option>
                   </select>
                 </div>
                 <div class="field full meal-image-field-group">
                   <div class="meal-image-header">
                     <label>Meal Photo / Image</label>
                     <div class="image-mode-tabs" role="tablist">
-                      <button type="button" class="tab-btn active" id="tabUploadImage" data-mode="upload">
+                      <button
+                        type="button"
+                        class="tab-btn active"
+                        id="tabUploadImage"
+                        data-mode="upload"
+                      >
                         <i class="bi bi-cloud-arrow-up"></i> Upload
                       </button>
-                      <button type="button" class="tab-btn" id="tabUrlImage" data-mode="url">
+                      <button
+                        type="button"
+                        class="tab-btn"
+                        id="tabUrlImage"
+                        data-mode="url"
+                      >
                         <i class="bi bi-link-45deg"></i> Image URL
                       </button>
                     </div>
@@ -679,14 +694,27 @@
 
                   <!-- Upload Mode -->
                   <div class="image-mode-panel" id="panelUploadImage">
-                    <div class="planner-image-dropzone" id="plannerImageDropzone">
-                      <input type="file" id="mealImageFileInput" accept="image/png,image/jpeg,image/webp,image/jpg" hidden />
+                    <div
+                      class="planner-image-dropzone"
+                      id="plannerImageDropzone"
+                    >
+                      <input
+                        type="file"
+                        id="mealImageFileInput"
+                        accept="image/png,image/jpeg,image/webp,image/jpg"
+                        hidden
+                      />
                       <div class="dropzone-content">
-                        <div class="dropzone-icon"><i class="bi bi-cloud-arrow-up"></i></div>
-                        <div class="dropzone-text">
-                          <strong>Click to browse</strong> or drag and drop image
+                        <div class="dropzone-icon">
+                          <i class="bi bi-cloud-arrow-up"></i>
                         </div>
-                        <span class="dropzone-hint">PNG, JPG or WebP (auto-optimized)</span>
+                        <div class="dropzone-text">
+                          <strong>Click to browse</strong> or drag and drop
+                          image
+                        </div>
+                        <span class="dropzone-hint"
+                          >PNG, JPG or WebP (auto-optimized)</span
+                        >
                       </div>
                     </div>
                   </div>
@@ -703,19 +731,34 @@
                         placeholder="https://images.unsplash.com/... or https://..."
                       />
                     </div>
-                    <small class="field-hint">Paste direct image URL from web.</small>
+                    <small class="field-hint"
+                      >Paste direct image URL from web.</small
+                    >
                   </div>
 
                   <!-- Live Image Preview Card -->
-                  <div class="planner-image-preview" id="plannerImagePreview" hidden>
+                  <div
+                    class="planner-image-preview"
+                    id="plannerImagePreview"
+                    hidden
+                  >
                     <div class="preview-img-box">
                       <img id="plannerPreviewImg" src="" alt="Meal preview" />
                     </div>
                     <div class="preview-info">
-                      <span class="preview-name" id="plannerPreviewName">meal-image.webp</span>
-                      <span class="preview-meta" id="plannerPreviewMeta">Ready to save</span>
+                      <span class="preview-name" id="plannerPreviewName"
+                        >meal-image.webp</span
+                      >
+                      <span class="preview-meta" id="plannerPreviewMeta"
+                        >Ready to save</span
+                      >
                     </div>
-                    <button type="button" class="btn-clear-img" id="btnClearMealImage" title="Remove image">
+                    <button
+                      type="button"
+                      class="btn-clear-img"
+                      id="btnClearMealImage"
+                      title="Remove image"
+                    >
                       <i class="bi bi-trash3"></i>
                     </button>
                   </div>
@@ -797,12 +840,14 @@
               <h3><span>3</span> Ingredients & Cooking Details</h3>
               <div class="planner-meal-form-grid">
                 <div class="field full">
-                  <label for="mealIngredients">Ingredients list</label>
+                  <label for="mealIngredients"
+                    >Ingredients list (English)</label
+                  >
                   <textarea
                     id="mealIngredients"
                     name="ingredientsText"
                     rows="4"
-                    placeholder="Oats | 50 | g | ស្រូវអូត&#10;Banana | 1 | piece | ចេក"
+                    placeholder="Oats | 50 | g&#10;Banana | 1 | piece"
                   ></textarea>
                   <small
                     >One ingredient per line: English name | quantity | unit |
@@ -810,8 +855,23 @@
                   >
                 </div>
                 <div class="field full">
+                  <label for="mealIngredientsKm"
+                    >Ingredients list (Khmer)</label
+                  >
+                  <textarea
+                    id="mealIngredientsKm"
+                    name="ingredientsTextKm"
+                    rows="4"
+                    placeholder="ស្រូវអូត | 50 | g&#10;ចេក | 1 | ផ្លែ"
+                  ></textarea>
+                  <small
+                    >One ingredient per line in Khmer: ឈ្មោះ | ចំនួន | ខ្នាត
+                    (optional, falls back to English).</small
+                  >
+                </div>
+                <div class="field full">
                   <label for="mealInstructions"
-                    >Preparation / cooking steps</label
+                    >Preparation / cooking steps (English)</label
                   >
                   <textarea
                     id="mealInstructions"
@@ -819,10 +879,25 @@
                     rows="3"
                     placeholder="Step 1: Boil the water or milk.&#10;Step 2: Add oats and simmer."
                   ></textarea>
-                  <small>One step per line.</small>
+                  <small>One step per line in English.</small>
+                </div>
+                <div class="field full">
+                  <label for="mealInstructionsKm"
+                    >Preparation / cooking steps (Khmer)</label
+                  >
+                  <textarea
+                    id="mealInstructionsKm"
+                    name="instructionsTextKm"
+                    rows="3"
+                    placeholder="ជំហានទី ១៖ ដាំទឹក ឬទឹកដោះគោឱ្យពុះ។&#10;ជំហានទី ២៖ ដាក់ស្រូវអូតចូល រួចរម្ងាស់។"
+                  ></textarea>
+                  <small
+                    >One step per line in Khmer (optional, falls back to
+                    English).</small
+                  >
                 </div>
                 <div class="field">
-                  <label for="mealTags">Tags</label>
+                  <label for="mealTags">Tags (English)</label>
                   <input
                     id="mealTags"
                     name="tagsText"
@@ -830,6 +905,16 @@
                     placeholder="Healthy, High Fiber, Quick"
                   />
                   <small>Separate tags with commas.</small>
+                </div>
+                <div class="field">
+                  <label for="mealTagsKm">Tags (Khmer)</label>
+                  <input
+                    id="mealTagsKm"
+                    name="tagsTextKm"
+                    maxlength="500"
+                    placeholder="សុខភាព, ជាតិសរសៃខ្ពស់, រហ័ស"
+                  />
+                  <small>Separate tags with commas (optional).</small>
                 </div>
                 <div class="field">
                   <label for="mealCookTime">Cooking time (minutes)</label>
@@ -842,7 +927,7 @@
                     placeholder="15"
                   />
                 </div>
-                <div class="field full">
+                <div class="field">
                   <label for="mealActive">Catalog status</label>
                   <select id="mealActive" name="active">
                     <option value="true">Active (Can be scheduled)</option>

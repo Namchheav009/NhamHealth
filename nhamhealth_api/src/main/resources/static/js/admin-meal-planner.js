@@ -506,8 +506,11 @@
       fatGrams: "fat",
       cookingTimeMinutes: "time",
       ingredientsText: "ingredients",
+      ingredientsTextKm: "ingredientsKm",
       instructionsText: "instructions",
+      instructionsTextKm: "instructionsKm",
       tagsText: "tags",
+      tagsTextKm: "tagsKm",
       active: "active",
     };
     Object.entries(fields).forEach(([field, attribute]) => {
@@ -567,8 +570,11 @@
           ? Number(data.cookingTimeMinutes)
           : null,
         ingredientsText: (data.ingredientsText || "").trim(),
+        ingredientsTextKm: (data.ingredientsTextKm || "").trim(),
         instructionsText: (data.instructionsText || "").trim(),
+        instructionsTextKm: (data.instructionsTextKm || "").trim(),
         tagsText: (data.tagsText || "").trim(),
+        tagsTextKm: (data.tagsTextKm || "").trim(),
         active: data.active === "true",
       };
 

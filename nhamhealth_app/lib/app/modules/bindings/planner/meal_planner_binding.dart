@@ -12,7 +12,10 @@ class MealPlannerBinding extends Bindings {
       fenix: true,
     );
     Get.lazyPut<MealPlannerController>(
-      () => MealPlannerController(provider: Get.find<MealPlannerProvider>()),
+      () => MealPlannerController(
+        provider: Get.find<MealPlannerProvider>(),
+        authService: Get.find<AuthService>(),
+      ),
       fenix: true,
     );
   }

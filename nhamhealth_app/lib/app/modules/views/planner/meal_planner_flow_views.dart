@@ -1854,50 +1854,88 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
           title: 'planner.grocery_list'.tr,
           trailing:
               totalItems > 0
-                  ? TextButton(
-                    onPressed: () {
-                      setState(() {
-                        if (checked.length == totalItems) {
-                          checked.clear();
-                        } else {
-                          checked.addAll(
-                            controller.groceryItems.map((i) => i.key),
-                          );
-                        }
-                      });
-                    },
-                    child: Text(
-                      checked.length == totalItems
-                          ? 'planner.cancel'.tr
-                          : 'planner.all'.tr,
-                      style: const TextStyle(
+                  ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.copy_rounded, size: 20),
                         color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.w700,
+                        tooltip: 'planner.copy_list'.tr,
+                        onPressed:
+                            () => controller.copyGroceryListToClipboard(),
                       ),
-                    ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            if (checked.length == totalItems) {
+                              checked.clear();
+                            } else {
+                              checked.addAll(
+                                controller.groceryItems.map((i) => i.key),
+                              );
+                            }
+                          });
+                        },
+                        child: Text(
+                          checked.length == totalItems
+                              ? 'planner.cancel'.tr
+                              : 'planner.all'.tr,
+                          style: const TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   )
                   : null,
         ),
         bottom:
             totalItems == 0
                 ? null
-                : PlannerPrimaryButton(
-                  label: 'planner.share_list'.tr,
-                  icon: Icons.share_outlined,
-                  onPressed: () async {
-                    final lines = controller.groceryItems
-                        .map(
-                          (i) =>
-                              '${checked.contains(i.key) ? '☑' : '☐'} ${i.name.tr}${i.quantityLabel.isEmpty ? '' : ' — ${i.quantityLabel}'}',
-                        )
-                        .join('\n');
-                    await SharePlus.instance.share(
-                      ShareParams(
-                        text:
-                            '${'planner.grocery_list'.tr}\n${_range(controller.weekStart, controller.weekDays.last)}\n\n$lines',
+                : Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            () => controller.copyGroceryListToClipboard(),
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: Text('planner.copy_list'.tr),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: AppColors.primaryGreen,
+                          side: const BorderSide(color: AppColors.primaryGreen),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: PlannerPrimaryButton(
+                        label: 'planner.share_list'.tr,
+                        icon: Icons.share_outlined,
+                        onPressed: () async {
+                          final lines = controller.groceryItems
+                              .map(
+                                (i) =>
+                                    '${checked.contains(i.key) ? '☑' : '☐'} ${i.name.tr}${i.quantityLabel.isEmpty ? '' : ' — ${i.quantityLabel}'}',
+                              )
+                              .join('\n');
+                          await SharePlus.instance.share(
+                            ShareParams(
+                              text:
+                                  '${'planner.grocery_list'.tr}\n${_range(controller.weekStart, controller.weekDays.last)}\n\n$lines',
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
         child:
             controller.isLoading.value && controller.plans.isEmpty

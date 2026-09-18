@@ -115,6 +115,17 @@ const Map<String, String> plannerEn = {
   'planner.grocery_protein': 'Protein',
   'planner.grocery_grains': 'Grains & Others',
   'planner.grocery_dairy': 'Dairy',
+  'planner.copy_list': 'Copy List',
+  'planner.grocery_copied': 'Grocery list copied to clipboard!',
+  'planner.auto_fill': 'Auto Fill',
+  'planner.auto_fill_plan': 'Auto-Fill Plan',
+  'planner.auto_fill_help': 'Automatically fill all empty meal slots',
+  'planner.auto_fill_confirm':
+      'Do you want to automatically fill empty meal slots from recommendations?',
+  'planner.auto_fill_success': 'Successfully filled @count meals!',
+  'planner.auto_fill_no_empty': 'All meal slots are already filled!',
+  'planner.auto_fill_no_recommendations':
+      'No recommendations available to fill!',
   'planner.desc_oatmeal':
       'A wholesome breakfast with oats, fresh banana and milk.',
   'planner.plan_your_week': 'Plan your meals',
@@ -130,7 +141,7 @@ const Map<String, String> plannerEn = {
   'planner.plan_days': '@days-day plan',
   'planner.days_plan': '@days Days Planned',
   'planner.choose_duration': 'Choose duration (3–7 days)',
-  'planner.detail': 'Select a day to view details',
+  'planner.detail': 'Detail',
   'planner.custom_plan': 'Customize plan',
   'planner.start_date': 'Start date',
   'planner.apply': 'Apply',

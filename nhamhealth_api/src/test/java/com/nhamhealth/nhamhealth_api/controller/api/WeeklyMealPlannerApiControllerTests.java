@@ -80,4 +80,53 @@ class WeeklyMealPlannerApiControllerTests {
         assertEquals(99, response.getBody().getFirst().plannerMealId());
         assertEquals("Chicken Salad", response.getBody().getFirst().mealName());
     }
+
+    @Test
+    void returnsDedicatedKhmerIngredientsInstructionsAndTagsWhenAvailable() {
+        WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+        PlannerMeal meal = new PlannerMeal();
+        meal.setPlannerMealId(55);
+        meal.setNameEn("Steamed Chicken Rice");
+        meal.setNameKm("បាយមាន់ស្ងោរ");
+        meal.setCategoryEn("Lunch");
+        MealCategory category = new MealCategory();
+        category.setCategoryId(2);
+        meal.setCategory(category);
+        meal.setCalories(new BigDecimal("480"));
+        meal.setProteinGrams(new BigDecimal("35"));
+        meal.setCarbsGrams(new BigDecimal("50"));
+        meal.setFatGrams(new BigDecimal("12"));
+
+        meal.setIngredientsText("Chicken | 150 | g\nRice | 100 | g");
+        meal.setIngredientsTextKm("សាច់មាន់ | 150 | g\nបាយ | 100 | g");
+        meal.setInstructionsText("Step 1: Boil chicken.\nStep 2: Cook rice.");
+        meal.setInstructionsTextKm("ជំហានទី ១៖ ស្ងោរសាច់មាន់។\nជំហានទី ២៖ ដាំបាយ។");
+        meal.setTagsText("High Protein, Balanced");
+        meal.setTagsTextKm("ប្រូតេអ៊ីនខ្ពស់, មានតុល្យភាព");
+
+        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+        recommendation.setPlannerMeal(meal);
+        recommendation.setDayOfWeek("ALL");
+        recommendation.setMealSlot("LUNCH");
+        recommendation.setSortOrder(1);
+
+        when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
+                .thenReturn(List.of(recommendation));
+
+        // When requesting Khmer
+        var kmResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
+        var kmItem = kmResponse.getBody().getFirst();
+        assertEquals("បាយមាន់ស្ងោរ", kmItem.mealName());
+        assertEquals(List.of("សាច់មាន់", "បាយ"), kmItem.ingredients().stream().map(i -> i.name()).toList());
+        assertEquals(List.of("ជំហានទី ១៖ ស្ងោរសាច់មាន់។", "ជំហានទី ២៖ ដាំបាយ។"), kmItem.instructions());
+        assertEquals(List.of("ប្រូតេអ៊ីនខ្ពស់", "មានតុល្យភាព"), kmItem.tags());
+
+        // When requesting English
+        var enResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "en");
+        var enItem = enResponse.getBody().getFirst();
+        assertEquals("Steamed Chicken Rice", enItem.mealName());
+        assertEquals(List.of("Chicken", "Rice"), enItem.ingredients().stream().map(i -> i.name()).toList());
+        assertEquals(List.of("Step 1: Boil chicken.", "Step 2: Cook rice."), enItem.instructions());
+        assertEquals(List.of("High Protein", "Balanced"), enItem.tags());
+    }
 }

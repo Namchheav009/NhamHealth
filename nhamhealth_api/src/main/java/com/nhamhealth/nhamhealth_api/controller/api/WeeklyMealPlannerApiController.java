@@ -63,7 +63,7 @@ public class WeeklyMealPlannerApiController {
                 meal.getFatGrams(), meal.getCategory().getCategoryId(),
                 meal.category(lang), meal.description(lang),
                 meal.getCookingTimeMinutes(), "", PlannerMealContent.ingredients(meal, lang),
-                PlannerMealContent.instructions(meal), PlannerMealContent.tags(meal),
+                PlannerMealContent.instructions(meal, lang), PlannerMealContent.tags(meal, lang),
                 row.getNote(), row.getSortOrder());
     }
 }

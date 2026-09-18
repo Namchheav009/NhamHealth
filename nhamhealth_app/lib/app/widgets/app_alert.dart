@@ -48,14 +48,21 @@ abstract final class AppAlert {
         return;
       }
     }
-    Get.rawSnackbar(
-      message: message.tr,
-      duration: duration,
-      snackPosition: SnackPosition.BOTTOM,
-      snackStyle: SnackStyle.FLOATING,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: 14,
-    );
+    if (Get.key.currentState?.overlay == null) {
+      return;
+    }
+    try {
+      Get.rawSnackbar(
+        message: message.tr,
+        duration: duration,
+        snackPosition: SnackPosition.BOTTOM,
+        snackStyle: SnackStyle.FLOATING,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        borderRadius: 14,
+      );
+    } catch (_) {
+      // In tests or headless environments where overlay isn't mounted, ignore.
+    }
   }
 
   /// Presents blocking feedback for a completed user action.
@@ -126,7 +133,12 @@ abstract final class AppAlert {
             confirmButtonColor: confirmButtonColor ?? AppColors.primaryGreen,
           );
         },
-        transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        transitionBuilder: (
+          dialogContext,
+          animation,
+          secondaryAnimation,
+          child,
+        ) {
           final curved = CurvedAnimation(
             parent: animation,
             curve: Curves.easeOutBack,
@@ -208,7 +220,12 @@ abstract final class AppAlert {
             confirmText: confirmText,
           );
         },
-        transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        transitionBuilder: (
+          dialogContext,
+          animation,
+          secondaryAnimation,
+          child,
+        ) {
           final curved = CurvedAnimation(
             parent: animation,
             curve: Curves.easeOutBack,

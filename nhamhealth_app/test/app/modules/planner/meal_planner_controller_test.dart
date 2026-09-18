@@ -14,6 +14,24 @@ class _FakeAuthService extends AuthService {
   Future<String?> readAccessToken() async => 'test-token';
 }
 
+String makeTestJwtToken(int userId) {
+  final header = base64Url.encode(
+    utf8.encode(jsonEncode({'alg': 'HS256', 'typ': 'JWT'})),
+  );
+  final payload = base64Url.encode(
+    utf8.encode(jsonEncode({'userId': userId, 'sub': 'user$userId'})),
+  );
+  return '$header.$payload.signature';
+}
+
+class _TestUserAuthService extends AuthService {
+  _TestUserAuthService(this.userId);
+  final int userId;
+
+  @override
+  Future<String?> readAccessToken() async => makeTestJwtToken(userId);
+}
+
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -406,6 +424,74 @@ void main() {
       expect(controller.planDaysCount.value, 5);
       expect(controller.planDays.length, 5);
       expect(controller.weekDays.length, 5);
+    },
+  );
+
+  test(
+    'user-scoped duration storage preserves settings per user and defaults to 7 days for new users',
+    () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      const storage = FlutterSecureStorage();
+
+      // User 100 sets plan to 3 days
+      final authUser1 = _TestUserAuthService(100);
+      final controller1 = MealPlannerController(
+        storage: storage,
+        authService: authUser1,
+      );
+      controller1.setPlanDaysCount(3);
+      expect(controller1.planDaysCount.value, 3);
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(await storage.read(key: 'meal_planner_days_count_100'), '3');
+
+      // User 200 logs in for first time with no saved settings -> must default to 7 days
+      final authUser2 = _TestUserAuthService(200);
+      final controller2 = MealPlannerController(
+        storage: storage,
+        authService: authUser2,
+      );
+      await controller2.initPlanner();
+      expect(controller2.planDaysCount.value, 7);
+
+      // User 100 logs back in -> should restore 3 days
+      final controller1Reloaded = MealPlannerController(
+        storage: storage,
+        authService: authUser1,
+      );
+      await controller1Reloaded.initPlanner();
+      expect(controller1Reloaded.planDaysCount.value, 3);
+    },
+  );
+
+  test(
+    'autoFillPlan populates empty slots across planDays using recommendations',
+    () async {
+      final controller = withAdminMeals();
+      expect(controller.selectedMeals.isEmpty, isTrue);
+
+      final filled = await controller.autoFillPlan();
+      expect(filled, greaterThan(0));
+      expect(controller.selectedMeals.isNotEmpty, isTrue);
+
+      // Calling autoFill again when slots are filled fills 0 new meals
+      final secondRun = await controller.autoFillPlan();
+      expect(secondRun, 0);
+    },
+  );
+
+  test(
+    'formatGroceryListText formats items by category and copyGroceryListToClipboard copies cleanly',
+    () async {
+      final controller = withAdminMeals();
+      await controller.autoFillPlan();
+
+      final text = controller.formatGroceryListText();
+      expect(text.isNotEmpty, isTrue);
+      expect(text, contains('NhamHealth'));
+
+      final copied = await controller.copyGroceryListToClipboard();
+      expect(copied, isTrue);
     },
   );
 }

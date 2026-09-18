@@ -151,6 +151,15 @@ class MealPlannerView extends GetView<MealPlannerController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
+            tooltip: 'planner.auto_fill'.tr,
+            onPressed: () => _confirmAutoFill(context),
+            icon: const Icon(Icons.auto_awesome_rounded),
+            color: AppColors.primaryGreen,
+            iconSize: 22,
+            visualDensity: VisualDensity.compact,
+          ),
+          const SizedBox(width: 2),
+          IconButton(
             tooltip: 'planner.weekly_view'.tr,
             onPressed: () => Get.toNamed(AppRoutes.mealPlannerWeek),
             icon: const Icon(Icons.calendar_month_outlined),
@@ -170,6 +179,119 @@ class MealPlannerView extends GetView<MealPlannerController> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmAutoFill(BuildContext context) async {
+    final confirmed = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'planner.auto_fill'.tr,
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 240),
+      pageBuilder:
+          (dialogContext, anim, secAnim) => Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                  decoration: BoxDecoration(
+                    color: dialogContext.appElevatedSurface,
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 28,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: dialogContext.appSoftGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'planner.auto_fill'.tr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: dialogContext.appText,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'planner.auto_fill_confirm'.tr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: dialogContext.appMutedText,
+                          fontSize: 13.5,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, false),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(48),
+                                side: BorderSide(
+                                  color: dialogContext.appBorder,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Text('planner.cancel'.tr),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, true),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size.fromHeight(48),
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Text('planner.auto_fill'.tr),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+
+    if (confirmed == true) {
+      await controller.autoFillPlan();
+    }
   }
 
   Widget _dateCard(BuildContext context) {
@@ -603,6 +725,36 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           days: selectedDays,
                         );
                       },
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        controller.setCustomPlanRange(
+                          start: selectedStart,
+                          days: selectedDays,
+                        );
+                        controller.autoFillPlan();
+                      },
+                      icon: const Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 18,
+                        color: AppColors.primaryGreen,
+                      ),
+                      label: Text(
+                        'planner.auto_fill_plan'.tr,
+                        style: const TextStyle(
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(50),
+                        side: const BorderSide(color: AppColors.primaryGreen),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2042,6 +2194,29 @@ class MealPlannerView extends GetView<MealPlannerController> {
                         ),
                       ),
                       child: Text('planner.view_grocery_list'.tr),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        controller.copyGroceryListToClipboard();
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 18),
+                      label: Text('planner.copy_list'.tr),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryGreen,
+                        side: const BorderSide(color: AppColors.primaryGreen),
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),

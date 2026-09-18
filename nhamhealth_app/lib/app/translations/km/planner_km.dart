@@ -115,6 +115,17 @@ const Map<String, String> plannerKm = {
   'planner.grocery_protein': 'ប្រូតេអ៊ីន',
   'planner.grocery_grains': 'ធញ្ញជាតិ និងផ្សេងៗ',
   'planner.grocery_dairy': 'ផលិតផលទឹកដោះគោ',
+  'planner.copy_list': 'ចម្លងបញ្ជី',
+  'planner.grocery_copied':
+      'បានចម្លងបញ្ជីទិញគ្រឿងផ្សំទៅក្ដារតម្បៀតខ្ទាស់រួចរាល់!',
+  'planner.auto_fill': 'បំពេញស្វ័យប្រវត្តិ',
+  'planner.auto_fill_plan': 'បំពេញគម្រោងស្វ័យប្រវត្តិ',
+  'planner.auto_fill_help': 'បំពេញអាហារដែលនៅទំនេរទាំងអស់ដោយស្វ័យប្រវត្តិ',
+  'planner.auto_fill_confirm':
+      'តើអ្នកចង់បំពេញអាហារដែលនៅទំនេរដោយស្វ័យប្រវត្តិតាមការណែនាំដែរឬទេ?',
+  'planner.auto_fill_success': 'បានបំពេញអាហារចំនួន @count ពេលដោយជោគជ័យ!',
+  'planner.auto_fill_no_empty': 'ពេលអាហារទាំងអស់ត្រូវបានរៀបចំរួចរាល់ហើយ!',
+  'planner.auto_fill_no_recommendations': 'មិនមានអាហារណែនាំសម្រាប់បំពេញទេ!',
   'planner.desc_oatmeal': 'អាហារពេលព្រឹកមានស្រូវអូត ចេកស្រស់ និងទឹកដោះគោ។',
   'planner.plan_your_week': 'រៀបចំផែនការអាហារ',
   'planner.home_description':
@@ -129,7 +140,7 @@ const Map<String, String> plannerKm = {
   'planner.plan_days': 'ផែនការ @days ថ្ងៃ',
   'planner.days_plan': 'បានរៀបចំ @days ថ្ងៃ',
   'planner.choose_duration': 'ជ្រើសរើសរយៈពេល (៣ ដល់ ៧ ថ្ងៃ)',
-  'planner.detail': 'ជ្រើសរើសថ្ងៃ ដើម្បីមើលព័ត៌មានលម្អិត',
+  'planner.detail': 'លម្អិត',
   'planner.custom_plan': 'កំណត់ផែនការអាហារ',
   'planner.start_date': 'ថ្ងៃចាប់ផ្ដើម',
   'planner.apply': 'អនុវត្ត',

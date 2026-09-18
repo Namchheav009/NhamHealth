@@ -37,8 +37,11 @@ public class PlannerMeal {
     @Column(name = "fat_grams", nullable = false) private BigDecimal fatGrams = BigDecimal.ZERO;
     @Column(name = "cooking_time_minutes") private Integer cookingTimeMinutes;
     @Column(name = "ingredients_text", columnDefinition = "text") private String ingredientsText;
+    @Column(name = "ingredients_text_km", columnDefinition = "text") private String ingredientsTextKm;
     @Column(name = "instructions_text", columnDefinition = "text") private String instructionsText;
+    @Column(name = "instructions_text_km", columnDefinition = "text") private String instructionsTextKm;
     @Column(name = "tags_text", length = 500) private String tagsText;
+    @Column(name = "tags_text_km", length = 500) private String tagsTextKm;
     @Column(name = "is_active", nullable = false) private Boolean active = true;
     @Column(name = "created_at", nullable = false, updatable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
@@ -75,13 +78,21 @@ public class PlannerMeal {
     public void setCookingTimeMinutes(Integer v) { cookingTimeMinutes = v; }
     public String getIngredientsText() { return ingredientsText; }
     public void setIngredientsText(String v) { ingredientsText = v; }
+    public String getIngredientsTextKm() { return ingredientsTextKm; }
+    public void setIngredientsTextKm(String v) { ingredientsTextKm = v; }
     public String getInstructionsText() { return instructionsText; }
     public void setInstructionsText(String v) { instructionsText = v; }
+    public String getInstructionsTextKm() { return instructionsTextKm; }
+    public void setInstructionsTextKm(String v) { instructionsTextKm = v; }
     public String getTagsText() { return tagsText; }
     public void setTagsText(String v) { tagsText = v; }
+    public String getTagsTextKm() { return tagsTextKm; }
+    public void setTagsTextKm(String v) { tagsTextKm = v; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean v) { active = v; }
     public String name(String lang) { return "km".equalsIgnoreCase(lang) && nameKm != null && !nameKm.isBlank() ? nameKm : nameEn; }
     public String category(String lang) { return "km".equalsIgnoreCase(lang) && categoryKm != null && !categoryKm.isBlank() ? categoryKm : categoryEn; }
     public String description(String lang) { return "km".equalsIgnoreCase(lang) && descriptionKm != null && !descriptionKm.isBlank() ? descriptionKm : descriptionEn; }
+    public String instructions(String lang) { return "km".equalsIgnoreCase(lang) && instructionsTextKm != null && !instructionsTextKm.isBlank() ? instructionsTextKm : instructionsText; }
+    public String tags(String lang) { return "km".equalsIgnoreCase(lang) && tagsTextKm != null && !tagsTextKm.isBlank() ? tagsTextKm : tagsText; }
 }

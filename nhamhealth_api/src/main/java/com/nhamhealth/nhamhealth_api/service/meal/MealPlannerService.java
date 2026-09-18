@@ -164,6 +164,6 @@ public class MealPlannerService {
                 detail.getImageUrl(), detail.getCalories(), detail.getProteinGrams(),
                 detail.getCarbsGrams(), detail.getFatGrams(), detail.description(lang),
                 detail.getCookingTimeMinutes(), "", PlannerMealContent.ingredients(detail, lang),
-                PlannerMealContent.instructions(detail), PlannerMealContent.tags(detail));
+                PlannerMealContent.instructions(detail, lang), PlannerMealContent.tags(detail, lang));
     }
 }

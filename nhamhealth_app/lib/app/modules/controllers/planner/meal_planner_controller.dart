@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
@@ -11,14 +15,17 @@ class MealPlannerController extends GetxController {
   MealPlannerController({
     MealPlannerProvider? provider,
     FlutterSecureStorage? storage,
+    AuthService? authService,
   }) : _provider = provider,
-       _storage = storage ?? const FlutterSecureStorage();
+       _storage = storage ?? const FlutterSecureStorage(),
+       _authService = authService;
 
   static const _storageDaysKey = 'meal_planner_days_count';
   static const _storageStartDateKey = 'meal_planner_start_date';
 
   final MealPlannerProvider? _provider;
   final FlutterSecureStorage _storage;
+  final AuthService? _authService;
   final selectedDayIndex = 0.obs;
   final weekOffset = 0.obs;
   final planDaysCount = 7.obs;
@@ -37,19 +44,60 @@ class MealPlannerController extends GetxController {
     super.onInit();
     selectedDayIndex.value = DateTime.now().weekday - 1;
     unawaited(refreshPlanner());
-    unawaited(_initPlanner());
+    unawaited(initPlanner());
+  }
+
+  Future<void> initPlanner() => _initPlanner();
+
+  Future<String?> _resolveUserId() async {
+    try {
+      final auth =
+          _authService ??
+          (Get.isRegistered<AuthService>() ? Get.find<AuthService>() : null);
+      if (auth != null) {
+        final token = await auth.readAccessToken();
+        if (token != null && token.isNotEmpty) {
+          final parts = token.split('.');
+          if (parts.length >= 2) {
+            final normalized = base64Url.normalize(parts[1]);
+            final decoded = utf8.decode(base64Url.decode(normalized));
+            final json = jsonDecode(decoded) as Map<String, dynamic>;
+            final raw = json['userId'] ?? json['id'] ?? json['sub'];
+            if (raw != null) return raw.toString();
+          }
+        }
+      }
+    } catch (_) {
+      // Ignore token parse error
+    }
+    return null;
+  }
+
+  Future<String> _userScopedKey(String baseKey) async {
+    final userId = await _resolveUserId();
+    if (userId != null && userId.isNotEmpty) {
+      return '${baseKey}_$userId';
+    }
+    return baseKey;
   }
 
   Future<void> _initPlanner() async {
     try {
-      final savedDays = await _storage.read(key: _storageDaysKey);
+      final daysKey = await _userScopedKey(_storageDaysKey);
+      final startKey = await _userScopedKey(_storageStartDateKey);
+
+      final savedDays = await _storage.read(key: daysKey);
       if (savedDays != null) {
         final parsed = int.tryParse(savedDays);
         if (parsed != null && parsed >= 3 && parsed <= 7) {
           planDaysCount.value = parsed;
+        } else {
+          planDaysCount.value = 7;
         }
+      } else {
+        planDaysCount.value = 7;
       }
-      final savedStart = await _storage.read(key: _storageStartDateKey);
+      final savedStart = await _storage.read(key: startKey);
       if (savedStart != null) {
         final parsedDate = DateTime.tryParse(savedStart);
         if (parsedDate != null) {
@@ -321,7 +369,12 @@ class MealPlannerController extends GetxController {
     final today = DateTime(now.year, now.month, now.day);
     customStartDate.value = null;
     weekOffset.value = 0;
-    unawaited(_storage.delete(key: _storageStartDateKey));
+    unawaited(() async {
+      try {
+        final startKey = await _userScopedKey(_storageStartDateKey);
+        await _storage.delete(key: startKey);
+      } catch (_) {}
+    }());
     final idx = planDays.indexWhere(
       (d) =>
           d.year == today.year && d.month == today.month && d.day == today.day,
@@ -370,17 +423,17 @@ class MealPlannerController extends GetxController {
 
   Future<void> _persistSettings() async {
     try {
-      await _storage.write(
-        key: _storageDaysKey,
-        value: '${planDaysCount.value}',
-      );
+      final daysKey = await _userScopedKey(_storageDaysKey);
+      final startKey = await _userScopedKey(_storageStartDateKey);
+
+      await _storage.write(key: daysKey, value: '${planDaysCount.value}');
       if (customStartDate.value != null) {
         await _storage.write(
-          key: _storageStartDateKey,
+          key: startKey,
           value: customStartDate.value!.toIso8601String(),
         );
       } else {
-        await _storage.delete(key: _storageStartDateKey);
+        await _storage.delete(key: startKey);
       }
     } catch (_) {
       // Secure storage write error ignored
@@ -548,6 +601,139 @@ class MealPlannerController extends GetxController {
     updated.add(meal);
     updated.sort((a, b) => a.slot.index.compareTo(b.slot.index));
     plans[key] = updated;
+  }
+
+  Future<int> autoFillPlan() async {
+    if (isSaving.value) return 0;
+
+    if (adminRecommendations.isEmpty && _provider != null) {
+      await loadRecommendations();
+    }
+
+    if (adminRecommendations.isEmpty) {
+      AppAlert.toast(message: 'planner.auto_fill_no_recommendations');
+      return 0;
+    }
+
+    final emptySlots = <({DateTime date, MealPlanSlot slot})>[];
+    for (final date in planDays) {
+      final currentMeals = mealsFor(date);
+      for (final slot in MealPlanSlot.values) {
+        final alreadyPlanned = currentMeals.any((m) => m.slot == slot);
+        if (!alreadyPlanned) {
+          emptySlots.add((date: date, slot: slot));
+        }
+      }
+    }
+
+    if (emptySlots.isEmpty) {
+      AppAlert.toast(message: 'planner.auto_fill_no_empty');
+      return 0;
+    }
+
+    isSaving.value = true;
+    var filledCount = 0;
+    try {
+      for (final entry in emptySlots) {
+        final slotRecs =
+            adminRecommendations.where((m) => m.slot == entry.slot).toList();
+        if (slotRecs.isEmpty) continue;
+
+        final weekdayRecs =
+            slotRecs
+                .where(
+                  (m) =>
+                      m.recommendedWeekday == null ||
+                      m.recommendedWeekday == entry.date.weekday,
+                )
+                .toList();
+        final pool = weekdayRecs.isNotEmpty ? weekdayRecs : slotRecs;
+
+        final dayDiff = entry.date.difference(planStartDate).inDays.abs();
+        final selectedRec = pool[dayDiff % pool.length];
+
+        final key = _dateKey(entry.date);
+        final optimistic = selectedRec.copyWith(
+          planDate: entry.date,
+          servings: 1,
+        );
+        _put(key, optimistic);
+
+        if (_provider != null) {
+          try {
+            final saved = await _provider.saveMeal(entry.date, selectedRec, 1);
+            _put(key, saved);
+            filledCount++;
+          } catch (_) {
+            filledCount++;
+          }
+        } else {
+          filledCount++;
+        }
+      }
+      plans.refresh();
+
+      if (filledCount > 0) {
+        AppAlert.toast(
+          message: 'planner.auto_fill_success'.trParams({
+            'count': '$filledCount',
+          }),
+        );
+      }
+      return filledCount;
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  String formatGroceryListText() {
+    final items = groceryItems;
+    if (items.isEmpty) return '';
+
+    final buffer = StringBuffer();
+    final start = planStartDate;
+    final end = planEndDate;
+    final dateRange =
+        '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}';
+
+    buffer.writeln('🛒 ${'planner.grocery_list'.tr}');
+    buffer.writeln(
+      '📅 $dateRange (${planDaysCount.value} ${'planner.days_short'.tr.trim()})',
+    );
+    buffer.writeln('');
+
+    final grouped = <String, List<GroceryItem>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.category, () => []).add(item);
+    }
+
+    for (final entry in grouped.entries) {
+      final categoryName = entry.key.tr;
+      buffer.writeln('[$categoryName]');
+      for (final item in entry.value) {
+        final q = item.quantityLabel;
+        if (q.isNotEmpty) {
+          buffer.writeln('• ${item.name}: $q');
+        } else {
+          buffer.writeln('• ${item.name}');
+        }
+      }
+      buffer.writeln('');
+    }
+
+    buffer.writeln('🌿 NhamHealth Meal Planner');
+    return buffer.toString().trim();
+  }
+
+  Future<bool> copyGroceryListToClipboard() async {
+    final text = formatGroceryListText();
+    if (text.isEmpty) {
+      AppAlert.toast(message: 'planner.empty_grocery_list');
+      return false;
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    AppAlert.toast(message: 'planner.grocery_copied');
+    return true;
   }
 
   String _dateKey(DateTime d) =>

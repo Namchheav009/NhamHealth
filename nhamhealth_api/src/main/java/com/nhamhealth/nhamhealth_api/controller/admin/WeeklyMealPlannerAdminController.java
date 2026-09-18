@@ -238,8 +238,11 @@ public class WeeklyMealPlannerAdminController {
         meal.setFatGrams(request.fatGrams() == null ? BigDecimal.ZERO : request.fatGrams());
         meal.setCookingTimeMinutes(request.cookingTimeMinutes());
         meal.setIngredientsText(clean(request.ingredientsText()));
+        meal.setIngredientsTextKm(clean(request.ingredientsTextKm()));
         meal.setInstructionsText(clean(request.instructionsText()));
+        meal.setInstructionsTextKm(clean(request.instructionsTextKm()));
         meal.setTagsText(clean(request.tagsText()));
+        meal.setTagsTextKm(clean(request.tagsTextKm()));
         meal.setActive(request.active() == null || request.active());
     }
 
