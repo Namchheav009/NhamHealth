@@ -26,10 +26,17 @@ public class CacheConfig {
         public static final String CACHE_FOOD_SEARCH = "foodSearch";
         public static final String CACHE_MEALS = "meals";
         public static final String CACHE_MEAL_DETAIL = "mealDetail";
+        public static final String CACHE_MOODS = "moods";
 
         @Bean
         public CacheManager cacheManager() {
-                CaffeineCacheManager manager = new CaffeineCacheManager();
+                CaffeineCacheManager manager = new CaffeineCacheManager() {
+                        @Override
+                        public org.springframework.cache.Cache getCache(String name) {
+                                org.springframework.cache.Cache cache = super.getCache(name);
+                                return cache != null ? cache : createCaffeineCache(name);
+                        }
+                };
                 manager.setCacheNames(List.of(
                                 CACHE_ADMIN_DASHBOARD,
                                 CACHE_MEAL_CATEGORIES,
@@ -41,7 +48,8 @@ public class CacheConfig {
                                 CACHE_FOOD_CORRECTION_MATCHES,
                                 CACHE_FOOD_SEARCH,
                                 CACHE_MEALS,
-                                CACHE_MEAL_DETAIL));
+                                CACHE_MEAL_DETAIL,
+                                CACHE_MOODS));
 
                 // Default specification for general caches: max 500 items, 10 min TTL
                 manager.setCaffeine(Caffeine.newBuilder()
@@ -56,6 +64,7 @@ public class CacheConfig {
                 manager.registerCustomCache(CACHE_SERVING_SIZES, buildCache(200, Duration.ofHours(1)));
                 manager.registerCustomCache(CACHE_NUTRIENTS, buildCache(200, Duration.ofHours(1)));
                 manager.registerCustomCache(CACHE_MEAL_TAG_NAMES, buildCache(200, Duration.ofHours(1)));
+                manager.registerCustomCache(CACHE_MOODS, buildCache(200, Duration.ofHours(1)));
 
                 // Food catalog search results: 30 minutes TTL, max 1000 items
                 manager.registerCustomCache(CACHE_FOOD_SEARCH, buildCache(1000, Duration.ofMinutes(30)));

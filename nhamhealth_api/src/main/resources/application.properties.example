@@ -115,7 +115,7 @@ spring.flyway.connect-retries=5
 spring.flyway.connect-retries-interval=10s
 spring.jpa.open-in-view=false
 spring.cache.type=caffeine
-spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches
+spring.cache.cache-names=adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches,foodSearch,meals,mealDetail,moods
 spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=60s
 
 # Brevo API (Transactional Email)
