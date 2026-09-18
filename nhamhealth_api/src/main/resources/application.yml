@@ -9,6 +9,12 @@ spring:
       keepalive-time: ${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:60000}
       connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:30000}
       initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:30000}
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 0
+    connect-retries: 5
+    connect-retries-interval: 10s
 
 app:
   follow-connections:

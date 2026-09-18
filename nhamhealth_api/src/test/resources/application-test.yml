@@ -33,6 +33,7 @@ server:
 app:
   mail:
     from: no-reply@nhamhealth.local
+    fallback-to-console: false
   auth:
     jwt:
       secret: test-only-jwt-secret-that-is-at-least-32-characters
@@ -80,3 +81,7 @@ app:
 nhamhealth:
   push:
     enabled: false
+
+BREVO_API_KEY: ""
+BREVO_SENDER_EMAIL: no-reply@nhamhealth.local
+BREVO_SENDER_NAME: NhamHealth
