@@ -17,6 +17,7 @@ public final class AppUserPrincipal implements UserDetails {
     private final String passwordHash;
     private final String role;
     private final boolean enabled;
+    private final boolean accountNonLocked;
     private final int authVersion;
 
     private AppUserPrincipal(
@@ -25,18 +26,21 @@ public final class AppUserPrincipal implements UserDetails {
             String passwordHash,
             String role,
             boolean enabled,
+            boolean accountNonLocked,
             int authVersion) {
         this.userId = userId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
         this.enabled = enabled;
+        this.accountNonLocked = accountNonLocked;
         this.authVersion = authVersion;
     }
 
     public static AppUserPrincipal from(User user) {
         String role = normalizeRole(user.getRole().getRoleName());
         boolean active = "ACTIVE".equalsIgnoreCase(user.getStatus());
+        boolean suspended = "SUSPENDED".equalsIgnoreCase(user.getStatus());
         boolean verified = Boolean.TRUE.equals(user.getIsVerified());
         String username = user.getEmail();
         if (username == null || username.isBlank()) {
@@ -48,7 +52,8 @@ public final class AppUserPrincipal implements UserDetails {
                 username,
                 user.getPasswordHash(),
                 role,
-                active && verified,
+                verified && active,
+                !suspended,
                 user.getAuthVersion() == null ? 0 : user.getAuthVersion());
     }
 
@@ -82,6 +87,11 @@ public final class AppUserPrincipal implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
     }
 
     @Override

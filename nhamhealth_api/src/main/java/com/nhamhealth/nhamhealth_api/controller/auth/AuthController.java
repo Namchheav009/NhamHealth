@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -78,6 +80,14 @@ public class AuthController {
         } catch (MobileLoginNotAllowedException exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new AuthErrorResponse(exception.getMessage()));
+        } catch (DisabledException exception) {
+            loginAttemptService.recordFailure(request.email());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AuthErrorResponse("Account is not verified. Please verify your email or phone number before signing in."));
+        } catch (LockedException exception) {
+            loginAttemptService.recordFailure(request.email());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AuthErrorResponse("This account has been suspended. Please contact support."));
         } catch (AuthenticationException exception) {
             loginAttemptService.recordFailure(request.email());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

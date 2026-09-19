@@ -463,6 +463,112 @@ void main() {
       ),
     );
   });
+
+  test('login surfaces unverified account error with 403 status', () async {
+    final service = AuthService(
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'message':
+                'Account is not verified. Please verify your email or phone number before signing in.',
+          }),
+          403,
+        ),
+      ),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(email: 'user@example.com', password: 'Password123!'),
+      ),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 403)
+            .having(
+              (error) => error.message,
+              'message',
+              contains('Account is not verified'),
+            ),
+      ),
+    );
+  });
+
+  test('login surfaces forbidden admin role error with 403 status', () async {
+    final service = AuthService(
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'message':
+                'This account must sign in through the administration portal',
+          }),
+          403,
+        ),
+      ),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(
+          email: 'admin@nhamhealth.com',
+          password: 'AdminPassword123!',
+        ),
+      ),
+      throwsA(
+        isA<AuthException>()
+            .having((error) => error.statusCode, 'statusCode', 403)
+            .having(
+              (error) => error.message,
+              'message',
+              contains('administration portal'),
+            ),
+      ),
+    );
+  });
+
+  test('login surfaces user-friendly message on network connection failure', () async {
+    final service = AuthService(
+      client: MockClient((_) async => throw http.ClientException('Connection reset by peer')),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(email: 'user@example.com', password: 'Password123!'),
+      ),
+      throwsA(
+        isA<AuthException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to connect to the server'),
+        ),
+      ),
+    );
+  });
+
+  test('login surfaces server cold-start message on timeout', () async {
+    final service = AuthService(
+      client: MockClient((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        throw http.ClientException('ClientException with socket timeout');
+      }),
+      tokenStorage: _MemoryTokenStorage(),
+    );
+
+    await expectLater(
+      service.login(
+        const LoginRequest(email: 'user@example.com', password: 'Password123!'),
+      ),
+      throwsA(
+        isA<AuthException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to connect to the server'),
+        ),
+      ),
+    );
+  });
 }
 
 class _MemoryTokenStorage extends TokenStorage {

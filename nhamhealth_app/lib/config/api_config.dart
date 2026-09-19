@@ -7,7 +7,7 @@ abstract final class ApiConfig {
 
   static String get baseUrl {
     if (_configuredBaseUrl.isNotEmpty) {
-      final configured = _withoutTrailingSlash(_configuredBaseUrl);
+      final configured = withoutTrailingSlash(_configuredBaseUrl);
       final uri = Uri.tryParse(configured);
       if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
         throw StateError('API_BASE_URL must be an absolute URL.');
@@ -40,7 +40,7 @@ abstract final class ApiConfig {
     };
   }
 
-  static String _withoutTrailingSlash(String value) {
+  static String withoutTrailingSlash(String value) {
     return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
   }
 }

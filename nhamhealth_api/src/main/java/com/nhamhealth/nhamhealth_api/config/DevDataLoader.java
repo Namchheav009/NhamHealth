@@ -17,7 +17,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
 @Component
-@Profile("!supabase")
+@Profile("!supabase & !prod")
 public class DevDataLoader implements CommandLineRunner {
 
     private final RoleRepository roleRepository;

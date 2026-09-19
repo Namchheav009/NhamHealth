@@ -162,13 +162,18 @@ class LoginController extends GetxController {
   }
 
   void _handleLoginError(Object error) {
-    if (error is AuthException && error.statusCode == 401) {
-      credentialsInvalid.value = true;
-      submitError.value = 'The email/phone number or password is incorrect.';
+    if (error is AuthException) {
+      if (error.statusCode == 401) {
+        credentialsInvalid.value = true;
+        submitError.value = 'The email/phone number or password is incorrect.';
+        return;
+      }
+      credentialsInvalid.value = false;
+      submitError.value = error.message;
       return;
     }
-    submitError.value =
-        error is AuthException ? error.message : error.toString();
+    credentialsInvalid.value = false;
+    submitError.value = error.toString();
   }
 
   void _clearErrors() {

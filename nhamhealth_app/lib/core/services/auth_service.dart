@@ -13,7 +13,8 @@ import '../storage/token_storage.dart';
 import 'push_notification_service.dart';
 
 class AuthService {
-  static const _emailDeliveryTimeout = Duration(seconds: 30);
+  static const _authDeliveryTimeout = Duration(seconds: 60);
+  static const _emailDeliveryTimeout = Duration(seconds: 60);
 
   AuthService({http.Client? client, TokenStorage? tokenStorage})
     : _client = client ?? http.Client(),
@@ -26,7 +27,7 @@ class AuthService {
   Future<LoginResponse> login(LoginRequest request) => _authenticate(
     '/api/v1/auth/login',
     request.toJson(),
-    timeout: _emailDeliveryTimeout,
+    timeout: _authDeliveryTimeout,
   );
 
   Future<void> register(RegisterRequest request) async {
@@ -373,9 +374,8 @@ class AuthService {
           .timeout(timeout);
     } on TimeoutException {
       if (path == '/api/v1/auth/login') {
-        final identity = body['email'];
-        throw LoginOtpDeliveryPendingException(
-          identity is String ? identity.trim() : '',
+        throw const AuthException(
+          'The server took too long to respond (it may be waking up). Please wait a moment and try again.',
         );
       }
       final sendsEmail =
@@ -388,13 +388,27 @@ class AuthService {
         sendsEmail
             ? 'The server took too long while sending the verification email. '
                 'The code may still arrive; wait a moment, then try again.'
-            : 'The server did not respond in time. Check that the API is '
+            : 'The server took too long to respond (it may be waking up). Check that the API is '
                 'running and try again.',
       );
     } on http.ClientException {
       throw const AuthException(
-        'Could not connect to the server. Check that the API is running.',
+        'Unable to connect to the server. Please check your internet connection and try again.',
       );
+    } catch (e) {
+      if (e is TimeoutException || e is AuthException) rethrow;
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('socket') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('handshake') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('refused')) {
+        throw const AuthException(
+          'Unable to connect to the server. Please check your internet connection and try again.',
+        );
+      }
+      throw AuthException('An unexpected error occurred: $e');
     }
 
     Map<String, dynamic>? payload;
@@ -503,7 +517,7 @@ class AuthService {
 
     return switch (response.statusCode) {
       301 || 302 || 303 || 307 || 308 =>
-        'The API redirected the request to a web page. Restart the API '
+        'The API redirected the sign-in request to a web page. Restart the API '
             'and verify API_BASE_URL (${ApiConfig.baseUrl}).',
       400 =>
         isPasswordRecovery

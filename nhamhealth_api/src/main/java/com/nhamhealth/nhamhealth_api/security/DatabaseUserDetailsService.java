@@ -41,37 +41,29 @@ public class DatabaseUserDetailsService implements UserDetailsService {
         User user;
         if (isEmail) {
             user = userRepository.findByEmailIgnoreCase(raw)
-                    .filter(this::isEligible)
+                    .filter(this::hasPassword)
                     .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
         } else {
             String normalized = smsService.normalizePhoneNumber(raw);
             user = userRepository.findByPhoneNumber(normalized)
                     .or(() -> userRepository.findByPhoneNumber(raw))
-                    .filter(this::isEligible)
+                    .filter(this::hasPassword)
                     .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
+        }
+
+        if ("SUSPENDED".equalsIgnoreCase(user.getStatus())) {
+            boolean hasActive = !moderationActions.findActiveRestrictions(
+                    user.getUserId(), ModerationActionType.SUSPENDED, LocalDateTime.now()).isEmpty();
+            if (!hasActive) {
+                user.setStatus("ACTIVE");
+                userRepository.save(user);
+            }
         }
 
         return AppUserPrincipal.from(user);
     }
 
-    private boolean isEligible(User candidate) {
-        if (candidate.getPasswordHash() == null
-                || candidate.getPasswordHash().isBlank()
-                || !Boolean.TRUE.equals(candidate.getIsVerified())) {
-            return false;
-        }
-        if ("ACTIVE".equalsIgnoreCase(candidate.getStatus())) {
-            return true;
-        }
-        if ("SUSPENDED".equalsIgnoreCase(candidate.getStatus())) {
-            boolean hasActive = !moderationActions.findActiveRestrictions(
-                    candidate.getUserId(), ModerationActionType.SUSPENDED, LocalDateTime.now()).isEmpty();
-            if (!hasActive) {
-                candidate.setStatus("ACTIVE");
-                userRepository.save(candidate);
-                return true;
-            }
-        }
-        return false;
+    private boolean hasPassword(User candidate) {
+        return candidate.getPasswordHash() != null && !candidate.getPasswordHash().isBlank();
     }
 }

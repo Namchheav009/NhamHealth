@@ -23,7 +23,8 @@ class LoginResponse {
       tokenType: json['tokenType'] as String,
       expiresIn: (json['expiresIn'] as num).toInt(),
       refreshToken: json['refreshToken'] as String,
-      refreshExpiresIn: (json['refreshExpiresIn'] as num).toInt(),
+      refreshExpiresIn:
+          (json['refreshExpiresIn'] as num?)?.toInt() ?? 2592000,
       user: AuthenticatedUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
