@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/wellness/wellness_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../controllers/wellness/wellness_controller.dart';
 import 'wellness_nutrient_tile.dart';
 
 class WellnessDailySummaryCard extends GetView<WellnessController> {
@@ -32,12 +32,14 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                'wellness.your_daily_summary'.tr,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: context.appText,
+              Expanded(
+                child: Text(
+                  'wellness.your_daily_summary'.tr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: context.appText,
+                  ),
                 ),
               ),
             ],

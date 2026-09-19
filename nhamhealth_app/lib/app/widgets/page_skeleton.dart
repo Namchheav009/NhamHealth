@@ -23,6 +23,7 @@ enum PageSkeletonType {
   reports,
   reportDetail,
   aiFoodAnalysis,
+  aiFood,
   mealPlanner,
   plannerCategories,
   plannerMeals,
@@ -128,6 +129,11 @@ class PageSkeleton extends StatefulWidget {
     super.key,
     this.duration = const Duration(milliseconds: 1600),
   }) : type = PageSkeletonType.aiFoodAnalysis;
+
+  const PageSkeleton.aiFood({
+    super.key,
+    this.duration = const Duration(milliseconds: 1600),
+  }) : type = PageSkeletonType.aiFood;
 
   const PageSkeleton.mealPlanner({
     super.key,
@@ -260,6 +266,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.reports => const _ReportsPlaceholder(),
     PageSkeletonType.reportDetail => const _ReportDetailPlaceholder(),
     PageSkeletonType.aiFoodAnalysis => const _AiFoodAnalysisPlaceholder(),
+    PageSkeletonType.aiFood => const _AiFoodPagePlaceholder(),
     PageSkeletonType.mealPlanner => const _MealPlannerPlaceholder(),
     PageSkeletonType.plannerCategories => const _PlannerCategoriesPlaceholder(),
     PageSkeletonType.plannerMeals => const _PlannerMealsPlaceholder(),
@@ -1762,6 +1769,30 @@ class _AiFoodAnalysisPlaceholder extends StatelessWidget {
       _SkeletonCard(height: 160),
       SizedBox(height: 12),
       _SkeletonCard(height: 110),
+    ],
+  );
+}
+
+class _AiFoodPagePlaceholder extends StatelessWidget {
+  const _AiFoodPagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _SkeletonCard(height: 104),
+      SizedBox(height: 14),
+      _SkeletonCard(height: 240),
+      SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(child: _SkeletonBox(height: 48, radius: 14)),
+          SizedBox(width: 12),
+          Expanded(child: _SkeletonBox(height: 48, radius: 14)),
+        ],
+      ),
+      SizedBox(height: 14),
+      _SkeletonCard(height: 84),
     ],
   );
 }

@@ -8,6 +8,7 @@ const Map<String, String> commonKm = {
   'common.cancel': 'បោះបង់',
   'common.save': 'រក្សាទុក',
   'common.save_changes': 'រក្សាទុកការកែប្រែ',
+  'common.edit': 'កែប្រែ',
   'common.close': 'បិទ',
   'common.remove': 'លុបចេញ',
   'common.retry': 'ព្យាយាមម្តងទៀត',

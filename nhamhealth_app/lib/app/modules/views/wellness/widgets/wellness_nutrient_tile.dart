@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../models/wellness/wellness_summary_model.dart';
-import '../../../../theme/app_colors.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+
+import '../../../../theme/app_colors.dart';
+import '../../../models/wellness/wellness_summary_model.dart';
 
 class WellnessNutrientTile extends StatelessWidget {
   const WellnessNutrientTile({super.key, required this.item, this.onTap});
@@ -97,16 +98,21 @@ class WellnessNutrientTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  item.isLimit && item.percentage <= 100
-                      ? 'wellness.percent_left'.trParams({
-                        'value': '${100 - item.percentage}',
-                      })
-                      : '${item.percentage}%',
-                  style: TextStyle(
-                    color: item.color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 72),
+                  child: Text(
+                    item.isLimit && item.percentage <= 100
+                        ? 'wellness.percent_left'.trParams({
+                          'value': '${100 - item.percentage}',
+                        })
+                        : '${item.percentage}%',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: item.color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 if (onTap != null) ...[

@@ -35,6 +35,7 @@ abstract class AppRoutes {
 
   static const String aiMealAutoFill = '/wellness/ai-meal-auto-fill';
   static const String aiFood = '/wellness/ai-food';
+  static const String plateBreakdown = '/wellness/ai-food/plate-breakdown';
   static const String foodSourceDetail =
       '/wellness/calories/food-source-detail';
   static const String community = '/community';

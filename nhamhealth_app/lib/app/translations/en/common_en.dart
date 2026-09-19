@@ -8,6 +8,7 @@ const Map<String, String> commonEn = {
   'common.cancel': 'Cancel',
   'common.save': 'Save',
   'common.save_changes': 'Save Changes',
+  'common.edit': 'Edit',
   'common.close': 'Close',
   'common.remove': 'Remove',
   'common.retry': 'Retry',

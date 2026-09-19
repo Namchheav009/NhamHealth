@@ -93,6 +93,7 @@ flutter:
     - assets/images/auth/account_create.png
     - assets/images/homepage/profile.jpg
     - assets/images/homepage/image.png
+    - assets/images/homepage/AI-Food.png
     - assets/images/homepage/healthy_salad.png
     - assets/images/meals/healthy_salad.jpg
     - assets/images/meals/slideshow1.png

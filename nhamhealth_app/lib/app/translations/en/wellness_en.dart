@@ -45,7 +45,9 @@ const Map<String, String> wellnessEn = {
       'Unable to add water. Please try again.',
   'wellness.ai_food_check': 'AI Food Check',
   'wellness.take_photo': 'Take Photo',
-  'wellness.gallery': 'Gallery',
+  'wellness.gallery': 'Choose from Gallery',
+  'wellness.take_or_choose_food_photo': 'Take or choose a food photo',
+  'wellness.point_camera_at_meal': 'Point camera at your meal or beverage',
   'wellness.analyze_food_or_drink': 'Analyze Food or Drink',
   'wellness.tell_us_the_amount': 'Confirm Portion Size',
   'wellness.amount_before_analysis_help':
@@ -83,7 +85,6 @@ const Map<String, String> wellnessEn = {
   'wellness.adding': 'Adding...',
   'wellness.add_to_todays_food': 'Add to Today\'s Food',
   'wellness.add_to_todays_water': 'Add to Today\'s Water',
-  'wellness.know_what_you_eat_or_drink': 'Know what you eat or drink',
   'wellness.snap_a_clear_photo_for_instant_nutrition_insights':
       'Snap a clear photo for instant nutrition insights.',
   'wellness.use_camera_or_choose_from_gallery':
@@ -278,6 +279,8 @@ const Map<String, String> wellnessEn = {
   'wellness.sugar_normal': 'Standard Sugar (100%)',
   'wellness.sugar_extra': 'Extra Sweet (120%)',
   'wellness.plate_items': 'Plate Breakdown',
+  'wellness.view_plate_breakdown_desc':
+      'View and customize items on this plate',
   'wellness.detected_items_count': '@count items detected',
   'wellness.add_plate_item': 'Add Item',
   'wellness.plate_item_name': 'Item name',
@@ -295,4 +298,6 @@ const Map<String, String> wellnessEn = {
   'wellness.portion_regular_short': 'Plate',
   'wellness.portion_large_short': 'Large',
   'wellness.portion_xlarge_short': 'XL',
+  'wellness.edit_detected_food': 'Edit Detected Food',
+  'wellness.photography_tips': 'Photography Tips',
 };

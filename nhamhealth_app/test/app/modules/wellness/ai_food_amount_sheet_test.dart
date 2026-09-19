@@ -93,20 +93,19 @@ void main() {
       );
 
       // Verify cup sizes
-      expect(find.text('S'), findsOneWidget);
-      expect(find.text('M'), findsOneWidget);
-      expect(find.text('L'), findsOneWidget);
-      expect(find.text('Custom'), findsOneWidget);
+      expect(find.text('250 ml'), findsOneWidget);
+      expect(find.text('500 ml'), findsOneWidget);
+      expect(find.text('700 ml'), findsOneWidget);
+      expect(find.text('350 ml (Custom)'), findsOneWidget);
 
       // Verify sugar level section and chips
-      expect(find.text('Sugar level'), findsOneWidget);
+      expect(find.text('wellness.sugar_level'.tr), findsOneWidget);
       expect(find.text('0%'), findsOneWidget);
       expect(
         find.text('25%'),
         findsWidgets,
       ); // May appear in slider and sugar chips
       expect(find.text('50%'), findsWidgets);
-      expect(find.text('75%'), findsWidgets);
       expect(find.text('100%'), findsWidgets);
 
       // Verify volume to analyse preview
@@ -114,12 +113,12 @@ void main() {
       expect(find.text('175 ml'), findsOneWidget);
 
       // Tap sugar % chip 25%
-      await tester.tap(find.text('25%').last);
+      await tester.tap(find.text('25%').first);
       await tester.pumpAndSettle();
       expect(controller.drinkSugarPercentage.value, 25);
 
-      // Tap cup size L
-      await tester.tap(find.text('L'));
+      // Tap cup size 500 ml
+      await tester.tap(find.text('500 ml'));
       await tester.pumpAndSettle();
       expect(controller.drinkCupMl.value, 500);
     },

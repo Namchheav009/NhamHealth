@@ -47,7 +47,9 @@ const Map<String, String> wellnessKm = {
       'មិនអាចបន្ថែមទឹកបានទេ។ សូមព្យាយាមម្តងទៀត។',
   'wellness.ai_food_check': 'ពិនិត្យអាហារដោយ AI',
   'wellness.take_photo': 'ថតរូប',
-  'wellness.gallery': 'ជ្រើសរូបភាព',
+  'wellness.gallery': 'ជ្រើសរូបពីវិចិត្រសាល',
+  'wellness.take_or_choose_food_photo': 'ថតរូប ឬជ្រើសរើសរូបភាពម្ហូប',
+  'wellness.point_camera_at_meal': 'តម្រង់កាមេរ៉ាទៅកាន់ម្ហូប ឬភេសជ្ជៈរបស់អ្នក',
   'wellness.analyze_food_or_drink': 'វិភាគអាហារ ឬភេសជ្ជៈ',
   'wellness.tell_us_the_amount': 'កំណត់បរិមាណអាហារ',
   'wellness.amount_before_analysis_help':
@@ -86,7 +88,6 @@ const Map<String, String> wellnessKm = {
   'wellness.adding': 'កំពុងបន្ថែម...',
   'wellness.add_to_todays_food': 'បន្ថែមទៅអាហារថ្ងៃនេះ',
   'wellness.add_to_todays_water': 'បន្ថែមទៅទឹកថ្ងៃនេះ',
-  'wellness.know_what_you_eat_or_drink': 'ស្គាល់អ្វីដែលអ្នកញ៉ាំ និងផឹក',
   'wellness.snap_a_clear_photo_for_instant_nutrition_insights':
       'ថតរូបអាហារឱ្យច្បាស់ ដើម្បីទទួលព័ត៌មានអាហារូបត្ថម្ភភ្លាមៗ។',
   'wellness.use_camera_or_choose_from_gallery':
@@ -285,6 +286,7 @@ const Map<String, String> wellnessKm = {
   'wellness.sugar_normal': 'ស្ករធម្មតា (100%)',
   'wellness.sugar_extra': 'ផ្អែមខ្លាំង (120%)',
   'wellness.plate_items': 'មុខម្ហូបលើចាន',
+  'wellness.view_plate_breakdown_desc': 'មើល និងកែសម្រួលមុខម្ហូបលើចាននេះ',
   'wellness.detected_items_count': 'រកឃើញ @count មុខ',
   'wellness.add_plate_item': 'ថែមមុខម្ហូប',
   'wellness.plate_item_name': 'ឈ្មោះម្ហូប',
@@ -302,4 +304,8 @@ const Map<String, String> wellnessKm = {
   'wellness.portion_regular_short': 'ធម្មតា',
   'wellness.portion_large_short': 'ចានធំ',
   'wellness.portion_xlarge_short': 'ធំពិសេស',
+  'wellness.know_what_you_eat_live_healthier':
+      'ស្គាល់អ្វីដែលអ្នកញ៉ាំ រស់នៅជាមួយសុខភាពល្អ',
+  'wellness.edit_detected_food': 'កែប្រែអាហារដែលបានរកឃើញ',
+  'wellness.photography_tips': 'គន្លឹះថតរូបអាហារ',
 };

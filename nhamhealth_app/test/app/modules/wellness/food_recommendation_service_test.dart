@@ -14,7 +14,7 @@ void main() {
     );
 
     expect(result.type, FoodRecommendationType.warning);
-    expect(result.title, 'Confirm the Food First');
+    expect(result.title, 'wellness.confirm_food_first');
   });
 
   test('high protein meal receives positive macro guidance', () {
@@ -25,10 +25,10 @@ void main() {
     );
 
     expect(result.type, FoodRecommendationType.good);
-    expect(result.title, 'Strong Protein Choice');
+    expect(result.title, 'wellness.strong_protein_choice');
     expect(
       result.message,
-      'Provides about @protein g protein and fits your remaining calories. Add vegetables for fiber.',
+      'wellness.provides_about_protein_g_protein_and_fits_your_remaining_calories_add_vegetables_for_fiber',
     );
     expect(result.messageParams, {'protein': '32'});
   });

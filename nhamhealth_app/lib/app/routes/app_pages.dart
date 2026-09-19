@@ -1,68 +1,67 @@
 import 'package:get/get.dart';
 
-import '../modules/bindings/onboarding/onboarding_binding.dart';
-import '../modules/views/onboarding/onboarding_view.dart';
-import '../modules/bindings/splash/splash_binding.dart';
-import '../modules/views/splash/splash_view.dart';
-import '../modules/bindings/onboarding/choose_language_binding.dart';
-import '../modules/views/onboarding/choose_language_view.dart';
-import '../modules/views/auth/login_view.dart';
-import '../modules/views/auth/register_view.dart';
+import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/bindings/auth/login_binding.dart';
 import '../modules/bindings/auth/register_binding.dart';
-import '../modules/controllers/auth/account_created_controller.dart';
-import '../modules/views/auth/account_created_view.dart';
-import '../modules/bindings/home/home_binding.dart';
-import '../modules/views/home/home_view.dart';
-import '../modules/bindings/assistant/assistant_binding.dart';
-import '../modules/views/assistant/assistant_view.dart';
-import '../modules/bindings/meals/meal_binding.dart';
-import '../modules/bindings/meals/food_detail_binding.dart';
-import '../modules/views/meals/meal_view.dart';
-import '../modules/views/meals/food_detail_view.dart';
-import '../modules/bindings/planner/meal_planner_binding.dart';
-import '../modules/views/planner/meal_planner_view.dart';
-import '../modules/views/planner/meal_planner_flow_views.dart';
-import '../modules/views/notifications/notifications_view.dart';
-import '../modules/bindings/notifications/notifications_binding.dart';
+import '../modules/bindings/community/community_binding.dart';
+import '../modules/bindings/community/community_post_detail_binding.dart';
+import '../modules/bindings/community/community_report_binding.dart';
 import '../modules/bindings/favorites/favorites_binding.dart';
-import '../modules/views/favorites/favorites_view.dart';
-import '../modules/bindings/profile/profile_binding.dart';
+import '../modules/bindings/home/home_binding.dart';
+import '../modules/bindings/meals/food_detail_binding.dart';
+import '../modules/bindings/meals/meal_binding.dart';
+import '../modules/bindings/notifications/notifications_binding.dart';
+import '../modules/bindings/onboarding/choose_language_binding.dart';
+import '../modules/bindings/onboarding/onboarding_binding.dart';
+import '../modules/bindings/planner/meal_planner_binding.dart';
 import '../modules/bindings/profile/change_password_binding.dart';
-import '../modules/views/profile/change_password_view.dart';
-import '../modules/views/profile/profile_view.dart';
-import '../modules/views/profile/setting_view.dart';
-import '../modules/controllers/profile/setting_controller.dart';
 import '../modules/bindings/profile/language_binding.dart';
-import '../modules/views/profile/language_view.dart';
-
-import '../modules/bindings/wellness/wellness_binding.dart';
-import '../modules/views/wellness/wellness_view.dart';
-import '../modules/views/wellness/calories_view.dart';
-import '../modules/views/wellness/protein_view.dart';
-import '../modules/views/wellness/carbohydrates_view.dart';
-import '../modules/views/wellness/fat_view.dart';
-import '../modules/bindings/wellness/water_binding.dart';
-import '../modules/views/wellness/water_view.dart';
-import '../modules/views/wellness/fiber_view.dart';
-import '../modules/views/wellness/sugar_view.dart';
-import '../modules/views/wellness/ai_food_view.dart';
-import '../modules/views/wellness/ai_meal_auto_fill_view.dart';
+import '../modules/bindings/profile/profile_binding.dart';
+import '../modules/bindings/splash/splash_binding.dart';
 import '../modules/bindings/wellness/ai_food_binding.dart';
 import '../modules/bindings/wellness/ai_meal_auto_fill_binding.dart';
 import '../modules/bindings/wellness/calories_binding.dart';
-import '../modules/views/wellness/food_source_detail_view.dart';
 import '../modules/bindings/wellness/food_source_detail_binding.dart';
-
-import 'app_routes.dart';
+import '../modules/bindings/wellness/water_binding.dart';
+import '../modules/bindings/wellness/wellness_binding.dart';
+import '../modules/controllers/auth/account_created_controller.dart';
+import '../modules/controllers/profile/setting_controller.dart';
+import '../modules/views/assistant/assistant_view.dart';
+import '../modules/views/auth/account_created_view.dart';
+import '../modules/views/auth/login_view.dart';
+import '../modules/views/auth/register_view.dart';
 import '../modules/views/community/community_page.dart';
-import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/views/community/community_person_profile_view.dart';
+import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/views/community/community_report_page.dart';
-import '../modules/bindings/community/community_report_binding.dart';
-import '../modules/bindings/community/community_binding.dart';
-import '../modules/bindings/community/community_post_detail_binding.dart';
+import '../modules/views/favorites/favorites_view.dart';
+import '../modules/views/home/home_view.dart';
+import '../modules/views/meals/food_detail_view.dart';
+import '../modules/views/meals/meal_view.dart';
+import '../modules/views/notifications/notifications_view.dart';
+import '../modules/views/onboarding/choose_language_view.dart';
+import '../modules/views/onboarding/onboarding_view.dart';
+import '../modules/views/planner/meal_planner_flow_views.dart';
+import '../modules/views/planner/meal_planner_view.dart';
+import '../modules/views/profile/change_password_view.dart';
+import '../modules/views/profile/language_view.dart';
+import '../modules/views/profile/profile_view.dart';
+import '../modules/views/profile/setting_view.dart';
 import '../modules/views/recipes/my_recipes_view.dart';
+import '../modules/views/splash/splash_view.dart';
+import '../modules/views/wellness/ai_food_view.dart';
+import '../modules/views/wellness/ai_meal_auto_fill_view.dart';
+import '../modules/views/wellness/calories_view.dart';
+import '../modules/views/wellness/carbohydrates_view.dart';
+import '../modules/views/wellness/fat_view.dart';
+import '../modules/views/wellness/fiber_view.dart';
+import '../modules/views/wellness/food_source_detail_view.dart';
+import '../modules/views/wellness/plate_breakdown_view.dart';
+import '../modules/views/wellness/protein_view.dart';
+import '../modules/views/wellness/sugar_view.dart';
+import '../modules/views/wellness/water_view.dart';
+import '../modules/views/wellness/wellness_view.dart';
+import 'app_routes.dart';
 
 abstract class AppPages {
   AppPages._();
@@ -267,6 +266,11 @@ abstract class AppPages {
       name: AppRoutes.aiFood,
       page: () => const AiFoodView(),
       binding: AiFoodBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.plateBreakdown,
+      page: () => const PlateBreakdownView(),
       transition: Transition.rightToLeft,
     ),
 

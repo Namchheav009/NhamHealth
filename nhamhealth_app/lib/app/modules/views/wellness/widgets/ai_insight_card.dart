@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../theme/app_colors.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class AiInsightCard extends StatelessWidget {
   const AiInsightCard({super.key});
@@ -73,18 +73,22 @@ class AiInsightCard extends StatelessWidget {
                             border: Border.all(color: const Color(0xFFFFC7AA)),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.balance_rounded,
                                 color: Color(0xFFFF6A32),
                                 size: 14,
                               ),
-                              SizedBox(width: 4),
-                              Text(
-                                'wellness.needs_balance'.tr,
-                                style: const TextStyle(
-                                  color: Color(0xFFFF6A32),
-                                  fontSize: 9,
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'wellness.needs_balance'.tr,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF6A32),
+                                    fontSize: 9,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

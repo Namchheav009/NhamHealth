@@ -1,0 +1,494 @@
+import 'package:flutter/material.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+
+import '../../../../theme/app_colors.dart';
+import '../../../../widgets/app_alert.dart';
+import '../../../controllers/wellness/ai_food_controller.dart';
+
+class AiFoodDetectedFoodSheet extends StatefulWidget {
+  const AiFoodDetectedFoodSheet({super.key, required this.controller});
+
+  final AiFoodController controller;
+
+  @override
+  State<AiFoodDetectedFoodSheet> createState() =>
+      _AiFoodDetectedFoodSheetState();
+}
+
+class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
+  static const green = Color(0xFF00A651);
+  static const greenDark = Color(0xFF087A48);
+  static const greenLightBg = Color(0xFFEAF7EE);
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _customCuisineController;
+  late bool _isDrink;
+  late String _selectedCuisine;
+
+  final List<String> _commonCuisines = const [
+    'Khmer',
+    'Asian',
+    'Western',
+    'Italian',
+    'Healthy',
+    'Beverage',
+    'Dessert',
+    'Street Food',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: widget.controller.detectedFoodName,
+    );
+    _customCuisineController = TextEditingController();
+
+    _isDrink = widget.controller.inputKind.value == AiFoodInputKind.drink;
+
+    // Detect initial cuisine choice
+    final currentCuisine =
+        widget.controller.customCuisine.value ??
+        (widget.controller.nutrition.value?.cuisine != 'Unknown' &&
+                widget.controller.nutrition.value?.cuisine.isNotEmpty == true
+            ? widget.controller.nutrition.value!.cuisine
+            : (_isDrink ? 'Beverage' : 'Healthy'));
+
+    if (_commonCuisines.contains(currentCuisine)) {
+      _selectedCuisine = currentCuisine;
+    } else {
+      _selectedCuisine = 'Other';
+      _customCuisineController.text = currentCuisine;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _customCuisineController.dispose();
+    super.dispose();
+  }
+
+  void _onSave() {
+    final foodName = _nameController.text.trim();
+    if (foodName.isEmpty) {
+      AppAlert.toast(message: 'Please enter a food or drink name');
+      return;
+    }
+
+    final cuisine =
+        _selectedCuisine == 'Other'
+            ? (_customCuisineController.text.trim().isNotEmpty
+                ? _customCuisineController.text.trim()
+                : (_isDrink ? 'Beverage' : 'Healthy'))
+            : _selectedCuisine;
+
+    widget.controller.updateDetectedFood(
+      name: foodName,
+      cuisine: cuisine,
+      isDrink: _isDrink,
+    );
+
+    Navigator.of(context).pop(true);
+    AppAlert.toast(message: 'Detected food updated to $foodName');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: 620,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: context.appSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          // Drag handle
+          Container(
+            width: 42,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 20),
+                  _buildNameField(context),
+                  const SizedBox(height: 18),
+                  _buildTypeSelector(context),
+                  const SizedBox(height: 18),
+                  _buildCuisineSelector(context),
+                ],
+              ),
+            ),
+          ),
+          _buildActionButtons(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: context.appIsDark ? const Color(0xFF143021) : greenLightBg,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            _isDrink ? Icons.local_drink_rounded : Icons.lunch_dining_rounded,
+            color: green,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'wellness.edit_detected_food'.trOrSelf,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: context.appText,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Adjust name or category if AI detection needs correction.',
+                style: TextStyle(fontSize: 12, color: context.appMutedText),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close_rounded),
+          color: context.appMutedText,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameField(BuildContext context) {
+    final isDark = context.appIsDark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Food or Drink Name',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: context.appText,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _nameController,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: context.appText,
+          ),
+          decoration: InputDecoration(
+            hintText: 'e.g., Iced Latte, Chicken Rice',
+            hintStyle: TextStyle(color: context.appMutedText, fontSize: 14),
+            prefixIcon: const Icon(Icons.edit_note_rounded, color: green),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.clear_rounded, size: 18),
+              onPressed: () => _nameController.clear(),
+            ),
+            filled: true,
+            fillColor: isDark ? context.appSurfaceLow : const Color(0xFFF9FAFB),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: context.appBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: context.appBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: green, width: 1.8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeSelector(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Item Type',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: context.appText,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTypeOption(
+                label: 'Food / Meal',
+                icon: Icons.restaurant_rounded,
+                selected: !_isDrink,
+                onTap: () {
+                  setState(() {
+                    _isDrink = false;
+                    if (_selectedCuisine == 'Beverage') {
+                      _selectedCuisine = 'Healthy';
+                    }
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTypeOption(
+                label: 'Drink / Beverage',
+                icon: Icons.local_drink_rounded,
+                selected: _isDrink,
+                onTap: () {
+                  setState(() {
+                    _isDrink = true;
+                    _selectedCuisine = 'Beverage';
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeOption({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.appIsDark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? (isDark ? const Color(0xFF143021) : greenLightBg)
+                    : (isDark
+                        ? context.appSurfaceLow
+                        : const Color(0xFFF9FAFB)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? green : context.appBorder,
+              width: selected ? 1.8 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: selected ? green : context.appMutedText,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? greenDark : context.appText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCuisineSelector(BuildContext context) {
+    final isDark = context.appIsDark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cuisine / Category',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: context.appText,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ..._commonCuisines.map((c) {
+              final isSel = _selectedCuisine == c;
+              return ChoiceChip(
+                label: Text(c),
+                selected: isSel,
+                onSelected: (_) {
+                  setState(() => _selectedCuisine = c);
+                },
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                  color:
+                      isSel
+                          ? (isDark ? Colors.white : greenDark)
+                          : context.appText,
+                ),
+                selectedColor:
+                    isDark ? const Color(0xFF1B4D31) : const Color(0xFFD1FAE5),
+                backgroundColor:
+                    isDark ? context.appSurfaceLow : const Color(0xFFF3F4F6),
+                side: BorderSide(color: isSel ? green : context.appBorder),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              );
+            }),
+            ChoiceChip(
+              label: const Text('Other'),
+              selected: _selectedCuisine == 'Other',
+              onSelected: (_) {
+                setState(() => _selectedCuisine = 'Other');
+              },
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight:
+                    _selectedCuisine == 'Other'
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                color:
+                    _selectedCuisine == 'Other'
+                        ? (isDark ? Colors.white : greenDark)
+                        : context.appText,
+              ),
+              selectedColor:
+                  isDark ? const Color(0xFF1B4D31) : const Color(0xFFD1FAE5),
+              backgroundColor:
+                  isDark ? context.appSurfaceLow : const Color(0xFFF3F4F6),
+              side: BorderSide(
+                color: _selectedCuisine == 'Other' ? green : context.appBorder,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ],
+        ),
+        if (_selectedCuisine == 'Other') ...[
+          const SizedBox(height: 10),
+          TextField(
+            controller: _customCuisineController,
+            style: TextStyle(fontSize: 14, color: context.appText),
+            decoration: InputDecoration(
+              hintText: 'Enter custom category (e.g., Mexican, Bakery)',
+              hintStyle: TextStyle(color: context.appMutedText, fontSize: 13),
+              filled: true,
+              fillColor:
+                  isDark ? context.appSurfaceLow : const Color(0xFFF9FAFB),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: context.appBorder),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      decoration: BoxDecoration(
+        color: context.appSurface,
+        border: Border(top: BorderSide(color: context.appBorder)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.appMutedText,
+                side: BorderSide(color: context.appBorder),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text('common.cancel'.trOrSelf),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: _onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: green,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                'Save Changes',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

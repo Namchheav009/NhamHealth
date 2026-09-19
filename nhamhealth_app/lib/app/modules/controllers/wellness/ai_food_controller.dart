@@ -51,6 +51,8 @@ class AiFoodController extends GetxController {
   final isUserConfirmed = false.obs;
   final selectedImage = Rxn<File>();
   final detection = Rxn<FoodDetectionModel>();
+  final customFoodName = RxnString();
+  final customCuisine = RxnString();
   final prediction = Rxn<FoodPredictionModel>();
   final nutrition = Rxn<FoodNutritionModel>();
   final recommendation = Rxn<FoodRecommendationModel>();
@@ -491,7 +493,7 @@ class AiFoodController extends GetxController {
       (!nutrition.value!.needsUserConfirmation || isUserConfirmed.value);
 
   bool get hasCompleteResult =>
-      prediction.value != null && nutrition.value != null;
+      nutrition.value != null && nutrition.value!.foodDetected;
 
   Future<void> confirmFood() async {
     final food = nutrition.value;
@@ -662,6 +664,8 @@ class AiFoodController extends GetxController {
 
   void clearResult() {
     detection.value = null;
+    customFoodName.value = null;
+    customCuisine.value = null;
     _clearAnalysisResult();
   }
 
@@ -675,6 +679,100 @@ class AiFoodController extends GetxController {
     errorMessageParams.clear();
     wasAdded.value = false;
     isUserConfirmed.value = false;
+  }
+
+  void updateDetectedFood({
+    required String name,
+    String? cuisine,
+    bool? isDrink,
+  }) {
+    final cleanName = name.trim();
+    if (cleanName.isNotEmpty) {
+      customFoodName.value = cleanName;
+    }
+    if (cuisine != null && cuisine.trim().isNotEmpty) {
+      customCuisine.value = cuisine.trim();
+    }
+    if (isDrink != null) {
+      inputKind.value = isDrink ? AiFoodInputKind.drink : AiFoodInputKind.food;
+    }
+    final det = detection.value;
+    if (det != null) {
+      detection.value = FoodDetectionModel(
+        foodDetected: true,
+        reason: det.reason,
+        mealName: cleanName.isNotEmpty ? cleanName : det.mealName,
+        type: (isDrink ?? det.isDrink) ? 'drink' : 'food',
+        requiresDrinkDetails: isDrink ?? det.requiresDrinkDetails,
+        confidence: det.confidence > 0 ? det.confidence : 1.0,
+      );
+    }
+  }
+
+  List<String> get foodTags {
+    final food = nutrition.value ?? _baseNutrition;
+    if (food == null) return const [];
+    final tags = <String>{};
+    if (food.cuisine != 'Unknown' && food.cuisine.trim().isNotEmpty) {
+      tags.add(food.cuisine.trim());
+    }
+    if (food.mealType != 'food' && food.mealType.trim().isNotEmpty) {
+      tags.add(food.mealType.capitalizeFirst ?? food.mealType);
+    }
+    for (final c in food.components) {
+      final name = c.name.trim();
+      if (name.isNotEmpty && !tags.contains(name)) {
+        tags.add(name);
+      }
+    }
+    for (final p in plateItems) {
+      final name = p.name.trim();
+      if (name.isNotEmpty && !tags.contains(name)) {
+        tags.add(name);
+      }
+    }
+    if (tags.isEmpty) {
+      tags.addAll(['Healthy', 'Nutrition']);
+    }
+    return tags.take(5).toList();
+  }
+
+  String get detectedFoodName {
+    if (customFoodName.value != null &&
+        customFoodName.value!.trim().isNotEmpty) {
+      return customFoodName.value!.trim();
+    }
+    final det = detection.value;
+    if (det != null && det.mealName.isNotEmpty) {
+      return det.mealName;
+    }
+    final nut = nutrition.value ?? _baseNutrition;
+    if (nut != null) {
+      return nut.mealName.isNotEmpty ? nut.mealName : nut.name;
+    }
+    return 'Shrimp Fettuccine Alfredo';
+  }
+
+  String get detectedCuisine {
+    if (customCuisine.value != null && customCuisine.value!.trim().isNotEmpty) {
+      final type = inputKind.value == AiFoodInputKind.drink ? 'Drink' : 'Dish';
+      return '${customCuisine.value!.trim()} • $type';
+    }
+    final nut = nutrition.value ?? _baseNutrition;
+    if (nut != null && nut.cuisine != 'Unknown' && nut.cuisine.isNotEmpty) {
+      return '${nut.cuisine} • ${nut.mealType == 'drink' ? 'Drink' : 'Pasta'}';
+    }
+    final det = detection.value;
+    if (det != null) {
+      return det.isDrink ? 'Beverage • Drink' : 'Italian • Pasta';
+    }
+    return 'Italian • Pasta';
+  }
+
+  void selectCandidate(String candidateName) {
+    if (nutrition.value == null) return;
+    nutrition.value = nutrition.value!.copyWith(name: candidateName);
+    isUserConfirmed.value = true;
   }
 
   void _publishPrediction(FoodNutritionModel food) {
