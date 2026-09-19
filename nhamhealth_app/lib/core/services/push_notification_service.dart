@@ -244,8 +244,13 @@ class PushNotificationService {
   String? _absoluteImageUrl(String? value) {
     final imageUrl = value?.trim();
     if (imageUrl == null || imageUrl.isEmpty) return null;
-    if (imageUrl.startsWith('/')) return '${ApiConfig.baseUrl}$imageUrl';
-    return imageUrl;
+    if (imageUrl.startsWith('http://') ||
+        imageUrl.startsWith('https://') ||
+        imageUrl.startsWith('file://')) {
+      return imageUrl;
+    }
+    final separator = imageUrl.startsWith('/') ? '' : '/';
+    return '${ApiConfig.baseUrl}$separator$imageUrl';
   }
 
   void _openNativeNotification(Object? rawArguments) {

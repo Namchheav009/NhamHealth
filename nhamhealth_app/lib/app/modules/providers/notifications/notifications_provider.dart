@@ -20,8 +20,12 @@ class NotificationsProvider {
     return payload.map((item) {
       final json = Map<String, dynamic>.from(item as Map);
       final avatarUrl = (json['actorAvatarUrl'] as String? ?? '').trim();
-      if (avatarUrl.startsWith('/')) {
-        json['actorAvatarUrl'] = '${ApiConfig.baseUrl}$avatarUrl';
+      if (avatarUrl.isNotEmpty &&
+          !avatarUrl.startsWith('http://') &&
+          !avatarUrl.startsWith('https://') &&
+          !avatarUrl.startsWith('file://')) {
+        final separator = avatarUrl.startsWith('/') ? '' : '/';
+        json['actorAvatarUrl'] = '${ApiConfig.baseUrl}$separator$avatarUrl';
       }
       return NotificationItem.fromJson(json);
     }).toList();

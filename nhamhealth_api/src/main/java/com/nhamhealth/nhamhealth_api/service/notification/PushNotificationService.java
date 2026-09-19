@@ -83,7 +83,8 @@ public class PushNotificationService {
         var notifBuilder = com.google.firebase.messaging.Notification.builder()
                 .setTitle(title)
                 .setBody(message);
-        if (avatarUrl != null && !avatarUrl.isBlank()) {
+        if (avatarUrl != null && !avatarUrl.isBlank()
+                && (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://"))) {
             notifBuilder.setImage(avatarUrl);
         }
 
@@ -144,9 +145,14 @@ public class PushNotificationService {
         data.put("referenceId", notification.getReferenceId() == null ? "" : notification.getReferenceId().toString());
 
         if (notification.getActorUser() != null) {
-            String actorName = notification.getActorUser().getName();
-            if (actorName != null && !actorName.isBlank()) {
-                data.put("subText", actorName);
+            String action = actionLabel(notification.getMessage(), notification.getReferenceType());
+            if (action != null && !action.isBlank()) {
+                data.put("subText", action);
+            } else {
+                String actorName = notification.getActorUser().getName();
+                if (actorName != null && !actorName.isBlank() && !actorName.equalsIgnoreCase(notification.getTitle())) {
+                    data.put("subText", actorName);
+                }
             }
             if (profilesProvider != null) {
                 var profiles = profilesProvider.getIfAvailable();
@@ -163,7 +169,10 @@ public class PushNotificationService {
                 .setTitle(notification.getTitle())
                 .setBody(notification.getMessage());
         if (data.containsKey("avatarUrl")) {
-            notifBuilder.setImage(data.get("avatarUrl"));
+            String avatar = data.get("avatarUrl");
+            if (avatar != null && (avatar.startsWith("http://") || avatar.startsWith("https://"))) {
+                notifBuilder.setImage(avatar);
+            }
         }
 
         for (var device : devices.findByUserUserId(notification.getUser().getUserId())) {
@@ -190,6 +199,25 @@ public class PushNotificationService {
                 }
             }
         }
+    }
+
+    private String actionLabel(String message, String referenceType) {
+        if (message == null)
+            return null;
+        String m = message.toLowerCase();
+        if (m.contains("liked"))
+            return "Like";
+        if (m.contains("commented"))
+            return "Comment";
+        if (m.contains("replied"))
+            return "Reply";
+        if (m.contains("shared"))
+            return "Share";
+        if (m.contains("following") || m.contains("followed"))
+            return "Follow";
+        if (m.contains("friend") || m.contains("invitation"))
+            return "Friend";
+        return null;
     }
 
     private String value(String value) {

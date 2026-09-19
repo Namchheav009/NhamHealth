@@ -118,11 +118,8 @@ class PlannerMealImage extends StatelessWidget {
         fit: BoxFit.cover,
         fadeInDuration: const Duration(milliseconds: 150),
         placeholder:
-            (_, _) => PageSkeleton.box(
-              width: width,
-              height: height ?? 60,
-              radius: radius,
-            ),
+            (_, _) =>
+                PageSkeleton.box(width: width, height: height, radius: radius),
         errorWidget: (_, _, _) => _buildFallback(theme, context),
       );
     }
