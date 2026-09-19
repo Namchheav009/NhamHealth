@@ -96,8 +96,8 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
     public GeminiFoodNutritionEstimationService(
             @Value("${app.ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${app.ai.gemini.api-key:}") String apiKey,
-            @Value("${app.ai.gemini.nutrition-model:${app.ai.gemini.model:gemini-3.5-flash}}") String model,
-            @Value("${app.ai.gemini.nutrition-fallback-model:${app.ai.gemini.fallback-model:gemini-3.7-flash}}") String fallbackModel,
+            @Value("${app.ai.gemini.nutrition-model:${app.ai.gemini.model:gemini-3.5-flash-lite}}") String model,
+            @Value("${app.ai.gemini.nutrition-fallback-model:${app.ai.gemini.fallback-model:gemini-3.6-flash}}") String fallbackModel,
             @Value("${app.ai.gemini.text-max-tokens:8192}") int maxTokens,
             @Autowired(required = false) NvidiaFoodNutritionEstimationService nvidiaFallback,
             GeminiRateLimitGuard rateLimitGuard) {
@@ -143,9 +143,9 @@ public class GeminiFoodNutritionEstimationService implements FoodNutritionEstima
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.client = RestClient.builder().requestFactory(requestFactory).build();
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "gemini-3.5-flash" : model.trim();
+        this.model = model == null || model.isBlank() ? "gemini-3.5-flash-lite" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
-                ? "gemini-3.7-flash"
+                ? "gemini-3.6-flash"
                 : fallbackModel.trim();
         this.maxTokens = Math.max(1_200, Math.min(maxTokens, 8_192));
         this.mapper = mapper;

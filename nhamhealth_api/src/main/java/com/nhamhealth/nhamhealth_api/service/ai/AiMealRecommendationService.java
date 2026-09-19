@@ -1,8 +1,8 @@
 package com.nhamhealth.nhamhealth_api.service.ai;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,12 +33,12 @@ import com.nhamhealth.nhamhealth_api.entity.Mood;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationItemRepository;
 import com.nhamhealth.nhamhealth_api.repository.ai.AiRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealFavoriteRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.MoodRepository;
 
 @Service
 public class AiMealRecommendationService {
@@ -101,8 +101,8 @@ public class AiMealRecommendationService {
             AiUserHealthProfileService userHealthProfileService,
             @Value("${app.ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${app.ai.gemini.api-key:}") String apiKey,
-            @Value("${app.ai.gemini.recommendation-model:${app.ai.gemini.model:gemini-3.7-flash}}") String model,
-            @Value("${app.ai.gemini.recommendation-fallback-model:${app.ai.gemini.fallback-model:gemini-3.5-flash}}") String fallbackModel,
+            @Value("${app.ai.gemini.recommendation-model:${app.ai.gemini.model:gemini-3.5-flash-lite}}") String model,
+            @Value("${app.ai.gemini.recommendation-fallback-model:${app.ai.gemini.fallback-model:gemini-3.6-flash}}") String fallbackModel,
             @Value("${app.ai.gemini.text-max-tokens:4096}") int textMaxTokens,
             GeminiRateLimitGuard rateLimitGuard) {
         this.recommendationRepository = recommendationRepository;
@@ -124,14 +124,18 @@ public class AiMealRecommendationService {
         this.mapper = new ObjectMapper();
         this.baseUrl = baseUrl == null ? "" : baseUrl.trim();
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "gemini-3.7-flash" : model.trim();
+        this.model = model == null || model.isBlank() ? "gemini-3.5-flash-lite" : model.trim();
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank()
-                ? "gemini-3.5-flash" : fallbackModel.trim();
+                ? "gemini-3.6-flash"
+                : fallbackModel.trim();
         this.textMaxTokens = Math.max(1_200, Math.min(textMaxTokens, 8_192));
         this.rateLimitGuard = rateLimitGuard;
     }
 
-    /** Test-compatible constructor retained for callers that supplied the old reasoning budget. */
+    /**
+     * Test-compatible constructor retained for callers that supplied the old
+     * reasoning budget.
+     */
     AiMealRecommendationService(
             AiRecommendationRepository recommendationRepository,
             AiRecommendationItemRepository itemRepository,
@@ -172,7 +176,8 @@ public class AiMealRecommendationService {
                     : recommendationRepository
                             .findFirstByUserUserIdAndMoodMoodIdAndStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
                                     userId, moodId, "ready", LocalDate.now().atStartOfDay());
-            if (existing.isPresent() && hasPublishedItems(existing.get())) return existing;
+            if (existing.isPresent() && hasPublishedItems(existing.get()))
+                return existing;
             if (existing.isPresent()) {
                 log.info("Ignoring empty or stale recommendation {} and generating a replacement",
                         existing.get().getRecommendationId());
@@ -196,8 +201,10 @@ public class AiMealRecommendationService {
         catalog.forEach(meal -> mealsById.put(meal.getMealId(), meal));
         LinkedHashMap<Integer, String> selected = new LinkedHashMap<>();
         for (MealChoice choice : decision.mealIds()) {
-            if (mealsById.containsKey(choice.id())) selected.putIfAbsent(choice.id(), choice.reason());
-            if (selected.size() == targetCount) break;
+            if (mealsById.containsKey(choice.id()))
+                selected.putIfAbsent(choice.id(), choice.reason());
+            if (selected.size() == targetCount)
+                break;
         }
         if (selected.size() < targetCount) {
             ModelDecision fallback = fallbackDecision(mood, catalog, context);
@@ -205,7 +212,8 @@ public class AiMealRecommendationService {
                 if (mealsById.containsKey(choice.id())) {
                     selected.putIfAbsent(choice.id(), choice.reason());
                 }
-                if (selected.size() == targetCount) break;
+                if (selected.size() == targetCount)
+                    break;
             }
         }
 
@@ -246,7 +254,8 @@ public class AiMealRecommendationService {
     }
 
     private ModelDecision askModel(Mood mood, List<Meal> meals, RecommendationContext context) {
-        if (apiKey == null || apiKey.isBlank()) return null;
+        if (apiKey == null || apiKey.isBlank())
+            return null;
         if (!rateLimitGuard.isCallAllowed()) {
             log.info("Skipping Gemini meal ranking during rate-limit cooldown ({}s remaining); "
                     + "using deterministic fallback", rateLimitGuard.remainingSeconds());
@@ -261,8 +270,8 @@ public class AiMealRecommendationService {
                     "category", meal.getCategory().getCategoryName(),
                     "calories", meal.getCaloriesCached() == null ? 0 : meal.getCaloriesCached(),
                     "proteinGrams", meal.getProteinGramsCached() == null ? 0 : meal.getProteinGramsCached(),
-                    "cookingMinutes", meal.getCookingTimeMinutes() == null ? 0 : meal.getCookingTimeMinutes()
-            )).toList();
+                    "cookingMinutes", meal.getCookingTimeMinutes() == null ? 0 : meal.getCookingTimeMinutes()))
+                    .toList();
             String input = mapper.writeValueAsString(Map.of(
                     "targetCount", targetCount,
                     "minimumCount", Math.min(MIN_RECOMMENDATIONS, targetCount),
@@ -314,12 +323,14 @@ public class AiMealRecommendationService {
                     + responseError.getStatusText();
         }
         String message = error.getMessage();
-        if (message == null || message.isBlank()) return error.getClass().getSimpleName();
+        if (message == null || message.isBlank())
+            return error.getClass().getSimpleName();
         return message.length() <= 180 ? message : message.substring(0, 180) + "...";
     }
 
     private ModelDecision requestModelDecision(String input, String targetModel, int attempt) throws Exception {
-        String retryInstruction = attempt == 1 ? "" : "\nYour previous response was invalid or truncated. Return one compact, complete JSON object only.";
+        String retryInstruction = attempt == 1 ? ""
+                : "\nYour previous response was invalid or truncated. Return one compact, complete JSON object only.";
         String prompt = RANKING_SYSTEM_PROMPT
                 + "\n\nRank meals using this JSON data:\n" + input + retryInstruction;
         Map<String, Object> body = Map.of(
@@ -372,7 +383,8 @@ public class AiMealRecommendationService {
         result.path("meals").forEach(node -> {
             int id = node.path("id").asInt(0);
             String reason = node.path("reason").asText("").trim();
-            if (id > 0 && !reason.isBlank()) choices.add(new MealChoice(id, reason));
+            if (id > 0 && !reason.isBlank())
+                choices.add(new MealChoice(id, reason));
         });
         if (choices.isEmpty()) {
             throw new IllegalArgumentException("The model response contains no valid meal choices.");
@@ -395,12 +407,16 @@ public class AiMealRecommendationService {
         int targetCount = Math.min(MAX_RECOMMENDATIONS, meals.size());
         for (Meal meal : ranked) {
             Integer categoryId = meal.getCategory().getCategoryId();
-            if (usedCategories.add(categoryId)) diverse.add(meal);
-            if (diverse.size() == targetCount) break;
+            if (usedCategories.add(categoryId))
+                diverse.add(meal);
+            if (diverse.size() == targetCount)
+                break;
         }
         for (Meal meal : ranked) {
-            if (diverse.size() == targetCount) break;
-            if (!diverse.contains(meal)) diverse.add(meal);
+            if (diverse.size() == targetCount)
+                break;
+            if (!diverse.contains(meal))
+                diverse.add(meal);
         }
         List<MealChoice> choices = diverse.stream().map(meal -> new MealChoice(
                 meal.getMealId(), fallbackReason(meal, mood, context, lowEnergy))).toList();
@@ -424,8 +440,10 @@ public class AiMealRecommendationService {
                 double remaining = Math.max(0,
                         total.getGoalAmount().doubleValue() - total.getConsumedAmount().doubleValue());
                 String nutrient = total.getNutrient().getNutrientName().toLowerCase();
-                if (nutrient.contains("calorie")) remainingCalories = remaining;
-                if (nutrient.contains("protein")) remainingProtein = remaining;
+                if (nutrient.contains("calorie"))
+                    remainingCalories = remaining;
+                if (nutrient.contains("protein"))
+                    remainingProtein = remaining;
             }
         }
         return new RecommendationContext(healthProfile, remainingCalories, remainingProtein, favoriteIds);
@@ -435,17 +453,21 @@ public class AiMealRecommendationService {
         double protein = meal.getProteinGramsCached() == null ? 0 : meal.getProteinGramsCached().doubleValue();
         double calories = meal.getCaloriesCached() == null ? 0 : meal.getCaloriesCached().doubleValue();
         double score = protein * (context.remainingProteinGrams() > 0 ? 2.5 : 1.4);
-        if (lowEnergy) score += calories * 0.025;
+        if (lowEnergy)
+            score += calories * 0.025;
         if (context.remainingCalories() > 0 && calories > 0) {
             double bmi = context.healthProfile().bmi() == null
-                    ? 0 : context.healthProfile().bmi().doubleValue();
+                    ? 0
+                    : context.healthProfile().bmi().doubleValue();
             double upperMealEnergy = bmi >= 25 ? 550 : bmi > 0 && bmi < 18.5 ? 750 : 700;
             double usefulPortion = Math.min(upperMealEnergy,
                     Math.max(250, context.remainingCalories() * 0.45));
             score -= Math.abs(calories - usefulPortion) * 0.018;
         }
-        if (context.favoriteMealIds().contains(meal.getMealId())) score += 10;
-        if (meal.getCookingTimeMinutes() != null && meal.getCookingTimeMinutes() <= 30) score += 4;
+        if (context.favoriteMealIds().contains(meal.getMealId()))
+            score += 10;
+        if (meal.getCookingTimeMinutes() != null && meal.getCookingTimeMinutes() <= 30)
+            score += 4;
         return score;
     }
 
@@ -460,7 +482,8 @@ public class AiMealRecommendationService {
             return "Adds " + meal.getProteinGramsCached().stripTrailingZeros().toPlainString()
                     + " g protein toward today's remaining goal.";
         }
-        if (lowEnergy) return "Provides practical energy for a " + mood.getMoodName() + " day.";
+        if (lowEnergy)
+            return "Provides practical energy for a " + mood.getMoodName() + " day.";
         if (context.healthProfile().bmi() != null) {
             String protein = meal.getProteinGramsCached() == null ? "available nutrition"
                     : meal.getProteinGramsCached().stripTrailingZeros().toPlainString() + " g protein";
@@ -492,7 +515,8 @@ public class AiMealRecommendationService {
     }
 
     private String limit(String value, int maxLength) {
-        if (value == null || value.isBlank()) return "Selected for your mood.";
+        if (value == null || value.isBlank())
+            return "Selected for your mood.";
         return value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 
@@ -503,17 +527,23 @@ public class AiMealRecommendationService {
                 int status = providerError.getStatusCode().value();
                 return status == 401 || status == 403;
             }
-            if (current.getCause() == current) break;
+            if (current.getCause() == current)
+                break;
             current = current.getCause();
         }
         return false;
     }
 
-    private record MealChoice(Integer id, String reason) {}
-    private record ModelDecision(String summary, List<MealChoice> mealIds) {}
+    private record MealChoice(Integer id, String reason) {
+    }
+
+    private record ModelDecision(String summary, List<MealChoice> mealIds) {
+    }
+
     private record RecommendationContext(
             AiUserHealthProfile healthProfile,
             double remainingCalories,
             double remainingProteinGrams,
-            List<Integer> favoriteMealIds) {}
+            List<Integer> favoriteMealIds) {
+    }
 }

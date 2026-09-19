@@ -1,22 +1,22 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
-import '../../../widgets/favorite_removal_confirmation.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
-import '../../models/auth/authenticated_user_model.dart';
-import '../../services/auth/google_auth_service.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
+import '../../../widgets/favorite_removal_confirmation.dart';
+import '../../models/auth/authenticated_user_model.dart';
+import '../../models/home/daily_summary_model.dart';
 import '../../models/home/home_dashboard_model.dart';
 import '../../models/home/home_route_arguments.dart';
-import '../../models/home/daily_summary_model.dart';
-import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/mood_model.dart';
+import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/recommended_meal_model.dart';
 import '../../models/meals/meal_model.dart';
 import '../../repositories/home/home_repository.dart';
+import '../../services/auth/google_auth_service.dart';
 
 class HomeController extends GetxController {
   HomeController({required this.repository, this.realtimeEvents});

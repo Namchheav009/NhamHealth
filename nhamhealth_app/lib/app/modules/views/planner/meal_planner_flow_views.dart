@@ -2347,7 +2347,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: context.appElevatedSurface,
       borderRadius: BorderRadius.circular(24),
@@ -2367,51 +2367,43 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
-                    vertical: 4,
+                    vertical: 2,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            controller.planDaysCount.value == 7 &&
-                                    controller.customStartDate.value == null &&
-                                    controller.weekOffset.value == 0
-                                ? 'planner.this_week'.tr
-                                : (controller.planDaysCount.value == 7
-                                    ? 'planner.selected_week'.tr
-                                    : 'planner.plan_days'.trParams({
-                                      'days':
-                                          '${controller.planDaysCount.value}',
-                                    })),
-                            style: TextStyle(
-                              color: context.appMutedText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'planner.selected_week'.tr,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.calendar_month_rounded,
-                            size: 13,
-                            color: AppColors.primaryGreen,
-                          ),
-                          if (controller.weekOffset.value != 0 ||
-                              controller.customStartDate.value != null) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.calendar_month_rounded,
+                              size: 13,
+                              color: AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 8),
                             InkWell(
                               onTap: () => controller.goToToday(),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 1.5,
+                                  horizontal: 8,
+                                  vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryGreen.withValues(
-                                    alpha: 0.14,
+                                    alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -2419,42 +2411,43 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                   'planner.today'.tr,
                                   style: const TextStyle(
                                     color: AppColors.primaryGreen,
-                                    fontSize: 10,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 3),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
                               _range(
                                 controller.weekStart,
                                 controller.weekDays.last,
                               ),
                               textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: context.appText,
-                                fontSize: 15,
+                                fontSize: 15.5,
                                 fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 2),
-                          Icon(
-                            Icons.arrow_drop_down_rounded,
-                            size: 18,
-                            color: context.appMutedText,
-                          ),
-                        ],
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_drop_down_rounded,
+                              size: 20,
+                              color: context.appMutedText,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -2464,75 +2457,88 @@ class _PlannerFlowWeekCard extends StatelessWidget {
             _flowWeekArrow(context, Icons.chevron_right_rounded, 1),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         Row(
           children: [
-            Icon(Icons.tune_rounded, size: 14, color: context.appMutedText),
-            const SizedBox(width: 5),
-            Text(
-              'planner.duration'.tr,
-              style: TextStyle(
-                color: context.appMutedText,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune_rounded, size: 14, color: context.appMutedText),
+                const SizedBox(width: 5),
+                Text(
+                  'planner.duration'.tr,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children:
-                    [3, 4, 5, 6, 7].map((days) {
-                      final isSelected = controller.planDaysCount.value == days;
-                      return InkWell(
-                        key: ValueKey('flow-duration-$days'),
-                        onTap: () => controller.setPlanDaysCount(days),
-                        borderRadius: BorderRadius.circular(10),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primaryGreen
-                                    : context.appBackground,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color:
-                                  isSelected
-                                      ? AppColors.primaryGreen
-                                      : context.appBorder.withValues(
-                                        alpha: 0.7,
-                                      ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children:
+                        [3, 4, 5, 6, 7].map((days) {
+                          final isSelected =
+                              controller.planDaysCount.value == days;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: InkWell(
+                              key: ValueKey('flow-duration-$days'),
+                              onTap: () => controller.setPlanDaysCount(days),
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? AppColors.primaryGreen
+                                          : context.appBackground,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? AppColors.primaryGreen
+                                            : context.appBorder.withValues(
+                                              alpha: 0.65,
+                                            ),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$days${'planner.days_short'.tr}',
+                                  style: TextStyle(
+                                    color:
+                                        isSelected
+                                            ? Colors.white
+                                            : context.appText,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            '$days${'planner.days_short'.tr}',
-                            style: TextStyle(
-                              color:
-                                  isSelected ? Colors.white : context.appText,
-                              fontSize: 11.5,
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        }).toList(),
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Divider(height: 1, color: context.appBorder.withValues(alpha: 0.65)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         SizedBox(
-          height: 62,
+          height: 72,
           child:
               controller.weekDays.length <= 5
                   ? Row(
@@ -2552,15 +2558,18 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                         'planner.sat',
                         'planner.sun',
                       ];
+                      final gap = controller.weekDays.length <= 3 ? 12.0 : 8.0;
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(
                             right:
-                                index == controller.weekDays.length - 1 ? 0 : 6,
+                                index == controller.weekDays.length - 1
+                                    ? 0
+                                    : gap,
                           ),
                           child: InkWell(
                             onTap: () => controller.selectDay(index),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
                               decoration: BoxDecoration(
@@ -2568,15 +2577,27 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                     selected
                                         ? AppColors.primaryGreen
                                         : context.appBackground,
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color:
                                       selected
                                           ? AppColors.primaryGreen
                                           : context.appBorder.withValues(
-                                            alpha: 0.65,
+                                            alpha: 0.6,
                                           ),
+                                  width: 1.0,
                                 ),
+                                boxShadow:
+                                    selected
+                                        ? [
+                                          BoxShadow(
+                                            color: AppColors.primaryGreen
+                                                .withValues(alpha: 0.28),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                        : null,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -2588,12 +2609,15 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                           selected
                                               ? Colors.white
                                               : context.appMutedText,
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.3,
+                                      fontSize: 11,
+                                      fontWeight:
+                                          selected
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                      height: 1.2,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 3),
                                   Text(
                                     '${date.day}',
                                     style: TextStyle(
@@ -2601,21 +2625,22 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                           selected
                                               ? Colors.white
                                               : context.appText,
-                                      fontSize: 15,
+                                      fontSize: 17,
                                       fontWeight: FontWeight.w800,
-                                      height: 1.2,
+                                      height: 1.15,
                                     ),
                                   ),
+                                  const SizedBox(height: 5),
                                   Container(
-                                    width: 4,
-                                    height: 4,
+                                    width: 4.5,
+                                    height: 4.5,
                                     decoration: BoxDecoration(
                                       color:
-                                          selected
-                                              ? Colors.white
-                                              : (hasMeals
-                                                  ? AppColors.primaryGreen
-                                                  : Colors.transparent),
+                                          hasMeals
+                                              ? (selected
+                                                  ? Colors.white
+                                                  : AppColors.primaryGreen)
+                                              : Colors.transparent,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -2631,7 +2656,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     itemCount: controller.weekDays.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 7),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, index) {
                       final date = controller.weekDays[index];
                       final selected =
@@ -2648,24 +2673,36 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       ];
                       return InkWell(
                         onTap: () => controller.selectDay(index),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(18),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
-                          width: 58,
+                          width: 60,
                           decoration: BoxDecoration(
                             color:
                                 selected
                                     ? AppColors.primaryGreen
                                     : context.appBackground,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color:
                                   selected
                                       ? AppColors.primaryGreen
                                       : context.appBorder.withValues(
-                                        alpha: 0.65,
+                                        alpha: 0.6,
                                       ),
+                              width: 1.0,
                             ),
+                            boxShadow:
+                                selected
+                                    ? [
+                                      BoxShadow(
+                                        color: AppColors.primaryGreen
+                                            .withValues(alpha: 0.28),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                    : null,
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -2677,32 +2714,36 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                                       selected
                                           ? Colors.white
                                           : context.appMutedText,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.3,
+                                  fontSize: 11,
+                                  fontWeight:
+                                      selected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                  height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 3),
                               Text(
                                 '${date.day}',
                                 style: TextStyle(
                                   color:
                                       selected ? Colors.white : context.appText,
-                                  fontSize: 15,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.w800,
-                                  height: 1.2,
+                                  height: 1.15,
                                 ),
                               ),
+                              const SizedBox(height: 5),
                               Container(
-                                width: 4,
-                                height: 4,
+                                width: 4.5,
+                                height: 4.5,
                                 decoration: BoxDecoration(
                                   color:
-                                      selected
-                                          ? Colors.white
-                                          : (hasMeals
-                                              ? AppColors.primaryGreen
-                                              : Colors.transparent),
+                                      hasMeals
+                                          ? (selected
+                                              ? Colors.white
+                                              : AppColors.primaryGreen)
+                                          : Colors.transparent,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -2962,13 +3003,20 @@ class _PlannerFlowWeekCard extends StatelessWidget {
   }
 
   Widget _flowWeekArrow(BuildContext context, IconData icon, int amount) =>
-      IconButton(
-        onPressed: () => controller.changeWeek(amount),
-        icon: Icon(icon),
-        color: context.appText,
-        style: IconButton.styleFrom(
-          backgroundColor: context.appBackground,
-          shape: const CircleBorder(),
+      InkWell(
+        onTap: () => controller.changeWeek(amount),
+        borderRadius: BorderRadius.circular(99),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: context.appBackground,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: context.appBorder.withValues(alpha: 0.55),
+            ),
+          ),
+          child: Center(child: Icon(icon, size: 20, color: context.appText)),
         ),
       );
 }

@@ -457,6 +457,15 @@ class AiFoodController extends GetxController {
     }
   }
 
+  Future<void> confirmAndAddFoodToToday() async {
+    final food = nutrition.value;
+    if (food == null || isSaving.value || wasAdded.value) return;
+    if (food.needsUserConfirmation && !isUserConfirmed.value) {
+      await confirmFood();
+    }
+    await addFoodToToday();
+  }
+
   bool get canAddFood =>
       nutrition.value != null &&
       nutrition.value!.hasCompleteNutrition &&

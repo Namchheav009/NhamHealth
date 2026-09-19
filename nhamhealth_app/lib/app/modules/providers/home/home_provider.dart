@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../repositories/profile/profile_repository.dart';
 import '../../models/home/daily_summary_model.dart';
 import '../../models/home/home_dashboard_model.dart';
 import '../../models/home/mood_model.dart';
 import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/recommended_meal_model.dart';
+import '../../repositories/profile/profile_repository.dart';
 
 class HomeProvider {
   HomeProvider({

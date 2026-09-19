@@ -4,14 +4,15 @@ import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/services/notification_realtime_event.dart';
 import '../../../../core/services/app_security_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/privacy_auth_dialog.dart';
 import '../../models/auth/authenticated_user_model.dart';
-import '../../models/community/community_post.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_person.dart';
 import '../../models/community/community_person_profile.dart';
+import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/community/community_repository.dart';
@@ -20,7 +21,6 @@ import '../../views/profile/edit_profile_view.dart';
 import '../../views/profile/security_view.dart';
 import 'edit_profile_controller.dart';
 import 'setting_controller.dart';
-import '../../../widgets/privacy_auth_dialog.dart';
 
 class ProfileController extends GetxController {
   ProfileController({
@@ -34,6 +34,7 @@ class ProfileController extends GetxController {
   final ProfileRepository _repository;
   final CommunityRepository _communityRepository;
   final Stream<NotificationRealtimeEvent>? _realtimeEvents;
+
   String? _uploadedProfileImagePath;
   final selectedNavIndex = 4.obs;
   final isLoading = false.obs;

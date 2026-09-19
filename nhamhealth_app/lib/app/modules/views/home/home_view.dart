@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../../widgets/scroll_aware_scaffold.dart';
-import '../../../routes/app_routes.dart';
 import '../../controllers/home/home_controller.dart';
 import 'widgets/ai_recommendation_card.dart';
 import 'widgets/daily_summary_card.dart';

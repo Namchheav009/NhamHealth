@@ -1,6 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../routes/app_routes.dart';
@@ -24,7 +25,6 @@ import 'widgets/health_stats_card.dart';
 import 'widgets/insight_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/profile_post_card.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -182,14 +182,18 @@ class ProfileView extends GetView<ProfileController> {
                           onShare: () => _showShare(post),
                           onSharedPostTap:
                               post.sharedPost != null
-                                  ? () => _showComments(post.sharedPost!.toPost())
+                                  ? () =>
+                                      _showComments(post.sharedPost!.toPost())
                                   : null,
                           onSharedAuthorTap:
-                              (post.sharedPost != null && post.sharedPost!.authorId > 0)
+                              (post.sharedPost != null &&
+                                      post.sharedPost!.authorId > 0)
                                   ? () => Get.toNamed<void>(
-                                        AppRoutes.communityPersonProfilePath(post.sharedPost!.authorId),
-                                        arguments: post.sharedPost!.toPost(),
-                                      )
+                                    AppRoutes.communityPersonProfilePath(
+                                      post.sharedPost!.authorId,
+                                    ),
+                                    arguments: post.sharedPost!.toPost(),
+                                  )
                                   : null,
                         ),
                       ),
@@ -543,7 +547,8 @@ class ProfileView extends GetView<ProfileController> {
 }
 
 class ProfileContentTabs extends StatelessWidget {
-  const ProfileContentTabs({super.key,
+  const ProfileContentTabs({
+    super.key,
     required this.selectedIndex,
     required this.onChanged,
   });

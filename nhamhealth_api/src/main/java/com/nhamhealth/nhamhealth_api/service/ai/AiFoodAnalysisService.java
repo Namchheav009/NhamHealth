@@ -177,21 +177,33 @@ public class AiFoodAnalysisService {
                                         List.copyOf(calculated), FoodNutritionEstimationResult.empty());
                 }
 
+                FoodNutritionEstimationResult estimation = FoodNutritionEstimationResult.empty();
                 try {
-                        FoodNutritionEstimationResult estimation = nutritionEstimationProvider
+                        estimation = nutritionEstimationProvider
                                         .estimate(List.copyOf(pendingComponents));
                         for (var estimate : estimation.components()) {
-                                int originalIndex = pendingIndexes.get(estimate.index());
-                                calculated.set(originalIndex, calculationService.applyAiEstimate(
-                                                calculated.get(originalIndex), estimate));
+                                if (estimate.index() >= 0 && estimate.index() < pendingIndexes.size()) {
+                                        int originalIndex = pendingIndexes.get(estimate.index());
+                                        calculated.set(originalIndex, calculationService.applyAiEstimate(
+                                                        calculated.get(originalIndex), estimate));
+                                }
                         }
-                        return new ComponentEnrichment(List.copyOf(calculated), estimation);
                 } catch (RuntimeException error) {
-                        log.warn("AI nutrition fallback was unavailable; returning an incomplete result: {}",
+                        log.warn("AI nutrition provider was unavailable; falling back to heuristic nutrition estimation: {}",
                                         safeMessage(error));
-                        return new ComponentEnrichment(
-                                        List.copyOf(calculated), FoodNutritionEstimationResult.empty());
                 }
+
+                // If any components remain UNAVAILABLE (due to provider failure or partial
+                // return),
+                // apply heuristic estimation so nutrition is complete and user is not blocked.
+                for (int index = 0; index < calculated.size(); index++) {
+                        if (calculated.get(index).nutritionSource() == NutritionSource.UNAVAILABLE) {
+                                calculated.set(index, calculationService.estimateFallback(
+                                                calculated.get(index), detected.get(index)));
+                        }
+                }
+
+                return new ComponentEnrichment(List.copyOf(calculated), estimation);
         }
 
         private AiFoodAnalysisResponse buildResponse(

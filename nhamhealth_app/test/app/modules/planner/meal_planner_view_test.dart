@@ -160,8 +160,8 @@ void main() {
         ),
       );
 
-      // Initial state: "Detail" and 7 days
-      expect(find.text('Detail'), findsOneWidget);
+      // Initial state: "Selected week" and 7 days
+      expect(find.text('Selected week'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('planner-week-picker-button')),
         findsOneWidget,

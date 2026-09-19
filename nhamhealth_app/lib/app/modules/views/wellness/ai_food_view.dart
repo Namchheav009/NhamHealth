@@ -395,15 +395,27 @@ class AiFoodView extends GetView<AiFoodController> {
                                     : 'Added to Today'
                                 : controller.isSaving.value
                                 ? 'Adding...'
+                                : controller
+                                        .nutrition
+                                        .value!
+                                        .needsUserConfirmation &&
+                                    !controller.isUserConfirmed.value
+                                ? controller.nutrition.value!.isPlainWaterOnly
+                                    ? 'Confirm & Add Water'
+                                    : 'Confirm & Add to Today'
                                 : controller.nutrition.value!.isPlainWaterOnly
                                 ? "Add to Today's Water"
                                 : "Add to Today's Food",
                         action:
                             controller.isSaving.value ||
                                     controller.wasAdded.value ||
-                                    !controller.canAddFood
+                                    controller.nutrition.value == null ||
+                                    !controller
+                                        .nutrition
+                                        .value!
+                                        .hasNutritionEstimate
                                 ? null
-                                : controller.addFoodToToday,
+                                : controller.confirmAndAddFoodToToday,
                         style:
                             controller.wasAdded.value
                                 ? _ButtonStyle.success

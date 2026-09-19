@@ -8,23 +8,28 @@
       "default": true
     }
   ],
-  "java.compile.nullAnalysis.mode": "automatic",
-  "cmake.ignoreCMakeListsMissing": true,
-  "java.import.exclusions": [
-    "**/.dart_tool/**",
-    "**/build/**",
-    "**/.m2-repository/**",
-    "**/nhamhealth_app/**"
-  ],
+  "java.compile.nullAnalysis.mode": "disabled",
+  "java.jdt.ls.lombokSupport.enabled": true,
+  "java.autobuild.enabled": true,
+  "java.project.importOnFirstTimeStartup": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true,
   "java.import.gradle.enabled": false,
   "gradle.autoDetect": "off",
   "gradle.nestedProjects": false,
+  "cmake.ignoreCMakeListsMissing": true,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/.dart_tool/**",
+    "**/build/**",
+    "**/.m2-repository/**",
+    "**/nhamhealth_app/**",
+    "**/nhamhealth_scraper/**"
+  ],
   "files.exclude": {
     "**/.dart_tool": true,
     "**/build": true,
-    "**/target": true,
     "**/.m2-repository": true,
     ".m2": true,
     ".dart_appdata": true
@@ -41,4 +46,3 @@
     "*.gradle": "groovy"
   }
 }
-

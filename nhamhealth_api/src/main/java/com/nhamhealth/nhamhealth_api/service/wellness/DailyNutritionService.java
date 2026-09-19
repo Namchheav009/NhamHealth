@@ -14,10 +14,10 @@ import com.nhamhealth.nhamhealth_api.entity.DailyNutrientTotal;
 import com.nhamhealth.nhamhealth_api.entity.DailyWellnessSummary;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
 import com.nhamhealth.nhamhealth_api.entity.User;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
-import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.NutrientRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyNutrientTotalRepository;
+import com.nhamhealth.nhamhealth_api.repository.wellness.DailyWellnessSummaryRepository;
 
 @Service
 public class DailyNutritionService {
@@ -73,7 +73,8 @@ public class DailyNutritionService {
 
     private void addAmount(DailyWellnessSummary summary, List<DailyNutrientTotal> totals,
             String name, String unit, int order, BigDecimal amount, BigDecimal defaultGoal) {
-        if (amount == null || amount.signum() == 0) return;
+        if (amount == null || amount.signum() == 0)
+            return;
         Nutrient nutrient = nutrientRepository.findByNutrientNameIgnoreCase(name)
                 .orElseGet(() -> createNutrient(name, unit, order));
         DailyNutrientTotal total = totals.stream()
@@ -100,9 +101,9 @@ public class DailyNutritionService {
         DailyNutrientTotal total = new DailyNutrientTotal();
         total.setDailyWellnessSummary(summary);
         total.setNutrient(nutrient);
-        total.setConsumedAmount(BigDecimal.ZERO);
         total.setGoalAmount(goal);
+        total.setConsumedAmount(BigDecimal.ZERO);
         total.setPercentage(BigDecimal.ZERO);
-        return total;
+        return totalRepository.save(total);
     }
 }
