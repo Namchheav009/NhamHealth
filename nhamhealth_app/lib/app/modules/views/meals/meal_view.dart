@@ -78,9 +78,7 @@ class MealView extends GetView<MealController> {
                           ),
                           child: Obx(
                             () => LoadingContentTransition(
-                              isLoading:
-                                  controller.isLoading.value &&
-                                  controller.meals.isEmpty,
+                              isLoading: controller.isLoading.value,
                               loading: const PageSkeleton.meals(),
                               content: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,12 +143,7 @@ class MealView extends GetView<MealController> {
     return Obx(() {
       final meals = controller.filteredMeals;
       if (controller.isLoading.value && controller.meals.isEmpty) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Center(
-            child: CircularProgressIndicator(color: AppColors.primaryGreen),
-          ),
-        );
+        return const PageSkeleton.allMeals();
       }
       final error = controller.errorMessage.value;
       if (error != null && controller.meals.isEmpty) {

@@ -6,6 +6,7 @@ import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
+import 'visual_portion_selector.dart';
 
 class AiFoodAmountSheet extends StatefulWidget {
   const AiFoodAmountSheet({super.key, required this.controller});
@@ -317,29 +318,67 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          'wellness.quick_select'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            const Icon(Icons.restaurant_menu_rounded, size: 16, color: green),
+            const SizedBox(width: 7),
+            Text(
+              'wellness.choose_plate_size'.tr,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            _quickFoodChip(context, label: '1/4', value: 0.25),
-            const SizedBox(width: 7),
-            _quickFoodChip(context, label: '1/2', value: 0.5),
-            const SizedBox(width: 7),
-            _quickFoodChip(context, label: '1', value: 1.0),
-            const SizedBox(width: 7),
-            _quickFoodChip(context, label: '1.5', value: 1.5),
-            const SizedBox(width: 7),
-            _quickFoodChip(context, label: '2', value: 2.0),
+            _portionSizeChip(
+              context,
+              label: '1/4',
+              shortName: 'wellness.portion_quarter_short'.tr,
+              icon: Icons.eco_outlined,
+              value: 0.25,
+            ),
+            const SizedBox(width: 6),
+            _portionSizeChip(
+              context,
+              label: '1/2',
+              shortName: 'wellness.portion_small_short'.tr,
+              icon: Icons.rice_bowl_outlined,
+              value: 0.5,
+            ),
+            const SizedBox(width: 6),
+            _portionSizeChip(
+              context,
+              label: '1',
+              shortName: 'wellness.portion_regular_short'.tr,
+              icon: Icons.dinner_dining_outlined,
+              value: 1.0,
+            ),
+            const SizedBox(width: 6),
+            _portionSizeChip(
+              context,
+              label: '1.5',
+              shortName: 'wellness.portion_large_short'.tr,
+              icon: Icons.ramen_dining_outlined,
+              value: 1.5,
+            ),
+            const SizedBox(width: 6),
+            _portionSizeChip(
+              context,
+              label: '2',
+              shortName: 'wellness.portion_xlarge_short'.tr,
+              icon: Icons.set_meal_outlined,
+              value: 2.0,
+            ),
           ],
         ),
+        const SizedBox(height: 10),
+        _portionDetailBanner(context, selectedAmount),
         const SizedBox(height: 18),
         _previewBox(
           context,
@@ -356,9 +395,11 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
     );
   }
 
-  Widget _quickFoodChip(
+  Widget _portionSizeChip(
     BuildContext context, {
     required String label,
+    required String shortName,
+    required IconData icon,
     required double value,
   }) {
     final isSelected =
@@ -367,31 +408,164 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
     return Expanded(
       child: Material(
         color: isSelected ? _selectedSurface(context) : context.appSurfaceLow,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () => _onQuickFoodAmountSelected(value),
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            height: 44,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 56,
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected ? green : context.appBorder,
-                width: isSelected ? 1.5 : 1,
+                width: isSelected ? 2.0 : 1.0,
               ),
             ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? green : context.appText,
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 14,
+                      color: isSelected ? green : context.appMutedText,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: isSelected ? green : context.appText,
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.w800 : FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  shortName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color:
+                        isSelected
+                            ? (context.appIsDark
+                                ? const Color(0xFF5EE09A)
+                                : greenDark)
+                            : context.appMutedText,
+                    fontSize: 10.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _portionDetailBanner(BuildContext context, double currentAmount) {
+    final detail = _portionDetailFor(currentAmount);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color:
+            context.appIsDark
+                ? green.withValues(alpha: .12)
+                : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: green.withValues(alpha: context.appIsDark ? .3 : .25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: green.withValues(alpha: .15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(detail.$1, size: 20, color: greenDark),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  detail.$2,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: greenDark,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail.$3,
+                  style: TextStyle(fontSize: 11.5, color: context.appMutedText),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  (IconData, String, String) _portionDetailFor(double amount) {
+    if ((amount - 0.25).abs() < 0.05) {
+      return (
+        Icons.eco_outlined,
+        'wellness.portion_quarter'.tr,
+        'wellness.portion_quarter_desc'.tr,
+      );
+    }
+    if ((amount - 0.5).abs() < 0.1) {
+      return (
+        Icons.rice_bowl_outlined,
+        'wellness.portion_small'.tr,
+        'wellness.portion_small_desc'.tr,
+      );
+    }
+    if ((amount - 1.0).abs() < 0.15) {
+      return (
+        Icons.dinner_dining_outlined,
+        'wellness.portion_regular'.tr,
+        'wellness.portion_regular_desc'.tr,
+      );
+    }
+    if ((amount - 1.5).abs() < 0.2) {
+      return (
+        Icons.ramen_dining_outlined,
+        'wellness.portion_large'.tr,
+        'wellness.portion_large_desc'.tr,
+      );
+    }
+    if ((amount - 2.0).abs() < 0.25) {
+      return (
+        Icons.set_meal_outlined,
+        'wellness.portion_xlarge'.tr,
+        'wellness.portion_xlarge_desc'.tr,
+      );
+    }
+    return (
+      Icons.straighten_rounded,
+      'wellness.custom'.tr,
+      '${_formatAmount(amount)} ${widget.controller.foodUnit.value.trOrSelf}',
     );
   }
 
@@ -402,61 +576,43 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
     final photo = widget.controller.selectedImage.value;
     final selectedSugar = widget.controller.drinkSugarPercentage.value;
 
-    final isCustomCup = cupMl != 250.0 && cupMl != 350.0 && cupMl != 500.0;
+    final isCustomCup = cupMl != 250.0 && cupMl != 500.0 && cupMl != 700.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'wellness.cup_size'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
+        VisualPortionSelector(
+          isDrink: true,
+          selectedAmount: cupMl,
+          drinkSugarPercentage: selectedSugar,
+          baseCalories: widget.controller.estimatedCalories,
+          onFoodAmountChanged: (_) {},
+          onDrinkCupChanged: (ml) {
+            widget.controller.setDrinkCupMl(ml);
+          },
+          onDrinkSugarChanged: (sugar) {
+            widget.controller.setDrinkSugarPercentage(sugar);
+          },
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _cupSizeCard(
-              context,
-              sizeCode: 'S',
-              volumeLabel: '250 ml',
-              isSelected: !isCustomCup && cupMl == 250.0,
-              icon: Icons.local_bar_outlined,
-              onTap: () => widget.controller.setDrinkCupMl(250.0),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => _showCustomCupDialog(context),
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: Text(
+              isCustomCup
+                  ? '${cupMl.round()} ml (${'wellness.custom'.tr})'
+                  : 'wellness.enter_custom_cup_size'.tr,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isCustomCup ? greenDark : context.appMutedText,
+              ),
             ),
-            const SizedBox(width: 8),
-            _cupSizeCard(
-              context,
-              sizeCode: 'M',
-              volumeLabel: '350 ml',
-              isSelected: !isCustomCup && cupMl == 350.0,
-              icon: Icons.local_drink_rounded,
-              onTap: () => widget.controller.setDrinkCupMl(350.0),
-            ),
-            const SizedBox(width: 8),
-            _cupSizeCard(
-              context,
-              sizeCode: 'L',
-              volumeLabel: '500 ml',
-              isSelected: !isCustomCup && cupMl == 500.0,
-              icon: Icons.coffee_outlined,
-              onTap: () => widget.controller.setDrinkCupMl(500.0),
-            ),
-            const SizedBox(width: 8),
-            _cupSizeCard(
-              context,
-              sizeCode:
-                  isCustomCup ? '${cupMl.round()}ml' : 'wellness.custom'.tr,
-              volumeLabel: isCustomCup ? 'wellness.custom'.tr : '',
-              isSelected: isCustomCup,
-              icon: Icons.edit_outlined,
-              onTap: () => _showCustomCupDialog(context),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Text(
           'wellness.how_much_did_you_drink'.tr,
           style: TextStyle(
@@ -505,63 +661,6 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
           ),
         ),
         const SizedBox(height: 18),
-        Text(
-          'wellness.sugar_level'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children:
-              [0, 25, 50, 75, 100].map((sugar) {
-                final isSelected = selectedSugar == sugar;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: sugar == 100 ? 0 : 7),
-                    child: Material(
-                      color:
-                          isSelected
-                              ? _selectedSurface(context)
-                              : context.appSurfaceLow,
-                      borderRadius: BorderRadius.circular(10),
-                      child: InkWell(
-                        onTap:
-                            () => widget.controller.setDrinkSugarPercentage(
-                              sugar,
-                            ),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          height: 40,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isSelected ? green : context.appBorder,
-                              width: isSelected ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Text(
-                            '$sugar%',
-                            style: TextStyle(
-                              color: isSelected ? green : context.appText,
-                              fontSize: 12,
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-        ),
-        const SizedBox(height: 18),
         _previewBox(
           context,
           photo: photo,
@@ -582,76 +681,6 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
           }),
         ),
       ],
-    );
-  }
-
-  Widget _cupSizeCard(
-    BuildContext context, {
-    required String sizeCode,
-    required String volumeLabel,
-    required bool isSelected,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: Material(
-        color: isSelected ? _selectedSurface(context) : context.appSurfaceLow,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 90,
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? green : context.appBorder,
-                width: isSelected ? 1.5 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 26,
-                  color: isSelected ? green : context.appMutedText,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  sizeCode,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected ? green : context.appText,
-                  ),
-                ),
-                if (volumeLabel.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    volumeLabel,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isSelected
-                              ? _accentText(context)
-                              : context.appMutedText,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

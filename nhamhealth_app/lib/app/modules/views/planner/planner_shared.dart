@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../config/api_config.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_back_header.dart';
+import '../../../widgets/page_skeleton.dart';
 import '../../models/planner/meal_plan.dart';
 
 String plannerImageUrl(String value) {
@@ -117,19 +118,10 @@ class PlannerMealImage extends StatelessWidget {
         fit: BoxFit.cover,
         fadeInDuration: const Duration(milliseconds: 150),
         placeholder:
-            (_, _) => Container(
+            (_, _) => PageSkeleton.box(
               width: width,
-              height: height,
-              color:
-                  context.appIsDark
-                      ? theme.soft.withValues(alpha: 0.12)
-                      : theme.soft,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: theme.accent,
-                ),
-              ),
+              height: height ?? 60,
+              radius: radius,
             ),
         errorWidget: (_, _, _) => _buildFallback(theme, context),
       );

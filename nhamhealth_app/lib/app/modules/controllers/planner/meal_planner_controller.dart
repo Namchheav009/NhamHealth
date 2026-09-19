@@ -38,6 +38,8 @@ class MealPlannerController extends GetxController {
   final isSaving = false.obs;
   final errorMessage = ''.obs;
   final recommendationsError = ''.obs;
+  final hasLoadedOnce = false.obs;
+  final hasLoadedRecommendationsOnce = false.obs;
 
   @override
   void onInit() {
@@ -179,6 +181,8 @@ class MealPlannerController extends GetxController {
   double get planProgress =>
       planMealCount / (planDaysCount.value * dailyMealGoal);
   bool get planIsEmpty => planMealCount == 0;
+  bool get plansAreEmpty =>
+      plans.isEmpty || plans.values.every((list) => list.isEmpty);
 
   int get weeklyMealCount => planMealCount;
   double get weeklyProgress => planProgress;
@@ -255,6 +259,7 @@ class MealPlannerController extends GetxController {
       recommendationsError.value = 'planner.recommendations_error'.tr;
     } finally {
       isLoadingRecommendations.value = false;
+      hasLoadedRecommendationsOnce.value = true;
     }
   }
 
@@ -303,6 +308,7 @@ class MealPlannerController extends GetxController {
       errorMessage.value = 'planner.load_error'.tr;
     } finally {
       isLoading.value = false;
+      hasLoadedOnce.value = true;
     }
   }
 

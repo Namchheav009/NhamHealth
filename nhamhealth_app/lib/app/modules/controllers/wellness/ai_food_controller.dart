@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,6 +11,7 @@ import '../../models/wellness/food_detection_model.dart';
 import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_prediction_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
+import '../../models/wellness/plate_item_model.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
 import '../../services/wellness/food_ai_service.dart';
@@ -61,6 +63,7 @@ class AiFoodController extends GetxController {
   final drinkCupMl = 350.0.obs;
   final drinkConsumedFraction = 1.0.obs;
   final drinkSugarPercentage = 100.obs;
+  final plateItems = <PlateItemState>[].obs;
   int _scanGeneration = 0;
   FoodNutritionModel? _baseNutrition;
 
@@ -288,6 +291,7 @@ class AiFoodController extends GetxController {
       _syncInputKindFrom(food);
       final adjustedFood = _applySelectedAmount(food);
       _publishPrediction(adjustedFood);
+      _initPlateFrom(adjustedFood);
       final localGuidance = recommendationService.create(
         food: adjustedFood,
         currentCalories: caloriesController.currentCalories.value,
@@ -343,6 +347,7 @@ class AiFoodController extends GetxController {
         _syncInputKindFrom(localNutrition);
         final adjustedFood = _applySelectedAmount(localNutrition);
         nutrition.value = adjustedFood;
+        _initPlateFrom(adjustedFood);
         prediction.value = FoodPredictionModel(
           foodName: adjustedFood.name,
           confidence: localPrediction.confidence.clamp(0, 1),
@@ -419,13 +424,27 @@ class AiFoodController extends GetxController {
                 : '${recommendation.value!.title}: ${recommendation.value!.message}',
       );
       if (!food.isPlainWaterOnly) {
-        caloriesController.addFoodSource(
-          mealType: _mealTypeNow(),
-          foodName: food.name,
-          calories: food.calories.round(),
-          closeSheet: false,
-          showMessage: false,
-        );
+        final activeItems = plateItems.where((i) => i.isSelected).toList();
+        if (activeItems.length > 1) {
+          for (final item in activeItems) {
+            caloriesController.addFoodSource(
+              mealType: _mealTypeNow(),
+              foodName: item.name,
+              calories: item.calories.round(),
+              closeSheet: false,
+              showMessage: false,
+            );
+          }
+        } else {
+          caloriesController.addFoodSource(
+            mealType: _mealTypeNow(),
+            foodName:
+                activeItems.isNotEmpty ? activeItems.first.name : food.name,
+            calories: food.calories.round(),
+            closeSheet: false,
+            showMessage: false,
+          );
+        }
       }
       wellnessController.showSavedNutrition(savedDashboard, date: today);
       if (Get.isRegistered<HomeController>()) {
@@ -648,6 +667,7 @@ class AiFoodController extends GetxController {
 
   void _clearAnalysisResult() {
     _baseNutrition = null;
+    plateItems.clear();
     prediction.value = null;
     nutrition.value = null;
     recommendation.value = null;
@@ -672,6 +692,7 @@ class AiFoodController extends GetxController {
     if (baseFood == null) return;
     final adjustedFood = _applySelectedAmount(baseFood);
     _publishPrediction(adjustedFood);
+    _initPlateFrom(adjustedFood);
     recommendation.value = recommendationService.create(
       food: adjustedFood,
       currentCalories: caloriesController.currentCalories.value,
@@ -679,6 +700,153 @@ class AiFoodController extends GetxController {
     );
     wasAdded.value = false;
     errorMessage.value = null;
+  }
+
+  // ---- Multi-Item Plate Management -----------------------------------------
+
+  void _initPlateFrom(FoodNutritionModel food) {
+    plateItems.clear();
+    if (food.components.isNotEmpty) {
+      for (var i = 0; i < food.components.length; i++) {
+        final c = food.components[i];
+        plateItems.add(
+          PlateItemState(
+            id: 'comp_${i}_${DateTime.now().microsecondsSinceEpoch}',
+            name: c.name,
+            baseCalories: c.calories,
+            baseProtein: c.protein,
+            baseCarbs: c.carbohydrates,
+            baseFat: c.fat,
+            baseSugar: c.sugar,
+            baseFiber: c.fiber,
+            baseSodium: c.sodium,
+            baseServingSize:
+                c.estimatedAmount > 0
+                    ? c.estimatedAmount
+                    : (c.liquidVolumeMl > 0 ? c.liquidVolumeMl : 100),
+            unit: c.liquidVolumeMl > 0 ? 'ml' : 'g',
+            portionMultiplier: 1.0,
+            isSelected: true,
+            componentType: c.componentType,
+            confidence: c.confidence,
+            preparationMethod: c.preparationMethod,
+            visibleEvidence: c.visibleEvidence,
+          ),
+        );
+      }
+    } else {
+      plateItems.add(
+        PlateItemState(
+          id: 'comp_single_${DateTime.now().microsecondsSinceEpoch}',
+          name: food.name,
+          baseCalories: food.calories,
+          baseProtein: food.protein,
+          baseCarbs: food.carbs,
+          baseFat: food.fat,
+          baseSugar: food.sugar,
+          baseFiber: food.fiber,
+          baseSodium: food.sodium,
+          baseServingSize: food.servingSize,
+          unit: food.servingUnit,
+          portionMultiplier: 1.0,
+          isSelected: true,
+          componentType: food.mealType,
+          confidence: food.confidence,
+        ),
+      );
+    }
+  }
+
+  void togglePlateItem(int index) {
+    if (index >= 0 && index < plateItems.length) {
+      plateItems[index].isSelected = !plateItems[index].isSelected;
+      plateItems.refresh();
+      _syncNutritionFromPlate();
+    }
+  }
+
+  void updatePlateItemPortion(int index, double multiplier) {
+    if (index >= 0 && index < plateItems.length) {
+      plateItems[index].portionMultiplier = multiplier;
+      plateItems.refresh();
+      _syncNutritionFromPlate();
+    }
+  }
+
+  void removePlateItem(int index) {
+    if (index >= 0 && index < plateItems.length) {
+      plateItems.removeAt(index);
+      _syncNutritionFromPlate();
+    }
+  }
+
+  void addPlateItem({
+    required String name,
+    required double calories,
+    double protein = 0,
+    double carbs = 0,
+    double fat = 0,
+  }) {
+    plateItems.add(
+      PlateItemState(
+        id: 'comp_manual_${DateTime.now().microsecondsSinceEpoch}',
+        name: name,
+        baseCalories: calories,
+        baseProtein: protein,
+        baseCarbs: carbs,
+        baseFat: fat,
+        portionMultiplier: 1.0,
+        isSelected: true,
+      ),
+    );
+    _syncNutritionFromPlate();
+  }
+
+  void _syncNutritionFromPlate() {
+    final current = nutrition.value;
+    if (current == null) return;
+
+    final selected = plateItems.where((i) => i.isSelected).toList();
+    if (selected.isEmpty) {
+      nutrition.value = current.copyWith(
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        sugar: 0,
+        fiber: 0,
+        sodium: 0,
+      );
+      return;
+    }
+
+    final totalCalories = selected.fold<double>(
+      0,
+      (sum, i) => sum + i.calories,
+    );
+    final totalProtein = selected.fold<double>(0, (sum, i) => sum + i.protein);
+    final totalCarbs = selected.fold<double>(0, (sum, i) => sum + i.carbs);
+    final totalFat = selected.fold<double>(0, (sum, i) => sum + i.fat);
+    final totalSugar = selected.fold<double>(0, (sum, i) => sum + i.sugar);
+    final totalFiber = selected.fold<double>(0, (sum, i) => sum + i.fiber);
+    final totalSodium = selected.fold<double>(0, (sum, i) => sum + i.sodium);
+
+    final updated = current.copyWith(
+      calories: totalCalories,
+      protein: totalProtein,
+      carbs: totalCarbs,
+      fat: totalFat,
+      sugar: totalSugar,
+      fiber: totalFiber,
+      sodium: totalSodium,
+    );
+
+    nutrition.value = updated;
+    recommendation.value = recommendationService.create(
+      food: updated,
+      currentCalories: caloriesController.currentCalories.value,
+      targetCalories: caloriesController.targetCalories.value,
+    );
   }
 
   void _syncInputKindFrom(FoodNutritionModel food) {

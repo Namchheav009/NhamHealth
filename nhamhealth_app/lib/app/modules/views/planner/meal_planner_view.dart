@@ -9,6 +9,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
@@ -72,21 +73,13 @@ class MealPlannerView extends GetView<MealPlannerController> {
                           constraints: const BoxConstraints(
                             maxWidth: AppSpacing.maxContentWidth,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (controller.isLoading.value &&
-                                  controller.plans.isEmpty)
-                                const PageSkeleton.mealPlanner()
-                              else ...[
+                          child: LoadingContentTransition(
+                            isLoading: controller.isLoading.value,
+                            loading: const PageSkeleton.mealPlanner(),
+                            content: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
                                 _dateCard(context),
-                                if (controller.isLoading.value)
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 14),
-                                    child: LinearProgressIndicator(
-                                      color: AppColors.primaryGreen,
-                                    ),
-                                  ),
                                 if (controller.errorMessage.value.isNotEmpty ||
                                     controller
                                         .recommendationsError
@@ -98,19 +91,28 @@ class MealPlannerView extends GetView<MealPlannerController> {
                                 const SizedBox(height: 20),
                                 _sectionHeading(context),
                                 const SizedBox(height: 12),
-                                if (controller.isLoadingDay.value)
-                                  const PageSkeleton.plannerSlots()
-                                else
-                                  ...MealPlanSlot.values.map(
-                                    (slot) => Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
-                                      child: _slotCard(context, slot),
-                                    ),
+                                LoadingContentTransition(
+                                  isLoading: controller.isLoadingDay.value,
+                                  loading: const PageSkeleton.plannerSlots(),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children:
+                                        MealPlanSlot.values
+                                            .map(
+                                              (slot) => Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 12,
+                                                ),
+                                                child: _slotCard(context, slot),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
+                                ),
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -1427,10 +1429,8 @@ class MealPlannerView extends GetView<MealPlannerController> {
   );
 
   Future<void> _openSlot(MealPlanSlot slot) async {
-    if (controller.isLoadingRecommendations.value) {
-      return;
-    }
-    if (controller.recommendationsError.value.isNotEmpty) {
+    if (controller.recommendationsError.value.isNotEmpty &&
+        controller.adminRecommendations.isEmpty) {
       await AppAlert.actionError(
         title: 'planner.error'.tr,
         message: controller.recommendationsError.value,

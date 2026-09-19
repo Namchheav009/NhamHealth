@@ -15,6 +15,7 @@ import '../../models/wellness/food_nutrition_model.dart';
 import '../../models/wellness/food_recommendation_model.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
 import 'widgets/ai_food_amount_sheet.dart';
+import 'widgets/multi_item_plate_card.dart';
 
 /// -----------------------------------------------------------------------
 /// AiFoodView — restyled
@@ -350,6 +351,8 @@ class AiFoodView extends GetView<AiFoodController> {
                         const SizedBox(height: 14),
                         _reviewCard(context, controller.nutrition.value!),
                       ],
+                      const SizedBox(height: 14),
+                      MultiItemPlateCard(controller: controller),
                       const SizedBox(height: 14),
                       _nutritionCard(context, controller.nutrition.value!),
                       if (controller.nutrition.value!.hasNutritionEstimate) ...[
@@ -772,7 +775,7 @@ class AiFoodView extends GetView<AiFoodController> {
             ),
           ],
         ),
-        if (food.components.isNotEmpty) ...[
+        if (food.components.isNotEmpty && controller.plateItems.isEmpty) ...[
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 6),

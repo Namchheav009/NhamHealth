@@ -164,6 +164,20 @@ class PageSkeleton extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1550),
   }) : type = PageSkeletonType.plannerSlots;
 
+  static Widget box({
+    Key? key,
+    double? width,
+    required double height,
+    double radius = 14,
+    Duration duration = const Duration(milliseconds: 1550),
+  }) => PageSkeletonBox(
+    key: key,
+    width: width,
+    height: height,
+    radius: radius,
+    duration: duration,
+  );
+
   final PageSkeletonType type;
   final Duration duration;
 
@@ -256,6 +270,68 @@ class _PageSkeletonState extends State<PageSkeleton>
   };
 }
 
+class PageSkeletonBox extends StatefulWidget {
+  const PageSkeletonBox({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = 14,
+    this.duration = const Duration(milliseconds: 1550),
+  });
+
+  final double? width;
+  final double height;
+  final double radius;
+  final Duration duration;
+
+  @override
+  State<PageSkeletonBox> createState() => _PageSkeletonBoxState();
+}
+
+class _PageSkeletonBoxState extends State<PageSkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _controller,
+    builder:
+        (context, child) => ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (bounds) {
+            final position = -1.7 + (_controller.value * 3.4);
+            return LinearGradient(
+              begin: Alignment(position, 0),
+              end: Alignment(position + .9, 0),
+              colors: [
+                context.appMutedSurface,
+                context.appElevatedSurface,
+                context.appMutedSurface,
+              ],
+              stops: const [0, .5, 1],
+            ).createShader(bounds);
+          },
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: context.appMutedSurface,
+              borderRadius: BorderRadius.circular(widget.radius),
+            ),
+          ),
+        ),
+  );
+}
+
 class _MealPlannerPlaceholder extends StatelessWidget {
   const _MealPlannerPlaceholder();
 
@@ -269,6 +345,8 @@ class _MealPlannerPlaceholder extends StatelessWidget {
       _SkeletonCard(height: 126),
       SizedBox(height: 20),
       _SkeletonBox(width: 150, height: 18, radius: 9),
+      SizedBox(height: 12),
+      _SkeletonCard(height: 112),
       SizedBox(height: 12),
       _SkeletonCard(height: 112),
       SizedBox(height: 12),

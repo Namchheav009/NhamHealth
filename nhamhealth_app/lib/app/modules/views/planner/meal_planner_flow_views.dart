@@ -9,6 +9,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
+import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
@@ -17,8 +18,24 @@ import 'planner_shared.dart';
 // =============================================================================
 // SCREEN 2: CHOOSE MEAL / CATEGORY VIEW
 // =============================================================================
-class PlannerCategoryView extends GetView<MealPlannerController> {
+class PlannerCategoryView extends StatefulWidget {
   const PlannerCategoryView({super.key});
+
+  @override
+  State<PlannerCategoryView> createState() => _PlannerCategoryViewState();
+}
+
+class _PlannerCategoryViewState extends State<PlannerCategoryView> {
+  final controller = Get.find<MealPlannerController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (controller.adminRecommendations.isEmpty &&
+        !controller.isLoadingRecommendations.value) {
+      controller.loadRecommendations();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,125 +59,122 @@ class PlannerCategoryView extends GetView<MealPlannerController> {
                     route.isFirst,
               ),
         ),
-        child:
-            controller.isLoadingRecommendations.value &&
-                    controller.adminRecommendations.isEmpty
-                ? const PageSkeleton.plannerCategories()
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: LoadingContentTransition(
+          isLoading: controller.isLoadingRecommendations.value,
+          loading: const PageSkeleton.plannerCategories(),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search input preview
+              _SearchPreview(
+                hint: 'planner.search_meals'.tr,
+                onTap:
+                    () => Get.toNamed(
+                      AppRoutes.mealPlannerMeals,
+                      arguments: {'slot': slot, 'replace': replace},
+                    ),
+              ),
+              const SizedBox(height: 14),
+
+              // Filter tags horizontal scroll
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
                   children: [
-                    // Search input preview
-                    _SearchPreview(
-                      hint: 'planner.search_meals'.tr,
-                      onTap:
-                          () => Get.toNamed(
-                            AppRoutes.mealPlannerMeals,
-                            arguments: {'slot': slot, 'replace': replace},
-                          ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Filter tags horizontal scroll
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: [
-                          for (final tag in const [
-                            ('all', 'planner.all'),
-                            ('popular', 'planner.popular'),
-                            ('healthy', 'planner.healthy'),
-                            ('quick', 'planner.quick'),
-                            ('vegetarian', 'planner.vegetarian'),
-                          ])
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap:
-                                    () => Get.toNamed(
-                                      AppRoutes.mealPlannerMeals,
-                                      arguments: {
-                                        'slot': slot,
-                                        'replace': replace,
-                                        'filter': tag.$1,
-                                      },
-                                    ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 7,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: context.appElevatedSurface,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: context.appBorder.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    tag.$2.tr,
-                                    style: TextStyle(
-                                      color: context.appText,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12.5,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Section Title
-                    Text(
-                      'planner.choose_category'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.2,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // 2-Column Category Grid
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: controller.categoriesFor(slot).length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1.12,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                      itemBuilder: (_, index) {
-                        final category = controller.categoriesFor(slot)[index];
-                        return _CategoryCard(
-                          category: category,
+                    for (final tag in const [
+                      ('all', 'planner.all'),
+                      ('popular', 'planner.popular'),
+                      ('healthy', 'planner.healthy'),
+                      ('quick', 'planner.quick'),
+                      ('vegetarian', 'planner.vegetarian'),
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
                           onTap:
                               () => Get.toNamed(
                                 AppRoutes.mealPlannerMeals,
                                 arguments: {
                                   'slot': slot,
                                   'replace': replace,
-                                  'category': category.name,
-                                  'categoryId': category.id,
+                                  'filter': tag.$1,
                                 },
                               ),
-                        );
-                      },
-                    ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.appElevatedSurface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: context.appBorder.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: Text(
+                              tag.$2.tr,
+                              style: TextStyle(
+                                color: context.appText,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 20),
+
+              // Section Title
+              Text(
+                'planner.choose_category'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 2-Column Category Grid
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: controller.categoriesFor(slot).length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.12,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemBuilder: (_, index) {
+                  final category = controller.categoriesFor(slot)[index];
+                  return _CategoryCard(
+                    category: category,
+                    onTap:
+                        () => Get.toNamed(
+                          AppRoutes.mealPlannerMeals,
+                          arguments: {
+                            'slot': slot,
+                            'replace': replace,
+                            'category': category.name,
+                            'categoryId': category.id,
+                          },
+                        ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -281,6 +295,10 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
       filter = initialFilter;
     }
     selectedCategoryId = int.tryParse('${args['categoryId'] ?? ''}');
+    if (controller.adminRecommendations.isEmpty &&
+        !controller.isLoadingRecommendations.value) {
+      controller.loadRecommendations();
+    }
   }
 
   @override
@@ -368,551 +386,519 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                     route.isFirst,
               ),
         ),
-        child:
-            controller.isLoadingRecommendations.value &&
-                    controller.adminRecommendations.isEmpty
-                ? const PageSkeleton.plannerMeals()
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: LoadingContentTransition(
+          isLoading: controller.isLoadingRecommendations.value,
+          loading: const PageSkeleton.plannerMeals(),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search TextField
+              TextField(
+                controller: search,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: context.appMutedText,
+                  ),
+                  suffixIcon:
+                      search.text.isNotEmpty
+                          ? IconButton(
+                            tooltip: 'common.clear_all'.tr,
+                            icon: const Icon(Icons.clear_rounded, size: 20),
+                            style: IconButton.styleFrom(
+                              foregroundColor: context.appMutedText,
+                              hoverColor: context.appBorder.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            onPressed: () {
+                              search.clear();
+                              setState(() {});
+                            },
+                          )
+                          : IconButton(
+                            tooltip: 'planner.filter_nutrition'.tr,
+                            icon: Badge(
+                              isLabelVisible: filter != 'all',
+                              label: const Text('1'),
+                              child: Icon(
+                                Icons.tune_rounded,
+                                color:
+                                    filter != 'all'
+                                        ? AppColors.primaryGreen
+                                        : context.appMutedText,
+                              ),
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  filter != 'all'
+                                      ? context.appSoftGreen
+                                      : Colors.transparent,
+                              hoverColor: AppColors.primaryGreen.withValues(
+                                alpha: 0.14,
+                              ),
+                              focusColor: AppColors.primaryGreen.withValues(
+                                alpha: 0.18,
+                              ),
+                            ),
+                            onPressed: () => _showPlannerFilters(context),
+                          ),
+                  hintText: 'planner.search_meals'.tr,
+                  filled: true,
+                  fillColor: context.appField,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Meal-time selector
+              SingleChildScrollView(
+                key: const ValueKey<String>('planner-slot-filters'),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
                   children: [
-                    // Search TextField
-                    TextField(
-                      controller: search,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: context.appMutedText,
-                        ),
-                        suffixIcon:
-                            search.text.isNotEmpty
-                                ? IconButton(
-                                  tooltip: 'common.clear_all'.tr,
-                                  icon: const Icon(
-                                    Icons.clear_rounded,
-                                    size: 20,
-                                  ),
-                                  style: IconButton.styleFrom(
-                                    foregroundColor: context.appMutedText,
-                                    hoverColor: context.appBorder.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    search.clear();
-                                    setState(() {});
-                                  },
-                                )
-                                : IconButton(
-                                  tooltip: 'planner.filter_nutrition'.tr,
-                                  icon: Badge(
-                                    isLabelVisible: filter != 'all',
-                                    label: const Text('1'),
-                                    child: Icon(
-                                      Icons.tune_rounded,
-                                      color:
-                                          filter != 'all'
-                                              ? AppColors.primaryGreen
-                                              : context.appMutedText,
-                                    ),
-                                  ),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor:
-                                        filter != 'all'
-                                            ? context.appSoftGreen
-                                            : Colors.transparent,
-                                    hoverColor: AppColors.primaryGreen
-                                        .withValues(alpha: 0.14),
-                                    focusColor: AppColors.primaryGreen
-                                        .withValues(alpha: 0.18),
-                                  ),
-                                  onPressed: () => _showPlannerFilters(context),
-                                ),
-                        hintText: 'planner.search_meals'.tr,
-                        filled: true,
-                        fillColor: context.appField,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Meal-time selector
-                    SingleChildScrollView(
-                      key: const ValueKey<String>('planner-slot-filters'),
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: [
-                          for (final mealSlot in MealPlanSlot.values)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                showCheckmark: false,
-                                avatar: Icon(
-                                  mealSlot.icon,
-                                  size: 17,
-                                  color:
-                                      selectedSlot == mealSlot
-                                          ? Colors.white
-                                          : PlannerSlotTheme.of(
-                                            mealSlot,
-                                          ).accent,
-                                ),
-                                label: Text(mealSlot.labelKey.tr),
-                                selected: selectedSlot == mealSlot,
-                                onSelected:
-                                    (_) => setState(() {
-                                      selectedSlot = mealSlot;
-                                      selectedCategoryId = null;
-                                    }),
-                                selectedColor: AppColors.primaryGreen,
-                                backgroundColor: context.appElevatedSurface,
-                                side: BorderSide(
-                                  color:
-                                      selectedSlot == mealSlot
-                                          ? Colors.transparent
-                                          : context.appBorder,
-                                ),
-                                labelStyle: TextStyle(
-                                  color:
-                                      selectedSlot == mealSlot
-                                          ? Colors.white
-                                          : context.appText,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${'planner.recommended_meals'.tr}  ·  ${meals.length}',
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        PopupMenuButton<String>(
-                          tooltip: 'planner.sort_by'.tr,
-                          initialValue: sortMode,
-                          onSelected:
-                              (value) => setState(() => sortMode = value),
-                          position: PopupMenuPosition.under,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          itemBuilder:
-                              (_) =>
-                                  [
-                                        (
-                                          'popular',
-                                          'planner.popular',
-                                          Icons.trending_up_rounded,
-                                        ),
-                                        (
-                                          'calories',
-                                          'planner.sort_lowest_calories',
-                                          Icons.local_fire_department_outlined,
-                                        ),
-                                        (
-                                          'protein',
-                                          'planner.sort_highest_protein',
-                                          Icons.fitness_center_rounded,
-                                        ),
-                                        (
-                                          'quickest',
-                                          'planner.sort_quickest',
-                                          Icons.schedule_rounded,
-                                        ),
-                                      ]
-                                      .map(
-                                        (item) => PopupMenuItem<String>(
-                                          value: item.$1,
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                item.$3,
-                                                size: 18,
-                                                color:
-                                                    sortMode == item.$1
-                                                        ? AppColors.primaryGreen
-                                                        : context.appMutedText,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                item.$2.tr,
-                                                style: TextStyle(
-                                                  fontWeight:
-                                                      sortMode == item.$1
-                                                          ? FontWeight.w800
-                                                          : FontWeight.w600,
-                                                  color:
-                                                      sortMode == item.$1
-                                                          ? AppColors
-                                                              .primaryGreen
-                                                          : context.appText,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.appSoftGreen,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${'planner.sort_by'.tr}: ${_plannerSortLabel(sortMode)}',
-                                  style: const TextStyle(
-                                    color: AppColors.primaryGreen,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(width: 2),
-                                const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: AppColors.primaryGreen,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Meal List
-                    if (meals.isEmpty)
+                    for (final mealSlot in MealPlanSlot.values)
                       Padding(
-                        padding: const EdgeInsets.only(top: 60),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.search_off_rounded,
-                                size: 54,
-                                color: context.appMutedText,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'planner.no_meals_found'.tr,
-                                style: TextStyle(
-                                  color: context.appMutedText,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (filter != 'all' ||
-                                  selectedCategoryId != null ||
-                                  search.text.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      filter = 'all';
-                                      selectedCategoryId = null;
-                                      search.clear();
-                                    });
-                                  },
-                                  icon: const Icon(Icons.refresh_rounded),
-                                  label: Text('planner.retry'.tr),
-                                ),
-                              ],
-                            ],
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          showCheckmark: false,
+                          avatar: Icon(
+                            mealSlot.icon,
+                            size: 17,
+                            color:
+                                selectedSlot == mealSlot
+                                    ? Colors.white
+                                    : PlannerSlotTheme.of(mealSlot).accent,
                           ),
-                        ),
-                      )
-                    else
-                      ...meals.map(
-                        (meal) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            hoverColor: AppColors.primaryGreen.withValues(
-                              alpha: 0.045,
-                            ),
-                            splashColor: AppColors.primaryGreen.withValues(
-                              alpha: 0.09,
-                            ),
-                            onTap:
-                                () => Get.toNamed(
-                                  AppRoutes.mealPlannerDetail,
-                                  arguments: {'meal': meal, 'replace': replace},
-                                ),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: context.appElevatedSurface,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: context.appBorder.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                                boxShadow: context.appTileShadow,
-                              ),
-                              child: Row(
-                                children: [
-                                  // Left: Food Image Thumbnail
-                                  Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      PlannerMealImage(
-                                        meal: meal,
-                                        width: 106,
-                                        height: 106,
-                                        radius: 17,
-                                      ),
-                                      Positioned(
-                                        top: 7,
-                                        right: 7,
-                                        child: IconButton(
-                                          tooltip:
-                                              favoriteMealIds.contains(meal.id)
-                                                  ? 'planner.remove_favorite'.tr
-                                                  : 'planner.add_favorite'.tr,
-                                          onPressed:
-                                              () => setState(() {
-                                                favoriteMealIds.contains(
-                                                      meal.id,
-                                                    )
-                                                    ? favoriteMealIds.remove(
-                                                      meal.id,
-                                                    )
-                                                    : favoriteMealIds.add(
-                                                      meal.id,
-                                                    );
-                                              }),
-                                          icon: Icon(
-                                            favoriteMealIds.contains(meal.id)
-                                                ? Icons.favorite_rounded
-                                                : Icons.favorite_border_rounded,
-                                            size: 19,
-                                          ),
-                                          style: ButtonStyle(
-                                            minimumSize:
-                                                const WidgetStatePropertyAll(
-                                                  Size.square(34),
-                                                ),
-                                            padding:
-                                                const WidgetStatePropertyAll(
-                                                  EdgeInsets.zero,
-                                                ),
-                                            foregroundColor:
-                                                WidgetStateProperty.resolveWith(
-                                                  (states) {
-                                                    if (favoriteMealIds
-                                                            .contains(
-                                                              meal.id,
-                                                            ) ||
-                                                        states.contains(
-                                                          WidgetState.hovered,
-                                                        )) {
-                                                      return Colors.redAccent;
-                                                    }
-                                                    return context.appText;
-                                                  },
-                                                ),
-                                            backgroundColor:
-                                                WidgetStateProperty.resolveWith(
-                                                  (states) {
-                                                    if (states.contains(
-                                                      WidgetState.hovered,
-                                                    )) {
-                                                      return const Color(
-                                                        0xFFFFE8EC,
-                                                      );
-                                                    }
-                                                    return context
-                                                        .appElevatedSurface;
-                                                  },
-                                                ),
-                                            shape: const WidgetStatePropertyAll(
-                                              CircleBorder(),
-                                            ),
-                                            elevation:
-                                                const WidgetStatePropertyAll(2),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 14),
-
-                                  // Middle: Title, Tags, Macro info
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          plannerMealName(meal),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: context.appText,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 15,
-                                            height: 1.35,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        if (meal.tags.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 6,
-                                            ),
-                                            child: Wrap(
-                                              spacing: 5,
-                                              children:
-                                                  meal.tags
-                                                      .take(2)
-                                                      .map(
-                                                        (tag) => Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 8,
-                                                                vertical: 2.5,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color:
-                                                                context
-                                                                    .appSoftGreen,
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                          ),
-                                                          child: Text(
-                                                            tag,
-                                                            style: const TextStyle(
-                                                              color:
-                                                                  AppColors
-                                                                      .primaryGreen,
-                                                              fontSize: 10.5,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                              height: 1.25,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      )
-                                                      .toList(),
-                                            ),
-                                          ),
-                                        Text(
-                                          '🔥 ${meal.calories} ${'planner.kcal'.tr}   🏋 ${meal.proteinGrams.toStringAsFixed(0)}g ${'planner.protein'.tr}${meal.cookingTimeMinutes == null ? '' : '   ◷ ${meal.cookingTimeMinutes} ${'planner.minutes_short'.tr}'}',
-                                          maxLines: 2,
-                                          style: TextStyle(
-                                            color: context.appMutedText,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.3,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-
-                                  // Right: Quick Add Button (+)
-                                  IconButton(
-                                    tooltip: 'planner.quick_add'.tr,
-                                    onPressed: () async {
-                                      final ok =
-                                          replace == null
-                                              ? await controller.addMeal(meal)
-                                              : await controller.replaceMeal(
-                                                replace,
-                                                meal,
-                                              );
-                                      if (!ok) return;
-                                      Get.until(
-                                        (route) =>
-                                            route.settings.name ==
-                                                AppRoutes.mealPlanner ||
-                                            route.isFirst,
-                                      );
-                                      AppAlert.toast(
-                                        message:
-                                            replace == null
-                                                ? 'planner.meal_added_one_serving'
-                                                : 'planner.meal_replaced',
-                                      );
-                                    },
-                                    icon: const Icon(
-                                      Icons.add_rounded,
-                                      size: 24,
-                                    ),
-                                    style: ButtonStyle(
-                                      minimumSize: const WidgetStatePropertyAll(
-                                        Size.square(48),
-                                      ),
-                                      foregroundColor:
-                                          const WidgetStatePropertyAll(
-                                            Colors.white,
-                                          ),
-                                      backgroundColor:
-                                          WidgetStateProperty.resolveWith(
-                                            (states) =>
-                                                states.contains(
-                                                      WidgetState.hovered,
-                                                    )
-                                                    ? const Color(0xFF008A46)
-                                                    : AppColors.primaryGreen,
-                                          ),
-                                      overlayColor: WidgetStatePropertyAll(
-                                        Colors.white.withValues(alpha: 0.14),
-                                      ),
-                                      shape: const WidgetStatePropertyAll(
-                                        CircleBorder(),
-                                      ),
-                                      elevation:
-                                          WidgetStateProperty.resolveWith(
-                                            (states) =>
-                                                states.contains(
-                                                      WidgetState.hovered,
-                                                    )
-                                                    ? 5
-                                                    : 1,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          label: Text(mealSlot.labelKey.tr),
+                          selected: selectedSlot == mealSlot,
+                          onSelected:
+                              (_) => setState(() {
+                                selectedSlot = mealSlot;
+                                selectedCategoryId = null;
+                              }),
+                          selectedColor: AppColors.primaryGreen,
+                          backgroundColor: context.appElevatedSurface,
+                          side: BorderSide(
+                            color:
+                                selectedSlot == mealSlot
+                                    ? Colors.transparent
+                                    : context.appBorder,
+                          ),
+                          labelStyle: TextStyle(
+                            color:
+                                selectedSlot == mealSlot
+                                    ? Colors.white
+                                    : context.appText,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
                           ),
                         ),
                       ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 22),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${'planner.recommended_meals'.tr}  ·  ${meals.length}',
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'planner.sort_by'.tr,
+                    initialValue: sortMode,
+                    onSelected: (value) => setState(() => sortMode = value),
+                    position: PopupMenuPosition.under,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    itemBuilder:
+                        (_) =>
+                            [
+                                  (
+                                    'popular',
+                                    'planner.popular',
+                                    Icons.trending_up_rounded,
+                                  ),
+                                  (
+                                    'calories',
+                                    'planner.sort_lowest_calories',
+                                    Icons.local_fire_department_outlined,
+                                  ),
+                                  (
+                                    'protein',
+                                    'planner.sort_highest_protein',
+                                    Icons.fitness_center_rounded,
+                                  ),
+                                  (
+                                    'quickest',
+                                    'planner.sort_quickest',
+                                    Icons.schedule_rounded,
+                                  ),
+                                ]
+                                .map(
+                                  (item) => PopupMenuItem<String>(
+                                    value: item.$1,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          item.$3,
+                                          size: 18,
+                                          color:
+                                              sortMode == item.$1
+                                                  ? AppColors.primaryGreen
+                                                  : context.appMutedText,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          item.$2.tr,
+                                          style: TextStyle(
+                                            fontWeight:
+                                                sortMode == item.$1
+                                                    ? FontWeight.w800
+                                                    : FontWeight.w600,
+                                            color:
+                                                sortMode == item.$1
+                                                    ? AppColors.primaryGreen
+                                                    : context.appText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.appSoftGreen,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${'planner.sort_by'.tr}: ${_plannerSortLabel(sortMode)}',
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Meal List
+              if (meals.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 60),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 54,
+                          color: context.appMutedText,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'planner.no_meals_found'.tr,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (filter != 'all' ||
+                            selectedCategoryId != null ||
+                            search.text.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                filter = 'all';
+                                selectedCategoryId = null;
+                                search.clear();
+                              });
+                            },
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: Text('planner.retry'.tr),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...meals.map(
+                  (meal) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      hoverColor: AppColors.primaryGreen.withValues(
+                        alpha: 0.045,
+                      ),
+                      splashColor: AppColors.primaryGreen.withValues(
+                        alpha: 0.09,
+                      ),
+                      onTap:
+                          () => Get.toNamed(
+                            AppRoutes.mealPlannerDetail,
+                            arguments: {'meal': meal, 'replace': replace},
+                          ),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.appElevatedSurface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: context.appBorder.withValues(alpha: 0.8),
+                          ),
+                          boxShadow: context.appTileShadow,
+                        ),
+                        child: Row(
+                          children: [
+                            // Left: Food Image Thumbnail
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                PlannerMealImage(
+                                  meal: meal,
+                                  width: 106,
+                                  height: 106,
+                                  radius: 17,
+                                ),
+                                Positioned(
+                                  top: 7,
+                                  right: 7,
+                                  child: IconButton(
+                                    tooltip:
+                                        favoriteMealIds.contains(meal.id)
+                                            ? 'planner.remove_favorite'.tr
+                                            : 'planner.add_favorite'.tr,
+                                    onPressed:
+                                        () => setState(() {
+                                          favoriteMealIds.contains(meal.id)
+                                              ? favoriteMealIds.remove(meal.id)
+                                              : favoriteMealIds.add(meal.id);
+                                        }),
+                                    icon: Icon(
+                                      favoriteMealIds.contains(meal.id)
+                                          ? Icons.favorite_rounded
+                                          : Icons.favorite_border_rounded,
+                                      size: 19,
+                                    ),
+                                    style: ButtonStyle(
+                                      minimumSize: const WidgetStatePropertyAll(
+                                        Size.square(34),
+                                      ),
+                                      padding: const WidgetStatePropertyAll(
+                                        EdgeInsets.zero,
+                                      ),
+                                      foregroundColor:
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (favoriteMealIds.contains(
+                                                  meal.id,
+                                                ) ||
+                                                states.contains(
+                                                  WidgetState.hovered,
+                                                )) {
+                                              return Colors.redAccent;
+                                            }
+                                            return context.appText;
+                                          }),
+                                      backgroundColor:
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.hovered,
+                                            )) {
+                                              return const Color(0xFFFFE8EC);
+                                            }
+                                            return context.appElevatedSurface;
+                                          }),
+                                      shape: const WidgetStatePropertyAll(
+                                        CircleBorder(),
+                                      ),
+                                      elevation: const WidgetStatePropertyAll(
+                                        2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 14),
+
+                            // Middle: Title, Tags, Macro info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    plannerMealName(meal),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: context.appText,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (meal.tags.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: Wrap(
+                                        spacing: 5,
+                                        children:
+                                            meal.tags
+                                                .take(2)
+                                                .map(
+                                                  (tag) => Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 2.5,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          context.appSoftGreen,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      tag,
+                                                      style: const TextStyle(
+                                                        color:
+                                                            AppColors
+                                                                .primaryGreen,
+                                                        fontSize: 10.5,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        height: 1.25,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                      ),
+                                    ),
+                                  Text(
+                                    '🔥 ${meal.calories} ${'planner.kcal'.tr}   🏋 ${meal.proteinGrams.toStringAsFixed(0)}g ${'planner.protein'.tr}${meal.cookingTimeMinutes == null ? '' : '   ◷ ${meal.cookingTimeMinutes} ${'planner.minutes_short'.tr}'}',
+                                    maxLines: 2,
+                                    style: TextStyle(
+                                      color: context.appMutedText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+
+                            // Right: Quick Add Button (+)
+                            IconButton(
+                              tooltip: 'planner.quick_add'.tr,
+                              onPressed: () async {
+                                final ok =
+                                    replace == null
+                                        ? await controller.addMeal(meal)
+                                        : await controller.replaceMeal(
+                                          replace,
+                                          meal,
+                                        );
+                                if (!ok) return;
+                                Get.until(
+                                  (route) =>
+                                      route.settings.name ==
+                                          AppRoutes.mealPlanner ||
+                                      route.isFirst,
+                                );
+                                AppAlert.toast(
+                                  message:
+                                      replace == null
+                                          ? 'planner.meal_added_one_serving'
+                                          : 'planner.meal_replaced',
+                                );
+                              },
+                              icon: const Icon(Icons.add_rounded, size: 24),
+                              style: ButtonStyle(
+                                minimumSize: const WidgetStatePropertyAll(
+                                  Size.square(48),
+                                ),
+                                foregroundColor: const WidgetStatePropertyAll(
+                                  Colors.white,
+                                ),
+                                backgroundColor:
+                                    WidgetStateProperty.resolveWith(
+                                      (states) =>
+                                          states.contains(WidgetState.hovered)
+                                              ? const Color(0xFF008A46)
+                                              : AppColors.primaryGreen,
+                                    ),
+                                overlayColor: WidgetStatePropertyAll(
+                                  Colors.white.withValues(alpha: 0.14),
+                                ),
+                                shape: const WidgetStatePropertyAll(
+                                  CircleBorder(),
+                                ),
+                                elevation: WidgetStateProperty.resolveWith(
+                                  (states) =>
+                                      states.contains(WidgetState.hovered)
+                                          ? 5
+                                          : 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       );
     });
   }
@@ -1063,7 +1049,30 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments as Map? ?? const {};
-    final meal = args['meal'] as PlannedMeal;
+    final PlannedMeal resolvedMeal;
+    final rawMeal = args['meal'] as PlannedMeal?;
+    if (rawMeal != null) {
+      resolvedMeal = rawMeal;
+    } else {
+      final mealId = args['mealId'] ?? args['id'];
+      final found =
+          mealId != null
+              ? controller.adminRecommendations.firstWhereOrNull(
+                (m) => m.id == mealId || m.planId == mealId,
+              )
+              : null;
+      if (found == null) {
+        return _PlannerScaffold(
+          header: PlannerPageHeader(
+            title: 'planner.details'.tr,
+            onClose: () => Get.back(),
+          ),
+          child: const PageSkeleton.plannerDetail(),
+        );
+      }
+      resolvedMeal = found;
+    }
+    final meal = resolvedMeal;
     final replace = args['replace'] as PlannedMeal?;
 
     return Obx(
@@ -1101,350 +1110,342 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
           ),
         ),
         header: const SizedBox.shrink(),
-        child:
-            controller.isLoadingRecommendations.value &&
-                    controller.adminRecommendations.isEmpty
-                ? const PageSkeleton.plannerDetail()
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: LoadingContentTransition(
+          isLoading:
+              controller.isLoadingRecommendations.value &&
+              controller.adminRecommendations.isEmpty,
+          loading: const PageSkeleton.plannerDetail(),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Food Image with Floating Buttons
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 280,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        PlannerMealImage(
+                          meal: meal,
+                          width: double.infinity,
+                          height: 280,
+                          radius: 22,
+                        ),
+                        Positioned(
+                          top: 16,
+                          left: 18,
+                          child: _HeroCircleButton(
+                            icon: Icons.arrow_back_rounded,
+                            onTap: Get.back<void>,
+                          ),
+                        ),
+                        Positioned(
+                          top: 16,
+                          right: 68,
+                          child: _HeroCircleButton(
+                            icon:
+                                favorite
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                            color:
+                                favorite
+                                    ? Colors.redAccent
+                                    : AppColors.primaryGreen,
+                            onTap: () => setState(() => favorite = !favorite),
+                          ),
+                        ),
+                        Positioned(
+                          top: 16,
+                          right: 18,
+                          child: _HeroCircleButton(
+                            icon: Icons.ios_share_rounded,
+                            onTap:
+                                () => SharePlus.instance.share(
+                                  ShareParams(text: plannerMealName(meal)),
+                                ),
+                          ),
+                        ),
+                        if (meal.tags.isNotEmpty)
+                          Positioned(
+                            left: 18,
+                            right: 18,
+                            bottom: 14,
+                            child: Wrap(
+                              spacing: 7,
+                              runSpacing: 6,
+                              children:
+                                  meal.tags
+                                      .take(3)
+                                      .map((tag) => _HeroTag(tag))
+                                      .toList(),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Meal Name
+              Text(
+                plannerMealName(meal),
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  if (meal.cookingTimeMinutes != null) ...[
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 18,
+                      color: context.appMutedText,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${meal.cookingTimeMinutes} min',
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  Icon(
+                    Icons.restaurant_rounded,
+                    size: 18,
+                    color: context.appMutedText,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '${servings.toStringAsFixed(servings == servings.roundToDouble() ? 0 : 1)} ${'planner.serving'.tr}',
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // 4 Macro Nutrition Cards Row
+              Row(
+                children: [
+                  _NutrientCard(
+                    value: '${(meal.calories * servings).round()}',
+                    label: 'planner.kcal'.tr,
+                    color: const Color(0xFFD97706),
+                    icon: Icons.local_fire_department_rounded,
+                  ),
+                  const SizedBox(width: 5),
+                  _NutrientCard(
+                    value:
+                        '${(meal.proteinGrams * servings).toStringAsFixed(0)}g',
+                    label: 'planner.protein'.tr,
+                    color: const Color(0xFF2563EB),
+                    icon: Icons.fitness_center_rounded,
+                  ),
+                  const SizedBox(width: 5),
+                  _NutrientCard(
+                    value:
+                        '${(meal.carbsGrams * servings).toStringAsFixed(0)}g',
+                    label: 'planner.carbs'.tr,
+                    color: AppColors.primaryGreen,
+                    icon: Icons.grain_rounded,
+                  ),
+                  const SizedBox(width: 5),
+                  _NutrientCard(
+                    value: '${(meal.fatGrams * servings).toStringAsFixed(0)}g',
+                    label: 'planner.fat'.tr,
+                    color: const Color(0xFFE11D48),
+                    icon: Icons.water_drop_rounded,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+
+              _SectionTitle('planner.servings'.tr),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: context.appElevatedSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: context.appBorder),
+                ),
+                child: Row(
                   children: [
-                    // Hero Food Image with Floating Buttons
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 280,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: Stack(
-                            fit: StackFit.expand,
+                    IconButton(
+                      onPressed:
+                          servings > .5
+                              ? () => setState(() => servings -= .5)
+                              : null,
+                      icon: const Icon(Icons.remove_rounded),
+                      color: AppColors.primaryGreen,
+                    ),
+                    Expanded(
+                      child: Text(
+                        servings.toStringAsFixed(
+                          servings == servings.roundToDouble() ? 0 : 1,
+                        ),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton.filled(
+                      onPressed: () => setState(() => servings += .5),
+                      icon: const Icon(Icons.add_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Description
+              _SectionTitle('planner.description'.tr),
+              const SizedBox(height: 8),
+              Text(
+                meal.description.isEmpty
+                    ? 'planner.default_description'.tr
+                    : meal.description.tr,
+                style: TextStyle(
+                  color: context.appMutedText,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Ingredients Checklist
+              _SectionTitle('planner.ingredients'.tr),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: context.appElevatedSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: context.appBorder.withValues(alpha: 0.8),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    if (meal.ingredients.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          'planner.ingredient_whole_grain_bread'.tr,
+                          style: TextStyle(color: context.appMutedText),
+                        ),
+                      )
+                    else
+                      ...meal.ingredients.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
                             children: [
-                              PlannerMealImage(
-                                meal: meal,
-                                width: double.infinity,
-                                height: 280,
-                                radius: 22,
+                              const Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 20,
+                                color: AppColors.primaryGreen,
                               ),
-                              Positioned(
-                                top: 16,
-                                left: 18,
-                                child: _HeroCircleButton(
-                                  icon: Icons.arrow_back_rounded,
-                                  onTap: Get.back<void>,
-                                ),
-                              ),
-                              Positioned(
-                                top: 16,
-                                right: 68,
-                                child: _HeroCircleButton(
-                                  icon:
-                                      favorite
-                                          ? Icons.favorite_rounded
-                                          : Icons.favorite_border_rounded,
-                                  color:
-                                      favorite
-                                          ? Colors.redAccent
-                                          : AppColors.primaryGreen,
-                                  onTap:
-                                      () =>
-                                          setState(() => favorite = !favorite),
-                                ),
-                              ),
-                              Positioned(
-                                top: 16,
-                                right: 18,
-                                child: _HeroCircleButton(
-                                  icon: Icons.ios_share_rounded,
-                                  onTap:
-                                      () => SharePlus.instance.share(
-                                        ShareParams(
-                                          text: plannerMealName(meal),
-                                        ),
-                                      ),
-                                ),
-                              ),
-                              if (meal.tags.isNotEmpty)
-                                Positioned(
-                                  left: 18,
-                                  right: 18,
-                                  bottom: 14,
-                                  child: Wrap(
-                                    spacing: 7,
-                                    runSpacing: 6,
-                                    children:
-                                        meal.tags
-                                            .take(3)
-                                            .map((tag) => _HeroTag(tag))
-                                            .toList(),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  item.tr,
+                                  style: TextStyle(
+                                    color: context.appText,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.35,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Meal Name
-                    Text(
-                      plannerMealName(meal),
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Row(
-                      children: [
-                        if (meal.cookingTimeMinutes != null) ...[
-                          Icon(
-                            Icons.schedule_rounded,
-                            size: 18,
-                            color: context.appMutedText,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '${meal.cookingTimeMinutes} min',
-                            style: TextStyle(
-                              color: context.appMutedText,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                        ],
-                        Icon(
-                          Icons.restaurant_rounded,
-                          size: 18,
-                          color: context.appMutedText,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          '${servings.toStringAsFixed(servings == servings.roundToDouble() ? 0 : 1)} ${'planner.serving'.tr}',
-                          style: TextStyle(
-                            color: context.appMutedText,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // 4 Macro Nutrition Cards Row
-                    Row(
-                      children: [
-                        _NutrientCard(
-                          value: '${(meal.calories * servings).round()}',
-                          label: 'planner.kcal'.tr,
-                          color: const Color(0xFFD97706),
-                          icon: Icons.local_fire_department_rounded,
-                        ),
-                        const SizedBox(width: 5),
-                        _NutrientCard(
-                          value:
-                              '${(meal.proteinGrams * servings).toStringAsFixed(0)}g',
-                          label: 'planner.protein'.tr,
-                          color: const Color(0xFF2563EB),
-                          icon: Icons.fitness_center_rounded,
-                        ),
-                        const SizedBox(width: 5),
-                        _NutrientCard(
-                          value:
-                              '${(meal.carbsGrams * servings).toStringAsFixed(0)}g',
-                          label: 'planner.carbs'.tr,
-                          color: AppColors.primaryGreen,
-                          icon: Icons.grain_rounded,
-                        ),
-                        const SizedBox(width: 5),
-                        _NutrientCard(
-                          value:
-                              '${(meal.fatGrams * servings).toStringAsFixed(0)}g',
-                          label: 'planner.fat'.tr,
-                          color: const Color(0xFFE11D48),
-                          icon: Icons.water_drop_rounded,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-
-                    _SectionTitle('planner.servings'.tr),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.appElevatedSurface,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: context.appBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed:
-                                servings > .5
-                                    ? () => setState(() => servings -= .5)
-                                    : null,
-                            icon: const Icon(Icons.remove_rounded),
-                            color: AppColors.primaryGreen,
-                          ),
-                          Expanded(
-                            child: Text(
-                              servings.toStringAsFixed(
-                                servings == servings.roundToDouble() ? 0 : 1,
-                              ),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: context.appText,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                          IconButton.filled(
-                            onPressed: () => setState(() => servings += .5),
-                            icon: const Icon(Icons.add_rounded),
-                            style: IconButton.styleFrom(
-                              backgroundColor: AppColors.primaryGreen,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Description
-                    _SectionTitle('planner.description'.tr),
-                    const SizedBox(height: 8),
-                    Text(
-                      meal.description.isEmpty
-                          ? 'planner.default_description'.tr
-                          : meal.description.tr,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 12.5,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Ingredients Checklist
-                    _SectionTitle('planner.ingredients'.tr),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.appElevatedSurface,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: context.appBorder.withValues(alpha: 0.8),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          if (meal.ingredients.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                'planner.ingredient_whole_grain_bread'.tr,
-                                style: TextStyle(color: context.appMutedText),
-                              ),
-                            )
-                          else
-                            ...meal.ingredients.map(
-                              (item) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 6,
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      size: 20,
-                                      color: AppColors.primaryGreen,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        item.tr,
-                                        style: TextStyle(
-                                          color: context.appText,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w600,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    // Cooking Instructions (if any)
-                    if (meal.instructions.isNotEmpty) ...[
-                      const SizedBox(height: 22),
-                      _SectionTitle('planner.instructions'.tr),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: context.appElevatedSurface,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: context.appBorder.withValues(alpha: 0.8),
-                          ),
-                        ),
-                        child: Column(
-                          children:
-                              meal.instructions.indexed.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 11,
-                                        backgroundColor: context.appSoftGreen,
-                                        child: Text(
-                                          '${entry.$1 + 1}',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.primaryGreen,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          entry.$2,
-                                          style: TextStyle(
-                                            color: context.appText,
-                                            fontSize: 13,
-                                            height: 1.45,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
+              ),
+
+              // Cooking Instructions (if any)
+              if (meal.instructions.isNotEmpty) ...[
+                const SizedBox(height: 22),
+                _SectionTitle('planner.instructions'.tr),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: context.appElevatedSurface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: context.appBorder.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  child: Column(
+                    children:
+                        meal.instructions.indexed.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 11,
+                                  backgroundColor: context.appSoftGreen,
+                                  child: Text(
+                                    '${entry.$1 + 1}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    entry.$2,
+                                    style: TextStyle(
+                                      color: context.appText,
+                                      fontSize: 13,
+                                      height: 1.45,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1575,263 +1576,249 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
           onPressed: () => Get.toNamed(AppRoutes.mealPlannerGrocery),
         ),
       ),
-      child:
-          controller.isLoading.value && controller.plans.isEmpty
-              ? const PageSkeleton.plannerWeek()
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _PlannerFlowWeekCard(controller: controller),
-                  const SizedBox(height: 16),
+      child: LoadingContentTransition(
+        isLoading: controller.isLoading.value,
+        loading: const PageSkeleton.plannerWeek(),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _PlannerFlowWeekCard(controller: controller),
+            const SizedBox(height: 16),
 
-                  // Weekly Progress Banner Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: context.appSoftGreen,
-                      borderRadius: BorderRadius.circular(20),
+            // Weekly Progress Banner Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.appSoftGreen,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 58,
+                    height: 58,
+                    child: CircularProgressIndicator(
+                      value: controller.weeklyProgress.clamp(0, 1),
+                      strokeWidth: 6.5,
+                      backgroundColor: context.appBorder,
+                      color: AppColors.primaryGreen,
                     ),
-                    child: Row(
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: 58,
-                          height: 58,
-                          child: CircularProgressIndicator(
-                            value: controller.weeklyProgress.clamp(0, 1),
-                            strokeWidth: 6.5,
-                            backgroundColor: context.appBorder,
-                            color: AppColors.primaryGreen,
+                        Text(
+                          'planner.weekly_progress'.tr,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'planner.weekly_progress'.tr,
-                                style: TextStyle(
-                                  color: context.appText,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'planner.meals_planned'.trParams({
-                                  'count': '${controller.weeklyMealCount}',
-                                  'total':
-                                      '${controller.planDaysCount.value * 4}',
-                                }),
-                                style: TextStyle(
-                                  color: context.appMutedText,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${(controller.weeklyProgress * 100).round()}%',
-                                style: const TextStyle(
-                                  color: AppColors.primaryGreen,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 2),
+                        Text(
+                          'planner.meals_planned'.trParams({
+                            'count': '${controller.weeklyMealCount}',
+                            'total': '${controller.planDaysCount.value * 4}',
+                          }),
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${(controller.weeklyProgress * 100).round()}%',
+                          style: const TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-
-                  // Planned Meal Cards
-                  Text(
-                    controller.planDaysCount.value == 7
-                        ? 'planner.seven_days'.tr
-                        : 'planner.days_plan'.trParams({
-                          'days': '${controller.planDaysCount.value}',
-                        }),
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  ...controller.weekDays.indexed.map((entry) {
-                    final dayIndex = entry.$1;
-                    final date = entry.$2;
-                    final meals = controller.mealsFor(date);
-                    final isSelected =
-                        dayIndex == controller.selectedDayIndex.value;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          controller.selectDay(dayIndex);
-                          Get.back<void>();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: context.appElevatedSurface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color:
-                                  isSelected
-                                      ? AppColors.primaryGreen.withValues(
-                                        alpha: 0.8,
-                                      )
-                                      : context.appBorder.withValues(
-                                        alpha: 0.8,
-                                      ),
-                              width: isSelected ? 1.5 : 1.0,
-                            ),
-                            boxShadow: context.appTileShadow,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Header Row: Day name + Meal count chip + Chevron
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      DateFormat('EEEE, d MMM').format(date),
-                                      style: TextStyle(
-                                        color: context.appText,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 14.5,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          meals.length == 4
-                                              ? AppColors.primaryGreen
-                                              : context.appSoftGreen,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      '${meals.length}/4 ${'planner.meals'.tr}',
-                                      style: TextStyle(
-                                        color:
-                                            meals.length == 4
-                                                ? Colors.white
-                                                : AppColors.primaryGreen,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: context.appMutedText,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // 4 Meal Slots Previews Row
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children:
-                                    MealPlanSlot.values.map((slot) {
-                                      final slotMeal = meals.firstWhereOrNull(
-                                        (m) => m.slot == slot,
-                                      );
-                                      final slotTheme = PlannerSlotTheme.of(
-                                        slot,
-                                      );
-
-                                      return Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 3,
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              // Slot thumbnail or empty container
-                                              if (slotMeal != null)
-                                                PlannerMealImage(
-                                                  meal: slotMeal,
-                                                  height: 52,
-                                                  radius: 12,
-                                                )
-                                              else
-                                                Container(
-                                                  height: 52,
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        context.appIsDark
-                                                            ? slotTheme.soft
-                                                                .withValues(
-                                                                  alpha: 0.1,
-                                                                )
-                                                            : slotTheme.soft
-                                                                .withValues(
-                                                                  alpha: 0.4,
-                                                                ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: context.appBorder
-                                                          .withValues(
-                                                            alpha: 0.6,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  child: Center(
-                                                    child: Icon(
-                                                      slotTheme.icon,
-                                                      size: 20,
-                                                      color: slotTheme.accent
-                                                          .withValues(
-                                                            alpha: 0.6,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                slot.labelKey.tr,
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: context.appMutedText,
-                                                  height: 1.35,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
                 ],
               ),
+            ),
+            const SizedBox(height: 18),
+
+            // Planned Meal Cards
+            Text(
+              controller.planDaysCount.value == 7
+                  ? 'planner.seven_days'.tr
+                  : 'planner.days_plan'.trParams({
+                    'days': '${controller.planDaysCount.value}',
+                  }),
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            ...controller.weekDays.indexed.map((entry) {
+              final dayIndex = entry.$1;
+              final date = entry.$2;
+              final meals = controller.mealsFor(date);
+              final isSelected = dayIndex == controller.selectedDayIndex.value;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    controller.selectDay(dayIndex);
+                    Get.back<void>();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: context.appElevatedSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? AppColors.primaryGreen.withValues(alpha: 0.8)
+                                : context.appBorder.withValues(alpha: 0.8),
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                      boxShadow: context.appTileShadow,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header Row: Day name + Meal count chip + Chevron
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                DateFormat('EEEE, d MMM').format(date),
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    meals.length == 4
+                                        ? AppColors.primaryGreen
+                                        : context.appSoftGreen,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${meals.length}/4 ${'planner.meals'.tr}',
+                                style: TextStyle(
+                                  color:
+                                      meals.length == 4
+                                          ? Colors.white
+                                          : AppColors.primaryGreen,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: context.appMutedText,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 4 Meal Slots Previews Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children:
+                              MealPlanSlot.values.map((slot) {
+                                final slotMeal = meals.firstWhereOrNull(
+                                  (m) => m.slot == slot,
+                                );
+                                final slotTheme = PlannerSlotTheme.of(slot);
+
+                                return Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 3,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        // Slot thumbnail or empty container
+                                        if (slotMeal != null)
+                                          PlannerMealImage(
+                                            meal: slotMeal,
+                                            height: 52,
+                                            radius: 12,
+                                          )
+                                        else
+                                          Container(
+                                            height: 52,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  context.appIsDark
+                                                      ? slotTheme.soft
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          )
+                                                      : slotTheme.soft
+                                                          .withValues(
+                                                            alpha: 0.4,
+                                                          ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: context.appBorder
+                                                    .withValues(alpha: 0.6),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: Icon(
+                                                slotTheme.icon,
+                                                size: 20,
+                                                color: slotTheme.accent
+                                                    .withValues(alpha: 0.6),
+                                              ),
+                                            ),
+                                          ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          slot.labelKey.tr,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: context.appMutedText,
+                                            height: 1.35,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   });
 }
@@ -1948,193 +1935,199 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                     ),
                   ],
                 ),
-        child:
-            controller.isLoading.value && controller.plans.isEmpty
-                ? const PageSkeleton.plannerGrocery()
-                : grouped.isEmpty
-                ? _EmptyGrocery()
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Progress chip / summary banner
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.appSoftGreen,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.shopping_bag_outlined,
-                            color: AppColors.primaryGreen,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              '$checkedCount / $totalItems ${'planner.meals_planned_short'.tr}',
-                              style: TextStyle(
-                                color: context.appText,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13.5,
-                              ),
-                            ),
-                          ),
-                          if (checkedCount > 0)
-                            InkWell(
-                              onTap: () => setState(checked.clear),
-                              child: Text(
-                                'planner.remove'.tr,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Categorized checklist groups
-                    ...grouped.entries.map((group) {
-                      final categoryIcon = _iconForGroceryCategory(group.key);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+        child: LoadingContentTransition(
+          isLoading: controller.isLoading.value,
+          loading: const PageSkeleton.plannerGrocery(),
+          content:
+              grouped.isEmpty
+                  ? _EmptyGrocery()
+                  : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Progress chip / summary banner
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.appSoftGreen,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
                           children: [
-                            // Category Header
-                            Row(
-                              children: [
-                                Icon(
-                                  categoryIcon,
-                                  size: 18,
-                                  color: AppColors.primaryGreen,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  group.key.tr,
-                                  style: TextStyle(
-                                    color: context.appText,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: context.appElevatedSurface,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: context.appBorder,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    '${group.value.length}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: context.appMutedText,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            const Icon(
+                              Icons.shopping_bag_outlined,
+                              color: AppColors.primaryGreen,
+                              size: 22,
                             ),
-                            const SizedBox(height: 10),
-
-                            // Items in this category
-                            ...group.value.map((item) {
-                              final isItemChecked = checked.contains(item.key);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: context.appElevatedSurface,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: context.appBorder.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  child: CheckboxListTile(
-                                    value: isItemChecked,
-                                    activeColor: AppColors.primaryGreen,
-                                    checkboxShape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 2,
-                                    ),
-                                    onChanged:
-                                        (value) => setState(
-                                          () =>
-                                              value == true
-                                                  ? checked.add(item.key)
-                                                  : checked.remove(item.key),
-                                        ),
-                                    title: Text(
-                                      item.name.tr,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color:
-                                            isItemChecked
-                                                ? context.appMutedText
-                                                : context.appText,
-                                        decoration:
-                                            isItemChecked
-                                                ? TextDecoration.lineThrough
-                                                : null,
-                                      ),
-                                    ),
-                                    secondary:
-                                        item.quantityLabel.isEmpty
-                                            ? null
-                                            : Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 3,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: context.appSoftGreen,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                item.quantityLabel,
-                                                style: const TextStyle(
-                                                  color: AppColors.primaryGreen,
-                                                  fontSize: 11.5,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ),
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '$checkedCount / $totalItems ${'planner.meals_planned_short'.tr}',
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                            ),
+                            if (checkedCount > 0)
+                              InkWell(
+                                onTap: () => setState(checked.clear),
+                                child: Text(
+                                  'planner.remove'.tr,
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              );
-                            }),
+                              ),
                           ],
                         ),
-                      );
-                    }),
-                  ],
-                ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Categorized checklist groups
+                      ...grouped.entries.map((group) {
+                        final categoryIcon = _iconForGroceryCategory(group.key);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Category Header
+                              Row(
+                                children: [
+                                  Icon(
+                                    categoryIcon,
+                                    size: 18,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    group.key.tr,
+                                    style: TextStyle(
+                                      color: context.appText,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: context.appElevatedSurface,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: context.appBorder,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '${group.value.length}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.appMutedText,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // Items in this category
+                              ...group.value.map((item) {
+                                final isItemChecked = checked.contains(
+                                  item.key,
+                                );
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: context.appElevatedSurface,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: context.appBorder.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    child: CheckboxListTile(
+                                      value: isItemChecked,
+                                      activeColor: AppColors.primaryGreen,
+                                      checkboxShape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 2,
+                                          ),
+                                      onChanged:
+                                          (value) => setState(
+                                            () =>
+                                                value == true
+                                                    ? checked.add(item.key)
+                                                    : checked.remove(item.key),
+                                          ),
+                                      title: Text(
+                                        item.name.tr,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color:
+                                              isItemChecked
+                                                  ? context.appMutedText
+                                                  : context.appText,
+                                          decoration:
+                                              isItemChecked
+                                                  ? TextDecoration.lineThrough
+                                                  : null,
+                                        ),
+                                      ),
+                                      secondary:
+                                          item.quantityLabel.isEmpty
+                                              ? null
+                                              : Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: context.appSoftGreen,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  item.quantityLabel,
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AppColors.primaryGreen,
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                      controlAffinity:
+                                          ListTileControlAffinity.leading,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+        ),
       );
     });
   }
