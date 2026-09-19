@@ -136,9 +136,13 @@ public class RecipeFlowService {
         recipe.setStatus("DRAFT");
         LocalDateTime now = LocalDateTime.now();
         recipe.setCreatedAt(now); recipe.setUpdatedAt(now);
-        apply(recipe, request, files.isEmpty() ? null : files.getFirst(), false);
+        apply(recipe, request, null, false);
         recipe = recipes.saveAndFlush(recipe);
-        replaceRecipeMedia(recipe.getRecipeId(), files);
+        List<String> mediaUrls = replaceRecipeMedia(recipe.getRecipeId(), files);
+        if (!mediaUrls.isEmpty()) {
+            recipe.setMainImageUrl(mediaUrls.getFirst());
+            recipe = recipes.saveAndFlush(recipe);
+        }
         return response(recipe, userId);
     }
 
@@ -156,10 +160,16 @@ public class RecipeFlowService {
         List<MultipartFile> files = usableImages(uploads);
         validateImageCount(files.size());
         Recipe recipe = owned(userId, recipeId);
-        apply(recipe, request, files.isEmpty() ? null : files.getFirst(), true);
+        apply(recipe, request, null, true);
         recipe.setUpdatedAt(LocalDateTime.now());
         recipe = recipes.saveAndFlush(recipe);
-        if (!files.isEmpty()) appendRecipeMedia(recipeId, files);
+        if (!files.isEmpty()) {
+            List<String> mediaUrls = appendRecipeMedia(recipeId, files);
+            if (recipe.getMainImageUrl() == null || recipe.getMainImageUrl().isBlank()) {
+                recipe.setMainImageUrl(mediaUrls.getFirst());
+                recipe = recipes.saveAndFlush(recipe);
+            }
+        }
         return response(recipe, userId);
     }
 
@@ -172,24 +182,26 @@ public class RecipeFlowService {
         if (count > 5) throw new IllegalArgumentException("A post can contain up to 5 images");
     }
 
-    private void replaceRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
+    private List<String> replaceRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
         deleteByMealPostId("post_media", recipeId);
-        insertRecipeMedia(recipeId, uploads, 0);
+        return insertRecipeMedia(recipeId, uploads, 0);
     }
 
-    private void appendRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
+    private List<String> appendRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
         Number count = (Number) entityManager.createNativeQuery(
                         "SELECT COUNT(*) FROM post_media WHERE user_meal_post_id = :postId")
                 .setParameter("postId", recipeId)
                 .getSingleResult();
         int existingCount = count.intValue();
         validateImageCount(existingCount + uploads.size());
-        insertRecipeMedia(recipeId, uploads, existingCount);
+        return insertRecipeMedia(recipeId, uploads, existingCount);
     }
 
-    private void insertRecipeMedia(Integer recipeId, List<MultipartFile> uploads, int startIndex) {
+    private List<String> insertRecipeMedia(Integer recipeId, List<MultipartFile> uploads, int startIndex) {
+        List<String> storedUrls = new ArrayList<>();
         for (int index = 0; index < uploads.size(); index++) {
             String imageUrl = images.storePostImage(uploads.get(index));
+            storedUrls.add(imageUrl);
             entityManager.createNativeQuery("INSERT INTO post_media "
                             + "(user_meal_post_id, media_type, media_url, display_order) "
                             + "VALUES (:postId, 'IMAGE', :mediaUrl, :displayOrder)")
@@ -198,6 +210,7 @@ public class RecipeFlowService {
                     .setParameter("displayOrder", startIndex + index)
                     .executeUpdate();
         }
+        return storedUrls;
     }
 
     @Transactional

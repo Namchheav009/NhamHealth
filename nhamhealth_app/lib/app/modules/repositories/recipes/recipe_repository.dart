@@ -29,6 +29,7 @@ class RecipeRepository {
     required List<RecipeIngredient> ingredients,
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
+    int? categoryId,
   }) => _sendRecipe(
     'POST',
     _basePath,
@@ -40,6 +41,7 @@ class RecipeRepository {
     ingredients: ingredients,
     steps: steps,
     imageBytes: imageBytes,
+    categoryId: categoryId,
   );
   Future<CommunityRecipe> update({
     required int id,
@@ -51,6 +53,7 @@ class RecipeRepository {
     required List<RecipeIngredient> ingredients,
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
+    int? categoryId,
   }) => _sendRecipe(
     'PUT',
     '$_basePath/$id',
@@ -62,6 +65,7 @@ class RecipeRepository {
     ingredients: ingredients,
     steps: steps,
     imageBytes: imageBytes,
+    categoryId: categoryId,
   );
   Future<CommunityRecipe> publish(int id) => _post('$_basePath/$id/publish');
   Future<void> delete(int id) async {
@@ -97,6 +101,7 @@ class RecipeRepository {
     required List<RecipeIngredient> ingredients,
     required List<RecipeStep> steps,
     Uint8List? imageBytes,
+    int? categoryId,
   }) async {
     final request = http.MultipartRequest(method, _uri(path))
       ..headers.addAll(await _headers(contentType: false));
@@ -106,6 +111,7 @@ class RecipeRepository {
       if (cookingTimeMinutes != null) 'cookingTimeMinutes': cookingTimeMinutes,
       if (servings != null) 'servings': servings,
       'difficulty': difficulty,
+      'categoryId': categoryId ?? 1,
       'ingredients': ingredients.map((item) => item.toJson()).toList(),
       'steps': steps.map((item) => item.toJson()).toList(),
     };

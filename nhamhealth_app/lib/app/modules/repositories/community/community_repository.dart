@@ -370,6 +370,7 @@ class CommunityRepository {
           'images',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
+          contentType: MediaType('image', 'jpeg'),
         ),
       );
     }
@@ -434,6 +435,7 @@ class CommunityRepository {
           'images',
           imageBytes[index],
           filename: 'community-post-${index + 1}.jpg',
+          contentType: MediaType('image', 'jpeg'),
         ),
       );
     }

@@ -47,6 +47,8 @@ app.upload.directory=uploads
 app.storage.supabase.url=https://YOUR_PROJECT_REF.supabase.co
 app.storage.supabase.service-key=${APP_STORAGE_SUPABASE_SERVICE_KEY:}
 app.storage.supabase.bucket=nhamhealth-images
+spring.servlet.multipart.max-file-size=${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:15MB}
+spring.servlet.multipart.max-request-size=${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:50MB}
 
 # Google Gemini AI hosted models (primary food vision and nutrition engine)
 app.ai.gemini.api-key=${GEMINI_API_KEY:${APP_AI_GEMINI_API_KEY:}}

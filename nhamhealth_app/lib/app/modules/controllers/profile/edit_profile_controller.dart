@@ -164,7 +164,8 @@ class EditProfileController extends GetxController {
       );
       return;
     }
-    if (emailAddress.isNotEmpty && !isEmailVerified.value) {
+    final hasEmailChanged = emailAddress.toLowerCase() != _savedEmail;
+    if (emailAddress.isNotEmpty && hasEmailChanged && !isEmailVerified.value) {
       await AppAlert.actionError(
         title: 'profile.verification_required',
         message: 'profile.verify_email',
@@ -178,7 +179,9 @@ class EditProfileController extends GetxController {
       );
       return;
     }
-    if (phoneNumber.isNotEmpty && !isPhoneVerified.value) {
+    final hasPhoneChanged =
+        _phoneComparisonKey(phoneNumber) != _phoneComparisonKey(_savedPhone);
+    if (phoneNumber.isNotEmpty && hasPhoneChanged && !isPhoneVerified.value) {
       verificationDetail.value = 'profile.verify_phone_before_save';
       await AppAlert.actionError(
         title: 'profile.verification_required',
@@ -186,7 +189,7 @@ class EditProfileController extends GetxController {
       );
       return;
     }
-    if (emailAddress.isEmpty && !isPhoneVerified.value) {
+    if (emailAddress.isEmpty && !isPhoneVerified.value && !_savedPhoneVerified) {
       await AppAlert.actionError(
         title: 'profile.verify_phone',
         message: 'profile.verify_phone_before_remove_email',
