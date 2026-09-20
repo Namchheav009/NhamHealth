@@ -193,5 +193,79 @@ void main() {
       expect(items[1].name, 'Grilled Chicken');
       expect(items[2].name, 'Clear Soup');
     });
+
+    test('retains a complete two-component AI analysis and its metadata', () {
+      final soup = FoodNutritionModel(
+        name: 'Beef soup',
+        calories: 260,
+        protein: 30,
+        carbs: 4,
+        fat: 12,
+        sugar: 1,
+        servingSize: 520,
+        servingUnit: 'g',
+        components: [
+          DetectedFoodComponentModel.fromJson({
+            'name': 'Soup broth',
+            'estimatedAmount': 400,
+            'unit': 'ml',
+            'confidence': 0.88,
+            'portionConfidence': 0.72,
+            'preparationMethod': 'simmered',
+            'visibleEvidence': 'Yellow broth fills most of the bowl',
+            'nutritionSource': 'AI_ESTIMATED',
+            'requiresUserConfirmation': true,
+          }),
+          DetectedFoodComponentModel.fromJson({
+            'name': 'Beef pieces',
+            'estimatedAmount': 120,
+            'unit': 'g',
+            'confidence': 0.91,
+            'portionConfidence': 0.81,
+            'databaseMatched': true,
+            'databaseMatchConfidence': 0.94,
+            'imageUrl': 'https://cdn.example.com/beef.jpg',
+            'nutritionSource': 'DATABASE_CALCULATED',
+          }),
+        ],
+      );
+
+      final items = FoodDecompositionService.decompose(soup);
+
+      expect(items.map((item) => item.name), ['Soup broth', 'Beef pieces']);
+      expect(items.first.portionConfidence, 0.72);
+      expect(items.first.preparationMethod, 'simmered');
+      expect(items.first.requiresUserConfirmation, isTrue);
+      expect(items.last.databaseMatched, isTrue);
+      expect(items.last.databaseMatchConfidence, 0.94);
+      expect(items.last.imageUrl, 'https://cdn.example.com/beef.jpg');
+      expect(items.last.nutritionSource, 'DATABASE_CALCULATED');
+    });
+
+    test('keeps one image-grounded component for a simple food', () {
+      final apple = FoodNutritionModel(
+        name: 'Apple',
+        calories: 95,
+        protein: 0.5,
+        carbs: 25,
+        fat: 0.3,
+        sugar: 19,
+        servingSize: 1,
+        servingUnit: 'piece',
+        components: [
+          DetectedFoodComponentModel.fromJson({
+            'name': 'Apple',
+            'estimatedAmount': 1,
+            'unit': 'piece',
+            'confidence': 0.98,
+          }),
+        ],
+      );
+
+      final items = FoodDecompositionService.decompose(apple);
+
+      expect(items, hasLength(1));
+      expect(items.single.name, 'Apple');
+    });
   });
 }

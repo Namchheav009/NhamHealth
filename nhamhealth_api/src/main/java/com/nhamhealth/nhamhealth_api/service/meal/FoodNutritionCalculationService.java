@@ -35,7 +35,7 @@ public class FoodNutritionCalculationService {
                     detected.confidence(), detected.portionConfidence(),
                     detected.preparationMethod(), detected.visibleEvidence(),
                     detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
-                    true, food.getId(), food.getName(), match.score(),
+                    true, food.getId(), food.getName(), food.getImageUrl(), match.score(),
                     0, 0, 0, 0, 0, 0, 0,
                     NutritionSource.UNAVAILABLE, true);
         }
@@ -45,7 +45,7 @@ public class FoodNutritionCalculationService {
                 detected.confidence(), detected.portionConfidence(),
                 detected.preparationMethod(), detected.visibleEvidence(),
                 detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
-                true, food.getId(), food.getName(), match.score(),
+                true, food.getId(), food.getName(), food.getImageUrl(), match.score(),
                 scaled(food.getCalories(), multiplier),
                 scaled(food.getProtein(), multiplier),
                 scaled(food.getCarbs(), multiplier),
@@ -111,7 +111,7 @@ public class FoodNutritionCalculationService {
                 component.preparationMethod(), component.visibleEvidence(),
                 component.componentType(), component.liquidVolumeMl(), component.beverageType(),
                 component.databaseMatched(), component.matchedFoodId(),
-                component.matchedFoodName(), component.databaseMatchConfidence(),
+                component.matchedFoodName(), component.imageUrl(), component.databaseMatchConfidence(),
                 round(estimate.calories()),
                 round(estimate.protein()),
                 round(estimate.carbohydrates()),
@@ -136,7 +136,7 @@ public class FoodNutritionCalculationService {
                 component.preparationMethod(), component.visibleEvidence(),
                 component.componentType(), component.liquidVolumeMl(), component.beverageType(),
                 component.databaseMatched(), component.matchedFoodId(),
-                component.matchedFoodName(), component.databaseMatchConfidence(),
+                component.matchedFoodName(), component.imageUrl(), component.databaseMatchConfidence(),
                 round(profile.calories * factor),
                 round(profile.protein * factor),
                 round(profile.carbohydrates * factor),
@@ -274,7 +274,7 @@ public class FoodNutritionCalculationService {
                 detected.confidence(), detected.portionConfidence(),
                 detected.preparationMethod(), detected.visibleEvidence(),
                 detected.componentType(), detected.liquidVolumeMl(), detected.beverageType(),
-                false, null, null, 0,
+                false, null, null, null, 0,
                 0, 0, 0, 0, 0, 0, 0,
                 NutritionSource.UNAVAILABLE, true);
     }

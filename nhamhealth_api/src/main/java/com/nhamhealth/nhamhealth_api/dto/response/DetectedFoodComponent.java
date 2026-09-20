@@ -14,6 +14,7 @@ public record DetectedFoodComponent(
         boolean databaseMatched,
         Integer matchedFoodId,
         String matchedFoodName,
+        String imageUrl,
         double databaseMatchConfidence,
         double calories,
         double protein,

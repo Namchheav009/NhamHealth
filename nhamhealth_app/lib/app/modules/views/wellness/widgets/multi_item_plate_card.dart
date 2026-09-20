@@ -231,7 +231,7 @@ class MultiItemPlateCard extends StatelessWidget {
       item.name,
       componentType: item.componentType,
       customRole: item.role,
-      customImageUrl: item.imageUrl,
+      customImageUrl: item.databaseMatched ? item.imageUrl : null,
     );
 
     final displayRole = item.role.isNotEmpty ? item.role : visual.defaultRole;
@@ -247,9 +247,10 @@ class MultiItemPlateCard extends StatelessWidget {
             // Circular Avatar / Thumbnail
             IngredientAvatar(
               name: item.name,
-              imageUrl: item.imageUrl ?? visual.imageUrl,
+              imageUrl: visual.imageUrl,
               componentType: item.componentType,
-              size: 52,
+              size: 58,
+              borderRadius: 17,
             ),
             const SizedBox(width: 12),
 
@@ -287,15 +288,15 @@ class MultiItemPlateCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // Confidence & Macro Badges
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+                  // Confidence & Macro Badges. Wrap on compact screens so
+                  // translated labels never compete with the amount column.
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 5,
                     children: [
                       _buildConfidenceBadge(context, item),
-                      if (item.calories > 0) ...[
-                        const SizedBox(width: 6),
+                      if (item.calories > 0)
                         _buildMacroContributionPill(context, item),
-                      ],
                     ],
                   ),
                 ],
@@ -313,30 +314,48 @@ class MultiItemPlateCard extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // Amount Column
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'wellness.amount_label'.tr,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: context.appMutedText,
-                    fontWeight: FontWeight.w500,
+            // Amount is styled as an action to make row editability obvious.
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 62, maxWidth: 86),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'wellness.amount_label'.tr,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: context.appMutedText,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${item.servingSize.round()} ${item.unit}',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: context.appText,
-                    letterSpacing: -0.2,
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${item.servingSize.round()} ${item.unit}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: context.appText,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 17,
+                        color: _actionColor(context),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -389,7 +408,7 @@ class MultiItemPlateCard extends StatelessWidget {
           Icon(icon, size: 12.5, color: textColor),
           const SizedBox(width: 3.5),
           Text(
-            label,
+            '$label · ${(item.confidence.clamp(0, 1) * 100).round()}%',
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
@@ -400,6 +419,9 @@ class MultiItemPlateCard extends StatelessWidget {
       ),
     );
   }
+
+  Color _actionColor(BuildContext context) =>
+      context.appIsDark ? const Color(0xFF4ADE80) : greenDark;
 
   Widget _buildMacroContributionPill(
     BuildContext context,
@@ -437,20 +459,131 @@ class MultiItemPlateCard extends StatelessWidget {
     );
   }
 
+  Widget _buildAnalysisSourceBadge(
+    BuildContext context,
+    PlateItemState item,
+  ) {
+    final isDatabase = item.databaseMatched;
+    final label =
+        isDatabase
+            ? 'wellness.database_verified'.tr
+            : 'wellness.ai_nutrition_estimate'.tr;
+    final color =
+        isDatabase
+            ? _actionColor(context)
+            : (context.appIsDark
+                ? const Color(0xFFFBBF24)
+                : const Color(0xFFB45309));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isDatabase ? Icons.verified_rounded : Icons.auto_awesome_rounded,
+            size: 13,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewBadge(BuildContext context) {
+    final color =
+        context.appIsDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.rate_review_outlined, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            'wellness.needs_review'.tr,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisDetail(
+    BuildContext context,
+    String label,
+    String value,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: context.appMutedText),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: context.appText,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showPortionSheet(BuildContext context, PlateItemState item, int index) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: context.appSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.9,
+          ),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Center(
                 child: Container(
                   width: 40,
@@ -488,6 +621,99 @@ class MultiItemPlateCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: sheetContext.appSurfaceLow,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: sheetContext.appBorder.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'wellness.ai_ingredient_analysis'.tr,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: sheetContext.appText,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _buildAnalysisSourceBadge(sheetContext, item),
+                          if (item.requiresUserConfirmation)
+                            _buildReviewBadge(sheetContext),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildAnalysisDetail(
+                        sheetContext,
+                        'wellness.identity_confidence'.tr,
+                        '${(item.confidence.clamp(0, 1) * 100).round()}%',
+                      ),
+                      _buildAnalysisDetail(
+                        sheetContext,
+                        'wellness.portion_confidence'.tr,
+                        item.portionConfidence > 0
+                            ? '${(item.portionConfidence.clamp(0, 1) * 100).round()}%'
+                            : '—',
+                      ),
+                      if (item.preparationMethod.trim().isNotEmpty &&
+                          item.preparationMethod.trim().toLowerCase() !=
+                              'unknown')
+                        _buildAnalysisDetail(
+                          sheetContext,
+                          'wellness.preparation'.tr,
+                          item.preparationMethod.trim(),
+                        ),
+                      if (item.visibleEvidence.trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'wellness.visible_evidence'.tr,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: sheetContext.appMutedText,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.visibleEvidence.trim(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: sheetContext.appMutedText,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'wellness.included_in_totals'.tr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: sheetContext.appText,
+                  ),
+                ),
+                value: item.isSelected,
+                activeColor: green,
+                onChanged: (_) {
+                  controller.togglePlateItem(index);
+                  Navigator.pop(sheetContext);
+                },
+              ),
               const SizedBox(height: 16),
               VisualPortionSelector(
                 isDrink: item.componentType == 'drink',
@@ -503,7 +729,8 @@ class MultiItemPlateCard extends StatelessWidget {
                   Navigator.pop(sheetContext);
                 },
               ),
-            ],
+              ],
+            ),
           ),
         );
       },

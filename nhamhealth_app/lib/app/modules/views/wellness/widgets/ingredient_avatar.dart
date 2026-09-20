@@ -10,13 +10,15 @@ class IngredientAvatar extends StatelessWidget {
     required this.name,
     this.imageUrl,
     this.componentType,
-    this.size = 50,
+    this.size = 56,
+    this.borderRadius = 16,
   });
 
   final String name;
   final String? imageUrl;
   final String? componentType;
   final double size;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +36,12 @@ class IngredientAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: isDark ? context.appSurfaceLow : visual.backgroundColor,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: isDark ? context.appBorder : const Color(0xFFEEEEEE),
+          color:
+              isDark
+                  ? context.appBorder
+                  : visual.iconColor.withValues(alpha: 0.12),
           width: 1,
         ),
       ),
@@ -53,31 +58,53 @@ class IngredientAvatar extends StatelessWidget {
       return fallbackWidget();
     }
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isDark ? context.appBorder : const Color(0xFFF1F5F9),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+    return Semantics(
+      image: true,
+      label: name,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color: isDark ? context.appBorder : const Color(0xFFE5E7EB),
+            width: 1.5,
           ),
-        ],
-      ),
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: resolvedUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => fallbackWidget(),
-          errorWidget: (context, url, error) => fallbackWidget(),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius - 1.5),
+          child: CachedNetworkImage(
+            imageUrl: resolvedUrl,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            fadeInDuration: const Duration(milliseconds: 220),
+            memCacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+            placeholder:
+                (context, url) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    fallbackWidget(),
+                    Center(
+                      child: SizedBox.square(
+                        dimension: size * 0.28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: visual.iconColor.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            errorWidget: (context, url, error) => fallbackWidget(),
+          ),
         ),
       ),
     );

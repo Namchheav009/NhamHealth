@@ -123,6 +123,7 @@ class AiFoodAnalysisServiceTests {
                 assertEquals(56, result.nutrition().carbohydrates());
                 assertEquals(NutritionSource.DATABASE_CALCULATED, result.nutrition().source());
                 assertTrue(result.databaseMatched());
+                assertEquals("https://cdn.example.com/rice.jpg", result.components().getFirst().imageUrl());
                 assertFalse(result.needsUserConfirmation());
                 assertEquals("Personalized nutrition check", result.recommendationTitle());
                 assertTrue(result.recommendation().contains("Using your saved BMI"));
@@ -236,6 +237,7 @@ class AiFoodAnalysisServiceTests {
                 food.setSodium(BigDecimal.ONE);
                 food.setServingSize(BigDecimal.valueOf(100));
                 food.setServingUnit("g");
+                food.setImageUrl("https://cdn.example.com/rice.jpg");
                 food.setActive(true);
                 return food;
         }

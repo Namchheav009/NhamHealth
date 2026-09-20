@@ -52,6 +52,72 @@ class IngredientVisualService {
   }
 
   static IngredientVisual _match(String n, String? compType) {
+    // Match specific ingredients before broad food categories. This avoids,
+    // for example, cherry tomatoes receiving a generic mixed-salad photo.
+    if (n.contains('broccoli')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?auto=format&fit=crop&w=320&h=320&q=84',
+        fallbackIcon: Icons.eco_rounded,
+        iconColor: Color(0xFF2E7D32),
+        backgroundColor: Color(0xFFE8F5E9),
+        defaultRole: 'Cruciferous vegetable',
+      );
+    }
+
+    if (n.contains('avocado')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=320&h=320&q=84',
+        fallbackIcon: Icons.eco_rounded,
+        iconColor: Color(0xFF558B2F),
+        backgroundColor: Color(0xFFF1F8E9),
+        defaultRole: 'Healthy fat',
+      );
+    }
+
+    if (n.contains('tomato')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=320&h=320&q=84',
+        fallbackIcon: Icons.circle_rounded,
+        iconColor: Color(0xFFE53935),
+        backgroundColor: Color(0xFFFFEBEE),
+        defaultRole: 'Fresh vegetable',
+      );
+    }
+
+    // Broth / soup / stock. Keep this before generic sauce matching.
+    if (n.contains('broth') ||
+        n.contains('soup') ||
+        n.contains('stock') ||
+        n.contains('stew')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=320&h=320&q=82',
+        fallbackIcon: Icons.soup_kitchen_rounded,
+        iconColor: Color(0xFFB45309),
+        backgroundColor: Color(0xFFFFF7E6),
+        defaultRole: 'Soup base',
+      );
+    }
+
+    // Chilli and dry seasonings must not resolve to the cooking-oil photo.
+    if (n.contains('chili') ||
+        n.contains('chilli') ||
+        n.contains('paprika') ||
+        n.contains('pepper slice') ||
+        n.contains('pepper flakes')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?auto=format&fit=crop&w=320&h=320&q=82',
+        fallbackIcon: Icons.local_fire_department_rounded,
+        iconColor: Color(0xFFE53935),
+        backgroundColor: Color(0xFFFFEBEE),
+        defaultRole: 'Flavor seasoning',
+      );
+    }
+
     // Matcha / Green Tea
     if (n.contains('matcha') || n.contains('green tea')) {
       return const IngredientVisual(
@@ -139,7 +205,7 @@ class IngredientVisualService {
         n.contains('breast')) {
       return const IngredientVisual(
         imageUrl:
-            'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=240&q=80',
+            'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=320&h=320&q=84',
         fallbackIcon: Icons.lunch_dining_rounded,
         iconColor: Color(0xFFF57C00),
         backgroundColor: Color(0xFFFFF3E0),
@@ -187,10 +253,17 @@ class IngredientVisualService {
       );
     }
 
-    // Salad / Greens / Lettuce / Spinach / Tomato
+    // Salad / leafy greens / vegetables
     if (n.contains('salad') ||
         n.contains('lettuce') ||
         n.contains('spinach') ||
+        n.contains('morning glory') ||
+        n.contains('water spinach') ||
+        n.contains('kangkong') ||
+        n.contains('bok choy') ||
+        n.contains('cabbage') ||
+        n.contains('scallion') ||
+        n.contains('spring onion') ||
         n.contains('greens') ||
         n.contains('tomato') ||
         n.contains('cucumber') ||
@@ -198,7 +271,7 @@ class IngredientVisualService {
         n.contains('vegetable')) {
       return const IngredientVisual(
         imageUrl:
-            'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=240&q=80',
+            'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=320&h=320&q=82',
         fallbackIcon: Icons.eco_rounded,
         iconColor: Color(0xFF388E3C),
         backgroundColor: Color(0xFFE8F5E9),

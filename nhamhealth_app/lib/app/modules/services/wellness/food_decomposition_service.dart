@@ -36,15 +36,10 @@ class FoodDecompositionService {
     final normFoodName = food.name.trim().toLowerCase();
     final normMealName = food.mealName.trim().toLowerCase();
 
-    // If there is only 1 component, it's just the whole dish
-    if (food.components.length <= 1) {
-      final singleName = food.components.first.name.trim().toLowerCase();
-      if (singleName == normFoodName ||
-          singleName == normMealName ||
-          normFoodName.contains(singleName) ||
-          singleName.contains(normFoodName)) {
-        return false;
-      }
+    // A single component is valid for simple foods and uniform dishes. Keep
+    // the provider's image-grounded result instead of inventing a recipe.
+    if (food.components.length == 1) {
+      return food.components.first.name.trim().isNotEmpty;
     }
 
     // Check if any component is identical or nearly identical to the whole meal
@@ -58,8 +53,10 @@ class FoodDecompositionService {
       }
     }
 
-    // If components has >= 3 distinct items and none is the dish name, it's granular!
-    return food.components.length >= 3;
+    // One or two visible components can be a complete analysis (for example,
+    // steak with sauce). Requiring three caused valid AI results to be replaced
+    // by generic template ingredients that were not necessarily visible.
+    return true;
   }
 
   static List<PlateItemState> _mapExistingComponents(FoodNutritionModel food) {
@@ -95,10 +92,16 @@ class FoodDecompositionService {
           isSelected: true,
           componentType: c.componentType,
           confidence: c.confidence > 0 ? c.confidence : 0.9,
+          portionConfidence: c.portionConfidence,
           preparationMethod: c.preparationMethod,
           visibleEvidence: c.visibleEvidence,
+          databaseMatched: c.databaseMatched,
+          databaseMatchConfidence: c.databaseMatchConfidence,
+          nutritionSource: c.nutritionSource,
+          requiresUserConfirmation: c.requiresUserConfirmation,
           role: visual.defaultRole,
-          imageUrl: visual.imageUrl,
+          imageUrl:
+              c.imageUrl?.isNotEmpty == true ? c.imageUrl : visual.imageUrl,
         ),
       );
     }

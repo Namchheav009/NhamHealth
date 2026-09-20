@@ -28,6 +28,7 @@ class DetectedFoodComponentModel {
     required this.databaseMatched,
     this.matchedFoodId,
     this.matchedFoodName,
+    this.imageUrl,
     required this.databaseMatchConfidence,
     required this.calories,
     required this.protein,
@@ -53,6 +54,7 @@ class DetectedFoodComponentModel {
   final bool databaseMatched;
   final int? matchedFoodId;
   final String? matchedFoodName;
+  final String? imageUrl;
   final double databaseMatchConfidence;
   final double calories;
   final double protein;
@@ -79,6 +81,7 @@ class DetectedFoodComponentModel {
         databaseMatched: json['databaseMatched'] == true,
         matchedFoodId: _integer(json['matchedFoodId']),
         matchedFoodName: json['matchedFoodName']?.toString(),
+        imageUrl: json['imageUrl']?.toString().trim(),
         databaseMatchConfidence: _number(json['databaseMatchConfidence']),
         calories: _number(json['calories']),
         protein: _number(json['protein']),
@@ -105,6 +108,7 @@ class DetectedFoodComponentModel {
     'databaseMatched': databaseMatched,
     'matchedFoodId': matchedFoodId,
     'matchedFoodName': matchedFoodName,
+    'imageUrl': imageUrl,
     'databaseMatchConfidence': databaseMatchConfidence,
     'calories': calories,
     'protein': protein,

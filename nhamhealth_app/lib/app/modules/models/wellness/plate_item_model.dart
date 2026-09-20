@@ -16,8 +16,13 @@ class PlateItemState {
     this.isSelected = true,
     this.componentType = 'food',
     this.confidence = 0.9,
+    this.portionConfidence = 0,
     this.preparationMethod = '',
     this.visibleEvidence = '',
+    this.databaseMatched = false,
+    this.databaseMatchConfidence = 0,
+    this.nutritionSource = 'UNAVAILABLE',
+    this.requiresUserConfirmation = false,
     this.role = '',
     this.imageUrl,
   });
@@ -37,8 +42,13 @@ class PlateItemState {
   bool isSelected;
   String componentType;
   double confidence;
+  double portionConfidence;
   String preparationMethod;
   String visibleEvidence;
+  bool databaseMatched;
+  double databaseMatchConfidence;
+  String nutritionSource;
+  bool requiresUserConfirmation;
   String role;
   String? imageUrl;
 
@@ -78,8 +88,13 @@ class PlateItemState {
     isSelected: isSelected,
     componentType: componentType,
     confidence: confidence,
+    portionConfidence: portionConfidence,
     preparationMethod: preparationMethod,
     visibleEvidence: visibleEvidence,
+    databaseMatched: databaseMatched,
+    databaseMatchConfidence: databaseMatchConfidence,
+    nutritionSource: nutritionSource,
+    requiresUserConfirmation: requiresUserConfirmation,
     role: role,
     imageUrl: imageUrl,
   );
