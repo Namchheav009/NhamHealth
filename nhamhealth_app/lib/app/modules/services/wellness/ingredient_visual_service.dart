@@ -217,11 +217,28 @@ class IngredientVisualService {
     if (n.contains('pork') || n.contains('bacon') || n.contains('ham')) {
       return const IngredientVisual(
         imageUrl:
-            'https://images.unsplash.com/photo-1602498456745-e9503b30470b?auto=format&fit=crop&w=240&q=80',
+            'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=320&h=320&q=84',
         fallbackIcon: Icons.lunch_dining_rounded,
         iconColor: Color(0xFFAD1457),
         backgroundColor: Color(0xFFFCE4EC),
         defaultRole: 'Protein source',
+      );
+    }
+
+    // Fresh herbs use a precise visual fallback. An icon is intentionally
+    // preferred over an unrelated stock image when no verified herb photo is
+    // available.
+    if (n.contains('cilantro') ||
+        n.contains('coriander') ||
+        n.contains('parsley') ||
+        n.contains('basil') ||
+        n.contains('mint') ||
+        n.contains('herb')) {
+      return const IngredientVisual(
+        fallbackIcon: Icons.grass_rounded,
+        iconColor: Color(0xFF2E7D32),
+        backgroundColor: Color(0xFFE8F5E9),
+        defaultRole: 'Fresh herb',
       );
     }
 
@@ -352,7 +369,23 @@ class IngredientVisualService {
       );
     }
 
-    // Default fallback
+    // Type-aware fallbacks keep unknown results recognizably food or drink.
+    // Never fetch an arbitrary photo merely because no keyword matched.
+    if (compType == 'drink' ||
+        n.contains('drink') ||
+        n.contains('juice') ||
+        n.contains('smoothie') ||
+        n.contains('beverage')) {
+      return const IngredientVisual(
+        fallbackIcon: Icons.local_drink_rounded,
+        iconColor: Color(0xFF0288D1),
+        backgroundColor: Color(0xFFE1F5FE),
+        defaultRole: 'Drink',
+      );
+    }
+
+    // Default food/ingredient fallback. A deterministic icon is safer than
+    // showing an unrelated landscape, person, or object.
     return const IngredientVisual(
       imageUrl: null,
       fallbackIcon: Icons.restaurant_rounded,

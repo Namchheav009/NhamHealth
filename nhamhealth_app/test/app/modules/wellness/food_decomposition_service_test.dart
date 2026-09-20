@@ -267,5 +267,66 @@ void main() {
       expect(items, hasLength(1));
       expect(items.single.name, 'Apple');
     });
+
+    test('does not expose a composite meal title as an ingredient', () {
+      final meal = FoodNutritionModel(
+        name: 'Grilled Pork with Rice',
+        calories: 610,
+        protein: 38,
+        carbs: 68,
+        fat: 21,
+        sugar: 4,
+        servingSize: 420,
+        servingUnit: 'g',
+        components: [
+          DetectedFoodComponentModel.fromJson({
+            'name': 'Grilled Pork with Rice',
+            'estimatedAmount': 420,
+            'unit': 'g',
+            'confidence': 0.92,
+          }),
+        ],
+      );
+
+      final items = FoodDecompositionService.decompose(meal);
+
+      expect(
+        items.any((item) => item.name == 'Grilled Pork with Rice'),
+        isFalse,
+      );
+      expect(items.length, greaterThan(1));
+      expect(items.any((item) => item.role == 'Carb base'), isTrue);
+      expect(items.any((item) => item.role == 'Protein source'), isTrue);
+    });
+
+    test('does not expose a finished composite drink as an ingredient', () {
+      final drink = FoodNutritionModel(
+        name: 'Milk Tea',
+        calories: 260,
+        protein: 5,
+        carbs: 45,
+        fat: 7,
+        sugar: 32,
+        servingSize: 450,
+        servingUnit: 'ml',
+        mealType: 'drink',
+        components: [
+          DetectedFoodComponentModel.fromJson({
+            'name': 'Milk Tea',
+            'estimatedAmount': 450,
+            'unit': 'ml',
+            'componentType': 'drink',
+            'confidence': 0.91,
+          }),
+        ],
+      );
+
+      final items = FoodDecompositionService.decompose(drink);
+
+      expect(items.any((item) => item.name == 'Milk Tea'), isFalse);
+      expect(items.any((item) => item.name == 'Brewed Tea Base'), isTrue);
+      expect(items.any((item) => item.name.contains('Milk')), isTrue);
+      expect(items.any((item) => item.name.contains('Boba')), isFalse);
+    });
   });
 }

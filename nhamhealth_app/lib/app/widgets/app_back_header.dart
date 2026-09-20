@@ -84,43 +84,79 @@ class AppBackHeader extends StatelessWidget {
     required this.onBack,
     this.backButtonKey,
     this.titleWidget,
+    this.subtitle,
     this.trailing,
     this.centerTitle = false,
   });
 
   static const double titleFontSize = 18;
-  static const FontWeight titleFontWeight = FontWeight.w700;
+  static const FontWeight titleFontWeight = FontWeight.w800;
+  static const double titleLetterSpacing = -0.2;
+  static const double subtitleFontSize = 13;
 
   final String title;
   final VoidCallback onBack;
   final Key? backButtonKey;
   final Widget? titleWidget;
+  final String? subtitle;
   final Widget? trailing;
   final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: AppBackButton.layoutSize,
+    final subtitleText = subtitle?.trOrSelf.trim();
+    final hasSubtitle = subtitleText != null && subtitleText.isNotEmpty;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: AppBackButton.layoutSize,
+        maxHeight: hasSubtitle ? 68 : AppBackButton.layoutSize,
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           AppBackButton(onPressed: onBack, buttonKey: backButtonKey),
           const SizedBox(width: AppBackButton.headerGap),
           Expanded(
-            child:
-                titleWidget ??
-                Text(
-                  title.trOrSelf,
-                  textAlign: centerTitle ? TextAlign.center : TextAlign.start,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textScaler: TextScaler.noScaling,
-                  style: TextStyle(
-                    color: colors.onSurface,
-                    fontSize: titleFontSize,
-                    fontWeight: titleFontWeight,
-                  ),
+            child: titleWidget ??
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      centerTitle
+                          ? CrossAxisAlignment.center
+                          : CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title.trOrSelf,
+                      textAlign:
+                          centerTitle ? TextAlign.center : TextAlign.start,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textScaler: TextScaler.noScaling,
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: titleFontSize,
+                        fontWeight: titleFontWeight,
+                        letterSpacing: titleLetterSpacing,
+                      ),
+                    ),
+                    if (hasSubtitle) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitleText,
+                        textAlign:
+                            centerTitle ? TextAlign.center : TextAlign.start,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontSize: subtitleFontSize,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
           ),
           if (trailing != null) ...[

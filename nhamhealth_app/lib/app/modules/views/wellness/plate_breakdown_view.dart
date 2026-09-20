@@ -44,43 +44,13 @@ class PlateBreakdownView extends StatelessWidget {
                   // App Bar / Top Navigation
                   Padding(
                     padding: EdgeInsets.fromLTRB(horizontal, 12, horizontal, 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        AppBackButton(
-                          buttonKey: const ValueKey(
-                            'plate-breakdown-back-button',
-                          ),
-                          onPressed: Get.back,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'wellness.plate_items'.tr,
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.4,
-                                  color: context.appText,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'wellness.ai_detected_ingredients_subtitle'.tr,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: context.appMutedText,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    child: AppBackHeader(
+                      title: 'wellness.plate_items',
+                      subtitle: 'wellness.ai_detected_ingredients_subtitle',
+                      backButtonKey: const ValueKey(
+                        'plate-breakdown-back-button',
+                      ),
+                      onBack: Get.back,
                     ),
                   ),
 

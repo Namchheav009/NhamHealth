@@ -102,11 +102,16 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
                         the category is visually ambiguous. Non-drinks must use beverageType none and
                         liquidVolumeMl 0. A culturally specific or
                         Cambodian/Khmer name is allowed only when visible evidence supports it. Similar Khmer
-                        soups and noodle dishes must remain alternatives when the evidence is ambiguous. For
-                        drinks, normally return the whole beverage as one component with the most specific name
-                        supported by the image. Return an edible topping as a separate component only when it
-                        has a separately visible portion. Never infer dissolved sugar, sweetness percentage,
-                        milk type, alcohol, carbonation, or flavor from color alone. Do not identify a clear
+                        soups and noodle dishes must remain alternatives when the evidence is ambiguous.
+                        Components are ingredients, never menu-item duplicates: do not return the whole dish
+                        or finished beverage as a component when it can be separated into constituent
+                        ingredients. For a recognizable composite drink, return only supported ingredients
+                        such as brewed tea or coffee base, visible milk or cream, syrup, fruit, and separately
+                        visible toppings. Use the beverage identity as supporting evidence only; lower
+                        confidence for recipe-implied ingredients and state that limitation in visibleEvidence.
+                        Plain water and genuinely single-ingredient drinks may remain one component. Never
+                        infer dissolved sugar, sweetness percentage, milk type, alcohol, carbonation, or flavor
+                        from color alone. Do not identify a clear
                         liquid as plain water from transparency alone; require a readable water label or
                         ordinary water-service context with no visible color, foam, fruit, tea, coffee, syrup,
                         or other beverage cues. Otherwise use a broad name such as Clear beverage,
@@ -197,7 +202,7 @@ public class NvidiaFoodVisionService implements FoodVisionProvider {
                         @Value("${app.ai.nvidia.api-key:}") String apiKey,
                         @Value("${app.ai.nvidia.model:nvidia/nemotron-nano-12b-v2-vl}") String model,
                         @Value("${app.ai.nvidia.fallback-vision-model:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning}") String fallbackVisionModel,
-                        @Value("${app.ai.prompt-version:food-drink-vision-v8}") String promptVersion,
+                        @Value("${app.ai.prompt-version:food-drink-vision-v9}") String promptVersion,
                         @Value("${app.ai.nvidia.text-max-tokens:4096}") int textMaxTokens) {
                 this(baseUrl, apiKey, model, fallbackVisionModel, promptVersion, textMaxTokens,
                                 new ObjectMapper(), new FoodVisionResultValidator());

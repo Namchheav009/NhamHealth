@@ -603,7 +603,9 @@ class AiFoodScanContent extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Detected Food',
+                          isDrink
+                              ? 'wellness.detected_drink'.trOrSelf
+                              : 'wellness.detected_food'.trOrSelf,
                           style: TextStyle(
                             color: context.appMutedText,
                             fontSize: 11,
@@ -851,12 +853,23 @@ class AiFoodScanContent extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
+                const SizedBox(width: 10),
+                Text(
+                  '${controller.analysisProgressPercent}%',
+                  key: const ValueKey<String>('ai-analysis-progress-percent'),
+                  style: const TextStyle(
+                    color: green,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
+                key: const ValueKey<String>('ai-analysis-progress-line'),
                 value: controller.analysisProgress,
                 minHeight: 7,
                 backgroundColor: context.appSubtleSurface,

@@ -18,7 +18,14 @@ class MealPlannerController extends GetxController {
     AuthService? authService,
   }) : _provider = provider,
        _storage = storage ?? const FlutterSecureStorage(),
-       _authService = authService;
+       _authService = authService {
+    if (provider == null) {
+      isLoading.value = false;
+      isLoadingRecommendations.value = false;
+      hasLoadedOnce.value = true;
+      hasLoadedRecommendationsOnce.value = true;
+    }
+  }
 
   static const _storageDaysKey = 'meal_planner_days_count';
   static const _storageStartDateKey = 'meal_planner_start_date';
@@ -32,8 +39,8 @@ class MealPlannerController extends GetxController {
   final customStartDate = Rxn<DateTime>();
   final plans = <String, List<PlannedMeal>>{}.obs;
   final adminRecommendations = <PlannedMeal>[].obs;
-  final isLoading = false.obs;
-  final isLoadingRecommendations = false.obs;
+  final isLoading = true.obs;
+  final isLoadingRecommendations = true.obs;
   final isLoadingDay = false.obs;
   final isSaving = false.obs;
   final errorMessage = ''.obs;
@@ -325,10 +332,6 @@ class MealPlannerController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      for (final day in planDays) {
-        plans.remove(_dateKey(day));
-        plans[_dateKey(day)] = <PlannedMeal>[];
-      }
       List<PlannedMeal> meals;
       try {
         meals = await _provider.getRange(
@@ -347,20 +350,25 @@ class MealPlannerController extends GetxController {
           meals.addAll(await _provider.getWeek(monday));
         }
       }
+      final newPlans = <String, List<PlannedMeal>>{};
+      for (final day in planDays) {
+        newPlans[_dateKey(day)] = <PlannedMeal>[];
+      }
       for (final meal in meals) {
         final date = meal.planDate;
         if (date != null) {
           final key = _dateKey(date);
-          final existing = plans[key] ?? const [];
+          final existing = newPlans[key] ?? const [];
           if (!existing.any(
             (m) =>
                 (m.planId != null && m.planId == meal.planId) ||
                 (m.slot == meal.slot && m.id == meal.id),
           )) {
-            plans[key] = [...existing, meal];
+            newPlans[key] = [...existing, meal];
           }
         }
       }
+      plans.addAll(newPlans);
     } catch (_) {
       errorMessage.value = 'planner.load_error'.tr;
     } finally {

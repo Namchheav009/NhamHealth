@@ -10,8 +10,10 @@ import 'package:nhamhealth_flutter/app/modules/models/home/recommended_meal_mode
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/ai_recommendation_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/daily_summary_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/greeting_section.dart';
+import 'package:nhamhealth_flutter/app/modules/views/home/widgets/home_quick_actions.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/mood_card.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
@@ -64,8 +66,24 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('home-wellness-sugar')),
+      find.byKey(const ValueKey<String>('home-wellness-water')),
       findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('home-wellness-sugar')),
+      findsNothing,
+    );
+    expect(
+      tester.getTopLeft(find.byType(GreetingSection)).dy,
+      lessThan(tester.getTopLeft(find.byType(AiRecommendationCard)).dy),
+    );
+    expect(
+      tester.getTopLeft(find.byType(AiRecommendationCard)).dy,
+      lessThan(tester.getTopLeft(find.byType(HomeQuickActions)).dy),
+    );
+    expect(
+      tester.getTopLeft(find.byType(HomeQuickActions)).dy,
+      lessThan(tester.getTopLeft(find.byType(DailySummaryCard)).dy),
     );
     expect(tester.takeException(), isNull);
     controller.onClose();
@@ -105,8 +123,20 @@ void main() {
       );
       if (size.width >= 768) {
         expect(
-          tester.getTopLeft(find.byType(GreetingSection)).dy,
+          tester.getTopLeft(find.byType(HomeQuickActions)).dy,
           tester.getTopLeft(find.byType(DailySummaryCard)).dy,
+        );
+        expect(
+          tester.getTopLeft(find.byType(HomeQuickActions)).dx,
+          lessThan(tester.getTopLeft(find.byType(DailySummaryCard)).dx),
+        );
+        expect(
+          tester.getTopLeft(find.byType(GreetingSection)).dy,
+          lessThan(tester.getTopLeft(find.byType(AiRecommendationCard)).dy),
+        );
+        expect(
+          tester.getTopLeft(find.byType(AiRecommendationCard)).dy,
+          lessThan(tester.getTopLeft(find.byType(HomeQuickActions)).dy),
         );
       }
       expect(tester.takeException(), isNull);
@@ -142,7 +172,7 @@ void main() {
     final homeScroll = find.byType(SingleChildScrollView);
     final scrollWidget = tester.widget<SingleChildScrollView>(homeScroll);
     final padding = scrollWidget.padding! as EdgeInsets;
-    expect(padding.bottom, greaterThanOrEqualTo(108));
+    expect(padding.bottom, 32);
     expect(
       scrollWidget.keyboardDismissBehavior,
       ScrollViewKeyboardDismissBehavior.onDrag,

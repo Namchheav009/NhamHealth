@@ -1,3 +1,4 @@
+import 'package:flutter/animation.dart';
 import 'package:get/get.dart';
 
 import '../modules/bindings/assistant/assistant_binding.dart';
@@ -132,6 +133,8 @@ abstract class AppPages {
       page: () => const MealPlannerView(),
       binding: MealPlannerBinding(),
       transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     ),
     GetPage<dynamic>(
       name: AppRoutes.mealPlannerCategories,

@@ -125,7 +125,8 @@ abstract class AppTheme {
         titleTextStyle: TextStyle(
           color: colorScheme.onSurface,
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.2,
         ),
       ),
       cardTheme: CardThemeData(

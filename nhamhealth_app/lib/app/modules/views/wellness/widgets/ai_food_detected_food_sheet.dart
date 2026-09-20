@@ -28,15 +28,25 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
   late bool _isDrink;
   late String _selectedCuisine;
 
-  final List<String> _commonCuisines = const [
+  static const List<String> _commonFoodCuisines = [
     'Khmer',
     'Asian',
     'Western',
     'Italian',
     'Healthy',
-    'Beverage',
     'Dessert',
     'Street Food',
+  ];
+
+  static const List<String> _commonDrinkCategories = [
+    'Beverage',
+    'Coffee',
+    'Tea',
+    'Juice',
+    'Smoothie',
+    'Water',
+    'Soft Drink',
+    'Healthy',
   ];
 
   late List<String> _cuisines;
@@ -65,7 +75,8 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             ? widget.controller.nutrition.value!.cuisine
             : (_isDrink ? 'Beverage' : 'Healthy'));
 
-    _cuisines = List<String>.from(_commonCuisines);
+    final defaultList = _isDrink ? _commonDrinkCategories : _commonFoodCuisines;
+    _cuisines = List<String>.from(defaultList);
     if (!_cuisines.contains(currentCuisine) && currentCuisine != 'Other') {
       _cuisines.insert(0, currentCuisine);
     }
@@ -106,8 +117,29 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
       if (_selectedCuisine != 'Other' && _selectedCuisine.isNotEmpty) {
         merged.add(_selectedCuisine);
       }
-      merged.addAll(apiCategories);
-      merged.addAll(_commonCuisines);
+      if (_isDrink) {
+        for (final cat in apiCategories) {
+          final l = cat.toLowerCase();
+          if (l.contains('drink') ||
+              l.contains('beverage') ||
+              l.contains('juice') ||
+              l.contains('coffee') ||
+              l.contains('tea') ||
+              l.contains('smoothie') ||
+              l.contains('water')) {
+            merged.add(cat);
+          }
+        }
+        merged.addAll(_commonDrinkCategories);
+      } else {
+        for (final cat in apiCategories) {
+          final l = cat.toLowerCase();
+          if (!l.contains('drink') && !l.contains('beverage')) {
+            merged.add(cat);
+          }
+        }
+        merged.addAll(_commonFoodCuisines);
+      }
 
       setState(() {
         _cuisines = merged.toList();
@@ -137,8 +169,10 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
       try {
         final results = await widget.controller.searchFoodSuggestions(query);
         if (!mounted) return;
+        final filtered =
+            results.where((s) => _isDrink ? s.isDrink : !s.isDrink).toList();
         setState(() {
-          _suggestions = results;
+          _suggestions = filtered;
           _isSearching = false;
         });
       } catch (_) {
@@ -161,7 +195,6 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
     setState(() {
       _suggestions = const [];
       _isSearching = false;
-      _isDrink = suggestion.isDrink;
       if (suggestion.category != null && suggestion.category!.isNotEmpty) {
         final cat = suggestion.category!;
         if (!_cuisines.contains(cat)) {
@@ -192,7 +225,12 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
   void _onSave() {
     final foodName = _nameController.text.trim();
     if (foodName.isEmpty) {
-      AppAlert.toast(message: 'Please enter a food or drink name');
+      AppAlert.toast(
+        message:
+            _isDrink
+                ? 'Please enter a drink name'
+                : 'Please enter a food name',
+      );
       return;
     }
 
@@ -210,7 +248,12 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
     );
 
     Navigator.of(context).pop(true);
-    AppAlert.toast(message: 'Detected food updated to $foodName');
+    AppAlert.toast(
+      message:
+          _isDrink
+              ? 'Detected drink updated to $foodName'
+              : 'Detected food updated to $foodName',
+    );
   }
 
   @override
@@ -262,6 +305,14 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final title =
+        _isDrink
+            ? 'wellness.edit_detected_drink'.trOrSelf
+            : 'wellness.edit_detected_food'.trOrSelf;
+    final subtitle =
+        _isDrink
+            ? 'Adjust drink name or category if AI detection needs correction.'
+            : 'Adjust food name or category if AI detection needs correction.';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,7 +336,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'wellness.edit_detected_food'.trOrSelf,
+                title,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -294,7 +345,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
               ),
               const SizedBox(height: 3),
               Text(
-                'Adjust name or category if AI detection needs correction.',
+                subtitle,
                 style: TextStyle(fontSize: 12, color: context.appMutedText),
               ),
             ],
@@ -311,6 +362,14 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
 
   Widget _buildNameField(BuildContext context) {
     final isDark = context.appIsDark;
+    final label =
+        _isDrink
+            ? 'wellness.drink_name'.trOrSelf
+            : 'wellness.food_name'.trOrSelf;
+    final hint =
+        _isDrink
+            ? 'e.g., Iced Latte, Fresh Orange Juice, Green Tea'
+            : 'e.g., Chicken Rice, Salad Bowl, Fried Noodles';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -318,7 +377,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Food or Drink Name',
+              label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -345,7 +404,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             color: context.appText,
           ),
           decoration: InputDecoration(
-            hintText: 'e.g., Iced Latte, Chicken Rice',
+            hintText: hint,
             hintStyle: TextStyle(color: context.appMutedText, fontSize: 14),
             prefixIcon: const Icon(Icons.edit_note_rounded, color: green),
             suffixIcon: IconButton(
@@ -405,7 +464,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
                       const Icon(Icons.search_rounded, size: 14, color: green),
                       const SizedBox(width: 6),
                       Text(
-                        'Matching Verified Foods',
+                        _isDrink ? 'Matching Verified Drinks' : 'Matching Verified Foods',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -544,36 +603,24 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: _buildTypeOption(
-                label: 'Food / Meal',
-                icon: Icons.restaurant_rounded,
-                selected: !_isDrink,
-                onTap: () {
-                  setState(() {
-                    _isDrink = false;
-                    if (_selectedCuisine == 'Beverage' ||
-                        _selectedCuisine.toLowerCase().contains('drink')) {
-                      _selectedCuisine = 'Healthy';
-                    }
-                  });
-                },
+            if (!_isDrink)
+              Expanded(
+                child: _buildTypeOption(
+                  label: 'Food / Meal',
+                  icon: Icons.restaurant_rounded,
+                  selected: true,
+                  onTap: () {},
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTypeOption(
-                label: 'Drink / Beverage',
-                icon: Icons.local_drink_rounded,
-                selected: _isDrink,
-                onTap: () {
-                  setState(() {
-                    _isDrink = true;
-                    _selectedCuisine = 'Beverage';
-                  });
-                },
+            if (_isDrink)
+              Expanded(
+                child: _buildTypeOption(
+                  label: 'Drink / Beverage',
+                  icon: Icons.local_drink_rounded,
+                  selected: true,
+                  onTap: () {},
+                ),
               ),
-            ),
           ],
         ),
       ],
@@ -634,6 +681,11 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
 
   Widget _buildCuisineSelector(BuildContext context) {
     final isDark = context.appIsDark;
+    final categoryLabel = _isDrink ? 'Drink Category' : 'Cuisine / Category';
+    final customHint =
+        _isDrink
+            ? 'Enter custom category (e.g., Boba, Herbal Tea)'
+            : 'Enter custom category (e.g., Mexican, Bakery)';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -641,7 +693,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Cuisine / Category',
+              categoryLabel,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -735,7 +787,7 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             controller: _customCuisineController,
             style: TextStyle(fontSize: 14, color: context.appText),
             decoration: InputDecoration(
-              hintText: 'Enter custom category (e.g., Mexican, Bakery)',
+              hintText: customHint,
               hintStyle: TextStyle(color: context.appMutedText, fontSize: 13),
               filled: true,
               fillColor:

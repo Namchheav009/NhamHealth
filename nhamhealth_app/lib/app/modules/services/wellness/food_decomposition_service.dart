@@ -36,10 +36,12 @@ class FoodDecompositionService {
     final normFoodName = food.name.trim().toLowerCase();
     final normMealName = food.mealName.trim().toLowerCase();
 
-    // A single component is valid for simple foods and uniform dishes. Keep
-    // the provider's image-grounded result instead of inventing a recipe.
+    // Keep truly simple foods, but never present a composite menu item or
+    // finished drink as though it were an ingredient.
     if (food.components.length == 1) {
-      return food.components.first.name.trim().isNotEmpty;
+      final singleName = food.components.first.name.trim().toLowerCase();
+      if (singleName.isEmpty) return false;
+      return !_isWholeCompositeItem(food, singleName);
     }
 
     // Check if any component is identical or nearly identical to the whole meal
@@ -57,6 +59,55 @@ class FoodDecompositionService {
     // steak with sauce). Requiring three caused valid AI results to be replaced
     // by generic template ingredients that were not necessarily visible.
     return true;
+  }
+
+  static bool _isWholeCompositeItem(
+    FoodNutritionModel food,
+    String componentName,
+  ) {
+    final foodName = food.name.trim().toLowerCase();
+    final mealName = food.mealName.trim().toLowerCase();
+    final repeatsMeal =
+        componentName == foodName ||
+        componentName == mealName ||
+        (foodName.length > 4 && componentName.contains(foodName));
+    if (!repeatsMeal) return false;
+
+    final isDrink =
+        food.mealType == 'drink' ||
+        food.servingUnit.toLowerCase() == 'ml' ||
+        food.requiresDrinkDetails;
+    if (isDrink) {
+      const singleIngredientDrinks = [
+        'water',
+        'plain water',
+        'black coffee',
+        'espresso',
+        'brewed tea',
+        'unsweetened tea',
+      ];
+      return !singleIngredientDrinks.contains(componentName);
+    }
+
+    const compositeMarkers = [
+      ' with ',
+      ' and ',
+      'rice',
+      'noodle',
+      'pasta',
+      'curry',
+      'soup',
+      'salad',
+      'sandwich',
+      'burger',
+      'pizza',
+      'stir-fry',
+      'stir fry',
+      'fried rice',
+      'bowl',
+      'plate',
+    ];
+    return compositeMarkers.any(foodName.contains);
   }
 
   static List<PlateItemState> _mapExistingComponents(FoodNutritionModel food) {
@@ -284,10 +335,18 @@ class FoodDecompositionService {
     // Liquid base
     final isMatcha = food.name.toLowerCase().contains('matcha');
     final isCoffee = food.name.toLowerCase().contains('coffee');
+    final isJuice = food.name.toLowerCase().contains('juice');
+    final isSmoothie = food.name.toLowerCase().contains('smoothie');
     final baseName =
         isMatcha
             ? 'Matcha Green Tea Base'
-            : (isCoffee ? 'Brewed Coffee Base' : 'Brewed Tea Base');
+            : isCoffee
+            ? 'Brewed Coffee Base'
+            : isJuice
+            ? 'Fruit Juice Base'
+            : isSmoothie
+            ? 'Blended Fruit Base'
+            : 'Brewed Tea Base';
     final baseVisual = IngredientVisualService.resolve(baseName);
     items.add(
       PlateItemState(
@@ -354,8 +413,7 @@ class FoodDecompositionService {
 
     // Boba pearls if present
     if (food.name.toLowerCase().contains('boba') ||
-        food.name.toLowerCase().contains('pearl') ||
-        food.name.toLowerCase().contains('tea')) {
+        food.name.toLowerCase().contains('pearl')) {
       final bobaVisual = IngredientVisualService.resolve('Tapioca Pearls');
       items.add(
         PlateItemState(

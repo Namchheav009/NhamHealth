@@ -86,6 +86,7 @@ void main() {
       expect(find.byType(AiFoodNutritionResultBottomBar), findsOneWidget);
       expect(find.text('Avocado Toast & Poached Egg'), findsOneWidget);
       expect(find.text('Save to Favorites'), findsNothing);
+      expect(find.text('Edit'), findsNothing);
       expect(find.text("Add to Today's Food"), findsOneWidget);
 
       // When back button is tapped while viewing results, resets to scan state without leaving
@@ -118,7 +119,7 @@ void main() {
   });
 
   testWidgets(
-    'tapping Detected Food card opens AiFoodDetectedFoodSheet and updates food name and type',
+    'tapping Detected Food card opens AiFoodDetectedFoodSheet showing food options and hiding drink',
     (tester) async {
       tester.view.physicalSize = const Size(800, 1800);
       tester.view.devicePixelRatio = 1.0;
@@ -136,15 +137,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AiFoodDetectedFoodSheet), findsOneWidget);
+      expect(find.text('Edit Detected Food'), findsOneWidget);
+      expect(find.text('Food / Meal'), findsOneWidget);
+      expect(find.text('Drink / Beverage'), findsNothing);
 
-      // Change food name to "Iced Coffee"
+      // Change food name to "Steamed Chicken Bowl"
       final textField = find.byType(TextField).first;
-      await tester.enterText(textField, 'Iced Coffee');
-      await tester.pumpAndSettle();
-
-      // Select Drink / Beverage
-      final drinkOption = find.text('Drink / Beverage');
-      await tester.tap(drinkOption);
+      await tester.enterText(textField, 'Steamed Chicken Bowl');
       await tester.pumpAndSettle();
 
       // Tap Save Changes
@@ -154,7 +153,48 @@ void main() {
 
       // Sheet dismissed and controller updated
       expect(find.byType(AiFoodDetectedFoodSheet), findsNothing);
-      expect(controller.detectedFoodName, 'Iced Coffee');
+      expect(controller.detectedFoodName, 'Steamed Chicken Bowl');
+      expect(controller.inputKind.value, AiFoodInputKind.food);
+    },
+  );
+
+  testWidgets(
+    'when analysis is Drink, sheet shows drink options and hides food',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      controller.selectedImage.value = File('test_image.jpg');
+      controller.inputKind.value = AiFoodInputKind.drink;
+      await tester.pumpWidget(buildTestView());
+      await tester.pumpAndSettle();
+
+      final detectedDrinkCard = find.text('Detected Drink');
+      expect(detectedDrinkCard, findsOneWidget);
+
+      await tester.tap(detectedDrinkCard);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AiFoodDetectedFoodSheet), findsOneWidget);
+      expect(find.text('Edit Detected Drink'), findsOneWidget);
+      expect(find.text('Drink / Beverage'), findsOneWidget);
+      expect(find.text('Food / Meal'), findsNothing);
+
+      // Change drink name to "Iced Green Tea"
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, 'Iced Green Tea');
+      await tester.pumpAndSettle();
+
+      // Tap Save Changes
+      final saveButton = find.text('Save Changes');
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      // Sheet dismissed and controller updated
+      expect(find.byType(AiFoodDetectedFoodSheet), findsNothing);
+      expect(controller.detectedFoodName, 'Iced Green Tea');
       expect(controller.inputKind.value, AiFoodInputKind.drink);
     },
   );

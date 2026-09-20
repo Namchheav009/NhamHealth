@@ -268,6 +268,8 @@ class AiFoodController extends GetxController {
     _ => .88,
   };
 
+  int get analysisProgressPercent => (analysisProgress * 100).round();
+
   Future<void> _analyzeWithCloud(
     List<int> bytes, {
     String filename = 'food.jpg',

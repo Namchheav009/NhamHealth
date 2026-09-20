@@ -43,4 +43,27 @@ void main() {
     expect(find.byType(AppBackButton), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('back header supports the AI Food Check title hierarchy', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: AppBackHeader(
+            title: 'Plate Breakdown',
+            subtitle: 'AI-detected ingredients from your item',
+            onBack: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Plate Breakdown'), findsOneWidget);
+    expect(find.text('AI-detected ingredients from your item'), findsOneWidget);
+    final title = tester.widget<Text>(find.text('Plate Breakdown'));
+    expect(title.style?.fontWeight, AppBackHeader.titleFontWeight);
+    expect(title.style?.letterSpacing, AppBackHeader.titleLetterSpacing);
+    expect(tester.takeException(), isNull);
+  });
 }

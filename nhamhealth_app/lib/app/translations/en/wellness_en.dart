@@ -298,6 +298,10 @@ const Map<String, String> wellnessEn = {
   'wellness.portion_regular_short': 'Plate',
   'wellness.portion_large_short': 'Large',
   'wellness.edit_detected_food': 'Edit Detected Food',
+  'wellness.edit_detected_drink': 'Edit Detected Drink',
+  'wellness.detected_food': 'Detected Food',
+  'wellness.detected_drink': 'Detected Drink',
+  'wellness.drink_name': 'Drink Name',
   'wellness.photography_tips': 'Photography Tips',
   'wellness.ai_detected_ingredients_subtitle':
       'AI-detected ingredients from your item',

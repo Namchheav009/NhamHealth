@@ -72,7 +72,7 @@ app.ai.nvidia.nutrition-max-tokens=1200
 app.ai.nvidia.recommendation-reasoning-budget=1024
 
 # Food image recognition and nutrition confidence thresholds.
-app.ai.prompt-version=food-drink-vision-v8
+app.ai.prompt-version=food-drink-vision-v9
 app.ai.food.confirmation-threshold=0.75
 app.ai.food.candidate-margin-threshold=0.15
 app.ai.food.portion-confirmation-threshold=0.70

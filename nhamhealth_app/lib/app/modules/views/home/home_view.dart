@@ -26,10 +26,11 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
-      child: ScrollAwareScaffold(
-        backgroundColor: context.appBackground,
-        body: AppBackground(
-          child: SafeArea(
+      child: AppBackground(
+        child: ScrollAwareScaffold(
+          extendBody: true,
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
             bottom: false,
             child: Column(
               children: [
@@ -59,7 +60,7 @@ class HomeView extends GetView<HomeController> {
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: AppSpacing.pagePaddingWithNavigationFor(
+                      padding: AppSpacing.pagePaddingFor(
                         context,
                       ).copyWith(top: 0),
                       child: Center(
@@ -84,17 +85,17 @@ class HomeView extends GetView<HomeController> {
               ],
             ),
           ),
-        ),
-        bottomNavigationBar: SafeArea(
-          top: false,
-          minimum: AppSpacing.navigationMargin,
-          child: Center(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxNavigationWidth,
+          bottomNavigationBar: SafeArea(
+            top: false,
+            minimum: AppSpacing.navigationMargin,
+            child: Center(
+              heightFactor: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSpacing.maxNavigationWidth,
+                ),
+                child: const HomeBottomNavigation(),
               ),
-              child: const HomeBottomNavigation(),
             ),
           ),
         ),
@@ -112,17 +113,18 @@ class _HomeDashboardContent extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth < AppSpacing.twoColumnBreakpoint) {
           return const Column(
+            key: ValueKey<String>('home-mobile-layout'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               RepaintBoundary(child: TimeGreeting()),
-              SizedBox(height: 14),
-              RepaintBoundary(child: HomeQuickActions()),
-              SizedBox(height: 14),
-              RepaintBoundary(child: DailySummaryCard()),
-              SizedBox(height: 14),
+              SizedBox(height: 16),
               RepaintBoundary(child: GreetingSection()),
-              SizedBox(height: 14),
+              SizedBox(height: 16),
               RepaintBoundary(child: AiRecommendationCard()),
+              SizedBox(height: 16),
+              RepaintBoundary(child: HomeQuickActions()),
+              SizedBox(height: 16),
+              RepaintBoundary(child: DailySummaryCard()),
               RepaintBoundary(child: _RecommendedMealsSection()),
             ],
           );
@@ -133,34 +135,26 @@ class _HomeDashboardContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RepaintBoundary(child: TimeGreeting()),
-            SizedBox(height: 16),
-            RepaintBoundary(child: HomeQuickActions()),
-            SizedBox(height: 16),
+            SizedBox(height: 18),
+            RepaintBoundary(child: GreetingSection()),
+            SizedBox(height: 18),
+            RepaintBoundary(child: AiRecommendationCard()),
+            SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RepaintBoundary(child: GreetingSection()),
-                      SizedBox(height: 16),
-                      RepaintBoundary(child: AiRecommendationCard()),
-                    ],
-                  ),
+                  flex: 5,
+                  child: RepaintBoundary(child: HomeQuickActions()),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 18),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RepaintBoundary(child: DailySummaryCard()),
-                      RepaintBoundary(child: _RecommendedMealsSection()),
-                    ],
-                  ),
+                  flex: 6,
+                  child: RepaintBoundary(child: DailySummaryCard()),
                 ),
               ],
             ),
+            RepaintBoundary(child: _RecommendedMealsSection()),
           ],
         );
       },

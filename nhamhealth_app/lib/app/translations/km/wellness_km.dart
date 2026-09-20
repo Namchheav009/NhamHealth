@@ -307,6 +307,10 @@ const Map<String, String> wellnessKm = {
   'wellness.know_what_you_eat_live_healthier':
       'ស្គាល់អ្វីដែលអ្នកញ៉ាំ រស់នៅជាមួយសុខភាពល្អ',
   'wellness.edit_detected_food': 'កែប្រែអាហារដែលបានរកឃើញ',
+  'wellness.edit_detected_drink': 'កែប្រែភេសជ្ជៈដែលបានរកឃើញ',
+  'wellness.detected_food': 'អាហារដែលបានរកឃើញ',
+  'wellness.detected_drink': 'ភេសជ្ជៈដែលបានរកឃើញ',
+  'wellness.drink_name': 'ឈ្មោះភេសជ្ជៈ',
   'wellness.photography_tips': 'គន្លឹះថតរូបអាហារ',
   'wellness.ai_detected_ingredients_subtitle':
       'គ្រឿងផ្សំដែល AI បានរកឃើញពីមុខម្ហូបរបស់អ្នក',

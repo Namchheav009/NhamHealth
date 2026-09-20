@@ -1717,7 +1717,8 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
         ),
       ),
       child: LoadingContentTransition(
-        isLoading: controller.isLoading.value,
+        isLoading:
+            !controller.hasLoadedOnce.value || controller.isLoading.value,
         loading: const PageSkeleton.plannerWeek(),
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2206,7 +2207,8 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                   ],
                 ),
         child: LoadingContentTransition(
-          isLoading: controller.isLoading.value,
+          isLoading:
+              !controller.hasLoadedOnce.value || controller.isLoading.value,
           loading: const PageSkeleton.plannerGrocery(),
           content:
               grouped.isEmpty

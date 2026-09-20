@@ -28,9 +28,9 @@ class DailySummaryCard extends GetView<HomeController> {
           AppNutrientTheme.proteinColor,
         ),
         (
-          summary.sugar,
-          AppNutrientTheme.sugarIcon,
-          AppNutrientTheme.sugarColor,
+          summary.water,
+          AppNutrientTheme.waterIcon,
+          AppNutrientTheme.waterColor,
         ),
       ];
 
@@ -55,7 +55,7 @@ class DailySummaryCard extends GetView<HomeController> {
           borderRadius: BorderRadius.circular(15),
           shadows: context.appIsDark ? context.appInnerShadow : const [],
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 15, 16, 17),
+            padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
             child: Column(
               children: [
                 Row(
@@ -73,8 +73,8 @@ class DailySummaryCard extends GetView<HomeController> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: context.appText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -89,7 +89,8 @@ class DailySummaryCard extends GetView<HomeController> {
                             Text(
                               'common.view_details'.tr,
                               style: const TextStyle(
-                                fontSize: 9,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.primaryGreen,
                               ),
                             ),
@@ -182,10 +183,10 @@ class DailySummaryCard extends GetView<HomeController> {
                     }),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 SizedBox(
                   key: const ValueKey<String>('home-wellness-cards'),
-                  height: 112,
+                  height: 96,
                   child: Row(
                     children: [
                       for (
@@ -202,7 +203,10 @@ class DailySummaryCard extends GetView<HomeController> {
                             data: nutrients[index].$1,
                             icon: nutrients[index].$2,
                             iconColor: nutrients[index].$3,
-                            onTap: controller.openWellnessDetails,
+                            onTap:
+                                index == 2
+                                    ? controller.openWaterDetails
+                                    : controller.openWellnessDetails,
                           ),
                         ),
                       ],

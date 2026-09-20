@@ -37,8 +37,8 @@ class _MealPlannerViewState extends State<MealPlannerView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        controller.syncToToday(forceRefresh: true);
+      if (mounted && !controller.hasLoadedOnce.value) {
+        controller.syncToToday();
       }
     });
   }
@@ -107,7 +107,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                             maxWidth: AppSpacing.maxContentWidth,
                           ),
                           child: LoadingContentTransition(
-                            isLoading: controller.isLoading.value,
+                            isLoading:
+                                !controller.hasLoadedOnce.value ||
+                                controller.isLoading.value,
                             loading: const PageSkeleton.mealPlanner(),
                             content: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,

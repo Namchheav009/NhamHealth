@@ -91,38 +91,16 @@ class AiFoodView extends GetView<AiFoodController> {
     final horizontal = AppSpacing.pageHorizontalFor(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontal, 14, horizontal, 10),
-      child: Row(
-        children: [
-          AppBackButton(
-            buttonKey: const ValueKey<String>('ai-food-back-button'),
-            onPressed: () {
-              if (controller.hasCompleteResult) {
-                controller.clearResult();
-              } else {
-                Get.back();
-              }
-            },
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'wellness.ai_food_check'.tr,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                    color: context.appText,
-                  ),
-                ),
-                const SizedBox(height: 1),
-              ],
-            ),
-          ),
-        ],
+      child: AppBackHeader(
+        title: 'wellness.ai_food_check',
+        backButtonKey: const ValueKey<String>('ai-food-back-button'),
+        onBack: () {
+          if (controller.hasCompleteResult) {
+            controller.clearResult();
+          } else {
+            Get.back();
+          }
+        },
       ),
     );
   }

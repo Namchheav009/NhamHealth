@@ -103,10 +103,15 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             liquidVolumeMl 0. A culturally specific or
             Cambodian/Khmer name (e.g. Bai Sach Chrouk, Kuy Teav, Lok Lak, Amok, Somlor Korko, Somlor Machu)
             is allowed only when visible evidence supports it. Similar Khmer soups and noodle dishes
-            must remain alternatives when the evidence is ambiguous. For drinks, normally return
-            the whole beverage as one component with the most specific name supported by the image.
-            Return an edible topping as a separate component only when it has a separately visible
-            portion. Never infer dissolved sugar, sweetness percentage, milk type, alcohol, carbonation,
+            must remain alternatives when the evidence is ambiguous. Components are ingredients,
+            never menu-item duplicates: do not return the whole dish or finished beverage as a
+            component when it can be separated into constituent ingredients. For a recognizable
+            composite drink, return only supported ingredients such as brewed tea or coffee base,
+            visible milk or cream, syrup, fruit, and separately visible toppings. Use the beverage
+            identity as supporting evidence only; lower confidence for ingredients that are recipe-
+            implied rather than directly visible and describe that limitation in visibleEvidence.
+            Plain water and genuinely single-ingredient drinks may remain one component. Never infer
+            dissolved sugar, sweetness percentage, milk type, alcohol, carbonation,
             or flavor from color alone. Do not identify a clear liquid as plain water from transparency
             alone; require a readable water label or ordinary water-service context with no visible color,
             foam, fruit, tea, coffee, syrup, or other beverage cues. Otherwise use a broad name such as
@@ -185,7 +190,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             @Value("${app.ai.gemini.api-key:}") String apiKey,
             @Value("${app.ai.gemini.vision-model:${app.ai.gemini.model:gemini-3.5-flash-lite}}") String model,
             @Value("${app.ai.gemini.vision-fallback-model:${app.ai.gemini.fallback-model:gemini-3.6-flash}}") String fallbackModel,
-            @Value("${app.ai.prompt-version:food-drink-vision-v8}") String promptVersion,
+            @Value("${app.ai.prompt-version:food-drink-vision-v9}") String promptVersion,
             @Value("${app.ai.gemini.text-max-tokens:8192}") int maxTokens,
             @Autowired(required = false) NvidiaFoodVisionService nvidiaFallback,
             GeminiRateLimitGuard rateLimitGuard) {

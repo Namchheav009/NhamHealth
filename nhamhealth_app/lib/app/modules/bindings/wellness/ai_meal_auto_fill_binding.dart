@@ -11,14 +11,16 @@ class AiMealAutoFillBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<ProfileRepository>()) {
-      Get.lazyPut<ProfileRepository>(
-        () => ProfileRepository(authService: Get.find<AuthService>()),
-        fenix: true,
+      Get.put<ProfileRepository>(
+        ProfileRepository(authService: Get.find<AuthService>()),
+        permanent: true,
       );
     }
     if (!Get.isRegistered<WellnessController>()) {
       Get.lazyPut<WellnessController>(
-        () => WellnessController(profileRepository: Get.find()),
+        () => WellnessController(
+          profileRepository: Get.find<ProfileRepository>(),
+        ),
         fenix: true,
       );
     }
@@ -33,10 +35,10 @@ class AiMealAutoFillBinding extends Bindings {
     );
     Get.lazyPut<AiMealAutoFillController>(
       () => AiMealAutoFillController(
-        nutritionRepository: Get.find(),
-        profileRepository: Get.find(),
-        caloriesController: Get.find(),
-        wellnessController: Get.find(),
+        nutritionRepository: Get.find<FoodNutritionRepository>(),
+        profileRepository: Get.find<ProfileRepository>(),
+        caloriesController: Get.find<CaloriesController>(),
+        wellnessController: Get.find<WellnessController>(),
       ),
     );
   }

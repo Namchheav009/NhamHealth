@@ -421,6 +421,19 @@ class HomeController extends GetxController {
     await loadDashboard();
   }
 
+  void openWaterDetails() => Get.toNamed<void>(AppRoutes.water);
+
+  bool _isNavigatingMealPlanner = false;
+  Future<void> openMealPlanner() async {
+    if (_isNavigatingMealPlanner) return;
+    _isNavigatingMealPlanner = true;
+    try {
+      await Get.toNamed<void>(AppRoutes.mealPlanner);
+    } finally {
+      _isNavigatingMealPlanner = false;
+    }
+  }
+
   void openFoodAnalyzer() {
     Get.toNamed<void>(AppRoutes.aiFood);
   }

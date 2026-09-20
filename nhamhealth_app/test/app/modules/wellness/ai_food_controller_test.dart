@@ -10,6 +10,27 @@ import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommenda
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
+  test('exposes percentage values for each AI analysis stage', () {
+    final controller = AiFoodController(
+      aiService: FoodAiService(),
+      nutritionRepository: FoodNutritionRepository(),
+      recommendationService: FoodRecommendationService(),
+      caloriesController: CaloriesController(),
+      wellnessController: WellnessController(),
+      profileRepository: ProfileRepository(authService: AuthService()),
+    );
+
+    expect(controller.analysisProgressPercent, 18);
+    controller.analysisStage.value = 1;
+    expect(controller.analysisProgressPercent, 42);
+    controller.analysisStage.value = 2;
+    expect(controller.analysisProgressPercent, 68);
+    controller.analysisStage.value = 3;
+    expect(controller.analysisProgressPercent, 88);
+
+    controller.onClose();
+  });
+
   test('builds food and drink amount summaries before analysis', () {
     final controller = AiFoodController(
       aiService: FoodAiService(),

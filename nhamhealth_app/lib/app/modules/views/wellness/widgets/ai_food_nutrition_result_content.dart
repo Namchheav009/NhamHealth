@@ -7,7 +7,6 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_nutrient_theme.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
 import '../../../models/wellness/food_nutrition_model.dart';
-import 'ai_food_amount_sheet.dart';
 
 class AiFoodNutritionResultContent extends StatelessWidget {
   const AiFoodNutritionResultContent({
@@ -301,38 +300,6 @@ class AiFoodNutritionResultContent extends StatelessWidget {
                   style: TextStyle(color: context.appMutedText, fontSize: 12),
                 ),
               ],
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () async {
-              final updated = await showModalBottomSheet<bool>(
-                context: context,
-                isScrollControlled: true,
-                useSafeArea: true,
-                backgroundColor: Colors.transparent,
-                barrierColor: Colors.black.withValues(alpha: .55),
-                builder: (_) => AiFoodAmountSheet(controller: controller),
-              );
-              if (updated == true) {
-                controller.updateAmountForCurrentResult();
-              }
-            },
-            icon: const Icon(Icons.edit_outlined, size: 15, color: green),
-            label: Text(
-              'common.edit'.trOrSelf,
-              style: const TextStyle(
-                color: green,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: green, width: 1.2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              visualDensity: VisualDensity.compact,
             ),
           ),
         ],
