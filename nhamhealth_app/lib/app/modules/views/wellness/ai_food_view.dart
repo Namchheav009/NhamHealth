@@ -157,49 +157,4 @@ class AiFoodView extends GetView<AiFoodController> {
       );
     }
   }
-
-  void _showHelpInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: ctx.appElevatedSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Row(
-              children: [
-                const Icon(Icons.info_outline_rounded, color: green, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  'wellness.important_information'.tr,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: ctx.appText,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'wellness.ai_nutrition_results_are_estimates_for_general_wellness_only_they_are_not_medical_advice_a_diagnosis_or_an_official_nutrition_label'
-                  .tr,
-              style: TextStyle(
-                fontSize: 13,
-                color: ctx.appMutedText,
-                height: 1.4,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(color: green, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-    );
-  }
 }

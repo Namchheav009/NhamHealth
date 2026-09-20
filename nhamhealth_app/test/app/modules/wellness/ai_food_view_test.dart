@@ -57,7 +57,6 @@ void main() {
 
       // In initial scan state:
       expect(find.text('AI Food Check'), findsOneWidget);
-      expect(find.text('Know what you eat, live healthier'), findsOneWidget);
       expect(find.byType(AiFoodScanContent), findsOneWidget);
       expect(find.byType(AiFoodNutritionResultContent), findsNothing);
 
@@ -80,7 +79,6 @@ void main() {
 
       // Verify Header NEVER changes:
       expect(find.text('AI Food Check'), findsOneWidget);
-      expect(find.text('Know what you eat, live healthier'), findsOneWidget);
       expect(find.text('Nutrition Details'), findsNothing);
 
       // Verify result content and bottom bar are rendered:

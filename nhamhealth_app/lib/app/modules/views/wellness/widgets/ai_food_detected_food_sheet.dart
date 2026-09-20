@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/app_alert.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
+import '../../../repositories/wellness/food_nutrition_repository.dart';
 
 class AiFoodDetectedFoodSheet extends StatefulWidget {
   const AiFoodDetectedFoodSheet({super.key, required this.controller});
@@ -36,6 +39,14 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
     'Street Food',
   ];
 
+  late List<String> _cuisines;
+  bool _isLoadingCategories = false;
+
+  Timer? _debounceTimer;
+  List<FoodSuggestion> _suggestions = const [];
+  bool _isSearching = false;
+  List<String> _candidates = const [];
+
   @override
   void initState() {
     super.initState();
@@ -54,16 +65,125 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             ? widget.controller.nutrition.value!.cuisine
             : (_isDrink ? 'Beverage' : 'Healthy'));
 
-    if (_commonCuisines.contains(currentCuisine)) {
+    _cuisines = List<String>.from(_commonCuisines);
+    if (!_cuisines.contains(currentCuisine) && currentCuisine != 'Other') {
+      _cuisines.insert(0, currentCuisine);
+    }
+
+    if (_cuisines.contains(currentCuisine)) {
       _selectedCuisine = currentCuisine;
     } else {
       _selectedCuisine = 'Other';
       _customCuisineController.text = currentCuisine;
     }
+
+    // Extract AI candidates if present
+    final detCandidates = widget.controller.detection.value?.candidates ?? [];
+    if (detCandidates.isNotEmpty) {
+      _candidates = detCandidates;
+    } else {
+      final nutCandidates =
+          widget.controller.nutrition.value?.candidates
+              .map((c) => c.name)
+              .toList() ??
+          [];
+      if (nutCandidates.isNotEmpty) {
+        _candidates = nutCandidates;
+      }
+    }
+
+    _nameController.addListener(_onNameChanged);
+    _loadDynamicCategories();
+  }
+
+  Future<void> _loadDynamicCategories() async {
+    setState(() => _isLoadingCategories = true);
+    try {
+      final apiCategories = await widget.controller.loadMealCategories();
+      if (!mounted) return;
+      final merged = <String>{};
+      // Keep selected cuisine and detected categories first
+      if (_selectedCuisine != 'Other' && _selectedCuisine.isNotEmpty) {
+        merged.add(_selectedCuisine);
+      }
+      merged.addAll(apiCategories);
+      merged.addAll(_commonCuisines);
+
+      setState(() {
+        _cuisines = merged.toList();
+        _isLoadingCategories = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCategories = false);
+    }
+  }
+
+  void _onNameChanged() {
+    final query = _nameController.text.trim();
+    _debounceTimer?.cancel();
+    if (query.length < 2) {
+      if (_suggestions.isNotEmpty || _isSearching) {
+        setState(() {
+          _suggestions = const [];
+          _isSearching = false;
+        });
+      }
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+      if (!mounted) return;
+      setState(() => _isSearching = true);
+      try {
+        final results = await widget.controller.searchFoodSuggestions(query);
+        if (!mounted) return;
+        setState(() {
+          _suggestions = results;
+          _isSearching = false;
+        });
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _suggestions = const [];
+            _isSearching = false;
+          });
+        }
+      }
+    });
+  }
+
+  void _selectSuggestion(FoodSuggestion suggestion) {
+    _debounceTimer?.cancel();
+    _nameController.removeListener(_onNameChanged);
+    _nameController.text = suggestion.name;
+    _nameController.addListener(_onNameChanged);
+
+    setState(() {
+      _suggestions = const [];
+      _isSearching = false;
+      _isDrink = suggestion.isDrink;
+      if (suggestion.category != null && suggestion.category!.isNotEmpty) {
+        final cat = suggestion.category!;
+        if (!_cuisines.contains(cat)) {
+          _cuisines.insert(0, cat);
+        }
+        _selectedCuisine = cat;
+      }
+    });
+  }
+
+  void _selectCandidate(String candidateName) {
+    _nameController.text = candidateName;
+    setState(() {
+      _suggestions = const [];
+      _isSearching = false;
+    });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _customCuisineController.dispose();
     super.dispose();
@@ -194,13 +314,27 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Food or Drink Name',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: context.appText,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Food or Drink Name',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.appText,
+              ),
+            ),
+            if (_isSearching)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(green),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(
@@ -216,7 +350,10 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             prefixIcon: const Icon(Icons.edit_note_rounded, color: green),
             suffixIcon: IconButton(
               icon: const Icon(Icons.clear_rounded, size: 18),
-              onPressed: () => _nameController.clear(),
+              onPressed: () {
+                _nameController.clear();
+                setState(() => _suggestions = const []);
+              },
             ),
             filled: true,
             fillColor: isDark ? context.appSurfaceLow : const Color(0xFFF9FAFB),
@@ -238,6 +375,156 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
             ),
           ),
         ),
+        // Live search suggestions dropdown
+        if (_suggestions.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? context.appSurfaceLow : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: green.withValues(alpha: .35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? .3 : .08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, size: 14, color: green),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Matching Verified Foods',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: context.appMutedText,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 8),
+                ..._suggestions.map((suggestion) {
+                  return InkWell(
+                    onTap: () => _selectSuggestion(suggestion),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            suggestion.isDrink
+                                ? Icons.local_drink_rounded
+                                : Icons.restaurant_rounded,
+                            size: 16,
+                            color: green,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  suggestion.name,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.appText,
+                                  ),
+                                ),
+                                if (suggestion.category != null ||
+                                    suggestion.calories != null)
+                                  Text(
+                                    [
+                                      if (suggestion.category != null)
+                                        suggestion.category!,
+                                      if (suggestion.calories != null)
+                                        '${suggestion.calories!.round()} kcal',
+                                    ].join(' • '),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: context.appMutedText,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.north_west_rounded,
+                            size: 14,
+                            color: greenDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+        // AI Candidates quick selection chips
+        if (_candidates.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.auto_awesome, size: 13, color: green),
+              const SizedBox(width: 5),
+              Text(
+                'AI Suggestions:',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: context.appMutedText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children:
+                _candidates.take(4).map((cand) {
+                  return ActionChip(
+                    label: Text(cand),
+                    onPressed: () => _selectCandidate(cand),
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: greenDark,
+                    ),
+                    backgroundColor:
+                        isDark ? const Color(0xFF143021) : greenLightBg,
+                    side: const BorderSide(color: green, width: 0.8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 0,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  );
+                }).toList(),
+          ),
+        ],
       ],
     );
   }
@@ -265,7 +552,8 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
                 onTap: () {
                   setState(() {
                     _isDrink = false;
-                    if (_selectedCuisine == 'Beverage') {
+                    if (_selectedCuisine == 'Beverage' ||
+                        _selectedCuisine.toLowerCase().contains('drink')) {
                       _selectedCuisine = 'Healthy';
                     }
                   });
@@ -349,20 +637,43 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Cuisine / Category',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: context.appText,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Cuisine / Category',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.appText,
+              ),
+            ),
+            if (_isLoadingCategories)
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(green),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Syncing...',
+                    style: TextStyle(fontSize: 11, color: context.appMutedText),
+                  ),
+                ],
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            ..._commonCuisines.map((c) {
+            ..._cuisines.map((c) {
               final isSel = _selectedCuisine == c;
               return ChoiceChip(
                 label: Text(c),

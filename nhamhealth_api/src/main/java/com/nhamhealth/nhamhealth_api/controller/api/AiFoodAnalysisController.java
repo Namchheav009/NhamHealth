@@ -41,7 +41,8 @@ public class AiFoodAnalysisController {
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public AiFoodAnalysisResponse analyze(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestParam("image") MultipartFile image) throws IOException {
+            @RequestParam("image") MultipartFile image,
+            @RequestParam(value = "foodName", required = false) String foodName) throws IOException {
         ValidatedImage validated = validateImage(image);
         if (jwt == null) {
             throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
@@ -50,12 +51,19 @@ public class AiFoodAnalysisController {
         if (userId == null) {
             throw new ResponseStatusException(UNAUTHORIZED, "User ID not found in token.");
         }
-        AiFoodAnalysisResponse result = service.analyzeAndSave(
-                userId.intValue(), image.getOriginalFilename(), validated.bytes(), validated.contentType());
+        AiFoodAnalysisResponse result = foodName != null && !foodName.isBlank()
+                ? service.analyzeAndSave(userId.intValue(), image.getOriginalFilename(), validated.bytes(),
+                        validated.contentType(), foodName)
+                : service.analyzeAndSave(userId.intValue(), image.getOriginalFilename(), validated.bytes(),
+                        validated.contentType());
         if (result != null) {
             userNotifications.aiFoodAnalysisCompleted(userId.intValue(), result);
         }
         return result;
+    }
+
+    public AiFoodAnalysisResponse analyze(Jwt jwt, MultipartFile image) throws IOException {
+        return analyze(jwt, image, null);
     }
 
     @PostMapping(value = "/detect", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -17,6 +17,20 @@ class FoodNutritionException implements Exception {
   final String message;
 }
 
+class FoodSuggestion {
+  final String name;
+  final String? category;
+  final bool isDrink;
+  final double? calories;
+
+  const FoodSuggestion({
+    required this.name,
+    this.category,
+    this.isDrink = false,
+    this.calories,
+  });
+}
+
 class FoodNutritionRepository {
   FoodNutritionRepository({
     http.Client? client,
@@ -94,6 +108,7 @@ class FoodNutritionRepository {
   Future<FoodNutritionModel> analyzeImage(
     Uint8List bytes, {
     String filename = 'food.jpg',
+    String? foodName,
   }) async {
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {
@@ -111,6 +126,9 @@ class FoodNutritionRepository {
       'POST',
       Uri.parse('${ApiConfig.baseUrl}/api/v1/ai/food/analyze'),
     )..headers['Authorization'] = 'Bearer $token';
+    if (foodName != null && foodName.trim().isNotEmpty) {
+      request.fields['foodName'] = foodName.trim();
+    }
     request.files.add(
       http.MultipartFile.fromBytes(
         'image',
@@ -358,6 +376,110 @@ class FoodNutritionRepository {
         'Could not reach the feedback service.',
       );
     }
+  }
+
+  List<String>? _cachedCategories;
+
+  Future<List<String>> getMealCategories({String? lang}) async {
+    if (_cachedCategories != null && _cachedCategories!.isNotEmpty) {
+      return _cachedCategories!;
+    }
+    const fallbackCategories = [
+      'Khmer',
+      'Asian',
+      'Western',
+      'Italian',
+      'Healthy',
+      'Beverage',
+      'Dessert',
+      'Street Food',
+    ];
+    try {
+      final language = lang ?? Get.locale?.languageCode ?? 'en';
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/meal-categories',
+      ).replace(queryParameters: {'lang': language});
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          final list =
+              data
+                  .map(
+                    (e) =>
+                        (e is Map
+                                ? (e['displayName'] ??
+                                    e['name'] ??
+                                    e['categoryName'])
+                                : null)
+                            ?.toString()
+                            .trim(),
+                  )
+                  .whereType<String>()
+                  .where(
+                    (name) => name.isNotEmpty && name.toLowerCase() != 'all',
+                  )
+                  .toSet()
+                  .toList();
+          if (list.isNotEmpty) {
+            _cachedCategories = list;
+            return list;
+          }
+        }
+      }
+    } catch (_) {
+      // Graceful fallback on network error or timeout
+    }
+    return fallbackCategories;
+  }
+
+  Future<List<FoodSuggestion>> searchFoodSuggestions(String query) async {
+    final clean = query.trim();
+    if (clean.length < 2) return const [];
+    try {
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/meals',
+      ).replace(queryParameters: {'keyword': clean});
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          return data
+              .take(6)
+              .map((item) {
+                final name = (item['name'] ?? '').toString().trim();
+                final category = (item['category'] ?? '').toString().trim();
+                final lowerCat = category.toLowerCase();
+                final lowerName = name.toLowerCase();
+                final isDrink =
+                    lowerCat.contains('drink') ||
+                    lowerCat.contains('beverage') ||
+                    lowerName.contains('tea') ||
+                    lowerName.contains('coffee') ||
+                    lowerName.contains('latte') ||
+                    lowerName.contains('juice') ||
+                    lowerName.contains('smoothie') ||
+                    lowerName.contains('water');
+                final calories = (item['calories'] as num?)?.toDouble();
+                return FoodSuggestion(
+                  name: name,
+                  category: category.isNotEmpty ? category : null,
+                  isDrink: isDrink,
+                  calories: calories,
+                );
+              })
+              .where((s) => s.name.isNotEmpty)
+              .toList();
+        }
+      }
+    } catch (_) {
+      // Gracefully return empty list on network or parse error
+    }
+    return const [];
   }
 }
 

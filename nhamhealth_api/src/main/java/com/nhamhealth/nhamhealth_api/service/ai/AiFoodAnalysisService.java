@@ -88,17 +88,38 @@ public class AiFoodAnalysisService {
                                 vision.mealName(),
                                 type,
                                 "drink".equalsIgnoreCase(type) || "mixed".equalsIgnoreCase(type),
-                                vision.mealConfidence());
+                                vision.mealConfidence(),
+                                vision.cuisine() != null ? vision.cuisine() : "Unknown",
+                                vision.candidates() != null ? vision.candidates() : List.of());
         }
 
         @Transactional
         public AiFoodAnalysisResponse analyzeAndSave(
                         Integer userId, String fileName, byte[] image, String contentType) {
+                return analyzeAndSave(userId, fileName, image, contentType, null);
+        }
+
+        @Transactional
+        public AiFoodAnalysisResponse analyzeAndSave(
+                        Integer userId, String fileName, byte[] image, String contentType, String customFoodName) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
                 AiUserHealthProfile healthProfile = userHealthProfileService.load(userId);
                 AiFoodModelResult modelResult = visionProvider.analyze(image, contentType);
                 FoodVisionResult vision = modelResult.response();
+                if (customFoodName != null && !customFoodName.isBlank()) {
+                        vision = new FoodVisionResult(
+                                        vision.foodDetected(),
+                                        vision.reason(),
+                                        customFoodName.trim(),
+                                        vision.cuisine(),
+                                        vision.type(),
+                                        vision.mealConfidence(),
+                                        vision.portionConfidence(),
+                                        vision.preparationConfidence(),
+                                        vision.components(),
+                                        vision.candidates());
+                }
 
                 ComponentEnrichment enrichment = matchCalculateAndEstimate(vision.components());
                 List<DetectedFoodComponent> components = enrichment.components();

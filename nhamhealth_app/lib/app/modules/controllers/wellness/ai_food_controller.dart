@@ -276,6 +276,7 @@ class AiFoodController extends GetxController {
       final food = await nutritionRepository.analyzeImage(
         Uint8List.fromList(bytes),
         filename: filename,
+        foodName: customFoodName.value,
       );
       if (generation != null && generation != _scanGeneration) return;
       if (!food.foodDetected) {
@@ -291,7 +292,15 @@ class AiFoodController extends GetxController {
       }
       _baseNutrition = food;
       _syncInputKindFrom(food);
-      final adjustedFood = _applySelectedAmount(food);
+      var adjustedFood = _applySelectedAmount(food);
+      if (customFoodName.value != null &&
+          customFoodName.value!.trim().isNotEmpty) {
+        adjustedFood = adjustedFood.copyWith(
+          name: customFoodName.value!.trim(),
+          mealName: customFoodName.value!.trim(),
+          cuisine: customCuisine.value ?? adjustedFood.cuisine,
+        );
+      }
       _publishPrediction(adjustedFood);
       _initPlateFrom(adjustedFood);
       final localGuidance = recommendationService.create(
@@ -705,9 +714,39 @@ class AiFoodController extends GetxController {
         type: (isDrink ?? det.isDrink) ? 'drink' : 'food',
         requiresDrinkDetails: isDrink ?? det.requiresDrinkDetails,
         confidence: det.confidence > 0 ? det.confidence : 1.0,
+        cuisine:
+            (cuisine != null && cuisine.trim().isNotEmpty)
+                ? cuisine.trim()
+                : det.cuisine,
+        candidates: det.candidates,
+      );
+    }
+    final currentNut = nutrition.value;
+    if (currentNut != null) {
+      final updatedNut = currentNut.copyWith(
+        name: cleanName.isNotEmpty ? cleanName : currentNut.name,
+        mealName: cleanName.isNotEmpty ? cleanName : currentNut.mealName,
+        cuisine:
+            (cuisine != null && cuisine.trim().isNotEmpty)
+                ? cuisine.trim()
+                : currentNut.cuisine,
+        mealType:
+            (isDrink ?? (currentNut.mealType == 'drink')) ? 'drink' : 'food',
+      );
+      nutrition.value = updatedNut;
+      prediction.value = FoodPredictionModel(
+        foodName: updatedNut.name,
+        confidence: updatedNut.confidence.clamp(0, 1),
+        classIndex: -1,
       );
     }
   }
+
+  Future<List<String>> loadMealCategories({String? lang}) =>
+      nutritionRepository.getMealCategories(lang: lang);
+
+  Future<List<FoodSuggestion>> searchFoodSuggestions(String query) =>
+      nutritionRepository.searchFoodSuggestions(query);
 
   List<String> get foodTags {
     final food = nutrition.value ?? _baseNutrition;
