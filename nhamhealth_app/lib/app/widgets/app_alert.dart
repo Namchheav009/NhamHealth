@@ -166,7 +166,20 @@ abstract final class AppAlert {
     required String confirmText,
     BuildContext? context,
   }) {
-    final operation = _actionTransition.then<void>(
+    if (_activeDialogContext == null) {
+      final operation = _presentActionDialog(
+        title: title,
+        message: message,
+        tone: tone,
+        confirmText: confirmText,
+        // ignore: use_build_context_synchronously
+        context: context,
+      );
+      _actionTransition = operation.then<void>((_) {}, onError: (_, _) {});
+      return operation;
+    }
+    final currentTransition = _actionTransition;
+    final operation = currentTransition.then<void>(
       (_) => _presentActionDialog(
         title: title,
         message: message,
@@ -339,7 +352,17 @@ abstract final class AppAlert {
       Navigator.of(dialogContext).pop();
       _activeDialogContext = null;
     }
+    _actionTransition = Future<void>.value();
     await _closeActiveAlert();
+  }
+
+  @visibleForTesting
+  static void resetForTesting() {
+    _latestRequest++;
+    _transition = Future<void>.value();
+    _actionTransition = Future<void>.value();
+    _activeController = null;
+    _activeDialogContext = null;
   }
 
   static Future<void> _closeActiveAlert() async {

@@ -144,8 +144,8 @@ class SettingsView extends GetView<SettingsController> {
                       ),
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AppSpacing.maxContentWidth,
+                          constraints: BoxConstraints(
+                            maxWidth: _contentMaxWidth(context),
                           ),
                           child: _buildHeader(),
                         ),
@@ -156,11 +156,18 @@ class SettingsView extends GetView<SettingsController> {
                         physics: const BouncingScrollPhysics(),
                         padding: AppSpacing.pagePaddingWithNavigationFor(
                           context,
-                        ).copyWith(top: 24),
+                        ).copyWith(
+                          top: 20,
+                          bottom:
+                              AppSpacing.pagePaddingWithNavigationFor(
+                                context,
+                              ).bottom +
+                              20,
+                        ),
                         child: Center(
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: AppSpacing.maxContentWidth,
+                            constraints: BoxConstraints(
+                              maxWidth: _contentMaxWidth(context),
                             ),
                             child: Obx(
                               () => AnimatedSize(
@@ -170,34 +177,7 @@ class SettingsView extends GetView<SettingsController> {
                                 child: LoadingContentTransition(
                                   isLoading: controller.isLoading.value,
                                   loading: const PageSkeleton.settings(),
-                                  content: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _buildSectionTitle(
-                                        context,
-                                        'profile.settings_account'.tr,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _buildAccountCard(context),
-                                      const SizedBox(height: 21),
-                                      _buildSectionTitle(
-                                        context,
-                                        'profile.settings_preferences'.tr,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _buildPreferenceCard(context),
-                                      const SizedBox(height: 21),
-                                      _buildSectionTitle(
-                                        context,
-                                        'profile.settings_support'.tr,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _buildSupportCard(context),
-                                      const SizedBox(height: 13),
-                                      _buildLogoutCard(context),
-                                    ],
-                                  ),
+                                  content: _buildContent(context),
                                 ),
                               ),
                             ),
@@ -231,6 +211,92 @@ class SettingsView extends GetView<SettingsController> {
     );
   }
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 760) {
+          return Row(
+            key: const ValueKey('settings-tablet-two-column'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle(
+                      context,
+                      'profile.settings_account'.tr,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildAccountCard(context),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(
+                      context,
+                      'profile.settings_preferences'.tr,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPreferenceCard(context),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle(
+                      context,
+                      'profile.settings_support'.tr,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildSupportCard(context),
+                    const SizedBox(height: 24),
+                    _buildLogoutCard(context),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          key: const ValueKey('settings-single-column'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle(
+              context,
+              'profile.settings_account'.tr,
+            ),
+            const SizedBox(height: 10),
+            _buildAccountCard(context),
+            const SizedBox(height: 21),
+            _buildSectionTitle(
+              context,
+              'profile.settings_preferences'.tr,
+            ),
+            const SizedBox(height: 10),
+            _buildPreferenceCard(context),
+            const SizedBox(height: 21),
+            _buildSectionTitle(
+              context,
+              'profile.settings_support'.tr,
+            ),
+            const SizedBox(height: 10),
+            _buildSupportCard(context),
+            const SizedBox(height: 13),
+            _buildLogoutCard(context),
+          ],
+        );
+      },
+    );
+  }
+
   // ============================================================
   // HEADER
   // ============================================================
@@ -248,14 +314,15 @@ class SettingsView extends GetView<SettingsController> {
   // ============================================================
 
   Widget _buildSectionTitle(BuildContext context, String title) {
+    final isTablet = AppSpacing.isTabletFor(context);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: isTablet ? 17 : 16,
           height: 1.1,
-          fontWeight: FontWeight.w600,
+          fontWeight: isTablet ? FontWeight.w700 : FontWeight.w600,
           color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
@@ -361,9 +428,12 @@ class SettingsView extends GetView<SettingsController> {
   Widget _buildLogoutCard(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = AppSpacing.isTabletFor(context);
+    final cardRadius = isTablet ? 16.0 : 13.0;
+
     return Container(
       width: double.infinity,
-      height: 65,
+      height: isTablet ? 76 : 65,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
@@ -381,7 +451,7 @@ class SettingsView extends GetView<SettingsController> {
                     Color(0xFFF2FFED),
                   ],
         ),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(color: colors.outline, width: 1),
         boxShadow: context.appCardShadow,
       ),
@@ -401,13 +471,16 @@ class SettingsView extends GetView<SettingsController> {
 
   Widget _groupCard(BuildContext context, {required List<Widget> children}) {
     final colors = Theme.of(context).colorScheme;
+    final isTablet = AppSpacing.isTabletFor(context);
+    final cardRadius = isTablet ? 16.0 : 13.0;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(
           alpha: context.appIsDark ? 0.88 : 0.92,
         ),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(color: colors.outlineVariant),
         boxShadow: context.appCardShadow,
       ),
@@ -416,8 +489,9 @@ class SettingsView extends GetView<SettingsController> {
   }
 
   Widget _divider(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
     return Padding(
-      padding: const EdgeInsets.only(left: 64),
+      padding: EdgeInsets.only(left: isTablet ? 76 : 64),
       child: Divider(
         height: 1,
         thickness: 0.7,
@@ -457,24 +531,32 @@ class _SettingsItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = AppSpacing.isTabletFor(context);
+    final itemRadius = isTablet ? 16.0 : 13.0;
+    final itemHeight = isTablet ? 76.0 : 72.0;
+    final iconContainerSize = isTablet ? 45.0 : 41.0;
+    final iconSize = isTablet ? 23.0 : 22.0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(itemRadius),
         child: SizedBox(
           width: double.infinity,
-          height: 72,
+          height: itemHeight,
           child: Padding(
-            padding: const EdgeInsets.only(left: 13, right: 13),
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? 16 : 13,
+            ),
             child: Row(
               children: [
                 // ----------------------------------------
                 // ICON
                 // ----------------------------------------
                 Container(
-                  width: 41,
-                  height: 41,
+                  width: iconContainerSize,
+                  height: iconContainerSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color:
@@ -489,7 +571,7 @@ class _SettingsItem extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Icon(
                     icon,
-                    size: 22,
+                    size: iconSize,
                     color:
                         isLogout
                             ? (isDark
@@ -499,7 +581,7 @@ class _SettingsItem extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(width: 14),
+                SizedBox(width: isTablet ? 16 : 14),
 
                 // ----------------------------------------
                 // TEXT
@@ -514,8 +596,8 @@ class _SettingsItem extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
-                          height: 1.1,
+                          fontSize: isTablet ? 15 : 13.5,
+                          height: 1.15,
                           fontWeight: FontWeight.w600,
                           color:
                               isLogout
@@ -526,15 +608,15 @@ class _SettingsItem extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 6),
+                      SizedBox(height: isTablet ? 5 : 4),
 
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9.5,
-                          height: 1,
+                          fontSize: isTablet ? 12 : 10.5,
+                          height: 1.1,
                           fontWeight: FontWeight.w400,
                           color: colors.onSurfaceVariant,
                         ),
@@ -550,12 +632,12 @@ class _SettingsItem extends StatelessWidget {
                   Text(
                     trailingText!,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                      fontSize: isTablet ? 13 : 11.5,
+                      fontWeight: FontWeight.w600,
                       color: colors.secondary,
                     ),
                   ),
-                  const SizedBox(width: 9),
+                  const SizedBox(width: 8),
                 ],
 
                 // ----------------------------------------
@@ -563,8 +645,8 @@ class _SettingsItem extends StatelessWidget {
                 // ----------------------------------------
                 Icon(
                   Icons.chevron_right_rounded,
-                  size: 29,
-                  color: colors.onSurfaceVariant,
+                  size: isTablet ? 26 : 28,
+                  color: colors.onSurfaceVariant.withValues(alpha: .7),
                 ),
               ],
             ),

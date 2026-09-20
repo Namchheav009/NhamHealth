@@ -11,10 +11,15 @@ import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/daily_summary_card.dart';
-import 'package:nhamhealth_flutter/app/modules/views/home/widgets/greeting_section.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/mood_card.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
+
+Widget _buildTestApp(Widget home) => GetMaterialApp(
+  translations: AppTranslations(),
+  locale: const Locale('en', 'US'),
+  home: home,
+);
 
 void main() {
   setUp(() {
@@ -40,13 +45,7 @@ void main() {
       fullName: 'Nham User',
     );
 
-    await tester.pumpWidget(
-      GetMaterialApp(
-        translations: AppTranslations(),
-        locale: const Locale('en', 'US'),
-        home: const HomeView(),
-      ),
-    );
+await tester.pumpWidget(_buildTestApp(const HomeView()));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump(const Duration(milliseconds: 250));
 
@@ -89,13 +88,7 @@ void main() {
       );
       Get.put<HomeController>(controller);
 
-      await tester.pumpWidget(
-        GetMaterialApp(
-          translations: AppTranslations(),
-          locale: const Locale('en', 'US'),
-          home: const HomeView(),
-        ),
-      );
+await tester.pumpWidget(_buildTestApp(const HomeView()));
       await tester.pump(const Duration(milliseconds: 900));
 
       expect(find.text('How are you feeling today?'), findsOneWidget);
@@ -105,7 +98,9 @@ void main() {
       );
       if (size.width >= 768) {
         expect(
-          tester.getTopLeft(find.byType(GreetingSection)).dy,
+          tester
+              .getTopLeft(find.byKey(const ValueKey('home-meal-planner-card')))
+              .dy,
           tester.getTopLeft(find.byType(DailySummaryCard)).dy,
         );
       }
@@ -130,13 +125,7 @@ void main() {
     );
     Get.put<HomeController>(controller);
 
-    await tester.pumpWidget(
-      GetMaterialApp(
-        translations: AppTranslations(),
-        locale: const Locale('en', 'US'),
-        home: const HomeView(),
-      ),
-    );
+await tester.pumpWidget(_buildTestApp(const HomeView()));
     await tester.pump(const Duration(milliseconds: 900));
 
     final homeScroll = find.byType(SingleChildScrollView);

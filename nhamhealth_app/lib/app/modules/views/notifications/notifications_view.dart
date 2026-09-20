@@ -19,6 +19,26 @@ class NotificationsView extends StatelessWidget {
         Get.isRegistered<NotificationsController>()
             ? Get.find<NotificationsController>()
             : Get.put(NotificationsController());
+    final isTablet = AppSpacing.isTabletFor(context);
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final contentMaxWidth =
+        isTablet
+            ? AppSpacing.maxWideContentWidth
+            : AppSpacing.maxContentWidth;
+    final paddedMaxWidth = contentMaxWidth + (horizontalPadding * 2);
+    final listPadding = EdgeInsets.fromLTRB(
+      horizontalPadding,
+      8,
+      horizontalPadding,
+      32,
+    );
+    final skeletonPadding = EdgeInsets.fromLTRB(
+      horizontalPadding,
+      12,
+      horizontalPadding,
+      24,
+    );
+
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
@@ -27,81 +47,108 @@ class NotificationsView extends StatelessWidget {
           child: SafeArea(
             child: Column(
               children: [
-                _NotificationsHeader(controller: controller),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: paddedMaxWidth),
+                    child: _NotificationsHeader(controller: controller),
+                  ),
+                ),
                 Expanded(
                   child: Obx(() {
                     if (controller.isLoading.value &&
                         controller.notifications.isEmpty) {
-                      return const SingleChildScrollView(
-                        physics: NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        child: PageSkeleton.notifications(),
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(maxWidth: paddedMaxWidth),
+                          child: SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: skeletonPadding,
+                            child: const PageSkeleton.notifications(),
+                          ),
+                        ),
                       );
                     }
                     if (controller.notifications.isEmpty) {
-                      return RefreshIndicator(
-                        onRefresh: () => controller.load(),
-                        child: ListView(
-                          key: const ValueKey<String>('notifications-list'),
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                          children: [
-                            _NotificationSection(
-                              title: 'notifications.new',
-                              notifications: const [],
-                              alwaysShowTitle: true,
-                              onTap: (_) {},
-                            ),
-                            const SizedBox(height: 13),
-                            _NotificationSection(
-                              title: 'common.today',
-                              notifications: const [],
-                              alwaysShowTitle: true,
-                              onTap: (_) {},
-                            ),
-                            const SizedBox(height: 13),
-                            _NotificationSection(
-                              title: 'notifications.earlier',
-                              notifications: const [],
-                              alwaysShowTitle: true,
-                              onTap: (_) {},
-                            ),
-                            const SizedBox(height: 100),
-                            Center(
-                              child: Text(
-                                'notifications.no_notifications_yet'.tr,
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(maxWidth: paddedMaxWidth),
+                          child: RefreshIndicator(
+                            onRefresh: () => controller.load(),
+                            child: ListView(
+                              key: const ValueKey<String>(
+                                'notifications-list',
                               ),
+                              padding: listPadding,
+                              children: [
+                                _NotificationSection(
+                                  title: 'notifications.new',
+                                  notifications: const [],
+                                  alwaysShowTitle: true,
+                                  onTap: (_) {},
+                                ),
+                                const SizedBox(height: 13),
+                                _NotificationSection(
+                                  title: 'common.today',
+                                  notifications: const [],
+                                  alwaysShowTitle: true,
+                                  onTap: (_) {},
+                                ),
+                                const SizedBox(height: 13),
+                                _NotificationSection(
+                                  title: 'notifications.earlier',
+                                  notifications: const [],
+                                  alwaysShowTitle: true,
+                                  onTap: (_) {},
+                                ),
+                                const SizedBox(height: 100),
+                                Center(
+                                  child: Text(
+                                    'notifications.no_notifications_yet'.tr,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     }
-                    return RefreshIndicator(
-                      onRefresh: () => controller.load(),
-                      child: ListView(
-                        key: const ValueKey<String>('notifications-list'),
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(maxWidth: paddedMaxWidth),
+                        child: RefreshIndicator(
+                          onRefresh: () => controller.load(),
+                          child: ListView(
+                            key: const ValueKey<String>(
+                              'notifications-list',
+                            ),
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            padding: listPadding,
+                            children: [
+                              _NotificationSection(
+                                title: 'notifications.new',
+                                notifications: controller.unread,
+                                onTap: controller.open,
+                              ),
+                              const SizedBox(height: 13),
+                              _NotificationSection(
+                                title: 'common.today',
+                                notifications: controller.today,
+                                onTap: controller.open,
+                              ),
+                              const SizedBox(height: 13),
+                              _NotificationSection(
+                                title: 'notifications.earlier',
+                                notifications: controller.earlier,
+                                onTap: controller.open,
+                              ),
+                            ],
+                          ),
                         ),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                        children: [
-                          _NotificationSection(
-                            title: 'notifications.new',
-                            notifications: controller.unread,
-                            onTap: controller.open,
-                          ),
-                          const SizedBox(height: 13),
-                          _NotificationSection(
-                            title: 'common.today',
-                            notifications: controller.today,
-                            onTap: controller.open,
-                          ),
-                          const SizedBox(height: 13),
-                          _NotificationSection(
-                            title: 'notifications.earlier',
-                            notifications: controller.earlier,
-                            onTap: controller.open,
-                          ),
-                        ],
                       ),
                     );
                   }),
@@ -122,8 +169,14 @@ class _NotificationsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
     return Padding(
-      padding: AppSpacing.topBarPagePadding,
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        AppSpacing.pageTop,
+        horizontalPadding,
+        0,
+      ),
       child: AppBackHeader(
         title: 'common.notifications',
         backButtonKey: const ValueKey<String>('notifications-back-button'),

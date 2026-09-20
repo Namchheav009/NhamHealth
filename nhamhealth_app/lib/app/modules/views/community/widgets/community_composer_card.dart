@@ -93,15 +93,15 @@ class CommunityComposerCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _ComposerAction(
               icon: Icons.image_outlined,
               label: 'community.photo'.tr,
               onTap: onTap,
             ),
-            const SizedBox(width: 8),
             _ComposerAction(
               icon: Icons.forum_outlined,
               label: 'community.ask_community'.tr,
@@ -145,13 +145,16 @@ class _ComposerAction extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: AppColors.primaryGreen),
               const SizedBox(width: 7),
-              Text(
-                label,
-                maxLines: 1,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

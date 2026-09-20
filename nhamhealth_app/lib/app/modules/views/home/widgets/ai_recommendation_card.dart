@@ -16,6 +16,11 @@ class AiRecommendationCard extends GetView<HomeController> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final animationSize = (constraints.maxWidth * 0.41).clamp(132.0, 154.0);
+        final contentWidth =
+            (constraints.maxWidth - animationSize + 12).clamp(
+              180.0,
+              constraints.maxWidth - 24,
+            );
         return Container(
           height: 188,
           clipBehavior: Clip.antiAlias,
@@ -87,7 +92,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                   left: 16,
                   top: 18,
                   bottom: 19,
-                  width: constraints.maxWidth * 0.61,
+                  width: contentWidth,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -154,7 +159,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                         }),
                       ),
                       SizedBox(
-                        width: constraints.maxWidth * 0.55,
+                        width: contentWidth.clamp(160.0, 260.0),
                         height: 36,
                         child: Obx(() {
                           final selectedMood = _selectedMood();

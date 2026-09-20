@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../translations/localized_text.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
@@ -346,12 +347,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     if (mounted) setState(() {});
   }
 
-  bool get _isBasicInfoComplete =>
-      _name.text.trim().isNotEmpty &&
-      (int.tryParse(_time.text.trim()) ?? 0) > 0 &&
-      (int.tryParse(_servings.text.trim()) ?? 0) > 0 &&
-      _selectedCategoryId != null;
-
   Future<void> _pickImage(ImageSource source) async {
     final existingCount = widget.post?.imageUrls.length ?? 0;
     final remaining = _maxImages - existingCount - _images.length;
@@ -528,10 +523,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       if (mounted) {
         final isEditing = widget.post != null;
         Get.back(result: true);
-        await WidgetsBinding.instance.endOfFrame;
         await AppAlert.actionSuccess(
           title:
-              isEditing ? 'community.meal_updated' : 'community.meal_submitted',
+              isEditing ? 'community.meal_updated' : 'community.meal_published',
           message:
               isEditing
                   ? 'community.changes_saved'
@@ -883,131 +877,150 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
-  Widget build(BuildContext context) => PopScope<void>(
-    canPop: _currentStep == 0 && !_submitting,
-    onPopInvokedWithResult: (didPop, _) {
-      if (!didPop && !_submitting) _handleBack();
-    },
-    child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: AppBackground(
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode:
-                _showValidation
-                    ? AutovalidateMode.onUserInteraction
-                    : AutovalidateMode.disabled,
-            child: ListView(
-              key: ValueKey('community-post-editor-scroll-$_currentStep'),
-              physics: const BouncingScrollPhysics(),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+  Widget build(BuildContext context) {
+    final hPad = AppSpacing.pageHorizontalFor(context);
+    final maxWidth = _contentMaxWidth(context);
+
+    return PopScope<void>(
+      canPop: _currentStep == 0 && !_submitting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_submitting) _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: context.appBackground,
+        body: AppBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
               children: [
-                _editorHeader(),
-                const SizedBox(height: 12),
-                _progressHeader(),
-                const SizedBox(height: 22),
-                if (_currentStep == 0) ...[
-                  Text(
-                    'community.share_your_meal'.tr,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, AppSpacing.pageTop, hPad, 0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: _editorHeader(),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'community.basic_info_help'.tr,
-                    style: TextStyle(color: context.appMutedText, fontSize: 13),
-                  ),
-                  if (widget.post == null)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: _submitting ? null : _chooseFavoriteFood,
-                        icon: const Icon(
-                          Icons.bookmark_outline_rounded,
-                          size: 17,
-                        ),
-                        label: Text(
-                          _selectedFavoriteFood?.name ??
-                              'community.prefill_from_favorites_short'.tr,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: green,
-                          visualDensity: VisualDensity.compact,
-                          textStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode:
+                            _showValidation
+                                ? AutovalidateMode.onUserInteraction
+                                : AutovalidateMode.disabled,
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isWide =
+                                constraints.maxWidth >=
+                                AppSpacing.twoColumnBreakpoint;
+                            return ListView(
+                              key: ValueKey(
+                                'community-post-editor-scroll-$_currentStep',
+                              ),
+                              physics: const BouncingScrollPhysics(),
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
+                              padding: EdgeInsets.fromLTRB(
+                                hPad,
+                                4,
+                                hPad,
+                                AppSpacing.pageBottom +
+                                    MediaQuery.viewPaddingOf(context).bottom,
+                              ),
+                              children: [
+                                _progressHeader(),
+                                const SizedBox(height: 8),
+                                if (_currentStep == 0)
+                                  _buildStep1Content(context, isWide: isWide)
+                                else
+                                  _buildStep2Content(context, isWide: isWide),
+                                if (!isWide || _currentStep == 0) ...[
+                                  const SizedBox(height: 12),
+                                  _navigationButton(),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
-                  const SizedBox(height: 8),
-                ],
-                if (_currentStep == 0)
-                  ..._basicInfoFields()
-                else
-                  ..._recipeFields(),
-                const SizedBox(height: 20),
-                _navigationButton(),
-                const SizedBox(height: 8),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _navigationButton() => ConstrainedBox(
     constraints: const BoxConstraints(minHeight: 50),
-    child: FilledButton(
-      onPressed:
-          _submitting || (_currentStep == 0 && !_isBasicInfoComplete)
-              ? null
-              : _currentStep == 0
-              ? _continueToRecipe
-              : _submit,
-      style: FilledButton.styleFrom(
-        backgroundColor: green,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: context.appMutedSurface,
-        disabledForegroundColor: context.appMutedText,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      ),
-      child:
-          _submitting
-              ? const SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-              : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _currentStep == 0
-                        ? 'community.continue_to_ingredients'.tr
-                        : widget.post == null
-                        ? 'meals.publish_meal'.tr
-                        : 'common.save_changes'.tr,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+    child: SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        key: ValueKey('community-navigation-button-$_currentStep'),
+        onPressed:
+            _submitting
+                ? null
+                : _currentStep == 0
+                ? _continueToRecipe
+                : _submit,
+        style: FilledButton.styleFrom(
+          backgroundColor: green,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: context.appMutedSurface,
+          disabledForegroundColor: context.appMutedText,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        ),
+        child:
+            _submitting
+                ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 10),
-                  const Icon(Icons.arrow_forward_rounded, size: 20),
-                ],
-              ),
+                )
+                : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _currentStep == 0
+                            ? 'community.continue_to_ingredients'.tr
+                            : widget.post == null
+                            ? 'meals.publish_meal'.tr
+                            : 'common.save_changes'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
+                ),
+      ),
     ),
   );
 
@@ -1015,7 +1028,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     height: AppBackButton.layoutSize,
     child: Row(
       children: [
-        AppBackButton(onPressed: _submitting ? null : _handleBack),
+        AppBackButton(
+          buttonKey: const ValueKey('community-editor-back-button'),
+          onPressed: _submitting ? null : _handleBack,
+        ),
         Expanded(
           child: Center(
             child: Text(
@@ -1048,7 +1064,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }
 
   Widget _progressHeader() => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       _progressStep(
         1,
@@ -1058,18 +1074,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ),
       Expanded(
         child: Container(
-          height: 4,
-          margin: const EdgeInsets.fromLTRB(8, 10, 8, 0),
+          height: 3,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(99),
-            color:
-                _currentStep == 1
-                    ? context.appColorScheme.primary
-                    : context.appBorder,
+            color: _currentStep >= 1 ? green : context.appBorder,
           ),
         ),
       ),
-      _progressStep(2, 'community.ingredients', isActive: _currentStep == 1),
+      _progressStep(2, 'community.ingredients_and_steps', isActive: _currentStep == 1),
     ],
   );
 
@@ -1081,27 +1094,30 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Container(
-        width: 22,
-        height: 22,
+      AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 26,
+        height: 26,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color:
-              isActive
+              isActive || isComplete
                   ? green
-                  : isComplete
-                  ? context.appSelectedSurface
                   : context.appMutedSurface,
+          border: Border.all(
+            color: isActive || isComplete ? green : context.appBorder,
+            width: 1.5,
+          ),
         ),
         child:
             isComplete
-                ? const Icon(Icons.check_rounded, size: 14, color: green)
+                ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
                 : Text(
                   '$number',
                   style: TextStyle(
                     color: isActive ? Colors.white : context.appMutedText,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1111,279 +1127,562 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         label.tr,
         style: TextStyle(
           color:
-              isActive ? context.appColorScheme.primary : context.appMutedText,
-          fontSize: 11,
-          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              isActive || isComplete
+                  ? (context.appIsDark ? const Color(0xFF86EFAC) : green)
+                  : context.appMutedText,
+          fontSize: 11.5,
+          fontWeight: isActive || isComplete ? FontWeight.w800 : FontWeight.w600,
         ),
       ),
     ],
   );
 
-  List<Widget> _basicInfoFields() => [
-    InkWell(
-      onTap: _submitting ? null : _chooseImage,
-      borderRadius: BorderRadius.circular(18),
-      child: CustomPaint(
-        foregroundPainter: _DashedRoundedBorder(
-          color:
-              context.appIsDark
-                  ? context.appColorScheme.primary.withValues(alpha: .48)
-                  : const Color(0xFFB7DEC7),
-          radius: 18,
-        ),
-        child: Container(
-          height: 210,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: context.appSubtleSurface,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
+  Widget _buildStep1Content(BuildContext context, {required bool isWide}) {
+    if (isWide) {
+      return Column(
+        key: const ValueKey<String>('community-post-editor-step1-wide'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _step1Header(),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _images.isNotEmpty
-                  ? Image.memory(_images.first, fit: BoxFit.cover)
-                  : widget.post?.imageUrl.isNotEmpty == true
-                  ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
-                  : _emptyPhotoPrompt(),
-              if (_images.isNotEmpty ||
-                  widget.post?.imageUrl.isNotEmpty == true)
-                Positioned(
-                  right: 12,
-                  bottom: 12,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: .55),
-                      borderRadius: BorderRadius.circular(14),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  children: [
+                    _coverPhotoCard(),
+                    if (_images.isNotEmpty ||
+                        (widget.post?.imageUrls.isNotEmpty ?? false)) ...[
+                      const SizedBox(height: 8),
+                      _selectedImageStrip(),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _nameField(),
+                    _timeAndServingsRow(),
+                    _difficultySection(),
+                    const SizedBox(height: 8),
+                    _mealCategoryField(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      key: const ValueKey<String>('community-post-editor-step1-single'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _step1Header(),
+        const SizedBox(height: 10),
+        _coverPhotoCard(),
+        if (_images.isNotEmpty ||
+            (widget.post?.imageUrls.isNotEmpty ?? false)) ...[
+          const SizedBox(height: 8),
+          _selectedImageStrip(),
+        ],
+        const SizedBox(height: 14),
+        _nameField(),
+        _timeAndServingsRow(),
+        _difficultySection(),
+        const SizedBox(height: 12),
+        _mealCategoryField(),
+      ],
+    );
+  }
+
+  Widget _step1Header() => Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'community.share_your_meal'.tr,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'community.basic_info_help'.tr,
+              style: TextStyle(color: context.appMutedText, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      if (widget.post == null) ...[
+        const SizedBox(width: 8),
+        Material(
+          color: context.appSoftGreen,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: _submitting ? null : _chooseFavoriteFood,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 7,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.bookmark_outline_rounded,
+                    size: 16,
+                    color: green,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _selectedFavoriteFood?.name ??
+                        'community.prefill_from_favorites_short'.tr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.edit_outlined,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ],
+  );
+
+  Widget _coverPhotoCard() => InkWell(
+    onTap: _submitting ? null : _chooseImage,
+    borderRadius: BorderRadius.circular(20),
+    child: CustomPaint(
+      foregroundPainter: _DashedRoundedBorder(
+        color:
+            context.appIsDark
+                ? context.appColorScheme.primary.withValues(alpha: .48)
+                : const Color(0xFFB7DEC7),
+        radius: 20,
+      ),
+      child: Container(
+        height: 200,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: context.appSubtleSurface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _images.isNotEmpty
+                ? Image.memory(_images.first, fit: BoxFit.cover)
+                : widget.post?.imageUrl.isNotEmpty == true
+                ? Image.network(widget.post!.imageUrl, fit: BoxFit.cover)
+                : _emptyPhotoPrompt(),
+            if (_images.isNotEmpty || widget.post?.imageUrl.isNotEmpty == true)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: .6),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'community.change_photo'.tr,
+                          style: const TextStyle(
                             color: Colors.white,
-                            size: 18,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'community.change_photo'.tr,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _nameField() => _field(
+    _name,
+    'Meal name',
+    hint: 'Khmer Fish Amok',
+    icon: Icons.restaurant_menu_rounded,
+    validator:
+        (v) =>
+            v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
+  );
+
+  Widget _timeAndServingsRow() => Row(
+    children: [
+      Expanded(
+        child: _field(
+          _time,
+          'Cooking time',
+          hint: '45',
+          suffix: 'min',
+          icon: Icons.schedule_rounded,
+          keyboard: TextInputType.number,
+          validator: (v) => _positive(v, 'Cooking time'),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: _field(
+          _servings,
+          'Servings',
+          hint: '2',
+          icon: Icons.group_outlined,
+          keyboard: TextInputType.number,
+          validator: (v) => _positive(v, 'Servings'),
+        ),
+      ),
+    ],
+  );
+
+  Widget _difficultySection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              shape: BoxShape.circle,
+            ),
+            child: const SizedBox(
+              width: 22,
+              height: 22,
+              child: Icon(Icons.tune_rounded, color: green, size: 13),
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            'common.difficulty'.tr,
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          _difficultyCard(
+            'EASY',
+            Icons.sentiment_satisfied_alt_rounded,
+            const Color(0xFF00A651),
+          ),
+          const SizedBox(width: 8),
+          _difficultyCard(
+            'MEDIUM',
+            Icons.sentiment_neutral_rounded,
+            const Color(0xFFF59E0B),
+          ),
+          const SizedBox(width: 8),
+          _difficultyCard(
+            'HARD',
+            Icons.sentiment_dissatisfied_rounded,
+            const Color(0xFFEF4444),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _difficultyCard(String value, IconData icon, Color activeColor) {
+    final selected = _difficulty == value;
+    final isDark = context.appIsDark;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _difficulty = value),
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: 46,
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? activeColor.withValues(alpha: isDark ? 0.22 : 0.12)
+                    : context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? activeColor : context.appBorder,
+              width: selected ? 1.6 : 1,
+            ),
+            boxShadow: selected ? null : context.appTileShadow,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 19,
+                color: selected ? activeColor : context.appMutedText,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                value[0] + value.substring(1).toLowerCase(),
+                style: TextStyle(
+                  color: selected ? activeColor : context.appText,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 13.5,
+                ),
+              ),
             ],
           ),
         ),
       ),
-    ),
-    if (_images.isNotEmpty || (widget.post?.imageUrls.isNotEmpty ?? false)) ...[
-      const SizedBox(height: 10),
-      _selectedImageStrip(),
-    ],
-    const SizedBox(height: 18),
-    _field(
-      _name,
-      'Meal name',
-      hint: 'Khmer Fish Amok',
-      icon: Icons.restaurant_menu_rounded,
-      validator:
-          (v) =>
-              v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
-    ),
-    Row(
-      children: [
-        Expanded(
-          child: _field(
-            _time,
-            'Cooking time',
-            hint: '45',
-            suffix: 'min',
-            icon: Icons.schedule_rounded,
-            keyboard: TextInputType.number,
-            validator: (v) => _positive(v, 'Cooking time'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _field(
-            _servings,
-            'Servings',
-            hint: '2',
-            icon: Icons.group_outlined,
-            keyboard: TextInputType.number,
-            validator: (v) => _positive(v, 'Servings'),
-          ),
-        ),
-      ],
-    ),
-    Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.appSoftGreen,
-            shape: BoxShape.circle,
-          ),
-          child: const SizedBox(
-            width: 22,
-            height: 22,
-            child: Icon(Icons.tune_rounded, color: green, size: 13),
-          ),
-        ),
-        const SizedBox(width: 7),
-        Text(
-          'common.difficulty'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    ),
-    const SizedBox(height: 8),
-    Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
+    );
+  }
+
+  Widget _buildStep2Content(BuildContext context, {required bool isWide}) {
+    if (isWide) {
+      return Column(
+        key: const ValueKey<String>('community-post-editor-step2-wide'),
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _difficultyCard('EASY', Icons.sentiment_satisfied_alt_rounded),
-          const SizedBox(width: 4),
-          _difficultyCard('MEDIUM', Icons.sentiment_neutral_rounded),
-          const SizedBox(width: 4),
-          _difficultyCard('HARD', Icons.sentiment_dissatisfied_rounded),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _heading(
+                      'community.ingredients'.tr,
+                      'community.ingredients_help'.tr,
+                      Icons.shopping_basket_outlined,
+                    ),
+                    _ingredientComposer(),
+                    const SizedBox(height: 12),
+                    _ingredientList(),
+                    const SizedBox(height: 20),
+                    _heading(
+                      'community.how_to_cook'.tr,
+                      'community.cooking_steps_help'.tr,
+                      Icons.restaurant_menu_rounded,
+                    ),
+                    _stepComposer(),
+                    const SizedBox(height: 12),
+                    _stepList(),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _heading(
+                      'Tags',
+                      'Help people discover your meal.',
+                      Icons.sell_outlined,
+                    ),
+                    _tagsField(),
+                    const SizedBox(height: 20),
+                    _heading(
+                      'Who can see it',
+                      'Choose the audience for this post.',
+                      Icons.visibility_outlined,
+                    ),
+                    _audienceField(),
+                    const SizedBox(height: 24),
+                    _navigationButton(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
-      ),
-    ),
-    const SizedBox(height: 16),
-    _mealCategoryField(),
-  ];
+      );
+    }
+
+    return Column(
+      key: const ValueKey<String>('community-post-editor-step2-single'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heading(
+          'community.ingredients'.tr,
+          'community.ingredients_help'.tr,
+          Icons.shopping_basket_outlined,
+        ),
+        _ingredientComposer(),
+        const SizedBox(height: 12),
+        _ingredientList(),
+        _heading(
+          'community.how_to_cook'.tr,
+          'community.cooking_steps_help'.tr,
+          Icons.restaurant_menu_rounded,
+        ),
+        _stepComposer(),
+        const SizedBox(height: 12),
+        _stepList(),
+        _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
+        _tagsField(),
+        _heading(
+          'Who can see it',
+          'Choose the audience for this post.',
+          Icons.visibility_outlined,
+        ),
+        _audienceField(),
+      ],
+    );
+  }
 
   Widget _emptyPhotoPrompt() => LayoutBuilder(
     builder: (context, constraints) {
-      final compact = constraints.maxWidth < 330;
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: compact ? 20 : 34,
-            top: 42,
-            child: SizedBox(
-              width: compact ? 125 : 150,
-              child: Column(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: context.appSoftGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add_a_photo_outlined,
-                      color: green,
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'community.add_photo'.tr,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'community.cover_photo_help_short'.tr,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: context.appMutedText, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            right: compact ? 10 : 22,
-            top: 17,
-            child: SizedBox(
-              width: compact ? 142 : 166,
-              height: 168,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    right: 0,
-                    top: 38,
-                    child: Transform.rotate(
-                      angle: .15,
-                      child: _samplePhoto(
-                        'assets/images/meals/slideshow2.png',
-                        70,
-                        108,
+      final compact = constraints.maxWidth < 360;
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: compact ? 120 : 150,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: compact ? 58 : 68,
+                      height: compact ? 58 : 68,
+                      decoration: BoxDecoration(
+                        color: context.appSoftGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add_a_photo_outlined,
+                        color: green,
+                        size: compact ? 28 : 32,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: 28,
-                    top: 0,
-                    child: Transform.rotate(
-                      angle: -.04,
-                      child: _samplePhoto(
-                        'assets/images/meals/slideshow1.png',
-                        88,
-                        88,
+                    const SizedBox(height: 10),
+                    Text(
+                      'community.add_cover_photo'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: compact ? 14 : 16,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    bottom: 4,
-                    child: Transform.rotate(
-                      angle: -.06,
-                      child: _samplePhoto(
-                        'assets/images/meals/healthy_salad.jpg',
-                        105,
-                        122,
+                    const SizedBox(height: 3),
+                    Text(
+                      'community.cover_photo_help_short'.tr,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: compact ? 10.5 : 11.5,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            right: 14,
-            bottom: 6,
-            child: Transform.rotate(
-              angle: -.08,
-              child: Text(
-                'community.good_food_caption'.tr,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF247842),
-                  fontSize: 13,
-                  height: 1.05,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w500,
+                  ],
                 ),
               ),
-            ),
+              SizedBox(
+                width: compact ? 130 : 165,
+                height: 175,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      right: 0,
+                      top: 36,
+                      child: Transform.rotate(
+                        angle: .15,
+                        child: _samplePhoto(
+                          'assets/images/meals/slideshow2.png',
+                          compact ? 60 : 70,
+                          compact ? 95 : 108,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 24,
+                      top: 0,
+                      child: Transform.rotate(
+                        angle: -.04,
+                        child: _samplePhoto(
+                          'assets/images/meals/slideshow1.png',
+                          compact ? 76 : 88,
+                          compact ? 76 : 88,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      bottom: 24,
+                      child: Transform.rotate(
+                        angle: -.06,
+                        child: _samplePhoto(
+                          'assets/images/meals/healthy_salad.jpg',
+                          compact ? 90 : 105,
+                          compact ? 105 : 122,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Transform.rotate(
+                        angle: -.05,
+                        child: Text(
+                          'community.good_food_caption'.tr,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: const Color(0xFF247842),
+                            fontSize: compact ? 11 : 12.5,
+                            height: 1.05,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     },
   );
@@ -1521,7 +1820,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       }
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: 13),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1529,7 +1828,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             'community.meal_category'.tr,
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Material(
             color: Colors.transparent,
             child: Ink(
@@ -1774,32 +2073,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     return Icons.restaurant_rounded;
   }
 
-  List<Widget> _recipeFields() => [
-    _heading(
-      'community.ingredients'.tr,
-      'community.ingredients_help'.tr,
-      Icons.shopping_basket_outlined,
-    ),
-    _ingredientComposer(),
-    const SizedBox(height: 12),
-    _ingredientList(),
-    _heading(
-      'community.how_to_cook'.tr,
-      'community.cooking_steps_help'.tr,
-      Icons.restaurant_menu_rounded,
-    ),
-    _stepComposer(),
-    const SizedBox(height: 12),
-    _stepList(),
-    _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
-    _tagsField(),
-    _heading(
-      'Who can see it',
-      'Choose the audience for this post.',
-      Icons.visibility_outlined,
-    ),
-    _audienceField(),
-  ];
 
   Widget _tagsField() {
     if (_tagsLoading) {
@@ -1945,7 +2218,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     TextInputType? keyboard,
     String? Function(String?)? validator,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 13),
+    padding: const EdgeInsets.only(bottom: 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1964,17 +2237,21 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               ),
               const SizedBox(width: 7),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           maxLines: lines,
@@ -2077,42 +2354,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ],
     ),
   );
-  Widget _difficultyCard(String value, IconData icon) {
-    final selected = _difficulty == value;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _difficulty = value),
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: 42,
-          decoration: BoxDecoration(
-            color: selected ? context.appSelectedSurface : Colors.transparent,
-            borderRadius: BorderRadius.circular(19),
-            border: Border.all(color: selected ? green : context.appBorder),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: selected ? green : context.appMutedText,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                value[0] + value.substring(1).toLowerCase(),
-                style: TextStyle(
-                  color: selected ? green : context.appText,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _ingredientComposer() {
     final amount = num.tryParse(_newIngredient.amount.text.trim());
@@ -2198,7 +2439,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               IconButton.filled(
                 key: const ValueKey('community-add-ingredient'),
                 tooltip: 'community.add_ingredient'.tr,
-                onPressed: _submitting || !isReady ? null : _addIngredient,
+                onPressed: _submitting ? null : _addIngredient,
                 icon: const Icon(Icons.add_rounded, size: 23),
                 style: IconButton.styleFrom(
                   backgroundColor: green,
@@ -2397,24 +2638,35 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Row(
             children: [
-              Text(
-                'community.ingredients_list'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: context.appSoftGreen,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_ingredients.length}',
-                  style: TextStyle(
-                    color: context.appColorScheme.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'community.ingredients_list'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: context.appSoftGreen,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_ingredients.length}',
+                        style: TextStyle(
+                          color: context.appColorScheme.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Spacer(),
@@ -2578,7 +2830,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             width: double.infinity,
             child: FilledButton.icon(
               key: const ValueKey('community-add-cooking-step'),
-              onPressed: _submitting || !isReady ? null : _addStep,
+              onPressed: _submitting ? null : _addStep,
               icon: const Icon(Icons.add_rounded, size: 19),
               label: Text('community.add_step'.tr),
               style: FilledButton.styleFrom(

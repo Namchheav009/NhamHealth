@@ -15,20 +15,27 @@ class RecommendedMealCard extends StatelessWidget {
     this.onTap,
     this.onFavorite,
     this.isFavorite = false,
+    this.width,
   });
 
   final RecommendedMealModel meal;
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
   final bool isFavorite;
+  final double? width;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveWidth = width ?? 142.0;
+    final isWide = effectiveWidth >= 180.0;
+    final imageHeight = isWide ? 134.0 : 96.0;
+    final radius = isWide ? 18.0 : 16.0;
+
     return Container(
-      width: 142,
+      width: effectiveWidth,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(radius),
         border: Border.all(
           color:
               context.appIsDark
@@ -38,33 +45,36 @@ class RecommendedMealCard extends StatelessWidget {
         boxShadow: context.appHomeTileShadow,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(radius),
         shadows: context.appIsDark ? context.appInnerShadow : const [],
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(radius),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius - 1),
                       ),
-                      child: _MealImage(path: meal.image),
+                      child: _MealImage(
+                        path: meal.image,
+                        height: imageHeight,
+                      ),
                     ),
                     Positioned(
-                      right: 7,
-                      top: 7,
+                      right: isWide ? 9 : 7,
+                      top: isWide ? 9 : 7,
                       child: InkWell(
                         onTap: onFavorite,
                         customBorder: const CircleBorder(),
                         child: Container(
-                          width: 28,
-                          height: 28,
+                          width: isWide ? 32 : 28,
+                          height: isWide ? 32 : 28,
                           decoration: BoxDecoration(
                             color: context.appElevatedSurface.withValues(
                               alpha: 0.94,
@@ -85,7 +95,7 @@ class RecommendedMealCard extends StatelessWidget {
                                   ? Icons.favorite_rounded
                                   : Icons.favorite_border_rounded,
                               key: ValueKey<bool>(isFavorite),
-                              size: 17,
+                              size: isWide ? 18 : 17,
                               color:
                                   isFavorite
                                       ? AppColors.favoriteRed
@@ -99,7 +109,12 @@ class RecommendedMealCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
+                    padding: EdgeInsets.fromLTRB(
+                      isWide ? 12 : 9,
+                      isWide ? 10 : 8,
+                      isWide ? 12 : 9,
+                      isWide ? 10 : 8,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -110,30 +125,51 @@ class RecommendedMealCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: context.appText,
-                              fontSize: 11,
-                              height: 1.18,
+                              fontSize: isWide ? 13.5 : 11,
+                              height: 1.2,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
-                              AppNutrientTheme.caloriesIcon,
+Icons.local_fire_department_rounded,
                               color: AppNutrientTheme.caloriesColor,
-                              size: 13,
+                              size: isWide ? 15 : 13,
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: 3),
                             Text(
                               localizeCalories(meal.calories),
                               maxLines: 1,
                               style: TextStyle(
                                 color: context.appMutedText,
-                                fontSize: 8.5,
+                                fontSize: isWide ? 11 : 8.5,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                            if (meal.cookingTime.isNotEmpty) ...[
+                              SizedBox(width: isWide ? 8 : 4),
+                              Icon(
+                                Icons.schedule_rounded,
+                                color: context.appMutedText,
+                                size: isWide ? 14 : 11,
+                              ),
+                              const SizedBox(width: 2),
+                              Flexible(
+                                child: Text(
+                                  meal.cookingTime,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: context.appMutedText,
+                                    fontSize: isWide ? 11 : 8.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                             if (meal.proteinGrams case final protein?)
                               if (protein > 0) ...[
                                 const Spacer(),
@@ -142,17 +178,17 @@ class RecommendedMealCard extends StatelessWidget {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
-                                        AppNutrientTheme.proteinIcon,
+Icon(
+                                        Icons.fitness_center_rounded,
                                         color: AppNutrientTheme.proteinColor,
-                                        size: 12,
+                                        size: isWide ? 13 : 11,
                                       ),
                                       const SizedBox(width: 2),
                                       Text(
                                         '${_formatNutrition(protein)}g',
                                         style: TextStyle(
                                           color: context.appMutedText,
-                                          fontSize: 8.5,
+                                          fontSize: isWide ? 11 : 8.5,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -181,9 +217,10 @@ String _formatNutrition(num value) =>
         : value.toStringAsFixed(1);
 
 class _MealImage extends StatelessWidget {
-  const _MealImage({required this.path});
+  const _MealImage({required this.path, this.height = 96});
 
   final String path;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -191,16 +228,16 @@ class _MealImage extends StatelessWidget {
       return Image.asset(
         path.isEmpty ? 'assets/images/meals/healthy_salad.jpg' : path,
         width: double.infinity,
-        height: 96,
+        height: height,
         fit: BoxFit.cover,
       );
     }
     return CachedNetworkImage(
       imageUrl: path,
       width: double.infinity,
-      height: 96,
+      height: height,
       fit: BoxFit.cover,
-      memCacheWidth: 300,
+      memCacheWidth: 400,
       fadeInDuration: const Duration(milliseconds: 120),
       placeholder:
           (_, _) => const ColoredBox(
@@ -210,6 +247,8 @@ class _MealImage extends StatelessWidget {
       errorWidget:
           (_, _, _) => Image.asset(
             'assets/images/meals/healthy_salad.jpg',
+            width: double.infinity,
+            height: height,
             fit: BoxFit.cover,
           ),
     );

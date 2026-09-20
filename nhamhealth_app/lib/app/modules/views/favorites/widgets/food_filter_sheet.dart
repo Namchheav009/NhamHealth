@@ -38,11 +38,13 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
     final screenHeight = MediaQuery.sizeOf(context).height;
     return SafeArea(
       top: false,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: 520,
-          maxHeight: screenHeight * .72,
-        ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: screenHeight * .72,
+          ),
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         decoration: BoxDecoration(
           color: context.appElevatedSurface,
@@ -164,8 +166,9 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _CategoryChip extends StatelessWidget {

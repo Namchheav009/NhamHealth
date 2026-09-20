@@ -10,16 +10,24 @@ import 'package:nhamhealth_flutter/app/modules/repositories/community/community_
 import 'package:nhamhealth_flutter/app/modules/views/community/community_post_editor_page.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post_draft.dart';
 import 'package:nhamhealth_flutter/app/modules/models/meals/meal_category_model.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
+import 'package:nhamhealth_flutter/app/widgets/app_alert.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
   setUp(() {
+    AppAlert.resetForTesting();
     Get.testMode = true;
+    Get.clearTranslations();
+    Get.addTranslations(AppTranslations().keys);
     final authService = _ComposerAuthService();
     Get.put<CommunityRepository>(_ComposerRepository(authService));
   });
 
-  tearDown(Get.reset);
+  tearDown(() {
+    AppAlert.resetForTesting();
+    Get.reset();
+  });
 
   for (final dismissBeforeResponse in [false, true]) {
     testWidgets(
@@ -30,6 +38,8 @@ void main() {
         repository.tagResult = Completer<CommunityTag>();
         await tester.pumpWidget(
           GetMaterialApp(
+            translations: AppTranslations(),
+            locale: const Locale('en', 'US'),
             home: CommunityPostEditorPage(
               post: CommunityPost(
                 id: '7',
@@ -101,6 +111,8 @@ void main() {
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: CommunityPostEditorPage(
           authorName: 'Nham Member',
           authorAvatarUrl: '',
@@ -127,7 +139,7 @@ void main() {
     await tester.tap(find.text('Main dishes').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Meal'), findsOneWidget);
+    expect(find.text('New meal'), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Khmer Fish Amok'),
       'Healthy lunch',
@@ -193,6 +205,8 @@ void main() {
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: CommunityPostEditorPage(
           post: CommunityPost(
             id: '7',

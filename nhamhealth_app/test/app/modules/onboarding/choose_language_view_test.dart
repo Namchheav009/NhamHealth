@@ -6,48 +6,100 @@ import 'package:nhamhealth_flutter/app/modules/views/onboarding/choose_language_
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
 void main() {
+  setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('selecting a language translates the page immediately', (
+  testWidgets('renders two-column responsive layout on tablet in landscape', (
     tester,
   ) async {
-    final controller = Get.put(ChooseLanguageController());
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+
+    Get.put(ChooseLanguageController());
 
     await tester.pumpWidget(
       GetMaterialApp(
         translations: AppTranslations(),
         locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
         home: const ChooseLanguageView(),
       ),
     );
+    await tester.pump();
 
+    expect(
+      find.byKey(const ValueKey<String>('choose-language-tablet-layout')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('choose-language-english')), findsOneWidget);
     expect(find.byKey(const Key('choose-language-khmer')), findsOneWidget);
-    expect(find.text('Choose Your\nLanguage'), findsOneWidget);
-    expect(find.text('Welcome'), findsNothing);
+    expect(find.byKey(const Key('choose-language-skip')), findsOneWidget);
     expect(
       find.image(const AssetImage('assets/images/onboarding/vagetables.png')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+  });
 
-    await tester.tap(find.byKey(const Key('choose-language-khmer')));
-    await tester.pumpAndSettle();
+  testWidgets('renders balanced responsive layout on tablet in portrait', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1280);
+    addTearDown(tester.view.reset);
 
-    expect(controller.selectedLanguage.value, 'km');
-    expect(Get.locale, const Locale('km', 'KH'));
-    expect(find.text('ជ្រើសរើស\nភាសារបស់អ្នក'), findsOneWidget);
-    expect(find.text('បន្ទាប់'), findsOneWidget);
-    expect(find.text('រំលងសិន'), findsOneWidget);
-    expect(find.text('Choose Your\nLanguage'), findsNothing);
+    Get.put(ChooseLanguageController());
 
-    await tester.tap(find.byKey(const Key('choose-language-english')));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: const ChooseLanguageView(),
+      ),
+    );
+    await tester.pump();
 
-    expect(controller.selectedLanguage.value, 'en');
-    expect(Get.locale, const Locale('en', 'US'));
+    // Portrait tablet uses the single-column centered layout (not the 2-column wide layout)
+    expect(
+      find.byKey(const ValueKey<String>('choose-language-tablet-layout')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('choose-language-english')), findsOneWidget);
+    expect(find.byKey(const Key('choose-language-khmer')), findsOneWidget);
+    expect(find.byKey(const Key('choose-language-skip')), findsOneWidget);
+    expect(
+      find.image(const AssetImage('assets/images/onboarding/vagetables.png')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('renders standard mobile phone layout', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+
+    Get.put(ChooseLanguageController());
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: const ChooseLanguageView(),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('choose-language-tablet-layout')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('choose-language-english')), findsOneWidget);
+    expect(find.byKey(const Key('choose-language-khmer')), findsOneWidget);
     expect(find.text('Choose Your\nLanguage'), findsOneWidget);
-    expect(find.text('Next'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

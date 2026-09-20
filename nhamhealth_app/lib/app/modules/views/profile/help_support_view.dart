@@ -1,10 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../theme/app_colors.dart';
-
 import '../../controllers/profile/help_support_controller.dart';
 import '../../../theme/app_spacing.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
@@ -14,73 +13,131 @@ class HelpSupportView extends GetView<HelpSupportController> {
 
   static const Color green = Color(0xFF00A651);
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final hPad = AppSpacing.pageHorizontalFor(context);
+    final maxWidth = _contentMaxWidth(context);
+
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
         backgroundColor: context.appBackground,
         body: AppBackground(
           child: SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: AppSpacing.pagePadding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-
-                      const SizedBox(height: 25),
-
-                      _SupportHero(),
-
-                      const SizedBox(height: 26),
-
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15),
-                        child: Text(
-                          'profile.contact_support'.tr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.appText,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      _buildContactCard(context),
-
-                      const SizedBox(height: 26),
-
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15),
-                        child: Text(
-                          'profile.frequently_asked_questions'.tr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.appText,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      _buildFaqList(context),
-                    ],
+            bottom: false,
+            child: Column(
+              children: [
+                // Pinned header matching setting_view pattern
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    hPad,
+                    AppSpacing.pageTop,
+                    hPad,
+                    0,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: _buildHeader(),
+                    ),
                   ),
                 ),
-              ),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 40),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: _buildBody(context, isTablet: isTablet),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, {required bool isTablet}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 760;
+
+        final contactSection = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SupportHero(isTablet: isTablet),
+            SizedBox(height: isTablet ? 28 : 26),
+            Padding(
+              padding: EdgeInsets.only(left: isTablet ? 6 : 15),
+              child: Text(
+                'profile.contact_support'.tr,
+                style: TextStyle(
+                  fontSize: isTablet ? 18 : 16,
+                  fontWeight: isTablet ? FontWeight.w700 : FontWeight.w600,
+                  color: context.appText,
+                ),
+              ),
+            ),
+            SizedBox(height: isTablet ? 14 : 12),
+            _buildContactCard(context, isTablet: isTablet),
+          ],
+        );
+
+        final faqSection = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: isTablet ? 6 : 15),
+              child: Text(
+                'profile.frequently_asked_questions'.tr,
+                style: TextStyle(
+                  fontSize: isTablet ? 18 : 16,
+                  fontWeight: isTablet ? FontWeight.w700 : FontWeight.w600,
+                  color: context.appText,
+                ),
+              ),
+            ),
+            SizedBox(height: isTablet ? 14 : 14),
+            _buildFaqList(context, isTablet: isTablet),
+          ],
+        );
+
+        if (isWide) {
+          return Row(
+            key: const ValueKey<String>('help-support-tablet-two-column'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: contactSection),
+              const SizedBox(width: 24),
+              Expanded(child: faqSection),
+            ],
+          );
+        }
+
+        return Column(
+          key: const ValueKey<String>('help-support-single-column'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            contactSection,
+            SizedBox(height: isTablet ? 30 : 26),
+            faqSection,
+          ],
+        );
+      },
     );
   }
 
@@ -92,6 +149,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
     return AppBackHeader(
       title: 'profile.help_support'.tr,
       onBack: controller.goBack,
+      backButtonKey: const ValueKey<String>('help-support-back-button'),
     );
   }
 
@@ -99,37 +157,44 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // CONTACT SUPPORT
   // ============================================================
 
-  Widget _buildContactCard(BuildContext context) {
+  Widget _buildContactCard(BuildContext context, {required bool isTablet}) {
     return Container(
       width: double.infinity,
       key: const ValueKey<String>('help-contact-card'),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(isTablet ? 22 : 18),
         border: Border.all(color: context.appBorder),
         boxShadow: context.appCardShadow,
       ),
-      child: Column(
-        children: [
-          _ContactItem(
-            icon: Icons.mail_outline_rounded,
-            title: 'profile.email_us',
-            subtitle: 'NhamHealth@gmail.com',
-            onTap: controller.emailSupport,
-          ),
-
-          Padding(
-            padding: const EdgeInsets.only(left: 64),
-            child: Divider(height: 1, thickness: 0.7, color: context.appBorder),
-          ),
-
-          _ContactItem(
-            icon: Icons.phone_outlined,
-            title: 'profile.call_us',
-            subtitle: '+855 81814451',
-            onTap: controller.callSupport,
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(isTablet ? 21 : 17),
+        child: Column(
+          children: [
+            _ContactItem(
+              icon: Icons.mail_outline_rounded,
+              title: 'profile.email_us',
+              subtitle: 'NhamHealth@gmail.com',
+              onTap: controller.emailSupport,
+              isTablet: isTablet,
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: isTablet ? 74 : 64),
+              child: Divider(
+                height: 1,
+                thickness: 0.7,
+                color: context.appBorder,
+              ),
+            ),
+            _ContactItem(
+              icon: Icons.phone_outlined,
+              title: 'profile.call_us',
+              subtitle: '+855 81814451',
+              onTap: controller.callSupport,
+              isTablet: isTablet,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -138,7 +203,7 @@ class HelpSupportView extends GetView<HelpSupportController> {
   // FAQ
   // ============================================================
 
-  Widget _buildFaqList(BuildContext context) {
+  Widget _buildFaqList(BuildContext context, {required bool isTablet}) {
     return Obx(
       () => Column(
         children: List.generate(controller.faqs.length, (index) {
@@ -146,15 +211,17 @@ class HelpSupportView extends GetView<HelpSupportController> {
           final isExpanded = controller.expandedIndex.value == index;
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: isTablet ? 10 : 8),
             child: _FaqItem(
               itemKey: ValueKey<String>('help-faq-$index'),
+              headerKey: ValueKey<String>('help-faq-header-$index'),
               question: faq['question']!,
               answer: faq['answer']!,
               expanded: isExpanded,
               onTap: () {
                 controller.toggleFaq(index);
               },
+              isTablet: isTablet,
             ),
           );
         }),
@@ -164,64 +231,73 @@ class HelpSupportView extends GetView<HelpSupportController> {
 }
 
 class _SupportHero extends StatelessWidget {
+  const _SupportHero({this.isTablet = false});
+
+  final bool isTablet;
+
   @override
-  Widget build(BuildContext context) => Container(
-    key: const ValueKey<String>('help-support-hero'),
-    width: double.infinity,
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [context.appSoftGreen, context.appSurfaceLow],
+  Widget build(BuildContext context) {
+    final avatarSize = isTablet ? 56.0 : 48.0;
+    final iconSize = isTablet ? 30.0 : 27.0;
+
+    return Container(
+      key: const ValueKey<String>('help-support-hero'),
+      width: double.infinity,
+      padding: EdgeInsets.all(isTablet ? 22 : 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [context.appSoftGreen, context.appSurfaceLow],
+        ),
+        borderRadius: BorderRadius.circular(isTablet ? 24 : 20),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
       ),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: context.appBorder),
-      boxShadow: context.appTileShadow,
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: context.appSelectedSurface,
-            shape: BoxShape.circle,
+      child: Row(
+        children: [
+          Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              color: context.appSelectedSurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.support_agent_rounded,
+              color: context.appColorScheme.primary,
+              size: iconSize,
+            ),
           ),
-          child: Icon(
-            Icons.support_agent_rounded,
-            color: context.appColorScheme.primary,
-            size: 27,
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'profile.how_can_we_help'.tr,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+          SizedBox(width: isTablet ? 18 : 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'profile.how_can_we_help'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: isTablet ? 19 : 17,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'profile.contact_us_or_find_quick_answers_below'.tr,
-                style: TextStyle(
-                  color: context.appMutedText,
-                  fontSize: 12.5,
-                  height: 1.4,
+                SizedBox(height: isTablet ? 6 : 4),
+                Text(
+                  'profile.contact_us_or_find_quick_answers_below'.tr,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: isTablet ? 14 : 12.5,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 // ================================================================
@@ -233,39 +309,43 @@ class _ContactItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool isTablet;
 
   const _ContactItem({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.isTablet = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final rowHeight = isTablet ? 74.0 : 62.0;
+    final iconBoxSize = isTablet ? 46.0 : 39.0;
+    final iconSize = isTablet ? 24.0 : 21.0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
         child: SizedBox(
-          height: 62,
+          height: rowHeight,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13),
+            padding: EdgeInsets.symmetric(horizontal: isTablet ? 16 : 13),
             child: Row(
               children: [
                 Container(
-                  width: 39,
-                  height: 39,
+                  width: iconBoxSize,
+                  height: iconBoxSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: context.appSoftGreen,
                   ),
-                  child: Icon(icon, size: 21, color: HelpSupportView.green),
+                  child: Icon(icon, size: iconSize, color: HelpSupportView.green),
                 ),
-
-                const SizedBox(width: 13),
-
+                SizedBox(width: isTablet ? 16 : 13),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -274,19 +354,17 @@ class _ContactItem extends StatelessWidget {
                       Text(
                         title.trOrSelf,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: isTablet ? 16 : 14,
                           height: 1,
                           fontWeight: FontWeight.w600,
                           color: context.appText,
                         ),
                       ),
-
-                      const SizedBox(height: 6),
-
+                      SizedBox(height: isTablet ? 8 : 6),
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: isTablet ? 13 : 11,
                           height: 1,
                           color: context.appMutedText,
                         ),
@@ -297,7 +375,7 @@ class _ContactItem extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   color: context.appMutedText,
-                  size: 21,
+                  size: isTablet ? 24 : 21,
                 ),
               ],
             ),
@@ -314,28 +392,36 @@ class _ContactItem extends StatelessWidget {
 
 class _FaqItem extends StatelessWidget {
   final Key itemKey;
+  final Key? headerKey;
   final String question;
   final String answer;
   final bool expanded;
   final VoidCallback onTap;
+  final bool isTablet;
 
   const _FaqItem({
     required this.itemKey,
+    this.headerKey,
     required this.question,
     required this.answer,
     required this.expanded,
     required this.onTap,
+    this.isTablet = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final minHeight = isTablet ? 70.0 : 62.0;
+    final iconBoxSize = isTablet ? 34.0 : 27.0;
+    final iconSize = isTablet ? 19.0 : 16.0;
+
     return AnimatedContainer(
       key: itemKey,
       duration: const Duration(milliseconds: 180),
       width: double.infinity,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
         border: Border.all(
           color:
               expanded
@@ -347,53 +433,51 @@ class _FaqItem extends StatelessWidget {
       child: Column(
         children: [
           InkWell(
+            key: headerKey,
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 62),
+              constraints: BoxConstraints(minHeight: minHeight),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 13,
-                  vertical: 14,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 16 : 13,
+                  vertical: isTablet ? 16 : 14,
                 ),
                 child: Row(
                   children: [
                     Container(
-                      width: 27,
-                      height: 27,
+                      width: iconBoxSize,
+                      height: iconBoxSize,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: context.appSoftGreen,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.help_outline_rounded,
                         color: HelpSupportView.green,
-                        size: 16,
+                        size: iconSize,
                       ),
                     ),
-
-                    const SizedBox(width: 12),
-
+                    SizedBox(width: isTablet ? 15 : 12),
                     Expanded(
                       child: Text(
                         question.trOrSelf,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: isTablet ? 15.5 : 14,
                           height: 1.25,
                           fontWeight: FontWeight.w600,
                           color: context.appText,
                         ),
                       ),
                     ),
-
                     AnimatedRotation(
                       turns: expanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 180),
                       child: Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        size: 18,
+                        size: isTablet ? 22 : 18,
                         color:
                             expanded
                                 ? HelpSupportView.green
@@ -405,28 +489,28 @@ class _FaqItem extends StatelessWidget {
               ),
             ),
           ),
-
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 180),
             crossFadeState:
                 expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-
             firstChild: const SizedBox.shrink(),
-
             secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(54, 0, 18, 14),
+              padding: EdgeInsets.fromLTRB(
+                isTablet ? 65 : 54,
+                0,
+                isTablet ? 20 : 18,
+                isTablet ? 16 : 14,
+              ),
               child: Column(
                 children: [
                   Divider(height: 1, thickness: 0.7, color: context.appBorder),
-
-                  const SizedBox(height: 11),
-
+                  SizedBox(height: isTablet ? 13 : 11),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       answer.trOrSelf,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: isTablet ? 13 : 11,
                         height: 1.45,
                         fontWeight: FontWeight.w400,
                         color: context.appMutedText,

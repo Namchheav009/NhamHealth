@@ -675,6 +675,9 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     final horizontalPadding = AppSpacing.pageHorizontalFor(context);
     final contentPadding = EdgeInsets.fromLTRB(
       horizontalPadding,
@@ -738,38 +741,48 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
           color: _green,
           onRefresh: controller.fetchMyReports,
           child: ListView(
+            key: ValueKey<String>(
+              isTablet
+                  ? (isLandscape
+                      ? 'my-reports-tablet-landscape'
+                      : 'my-reports-tablet-portrait')
+                  : 'my-reports-mobile',
+            ),
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
             padding: contentPadding,
             children: [
-              _buildSafetyBanner(context),
-              const SizedBox(height: 14),
+              _buildSafetyBanner(context, isTablet: isTablet),
+              SizedBox(height: isTablet ? 18 : 14),
               _buildFilterChips(
                 context,
                 allCount: allCount,
                 pendingCount: pendingCount,
                 resolvedCount: resolvedCount,
                 noViolationCount: noViolationCount,
+                isTablet: isTablet,
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: isTablet ? 18 : 14),
               if (filtered.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isTablet ? 56 : 40,
+                  ),
                   child: Center(
                     child: Column(
                       children: [
                         Icon(
                           Icons.inbox_outlined,
-                          size: 48,
+                          size: isTablet ? 56 : 48,
                           color: context.appMutedText,
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: isTablet ? 14 : 10),
                         Text(
                           'community.report_empty'.tr,
                           style: TextStyle(
                             color: context.appMutedText,
-                            fontSize: 14,
+                            fontSize: isTablet ? 15.5 : 14,
                           ),
                         ),
                       ],
@@ -777,23 +790,13 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
                   ),
                 )
               else
-                ...filtered.map(
-                  (report) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _ReportList(
-                      report: report,
-                      onTap:
-                          () => Get.to<void>(
-                            () => CommunityReportDetailPage(
-                              reportId: report.id,
-                              controller: controller,
-                            ),
-                          ),
-                    ),
-                  ),
+                _buildReportResults(
+                  filtered,
+                  isTablet: isTablet,
+                  isLandscape: isLandscape,
                 ),
-              const SizedBox(height: 6),
-              _buildNeedHelpCard(context),
+              SizedBox(height: isTablet ? 10 : 6),
+              _buildNeedHelpCard(context, isTablet: isTablet),
             ],
           ),
         );
@@ -801,14 +804,61 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     );
   }
 
-  Widget _buildSafetyBanner(BuildContext context) {
+  Widget _buildReportResults(
+    List<CommunityReport> reports, {
+    required bool isTablet,
+    required bool isLandscape,
+  }) {
+    Widget reportCard(CommunityReport report) => _ReportList(
+      report: report,
+      onTap:
+          () => Get.to<void>(
+            () => CommunityReportDetailPage(
+              reportId: report.id,
+              controller: controller,
+            ),
+          ),
+    );
+
+    if (!isTablet || !isLandscape || reports.length < 2) {
+      return Column(
+        children: [
+          for (final report in reports)
+            Padding(
+              padding: EdgeInsets.only(bottom: isTablet ? 14 : 10),
+              child: reportCard(report),
+            ),
+        ],
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 14.0;
+        final cardWidth = (constraints.maxWidth - gap) / 2;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final report in reports)
+              SizedBox(width: cardWidth, child: reportCard(report)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSafetyBanner(BuildContext context, {bool isTablet = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shieldSize = isTablet ? 48.0 : 42.0;
+    final shieldIconSize = isTablet ? 26.0 : 22.0;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF102820) : const Color(0xFFE8F7F0),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
         border: Border.all(
           color:
               isDark ? _green.withValues(alpha: 0.3) : const Color(0xFFBCE7D3),
@@ -817,15 +867,15 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: shieldSize,
+            height: shieldSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _green.withValues(alpha: 0.15),
             ),
-            child: const Icon(Icons.shield_outlined, color: _green, size: 22),
+            child: Icon(Icons.shield_outlined, color: _green, size: shieldIconSize),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isTablet ? 15 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,15 +885,15 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
                   style: TextStyle(
                     color: context.appText,
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: isTablet ? 16 : 14,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: isTablet ? 5 : 3),
                 Text(
                   'community.report_keep_safe_desc'.tr,
                   style: TextStyle(
                     color: context.appMutedText,
-                    fontSize: 12,
+                    fontSize: isTablet ? 13.5 : 12,
                     height: 1.35,
                   ),
                 ),
@@ -852,15 +902,15 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(isTablet ? 7 : 6),
             decoration: BoxDecoration(
               color: _green.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.verified_user_rounded,
               color: _green,
-              size: 20,
+              size: isTablet ? 22 : 20,
             ),
           ),
         ],
@@ -874,92 +924,118 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     required int pendingCount,
     required int resolvedCount,
     required int noViolationCount,
-  }) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    physics: const BouncingScrollPhysics(),
-    child: Row(
-      children: [
+    bool isTablet = false,
+  }) {
+    final chips = <Widget>[
         _FilterChipItem(
           label: 'community.report_filter_all'.tr,
           count: allCount,
           selected: _selectedFilter == _ReportFilter.all,
           onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
+          isTablet: isTablet,
         ),
-        const SizedBox(width: 8),
         _FilterChipItem(
           label: 'community.report_filter_pending'.tr,
           count: pendingCount,
           selected: _selectedFilter == _ReportFilter.pending,
           onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
+          isTablet: isTablet,
         ),
-        const SizedBox(width: 8),
         _FilterChipItem(
           label: 'community.report_filter_resolved'.tr,
           count: resolvedCount,
           selected: _selectedFilter == _ReportFilter.resolved,
           onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
+          isTablet: isTablet,
         ),
-        const SizedBox(width: 8),
         _FilterChipItem(
           label: 'community.report_filter_no_violation'.tr,
           count: noViolationCount,
           selected: _selectedFilter == _ReportFilter.noViolation,
           onTap:
               () => setState(() => _selectedFilter = _ReportFilter.noViolation),
+          isTablet: isTablet,
         ),
-      ],
-    ),
-  );
+      ];
 
-  Widget _buildNeedHelpCard(BuildContext context) => _Card(
-    child: InkWell(
-      onTap: () => Get.to<void>(() => const CommunityGuidelinesPage()),
-      borderRadius: BorderRadius.circular(14),
+    if (isTablet) {
+      return Wrap(spacing: 8, runSpacing: 8, children: chips);
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: context.appMutedSurface,
-            ),
-            child: Icon(
-              Icons.help_outline_rounded,
-              color: context.appText,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'community.report_need_help'.tr,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'community.report_need_help_desc'.tr,
-                  style: TextStyle(color: context.appMutedText, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: context.appMutedText,
-            size: 22,
-          ),
+          for (var index = 0; index < chips.length; index++) ...[
+            if (index > 0) const SizedBox(width: 8),
+            chips[index],
+          ],
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildNeedHelpCard(BuildContext context, {bool isTablet = false}) {
+    final iconBoxSize = isTablet ? 44.0 : 38.0;
+    final iconSize = isTablet ? 23.0 : 20.0;
+
+    return _Card(
+      child: InkWell(
+        onTap: () => Get.to<void>(() => const CommunityGuidelinesPage()),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
+        child: Padding(
+          padding: isTablet ? const EdgeInsets.all(4) : EdgeInsets.zero,
+          child: Row(
+            children: [
+              Container(
+                width: iconBoxSize,
+                height: iconBoxSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.appMutedSurface,
+                ),
+                child: Icon(
+                  Icons.help_outline_rounded,
+                  color: context.appText,
+                  size: iconSize,
+                ),
+              ),
+              SizedBox(width: isTablet ? 15 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'community.report_need_help'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontWeight: FontWeight.w700,
+                        fontSize: isTablet ? 15.5 : 14,
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 4 : 2),
+                    Text(
+                      'community.report_need_help_desc'.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: isTablet ? 13 : 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.appMutedText,
+                size: isTablet ? 24 : 22,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CommunityReportDetailPage extends StatefulWidget {
@@ -1724,9 +1800,16 @@ class _Page extends StatelessWidget {
   final int? step;
   final bool scrollable;
 
+  static double contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final maxWidth = contentMaxWidth(context);
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Scaffold(
@@ -1744,17 +1827,28 @@ class _Page extends StatelessWidget {
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppSpacing.maxContentWidth,
+                      constraints: BoxConstraints(
+                        maxWidth: maxWidth,
                       ),
-                      child: AppBackHeader(title: title, onBack: Get.back),
+                      child: AppBackHeader(
+                        title: title,
+                        onBack: Get.back,
+                        backButtonKey: const ValueKey<String>(
+                          'community-report-back-button',
+                        ),
+                      ),
                     ),
                   ),
                 ),
                 if (step != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: _Steps(current: step!),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: _Steps(current: step!),
+                      ),
+                    ),
                   ),
                 Expanded(
                   child:
@@ -1769,8 +1863,8 @@ class _Page extends StatelessWidget {
                             ),
                             child: Center(
                               child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: AppSpacing.maxContentWidth,
+                                constraints: BoxConstraints(
+                                  maxWidth: maxWidth,
                                 ),
                                 child: child,
                               ),
@@ -1778,8 +1872,8 @@ class _Page extends StatelessWidget {
                           )
                           : Center(
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: AppSpacing.maxContentWidth,
+                              constraints: BoxConstraints(
+                                maxWidth: maxWidth,
                               ),
                               child: child,
                             ),
@@ -2402,12 +2496,14 @@ class _FilterChipItem extends StatelessWidget {
     required this.count,
     required this.selected,
     required this.onTap,
+    this.isTablet = false,
   });
 
   final String label;
   final int count;
   final bool selected;
   final VoidCallback onTap;
+  final bool isTablet;
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -2415,7 +2511,10 @@ class _FilterChipItem extends StatelessWidget {
     borderRadius: BorderRadius.circular(20),
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 16 : 12,
+        vertical: isTablet ? 10 : 7,
+      ),
       decoration: BoxDecoration(
         color: selected ? _green : context.appElevatedSurface,
         borderRadius: BorderRadius.circular(20),
@@ -2429,12 +2528,15 @@ class _FilterChipItem extends StatelessWidget {
             style: TextStyle(
               color: selected ? Colors.white : context.appText,
               fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontSize: isTablet ? 14.5 : 13,
             ),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: isTablet ? 8 : 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? 8 : 6,
+              vertical: isTablet ? 3 : 2,
+            ),
             decoration: BoxDecoration(
               color:
                   selected
@@ -2447,7 +2549,7 @@ class _FilterChipItem extends StatelessWidget {
               style: TextStyle(
                 color: selected ? Colors.white : context.appMutedText,
                 fontWeight: FontWeight.w700,
-                fontSize: 11,
+                fontSize: isTablet ? 12.5 : 11,
               ),
             ),
           ),

@@ -807,21 +807,60 @@ class _SettingsPlaceholder extends StatelessWidget {
   const _SettingsPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _SkeletonBox(width: 72, height: 13, radius: 7),
-      SizedBox(height: 10),
-      _SkeletonCard(height: 145),
-      SizedBox(height: 21),
-      _SkeletonBox(width: 92, height: 13, radius: 7),
-      SizedBox(height: 10),
-      _SkeletonCard(height: 145),
-      SizedBox(height: 21),
-      _SkeletonBox(width: 64, height: 13, radius: 7),
-      SizedBox(height: 10),
-      _SkeletonCard(height: 145),
-    ],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth >= 760) {
+        return const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonBox(width: 72, height: 13, radius: 7),
+                  SizedBox(height: 10),
+                  _SkeletonCard(height: 152),
+                  SizedBox(height: 24),
+                  _SkeletonBox(width: 92, height: 13, radius: 7),
+                  SizedBox(height: 10),
+                  _SkeletonCard(height: 152),
+                ],
+              ),
+            ),
+            SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonBox(width: 64, height: 13, radius: 7),
+                  SizedBox(height: 10),
+                  _SkeletonCard(height: 228),
+                  SizedBox(height: 24),
+                  _SkeletonCard(height: 72),
+                ],
+              ),
+            ),
+          ],
+        );
+      }
+
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SkeletonBox(width: 72, height: 13, radius: 7),
+          SizedBox(height: 10),
+          _SkeletonCard(height: 145),
+          SizedBox(height: 21),
+          _SkeletonBox(width: 92, height: 13, radius: 7),
+          SizedBox(height: 10),
+          _SkeletonCard(height: 145),
+          SizedBox(height: 21),
+          _SkeletonBox(width: 64, height: 13, radius: 7),
+          SizedBox(height: 10),
+          _SkeletonCard(height: 145),
+        ],
+      );
+    },
   );
 }
 

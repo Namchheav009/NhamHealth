@@ -12,6 +12,7 @@ class AiFoodTipsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.appIsDark;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     return Container(
       constraints: BoxConstraints(
@@ -100,7 +101,7 @@ class AiFoodTipsSheet extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + bottomInset),
             decoration: BoxDecoration(
               color: context.appSurface,
               border: Border(top: BorderSide(color: context.appBorder)),

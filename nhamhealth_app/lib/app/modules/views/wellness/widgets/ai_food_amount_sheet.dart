@@ -145,43 +145,60 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
     return Obx(() {
       final isDrink =
           widget.controller.inputKind.value == AiFoodInputKind.drink;
-      return Container(
-        constraints: BoxConstraints(
-          maxWidth: 620,
-          maxHeight: MediaQuery.sizeOf(context).height * .88,
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: context.appSurface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(99),
-              ),
+      final mediaQuery = MediaQuery.of(context);
+      final availableHeight =
+          mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 620,
+            maxHeight: availableHeight * .88,
+          ),
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: context.appSurface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
             ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _header(context, isDrink),
-                    const SizedBox(height: 18),
-                    if (isDrink) _drinkBody(context) else _foodBody(context),
-                  ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1D5DB),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
                 ),
-              ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _header(context, isDrink),
+                        const SizedBox(height: 18),
+                        if (isDrink)
+                          _drinkBody(context)
+                        else
+                          _foodBody(context),
+                      ],
+                    ),
+                  ),
+                ),
+                // Keep the action row above Android's gesture/navigation bar.
+                // The Flexible body yields space first when the sheet is short.
+                Padding(
+                  padding: EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom),
+                  child: _sheetActions(context),
+                ),
+              ],
             ),
-            _sheetActions(context),
-          ],
+          ),
         ),
       );
     });
@@ -414,7 +431,7 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
           borderRadius: BorderRadius.circular(12),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            height: 56,
+            height: 60,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
             alignment: Alignment.center,
             decoration: BoxDecoration(

@@ -29,54 +29,85 @@ import 'widgets/profile_post_card.dart';
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final maxWidth = _contentMaxWidth(context);
+
     return Scaffold(
       extendBody: true,
       backgroundColor: context.appBackground,
       body: AppBackground(
         child: SafeArea(
           bottom: false,
-          child: RefreshIndicator(
-            onRefresh: controller.refreshProfile,
-            color: const Color(0xFF009B3E),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: AppSpacing.pagePaddingFor(context),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppSpacing.maxWideContentWidth,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTopBar(),
-                      Obx(() {
-                        final message = controller.errorMessage.value;
-                        if (message == null) return const SizedBox.shrink();
-                        return _ProfileErrorBanner(
-                          message: message,
-                          onRetry: controller.loadProfile,
-                        );
-                      }),
-                      const SizedBox(height: 8),
-                      Obx(
-                        () => LoadingContentTransition(
-                          isLoading:
-                              controller.isLoading.value &&
-                              controller.dashboard.value == null,
-                          loading: const PageSkeleton.profile(),
-                          content: _profileContent(context),
-                        ),
-                      ),
-                    ],
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  AppSpacing.pageTop,
+                  horizontalPadding,
+                  0,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: _buildTopBar(),
                   ),
                 ),
               ),
-            ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: controller.refreshProfile,
+                  color: const Color(0xFF009B3E),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      12,
+                      horizontalPadding,
+                      AppSpacing.pageBottom,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Obx(() {
+                              final message = controller.errorMessage.value;
+                              if (message == null) return const SizedBox.shrink();
+                              return _ProfileErrorBanner(
+                                message: message,
+                                onRetry: controller.loadProfile,
+                              );
+                            }),
+                            const SizedBox(height: 8),
+                            Obx(
+                              () => LoadingContentTransition(
+                                isLoading:
+                                    controller.isLoading.value &&
+                                    controller.dashboard.value == null,
+                                loading: const PageSkeleton.profile(),
+                                content: _profileContent(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
@@ -20,92 +21,177 @@ class FoodDetailView extends GetView<FoodDetailController> {
     maxScaleFactor: 1.15,
     child: Scaffold(
       backgroundColor: Colors.transparent,
-      body: AppBackground(child: Obx(() => _body(context))),
+      body: AppBackground(
+        child: LayoutBuilder(
+          builder:
+              (context, constraints) => Obx(() => _body(context, constraints)),
+        ),
+      ),
     ),
   );
 
-  Widget _body(BuildContext context) {
-    final meal = controller.meal;
-    if (meal == null) {
-      if (controller.isLoading.value) {
+  Widget _body(BuildContext context, BoxConstraints constraints) {
+    final isLandscapeTablet = constraints.maxWidth >= 840;
+    final isPortraitTablet =
+        !isLandscapeTablet &&
+        constraints.maxWidth >= AppSpacing.tabletBreakpoint;
+    final isTablet = isLandscapeTablet || isPortraitTablet;
+    final horizontalPadding =
+        isTablet ? AppSpacing.tabletPageHorizontal : 14.0;
+    final maxContentWidth =
+        isTablet
+            ? AppSpacing.maxWideContentWidth
+            : 460.0;
+    final heroHeight =
+        isLandscapeTablet
+            ? 280.0
+            : (isPortraitTablet ? 300.0 : 264.0);
+
+        final meal = controller.meal;
+        if (meal == null) {
+          if (controller.isLoading.value) {
+            return SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  4,
+                  horizontalPadding,
+                  34,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: const PageSkeleton.foodDetail(),
+                  ),
+                ),
+              ),
+            );
+          }
+          return Center(
+            child: _LoadError(
+              message: controller.errorMessage.value,
+              onRetry: controller.loadDetail,
+            ),
+          );
+        }
+
         return SafeArea(
           bottom: false,
           child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(14, 4, 14, 34),
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              4,
+              horizontalPadding,
+              34,
+            ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: const PageSkeleton.foodDetail(),
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _DetailHeader(
+                      onBack: controller.goBack,
+                      isFavorite: controller.isFavorite.value,
+                      onFavorite: controller.toggleFavorite,
+                    ),
+                    const SizedBox(height: 14),
+                    if (isLandscapeTablet) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _Hero(meal: meal, height: heroHeight),
+                                const SizedBox(height: 20),
+                                _Introduction(meal: meal),
+                                const SizedBox(height: 20),
+                                _Nutrition(
+                                  meal: meal,
+                                  isLoading: !controller.isDetailLoaded.value,
+                                ),
+                                const SizedBox(height: 20),
+                                _Stats(meal: meal),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 32),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _Tabs(
+                                  selected: controller.selectedContentTab.value,
+                                  ingredientCount: meal.ingredients.length,
+                                  stepCount: meal.steps.length,
+                                  isLoading: !controller.isDetailLoaded.value,
+                                  onSelected: controller.selectContentTab,
+                                ),
+                                const SizedBox(height: 18),
+                                if (!controller.isDetailLoaded.value)
+                                  _ContentLoading(
+                                    error: controller.errorMessage.value,
+                                    onRetry: controller.loadDetail,
+                                  )
+                                else if (controller.selectedContentTab.value == 0)
+                                  _Ingredients(items: meal.ingredients)
+                                else
+                                  _Steps(items: meal.steps),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      _Hero(meal: meal, height: heroHeight),
+                      const SizedBox(height: 22),
+                      _Introduction(meal: meal),
+                      const SizedBox(height: 22),
+                      _Nutrition(
+                        meal: meal,
+                        isLoading: !controller.isDetailLoaded.value,
+                      ),
+                      const SizedBox(height: 22),
+                      _Stats(meal: meal),
+                      const SizedBox(height: 24),
+                      _Tabs(
+                        selected: controller.selectedContentTab.value,
+                        ingredientCount: meal.ingredients.length,
+                        stepCount: meal.steps.length,
+                        isLoading: !controller.isDetailLoaded.value,
+                        onSelected: controller.selectContentTab,
+                      ),
+                      const SizedBox(height: 18),
+                      if (!controller.isDetailLoaded.value)
+                        _ContentLoading(
+                          error: controller.errorMessage.value,
+                          onRetry: controller.loadDetail,
+                        )
+                      else if (controller.selectedContentTab.value == 0)
+                        _Ingredients(items: meal.ingredients)
+                      else
+                        _Steps(items: meal.steps),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
         );
-      }
-      return Center(
-        child: _LoadError(
-          message: controller.errorMessage.value,
-          onRetry: controller.loadDetail,
-        ),
-      );
-    }
-    return SafeArea(
-      bottom: false,
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(14, 4, 14, 34),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DetailHeader(
-                  onBack: controller.goBack,
-                  isFavorite: controller.isFavorite.value,
-                  onFavorite: controller.toggleFavorite,
-                ),
-                const SizedBox(height: 14),
-                _Hero(meal: meal),
-                const SizedBox(height: 22),
-                _Introduction(meal: meal),
-                const SizedBox(height: 22),
-                _Nutrition(
-                  meal: meal,
-                  isLoading: !controller.isDetailLoaded.value,
-                ),
-                const SizedBox(height: 22),
-                _Stats(meal: meal),
-                const SizedBox(height: 24),
-                _Tabs(
-                  selected: controller.selectedContentTab.value,
-                  ingredientCount: meal.ingredients.length,
-                  stepCount: meal.steps.length,
-                  isLoading: !controller.isDetailLoaded.value,
-                  onSelected: controller.selectContentTab,
-                ),
-                const SizedBox(height: 18),
-                if (!controller.isDetailLoaded.value)
-                  _ContentLoading(
-                    error: controller.errorMessage.value,
-                    onRetry: controller.loadDetail,
-                  )
-                else if (controller.selectedContentTab.value == 0)
-                  _Ingredients(items: meal.ingredients)
-                else
-                  _Steps(items: meal.steps),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.meal});
+  const _Hero({required this.meal, this.height = 264});
   final MealModel meal;
+  final double height;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -116,7 +202,7 @@ class _Hero extends StatelessWidget {
     ),
     clipBehavior: Clip.antiAlias,
     child: SizedBox(
-      height: 264,
+      height: height,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,

@@ -968,49 +968,58 @@ class _ProfileImageCarouselState extends State<_ProfileImageCarousel> {
               child: Stack(
                 fit: StackFit.passthrough,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 360),
-                      child: AspectRatio(
-                        aspectRatio: 5 / 4,
-                        child:
-                            widget.imageBytes != null
-                                ? Image.memory(
-                                  widget.imageBytes!,
-                                  fit: BoxFit.cover,
-                                  filterQuality: FilterQuality.medium,
-                                )
-                                : PageView(
-                                  controller: _pageController,
-                                  physics: const BouncingScrollPhysics(),
-                                  onPageChanged: (page) {
-                                    if (_currentPage != page) {
-                                      setState(() => _currentPage = page);
-                                    }
-                                  },
-                                  children: widget.imageUrls
-                                      .map(
-                                        (url) => Image.network(
-                                          url,
-                                          fit: BoxFit.cover,
-                                          filterQuality: FilterQuality.medium,
-                                          errorBuilder:
-                                              (_, _, _) => Container(
-                                                color: context.appSubtleSurface,
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.image_outlined,
-                                                    color: Color(0xFF8D9990),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 450;
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: isWide ? 400 : 360,
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: isWide ? (16 / 9) : (5 / 4),
+                            child:
+                                widget.imageBytes != null
+                                    ? Image.memory(
+                                      widget.imageBytes!,
+                                      fit: BoxFit.cover,
+                                      filterQuality: FilterQuality.medium,
+                                    )
+                                    : PageView(
+                                      controller: _pageController,
+                                      physics: const BouncingScrollPhysics(),
+                                      onPageChanged: (page) {
+                                        if (_currentPage != page) {
+                                          setState(() => _currentPage = page);
+                                        }
+                                      },
+                                      children: widget.imageUrls
+                                          .map(
+                                            (url) => Image.network(
+                                              url,
+                                              fit: BoxFit.cover,
+                                              filterQuality:
+                                                  FilterQuality.medium,
+                                              errorBuilder:
+                                                  (_, _, _) => Container(
+                                                    color:
+                                                        context.appSubtleSurface,
+                                                    child: const Center(
+                                                      child: Icon(
+                                                        Icons.image_outlined,
+                                                        color: Color(0xFF8D9990),
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
-                                              ),
-                                        ),
-                                      )
-                                      .toList(growable: false),
-                                ),
-                      ),
-                    ),
+                                            ),
+                                          )
+                                          .toList(growable: false),
+                                    ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   // Carousel Counter
                   if (showCarousel)

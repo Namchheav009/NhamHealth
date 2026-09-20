@@ -674,126 +674,142 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: context.appBackground,
-    body: AppBackground(
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppSpacing.maxPaddedContentWidth,
-                ),
-                child: Padding(
-                  padding: AppSpacing.topBarPagePadding,
-                  child: AppBackHeader(
-                    title: widget.titleKey.tr,
-                    onBack: Get.back,
-                    backButtonKey: const ValueKey<String>(
-                      'comments-back-button',
+  Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final contentMaxWidth =
+        isTablet
+            ? AppSpacing.maxWideContentWidth
+            : AppSpacing.maxContentWidth;
+
+    return Scaffold(
+      backgroundColor: context.appBackground,
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: contentMaxWidth + (horizontalPadding * 2),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      AppSpacing.pageTop,
+                      horizontalPadding,
+                      0,
                     ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: RefreshIndicator(
-                color: _green,
-                onRefresh: _loadComments,
-                child: ListView(
-                  controller: _scrollController,
-                  // ignore: deprecated_member_use
-                  cacheExtent: 1200,
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(
-                      decelerationRate: ScrollDecelerationRate.normal,
-                    ),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.pageHorizontal,
-                    4,
-                    AppSpacing.pageHorizontal,
-                    24,
-                  ),
-                  children: [
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: AppSpacing.maxContentWidth,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _postSummary(),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Text(
-                                  (_post.comments == 1
-                                          ? 'community.comment_count_one'
-                                          : 'community.comment_count_many')
-                                      .trParams({'count': '${_post.comments}'}),
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  'community.discussion'.tr,
-                                  style: TextStyle(
-                                    color: _green,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            if (_loading)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 38),
-                                child: Center(
-                                  child: SizedBox(
-                                    width: 26,
-                                    height: 26,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: _green,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else if (_comments.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 38,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'community.be_the_first_to_comment'.tr,
-                                  ),
-                                ),
-                              )
-                            else
-                              ..._threadWidgets(),
-                          ],
-                        ),
+                    child: AppBackHeader(
+                      title: widget.titleKey.tr,
+                      onBack: Get.back,
+                      backButtonKey: const ValueKey<String>(
+                        'comments-back-button',
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            _composer(),
-          ],
+              const SizedBox(height: 8),
+              Expanded(
+                child: RefreshIndicator(
+                  color: _green,
+                  onRefresh: _loadComments,
+                  child: ListView(
+                    controller: _scrollController,
+                    // ignore: deprecated_member_use
+                    cacheExtent: 1200,
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(
+                        decelerationRate: ScrollDecelerationRate.normal,
+                      ),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      4,
+                      horizontalPadding,
+                      24,
+                    ),
+                    children: [
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: contentMaxWidth,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _postSummary(),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Text(
+                                    (_post.comments == 1
+                                            ? 'community.comment_count_one'
+                                            : 'community.comment_count_many')
+                                        .trParams({
+                                      'count': '${_post.comments}',
+                                    }),
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    'community.discussion'.tr,
+                                    style: TextStyle(
+                                      color: _green,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              if (_loading)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 38),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 26,
+                                      height: 26,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: _green,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else if (_comments.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 38,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'community.be_the_first_to_comment'.tr,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ..._threadWidgets(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _composer(),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _postSummary() {
     final sharedAsPost = _post.sharedPost?.toPost();
@@ -1240,18 +1256,31 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   );
 
   Widget _composer() {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final composerMaxWidth =
+        (isTablet
+                ? AppSpacing.maxWideContentWidth
+                : AppSpacing.maxContentWidth) +
+        (horizontalPadding * 2);
+
     if (!_post.allowComments) {
       return Material(
         color: context.appSurface,
         elevation: 9,
         child: SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Center(
-              child: Text(
-                'community.comments_are_turned_off_for_this_post'.tr,
-                style: TextStyle(color: context.appMutedText),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: composerMaxWidth),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Text(
+                  'community.comments_are_turned_off_for_this_post'.tr,
+                  style: TextStyle(color: context.appMutedText),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ),
@@ -1267,14 +1296,12 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         child: Center(
           heightFactor: 1,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSpacing.maxPaddedContentWidth,
-            ),
+            constraints: BoxConstraints(maxWidth: composerMaxWidth),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.pageHorizontal,
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
                 10,
-                AppSpacing.pageHorizontal,
+                horizontalPadding,
                 12,
               ),
               child: Column(

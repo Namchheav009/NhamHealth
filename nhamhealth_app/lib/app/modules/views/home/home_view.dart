@@ -134,6 +134,8 @@ class _HomeDashboardContent extends StatelessWidget {
           children: [
             RepaintBoundary(child: TimeGreeting()),
             SizedBox(height: 16),
+RepaintBoundary(child: GreetingSection()),
+            SizedBox(height: 8),
             RepaintBoundary(child: HomeQuickActions()),
             SizedBox(height: 16),
             Row(
@@ -143,7 +145,7 @@ class _HomeDashboardContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RepaintBoundary(child: GreetingSection()),
+RepaintBoundary(child: _MealPlannerCard()),
                       SizedBox(height: 16),
                       RepaintBoundary(child: AiRecommendationCard()),
                     ],
@@ -151,7 +153,7 @@ class _HomeDashboardContent extends StatelessWidget {
                 ),
                 SizedBox(width: 16),
                 Expanded(
-                  child: Column(
+child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       RepaintBoundary(child: DailySummaryCard()),
@@ -161,6 +163,7 @@ class _HomeDashboardContent extends StatelessWidget {
                 ),
               ],
             ),
+            RepaintBoundary(child: _RecommendedMealsSection()),
           ],
         );
       },
@@ -231,16 +234,23 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                   onPressed: () => controller.openMeals(),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
-                    minimumSize: const Size(0, 34),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: Text(
-                    'home.see_more'.tr,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'home.see_more'.tr,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.chevron_right_rounded, size: 16),
+                    ],
                   ),
                 ),
               ],
@@ -249,34 +259,32 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final cardWidth =
-                      constraints.maxWidth >= 600
-                          ? (constraints.maxWidth - 36) / 4
-                          : 142.0;
+                  final isWide = constraints.maxWidth >= 600;
+                  final cardWidth = isWide ? 250.0 : 156.0;
+                  final cardHeight = isWide ? 246.0 : 190.0;
+                  final itemGap = isWide ? 14.0 : 10.0;
                   return SizedBox(
-                    height: 184,
+                    height: cardHeight,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       clipBehavior: Clip.none,
                       itemCount: meals.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      separatorBuilder: (_, _) => SizedBox(width: itemGap),
                       itemBuilder:
-                          (_, index) => SizedBox(
+                          (_, index) => RecommendedMealCard(
                             width: cardWidth,
-                            child: RecommendedMealCard(
-                              meal: meals[index],
-                              onTap:
-                                  () => controller.openRecommendedMeal(
-                                    meals[index],
-                                  ),
-                              isFavorite: controller.favoriteMealIds.contains(
-                                meals[index].id,
-                              ),
-                              onFavorite:
-                                  () => controller.toggleMealFavorite(
-                                    meals[index].id,
-                                  ),
+                            meal: meals[index],
+                            onTap:
+                                () => controller.openRecommendedMeal(
+                                  meals[index],
+                                ),
+                            isFavorite: controller.favoriteMealIds.contains(
+                              meals[index].id,
                             ),
+                            onFavorite:
+                                () => controller.toggleMealFavorite(
+                                  meals[index].id,
+                                ),
                           ),
                     ),
                   );

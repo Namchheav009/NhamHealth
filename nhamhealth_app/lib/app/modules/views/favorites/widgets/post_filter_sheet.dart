@@ -30,8 +30,10 @@ class _PostFilterSheetState extends State<PostFilterSheet> {
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
-    child: Container(
-      constraints: const BoxConstraints(maxWidth: 520),
+    child: Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 560),
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
@@ -144,7 +146,8 @@ class _PostFilterSheetState extends State<PostFilterSheet> {
         ],
       ),
     ),
-  );
+  ),
+);
 }
 
 class _SortOption extends StatelessWidget {

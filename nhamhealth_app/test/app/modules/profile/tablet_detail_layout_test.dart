@@ -6,6 +6,7 @@ import 'package:nhamhealth_flutter/app/modules/controllers/profile/profile_contr
 import 'package:nhamhealth_flutter/app/modules/controllers/wellness/ai_food_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/wellness/calories_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/wellness/wellness_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/models/community/community_person_profile.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/models/profile/profile_dashboard_model.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
@@ -13,6 +14,7 @@ import 'package:nhamhealth_flutter/app/modules/repositories/profile/profile_repo
 import 'package:nhamhealth_flutter/app/modules/repositories/wellness/food_nutrition_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/services/wellness/food_ai_service.dart';
 import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommendation_service.dart';
+import 'package:nhamhealth_flutter/app/modules/views/auth/forgot_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/change_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/profile_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/security_view.dart';
@@ -32,7 +34,7 @@ void main() {
     final auth = AuthService();
     final controller = ProfileController(
       repository: _ProfileRepository(auth),
-      communityRepository: CommunityRepository(authService: auth),
+      communityRepository: _CommunityRepository(auth),
     );
     Get.put<ProfileController>(controller);
 
@@ -52,7 +54,13 @@ void main() {
       find.byKey(const ValueKey<String>('my-profile-tab-photos')),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.image_outlined), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('my-profile-tab-photos')),
+        matching: find.byIcon(Icons.image_outlined),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -130,7 +138,63 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('change password uses an intro and form tablet split', (
+  testWidgets(
+    'Password and Security uses centered single-column layout on portrait tablet (800x1280)',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1280);
+      addTearDown(tester.view.reset);
+      Get.put<AppSecurityService>(_SecurityService());
+
+      await tester.pumpWidget(const GetMaterialApp(home: SecurityView()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        find.byKey(const ValueKey<String>('security-tablet-layout')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Password and Security uses centered single-column layout on iPad portrait (768x1024)',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(768, 1024);
+      addTearDown(tester.view.reset);
+      Get.put<AppSecurityService>(_SecurityService());
+
+      await tester.pumpWidget(const GetMaterialApp(home: SecurityView()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        find.byKey(const ValueKey<String>('security-tablet-layout')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Password and Security uses single-column layout on phone', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    Get.put<AppSecurityService>(_SecurityService());
+
+    await tester.pumpWidget(const GetMaterialApp(home: SecurityView()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.byKey(const ValueKey<String>('security-tablet-layout')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('change password uses an intro and form tablet split in landscape', (
     tester,
   ) async {
     _setTabletSize(tester);
@@ -145,6 +209,98 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'change password uses centered single-column layout on portrait tablet (800x1280)',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1280);
+      addTearDown(tester.view.reset);
+      Get.put<ChangePasswordController>(ChangePasswordController());
+
+      await tester.pumpWidget(const GetMaterialApp(home: ChangePasswordView()));
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('change-password-tablet-layout')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'change password uses centered single-column layout on iPad portrait (768x1024)',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(768, 1024);
+      addTearDown(tester.view.reset);
+      Get.put<ChangePasswordController>(ChangePasswordController());
+
+      await tester.pumpWidget(const GetMaterialApp(home: ChangePasswordView()));
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('change-password-tablet-layout')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('change password uses single-column layout on phone', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    Get.put<ChangePasswordController>(ChangePasswordController());
+
+    await tester.pumpWidget(const GetMaterialApp(home: ChangePasswordView()));
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('change-password-tablet-layout')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'forgot password renders responsive layout on portrait tablet (800x1280)',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1280);
+      addTearDown(tester.view.reset);
+      Get.put<AuthService>(_AuthService());
+
+      await tester.pumpWidget(GetMaterialApp(home: ForgotPasswordPage()));
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('forgot-password-identifier-field')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'forgot password renders two-column layout on landscape tablet (1024x768)',
+    (tester) async {
+      _setTabletSize(tester);
+      Get.put<AuthService>(_AuthService());
+
+      await tester.pumpWidget(GetMaterialApp(home: ForgotPasswordPage()));
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('forgot-password-identifier-field')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _setTabletSize(WidgetTester tester) {
@@ -152,6 +308,8 @@ void _setTabletSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(1024, 768);
   addTearDown(tester.view.reset);
 }
+
+class _AuthService extends AuthService {}
 
 class _FoodAiService extends FoodAiService {
   @override
@@ -188,4 +346,25 @@ class _ProfileRepository extends ProfileRepository {
 
   @override
   Future<List<CommunityPost>> getMyPosts() async => const [];
+}
+
+class _CommunityRepository extends CommunityRepository {
+  _CommunityRepository(AuthService authService) : super(authService: authService);
+
+  @override
+  Future<CommunityPersonProfile> getPersonProfile(int userId) async =>
+      const CommunityPersonProfile(
+        id: 1,
+        name: 'Tablet User',
+        avatarUrl: '',
+        role: 'Member',
+        headline: '',
+        joinedLabel: 'Jan 2025',
+        verified: false,
+        posts: 0,
+        followers: 0,
+        following: 0,
+        isFollowing: false,
+        followsViewer: false,
+      );
 }

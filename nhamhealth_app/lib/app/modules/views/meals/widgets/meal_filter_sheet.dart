@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_spacing.dart';
 import '../../../controllers/meals/meal_controller.dart';
 import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
@@ -32,34 +33,58 @@ class MealFilterButton extends GetView<MealController> {
   }
 
   void _showFilters(BuildContext context) {
-    Get.bottomSheet<void>(
-      const _MealFilterSheet(),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
+    final isTablet =
+        MediaQuery.sizeOf(context).width >= AppSpacing.tabletBreakpoint;
+    if (isTablet) {
+      Get.dialog<void>(
+        const Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(24),
+          child: _MealFilterSheet(isDialog: true),
+        ),
+      );
+    } else {
+      Get.bottomSheet<void>(
+        const _MealFilterSheet(isDialog: false),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+      );
+    }
   }
 }
 
 class _MealFilterSheet extends GetView<MealController> {
-  const _MealFilterSheet();
+  const _MealFilterSheet({this.isDialog = false});
+
+  final bool isDialog;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.82,
-        ),
-        decoration: BoxDecoration(
-          color: context.appElevatedSurface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    final sheet = Container(
+      constraints: BoxConstraints(
+        maxWidth: isDialog ? 540 : double.infinity,
+        maxHeight: MediaQuery.sizeOf(context).height * (isDialog ? 0.86 : 0.82),
+      ),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius:
+            isDialog
+                ? BorderRadius.circular(24)
+                : const BorderRadius.vertical(top: Radius.circular(24)),
+        border:
+            isDialog
+                ? Border.all(color: context.appBorder.withValues(alpha: 0.6))
+                : null,
+        boxShadow: isDialog ? context.appCardShadow : null,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, isDialog ? 20 : 12, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isDialog) ...[
               Center(
                 child: Container(
                   width: 42,
@@ -71,24 +96,33 @@ class _MealFilterSheet extends GetView<MealController> {
                 ),
               ),
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'meals.filters'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'meals.filters'.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: isDialog ? 20 : 18,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  TextButton(
-                    onPressed: controller.clearMealFilters,
-                    child: Text('common.clear_all'.tr),
+                ),
+                TextButton(
+                  onPressed: controller.clearMealFilters,
+                  child: Text('common.clear_all'.tr),
+                ),
+                if (isDialog) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'common.close'.tr,
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Get.back<void>(),
                   ),
                 ],
-              ),
+              ],
+            ),
               const SizedBox(height: 14),
               _FilterLabel(text: 'meals.category'.tr),
               const SizedBox(height: 8),
@@ -222,8 +256,11 @@ class _MealFilterSheet extends GetView<MealController> {
             ],
           ),
         ),
-      ),
-    );
+      );
+    if (isDialog) {
+      return Center(child: sheet);
+    }
+    return SafeArea(top: false, child: sheet);
   }
 }
 
