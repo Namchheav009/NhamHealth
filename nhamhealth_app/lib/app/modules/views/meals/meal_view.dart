@@ -239,35 +239,74 @@ class MealView extends GetView<MealController> {
             ],
           ),
           const SizedBox(height: 10),
-          for (final meal in ideaMeals) ...[
-            MealIdeaCard(
-              key: ValueKey<String>('meal-idea-${meal.id}'),
-              meal: meal,
-              onTap: () => controller.openFoodDetail(meal),
-              onFavorite: () => controller.toggleMealFavorite(meal),
-            ),
-            if (meal != ideaMeals.last) const SizedBox(height: 12),
-          ],
+          _buildIdeaMeals(ideaMeals),
         ],
       );
     });
   }
 
+  Widget _buildIdeaMeals(Iterable<MealModel> ideaMeals) {
+    final list = ideaMeals.toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= AppSpacing.twoColumnBreakpoint;
+
+        if (!isTablet) {
+          return Column(
+            children: [
+              for (var i = 0; i < list.length; i++) ...[
+                MealIdeaCard(
+                  key: ValueKey<String>('meal-idea-${list[i].id}'),
+                  meal: list[i],
+                  onTap: () => controller.openFoodDetail(list[i]),
+                  onFavorite: () => controller.toggleMealFavorite(list[i]),
+                ),
+                if (i < list.length - 1) const SizedBox(height: 12),
+              ],
+            ],
+          );
+        }
+
+        final cardWidth = (constraints.maxWidth - 16) / 2;
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            for (final meal in list)
+              SizedBox(
+                width: cardWidth,
+                child: MealIdeaCard(
+                  key: ValueKey<String>('meal-idea-${meal.id}'),
+                  meal: meal,
+                  onTap: () => controller.openFoodDetail(meal),
+                  onFavorite: () => controller.toggleMealFavorite(meal),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildPopularMeals(List<MealModel> meals) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= AppSpacing.tabletBreakpoint;
         final cardWidth =
-            constraints.maxWidth >= AppSpacing.tabletBreakpoint
-                ? 210.0
+            isWide
+                ? 230.0
                 : ((constraints.maxWidth - 12) / 2.08).clamp(150.0, 180.0);
+        final cardHeight = isWide ? 250.0 : 232.0;
+        final itemGap = isWide ? 14.0 : 12.0;
+
         return SizedBox(
-          height: 232,
+          height: cardHeight,
           child: ListView.separated(
             key: const ValueKey('popular-meals-list'),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: meals.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => SizedBox(width: itemGap),
             itemBuilder: (context, index) {
               final meal = meals[index];
               return SizedBox(

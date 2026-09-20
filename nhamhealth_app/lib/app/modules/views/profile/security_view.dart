@@ -319,7 +319,13 @@ class _SecurityViewState extends State<SecurityView> {
                       )
                       : LayoutBuilder(
                         builder: (context, constraints) {
-                          final wide = constraints.maxWidth >= 820;
+                          final isLandscape =
+                              MediaQuery.orientationOf(context) ==
+                              Orientation.landscape;
+                          final isTablet = AppSpacing.isTabletFor(context);
+                          final isWide =
+                              (isLandscape && isTablet) ||
+                              constraints.maxWidth >= 900;
                           return ListView(
                             physics: const BouncingScrollPhysics(),
                             padding: EdgeInsets.fromLTRB(
@@ -331,11 +337,11 @@ class _SecurityViewState extends State<SecurityView> {
                             children: [
                               Center(
                                 child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: AppSpacing.maxWideContentWidth,
+                                  constraints: BoxConstraints(
+                                    maxWidth: _contentMaxWidth(context),
                                   ),
                                   child:
-                                      wide
+                                      isWide
                                           ? Row(
                                             key: const ValueKey<String>(
                                               'security-tablet-layout',
@@ -366,13 +372,24 @@ class _SecurityViewState extends State<SecurityView> {
     ),
   );
 
-  Widget _header() => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxWidth: AppSpacing.maxWideContentWidth,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 20, 10),
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
+  Widget _header() => Padding(
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontalFor(context),
+      AppSpacing.pageTop,
+      AppSpacing.pageHorizontalFor(context),
+      0,
+    ),
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: _contentMaxWidth(context),
+        ),
         child: Row(
           children: [
             if (widget.requirePinCreation && !_hasPin)

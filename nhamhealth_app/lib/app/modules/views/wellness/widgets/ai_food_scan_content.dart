@@ -34,6 +34,10 @@ class AiFoodScanContent extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 820;
+        final horizontalPadding =
+            AppSpacing.isTabletFor(context)
+                ? AppSpacing.tabletPageHorizontal
+                : 16.0;
         // Wrap in Obx so the list rebuilds whenever any observable changes
         // (isAnalyzing, selectedImage, errorMessage, analysisStage, etc.)
         return Obx(() {
@@ -43,9 +47,9 @@ class AiFoodScanContent extends StatelessWidget {
           return ListView(
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
-              wide ? AppSpacing.tabletPageHorizontal : 16,
+              horizontalPadding,
               8,
-              wide ? AppSpacing.tabletPageHorizontal : 16,
+              horizontalPadding,
               40,
             ),
             children: [

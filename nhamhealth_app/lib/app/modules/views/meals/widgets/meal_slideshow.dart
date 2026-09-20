@@ -17,9 +17,11 @@ class MealSlideShow extends GetView<MealController> {
         LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 390;
+            final isTablet = constraints.maxWidth >= 700;
+            final bannerHeight = isTablet ? 228.0 : (compact ? 190.0 : 208.0);
             return Container(
               width: double.infinity,
-              height: compact ? 190 : 208,
+              height: bannerHeight,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: context.appElevatedSurface.withValues(alpha: 0.96),
@@ -54,7 +56,7 @@ class MealSlideShow extends GetView<MealController> {
 
                       return Padding(
                         padding: EdgeInsets.fromLTRB(
-                          compact ? 20 : 24,
+                          isTablet ? 32 : (compact ? 20 : 24),
                           16,
                           12,
                           16,
@@ -70,7 +72,8 @@ class MealSlideShow extends GetView<MealController> {
                                   Text(
                                     slide.title.trOrSelf,
                                     style: TextStyle(
-                                      fontSize: compact ? 18 : 20,
+                                      fontSize:
+                                          isTablet ? 23 : (compact ? 18 : 20),
                                       height: 1.08,
                                       fontWeight: FontWeight.w700,
                                       color: context.appText,
@@ -80,7 +83,8 @@ class MealSlideShow extends GetView<MealController> {
                                   Text(
                                     slide.highlight.trOrSelf,
                                     style: TextStyle(
-                                      fontSize: compact ? 18 : 20,
+                                      fontSize:
+                                          isTablet ? 23 : (compact ? 18 : 20),
                                       height: 1.08,
                                       fontWeight: FontWeight.w700,
                                       color: green,
@@ -92,34 +96,34 @@ class MealSlideShow extends GetView<MealController> {
                                     maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: isTablet ? 12.5 : 11,
                                       height: 1.35,
                                       color: context.appMutedText,
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 12),
                                   SizedBox(
-                                    height: 34,
+                                    height: isTablet ? 38 : 34,
                                     child: FilledButton.icon(
                                       key: const ValueKey(
                                         'meal-explore-button',
                                       ),
                                       onPressed: controller.showAllMeals,
                                       style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isTablet ? 20 : 16,
                                         ),
                                         shape: const StadiumBorder(),
                                       ),
                                       iconAlignment: IconAlignment.end,
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.arrow_forward_rounded,
-                                        size: 18,
+                                        size: isTablet ? 20 : 18,
                                       ),
                                       label: Text(
                                         'meals.explore_now'.tr,
-                                        style: const TextStyle(
-                                          fontSize: 11,
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 12 : 11,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),

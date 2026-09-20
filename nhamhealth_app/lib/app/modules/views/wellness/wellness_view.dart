@@ -18,6 +18,14 @@ class WellnessView extends GetView<WellnessController> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final contentMaxWidth =
+        isTablet
+            ? AppSpacing.maxWideContentWidth
+            : AppSpacing.maxContentWidth;
+    final paddedMaxWidth = contentMaxWidth + (horizontalPadding * 2);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppBackground(
@@ -46,9 +54,7 @@ class WellnessView extends GetView<WellnessController> {
                 SliverToBoxAdapter(
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppSpacing.maxWideContentWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: paddedMaxWidth),
                       child: _header(context),
                     ),
                   ),
@@ -56,9 +62,7 @@ class WellnessView extends GetView<WellnessController> {
                 SliverToBoxAdapter(
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppSpacing.maxWideContentWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: paddedMaxWidth),
                       child: Padding(
                         padding: AppSpacing.pagePaddingFor(context),
                         child: Obx(

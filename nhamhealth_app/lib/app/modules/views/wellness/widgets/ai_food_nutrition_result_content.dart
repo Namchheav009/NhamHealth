@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_nutrient_theme.dart';
+import '../../../../theme/app_spacing.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
 import '../../../models/wellness/food_nutrition_model.dart';
 
@@ -28,9 +29,10 @@ class AiFoodNutritionResultContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1105,13 +1107,20 @@ class AiFoodNutritionResultContent extends StatelessWidget {
   ) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: context.appElevatedSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder:
           (ctx) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              24 + MediaQuery.viewPaddingOf(ctx).bottom,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

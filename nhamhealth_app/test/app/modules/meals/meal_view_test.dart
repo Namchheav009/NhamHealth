@@ -42,6 +42,16 @@ class TestMealRepository implements MealRepository {
       cookingTimeMinutes: 30,
       recommendationReason: 'A balanced, varied option selected for your daily wellness goals.',
     ),
+    MealModel(
+      id: 3,
+      name: 'Khmer Curry',
+      calories: 620,
+      image: 'assets/images/meals/healthy_salad.jpg',
+      category: 'Dinner',
+      categoryId: 3,
+      cookingTimeMinutes: 40,
+      recommendationReason: 'Rich in aroma and nutrients.',
+    ),
   ];
 
   @override
@@ -84,6 +94,39 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull);
+
+    controller.onClose();
+    Get.reset();
+  });
+
+  testWidgets('MealView renders responsive 2-column ideas on tablet', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(768, 1024);
+    addTearDown(tester.view.reset);
+
+    final localeService = AppLocaleService();
+    final repo = TestMealRepository();
+    final controller = MealController(repository: repo, localeService: localeService);
+    Get.put<MealController>(controller);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealView(),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+
+    final card1 = find.byKey(const ValueKey<String>('meal-idea-2'));
+    final card2 = find.byKey(const ValueKey<String>('meal-idea-3'));
+    expect(card1, findsOneWidget);
+    expect(card2, findsOneWidget);
+    expect(tester.getTopLeft(card1).dy, tester.getTopLeft(card2).dy);
 
     controller.onClose();
     Get.reset();

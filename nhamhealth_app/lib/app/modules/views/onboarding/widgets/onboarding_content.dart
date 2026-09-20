@@ -47,84 +47,204 @@ class OnboardingContent extends StatelessWidget {
                 ),
               ),
               child: SafeArea(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 480),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final compact = constraints.maxHeight < 720;
-                        final imageHeight = (constraints.maxHeight *
-                                (item.titleAboveImage ? 0.45 : 0.34))
-                            .clamp(
-                              compact ? 170.0 : 220.0,
-                              item.titleAboveImage
-                                  ? (compact ? 310.0 : 380.0)
-                                  : (compact ? 250.0 : 290.0),
-                            );
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                      final isLandscape =
+                          constraints.maxWidth > constraints.maxHeight;
+                      final isTablet =
+                          AppSpacing.isTabletFor(context) ||
+                          constraints.maxWidth >= AppSpacing.tabletBreakpoint;
+                      final isWide =
+                          (constraints.maxWidth >=
+                                  AppSpacing.twoColumnBreakpoint &&
+                              isLandscape) ||
+                          constraints.maxWidth >= 840;
 
-                        return Padding(
-                          padding: AppSpacing.pagePadding,
-                          child: Column(
-                            children: [
-                              if (item.titleAboveImage) ...[
-                                const SizedBox(height: 8),
-                                _TitleBlock(item: item, centered: false),
-                              ],
-                              Expanded(
-                                child: Align(
-                                  alignment:
-                                      item.titleAboveImage
-                                          ? Alignment.center
-                                          : const Alignment(0, -0.35),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    height: imageHeight,
-                                    child: Image.asset(
-                                      item.imagePath,
-                                      fit: BoxFit.contain,
-                                      errorBuilder:
-                                          (_, _, _) => const Icon(
-                                            Icons.image_not_supported_outlined,
-                                            size: 70,
-                                            color: AppColors.mutedText,
+                      if (isWide) {
+                        return Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: AppSpacing.maxWideContentWidth,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.tabletPageHorizontal,
+                                vertical: AppSpacing.pageTop,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Left Column: Illustration
+                                  Expanded(
+                                    flex: 5,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 28),
+                                      child: Center(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxHeight: 340,
                                           ),
+                                          child: Image.asset(
+                                            item.imagePath,
+                                            fit: BoxFit.contain,
+                                            errorBuilder:
+                                                (_, _, _) => const Icon(
+                                                  Icons.image_not_supported_outlined,
+                                                  size: 70,
+                                                  color: AppColors.mutedText,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Right Column: Title, Indicator, Actions
+                                  Expanded(
+                                    flex: 5,
+                                    child: Center(
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 440,
+                                        ),
+                                        child: SingleChildScrollView(
+                                          physics: const BouncingScrollPhysics(),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              _TitleBlock(
+                                                item: item,
+                                                centered: false,
+                                              ),
+                                              const SizedBox(height: 28),
+                                              OnboardingIndicator(
+                                                activePage: activePage,
+                                                pageCount: pageCount,
+                                                onBack: onBack,
+                                              ),
+                                              const SizedBox(height: 24),
+                                              OnboardingNextButton(
+                                                text: buttonText,
+                                                onPressed: onNext,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Visibility(
+                                                visible: showSkipButton,
+                                                maintainSize: true,
+                                                maintainAnimation: true,
+                                                maintainState: true,
+                                                child: OnboardingSkipButton(
+                                                  onPressed: onSkip,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final compact = constraints.maxHeight < 720;
+                      final maxContentWidth = isTablet ? 560.0 : 480.0;
+                      final contentPadding = isTablet
+                          ? const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.tabletPageHorizontal,
+                              vertical: AppSpacing.pageTop,
+                            )
+                          : AppSpacing.pagePadding;
+                      final imageHeight = (constraints.maxHeight *
+                              (item.titleAboveImage ? 0.45 : 0.34))
+                          .clamp(
+                            compact ? 170.0 : 220.0,
+                            item.titleAboveImage
+                                ? (compact
+                                    ? 310.0
+                                    : (isTablet ? 420.0 : 380.0))
+                                : (compact
+                                    ? 250.0
+                                    : (isTablet ? 340.0 : 290.0)),
+                          );
+
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxContentWidth),
+                          child: Padding(
+                            padding: contentPadding,
+                            child: Column(
+                              children: [
+                                if (item.titleAboveImage) ...[
+                                  SizedBox(height: isTablet ? 16 : 8),
+                                  _TitleBlock(item: item, centered: false),
+                                ],
+                                Expanded(
+                                  child: Align(
+                                    alignment:
+                                        item.titleAboveImage
+                                            ? Alignment.center
+                                            : const Alignment(0, -0.35),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      height: imageHeight,
+                                      child: Image.asset(
+                                        item.imagePath,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (_, _, _) => const Icon(
+                                              Icons
+                                                  .image_not_supported_outlined,
+                                              size: 70,
+                                              color: AppColors.mutedText,
+                                            ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              if (!item.titleAboveImage) ...[
-                                _TitleBlock(item: item, centered: true),
-                                SizedBox(height: compact ? 16 : 24),
+                                if (!item.titleAboveImage) ...[
+                                  _TitleBlock(item: item, centered: true),
+                                  SizedBox(
+                                    height: compact
+                                        ? 16
+                                        : (isTablet ? 28 : 24),
+                                  ),
+                                ],
+                                OnboardingIndicator(
+                                  activePage: activePage,
+                                  pageCount: pageCount,
+                                  onBack: onBack,
+                                ),
+                                SizedBox(height: isTablet ? 24 : 18),
+                                OnboardingNextButton(
+                                  text: buttonText,
+                                  onPressed: onNext,
+                                ),
+                                const SizedBox(height: 4),
+                                Visibility(
+                                  visible: showSkipButton,
+                                  maintainSize: true,
+                                  maintainAnimation: true,
+                                  maintainState: true,
+                                  child: OnboardingSkipButton(
+                                    onPressed: onSkip,
+                                  ),
+                                ),
                               ],
-                              OnboardingIndicator(
-                                activePage: activePage,
-                                pageCount: pageCount,
-                                onBack: onBack,
-                              ),
-                              const SizedBox(height: 18),
-                              OnboardingNextButton(
-                                text: buttonText,
-                                onPressed: onNext,
-                              ),
-                              const SizedBox(height: 4),
-                              Visibility(
-                                visible: showSkipButton,
-                                maintainSize: true,
-                                maintainAnimation: true,
-                                maintainState: true,
-                                child: OnboardingSkipButton(onPressed: onSkip),
-                              ),
-                            ],
+                            ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
-      ),
-    );
+      );
   }
 }
 

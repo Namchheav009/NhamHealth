@@ -144,6 +144,7 @@ const Map<String, String> communityKm = {
   'community.continue_to_ingredients': 'បន្តទៅគ្រឿងផ្សំ',
   'community.basic_info': 'ព័ត៌មានមូលដ្ឋាន',
   'community.ingredients': 'គ្រឿងផ្សំ',
+  'community.ingredients_and_steps': 'គ្រឿងផ្សំ និងជំហាន',
   'community.share_your_meal': 'តោះចែករំលែកអាហាររបស់អ្នក!',
   'community.basic_info_help': 'បន្ថែមព័ត៌មានមូលដ្ឋានអំពីអាហាររបស់អ្នក',
   'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',

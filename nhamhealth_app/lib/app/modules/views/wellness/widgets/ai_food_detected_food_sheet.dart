@@ -809,7 +809,12 @@ class _AiFoodDetectedFoodSheetState extends State<AiFoodDetectedFoodSheet> {
 
   Widget _buildActionButtons(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        20 + MediaQuery.viewPaddingOf(context).bottom,
+      ),
       decoration: BoxDecoration(
         color: context.appSurface,
         border: Border(top: BorderSide(color: context.appBorder)),

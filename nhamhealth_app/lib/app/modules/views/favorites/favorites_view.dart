@@ -21,64 +21,97 @@ import 'widgets/post_filter_sheet.dart';
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet =
+        AppSpacing.isTabletFor(context) ||
+        MediaQuery.sizeOf(context).shortestSide >= AppSpacing.tabletBreakpoint;
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: context.appBackground,
-    body: AppBackground(
-      child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSpacing.maxContentWidth,
-            ),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.pageHorizontalFor(context),
-                12,
-                AppSpacing.pageHorizontalFor(context),
-                0,
-              ),
-              child: Column(
-                children: [
-                  Row(
+  Widget build(BuildContext context) {
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+    final isTablet =
+        AppSpacing.isTabletFor(context) ||
+        MediaQuery.sizeOf(context).shortestSide >= AppSpacing.tabletBreakpoint;
+    final maxWidth = _contentMaxWidth(context);
+    final topPadding = isTablet ? AppSpacing.pageTop : 12.0;
+
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.25,
+      child: Scaffold(
+        backgroundColor: context.appBackground,
+        body: AppBackground(
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: maxWidth,
+                ),
+                child: Padding(
+                  key: ValueKey<String>(
+                    isTablet
+                        ? (isLandscape
+                            ? 'favorites-tablet-landscape'
+                            : 'favorites-tablet-portrait')
+                        : 'favorites-mobile',
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.pageHorizontalFor(context),
+                    topPadding,
+                    AppSpacing.pageHorizontalFor(context),
+                    0,
+                  ),
+                  child: Column(
                     children: [
-                      AppBackButton(onPressed: Get.back),
-                      const SizedBox(width: AppBackButton.headerGap),
-                      Text(
-                        'common.favorites'.tr,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                      Row(
+                        children: [
+                          AppBackButton(
+                            buttonKey: const ValueKey<String>(
+                              'favorites-back-button',
+                            ),
+                            onPressed: Get.back,
+                          ),
+                          const SizedBox(width: AppBackButton.headerGap),
+                          Text(
+                            'common.favorites'.tr,
+                            style: TextStyle(
+                              fontSize: isTablet ? 20 : 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isTablet ? 18 : 14),
+                      Obx(
+                        () => FavoritesTabSwitcher(
+                          selected: controller.selectedTab.value,
+                          onChanged: controller.selectTab,
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 22 : 20),
+                      Expanded(
+                        child: Obx(
+                          () =>
+                              controller.selectedTab.value == FavoritesTab.foods
+                                  ? _foods(context, isTablet: isTablet)
+                                  : _posts(context, isTablet: isTablet),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Obx(
-                    () => FavoritesTabSwitcher(
-                      selected: controller.selectedTab.value,
-                      onChanged: controller.selectTab,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: Obx(
-                      () =>
-                          controller.selectedTab.value == FavoritesTab.foods
-                              ? _foods(context)
-                              : _posts(context),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _foods(BuildContext context) => Column(
+  Widget _foods(BuildContext context, {required bool isTablet}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _sectionHeader(
@@ -86,8 +119,9 @@ class FavoritesView extends GetView<FavoritesController> {
         'favorites.favorite_foods',
         Icons.filter_list_rounded,
         onTap: _showFoodFilter,
+        isTablet: isTablet,
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: isTablet ? 14 : 10),
       Expanded(
         child: Obx(() {
           final categories = controller.selectedFoodCategories;
@@ -115,22 +149,27 @@ class FavoritesView extends GetView<FavoritesController> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final columns = switch (constraints.maxWidth) {
-                  < 600 => 2,
-                  < 900 => 3,
+                  < 560 => 2,
+                  < 860 => 3,
                   _ => 4,
                 };
-                final spacing = constraints.maxWidth >= 600 ? 12.0 : 10.0;
+                final spacing = isTablet ? 14.0 : 10.0;
                 final cardWidth =
                     (constraints.maxWidth - ((columns - 1) * spacing)) /
                     columns;
+                final extent =
+                    isTablet
+                        ? (cardWidth * 1.25).clamp(240.0, 330.0)
+                        : cardWidth * 1.38;
                 return GridView.builder(
+                  key: ValueKey<String>('favorites-food-grid-$columns'),
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: EdgeInsets.only(bottom: isTablet ? 32 : 24),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
                     crossAxisSpacing: spacing,
                     mainAxisSpacing: spacing,
-                    mainAxisExtent: cardWidth * 1.38,
+                    mainAxisExtent: extent,
                   ),
                   itemCount: visible.length,
                   itemBuilder:
@@ -149,7 +188,7 @@ class FavoritesView extends GetView<FavoritesController> {
     ],
   );
 
-  Widget _posts(BuildContext context) => Column(
+  Widget _posts(BuildContext context, {required bool isTablet}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _sectionHeader(
@@ -158,8 +197,9 @@ class FavoritesView extends GetView<FavoritesController> {
         Icons.calendar_today_outlined,
         postMenu: true,
         onTap: _showPostFilter,
+        isTablet: isTablet,
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: isTablet ? 14 : 10),
       Expanded(
         child: Obx(() {
           final visible =
@@ -183,12 +223,20 @@ class FavoritesView extends GetView<FavoritesController> {
           }
           return RefreshIndicator(
             onRefresh: controller.refresh,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 24),
-              itemCount: visible.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (_, index) => _postCard(visible[index]),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: ListView.separated(
+                  key: const ValueKey<String>('favorites-posts-list'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: isTablet ? 32 : 24),
+                  itemCount: visible.length,
+                  separatorBuilder:
+                      (_, _) => SizedBox(height: isTablet ? 16 : 12),
+                  itemBuilder: (_, index) => _postCard(visible[index]),
+                ),
+              ),
             ),
           );
         }),
@@ -208,12 +256,16 @@ class FavoritesView extends GetView<FavoritesController> {
     IconData icon, {
     bool postMenu = false,
     VoidCallback? onTap,
+    bool isTablet = false,
   }) => Row(
     children: [
       Expanded(
         child: Text(
           title.trOrSelf,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: isTablet ? 18 : 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       if (postMenu)
@@ -242,22 +294,29 @@ class FavoritesView extends GetView<FavoritesController> {
                   Icons.schedule_rounded,
                 ),
               ],
-          child: _filterButton(context, icon),
+          child: _filterButton(context, icon, isTablet: isTablet),
         )
       else
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
-          child: _filterButton(context, icon),
+          child: _filterButton(context, icon, isTablet: isTablet),
         ),
     ],
   );
 
-  Widget _filterButton(BuildContext context, IconData icon) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+  Widget _filterButton(
+    BuildContext context,
+    IconData icon, {
+    bool isTablet = false,
+  }) => Container(
+    padding: EdgeInsets.symmetric(
+      horizontal: isTablet ? 14 : 10,
+      vertical: isTablet ? 8 : 7,
+    ),
     decoration: BoxDecoration(
       color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(isTablet ? 20 : 18),
     ),
     child: Row(
       children: [
@@ -267,7 +326,7 @@ class FavoritesView extends GetView<FavoritesController> {
               context.appIsDark
                   ? context.appColorScheme.primary
                   : const Color(0xFF0AA653),
-          size: 19,
+          size: isTablet ? 21 : 19,
         ),
         const SizedBox(width: 5),
         Text(
@@ -277,6 +336,7 @@ class FavoritesView extends GetView<FavoritesController> {
                 context.appIsDark
                     ? context.appColorScheme.primary
                     : const Color(0xFF0AA653),
+            fontSize: isTablet ? 14 : 13,
             fontWeight: FontWeight.w600,
           ),
         ),

@@ -18,74 +18,82 @@ class AiFoodView extends GetView<AiFoodController> {
   static const Color green = Color(0xFF00A651);
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !controller.hasCompleteResult,
-    onPopInvokedWithResult: (didPop, result) {
-      if (didPop) return;
-      if (controller.hasCompleteResult) {
-        controller.clearResult();
-      }
-    },
-    child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: AppBackground(
-        lightDecoration: BoxDecoration(color: context.appBackground),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxWideContentWidth,
-              ),
-              child: Column(
-                children: [
-                  _header(context),
-                  Expanded(
-                    child: Obx(() {
+  Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final horizontalPadding = AppSpacing.pageHorizontalFor(context);
+    final contentMaxWidth =
+        isTablet
+            ? AppSpacing.maxWideContentWidth
+            : AppSpacing.maxContentWidth;
+    final paddedMaxWidth = contentMaxWidth + (horizontalPadding * 2);
+
+    return PopScope(
+      canPop: !controller.hasCompleteResult,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (controller.hasCompleteResult) {
+          controller.clearResult();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AppBackground(
+          lightDecoration: BoxDecoration(color: context.appBackground),
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: paddedMaxWidth),
+                child: Column(
+                  children: [
+                    _header(context),
+                    Expanded(
+                      child: Obx(() {
+                        if (controller.hasCompleteResult &&
+                            controller.nutrition.value != null) {
+                          return AiFoodNutritionResultContent(
+                            controller: controller,
+                          );
+                        }
+                        return LoadingContentTransition(
+                          isLoading: controller.isModelLoading.value,
+                          loading: SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpacing.pageHorizontalFor(context),
+                              8,
+                              AppSpacing.pageHorizontalFor(context),
+                              40,
+                            ),
+                            child: const PageSkeleton.aiFood(),
+                          ),
+                          content: AiFoodScanContent(
+                            controller: controller,
+                            onPickImage:
+                                (ctx, {required camera}) =>
+                                    _pickImage(ctx, camera: camera),
+                            onAnalyze: controller.analyzeFood,
+                          ),
+                        );
+                      }),
+                    ),
+                    Obx(() {
                       if (controller.hasCompleteResult &&
                           controller.nutrition.value != null) {
-                        return AiFoodNutritionResultContent(
+                        return AiFoodNutritionResultBottomBar(
                           controller: controller,
                         );
                       }
-                      return LoadingContentTransition(
-                        isLoading: controller.isModelLoading.value,
-                        loading: SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(
-                            AppSpacing.pageHorizontalFor(context),
-                            8,
-                            AppSpacing.pageHorizontalFor(context),
-                            40,
-                          ),
-                          child: const PageSkeleton.aiFood(),
-                        ),
-                        content: AiFoodScanContent(
-                          controller: controller,
-                          onPickImage:
-                              (ctx, {required camera}) =>
-                                  _pickImage(ctx, camera: camera),
-                          onAnalyze: controller.analyzeFood,
-                        ),
-                      );
+                      return const SizedBox.shrink();
                     }),
-                  ),
-                  Obx(() {
-                    if (controller.hasCompleteResult &&
-                        controller.nutrition.value != null) {
-                      return AiFoodNutritionResultBottomBar(
-                        controller: controller,
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _header(BuildContext context) {
     final horizontal = AppSpacing.pageHorizontalFor(context);

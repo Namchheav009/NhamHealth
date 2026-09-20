@@ -72,7 +72,8 @@ class CommunityPage extends GetView<CommunityController> {
                         AppSpacing.pageHorizontalFor(context),
                         6,
                         AppSpacing.pageHorizontalFor(context),
-                        110,
+                        AppSpacing.pagePaddingWithNavigationFor(context).bottom +
+                            28,
                       ),
                       child: const PageSkeleton.community(),
                     ),
@@ -120,14 +121,17 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
-  Widget _mainTabs(BuildContext context) => _contentWidth(
-    Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.pageHorizontalFor(context),
-      ),
-      child: CommunityTabSwitcher(
-        selected: controller.section.value,
-        onChanged: controller.selectSection,
+  Widget _mainTabs(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.pageHorizontalFor(context),
+        ),
+        child: CommunityTabSwitcher(
+          selected: controller.section.value,
+          onChanged: controller.selectSection,
+        ),
       ),
     ),
   );
@@ -148,6 +152,17 @@ class CommunityPage extends GetView<CommunityController> {
     ),
   );
 
+  Widget _singleColumnContent(BuildContext context, Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppSpacing.maxWidePaddedContentWidth,
+        ),
+        child: child,
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // People
   // ---------------------------------------------------------------------------
@@ -155,6 +170,8 @@ class CommunityPage extends GetView<CommunityController> {
   Widget _people(BuildContext context) {
     final view = controller.friendsView.value;
     final isDiscover = view == FriendsView.addFriends;
+    final bottomPadding =
+        AppSpacing.pagePaddingWithNavigationFor(context).bottom + 28;
 
     return ListView(
       // ignore: deprecated_member_use
@@ -168,33 +185,38 @@ class CommunityPage extends GetView<CommunityController> {
         AppSpacing.pageHorizontalFor(context),
         10,
         AppSpacing.pageHorizontalFor(context),
-        115,
+        bottomPadding,
       ),
       children: [
-        _contentWidth(
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _peopleSections(context),
-              const SizedBox(height: 14),
-              _PeopleSearchField(
-                key: ValueKey<String>('people-search-${view.name}'),
-                hintText:
-                    isDiscover
-                        ? 'community.search_people'.tr
-                        : 'community.search_group'.trParams({
-                          'group': _resultLabel(view),
-                        }),
-                onChanged: controller.updateSearch,
-              ),
-              if (isDiscover) ...[
-                const SizedBox(height: 10),
-                _peopleFilters(context),
-                const SizedBox(height: 10),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxWidePaddedContentWidth,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _peopleSections(context),
+                const SizedBox(height: 14),
+                _PeopleSearchField(
+                  key: ValueKey<String>('people-search-${view.name}'),
+                  hintText:
+                      isDiscover
+                          ? 'community.search_people'.tr
+                          : 'community.search_group'.trParams({
+                            'group': _resultLabel(view),
+                          }),
+                  onChanged: controller.updateSearch,
+                ),
+                if (isDiscover) ...[
+                  const SizedBox(height: 10),
+                  _peopleFilters(context),
+                  const SizedBox(height: 10),
+                ],
+                const SizedBox(height: 18),
+                _peopleResults(context, view),
               ],
-              const SizedBox(height: 18),
-              _peopleResults(context, view),
-            ],
+            ),
           ),
         ),
       ],
@@ -823,7 +845,14 @@ class CommunityPage extends GetView<CommunityController> {
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < _feedTwoColumnBreakpoint) {
+          final isLandscape =
+              MediaQuery.orientationOf(context) == Orientation.landscape;
+          final isTwoColumn =
+              constraints.maxWidth >= _feedTwoColumnBreakpoint && isLandscape;
+          final bottomPadding =
+              AppSpacing.pagePaddingWithNavigationFor(context).bottom + 28;
+
+          if (!isTwoColumn) {
             return Obx(() {
               final visiblePosts = controller.visiblePosts;
               final error = controller.errorMessage.value;
@@ -838,12 +867,13 @@ class CommunityPage extends GetView<CommunityController> {
                   AppSpacing.pageHorizontalFor(context),
                   0,
                   AppSpacing.pageHorizontalFor(context),
-                  115,
+                  bottomPadding,
                 ),
                 itemCount: visiblePosts.length + 1 + (loadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return _contentWidth(
+                    return _singleColumnContent(
+                      context,
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -871,7 +901,8 @@ class CommunityPage extends GetView<CommunityController> {
                       ),
                     );
                   }
-                  return _contentWidth(
+                  return _singleColumnContent(
+                    context,
                     _postCard(visiblePosts[index - 1], index - 1),
                   );
                 },
@@ -890,7 +921,7 @@ class CommunityPage extends GetView<CommunityController> {
               AppSpacing.pageHorizontalFor(context),
               0,
               AppSpacing.pageHorizontalFor(context),
-              115,
+              bottomPadding,
             ),
             children: [
               _contentWidth(
@@ -898,7 +929,10 @@ class CommunityPage extends GetView<CommunityController> {
                   key: const ValueKey<String>('community-tablet-layout'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: 290, child: _feedControls(context)),
+                    SizedBox(
+                      width: 310,
+                      child: _feedControls(context, isSidebar: true),
+                    ),
                     const SizedBox(width: 20),
                     Expanded(child: _feedPosts(context)),
                   ],
@@ -911,7 +945,7 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _feedControls(BuildContext context) {
+  Widget _feedControls(BuildContext context, {bool isSidebar = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -922,32 +956,120 @@ class CommunityPage extends GetView<CommunityController> {
         ),
         const SizedBox(height: 10),
         _feedFilters(context),
+        if (isSidebar) ...[
+          const SizedBox(height: 14),
+          _sidebarDiscoverCard(context),
+        ],
       ],
     );
   }
 
-  Widget _feedIntro(BuildContext context) => SizedBox(
-    width: double.infinity,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'common.navigation_community'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 24,
-            letterSpacing: -.5,
-            fontWeight: FontWeight.w800,
+  Widget _sidebarDiscoverCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  size: 18,
+                  color: green,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'community.discover'.tr,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: context.appText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'community.empty_feed_help'.tr,
+            style: TextStyle(
+              fontSize: 12,
+              color: context.appMutedText,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => controller.selectSection(CommunitySection.people),
+              icon: const Icon(Icons.explore_rounded, size: 16),
+              label: Text('community.search_people'.tr),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: green,
+                side: BorderSide(color: green.withValues(alpha: .3)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _feedIntro(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final maxWidth =
+        isTablet
+            ? AppSpacing.maxWidePaddedContentWidth
+            : double.infinity;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'common.navigation_community'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 24,
+                  letterSpacing: -.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'community.tagline'.tr,
+                style: TextStyle(fontSize: 13, color: context.appMutedText),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          'community.tagline'.tr,
-          style: TextStyle(fontSize: 13, color: context.appMutedText),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _feedFilters(BuildContext context) {
     const labelKeys = [
@@ -961,7 +1083,7 @@ class CommunityPage extends GetView<CommunityController> {
       final selectedFilter = controller.feedFilter.value;
 
       return SizedBox(
-        height: 42,
+        height: 48,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const AlwaysScrollableScrollPhysics(
@@ -973,7 +1095,7 @@ class CommunityPage extends GetView<CommunityController> {
             children: List.generate(CommunityFeedFilter.values.length, (index) {
               final filter = CommunityFeedFilter.values[index];
               final selected = selectedFilter == filter;
-              final borderRadius = BorderRadius.circular(21);
+              final borderRadius = BorderRadius.circular(24);
 
               return Padding(
                 padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
@@ -994,8 +1116,8 @@ class CommunityPage extends GetView<CommunityController> {
                       onTap: () => controller.selectFeedFilter(filter),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 17),
+                        height: 48,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color:

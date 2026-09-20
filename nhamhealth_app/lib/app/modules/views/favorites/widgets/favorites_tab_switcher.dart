@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../controllers/favorites/favorites_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_spacing.dart';
+import '../../../controllers/favorites/favorites_controller.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class FavoritesTabSwitcher extends StatelessWidget {
@@ -16,8 +17,12 @@ class FavoritesTabSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet =
+        AppSpacing.isTabletFor(context) ||
+        MediaQuery.sizeOf(context).shortestSide >= AppSpacing.tabletBreakpoint;
+
     return Container(
-      height: 44,
+      height: isTablet ? 48 : 44,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: .9),
@@ -30,11 +35,13 @@ class FavoritesTabSwitcher extends StatelessWidget {
             label: 'favorites.foods',
             active: selected == FavoritesTab.foods,
             onTap: () => onChanged(FavoritesTab.foods),
+            fontSize: isTablet ? 15 : 13.5,
           ),
           _Tab(
             label: 'common.posts',
             active: selected == FavoritesTab.posts,
             onTap: () => onChanged(FavoritesTab.posts),
+            fontSize: isTablet ? 15 : 13.5,
           ),
         ],
       ),
@@ -43,10 +50,16 @@ class FavoritesTabSwitcher extends StatelessWidget {
 }
 
 class _Tab extends StatelessWidget {
-  const _Tab({required this.label, required this.active, required this.onTap});
+  const _Tab({
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.fontSize = 13.5,
+  });
   final String label;
   final bool active;
   final VoidCallback onTap;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +85,7 @@ class _Tab extends StatelessWidget {
             child: Text(
               label.trOrSelf,
               style: TextStyle(
+                fontSize: fontSize,
                 color: active ? colors.primary : colors.onSurfaceVariant,
                 fontWeight: active ? FontWeight.w600 : FontWeight.w500,
               ),

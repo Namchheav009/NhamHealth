@@ -18,40 +18,103 @@ class EditProfileView extends GetView<EditProfileController> {
 
   static const green = Color(0xFF00A651);
 
+  double _contentMaxWidth(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    if (isTablet) return AppSpacing.maxWideContentWidth;
+    return AppSpacing.maxContentWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isTablet = AppSpacing.isTabletFor(context);
+    final hPad = AppSpacing.pageHorizontalFor(context);
+    final maxWidth = _contentMaxWidth(context);
+
     return Scaffold(
       backgroundColor: context.appBackground,
       body: AppBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: AppSpacing.pagePadding,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAppBar(),
-
-                    const SizedBox(height: 12),
-
-                    _buildProfileHeader(context),
-                    const SizedBox(height: 12),
-
-                    _buildPersonalInformation(context),
-
-                    const SizedBox(height: 14),
-
-                    _buildHealthInformation(context),
-                  ],
+          bottom: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  hPad,
+                  AppSpacing.pageTop,
+                  hPad,
+                  0,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: _buildAppBar(),
+                  ),
                 ),
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 40),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: _buildBody(context, isTablet: isTablet),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, {required bool isTablet}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 760;
+
+        if (isWide) {
+          return Column(
+            key: const ValueKey<String>('edit-profile-tablet-two-column'),
+            children: [
+              _buildProfileHeader(context, isTablet: isTablet),
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildPersonalInformation(
+                      context,
+                      isTablet: isTablet,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildHealthInformation(
+                      context,
+                      isTablet: isTablet,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          key: const ValueKey<String>('edit-profile-single-column'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileHeader(context, isTablet: isTablet),
+            SizedBox(height: isTablet ? 16 : 12),
+            _buildPersonalInformation(context, isTablet: isTablet),
+            SizedBox(height: isTablet ? 18 : 14),
+            _buildHealthInformation(context, isTablet: isTablet),
+          ],
+        );
+      },
     );
   }
 
@@ -63,8 +126,10 @@ class EditProfileView extends GetView<EditProfileController> {
     return AppBackHeader(
       title: 'profile.edit_profile',
       onBack: controller.goBack,
+      backButtonKey: const ValueKey<String>('edit-profile-back-button'),
       trailing: Obx(
         () => TextButton(
+          key: const ValueKey<String>('edit-profile-save-button'),
           onPressed: controller.isBusy ? null : controller.saveProfile,
           child:
               controller.isBusy
@@ -93,13 +158,17 @@ class EditProfileView extends GetView<EditProfileController> {
   // PROFILE HEADER
   // -----------------------------------------
 
-  Widget _buildProfileHeader(BuildContext context) {
+  Widget _buildProfileHeader(BuildContext context, {bool isTablet = false}) {
+    final avatarRadius = isTablet ? 44.0 : 38.0;
+    final cameraBoxSize = isTablet ? 34.0 : 30.0;
+    final cameraIconSize = isTablet ? 19.0 : 17.0;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isTablet ? 18 : 14),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(isTablet ? 22 : 17),
         border: Border.all(color: context.appBorder),
         boxShadow: context.appCardShadow,
       ),
@@ -111,14 +180,14 @@ class EditProfileView extends GetView<EditProfileController> {
               Obx(() {
                 final image = _editAvatarImage();
                 return CircleAvatar(
-                  radius: 38,
+                  radius: avatarRadius,
                   backgroundColor: context.appSoftGreen,
                   backgroundImage: image,
                   child:
                       image == null
-                          ? const Icon(
+                          ? Icon(
                             Icons.person_outline_rounded,
-                            size: 39,
+                            size: isTablet ? 45 : 39,
                             color: green,
                           )
                           : null,
@@ -134,15 +203,15 @@ class EditProfileView extends GetView<EditProfileController> {
                     onTap: controller.pickProfileImage,
                     customBorder: const CircleBorder(),
                     child: Container(
-                      width: 30,
-                      height: 30,
+                      width: cameraBoxSize,
+                      height: cameraBoxSize,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: green),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.camera_alt_outlined,
-                        size: 17,
+                        size: cameraIconSize,
                         color: green,
                       ),
                     ),
@@ -151,7 +220,7 @@ class EditProfileView extends GetView<EditProfileController> {
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isTablet ? 18 : 16),
           Expanded(
             child: Obx(() {
               final name = controller.fullName.value.trim();
@@ -165,22 +234,25 @@ class EditProfileView extends GetView<EditProfileController> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: context.appText,
-                      fontSize: 18,
+                      fontSize: isTablet ? 20 : 18,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: isTablet ? 6 : 5),
                   Text(
                     email.isEmpty ? controller.profileEmail.value : email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: context.appMutedText, fontSize: 12),
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: isTablet ? 13.5 : 12,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isTablet ? 10 : 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 10 : 8,
+                      vertical: isTablet ? 5 : 4,
                     ),
                     decoration: BoxDecoration(
                       color: context.appSoftGreen,
@@ -188,9 +260,9 @@ class EditProfileView extends GetView<EditProfileController> {
                     ),
                     child: Text(
                       controller.membership.value.trOrSelf,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: green,
-                        fontSize: 10,
+                        fontSize: isTablet ? 11.5 : 10,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -372,10 +444,11 @@ class EditProfileView extends GetView<EditProfileController> {
   // PERSONAL INFORMATION
   // -----------------------------------------
 
-  Widget _buildPersonalInformation(BuildContext context) {
+  Widget _buildPersonalInformation(BuildContext context, {bool isTablet = false}) {
     return _sectionCard(
       context,
       title: 'profile.personal_information',
+      isTablet: isTablet,
       child: Obx(
         () => Column(
           children: [
@@ -567,13 +640,18 @@ class EditProfileView extends GetView<EditProfileController> {
   // BODY AND HEALTH
   // -----------------------------------------
 
-  Widget _buildHealthInformation(BuildContext context) {
+  Widget _buildHealthInformation(BuildContext context, {bool isTablet = false}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 13),
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 18 : 14,
+        isTablet ? 16 : 14,
+        isTablet ? 18 : 14,
+        isTablet ? 16 : 13,
+      ),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(isTablet ? 22 : 17),
         border: Border.all(color: context.appBorder),
         boxShadow: context.appCardShadow,
       ),
@@ -582,7 +660,10 @@ class EditProfileView extends GetView<EditProfileController> {
         children: [
           Text(
             'profile.body_and_health_information'.tr,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: isTablet ? 18 : 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
 
           const SizedBox(height: 2),
@@ -590,7 +671,10 @@ class EditProfileView extends GetView<EditProfileController> {
           Text(
             'profile.bmi_is_calculated_automatically_from_your_height_and_weight'
                 .tr,
-            style: const TextStyle(color: Color(0xFF888888), fontSize: 10),
+            style: TextStyle(
+              color: const Color(0xFF888888),
+              fontSize: isTablet ? 12 : 10,
+            ),
           ),
 
           const SizedBox(height: 7),
@@ -764,13 +848,19 @@ class EditProfileView extends GetView<EditProfileController> {
     BuildContext context, {
     required String title,
     required Widget child,
+    bool isTablet = false,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 18 : 14,
+        isTablet ? 16 : 12,
+        isTablet ? 18 : 14,
+        isTablet ? 16 : 13,
+      ),
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(isTablet ? 22 : 17),
         border: Border.all(color: context.appBorder),
         boxShadow: context.appCardShadow,
       ),
@@ -781,14 +871,17 @@ class EditProfileView extends GetView<EditProfileController> {
             padding: const EdgeInsets.only(left: 4, bottom: 9),
             child: Text(
               title.trOrSelf,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: isTablet ? 18 : 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
 
           Container(
             decoration: BoxDecoration(
               color: context.appMutedSurface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
               border: Border.all(color: context.appBorder),
             ),
             child: child,

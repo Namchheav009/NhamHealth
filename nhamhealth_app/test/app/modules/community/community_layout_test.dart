@@ -9,12 +9,23 @@ import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart
 import 'package:nhamhealth_flutter/app/modules/repositories/community/community_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_composer_card.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 import 'package:nhamhealth_flutter/core/services/notification_realtime_event.dart';
 
 void main() {
-  setUp(() => Get.testMode = true);
+  setUp(() {
+    Get.testMode = true;
+    Get.clearTranslations();
+    Get.addTranslations(AppTranslations().keys);
+  });
   tearDown(Get.reset);
+
+  Widget buildApp(Widget home) => GetMaterialApp(
+    translations: AppTranslations(),
+    locale: const Locale('en', 'US'),
+    home: home,
+  );
 
   for (final size in <Size>[const Size(320, 700), const Size(381, 856)]) {
     testWidgets(
@@ -34,7 +45,7 @@ void main() {
           ),
         );
 
-        await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+        await tester.pumpWidget(buildApp(const CommunityPage()));
         await tester.pump(const Duration(milliseconds: 500));
 
         final carousel = find.byType(PageView);
@@ -72,7 +83,7 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+    await tester.pumpWidget(buildApp(const CommunityPage()));
     await tester.pump(const Duration(milliseconds: 500));
 
     final tabletLayout = find.byKey(
@@ -95,7 +106,7 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+    await tester.pumpWidget(buildApp(const CommunityPage()));
     await tester.pump(const Duration(milliseconds: 500));
 
     final following = find.byKey(
@@ -134,7 +145,7 @@ void main() {
       );
       controller.section.value = CommunitySection.people;
 
-      await tester.pumpWidget(const GetMaterialApp(home: CommunityPage()));
+      await tester.pumpWidget(buildApp(const CommunityPage()));
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Friends'), findsWidgets);
@@ -142,7 +153,7 @@ void main() {
         find.byKey(const ValueKey<String>('people-card-2')),
         findsOneWidget,
       );
-      expect(find.text('View profile'), findsWidgets);
+      expect(find.text('Profile'), findsWidgets);
       expect(find.text('2 people'), findsNothing);
       expect(find.textContaining('mutual connection'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
@@ -302,12 +313,12 @@ class _PeopleRepository extends _ImagePostRepository {
     ],
     FriendsView.followers: const [],
     FriendsView.following: const [],
-    FriendsView.addFriends: const [
+    FriendsView.addFriends: [
       CommunityPerson(
         id: '4',
         name: 'Malis Chan',
         avatarUrl: '',
-        connectionStatus: 'NONE',
+        connectionStatus: followedUserId == '4' ? 'FOLLOWING' : 'NONE',
       ),
     ],
   };

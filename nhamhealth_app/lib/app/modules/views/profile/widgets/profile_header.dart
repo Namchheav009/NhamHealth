@@ -216,24 +216,31 @@ class _ProfileStat extends StatelessWidget {
           child: Icon(icon, color: Colors.green, size: 18),
         ),
         const SizedBox(width: 5),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                height: 1,
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label.tr,
-              style: TextStyle(color: context.appMutedText, fontSize: 8),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: context.appMutedText, fontSize: 8),
+              ),
+            ],
+          ),
         ),
       ],
     ),
