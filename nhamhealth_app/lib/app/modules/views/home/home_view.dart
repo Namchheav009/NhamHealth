@@ -134,7 +134,7 @@ class _HomeDashboardContent extends StatelessWidget {
           children: [
             RepaintBoundary(child: TimeGreeting()),
             SizedBox(height: 16),
-RepaintBoundary(child: GreetingSection()),
+            RepaintBoundary(child: GreetingSection()),
             SizedBox(height: 8),
             RepaintBoundary(child: HomeQuickActions()),
             SizedBox(height: 16),
@@ -145,19 +145,16 @@ RepaintBoundary(child: GreetingSection()),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-RepaintBoundary(child: _MealPlannerCard()),
-                      SizedBox(height: 16),
                       RepaintBoundary(child: AiRecommendationCard()),
                     ],
                   ),
                 ),
                 SizedBox(width: 16),
                 Expanded(
-child: Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       RepaintBoundary(child: DailySummaryCard()),
-                      RepaintBoundary(child: _RecommendedMealsSection()),
                     ],
                   ),
                 ),
