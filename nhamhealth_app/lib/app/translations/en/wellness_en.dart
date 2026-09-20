@@ -297,7 +297,44 @@ const Map<String, String> wellnessEn = {
   'wellness.portion_small_short': 'Bowl',
   'wellness.portion_regular_short': 'Plate',
   'wellness.portion_large_short': 'Large',
-  'wellness.portion_xlarge_short': 'XL',
   'wellness.edit_detected_food': 'Edit Detected Food',
   'wellness.photography_tips': 'Photography Tips',
+  'wellness.ai_detected_ingredients_subtitle':
+      'AI-detected ingredients from your item',
+  'wellness.analyzed_by_ai': 'Analyzed by AI',
+  'wellness.portion_prefix': 'Portion: @portion',
+  'wellness.detected_ingredients': 'Detected ingredients',
+  'wellness.ingredients_likely_inside':
+      "Here's what's likely inside your item.",
+  'wellness.ingredients_found': '@count ingredients found',
+  'wellness.high_confidence': 'High confidence',
+  'wellness.medium_confidence': 'Medium confidence',
+  'wellness.low_confidence': 'Low confidence',
+  'wellness.amount_label': 'Amount',
+  'wellness.review_and_adjust_ingredients':
+      'Review and adjust ingredients if needed.',
+  'wellness.add_ingredient': 'Add ingredient',
+  'wellness.ingredient_role': 'Role / Category',
+  'wellness.plate_composition': 'Plate Composition',
+  'wellness.macro_distribution_subtitle': 'Macronutrient energy balance',
+  'wellness.high_protein_distribution': 'High Protein',
+  'wellness.carb_focused_energy': 'Carb Energy',
+  'wellness.balanced_plate_distribution': 'Balanced Plate',
+  'wellness.protein': 'Protein',
+  'wellness.fats': 'Fats',
+  'wellness.ingredient_insights': 'AI Ingredient Insights',
+  'wellness.ingredient_insights_subtitle':
+      'Observations from detected components',
+  'wellness.insight_cooking_oil_title': 'Cooking Oil & Added Fat',
+  'wellness.insight_cooking_oil_desc':
+      'Cooking oil adds ~@cals kcal during preparation. Choosing less oil can trim 80-120 kcal without compromising taste.',
+  'wellness.insight_carb_title': '@name (Carb Energy)',
+  'wellness.insight_carb_desc':
+      'Provides ~@carbs g of carbohydrates for sustained physical activity. Balance with greens to moderate glycemic response.',
+  'wellness.insight_protein_title': '@name (Protein Source)',
+  'wellness.insight_protein_desc':
+      'Supplies ~@protein g of protein containing amino acids essential for satiety and muscle maintenance.',
+  'wellness.insight_veggie_boost_title': 'Add Extra Fresh Greens',
+  'wellness.insight_veggie_boost_desc':
+      'Increasing vegetable portions adds fiber, potassium, and micronutrients while keeping calories light.',
 };

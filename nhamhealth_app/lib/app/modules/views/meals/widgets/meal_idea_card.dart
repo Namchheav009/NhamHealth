@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
 import '../../../models/meals/meal_model.dart';
 
 class MealIdeaCard extends StatelessWidget {
@@ -109,15 +110,15 @@ class MealIdeaCard extends StatelessWidget {
                         runSpacing: 6,
                         children: [
                           _Metric(
-                            icon: Icons.local_fire_department_rounded,
-                            iconColor: AppColors.accentOrange,
+                            icon: AppNutrientTheme.caloriesIcon,
+                            iconColor: AppNutrientTheme.caloriesColor,
                             label: localizeCalories(meal.calories),
                           ),
                           if (meal.proteinGrams case final protein?)
                             if (protein > 0)
                               _Metric(
-                                icon: Icons.fitness_center_rounded,
-                                iconColor: AppColors.primaryGreen,
+                                icon: AppNutrientTheme.proteinIcon,
+                                iconColor: AppNutrientTheme.proteinColor,
                                 label: 'meals.protein_grams'.trParams({
                                   'value': _formatNutrition(protein),
                                 }),

@@ -15,7 +15,9 @@ import '../../models/wellness/plate_item_model.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
 import '../../services/wellness/food_ai_service.dart';
+import '../../services/wellness/food_decomposition_service.dart';
 import '../../services/wellness/food_recommendation_service.dart';
+import '../../services/wellness/ingredient_visual_service.dart';
 import '../home/home_controller.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
@@ -843,55 +845,8 @@ class AiFoodController extends GetxController {
 
   void _initPlateFrom(FoodNutritionModel food) {
     plateItems.clear();
-    if (food.components.isNotEmpty) {
-      for (var i = 0; i < food.components.length; i++) {
-        final c = food.components[i];
-        plateItems.add(
-          PlateItemState(
-            id: 'comp_${i}_${DateTime.now().microsecondsSinceEpoch}',
-            name: c.name,
-            baseCalories: c.calories,
-            baseProtein: c.protein,
-            baseCarbs: c.carbohydrates,
-            baseFat: c.fat,
-            baseSugar: c.sugar,
-            baseFiber: c.fiber,
-            baseSodium: c.sodium,
-            baseServingSize:
-                c.estimatedAmount > 0
-                    ? c.estimatedAmount
-                    : (c.liquidVolumeMl > 0 ? c.liquidVolumeMl : 100),
-            unit: c.liquidVolumeMl > 0 ? 'ml' : 'g',
-            portionMultiplier: 1.0,
-            isSelected: true,
-            componentType: c.componentType,
-            confidence: c.confidence,
-            preparationMethod: c.preparationMethod,
-            visibleEvidence: c.visibleEvidence,
-          ),
-        );
-      }
-    } else {
-      plateItems.add(
-        PlateItemState(
-          id: 'comp_single_${DateTime.now().microsecondsSinceEpoch}',
-          name: food.name,
-          baseCalories: food.calories,
-          baseProtein: food.protein,
-          baseCarbs: food.carbs,
-          baseFat: food.fat,
-          baseSugar: food.sugar,
-          baseFiber: food.fiber,
-          baseSodium: food.sodium,
-          baseServingSize: food.servingSize,
-          unit: food.servingUnit,
-          portionMultiplier: 1.0,
-          isSelected: true,
-          componentType: food.mealType,
-          confidence: food.confidence,
-        ),
-      );
-    }
+    final items = FoodDecompositionService.decompose(food);
+    plateItems.assignAll(items);
   }
 
   void togglePlateItem(int index) {
@@ -923,7 +878,11 @@ class AiFoodController extends GetxController {
     double protein = 0,
     double carbs = 0,
     double fat = 0,
+    double amount = 100,
+    String unit = 'g',
+    String? role,
   }) {
+    final visual = IngredientVisualService.resolve(name, customRole: role);
     plateItems.add(
       PlateItemState(
         id: 'comp_manual_${DateTime.now().microsecondsSinceEpoch}',
@@ -932,8 +891,12 @@ class AiFoodController extends GetxController {
         baseProtein: protein,
         baseCarbs: carbs,
         baseFat: fat,
+        baseServingSize: amount,
+        unit: unit,
         portionMultiplier: 1.0,
         isSelected: true,
+        role: visual.defaultRole,
+        imageUrl: visual.imageUrl,
       ),
     );
     _syncNutritionFromPlate();

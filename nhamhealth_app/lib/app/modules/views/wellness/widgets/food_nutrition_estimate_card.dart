@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../controllers/wellness/food_source_detail_controller.dart';
-import '../../../../theme/app_colors.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
+import '../../../controllers/wellness/food_source_detail_controller.dart';
 
 class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
   const FoodNutritionEstimateCard({super.key});
@@ -42,52 +43,52 @@ class FoodNutritionEstimateCard extends GetView<FoodSourceDetailController> {
               children: [
                 _nutritionBox(
                   context: context,
-                  icon: Icons.local_fire_department_rounded,
+                  icon: AppNutrientTheme.caloriesIcon,
                   title: 'common.calories',
                   value: '+${controller.currentCalories.value}',
                   unit: 'kcal',
-                  color: const Color(0xFFFF641E),
-                  bg: const Color(0xFFFFF1E8),
+                  color: AppNutrientTheme.caloriesColor,
+                  bg: AppNutrientTheme.caloriesBg,
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
                   context: context,
-                  icon: Icons.bolt_rounded,
+                  icon: AppNutrientTheme.proteinIcon,
                   title: 'common.protein',
                   value: '+${controller.estimatedProtein}',
                   unit: 'g',
-                  color: const Color(0xFF00A651),
-                  bg: const Color(0xFFEAF7EC),
+                  color: AppNutrientTheme.proteinColor,
+                  bg: AppNutrientTheme.proteinBg,
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
                   context: context,
-                  icon: Icons.air_rounded,
+                  icon: AppNutrientTheme.fiberIcon,
                   title: 'common.fiber',
                   value: '+${controller.estimatedFiber}',
                   unit: 'g',
-                  color: const Color(0xFF9747FF),
-                  bg: const Color(0xFFF2EAFE),
+                  color: AppNutrientTheme.fiberColor,
+                  bg: AppNutrientTheme.fiberBg,
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
                   context: context,
-                  icon: Icons.hexagon_rounded,
+                  icon: AppNutrientTheme.sugarIcon,
                   title: 'common.sugar',
                   value: '+${controller.estimatedSugar}',
                   unit: 'g',
-                  color: const Color(0xFFFF5CB8),
-                  bg: const Color(0xFFFFEDF7),
+                  color: AppNutrientTheme.sugarColor,
+                  bg: AppNutrientTheme.sugarBg,
                 ),
                 const SizedBox(width: 8),
                 _nutritionBox(
                   context: context,
-                  icon: Icons.water_drop_rounded,
+                  icon: AppNutrientTheme.waterIcon,
                   title: 'wellness.hydration_tip',
                   value: controller.hydrationTip,
                   unit: '',
-                  color: const Color(0xFF48BFF2),
-                  bg: const Color(0xFFE8F7FF),
+                  color: AppNutrientTheme.waterColor,
+                  bg: AppNutrientTheme.waterBg,
                   small: true,
                 ),
               ],

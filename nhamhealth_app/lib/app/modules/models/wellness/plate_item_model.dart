@@ -18,6 +18,8 @@ class PlateItemState {
     this.confidence = 0.9,
     this.preparationMethod = '',
     this.visibleEvidence = '',
+    this.role = '',
+    this.imageUrl,
   });
 
   final String id;
@@ -37,6 +39,8 @@ class PlateItemState {
   double confidence;
   String preparationMethod;
   String visibleEvidence;
+  String role;
+  String? imageUrl;
 
   double get calories => baseCalories * portionMultiplier;
   double get protein => baseProtein * portionMultiplier;
@@ -46,6 +50,9 @@ class PlateItemState {
   double get fiber => baseFiber * portionMultiplier;
   double get sodium => baseSodium * portionMultiplier;
   double get servingSize => baseServingSize * portionMultiplier;
+
+  bool get isHighConfidence => confidence >= 0.8;
+  bool get isMediumConfidence => confidence >= 0.5 && confidence < 0.8;
 
   String get portionLabel {
     if (portionMultiplier == 0.5) return 'Small (0.5x)';
@@ -73,5 +80,7 @@ class PlateItemState {
     confidence: confidence,
     preparationMethod: preparationMethod,
     visibleEvidence: visibleEvidence,
+    role: role,
+    imageUrl: imageUrl,
   );
 }

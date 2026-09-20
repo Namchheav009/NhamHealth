@@ -197,7 +197,9 @@ class PlannedMeal {
             'SATURDAY': 6,
             'SUNDAY': 7,
           }[dayName],
-      imageUrl: '${json['imageUrl'] ?? ''}'.trim(),
+      imageUrl:
+          '${json['imageUrl'] ?? json['mainImageUrl'] ?? json['image'] ?? json['thumbnail'] ?? json['photoUrl'] ?? ''}'
+              .trim(),
       recommendationNote: '${json['note'] ?? ''}'.trim(),
     );
   }

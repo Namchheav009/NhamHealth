@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/daily_summary_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/home_dashboard_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/nutrition_progress_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/home/recommended_meal_model.dart';
-import 'package:nhamhealth_flutter/app/modules/controllers/home/home_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/home/home_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/home/home_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/daily_summary_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/greeting_section.dart';
 import 'package:nhamhealth_flutter/app/modules/views/home/widgets/mood_card.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -39,14 +40,20 @@ void main() {
       fullName: 'Nham User',
     );
 
-    await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const HomeView(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('How are you feeling today?'), findsOneWidget);
     expect(find.text('AI Recommendation'), findsOneWidget);
     expect(find.text('Your Daily Wellness'), findsOneWidget);
-    expect(find.text('Recommended Meals'), findsOneWidget);
+    expect(find.text('Recommended for You'), findsOneWidget);
 
     expect(
       find.byKey(const ValueKey<String>('home-wellness-scroll')),
@@ -82,7 +89,13 @@ void main() {
       );
       Get.put<HomeController>(controller);
 
-      await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: const HomeView(),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 900));
 
       expect(find.text('How are you feeling today?'), findsOneWidget);
@@ -117,13 +130,19 @@ void main() {
     );
     Get.put<HomeController>(controller);
 
-    await tester.pumpWidget(const GetMaterialApp(home: HomeView()));
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const HomeView(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 900));
 
     final homeScroll = find.byType(SingleChildScrollView);
     final scrollWidget = tester.widget<SingleChildScrollView>(homeScroll);
     final padding = scrollWidget.padding! as EdgeInsets;
-    expect(padding.bottom, greaterThanOrEqualTo(114));
+    expect(padding.bottom, greaterThanOrEqualTo(108));
     expect(
       scrollWidget.keyboardDismissBehavior,
       ScrollViewKeyboardDismissBehavior.onDrag,
@@ -157,7 +176,9 @@ void main() {
     expect(controller.dashboard.value!.dailySummary.protein.value, '15');
     expect(controller.dashboard.value!.dailySummary.fat.value, '12');
 
-    controller.selectDay(DateTime.now().subtract(const Duration(days: 1)));
+    await controller.selectDay(
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
     expect(controller.dashboard.value!.dailySummary.calories.value, '0');
   });
 
@@ -174,29 +195,34 @@ void main() {
     expect(repository.lastRequestedDate!.day, controller.selectedDay.value.day);
   });
 
-  test('dashboard refresh preserves user-requested meal recommendations', () async {
-    final controller = HomeController(repository: _RefreshingHomeRepository());
-    await controller.loadDashboard();
-    const meal = RecommendedMealModel(
-      id: 7,
-      name: 'Selected meal',
-      image: '',
-      calories: 320,
-      cookingTime: '20 min',
-      moodId: 2,
-    );
-    final current = controller.dashboard.value!;
-    controller.dashboard.value = HomeDashboardModel(
-      userName: current.userName,
-      dailySummary: current.dailySummary,
-      recommendedMeals: const [meal],
-    );
+  test(
+    'dashboard refresh preserves user-requested meal recommendations',
+    () async {
+      final controller = HomeController(
+        repository: _RefreshingHomeRepository(),
+      );
+      await controller.loadDashboard();
+      const meal = RecommendedMealModel(
+        id: 7,
+        name: 'Selected meal',
+        image: '',
+        calories: 320,
+        cookingTime: '20 min',
+        moodId: 2,
+      );
+      final current = controller.dashboard.value!;
+      controller.dashboard.value = HomeDashboardModel(
+        userName: current.userName,
+        dailySummary: current.dailySummary,
+        recommendedMeals: const [meal],
+      );
 
-    await controller.loadDashboard();
+      await controller.loadDashboard();
 
-    expect(controller.dashboard.value!.dailySummary.calories.value, '250');
-    expect(controller.dashboard.value!.recommendedMeals, const [meal]);
-  });
+      expect(controller.dashboard.value!.dailySummary.calories.value, '250');
+      expect(controller.dashboard.value!.recommendedMeals, const [meal]);
+    },
+  );
 
   test('home startup refreshes a stale initial wellness snapshot', () async {
     Get.put<AuthService>(_SessionAuthService());

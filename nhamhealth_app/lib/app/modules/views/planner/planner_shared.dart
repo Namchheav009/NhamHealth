@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,16 +8,28 @@ import '../../../../config/api_config.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
 
 String plannerImageUrl(String value) {
-  if (value.isEmpty ||
-      value.startsWith('http') ||
-      value.startsWith('assets/') ||
-      value.startsWith('package:')) {
-    return value;
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return '';
+  if (trimmed.startsWith('assets/') || trimmed.startsWith('package:')) {
+    return trimmed;
   }
-  return '${ApiConfig.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
+  var url = trimmed;
+  // If backend returns localhost or 127.0.0.1, rewrite to ApiConfig.baseUrl
+  if (url.startsWith('http://localhost:8080') ||
+      url.startsWith('http://127.0.0.1:8080')) {
+    url = url.replaceFirst(
+      RegExp(r'http://(localhost|127\.0\.0\.1):8080'),
+      ApiConfig.baseUrl,
+    );
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return '${ApiConfig.baseUrl}${url.startsWith('/') ? '' : '/'}$url';
 }
 
 String plannerMealName(PlannedMeal meal) => meal.name.tr;
@@ -62,12 +76,14 @@ class PlannerMealImage extends StatelessWidget {
     this.width,
     this.height = 76,
     this.radius = 14,
+    this.imageKey,
   });
 
   final PlannedMeal meal;
   final double? width;
   final double height;
   final double radius;
+  final Key? imageKey;
 
   static const String fallbackMealAsset =
       'assets/images/meals/healthy_salad.jpg';
@@ -111,7 +127,16 @@ class PlannerMealImage extends StatelessWidget {
       );
     } else {
       final url = plannerImageUrl(rawUrl);
+      final refreshKey =
+          Get.isRegistered<MealPlannerController>()
+              ? Get.find<MealPlannerController>().imageRefreshKey.value
+              : 0;
       imageWidget = CachedNetworkImage(
+        key:
+            imageKey ??
+            ValueKey(
+              '$url?id=${meal.id}&planId=${meal.planId ?? 0}&v=$refreshKey',
+            ),
         imageUrl: url,
         width: width,
         height: height,
@@ -293,4 +318,396 @@ class PlannerPrimaryButton extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> showAutoFillConfirmDialog(
+  BuildContext context,
+  MealPlannerController controller,
+) async {
+  final confirmed = await showGeneralDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'planner.auto_fill'.tr,
+    barrierColor: Colors.black.withValues(alpha: 0.48),
+    transitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      return Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: const SizedBox.expand(),
+            ),
+            SafeArea(
+              minimum: const EdgeInsets.all(22),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
+                      decoration: BoxDecoration(
+                        color: dialogContext.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 32,
+                            offset: const Offset(0, 16),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: dialogContext.appElevatedSurface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.16),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              color: AppColors.primaryGreen,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'planner.auto_fill'.tr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: dialogContext.appText,
+                              fontSize: 20,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'planner.auto_fill_confirm'.tr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: dialogContext.appMutedText,
+                              fontSize: 14,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 52,
+                                  child: OutlinedButton(
+                                    onPressed:
+                                        () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(false),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: dialogContext.appBorder,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    child: Text('common.cancel'.tr),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 52,
+                                  child: FilledButton(
+                                    onPressed:
+                                        () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: AppColors.primaryGreen,
+                                      foregroundColor: Colors.white,
+                                      elevation: 5,
+                                      shadowColor: AppColors.primaryGreen
+                                          .withValues(alpha: 0.38),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    child: Text('planner.auto_fill'.tr),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+
+  if (confirmed == true) {
+    await controller.autoFillPlan();
+  }
+}
+
+Future<void> showWeeklyReportDialog(
+  BuildContext context,
+  MealPlannerController controller,
+) async {
+  final pct = (controller.weeklyProgress * 100).round();
+  final isComplete = controller.weeklyProgress >= 1.0;
+  final totalSlots = controller.planDaysCount.value * 4;
+  final plannedCount = controller.weeklyMealCount;
+  final eatenCount = controller.weeklyEatenMeals;
+
+  await showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'planner.weekly_progress'.tr,
+    barrierColor: Colors.black.withValues(alpha: 0.48),
+    transitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      return Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: const SizedBox.expand(),
+            ),
+            SafeArea(
+              minimum: const EdgeInsets.all(22),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
+                      decoration: BoxDecoration(
+                        color: dialogContext.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 32,
+                            offset: const Offset(0, 16),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: dialogContext.appElevatedSurface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.16),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              isComplete
+                                  ? Icons.emoji_events_rounded
+                                  : Icons.insights_rounded,
+                              color: AppColors.primaryGreen,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'planner.weekly_progress'.tr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: dialogContext.appText,
+                              fontSize: 20,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isComplete
+                                ? 'planner.all_meals_eaten'.tr
+                                : 'planner.keep_going_on_track'.tr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: dialogContext.appMutedText,
+                              fontSize: 14,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: dialogContext.appSoftGreen,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'planner.meals_planned'.trParams({
+                                        'count': '$plannedCount',
+                                        'total': '$totalSlots',
+                                      }),
+                                      style: TextStyle(
+                                        color: dialogContext.appText,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13.5,
+                                      ),
+                                    ),
+                                    Text(
+                                      '$pct%',
+                                      style: const TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(99),
+                                  child: LinearProgressIndicator(
+                                    value: controller.weeklyProgress.clamp(
+                                      0.0,
+                                      1.0,
+                                    ),
+                                    minHeight: 8,
+                                    backgroundColor: dialogContext.appBorder,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                ),
+                                if (eatenCount > 0) ...[
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AppColors.primaryGreen,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '$eatenCount ${'planner.eaten'.tr.toLowerCase()}',
+                                        style: const TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: FilledButton(
+                              onPressed:
+                                  () => Navigator.of(dialogContext).pop(),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                elevation: 5,
+                                shadowColor: AppColors.primaryGreen.withValues(
+                                  alpha: 0.38,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(21),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: Text('common.ok'.tr),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
 }

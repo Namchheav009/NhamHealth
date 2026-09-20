@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/app_alert.dart';
 
 import '../../../routes/app_routes.dart';
-import '../../models/wellness/wellness_summary_model.dart';
+import '../../../theme/app_nutrient_theme.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/profile/profile_dashboard_model.dart';
+import '../../models/wellness/wellness_summary_model.dart';
 import '../../repositories/profile/profile_repository.dart';
 
 class WellnessController extends GetxController {
@@ -25,8 +26,8 @@ class WellnessController extends GetxController {
           target: '2000',
           unit: 'kcal',
           percentage: 0,
-          icon: Icons.local_fire_department_rounded,
-          color: Color(0xFFFF641E),
+          icon: AppNutrientTheme.caloriesIcon,
+          color: AppNutrientTheme.caloriesColor,
         ),
         const WellnessSummaryModel(
           name: 'Protein',
@@ -34,8 +35,8 @@ class WellnessController extends GetxController {
           target: '120',
           unit: 'g',
           percentage: 0,
-          icon: Icons.bolt_rounded,
-          color: Color(0xFF00A651),
+          icon: AppNutrientTheme.proteinIcon,
+          color: AppNutrientTheme.proteinColor,
         ),
         const WellnessSummaryModel(
           name: 'Carbohydrates',
@@ -43,8 +44,8 @@ class WellnessController extends GetxController {
           target: '205',
           unit: 'g',
           percentage: 0,
-          icon: Icons.grain_rounded,
-          color: Color(0xFFF59E0B),
+          icon: AppNutrientTheme.carbsIcon,
+          color: AppNutrientTheme.carbsColor,
         ),
         const WellnessSummaryModel(
           name: 'Fat',
@@ -52,8 +53,8 @@ class WellnessController extends GetxController {
           target: '78',
           unit: 'g',
           percentage: 0,
-          icon: Icons.opacity_rounded,
-          color: Color(0xFFF43F5E),
+          icon: AppNutrientTheme.fatIcon,
+          color: AppNutrientTheme.fatColor,
         ),
         const WellnessSummaryModel(
           name: 'Water',
@@ -61,8 +62,8 @@ class WellnessController extends GetxController {
           target: '8',
           unit: 'glasses',
           percentage: 0,
-          icon: Icons.water_drop_rounded,
-          color: Color(0xFF4FC3F7),
+          icon: AppNutrientTheme.waterIcon,
+          color: AppNutrientTheme.waterColor,
         ),
         const WellnessSummaryModel(
           name: 'Fiber',
@@ -70,8 +71,8 @@ class WellnessController extends GetxController {
           target: '25',
           unit: 'g',
           percentage: 0,
-          icon: Icons.air_rounded,
-          color: Color(0xFF9747FF),
+          icon: AppNutrientTheme.fiberIcon,
+          color: AppNutrientTheme.fiberColor,
         ),
         const WellnessSummaryModel(
           name: 'Sugar',
@@ -79,8 +80,8 @@ class WellnessController extends GetxController {
           target: '50',
           unit: 'g',
           percentage: 0,
-          icon: Icons.hexagon_rounded,
-          color: Color(0xFFFF5CB8),
+          icon: AppNutrientTheme.sugarIcon,
+          color: AppNutrientTheme.sugarColor,
           isLimit: true,
         ),
       ].obs;

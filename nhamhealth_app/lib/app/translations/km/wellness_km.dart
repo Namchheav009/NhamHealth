@@ -308,4 +308,41 @@ const Map<String, String> wellnessKm = {
       'ស្គាល់អ្វីដែលអ្នកញ៉ាំ រស់នៅជាមួយសុខភាពល្អ',
   'wellness.edit_detected_food': 'កែប្រែអាហារដែលបានរកឃើញ',
   'wellness.photography_tips': 'គន្លឹះថតរូបអាហារ',
+  'wellness.ai_detected_ingredients_subtitle':
+      'គ្រឿងផ្សំដែល AI បានរកឃើញពីមុខម្ហូបរបស់អ្នក',
+  'wellness.analyzed_by_ai': 'វិភាគដោយ AI',
+  'wellness.portion_prefix': 'ទំហំ៖ @portion',
+  'wellness.detected_ingredients': 'គ្រឿងផ្សំដែលបានរកឃើញ',
+  'wellness.ingredients_likely_inside':
+      'នេះជាគ្រឿងផ្សំដែលអាចមាននៅក្នុងម្ហូបរបស់អ្នក។',
+  'wellness.ingredients_found': 'រកឃើញ @count មុខ',
+  'wellness.high_confidence': 'ទំនុកចិត្តខ្ពស់',
+  'wellness.medium_confidence': 'ទំនុកចិត្តមធ្យម',
+  'wellness.low_confidence': 'ទំនុកចិត្តទាប',
+  'wellness.amount_label': 'បរិមាណ',
+  'wellness.review_and_adjust_ingredients':
+      'ពិនិត្យ និងកែសម្រួលគ្រឿងផ្សំប្រសិនបើចាំបាច់។',
+  'wellness.add_ingredient': 'បន្ថែមគ្រឿងផ្សំ',
+  'wellness.ingredient_role': 'តួនាទី / ប្រភេទ',
+  'wellness.plate_composition': 'សមាសភាពក្នុងចាន',
+  'wellness.macro_distribution_subtitle': 'តុល្យភាពថាមពលសារធាតុចិញ្ចឹម',
+  'wellness.high_protein_distribution': 'ប្រូតេអ៊ីនខ្ពស់',
+  'wellness.carb_focused_energy': 'ថាមពលកាបូអ៊ីដ្រាត',
+  'wellness.balanced_plate_distribution': 'ចានមានតុល្យភាពល្អ',
+  'wellness.protein': 'ប្រូតេអ៊ីន',
+  'wellness.fats': 'ខ្លាញ់',
+  'wellness.ingredient_insights': 'ការយល់ដឹង AI លើគ្រឿងផ្សំ',
+  'wellness.ingredient_insights_subtitle': 'ការសង្កេតពីគ្រឿងផ្សំដែលបានរកឃើញ',
+  'wellness.insight_cooking_oil_title': 'ប្រេងឆា & ខ្លាញ់បន្ថែម',
+  'wellness.insight_cooking_oil_desc':
+      'ប្រេងឆាបន្ថែមថាមពលប្រហែល ~@cals kcal ពេលចម្អិន។ ការកាត់បន្ថយប្រេងអាចជួយកាត់ ~80-120 kcal ដោយមិនបាត់បង់រសជាតិ។',
+  'wellness.insight_carb_title': '@name (ថាមពលកាបូអ៊ីដ្រាត)',
+  'wellness.insight_carb_desc':
+      'ផ្ដល់កាបូអ៊ីដ្រាតប្រហែល ~@carbs g សម្រាប់ថាមពលរាងកាយ។ ញ៉ាំជាមួយបន្លែដើម្បីជួយរក្សាលំនឹងជាតិស្ករ។',
+  'wellness.insight_protein_title': '@name (ប្រភពប្រូតេអ៊ីន)',
+  'wellness.insight_protein_desc':
+      'ផ្ដល់ប្រូតេអ៊ីនប្រហែល ~@protein g ដែលមានអាស៊ីតអាមីណូចាំបាច់សម្រាប់ការលូតលាស់ និងថែទាំសាច់ដុំ។',
+  'wellness.insight_veggie_boost_title': 'បន្ថែមបន្លែបៃតងស្រស់',
+  'wellness.insight_veggie_boost_desc':
+      'ការបង្កើនបន្លែបន្ថែមជាតិសរសៃ ប៉ូតាស្យូម និងវីតាមីន ដោយមិនបង្កើនកាឡូរីច្រើនឡើយ។',
 };

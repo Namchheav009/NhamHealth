@@ -1,11 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../models/home/recommended_meal_model.dart';
-import 'package:nhamhealth_flutter/app/translations/meal_localization_helpers.dart';
 
 class RecommendedMealCard extends StatelessWidget {
   const RecommendedMealCard({
@@ -119,8 +120,8 @@ class RecommendedMealCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(
-                              Icons.local_fire_department_rounded,
-                              color: AppColors.accentOrange,
+                              AppNutrientTheme.caloriesIcon,
+                              color: AppNutrientTheme.caloriesColor,
                               size: 13,
                             ),
                             const SizedBox(width: 2),
@@ -142,8 +143,8 @@ class RecommendedMealCard extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Icon(
-                                        Icons.fitness_center_rounded,
-                                        color: AppColors.primaryGreen,
+                                        AppNutrientTheme.proteinIcon,
+                                        color: AppNutrientTheme.proteinColor,
                                         size: 12,
                                       ),
                                       const SizedBox(width: 2),

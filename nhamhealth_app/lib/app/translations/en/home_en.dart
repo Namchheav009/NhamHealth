@@ -32,6 +32,12 @@ const Map<String, String> homeEn = {
   'home.ai_will_personalize_meals_for_this_mood':
       'AI will personalize meals for this mood.',
   'home.your_daily_wellness': 'Your Daily Wellness',
+  'home.quick_actions': 'Quick Actions',
+  'home.action_scan_food': 'Scan Food',
+  'home.action_log_water': 'Log Water',
+  'home.action_meal_plan': 'Meal Plan',
+  'home.action_explore_meals': 'Find Meals',
+  'home.scan_or_log_meal': 'Scan or Log Meal with AI',
   'home.how_are_you_feeling_today': 'How are you feeling today?',
   'home.no_moods_are_available_right_now': 'No moods are available right now.',
   'home.mood_mood': '@mood mood',

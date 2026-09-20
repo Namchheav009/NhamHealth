@@ -40,12 +40,19 @@ class MealPlannerController extends GetxController {
   final recommendationsError = ''.obs;
   final hasLoadedOnce = false.obs;
   final hasLoadedRecommendationsOnce = false.obs;
+  final imageRefreshKey = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
-    selectedDayIndex.value = DateTime.now().weekday - 1;
-    unawaited(refreshPlanner());
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final idx = planDays.indexWhere(
+      (d) =>
+          d.year == today.year && d.month == today.month && d.day == today.day,
+    );
+    selectedDayIndex.value =
+        idx >= 0 ? idx : (today.weekday - 1).clamp(0, planDaysCount.value - 1);
     unawaited(initPlanner());
   }
 
@@ -103,20 +110,28 @@ class MealPlannerController extends GetxController {
       if (savedStart != null) {
         final parsedDate = DateTime.tryParse(savedStart);
         if (parsedDate != null) {
-          customStartDate.value = DateTime(
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final start = DateTime(
             parsedDate.year,
             parsedDate.month,
             parsedDate.day,
           );
+          final end = start.add(Duration(days: planDaysCount.value - 1));
+          // If the custom start period has ended before today, clear it so the
+          // user always gets today's real-time date and week!
+          if (end.isBefore(today)) {
+            customStartDate.value = null;
+            await _storage.delete(key: startKey);
+          } else {
+            customStartDate.value = start;
+          }
         }
       }
     } catch (_) {
       // Secure storage read error ignored
     }
-    if (selectedDayIndex.value >= planDaysCount.value) {
-      selectedDayIndex.value = 0;
-    }
-    await refreshPlanner();
+    await syncToToday(forceRefresh: true);
   }
 
   DateTime get planStartDate {
@@ -178,14 +193,20 @@ class MealPlannerController extends GetxController {
   Iterable<PlannedMeal> get _currentPlanMeals =>
       planDays.expand((date) => mealsFor(date));
   int get planMealCount => _currentPlanMeals.length;
-  double get planProgress =>
-      planMealCount / (planDaysCount.value * dailyMealGoal);
+  double get planProgress {
+    final total = planDaysCount.value * dailyMealGoal;
+    if (total <= 0) return 0.0;
+    return (planMealCount / total).clamp(0.0, 1.0);
+  }
+
   bool get planIsEmpty => planMealCount == 0;
   bool get plansAreEmpty =>
       plans.isEmpty || plans.values.every((list) => list.isEmpty);
 
   int get weeklyMealCount => planMealCount;
   double get weeklyProgress => planProgress;
+  int get weeklyEatenMeals =>
+      _currentPlanMeals.where((m) => m.status == MealPlanStatus.eaten).length;
   bool get weekIsEmpty => planIsEmpty;
 
   List<GroceryItem> get groceryItems {
@@ -226,9 +247,26 @@ class MealPlannerController extends GetxController {
         .toList();
   }
 
+  /// Returns all available meals for this slot, prioritizing today's recommendations,
+  /// followed by other recommendations for this slot, or fallback to all meals.
+  List<PlannedMeal> availableMealsFor(MealPlanSlot slot) {
+    final todayRecs = suggestionsFor(slot);
+    final otherSlotMeals =
+        adminRecommendations
+            .where(
+              (meal) =>
+                  meal.slot == slot && !todayRecs.any((r) => r.id == meal.id),
+            )
+            .toList();
+    final combined = [...todayRecs, ...otherSlotMeals];
+    if (combined.isNotEmpty) return combined;
+    return adminRecommendations.toList();
+  }
+
   List<PlannerMealCategory> categoriesFor(MealPlanSlot slot) {
     final categories = <int, PlannerMealCategory>{};
-    for (final meal in suggestionsFor(slot)) {
+    final meals = availableMealsFor(slot);
+    for (final meal in meals) {
       final id = meal.categoryId;
       if (id == null || meal.category.isEmpty) continue;
       categories.putIfAbsent(
@@ -240,16 +278,35 @@ class MealPlannerController extends GetxController {
         ),
       );
     }
+    if (categories.isEmpty) {
+      for (final meal in adminRecommendations) {
+        final id = meal.categoryId;
+        if (id == null || meal.category.isEmpty) continue;
+        categories.putIfAbsent(
+          id,
+          () => PlannerMealCategory(
+            id: id,
+            name: meal.category,
+            imageUrl: meal.imageUrl,
+          ),
+        );
+      }
+    }
     final values =
         categories.values.toList()..sort((a, b) => a.name.compareTo(b.name));
     return values;
   }
 
-  Future<void> refreshPlanner() async =>
-      Future.wait([loadRecommendations(), loadWeek()]);
+  Future<void> refreshPlanner({bool force = false}) async {
+    imageRefreshKey.value++;
+    await Future.wait([
+      loadRecommendations(force: force),
+      loadWeek(force: force),
+    ]);
+  }
 
-  Future<void> loadRecommendations() async {
-    if (_provider == null || isLoadingRecommendations.value) return;
+  Future<void> loadRecommendations({bool force = false}) async {
+    if (_provider == null || (!force && isLoadingRecommendations.value)) return;
     isLoadingRecommendations.value = true;
     recommendationsError.value = '';
     try {
@@ -263,8 +320,8 @@ class MealPlannerController extends GetxController {
     }
   }
 
-  Future<void> loadWeek() async {
-    if (_provider == null || isLoading.value) return;
+  Future<void> loadWeek({bool force = false}) async {
+    if (_provider == null || (!force && isLoading.value)) return;
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -312,7 +369,7 @@ class MealPlannerController extends GetxController {
     }
   }
 
-  Future<void> loadPlan() => loadWeek();
+  Future<void> loadPlan({bool force = false}) => loadWeek(force: force);
 
   Future<void> selectDay(int index, {bool force = false}) async {
     if (index >= 0 && index < planDays.length) {
@@ -370,23 +427,39 @@ class MealPlannerController extends GetxController {
     unawaited(loadWeek());
   }
 
-  void goToToday() {
+  Future<void> syncToToday({bool forceRefresh = false}) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    customStartDate.value = null;
+    if (customStartDate.value != null) {
+      final end = customStartDate.value!.add(
+        Duration(days: planDaysCount.value - 1),
+      );
+      if (end.isBefore(today)) {
+        customStartDate.value = null;
+        unawaited(() async {
+          try {
+            final startKey = await _userScopedKey(_storageStartDateKey);
+            await _storage.delete(key: startKey);
+          } catch (_) {}
+        }());
+      }
+    }
     weekOffset.value = 0;
-    unawaited(() async {
-      try {
-        final startKey = await _userScopedKey(_storageStartDateKey);
-        await _storage.delete(key: startKey);
-      } catch (_) {}
-    }());
     final idx = planDays.indexWhere(
       (d) =>
           d.year == today.year && d.month == today.month && d.day == today.day,
     );
-    selectedDayIndex.value = idx >= 0 ? idx : 0;
-    unawaited(loadWeek());
+    selectedDayIndex.value =
+        idx >= 0 ? idx : (today.weekday - 1).clamp(0, planDaysCount.value - 1);
+    imageRefreshKey.value++;
+    if (forceRefresh || !hasLoadedOnce.value) {
+      await refreshPlanner(force: true);
+      await loadDayMeals(selectedDate, force: true);
+    }
+  }
+
+  void goToToday() {
+    unawaited(syncToToday(forceRefresh: true));
   }
 
   void goToDate(DateTime target) {
@@ -446,19 +519,30 @@ class MealPlannerController extends GetxController {
     }
   }
 
-  Future<bool> addMeal(PlannedMeal meal, {double servings = 1}) async {
+  Future<bool> addMeal(
+    PlannedMeal meal, {
+    double servings = 1,
+    MealPlanSlot? targetSlot,
+  }) async {
     if (isSaving.value) return false;
+    final slotToUse = targetSlot ?? meal.slot;
     final key = _dateKey(selectedDate);
     final previous = List<PlannedMeal>.from(plans[key] ?? const []);
-    final optimistic = meal.copyWith(
+    final mealWithSlot = meal.copyWith(
+      slot: slotToUse,
       planDate: selectedDate,
       servings: servings,
     );
-    _put(key, optimistic);
+    _put(key, mealWithSlot);
     if (_provider == null) return true;
     isSaving.value = true;
     try {
-      _put(key, await _provider.saveMeal(selectedDate, meal, servings));
+      final saved = await _provider.saveMeal(
+        selectedDate,
+        mealWithSlot,
+        servings,
+      );
+      _put(key, saved.copyWith(slot: slotToUse));
       return true;
     } catch (_) {
       plans[key] = previous;
@@ -479,8 +563,10 @@ class MealPlannerController extends GetxController {
   }) async {
     final provider = _provider;
     final planId = current.planId;
+    final slotToUse = current.slot;
+    final repWithSlot = replacement.copyWith(slot: slotToUse);
     if (provider == null || planId == null) {
-      return addMeal(replacement, servings: servings);
+      return addMeal(repWithSlot, servings: servings, targetSlot: slotToUse);
     }
     isSaving.value = true;
     try {
@@ -489,7 +575,13 @@ class MealPlannerController extends GetxController {
         mealId: replacement.id,
         servings: servings,
       );
-      _put(_dateKey(selectedDate), saved);
+      final key = _dateKey(selectedDate);
+      final updated = List<PlannedMeal>.from(plans[key] ?? const [])
+        ..removeWhere((m) => m.slot == slotToUse || m.planId == planId);
+      final finalMeal = saved.copyWith(slot: slotToUse);
+      updated.add(finalMeal);
+      updated.sort((a, b) => a.slot.index.compareTo(b.slot.index));
+      plans[key] = updated;
       return true;
     } catch (_) {
       await AppAlert.actionError(
@@ -616,8 +708,11 @@ class MealPlannerController extends GetxController {
   }
 
   void _put(String key, PlannedMeal meal) {
-    final updated = List<PlannedMeal>.from(plans[key] ?? const [])
-      ..removeWhere((m) => m.slot == meal.slot);
+    final updated = List<PlannedMeal>.from(plans[key] ?? const [])..removeWhere(
+      (m) =>
+          m.slot == meal.slot ||
+          (meal.planId != null && m.planId == meal.planId),
+    );
     updated.add(meal);
     updated.sort((a, b) => a.slot.index.compareTo(b.slot.index));
     plans[key] = updated;

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
 import '../../../../widgets/inner_shadow.dart';
 import '../../../controllers/home/home_controller.dart';
 import 'nutrition_progress_card.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class DailySummaryCard extends GetView<HomeController> {
   const DailySummaryCard({super.key});
@@ -18,15 +19,19 @@ class DailySummaryCard extends GetView<HomeController> {
       final nutrients = [
         (
           summary.calories,
-          Icons.local_fire_department_rounded,
-          const Color(0xFFFF6A24),
+          AppNutrientTheme.caloriesIcon,
+          AppNutrientTheme.caloriesColor,
         ),
         (
           summary.protein,
-          Icons.energy_savings_leaf_rounded,
-          const Color(0xFF00B85C),
+          AppNutrientTheme.proteinIcon,
+          AppNutrientTheme.proteinColor,
         ),
-        (summary.sugar, Icons.hexagon_rounded, const Color(0xFFFF5CB8)),
+        (
+          summary.sugar,
+          AppNutrientTheme.sugarIcon,
+          AppNutrientTheme.sugarColor,
+        ),
       ];
 
       return Container(
@@ -192,7 +197,7 @@ class DailySummaryCard extends GetView<HomeController> {
                         Expanded(
                           child: NutritionProgressCard(
                             key: ValueKey<String>(
-                              'home-wellness-${nutrients[index].$1.title.toLowerCase()}',
+                              'home-wellness-${nutrients[index].$1.title.split('.').last.toLowerCase()}',
                             ),
                             data: nutrients[index].$1,
                             icon: nutrients[index].$2,

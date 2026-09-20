@@ -33,6 +33,12 @@ const Map<String, String> homeKm = {
   'home.ai_will_personalize_meals_for_this_mood':
       'AI នឹងរៀបចំអាហារឱ្យសមនឹងអារម្មណ៍នេះ។',
   'home.your_daily_wellness': 'សុខភាពប្រចាំថ្ងៃរបស់អ្នក',
+  'home.quick_actions': 'សកម្មភាពរហ័ស',
+  'home.action_scan_food': 'ស្កេនអាហារ',
+  'home.action_log_water': 'ថែមទឹក',
+  'home.action_meal_plan': 'គម្រោងអាហារ',
+  'home.action_explore_meals': 'រកមុខម្ហូប',
+  'home.scan_or_log_meal': 'ស្កេន ឬកត់ត្រាអាហារ AI',
   'home.how_are_you_feeling_today': 'ថ្ងៃនេះអ្នកមានអារម្មណ៍យ៉ាងដូចម្តេច?',
   'home.no_moods_are_available_right_now': 'មិនមានជម្រើសអារម្មណ៍នៅពេលនេះទេ។',
   'home.mood_mood': 'អារម្មណ៍ @mood',

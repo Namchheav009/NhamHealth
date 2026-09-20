@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
@@ -7,7 +10,9 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/wellness/ai_food_controller.dart';
+import '../../services/wellness/ingredient_visual_service.dart';
 import 'widgets/multi_item_plate_card.dart';
+import 'widgets/plate_ai_insights_card.dart';
 
 class PlateBreakdownView extends StatelessWidget {
   const PlateBreakdownView({super.key, this.controller});
@@ -36,15 +41,11 @@ class PlateBreakdownView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // App Bar
+                  // App Bar / Top Navigation
                   Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontal,
-                      14,
-                      horizontal,
-                      10,
-                    ),
+                    padding: EdgeInsets.fromLTRB(horizontal, 12, horizontal, 8),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         AppBackButton(
                           buttonKey: const ValueKey(
@@ -52,7 +53,7 @@ class PlateBreakdownView extends StatelessWidget {
                           ),
                           onPressed: Get.back,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,28 +62,21 @@ class PlateBreakdownView extends StatelessWidget {
                               Text(
                                 'wellness.plate_items'.tr,
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.2,
+                                  letterSpacing: -0.4,
                                   color: context.appText,
                                 ),
                               ),
-                              const SizedBox(height: 1),
-                              Obx(() {
-                                final count = _ctrl.plateItems.length;
-                                final selected =
-                                    _ctrl.plateItems
-                                        .where((i) => i.isSelected)
-                                        .length;
-                                return Text(
-                                  '$selected of $count items selected',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: context.appMutedText,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                );
-                              }),
+                              const SizedBox(height: 2),
+                              Text(
+                                'wellness.ai_detected_ingredients_subtitle'.tr,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.appMutedText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -90,114 +84,70 @@ class PlateBreakdownView extends StatelessWidget {
                     ),
                   ),
 
-                  // Body
+                  // Scrollable Body
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
                         horizontal,
-                        6,
+                        8,
                         horizontal,
                         24,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Summary Card
-                          Obx(() {
-                            final nut = _ctrl.nutrition.value;
-                            if (nut == null) return const SizedBox.shrink();
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 14),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: context.appElevatedSurface,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: context.appBorder),
-                                boxShadow: context.appCardShadow,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 46,
-                                    height: 46,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          isDark
-                                              ? const Color(0xFF143021)
-                                              : const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.pie_chart_rounded,
-                                      color: green,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          nut.mealName.isNotEmpty
-                                              ? nut.mealName
-                                              : nut.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w800,
-                                            color: context.appText,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${nut.calories.round()} kcal • ${nut.protein.round()}g P • ${nut.carbs.round()}g C • ${nut.fat.round()}g F',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: context.appMutedText,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
+                          // Item Summary Card
+                          Obx(() => _buildItemSummaryCard(context)),
 
-                          // The multi-item plate breakdown editor
+                          const SizedBox(height: 14),
+
+                          // Detected ingredients Card
                           MultiItemPlateCard(controller: _ctrl),
+
+                          const SizedBox(height: 14),
+
+                          // Plate AI Insights Card
+                          PlateAiInsightsCard(controller: _ctrl),
                         ],
                       ),
                     ),
                   ),
 
-                  // Bottom bar with Done button
+                  // Bottom Sticky Done Button
                   Container(
                     padding: EdgeInsets.fromLTRB(
                       horizontal,
-                      10,
+                      12,
                       horizontal,
-                      14,
+                      16,
                     ),
                     decoration: BoxDecoration(
-                      color: context.appElevatedSurface,
-                      border: Border(top: BorderSide(color: context.appBorder)),
+                      color: isDark ? context.appSurface : Colors.white,
+                      border: Border(
+                        top: BorderSide(
+                          color: context.appBorder.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.03,
+                          ),
+                          blurRadius: 10,
+                          offset: const Offset(0, -3),
+                        ),
+                      ],
                     ),
                     child: ElevatedButton(
+                      key: const ValueKey('plate-breakdown-done-button'),
                       onPressed: Get.back,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: green,
                         foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(50),
+                        minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(26),
                         ),
                         elevation: 0,
                       ),
@@ -206,6 +156,7 @@ class PlateBreakdownView extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
@@ -216,6 +167,332 @@ class PlateBreakdownView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildItemSummaryCard(BuildContext context) {
+    final nut = _ctrl.nutrition.value;
+    if (nut == null) return const SizedBox.shrink();
+
+    final isDark = context.appIsDark;
+    final displayName = nut.mealName.isNotEmpty ? nut.mealName : nut.name;
+    final selectedFile = _ctrl.selectedImage.value;
+
+    // Determine current general portion from plate items
+    final portionLabel = _resolveCurrentPortionLabel();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF132A1C) : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1F4D33) : const Color(0xFFDCFCE7),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Food Thumbnail
+          _buildItemThumbnail(context, selectedFile, displayName),
+
+          const SizedBox(width: 12),
+
+          // Meal Name, Macros & AI Badge
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: context.appText,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${nut.protein.round()}g P  •  ${nut.carbs.round()}g C  •  ${nut.fat.round()}g F',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: context.appMutedText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Analyzed by AI Pill
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        isDark
+                            ? green.withValues(alpha: 0.22)
+                            : const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.eco_rounded, size: 13, color: green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'wellness.analyzed_by_ai'.tr,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? const Color(0xFF4ADE80) : greenDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Portion Dropdown Pill Button
+          InkWell(
+            onTap: () => _showGlobalPortionSheet(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? context.appSurface : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color:
+                      isDark
+                          ? const Color(0xFF2E6B47)
+                          : const Color(0xFF86EFAC),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'wellness.portion_prefix'.trParams({
+                      'portion': portionLabel,
+                    }),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFF4ADE80) : greenDark,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF4ADE80) : greenDark,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemThumbnail(
+    BuildContext context,
+    File? selectedFile,
+    String mealName,
+  ) {
+    const double size = 62;
+    final isDark = context.appIsDark;
+
+    if (selectedFile != null && selectedFile.existsSync()) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.file(
+          selectedFile,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    final visual = IngredientVisualService.resolve(mealName);
+    final url = visual.imageUrl;
+
+    if (url != null && url.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: CachedNetworkImage(
+          imageUrl: url,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          placeholder:
+              (_, _) => Container(
+                width: size,
+                height: size,
+                color: isDark ? context.appSurfaceLow : visual.backgroundColor,
+                child: Center(
+                  child: Icon(
+                    visual.fallbackIcon,
+                    color: visual.iconColor,
+                    size: 26,
+                  ),
+                ),
+              ),
+          errorWidget:
+              (_, _, _) => Container(
+                width: size,
+                height: size,
+                color: isDark ? context.appSurfaceLow : visual.backgroundColor,
+                child: Center(
+                  child: Icon(
+                    visual.fallbackIcon,
+                    color: visual.iconColor,
+                    size: 26,
+                  ),
+                ),
+              ),
+        ),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: isDark ? context.appSurfaceLow : const Color(0xFFDCFCE7),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Icon(Icons.restaurant_rounded, color: green, size: 28),
+      ),
+    );
+  }
+
+  String _resolveCurrentPortionLabel() {
+    if (_ctrl.plateItems.isEmpty) return 'Regular';
+    final avg =
+        _ctrl.plateItems.fold<double>(
+          0.0,
+          (sum, item) => sum + item.portionMultiplier,
+        ) /
+        _ctrl.plateItems.length;
+
+    if (avg <= 0.6) return 'Small';
+    if (avg <= 1.2) return 'Regular';
+    if (avg <= 1.7) return 'Large';
+    return 'XL';
+  }
+
+  void _showGlobalPortionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.appSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: context.appBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'wellness.choose_plate_size'.tr,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: context.appText,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _portionOptionTile(
+                  context: sheetContext,
+                  label: 'wellness.portion_small_short'.tr,
+                  multiplier: 0.5,
+                  desc: 'wellness.portion_small_desc'.tr,
+                ),
+                _portionOptionTile(
+                  context: sheetContext,
+                  label: 'wellness.portion_regular_short'.tr,
+                  multiplier: 1.0,
+                  desc: 'wellness.portion_regular_desc'.tr,
+                ),
+                _portionOptionTile(
+                  context: sheetContext,
+                  label: 'wellness.portion_large_short'.tr,
+                  multiplier: 1.5,
+                  desc: 'wellness.portion_large_desc'.tr,
+                ),
+                _portionOptionTile(
+                  context: sheetContext,
+                  label: 'wellness.portion_xlarge_short'.tr,
+                  multiplier: 2.0,
+                  desc: 'wellness.portion_xlarge_desc'.tr,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _portionOptionTile({
+    required BuildContext context,
+    required String label,
+    required double multiplier,
+    required String desc,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        '$label (${multiplier}x)',
+        style: TextStyle(fontWeight: FontWeight.w700, color: context.appText),
+      ),
+      subtitle: Text(
+        desc,
+        style: TextStyle(fontSize: 12, color: context.appMutedText),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: green),
+      onTap: () {
+        for (var i = 0; i < _ctrl.plateItems.length; i++) {
+          _ctrl.updatePlateItemPortion(i, multiplier);
+        }
+        Navigator.pop(context);
+      },
     );
   }
 }

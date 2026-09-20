@@ -70,15 +70,22 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             when the defining ingredients or preparation are not visible. Candidate names must be
             meaningfully different food identities, not spelling variants or synonyms.
 
-            Partition all consumable content into non-overlapping nutrition components. Never
-            return a whole dish and also return ingredients already included in that dish. Use one
-            whole-dish component when its ingredients cannot be visually portioned; otherwise use
-            separately visible sides or toppings without also returning the whole dish. Do not list
-            a sauce, dip, spread, topping, or garnish separately unless it has a distinct visible
-            portion that can be estimated without double counting. Readable packaging may support
-            identity and labelled serving size, but do not list plates, cups, bottles, cans,
-            utensils, napkins, packaging, shadows, non-edible decorations, medicines, or pet food
-            as components. Do not list ice as a component or include it in beverage volume.
+            Partition all consumable content into non-overlapping nutrition components. For plated
+            meals and composite dishes (such as fried rice, noodle dishes, stir-fries, bowls, burgers,
+            sandwiches, or curries), itemize the visible constituent ingredients and culinary components
+            (for example: the carb/grain base such as cooked rice or noodles, main protein such as egg,
+            chicken, beef or tofu, cooking oil/fat used in preparation, visible vegetables/scallions, and
+            distinct sauces or garnishes) so the user can accurately inspect and adjust individual ingredients.
+            Never double-count: when itemizing the ingredients of a composite dish, do NOT also list the
+            overall dish title as a component alongside its ingredients (e.g. if mealName is "Fried Rice",
+            components must be "Cooked jasmine rice", "Scrambled egg", "Vegetable cooking oil",
+            "Spring onions", etc. — NEVER include "Fried Rice" as an ingredient component when its ingredients
+            are listed). The total estimated amounts of the ingredients should realistically sum to the overall
+            dish portion. For single-ingredient or simple uniform foods (such as a plain apple, a boiled egg,
+            a plain slice of bread, or plain yogurt), return that single food item as the sole component.
+            Do not list plates, cups, bottles, cans, utensils, napkins, packaging, shadows, non-edible
+            decorations, medicines, or pet food as components. Do not list ice as a component or include
+            it in beverage volume.
 
             Estimate each component's visible amount using plate, bowl, glass, utensil, packaging,
             fill level, and scale cues. Estimate liquid volume excluding ice, foam, and empty

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
@@ -16,6 +17,7 @@ import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/recommended_meal_model.dart';
 import '../../models/meals/meal_model.dart';
 import '../../repositories/home/home_repository.dart';
+import '../../repositories/profile/profile_repository.dart';
 import '../../services/auth/google_auth_service.dart';
 
 class HomeController extends GetxController {
@@ -195,8 +197,10 @@ class HomeController extends GetxController {
       isLoading.value = true;
       final result = await repository.getHomeDashboard(date: date);
       _summariesByDay[key] = result.dailySummary;
-      _showSelectedDay();
+    } catch (_) {
+      _summariesByDay[key] = _emptySummary;
     } finally {
+      _showSelectedDay();
       isLoading.value = false;
     }
   }
@@ -221,6 +225,41 @@ class HomeController extends GetxController {
       sugar: _increment(current.sugar, sugar),
     );
     if (_dayKey(selectedDay.value) == key) _showSelectedDay();
+  }
+
+  final isQuickLoggingWater = false.obs;
+
+  Future<void> quickLogWater([double glasses = 1.0]) async {
+    if (isQuickLoggingWater.value) return;
+    isQuickLoggingWater.value = true;
+    try {
+      HapticFeedback.lightImpact();
+    } catch (_) {}
+    addNutritionToToday(calories: 0, protein: 0, water: glasses);
+    try {
+      final auth =
+          Get.isRegistered<AuthService>()
+              ? Get.find<AuthService>()
+              : AuthService();
+      final profileRepo =
+          Get.isRegistered<ProfileRepository>()
+              ? Get.find<ProfileRepository>()
+              : ProfileRepository(authService: auth);
+      await profileRepo.addDailyNutrition(
+        water: glasses,
+        date: selectedDay.value,
+      );
+      AppAlert.success(
+        title: 'wellness.water_added_today',
+        message: 'wellness.water_count_added_one'.trParams({
+          'count': '${glasses.round()}',
+        }),
+      );
+    } catch (_) {
+      // Local state is already updated optimistically
+    } finally {
+      isQuickLoggingWater.value = false;
+    }
   }
 
   void _showSelectedDay() {

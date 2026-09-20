@@ -4,6 +4,7 @@ import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
 import '../../../models/wellness/food_nutrition_model.dart';
 import 'ai_food_amount_sheet.dart';
@@ -594,9 +595,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.local_fire_department_rounded,
-                  iconColor: const Color(0xFFFF6D3B),
-                  iconBg: const Color(0xFFFFECE5),
+                  icon: AppNutrientTheme.caloriesIcon,
+                  iconColor: AppNutrientTheme.caloriesColor,
+                  iconBg: AppNutrientTheme.caloriesBg,
                   value: '${food.calories.round()} kcal',
                   label: 'wellness.calories'.tr,
                 ),
@@ -605,9 +606,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.fitness_center_rounded,
-                  iconColor: const Color(0xFF2F80ED),
-                  iconBg: const Color(0xFFE8F2FF),
+                  icon: AppNutrientTheme.proteinIcon,
+                  iconColor: AppNutrientTheme.proteinColor,
+                  iconBg: AppNutrientTheme.proteinBg,
                   value: '${food.protein.toStringAsFixed(1)} g',
                   label: 'wellness.protein'.tr,
                 ),
@@ -620,9 +621,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.grain_rounded,
-                  iconColor: const Color(0xFFE5A100),
-                  iconBg: const Color(0xFFFFF7E6),
+                  icon: AppNutrientTheme.carbsIcon,
+                  iconColor: AppNutrientTheme.carbsColor,
+                  iconBg: AppNutrientTheme.carbsBg,
                   value: '${food.carbs.toStringAsFixed(1)} g',
                   label: 'wellness.carbs'.tr,
                 ),
@@ -631,9 +632,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.water_drop_rounded,
-                  iconColor: const Color(0xFFEB5757),
-                  iconBg: const Color(0xFFFFECEE),
+                  icon: AppNutrientTheme.fatIcon,
+                  iconColor: AppNutrientTheme.fatColor,
+                  iconBg: AppNutrientTheme.fatBg,
                   value: '${food.fat.toStringAsFixed(1)} g',
                   label: 'wellness.fat'.tr,
                 ),
@@ -646,9 +647,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.view_in_ar_rounded,
-                  iconColor: const Color(0xFF9333EA),
-                  iconBg: const Color(0xFFF3E8FF),
+                  icon: AppNutrientTheme.sugarIcon,
+                  iconColor: AppNutrientTheme.sugarColor,
+                  iconBg: AppNutrientTheme.sugarBg,
                   value: '${food.sugar.toStringAsFixed(1)} g',
                   label: 'wellness.sugar'.tr,
                 ),
@@ -657,9 +658,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.eco_rounded,
-                  iconColor: const Color(0xFF22C55E),
-                  iconBg: const Color(0xFFE8F8EE),
+                  icon: AppNutrientTheme.fiberIcon,
+                  iconColor: AppNutrientTheme.fiberColor,
+                  iconBg: AppNutrientTheme.fiberBg,
                   value: '${food.fiber.toStringAsFixed(1)} g',
                   label: 'wellness.fiber'.tr,
                 ),
@@ -672,9 +673,9 @@ class AiFoodNutritionResultContent extends StatelessWidget {
               Expanded(
                 child: _metricBox(
                   context,
-                  icon: Icons.water_drop_rounded,
-                  iconColor: const Color(0xFF0284C7),
-                  iconBg: const Color(0xFFE0F2FE),
+                  icon: AppNutrientTheme.waterIcon,
+                  iconColor: AppNutrientTheme.waterColor,
+                  iconBg: AppNutrientTheme.waterBg,
                   value:
                       food.requiresDrinkDetails || food.mealType == 'drink'
                           ? '${controller.selectedAmount.round()} ml'

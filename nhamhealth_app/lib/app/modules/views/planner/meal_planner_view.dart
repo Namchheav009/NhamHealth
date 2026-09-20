@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_nutrient_theme.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
@@ -20,8 +21,40 @@ String _plannerLabel(String key, String fallback) {
   return translated == key ? fallback : translated;
 }
 
-class MealPlannerView extends GetView<MealPlannerController> {
+class MealPlannerView extends StatefulWidget {
   const MealPlannerView({super.key});
+
+  @override
+  State<MealPlannerView> createState() => _MealPlannerViewState();
+}
+
+class _MealPlannerViewState extends State<MealPlannerView>
+    with WidgetsBindingObserver {
+  MealPlannerController get controller => Get.find<MealPlannerController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        controller.syncToToday(forceRefresh: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      controller.syncToToday(forceRefresh: true);
+    }
+  }
 
   static const _days = [
     'planner.mon',
@@ -58,7 +91,7 @@ class MealPlannerView extends GetView<MealPlannerController> {
             Expanded(
               child: Obx(
                 () => RefreshIndicator(
-                  onRefresh: controller.refreshPlanner,
+                  onRefresh: () => controller.refreshPlanner(force: true),
                   color: AppColors.primaryGreen,
                   child: ListView(
                     padding: EdgeInsets.fromLTRB(
@@ -188,118 +221,8 @@ class MealPlannerView extends GetView<MealPlannerController> {
     );
   }
 
-  Future<void> _confirmAutoFill(BuildContext context) async {
-    final confirmed = await showGeneralDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'planner.auto_fill'.tr,
-      barrierColor: Colors.black.withValues(alpha: 0.48),
-      transitionDuration: const Duration(milliseconds: 240),
-      pageBuilder:
-          (dialogContext, anim, secAnim) => Material(
-            type: MaterialType.transparency,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-                  decoration: BoxDecoration(
-                    color: dialogContext.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(26),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 28,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: dialogContext.appSoftGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome_rounded,
-                          color: AppColors.primaryGreen,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'planner.auto_fill'.tr,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: dialogContext.appText,
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'planner.auto_fill_confirm'.tr,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: dialogContext.appMutedText,
-                          fontSize: 13.5,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed:
-                                  () => Navigator.pop(dialogContext, false),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                side: BorderSide(
-                                  color: dialogContext.appBorder,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text('planner.cancel'.tr),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed:
-                                  () => Navigator.pop(dialogContext, true),
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                backgroundColor: AppColors.primaryGreen,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text('planner.auto_fill'.tr),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-    );
-
-    if (confirmed == true) {
-      await controller.autoFillPlan();
-    }
-  }
+  Future<void> _confirmAutoFill(BuildContext context) =>
+      showAutoFillConfirmDialog(context, controller);
 
   Widget _dateCard(BuildContext context) {
     final start = controller.weekStart;
@@ -981,17 +904,13 @@ class MealPlannerView extends GetView<MealPlannerController> {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: context.appSoftGreen,
                 child: const Icon(
-                  Icons.bar_chart_rounded,
-                  color: Colors.white,
-                  size: 22,
+                  Icons.eco_rounded,
+                  color: Color(0xFF43C756),
+                  size: 21,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1080,32 +999,32 @@ class MealPlannerView extends GetView<MealPlannerController> {
             children: [
               _macroCard(
                 context,
-                icon: Icons.local_fire_department_rounded,
-                iconColor: const Color(0xFFF59E0B),
+                icon: AppNutrientTheme.caloriesIcon,
+                iconColor: AppNutrientTheme.caloriesColor,
                 value: '${controller.selectedCalories}',
                 label: 'planner.kcal'.tr,
               ),
               _macroDivider(context),
               _macroCard(
                 context,
-                icon: Icons.water_drop_rounded,
-                iconColor: const Color(0xFF3B82F6),
+                icon: AppNutrientTheme.proteinIcon,
+                iconColor: AppNutrientTheme.proteinColor,
                 value: '${controller.selectedProtein.toStringAsFixed(0)}g',
                 label: 'planner.protein'.tr,
               ),
               _macroDivider(context),
               _macroCard(
                 context,
-                icon: Icons.blur_on_rounded,
-                iconColor: const Color(0xFF10B981),
+                icon: AppNutrientTheme.carbsIcon,
+                iconColor: AppNutrientTheme.carbsColor,
                 value: '${controller.selectedCarbs.toStringAsFixed(0)}g',
                 label: 'planner.carbs'.tr,
               ),
               _macroDivider(context),
               _macroCard(
                 context,
-                icon: Icons.opacity_rounded,
-                iconColor: const Color(0xFFF43F5E),
+                icon: AppNutrientTheme.fatIcon,
+                iconColor: AppNutrientTheme.fatColor,
                 value: '${controller.selectedFat.toStringAsFixed(0)}g',
                 label: 'planner.fat'.tr,
               ),
@@ -1530,7 +1449,11 @@ class MealPlannerView extends GetView<MealPlannerController> {
                         Get.back<void>();
                         Get.toNamed(
                           AppRoutes.mealPlannerDetail,
-                          arguments: {'meal': meal},
+                          arguments: {
+                            'meal': meal,
+                            'isAlreadyPlanned': true,
+                            'slot': meal.slot,
+                          },
                         );
                       },
                       context: context,
@@ -2085,159 +2008,6 @@ class MealPlannerView extends GetView<MealPlannerController> {
       return;
     }
 
-    final start = controller.weekStart;
-    final end = controller.weekDays.last;
-    final range =
-        '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}';
-
-    await showDialog<void>(
-      context: context,
-      builder:
-          (dialog) => Dialog(
-            backgroundColor: context.appElevatedSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      color: context.appMutedText,
-                      onPressed: () => Navigator.pop(dialog),
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.appBackground,
-                        shape: const CircleBorder(),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: context.appSoftGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        const Icon(
-                          Icons.shopping_basket_rounded,
-                          color: AppColors.primaryGreen,
-                          size: 40,
-                        ),
-                        Positioned(
-                          right: 14,
-                          bottom: 14,
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryGreen,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'planner.grocery_ready'.tr,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'planner.grocery_ready_help'.trParams({'range': range}),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: context.appMutedText,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.pop(dialog);
-                        Get.toNamed(AppRoutes.mealPlannerGrocery);
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                      child: Text('planner.view_grocery_list'.tr),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        controller.copyGroceryListToClipboard();
-                      },
-                      icon: const Icon(Icons.copy_rounded, size: 18),
-                      label: Text('planner.copy_list'.tr),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryGreen,
-                        side: const BorderSide(color: AppColors.primaryGreen),
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(dialog),
-                      style: TextButton.styleFrom(
-                        backgroundColor: context.appSoftGreen,
-                        foregroundColor: AppColors.primaryGreen,
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                      child: Text('planner.keep_planning'.tr),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-    );
+    Get.toNamed(AppRoutes.mealPlannerGrocery);
   }
 }

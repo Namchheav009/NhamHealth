@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/planner/meal_planner_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/planner/meal_plan.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/planner/meal_planner_provider.dart';
+import 'package:nhamhealth_flutter/app/modules/views/planner/planner_shared.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 class _FakeAuthService extends AuthService {
@@ -610,6 +611,222 @@ void main() {
       expect(bulkCallCount, 1);
       expect(singleSaveCallCount, 0);
       expect(capturedBulkItems.isNotEmpty, isTrue);
+    },
+  );
+
+  test('availableMealsFor and targetSlot meal planning flow operations', () async {
+    final controller = MealPlannerController();
+    final todayWeekday = controller.selectedDate.weekday;
+    final otherWeekday = todayWeekday == 7 ? 1 : todayWeekday + 1;
+
+    final todayBreakfast = PlannedMeal(
+      id: 201,
+      name: 'Today Breakfast',
+      calories: 350,
+      slot: MealPlanSlot.breakfast,
+      ingredients: const ['Eggs', 'Toast'],
+      recommendedWeekday: todayWeekday,
+      categoryId: 1,
+      category: 'Morning Healthy',
+    );
+    final otherDayBreakfast = PlannedMeal(
+      id: 202,
+      name: 'Other Day Breakfast',
+      calories: 320,
+      slot: MealPlanSlot.breakfast,
+      ingredients: const ['Oats'],
+      recommendedWeekday: otherWeekday,
+      categoryId: 2,
+      category: 'Quick Morning',
+    );
+    final lunchMeal = PlannedMeal(
+      id: 203,
+      name: 'Khmer Fried Rice',
+      calories: 550,
+      slot: MealPlanSlot.lunch,
+      ingredients: const ['Rice', 'Vegetables'],
+      recommendedWeekday: todayWeekday,
+      categoryId: 3,
+      category: 'Rice & Noodles',
+    );
+
+    controller.adminRecommendations.addAll([
+      todayBreakfast,
+      otherDayBreakfast,
+      lunchMeal,
+    ]);
+
+    // 1. availableMealsFor returns both today's recommendation and other day recommendation for breakfast
+    final breakfastAvailable = controller.availableMealsFor(
+      MealPlanSlot.breakfast,
+    );
+    expect(breakfastAvailable.length, 2);
+    expect(breakfastAvailable.first.id, todayBreakfast.id);
+    expect(breakfastAvailable.last.id, otherDayBreakfast.id);
+
+    // 2. categoriesFor returns categories derived from available meals
+    final breakfastCategories = controller.categoriesFor(
+      MealPlanSlot.breakfast,
+    );
+    expect(breakfastCategories.any((c) => c.name == 'Morning Healthy'), isTrue);
+    expect(breakfastCategories.any((c) => c.name == 'Quick Morning'), isTrue);
+
+    // 3. Fallback when a slot has no recommendations: returns all catalog recommendations
+    final snackAvailable = controller.availableMealsFor(MealPlanSlot.snack);
+    expect(snackAvailable.isNotEmpty, isTrue);
+
+    // 4. addMeal with targetSlot: user chooses a Lunch template meal for Dinner slot
+    final added = await controller.addMeal(
+      lunchMeal,
+      targetSlot: MealPlanSlot.dinner,
+      servings: 2,
+    );
+    expect(added, isTrue);
+    final dinnerMeal = controller.mealFor(MealPlanSlot.dinner);
+    expect(dinnerMeal, isNotNull);
+    expect(dinnerMeal!.name, lunchMeal.name);
+    expect(dinnerMeal.slot, MealPlanSlot.dinner);
+    expect(dinnerMeal.servings, 2);
+
+    // Ensure lunch slot was not overwritten
+    expect(controller.mealFor(MealPlanSlot.lunch), isNull);
+
+    // 5. replaceMeal replaces the meal in the exact slot
+    final replaced = await controller.replaceMeal(
+      dinnerMeal,
+      todayBreakfast,
+      servings: 1,
+    );
+    expect(replaced, isTrue);
+    final updatedDinner = controller.mealFor(MealPlanSlot.dinner);
+    expect(updatedDinner, isNotNull);
+    expect(updatedDinner!.name, todayBreakfast.name);
+    expect(updatedDinner.slot, MealPlanSlot.dinner);
+    expect(updatedDinner.servings, 1);
+  });
+
+  test(
+    'syncToToday resets to today, clears expired custom dates, and increments imageRefreshKey',
+    () async {
+      final controller = MealPlannerController();
+      final initialImageKey = controller.imageRefreshKey.value;
+
+      // Simulate moving to next week and picking day index 5
+      controller.changeWeek(2);
+      controller.selectedDayIndex.value = 4;
+      expect(controller.weekOffset.value, 2);
+      expect(controller.selectedDayIndex.value, 4);
+
+      // Call syncToToday
+      await controller.syncToToday(forceRefresh: false);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      expect(controller.weekOffset.value, 0);
+      expect(controller.selectedDate.year, today.year);
+      expect(controller.selectedDate.month, today.month);
+      expect(controller.selectedDate.day, today.day);
+      expect(controller.imageRefreshKey.value, greaterThan(initialImageKey));
+    },
+  );
+
+  test('PlannedMeal.fromJson parses images from alternative backend keys', () {
+    final meal1 = PlannedMeal.fromJson({
+      'mealId': 10,
+      'mealName': 'Salmon Salad',
+      'mainImageUrl': '/uploads/meals/salmon.webp',
+      'mealType': 'LUNCH',
+    });
+    expect(meal1.imageUrl, '/uploads/meals/salmon.webp');
+
+    final meal2 = PlannedMeal.fromJson({
+      'mealId': 11,
+      'mealName': 'Berry Smoothie',
+      'image': 'https://cdn.example.com/smoothie.jpg',
+      'mealType': 'BREAKFAST',
+    });
+    expect(meal2.imageUrl, 'https://cdn.example.com/smoothie.jpg');
+
+    final meal3 = PlannedMeal.fromJson({
+      'mealId': 12,
+      'mealName': 'Chicken Rice',
+      'thumbnail': 'assets/images/meals/chicken.jpg',
+      'mealType': 'DINNER',
+    });
+    expect(meal3.imageUrl, 'assets/images/meals/chicken.jpg');
+  });
+
+  test(
+    'plannerImageUrl resolves localhost, relative paths, and assets properly',
+    () {
+      expect(
+        plannerImageUrl('assets/images/test.jpg'),
+        'assets/images/test.jpg',
+      );
+      expect(plannerImageUrl(''), '');
+
+      final localhostUrl = plannerImageUrl(
+        'http://localhost:8080/uploads/meals/food.jpg',
+      );
+      expect(localhostUrl.contains('localhost:8080'), isFalse);
+      expect(localhostUrl.endsWith('/uploads/meals/food.jpg'), isTrue);
+
+      final relativeUrl = plannerImageUrl('/uploads/meals/soup.png');
+      expect(relativeUrl.endsWith('/uploads/meals/soup.png'), isTrue);
+      expect(relativeUrl.startsWith('http'), isTrue);
+    },
+  );
+
+  test(
+    'weeklyProgress and weeklyEatenMeals accurately reflect planned and eaten meals',
+    () {
+      final controller = MealPlannerController(
+        provider: MealPlannerProvider(
+          authService: _FakeAuthService(),
+          client: MockClient((_) async => http.Response('[]', 200)),
+        ),
+      );
+
+      final monday = controller.weekDays.first;
+      final mondayKey =
+          '${monday.year.toString().padLeft(4, '0')}-${monday.month.toString().padLeft(2, '0')}-${monday.day.toString().padLeft(2, '0')}';
+
+      expect(controller.weeklyMealCount, 0);
+      expect(controller.weeklyProgress, 0.0);
+      expect(controller.weeklyEatenMeals, 0);
+
+      // Add one planned meal
+      controller.plans[mondayKey] = [
+        const PlannedMeal(
+          id: 1,
+          name: 'Oatmeal',
+          slot: MealPlanSlot.breakfast,
+          calories: 320,
+          status: MealPlanStatus.planned,
+          ingredients: ['Oats'],
+        ),
+      ];
+
+      expect(controller.weeklyMealCount, 1);
+      expect(controller.weeklyEatenMeals, 0);
+      expect(controller.weeklyProgress, greaterThan(0.0));
+      expect(controller.weeklyProgress, lessThanOrEqualTo(1.0));
+
+      // Add an eaten meal
+      controller.plans[mondayKey] = [
+        ...controller.plans[mondayKey]!,
+        const PlannedMeal(
+          id: 2,
+          name: 'Chicken Rice',
+          slot: MealPlanSlot.lunch,
+          calories: 550,
+          status: MealPlanStatus.eaten,
+          ingredients: ['Chicken', 'Rice'],
+        ),
+      ];
+
+      expect(controller.weeklyMealCount, 2);
+      expect(controller.weeklyEatenMeals, 1);
     },
   );
 }

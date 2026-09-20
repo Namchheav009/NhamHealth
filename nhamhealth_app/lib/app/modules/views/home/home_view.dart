@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_background.dart';
@@ -14,6 +13,7 @@ import 'widgets/daily_summary_card.dart';
 import 'widgets/greeting_section.dart';
 import 'widgets/home_bottom_navigation.dart';
 import 'widgets/home_header.dart';
+import 'widgets/home_quick_actions.dart';
 import 'widgets/recommended_meal_card.dart';
 import 'widgets/time_greeting.dart';
 
@@ -116,11 +116,11 @@ class _HomeDashboardContent extends StatelessWidget {
             children: [
               RepaintBoundary(child: TimeGreeting()),
               SizedBox(height: 14),
-              RepaintBoundary(child: GreetingSection()),
-              SizedBox(height: 14),
-              RepaintBoundary(child: _MealPlannerCard()),
+              RepaintBoundary(child: HomeQuickActions()),
               SizedBox(height: 14),
               RepaintBoundary(child: DailySummaryCard()),
+              SizedBox(height: 14),
+              RepaintBoundary(child: GreetingSection()),
               SizedBox(height: 14),
               RepaintBoundary(child: AiRecommendationCard()),
               RepaintBoundary(child: _RecommendedMealsSection()),
@@ -132,6 +132,10 @@ class _HomeDashboardContent extends StatelessWidget {
           key: ValueKey<String>('home-tablet-layout'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            RepaintBoundary(child: TimeGreeting()),
+            SizedBox(height: 16),
+            RepaintBoundary(child: HomeQuickActions()),
+            SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -139,8 +143,6 @@ class _HomeDashboardContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RepaintBoundary(child: TimeGreeting()),
-                      SizedBox(height: 16),
                       RepaintBoundary(child: GreetingSection()),
                       SizedBox(height: 16),
                       RepaintBoundary(child: AiRecommendationCard()),
@@ -150,9 +152,8 @@ class _HomeDashboardContent extends StatelessWidget {
                 SizedBox(width: 16),
                 Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RepaintBoundary(child: _MealPlannerCard()),
-                      SizedBox(height: 16),
                       RepaintBoundary(child: DailySummaryCard()),
                       RepaintBoundary(child: _RecommendedMealsSection()),
                     ],
@@ -163,93 +164,6 @@ class _HomeDashboardContent extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _MealPlannerCard extends StatelessWidget {
-  const _MealPlannerCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: const ValueKey('home-meal-planner-card'),
-        onTap: () => Get.toNamed<void>(AppRoutes.mealPlanner),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.appBorder),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [context.appSoftGreen, context.appElevatedSurface],
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_rounded,
-                  color: Colors.white,
-                  size: 27,
-                ),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'planner.plan_your_week'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'planner.home_description'.tr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 10.5,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 19,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

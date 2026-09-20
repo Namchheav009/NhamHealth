@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../controllers/profile/profile_controller.dart';
-import '../../../../theme/app_colors.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_nutrient_theme.dart';
+import '../../../controllers/profile/profile_controller.dart';
 
 class ProgressCard extends GetView<ProfileController> {
   const ProgressCard({super.key});
@@ -78,8 +79,8 @@ class ProgressCard extends GetView<ProfileController> {
                 Expanded(
                   child: _progressItem(
                     context: context,
-                    icon: Icons.local_fire_department_rounded,
-                    iconColor: Colors.deepOrange,
+                    icon: AppNutrientTheme.caloriesIcon,
+                    iconColor: AppNutrientTheme.caloriesColor,
                     title: 'common.calories',
                     current: '${controller.calories.value}',
                     target: '${controller.caloriesGoal.value}',
@@ -93,8 +94,8 @@ class ProgressCard extends GetView<ProfileController> {
                 Expanded(
                   child: _progressItem(
                     context: context,
-                    icon: Icons.energy_savings_leaf_outlined,
-                    iconColor: isDark ? context.appColorScheme.primary : green,
+                    icon: AppNutrientTheme.proteinIcon,
+                    iconColor: AppNutrientTheme.proteinColor,
                     title: 'common.protein',
                     current: '${controller.protein.value}',
                     target: '${controller.proteinGoal.value}',
@@ -108,8 +109,8 @@ class ProgressCard extends GetView<ProfileController> {
                 Expanded(
                   child: _progressItem(
                     context: context,
-                    icon: Icons.water_drop_rounded,
-                    iconColor: const Color(0xFF72A9FF),
+                    icon: AppNutrientTheme.waterIcon,
+                    iconColor: AppNutrientTheme.waterColor,
                     title: 'common.water',
                     current: '${controller.water.value}',
                     target: '${controller.waterGoal.value}',

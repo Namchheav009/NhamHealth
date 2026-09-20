@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../models/home/nutrition_progress_model.dart';
-import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
 class NutritionProgressCard extends StatelessWidget {
   const NutritionProgressCard({
@@ -66,11 +67,21 @@ class NutritionProgressCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                data.unit.trOrSelf,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10, color: context.appMutedText),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _buildSubtitle(),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight:
+                        _isOverBudget ? FontWeight.w700 : FontWeight.w500,
+                    color:
+                        _isOverBudget
+                            ? const Color(0xFFFF5252)
+                            : context.appMutedText,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -103,5 +114,38 @@ class NutritionProgressCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool get _isOverBudget {
+    final isCalories =
+        data.title.toLowerCase().contains('calorie') ||
+        data.unit.toLowerCase() == 'kcal';
+    if (!isCalories) return false;
+    final current =
+        int.tryParse(data.value.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final target =
+        int.tryParse(data.target.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    return target > 0 && current > target;
+  }
+
+  String _buildSubtitle() {
+    final isCalories =
+        data.title.toLowerCase().contains('calorie') ||
+        data.unit.toLowerCase() == 'kcal';
+    final isKm = Get.locale?.languageCode == 'km';
+    if (isCalories) {
+      final current =
+          int.tryParse(data.value.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      final target =
+          int.tryParse(data.target.replaceAll(RegExp(r'[^0-9]'), '')) ?? 2000;
+      final remaining = target - current;
+      if (remaining >= 0) {
+        return isKm ? 'សល់ $remaining kcal' : '$remaining left';
+      } else {
+        return isKm ? 'លើស ${-remaining} kcal' : '${-remaining} over';
+      }
+    }
+    final pct = (data.progress * 100).toInt();
+    return '${data.unit.trOrSelf} ($pct%)';
   }
 }
