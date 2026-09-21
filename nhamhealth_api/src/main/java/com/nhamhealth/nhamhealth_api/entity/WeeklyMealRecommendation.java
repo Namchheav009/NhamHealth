@@ -10,12 +10,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "weekly_meal_recommendations", uniqueConstraints = @UniqueConstraint(
-        name = "uk_weekly_planner_meal", columnNames = { "day_of_week", "meal_slot", "planner_meal_id" }))
+@Table(name = "weekly_meal_recommendations", uniqueConstraints = @UniqueConstraint(name = "uk_weekly_planner_meal", columnNames = {
+        "day_of_week", "meal_slot", "planner_meal_id" }))
 public class WeeklyMealRecommendation {
 
     @Id
@@ -52,23 +54,99 @@ public class WeeklyMealRecommendation {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public Integer getRecommendationId() { return recommendationId; }
-    public Meal getMeal() { return meal; }
-    public void setMeal(Meal meal) { this.meal = meal; }
-    public PlannerMeal getPlannerMeal() { return plannerMeal; }
-    public void setPlannerMeal(PlannerMeal plannerMeal) { this.plannerMeal = plannerMeal; }
-    public String getDayOfWeek() { return dayOfWeek; }
-    public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
-    public String getMealSlot() { return mealSlot; }
-    public void setMealSlot(String mealSlot) { this.mealSlot = mealSlot; }
-    public String getNote() { return note; }
-    public void setNote(String note) { this.note = note; }
-    public Boolean getActive() { return active; }
-    public void setActive(Boolean active) { this.active = active; }
-    public Integer getSortOrder() { return sortOrder; }
-    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    @PrePersist
+    void createTimestamps() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    void updateTimestamp() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public Integer getRecommendationId() {
+        return recommendationId;
+    }
+
+    public void setRecommendationId(Integer recommendationId) {
+        this.recommendationId = recommendationId;
+    }
+
+    public Meal getMeal() {
+        return meal;
+    }
+
+    public void setMeal(Meal meal) {
+        this.meal = meal;
+    }
+
+    public PlannerMeal getPlannerMeal() {
+        return plannerMeal;
+    }
+
+    public void setPlannerMeal(PlannerMeal plannerMeal) {
+        this.plannerMeal = plannerMeal;
+    }
+
+    public String getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public String getMealSlot() {
+        return mealSlot;
+    }
+
+    public void setMealSlot(String mealSlot) {
+        this.mealSlot = mealSlot;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Integer getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(Integer sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

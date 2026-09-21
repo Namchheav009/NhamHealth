@@ -3,9 +3,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/planner/meal_planner_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/controllers/planner/weight_loss_projection_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/planner/meal_plan.dart';
+import 'package:nhamhealth_flutter/app/modules/models/planner/weight_loss_forecast_model.dart';
 import 'package:nhamhealth_flutter/app/modules/views/planner/meal_planner_flow_views.dart';
 import 'package:nhamhealth_flutter/app/modules/views/planner/meal_planner_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/planner/planner_shared.dart';
+import 'package:nhamhealth_flutter/app/modules/views/wellness/widgets/ingredient_avatar.dart';
 import 'package:nhamhealth_flutter/app/routes/app_routes.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
@@ -19,9 +23,145 @@ void main() {
   });
   tearDown(Get.reset);
 
+  testWidgets('Auto Fill uses choices without text input or tile assertion', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1200);
+    addTearDown(tester.view.reset);
+    final planner = Get.put(MealPlannerController());
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Builder(
+          builder:
+              (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => showAutoFillConfirmDialog(context, planner),
+                  child: const Text('Open Auto Fill'),
+                ),
+              ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Auto Fill'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.text('Maintain Health'), findsNothing);
+    expect(find.byType(TextField), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('2  Food preferences'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Peanut'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps meal cards consistent without forecast suggestions', (
+    tester,
+  ) async {
+    final planner = Get.put(MealPlannerController());
+    planner.healthGoal.value = MealPlannerHealthGoal.loseWeight;
+    await planner.addMeal(
+      const PlannedMeal(
+        id: 802,
+        name: 'Planned Rice Bowl',
+        calories: 510,
+        slot: MealPlanSlot.lunch,
+        ingredients: ['Rice'],
+      ),
+    );
+    final forecastController = Get.put(WeightLossProjectionController());
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealPlannerView(),
+      ),
+    );
+    forecastController.forecast.value = WeightLossForecast.fromJson({
+      'currentWeightKg': 75,
+      'targetWeightKg': 72,
+      'projectedWeightLossKg': 2,
+      'projectedEndWeightKg': 73,
+      'bmrCalories': 1600,
+      'tdeeCalories': 2300,
+      'dailyPlannedCalories': 1800,
+      'dailyDeficitCalories': 500,
+      'timeframeDays': 28,
+      'weeklyPaceKg': 0.45,
+      'paceStatus': 'OPTIMAL',
+      'paceDescription': 'Healthy pace',
+      'calorieWarning': false,
+      'calorieWarningMessage': '',
+      'recommendedFoods': [
+        {
+          'itemType': 'FOOD',
+          'sourceId': 901,
+          'sourceTable': 'planner_meals',
+          'name': 'AI Grilled Chicken Bowl',
+          'category': 'Lunch',
+          'calories': 420,
+          'proteinGrams': 38,
+          'carbsGrams': 35,
+          'fatGrams': 10,
+          'servingUnit': 'bowl',
+          'servingSize': 1,
+          'imageUrl': '',
+          'rationale': 'High protein lunch.',
+          'ibmBadge': 'AI',
+        },
+      ],
+      'recommendedBeverages': <Map<String, dynamic>>[],
+      'aiAnalysisSummary': 'Balanced plan',
+      'hasPlannedMeals': true,
+    });
+    forecastController.isLoading.value = false;
+    await tester.pump();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('planner-meal-card-lunch')),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    final lunchCard = find.byKey(const ValueKey('planner-meal-card-lunch'));
+    expect(
+      find.descendant(of: lunchCard, matching: find.byType(PlannerMealImage)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: lunchCard, matching: find.text('Planned Rice Bowl')),
+      findsOneWidget,
+    );
+    expect(find.text('AI Grilled Chicken Bowl'), findsNothing);
+    expect(find.text('Suggested alternative'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('planner-ai-suggestion-lunch')),
+      findsNothing,
+    );
+    expect(
+      tester.getSize(lunchCard).height,
+      tester.getSize(
+        find.byKey(const ValueKey('planner-meal-card-breakfast')),
+      ).height,
+    );
+  });
+
   testWidgets('user can add a suggested meal to the selected day', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1000);
+    addTearDown(tester.view.reset);
+
     final controller = Get.put(MealPlannerController());
     controller.adminRecommendations.add(
       PlannedMeal(
@@ -33,6 +173,7 @@ void main() {
         recommendedWeekday: controller.selectedDate.weekday,
         category: 'Breakfast',
         ingredients: const ['Oats', 'Banana'],
+        imageUrl: 'assets/images/meals/healthy_salad.jpg',
       ),
     );
     await tester.pumpWidget(
@@ -57,6 +198,10 @@ void main() {
           GetPage(
             name: AppRoutes.mealPlannerDetail,
             page: () => const PlannerMealDetailView(),
+          ),
+          GetPage(
+            name: AppRoutes.mealPlannerGrocery,
+            page: () => const PlannerGroceryView(),
           ),
         ],
       ),
@@ -93,13 +238,55 @@ void main() {
       matching: find.byIcon(Icons.add_rounded),
     );
     await tester.tap(quickAdd);
-    await tester.pumpAndSettle();
+    // The planner can display a continuously animated image/skeleton while the
+    // route transition completes, so a bounded pump is more deterministic than
+    // waiting for every animation in the tree to settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
 
     expect(find.text('Oatmeal with banana'), findsOneWidget);
     expect(find.textContaining('0/4'), findsOneWidget);
     expect(find.text('360'), findsOneWidget);
+
     Get.closeAllSnackbars();
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    await tester.tap(find.text('Generate grocery list'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.text('Organized grocery list'), findsOneWidget);
+    expect(find.text('Selected day'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('grocery-page-item-oats|')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('grocery-page-item-oats|')),
+        matching: find.byType(IngredientAvatar),
+      ),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('grocery-page-item-oats|')),
+    );
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(find.byKey(const ValueKey('grocery-page-item-oats|')));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('1 of 2 items checked'), findsOneWidget);
+    await tester.ensureVisible(find.text('Full week'));
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(find.text('Full week'));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(
+      find.byKey(const ValueKey('grocery-page-item-oats|')),
+      findsOneWidget,
+    );
+    expect(find.text('Grocery List'), findsOneWidget);
+    Get.closeAllSnackbars();
+    await tester.pump(const Duration(milliseconds: 350));
   });
 
   testWidgets('meal options are scrollable on a short screen', (tester) async {
@@ -166,6 +353,14 @@ void main() {
         find.byKey(const ValueKey('planner-week-picker-button')),
         findsOneWidget,
       );
+      expect(
+        tester.getSize(find.byKey(const ValueKey('planner-week-card'))).height,
+        lessThan(205),
+      );
+      expect(
+        find.byKey(const ValueKey('planner-week-today-button')),
+        findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('planner-day-6')), findsOneWidget);
 
       // Tap the date form / Detail button to open the custom plan sheet
@@ -215,9 +410,10 @@ void main() {
       expect(find.text('Today'), findsOneWidget);
 
       // Tapping "Today" brings back to today
-      await tester.tap(find.text('Today'));
+      await tester.tap(find.byKey(const ValueKey('planner-week-today-button')));
       await tester.pumpAndSettle();
       expect(controller.weekOffset.value, 0);
+      expect(find.text('Customize plan'), findsNothing);
     },
   );
 }

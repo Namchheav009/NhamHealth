@@ -58,6 +58,15 @@ app.ai.gemini.assistant-model=${GEMINI_ASSISTANT_MODEL:${GEMINI_MODEL:gemini-3.8
 app.ai.gemini.fallback-model=gemini-3.7-flash
 app.ai.gemini.text-max-tokens=8192
 app.ai.gemini.rate-limit-cooldown=PT1M
+app.ai.gemini.meal-planner-model=${GEMINI_MEAL_PLANNER_MODEL:${GEMINI_RECOMMENDATION_MODEL:gemini-3.8-flash-lite}}
+app.ai.gemini.meal-planner-fallback-model=${GEMINI_MEAL_PLANNER_FALLBACK_MODEL:${GEMINI_FALLBACK_MODEL:gemini-3.7-flash}}
+
+# IBM watsonx.ai (goal-aware Meal Planner ranking)
+app.ai.ibm.api-key=${IBM_WATSONX_API_KEY:}
+app.ai.ibm.project-id=${IBM_WATSONX_PROJECT_ID:}
+app.ai.ibm.base-url=${IBM_WATSONX_BASE_URL:https://us-south.ml.cloud.ibm.com}
+app.ai.ibm.iam-url=${IBM_WATSONX_IAM_URL:https://iam.cloud.ibm.com}
+app.ai.ibm.model=${IBM_WATSONX_MODEL:ibm/granite-3-3-8b-instruct}
 
 # NVIDIA AI (secondary fallback). Keep NVIDIA_API_KEY on the server; never ship it in the mobile app.
 app.ai.nvidia.api-key=${APP_AI_NVIDIA_API_KEY:}

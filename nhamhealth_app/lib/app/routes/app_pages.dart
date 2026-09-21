@@ -15,6 +15,7 @@ import '../modules/bindings/notifications/notifications_binding.dart';
 import '../modules/bindings/onboarding/choose_language_binding.dart';
 import '../modules/bindings/onboarding/onboarding_binding.dart';
 import '../modules/bindings/planner/meal_planner_binding.dart';
+import '../modules/bindings/planner/weight_loss_projection_binding.dart';
 import '../modules/bindings/profile/change_password_binding.dart';
 import '../modules/bindings/profile/language_binding.dart';
 import '../modules/bindings/profile/profile_binding.dart';
@@ -44,6 +45,7 @@ import '../modules/views/onboarding/choose_language_view.dart';
 import '../modules/views/onboarding/onboarding_view.dart';
 import '../modules/views/planner/meal_planner_flow_views.dart';
 import '../modules/views/planner/meal_planner_view.dart';
+import '../modules/views/planner/goal_analysis_pages.dart';
 import '../modules/views/profile/change_password_view.dart';
 import '../modules/views/profile/language_view.dart';
 import '../modules/views/profile/profile_view.dart';
@@ -165,6 +167,22 @@ abstract class AppPages {
       page: () => const PlannerGroceryView(),
       binding: MealPlannerBinding(),
       transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerWeightLossProjection,
+      page: () => const WeightLossAnalysisPage(),
+      binding: WeightLossProjectionBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.mealPlannerWeightLossAnalysis,
+      page: () => const WeightLossAnalysisPage(),
+      binding: WeightLossProjectionBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     ),
     GetPage<dynamic>(
       name: AppRoutes.foodDetail,

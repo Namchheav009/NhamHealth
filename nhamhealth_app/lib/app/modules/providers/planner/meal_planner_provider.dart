@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/meal_plan.dart';
+import '../../models/planner/weight_loss_forecast_model.dart';
 
 class MealPlannerProvider {
   MealPlannerProvider({required AuthService authService, http.Client? client})
@@ -15,11 +17,88 @@ class MealPlannerProvider {
   final http.Client _client;
   String get _lang => Get.locale?.languageCode ?? 'en';
 
+  Future<WeightLossForecast> getWeightLossForecast({
+    int days = 28,
+    DateTime? startDate,
+    MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+  }) async {
+    final query = <String, String>{
+      'days': days.toString(),
+      'lang': _lang,
+      'goal': goal.apiValue,
+    };
+    if (startDate != null) {
+      query['startDate'] = _date(startDate);
+    }
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-planner/weight-loss-forecast',
+    ).replace(queryParameters: query);
+    final headers = await _headers();
+    final response = await _client
+        .get(uri, headers: headers)
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const MealPlannerProviderException(
+        'Unable to load weight loss forecast.',
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! Map<String, dynamic>) {
+      throw const MealPlannerProviderException(
+        'Weight loss forecast response is incomplete.',
+      );
+    }
+    return WeightLossForecast.fromJson(payload);
+  }
+
+  Future<AiAutoFillPlanResponse> aiAutoFillPlan({
+    required DateTime startDate,
+    int days = 7,
+    MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+    int targetTimeframeDays = 28,
+    bool fillEmptyOnly = true,
+    bool includeBeverages = true,
+    MealPlannerDietaryPreferences preferences =
+        const MealPlannerDietaryPreferences(),
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-planner/ai-autofill',
+    ).replace(queryParameters: {'lang': _lang});
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final body = {
+      'startDate': _date(startDate),
+      'days': days,
+      'goal': goal.apiValue,
+      'targetTimeframeDays': targetTimeframeDays,
+      'fillEmptyOnly': fillEmptyOnly,
+      'includeBeverages': includeBeverages,
+      ...preferences.toJson(),
+    };
+    final response = await _client
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        'Unable to auto-fill meal plan with AI.',
+        statusCode: response.statusCode,
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! Map<String, dynamic>) {
+      throw const MealPlannerProviderException(
+        'AI auto-fill response is incomplete.',
+      );
+    }
+    return AiAutoFillPlanResponse.fromJson(payload);
+  }
+
   Future<List<PlannedMeal>> getRecommendations({
     DateTime? date,
     String? dayOfWeek,
+    MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
   }) {
-    final query = <String, String>{'lang': _lang};
+    final query = <String, String>{'lang': _lang, 'goal': goal.apiValue};
     if (dayOfWeek != null && dayOfWeek.isNotEmpty) {
       query['dayOfWeek'] = dayOfWeek;
     } else if (date != null) {
@@ -199,8 +278,9 @@ class MealPlannerProvider {
 }
 
 class MealPlannerProviderException implements Exception {
-  const MealPlannerProviderException(this.message);
+  const MealPlannerProviderException(this.message, {this.statusCode});
   final String message;
+  final int? statusCode;
   @override
   String toString() => message;
 }

@@ -200,7 +200,8 @@ class PlannedMeal {
       imageUrl:
           '${json['imageUrl'] ?? json['mainImageUrl'] ?? json['image'] ?? json['thumbnail'] ?? json['photoUrl'] ?? ''}'
               .trim(),
-      recommendationNote: '${json['note'] ?? ''}'.trim(),
+      recommendationNote:
+          '${json['note'] ?? json['recommendationNote'] ?? ''}'.trim(),
     );
   }
 }
@@ -223,11 +224,13 @@ class GroceryItem {
     required this.category,
     this.quantity = 0,
     this.unit = '',
+    this.sourceMeals = const [],
   });
   final String name;
   final String category;
   final double quantity;
   final String unit;
+  final List<String> sourceMeals;
   String get key => '${name.toLowerCase()}|${unit.toLowerCase()}';
   String get quantityLabel {
     if (quantity <= 0) return '';
@@ -236,5 +239,62 @@ class GroceryItem {
             ? quantity.toInt().toString()
             : quantity.toStringAsFixed(1);
     return '$value${unit.isEmpty ? '' : ' $unit'}';
+  }
+}
+
+enum MealPlannerHealthGoal {
+  loseWeight,
+  maintainHealth;
+
+  String get apiValue => switch (this) {
+    loseWeight => 'LOSE_WEIGHT',
+    maintainHealth => 'MAINTAIN_HEALTH',
+  };
+}
+
+enum MealPlannerDiet {
+  balanced,
+  vegetarian,
+  vegan;
+
+  String get apiValue => name.toUpperCase();
+}
+
+class MealPlannerDietaryPreferences {
+  const MealPlannerDietaryPreferences({
+    this.diet = MealPlannerDiet.balanced,
+    this.allergens = const [],
+    this.excludedIngredients = const [],
+    this.medicalFlags = const [],
+  });
+
+  final MealPlannerDiet diet;
+  final List<String> allergens;
+  final List<String> excludedIngredients;
+  final List<String> medicalFlags;
+
+  Map<String, dynamic> toJson() => {
+    'diet': diet.apiValue,
+    'allergens': allergens,
+    'excludedIngredients': excludedIngredients,
+    'medicalFlags': medicalFlags,
+  };
+
+  factory MealPlannerDietaryPreferences.fromJson(Map<String, dynamic> json) {
+    List<String> strings(String key) =>
+        (json[key] as List<dynamic>? ?? const [])
+            .map((value) => '$value'.trim())
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false);
+    final dietValue = '${json['diet'] ?? ''}'.toUpperCase();
+    return MealPlannerDietaryPreferences(
+      diet: MealPlannerDiet.values.firstWhere(
+        (diet) => diet.apiValue == dietValue,
+        orElse: () => MealPlannerDiet.balanced,
+      ),
+      allergens: strings('allergens'),
+      excludedIngredients: strings('excludedIngredients'),
+      medicalFlags: strings('medicalFlags'),
+    );
   }
 }

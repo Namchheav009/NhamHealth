@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
+import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 
@@ -29,6 +30,13 @@ class MealPlannerController extends GetxController {
 
   static const _storageDaysKey = 'meal_planner_days_count';
   static const _storageStartDateKey = 'meal_planner_start_date';
+  static const _storageHealthGoalKey = 'meal_planner_health_goal';
+  static const _storageDietaryPreferencesKey =
+      'meal_planner_dietary_preferences';
+  static const _storageAnalyzedWeightLossKey =
+      'meal_planner_analyzed_weight_loss';
+  static const _storageAnalyzedMaintainHealthKey =
+      'meal_planner_analyzed_maintain_health';
 
   final MealPlannerProvider? _provider;
   final FlutterSecureStorage _storage;
@@ -37,6 +45,8 @@ class MealPlannerController extends GetxController {
   final weekOffset = 0.obs;
   final planDaysCount = 7.obs;
   final customStartDate = Rxn<DateTime>();
+  final healthGoal = MealPlannerHealthGoal.loseWeight.obs;
+  final dietaryPreferences = const MealPlannerDietaryPreferences().obs;
   final plans = <String, List<PlannedMeal>>{}.obs;
   final adminRecommendations = <PlannedMeal>[].obs;
   final isLoading = true.obs;
@@ -48,6 +58,13 @@ class MealPlannerController extends GetxController {
   final hasLoadedOnce = false.obs;
   final hasLoadedRecommendationsOnce = false.obs;
   final imageRefreshKey = 0.obs;
+  final lastAiAutoFillResult = Rxn<AiAutoFillPlanResponse>();
+  final hasAnalyzedWeightLoss = false.obs;
+  final hasAnalyzedMaintainHealth = false.obs;
+  bool get hasAnalyzedBoth =>
+      hasAnalyzedWeightLoss.value && hasAnalyzedMaintainHealth.value;
+  final lastWeightLossResult = Rxn<AiAutoFillPlanResponse>();
+  final lastMaintainHealthResult = Rxn<AiAutoFillPlanResponse>();
 
   @override
   void onInit() {
@@ -101,6 +118,35 @@ class MealPlannerController extends GetxController {
     try {
       final daysKey = await _userScopedKey(_storageDaysKey);
       final startKey = await _userScopedKey(_storageStartDateKey);
+      final goalKey = await _userScopedKey(_storageHealthGoalKey);
+      final preferencesKey = await _userScopedKey(
+        _storageDietaryPreferencesKey,
+      );
+
+      // Weight Loss is the only planner goal exposed by the current product.
+      // Migrate any older Maintain Health selection back to Weight Loss.
+      healthGoal.value = MealPlannerHealthGoal.loseWeight;
+      final savedGoal = await _storage.read(key: goalKey);
+      if (savedGoal != MealPlannerHealthGoal.loseWeight.apiValue) {
+        try {
+          await _storage.write(
+            key: goalKey,
+            value: MealPlannerHealthGoal.loseWeight.apiValue,
+          );
+        } catch (_) {
+          // An unavailable secure store must not prevent loading other settings.
+        }
+      }
+
+      final savedPreferences = await _storage.read(key: preferencesKey);
+      if (savedPreferences != null && savedPreferences.isNotEmpty) {
+        final decoded = jsonDecode(savedPreferences);
+        if (decoded is Map) {
+          dietaryPreferences.value = MealPlannerDietaryPreferences.fromJson(
+            Map<String, dynamic>.from(decoded),
+          );
+        }
+      }
 
       final savedDays = await _storage.read(key: daysKey);
       if (savedDays != null) {
@@ -134,6 +180,23 @@ class MealPlannerController extends GetxController {
             customStartDate.value = start;
           }
         }
+      }
+
+      final analyzedLossKey = await _userScopedKey(
+        _storageAnalyzedWeightLossKey,
+      );
+      final analyzedMaintainKey = await _userScopedKey(
+        _storageAnalyzedMaintainHealthKey,
+      );
+      final savedAnalyzedLoss = await _storage.read(key: analyzedLossKey);
+      if (savedAnalyzedLoss == 'true') {
+        hasAnalyzedWeightLoss.value = true;
+      }
+      hasAnalyzedMaintainHealth.value = false;
+      try {
+        await _storage.delete(key: analyzedMaintainKey);
+      } catch (_) {
+        // The legacy flag is ignored even if its stored value cannot be cleared.
       }
     } catch (_) {
       // Secure storage read error ignored
@@ -216,22 +279,36 @@ class MealPlannerController extends GetxController {
       _currentPlanMeals.where((m) => m.status == MealPlanStatus.eaten).length;
   bool get weekIsEmpty => planIsEmpty;
 
-  List<GroceryItem> get groceryItems {
+  List<GroceryItem> get groceryItems => _groceryItemsFor(_currentPlanMeals);
+
+  /// Ingredients for the four saved slots on the selected day only.
+  List<GroceryItem> groceryItemsForDate(DateTime date) =>
+      _groceryItemsFor(mealsFor(date));
+
+  List<GroceryItem> _groceryItemsFor(Iterable<PlannedMeal> meals) {
     final combined = <String, GroceryItem>{};
-    for (final meal in _currentPlanMeals) {
+    for (final meal in meals) {
       final ingredients =
           meal.ingredientDetails.isEmpty
               ? meal.ingredients.map((name) => PlannerIngredient(name: name))
               : meal.ingredientDetails;
       for (final ingredient in ingredients) {
-        final key =
-            '${ingredient.name.toLowerCase()}|${ingredient.unit.toLowerCase()}';
+        final name = ingredient.name.trim();
+        if (name.isEmpty) continue;
+        final unit = ingredient.unit.trim();
+        final key = '${name.toLowerCase()}|${unit.toLowerCase()}';
         final old = combined[key];
         combined[key] = GroceryItem(
-          name: ingredient.name,
-          unit: ingredient.unit,
+          name: name,
+          unit: unit,
           quantity: (old?.quantity ?? 0) + ingredient.quantity * meal.servings,
-          category: _groceryCategory(ingredient.name),
+          category: _groceryCategory(name),
+          sourceMeals: [
+            ...?old?.sourceMeals,
+            if (meal.name.isNotEmpty &&
+                (old == null || !old.sourceMeals.contains(meal.name)))
+              meal.name,
+          ],
         );
       }
     }
@@ -312,12 +389,37 @@ class MealPlannerController extends GetxController {
     ]);
   }
 
+  Future<void> setHealthGoal(MealPlannerHealthGoal goal) async {
+    const supportedGoal = MealPlannerHealthGoal.loseWeight;
+    if (healthGoal.value == supportedGoal && goal == supportedGoal) return;
+    healthGoal.value = supportedGoal;
+    try {
+      final goalKey = await _userScopedKey(_storageHealthGoalKey);
+      await _storage.write(key: goalKey, value: supportedGoal.apiValue);
+    } catch (_) {}
+    await loadRecommendations(force: true);
+  }
+
+  Future<void> setDietaryPreferences(
+    MealPlannerDietaryPreferences preferences,
+  ) async {
+    dietaryPreferences.value = preferences;
+    try {
+      final key = await _userScopedKey(_storageDietaryPreferencesKey);
+      await _storage.write(key: key, value: jsonEncode(preferences.toJson()));
+    } catch (_) {
+      // The current selection remains usable even if secure storage is unavailable.
+    }
+  }
+
   Future<void> loadRecommendations({bool force = false}) async {
     if (_provider == null || (!force && isLoadingRecommendations.value)) return;
     isLoadingRecommendations.value = true;
     recommendationsError.value = '';
     try {
-      adminRecommendations.assignAll(await _provider.getRecommendations());
+      adminRecommendations.assignAll(
+        await _provider.getRecommendations(goal: healthGoal.value),
+      );
     } catch (_) {
       adminRecommendations.clear();
       recommendationsError.value = 'planner.recommendations_error'.tr;
@@ -396,7 +498,10 @@ class MealPlannerController extends GetxController {
     try {
       final dayMeals = await _provider.getDay(date);
       plans[key] = dayMeals;
-      final dayRecs = await _provider.getRecommendations(date: date);
+      final dayRecs = await _provider.getRecommendations(
+        date: date,
+        goal: healthGoal.value,
+      );
       if (dayRecs.isNotEmpty) {
         for (final rec in dayRecs) {
           if (!adminRecommendations.any((m) => m.id == rec.id)) {
@@ -708,11 +813,123 @@ class MealPlannerController extends GetxController {
     }
   }
 
+  Future<void> resetAllMealsToPlanned({bool currentDayOnly = true}) async {
+    final dates = currentDayOnly ? [selectedDate] : planDays;
+    final mealsToReset = <PlannedMeal>[];
+    final backup = <String, List<PlannedMeal>>{};
+
+    for (final d in dates) {
+      final key = _dateKey(d);
+      final dayMeals = mealsFor(d);
+      backup[key] = List<PlannedMeal>.from(plans[key] ?? const []);
+      for (final m in dayMeals) {
+        if (m.status != MealPlanStatus.planned) {
+          mealsToReset.add(m);
+          final updated = m.copyWith(
+            status: MealPlanStatus.planned,
+            planDate: m.planDate ?? d,
+            clearCompletedAt: true,
+            clearActualServings: true,
+          );
+          _put(key, updated);
+        }
+      }
+    }
+
+    if (mealsToReset.isEmpty) {
+      AppAlert.toast(message: 'planner.all_meals_already_planned'.tr);
+      return;
+    }
+
+    plans.refresh();
+    HapticFeedback.lightImpact();
+    AppAlert.toast(message: 'planner.all_meals_reset_planned'.tr);
+
+    final provider = _provider;
+    if (provider == null) return;
+    isSaving.value = true;
+    try {
+      for (final meal in mealsToReset) {
+        if (meal.planId != null) {
+          await provider.updateMeal(
+            meal.planId!,
+            status: MealPlanStatus.planned,
+          );
+        }
+      }
+    } catch (_) {
+      for (final entry in backup.entries) {
+        plans[entry.key] = entry.value;
+      }
+      plans.refresh();
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  Future<void> clearAllMeals({bool currentDayOnly = true}) async {
+    final dates = currentDayOnly ? [selectedDate] : planDays;
+    final mealsToDelete = <PlannedMeal>[];
+    for (final d in dates) {
+      mealsToDelete.addAll(mealsFor(d));
+    }
+    if (mealsToDelete.isEmpty) return;
+
+    final backup = <String, List<PlannedMeal>>{};
+    for (final d in dates) {
+      final k = _dateKey(d);
+      backup[k] = List<PlannedMeal>.from(plans[k] ?? const []);
+      plans[k] = [];
+    }
+    plans.refresh();
+    if (!currentDayOnly) {
+      hasAnalyzedWeightLoss.value = false;
+      hasAnalyzedMaintainHealth.value = false;
+      lastWeightLossResult.value = null;
+      lastMaintainHealthResult.value = null;
+      lastAiAutoFillResult.value = null;
+      unawaited(_persistAnalyzedGoals());
+    }
+    HapticFeedback.mediumImpact();
+    AppAlert.toast(message: 'planner.all_meals_cleared'.tr);
+
+    final provider = _provider;
+    if (provider == null) return;
+    isSaving.value = true;
+    try {
+      for (final meal in mealsToDelete) {
+        if (meal.planId != null) {
+          await provider.deleteMeal(meal.planId!);
+        }
+      }
+    } catch (_) {
+      for (final entry in backup.entries) {
+        plans[entry.key] = entry.value;
+      }
+      plans.refresh();
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.save_error'.tr,
+      );
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
   PlannedMeal? mealFor(MealPlanSlot slot) {
     for (final meal in selectedMeals) {
       if (meal.slot == slot) return meal;
     }
     return null;
+  }
+
+  void putOptimisticMeal(PlannedMeal meal) {
+    final key = _dateKey(meal.planDate ?? selectedDate);
+    _put(key, meal);
   }
 
   void _put(String key, PlannedMeal meal) {
@@ -726,41 +943,160 @@ class MealPlannerController extends GetxController {
     plans[key] = updated;
   }
 
-  Future<int> autoFillPlan() async {
-    if (isSaving.value) return 0;
+  void applyAiAutoFillResult(
+    AiAutoFillPlanResponse response, {
+    bool fillEmptyOnly = true,
+  }) {
+    lastAiAutoFillResult.value = response;
+    hasAnalyzedWeightLoss.value = true;
+    lastWeightLossResult.value = response;
+    hasAnalyzedMaintainHealth.value = false;
+    lastMaintainHealthResult.value = null;
+    unawaited(_persistAnalyzedGoals());
 
-    if (adminRecommendations.isEmpty && _provider != null) {
-      await loadRecommendations();
-    }
-
-    if (adminRecommendations.isEmpty) {
-      AppAlert.toast(message: 'planner.auto_fill_no_recommendations');
-      return 0;
-    }
-
-    final emptySlots = <({DateTime date, MealPlanSlot slot})>[];
-    for (final date in planDays) {
-      final currentMeals = mealsFor(date);
-      for (final slot in MealPlanSlot.values) {
-        final alreadyPlanned = currentMeals.any((m) => m.slot == slot);
-        if (!alreadyPlanned) {
-          emptySlots.add((date: date, slot: slot));
-        }
+    if (!fillEmptyOnly) {
+      for (final date in planDays) {
+        plans[_dateKey(date)] = [];
       }
     }
+    for (final saved in response.createdPlans) {
+      final date = saved.planDate;
+      if (date != null) {
+        _put(_dateKey(date), saved);
+      }
+    }
+    plans.refresh();
+  }
 
-    if (emptySlots.isEmpty) {
-      AppAlert.toast(message: 'planner.auto_fill_no_empty');
+  Future<void> _persistAnalyzedGoals() async {
+    try {
+      final lossKey = await _userScopedKey(_storageAnalyzedWeightLossKey);
+      final maintainKey = await _userScopedKey(
+        _storageAnalyzedMaintainHealthKey,
+      );
+      await _storage.write(
+        key: lossKey,
+        value: hasAnalyzedWeightLoss.value ? 'true' : 'false',
+      );
+      await _storage.write(
+        key: maintainKey,
+        value: 'false',
+      );
+    } catch (_) {}
+  }
+
+  Future<int> autoFillPlan({
+    bool fillEmptyOnly = true,
+    int? targetTimeframeDays,
+  }) async {
+    if (isSaving.value) return 0;
+
+    if (dietaryPreferences.value.medicalFlags.contains(
+          'PREGNANT_OR_BREASTFEEDING',
+        )) {
+      await AppAlert.actionError(
+        title: 'planner.medical_review_required'.tr,
+        message: 'planner.pregnancy_weight_loss_warning'.tr,
+      );
       return 0;
     }
 
     isSaving.value = true;
-    var filledCount = 0;
     try {
+      if (_provider != null) {
+        try {
+          final response = await _provider.aiAutoFillPlan(
+            startDate: planStartDate,
+            days: planDaysCount.value,
+            goal: MealPlannerHealthGoal.loseWeight,
+            targetTimeframeDays: targetTimeframeDays ?? 28,
+            fillEmptyOnly: fillEmptyOnly,
+            preferences: dietaryPreferences.value,
+          );
+          applyAiAutoFillResult(response, fillEmptyOnly: fillEmptyOnly);
+
+          if (response.filledCount > 0) {
+            HapticFeedback.mediumImpact();
+            AppAlert.toast(
+              message: 'planner.auto_fill_success'.trParams({
+                'count': '${response.filledCount}',
+              }),
+            );
+          } else {
+            AppAlert.toast(message: 'planner.auto_fill_no_empty'.tr);
+          }
+          return response.filledCount;
+        } catch (error) {
+          if (error is MealPlannerProviderException &&
+              error.statusCode == 400) {
+            await AppAlert.actionError(
+              title: 'planner.error'.tr,
+              message: 'planner.restrictions_no_match'.tr,
+            );
+            return 0;
+          }
+          // Fall back to local slot filling if AI auto-fill endpoint errors
+        }
+      }
+
+      // Offline / fallback algorithm
+      if (adminRecommendations.isEmpty && _provider != null) {
+        await loadRecommendations();
+      }
+
+      if (adminRecommendations.isEmpty) {
+        AppAlert.toast(message: 'planner.auto_fill_no_recommendations'.tr);
+        return 0;
+      }
+
+      final emptySlots = <({DateTime date, MealPlanSlot slot})>[];
+      for (final date in planDays) {
+        final currentMeals = mealsFor(date);
+        final distinctMealKeys = <String>{};
+        for (final slot in MealPlanSlot.values) {
+          final planned = currentMeals.firstWhereOrNull((m) => m.slot == slot);
+          final isDuplicate =
+              planned != null && !distinctMealKeys.add(_mealIdentity(planned));
+          if (planned == null || isDuplicate || !fillEmptyOnly) {
+            emptySlots.add((date: date, slot: slot));
+          }
+        }
+      }
+      if (emptySlots.isEmpty) {
+        AppAlert.toast(message: 'planner.auto_fill_no_empty'.tr);
+        return 0;
+      }
+
+      final previousPlans = <String, List<PlannedMeal>>{
+        for (final date in planDays)
+          _dateKey(date): List<PlannedMeal>.from(
+            plans[_dateKey(date)] ?? const [],
+          ),
+      };
+      final recentUsage = <int, int>{};
+      for (final meals in previousPlans.values) {
+        for (final meal in meals) {
+          recentUsage.update(meal.id, (count) => count + 1, ifAbsent: () => 1);
+        }
+      }
+      final usedIdsByDate = <String, Set<int>>{
+        for (final entry in previousPlans.entries)
+          entry.key:
+              fillEmptyOnly
+                  ? entry.value.map((meal) => meal.id).toSet()
+                  : <int>{},
+      };
+      var filledCount = 0;
       final bulkPayload = <Map<String, dynamic>>[];
       for (final entry in emptySlots) {
         final slotRecs =
-            adminRecommendations.where((m) => m.slot == entry.slot).toList();
+            adminRecommendations
+                .where(
+                  (meal) =>
+                      meal.slot == entry.slot &&
+                      _matchesDietaryPreferences(meal),
+                )
+                .toList();
         if (slotRecs.isEmpty) continue;
 
         final weekdayRecs =
@@ -774,14 +1110,40 @@ class MealPlannerController extends GetxController {
         final pool = weekdayRecs.isNotEmpty ? weekdayRecs : slotRecs;
 
         final dayDiff = entry.date.difference(planStartDate).inDays.abs();
-        final selectedRec = pool[dayDiff % pool.length];
-
         final key = _dateKey(entry.date);
+        final usedToday = usedIdsByDate.putIfAbsent(key, () => <int>{});
+        var eligible =
+            pool.where((meal) => !usedToday.contains(meal.id)).toList();
+        if (eligible.isEmpty) eligible = pool;
+
+        final fresh =
+            eligible.where((meal) => (recentUsage[meal.id] ?? 0) == 0).toList();
+        if (fresh.isNotEmpty) eligible = fresh;
+
+        final minimumUsage = eligible
+            .map((meal) => recentUsage[meal.id] ?? 0)
+            .reduce((a, b) => a < b ? a : b);
+        eligible =
+            eligible
+                .where((meal) => (recentUsage[meal.id] ?? 0) == minimumUsage)
+                .toList();
+        final rotationIndex =
+            (dayDiff * MealPlanSlot.values.length + entry.slot.index) %
+            eligible.length;
+        final selectedRec = eligible[rotationIndex];
+
         final optimistic = selectedRec.copyWith(
           planDate: entry.date,
+          slot: entry.slot,
           servings: 1,
         );
         _put(key, optimistic);
+        usedToday.add(selectedRec.id);
+        recentUsage.update(
+          selectedRec.id,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
         bulkPayload.add({
           'planDate': _dateKey(entry.date),
           'mealType': entry.slot.name.toUpperCase(),
@@ -801,38 +1163,51 @@ class MealPlannerController extends GetxController {
             }
           }
         } catch (_) {
-          // Fallback to optimistic state if bulk network call fails
+          for (final entry in previousPlans.entries) {
+            plans[entry.key] = entry.value;
+          }
+          plans.refresh();
+          await AppAlert.actionError(
+            title: 'planner.error'.tr,
+            message: 'planner.save_error'.tr,
+          );
+          return 0;
         }
       }
       plans.refresh();
 
-      if (filledCount > 0) {
-        HapticFeedback.mediumImpact();
-        AppAlert.toast(
-          message: 'planner.auto_fill_success'.trParams({
-            'count': '$filledCount',
-          }),
-        );
+      if (filledCount == 0) {
+        AppAlert.toast(message: 'planner.restrictions_no_match'.tr);
+        return 0;
       }
+
+      HapticFeedback.mediumImpact();
+      AppAlert.toast(
+        message: 'planner.auto_fill_success'.trParams({
+          'count': '$filledCount',
+        }),
+      );
       return filledCount;
     } finally {
       isSaving.value = false;
     }
   }
 
-  String formatGroceryListText() {
-    final items = groceryItems;
+  String formatGroceryListText({DateTime? date}) {
+    final items = date == null ? groceryItems : groceryItemsForDate(date);
     if (items.isEmpty) return '';
 
     final buffer = StringBuffer();
-    final start = planStartDate;
-    final end = planEndDate;
     final dateRange =
-        '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}';
+        date == null
+            ? '${DateFormat('d MMM').format(planStartDate)} – ${DateFormat('d MMM yyyy').format(planEndDate)}'
+            : DateFormat('d MMM yyyy').format(date);
 
     buffer.writeln('🛒 ${'planner.grocery_list'.tr}');
     buffer.writeln(
-      '📅 $dateRange (${planDaysCount.value} ${'planner.days_short'.tr.trim()})',
+      date == null
+          ? '📅 $dateRange (${planDaysCount.value} ${'planner.days_short'.tr.trim()})'
+          : '📅 $dateRange',
     );
     buffer.writeln('');
 
@@ -859,20 +1234,31 @@ class MealPlannerController extends GetxController {
     return buffer.toString().trim();
   }
 
-  Future<bool> copyGroceryListToClipboard() async {
-    final text = formatGroceryListText();
+  Future<bool> copyGroceryListToClipboard({DateTime? date}) async {
+    final text = formatGroceryListText(date: date);
     if (text.isEmpty) {
-      AppAlert.toast(message: 'planner.empty_grocery_list');
+      AppAlert.toast(message: 'planner.empty_grocery_list'.tr);
       return false;
     }
     await Clipboard.setData(ClipboardData(text: text));
     HapticFeedback.selectionClick();
-    AppAlert.toast(message: 'planner.grocery_copied');
+    AppAlert.toast(message: 'planner.grocery_copied'.tr);
     return true;
   }
 
   String _dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  String _mealIdentity(PlannedMeal meal) {
+    final normalizedName =
+        meal.name
+            .trim()
+            .toLowerCase()
+            .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+            .trim();
+    return normalizedName.isEmpty ? 'meal-${meal.id}' : normalizedName;
+  }
+
   String _groceryCategory(String value) {
     final name = value.toLowerCase();
     if (RegExp(r'milk|yogurt|cheese|cream').hasMatch(name)) {
@@ -885,5 +1271,65 @@ class MealPlannerController extends GetxController {
       return 'planner.grocery_grains';
     }
     return 'planner.grocery_produce';
+  }
+
+  bool _matchesDietaryPreferences(PlannedMeal meal) {
+    final preferences = dietaryPreferences.value;
+    final searchable =
+        <String>[
+          meal.name,
+          meal.category,
+          meal.description,
+          ...meal.ingredients,
+          ...meal.tags,
+        ].join(' ').toLowerCase();
+    final prohibited = <String>[
+      if (preferences.diet == MealPlannerDiet.vegetarian ||
+          preferences.diet == MealPlannerDiet.vegan) ...[
+        'beef',
+        'pork',
+        'chicken',
+        'fish',
+        'shrimp',
+        'prawn',
+        'meat',
+        'សាច់',
+        'ត្រី',
+        'បង្គា',
+      ],
+      if (preferences.diet == MealPlannerDiet.vegan) ...[
+        'egg',
+        'milk',
+        'cheese',
+        'yogurt',
+        'butter',
+        'cream',
+        'honey',
+        'ស៊ុត',
+        'ទឹកដោះ',
+        'ឈីស',
+        'យ៉ាអួ',
+      ],
+      if (preferences.medicalFlags.contains('DIABETES')) ...[
+        'sugary drink',
+        'sweetened',
+        'syrup',
+        'soda',
+        'soft drink',
+      ],
+      if (preferences.medicalFlags.contains('HYPERTENSION')) ...[
+        'high sodium',
+        'salty',
+        'bacon',
+        'sausage',
+        'processed meat',
+      ],
+      ...preferences.allergens,
+      ...preferences.excludedIngredients,
+    ];
+    return prohibited
+        .map((item) => item.trim().toLowerCase())
+        .where((item) => item.isNotEmpty)
+        .every((item) => !searchable.contains(item));
   }
 }

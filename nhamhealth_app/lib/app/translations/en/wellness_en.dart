@@ -349,4 +349,7 @@ const Map<String, String> wellnessEn = {
   'wellness.insight_veggie_boost_title': 'Add Extra Fresh Greens',
   'wellness.insight_veggie_boost_desc':
       'Increasing vegetable portions adds fiber, potassium, and micronutrients while keeping calories light.',
+  'wellness.portion_xlarge_short': 'Extra large',
+  'wellness.know_what_you_eat_live_healthier':
+      'Know what you eat, live healthier',
 };

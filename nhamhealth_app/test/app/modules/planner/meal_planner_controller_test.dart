@@ -102,13 +102,29 @@ void main() {
         controller.groceryItems.map((item) => item.name),
         containsAll(breakfast.ingredients),
       );
+      final firstDay = controller.selectedDate;
 
       controller.selectDay(1);
       expect(controller.selectedMeals, isEmpty);
+      expect(controller.groceryItemsForDate(controller.selectedDate), isEmpty);
 
       final dinner = controller.suggestionsFor(MealPlanSlot.dinner).first;
       controller.addMeal(dinner);
       expect(controller.selectedMeals.single.id, dinner.id);
+      expect(
+        controller
+            .groceryItemsForDate(controller.selectedDate)
+            .map((item) => item.name),
+        containsAll(dinner.ingredients),
+      );
+      expect(
+        controller.groceryItemsForDate(firstDay).map((item) => item.name),
+        isNot(contains('Fish')),
+      );
+      expect(
+        controller.formatGroceryListText(date: firstDay),
+        isNot(contains('Fish')),
+      );
       expect(
         controller.groceryItems.map((item) => item.name),
         containsAll(dinner.ingredients),
@@ -129,6 +145,34 @@ void main() {
 
     expect(controller.selectedMeals.single.id, breakfasts.last.id);
     expect(controller.selectedCalories, breakfasts.last.calories);
+  });
+
+  test('grocery items combine quantities and track their planned meals', () {
+    final controller = withAdminMeals();
+    controller.addMeal(
+      controller.suggestionsFor(MealPlanSlot.breakfast).first,
+      servings: 2,
+    );
+    controller.addMeal(
+      const PlannedMeal(
+        id: 105,
+        name: 'Oat pancakes',
+        calories: 430,
+        slot: MealPlanSlot.lunch,
+        ingredients: [],
+        ingredientDetails: [
+          PlannerIngredient(name: ' Oats ', quantity: 25, unit: 'g'),
+          PlannerIngredient(name: '  '),
+        ],
+      ),
+    );
+
+    final oats = controller.groceryItems.singleWhere(
+      (item) => item.name == 'Oats',
+    );
+    expect(oats.quantity, 125);
+    expect(oats.sourceMeals, ['Oatmeal with banana', 'Oat pancakes']);
+    expect(controller.groceryItems.any((item) => item.name.isEmpty), isFalse);
   });
 
   test('admin recommendations take priority for their configured weekday', () {
@@ -390,7 +434,8 @@ void main() {
       );
 
       final controller = MealPlannerController(provider: provider);
-      await controller.loadWeek();
+      await controller.initPlanner();
+      await controller.loadWeek(force: true);
 
       expect(controller.mealsFor(controller.planStartDate).isNotEmpty, isTrue);
       expect(
@@ -614,6 +659,199 @@ void main() {
     },
   );
 
+  test(
+    'offline auto-fill does not reuse one meal in multiple daily slots',
+    () async {
+      var capturedBulkItems = <dynamic>[];
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/meal-planner/ai-autofill') {
+          return http.Response('Unavailable', 503);
+        }
+        if (request.url.path == '/api/v1/meal-plans/bulk') {
+          final decoded = jsonDecode(request.body) as List;
+          capturedBulkItems = decoded;
+          return http.Response(
+            jsonEncode(
+              decoded
+                  .map(
+                    (item) => {
+                      'planId': 700 + decoded.indexOf(item),
+                      'planDate': item['planDate'],
+                      'mealType': item['mealType'],
+                      'plannerMealId': item['plannerMealId'],
+                      'mealName': 'Saved varied meal',
+                      'calories': 400,
+                      'servings': item['servings'],
+                    },
+                  )
+                  .toList(),
+            ),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+      final controller = MealPlannerController(provider: provider);
+      controller.setPlanDaysCount(3);
+      for (final slot in MealPlanSlot.values) {
+        controller.adminRecommendations.addAll([
+          PlannedMeal(
+            id: 1,
+            name: 'Shared meal',
+            calories: 400,
+            slot: slot,
+            ingredients: const [],
+          ),
+          PlannedMeal(
+            id: 10 + slot.index,
+            name: 'Unique ${slot.name}',
+            calories: 400,
+            slot: slot,
+            ingredients: const [],
+          ),
+        ]);
+      }
+
+      final filled = await controller.autoFillPlan();
+
+      expect(filled, greaterThanOrEqualTo(4));
+      final firstDate = capturedBulkItems.first['planDate'];
+      final firstDayIds =
+          capturedBulkItems
+              .where((item) => item['planDate'] == firstDate)
+              .map((item) => item['plannerMealId'])
+              .toList();
+      expect(firstDayIds.length, 4);
+      expect(firstDayIds.toSet().length, 4);
+    },
+  );
+
+  test(
+    'fill-empty mode repairs duplicate meals that already occupy daily slots',
+    () async {
+      var capturedBulkItems = <dynamic>[];
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/meal-planner/ai-autofill') {
+          return http.Response('Unavailable', 503);
+        }
+        if (request.url.path == '/api/v1/meal-plans/bulk') {
+          final decoded = jsonDecode(request.body) as List;
+          capturedBulkItems = decoded;
+          return http.Response(
+            jsonEncode(
+              decoded
+                  .map(
+                    (item) => {
+                      'planId': 800 + decoded.indexOf(item),
+                      'planDate': item['planDate'],
+                      'mealType': item['mealType'],
+                      'plannerMealId': item['plannerMealId'],
+                      'mealName': 'Repaired meal',
+                      'calories': 400,
+                      'servings': item['servings'],
+                    },
+                  )
+                  .toList(),
+            ),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+      final controller = MealPlannerController(
+        provider: MealPlannerProvider(
+          authService: _FakeAuthService(),
+          client: client,
+        ),
+      );
+      controller.setPlanDaysCount(3);
+      final selectedDate = controller.selectedDate;
+
+      for (final slot in MealPlanSlot.values) {
+        controller.putOptimisticMeal(
+          PlannedMeal(
+            id: 1,
+            planId: 100 + slot.index,
+            name: 'Repeated meal',
+            calories: 400,
+            slot: slot,
+            planDate: selectedDate,
+            ingredients: const [],
+          ),
+        );
+        controller.adminRecommendations.addAll([
+          PlannedMeal(
+            id: 1,
+            name: 'Repeated meal',
+            calories: 400,
+            slot: slot,
+            ingredients: const [],
+          ),
+          PlannedMeal(
+            id: 20 + slot.index,
+            name: 'Fresh ${slot.name}',
+            calories: 400,
+            slot: slot,
+            ingredients: const [],
+          ),
+        ]);
+      }
+
+      final filled = await controller.autoFillPlan(fillEmptyOnly: true);
+
+      expect(filled, greaterThanOrEqualTo(3));
+      final selectedDateKey =
+          '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+      final repairedSlots =
+          capturedBulkItems
+              .where((item) => item['planDate'] == selectedDateKey)
+              .map((item) => item['mealType'])
+              .toSet();
+      expect(repairedSlots, {'LUNCH', 'DINNER', 'SNACK'});
+      expect(
+        controller.mealsFor(selectedDate).map((meal) => meal.id).toSet().length,
+        4,
+      );
+    },
+  );
+
+  test(
+    'autoFillPlan rolls back optimistic meals when bulk save fails',
+    () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/meal-planner/ai-autofill') {
+          return http.Response('Unavailable', 503);
+        }
+        if (request.url.path == '/api/v1/meal-plans/bulk') {
+          return http.Response('Unable to save', 500);
+        }
+        return http.Response('[]', 200);
+      });
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+      final recommendations = withAdminMeals().adminRecommendations.toList();
+      final controller = MealPlannerController(provider: provider);
+      controller.adminRecommendations.addAll(recommendations);
+      controller.setPlanDaysCount(3);
+      final existing = recommendations.first.copyWith(
+        planDate: controller.selectedDate,
+      );
+      controller.putOptimisticMeal(existing);
+
+      final filled = await controller.autoFillPlan();
+
+      expect(filled, 0);
+      expect(controller.planMealCount, 1);
+      expect(controller.mealFor(MealPlanSlot.breakfast)?.id, existing.id);
+    },
+  );
+
   test('availableMealsFor and targetSlot meal planning flow operations', () async {
     final controller = MealPlannerController();
     final todayWeekday = controller.selectedDate.weekday;
@@ -829,4 +1067,223 @@ void main() {
       expect(controller.weeklyEatenMeals, 1);
     },
   );
+
+  test(
+    'controller keeps Weight Loss when a legacy Maintain Health goal is requested',
+    () async {
+      String? lastRequestedGoal;
+      final client = MockClient((request) async {
+        if (request.url.path.contains('recommendations')) {
+          lastRequestedGoal = request.url.queryParameters['goal'];
+          return http.Response(
+            jsonEncode([
+              {
+                'recommendationId': 501,
+                'mealId': 101,
+                'mealName': 'High Protein Salmon Bowl',
+                'calories': 420,
+                'proteinGrams': 38.0,
+                'recommendationNote':
+                    'IBM Granite • Preserves lean mass during deficit',
+              },
+            ]),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response('[]', 200);
+      });
+
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+
+      final controller = MealPlannerController(provider: provider);
+      await controller.initPlanner();
+
+      expect(controller.healthGoal.value, MealPlannerHealthGoal.loseWeight);
+
+      await controller.loadRecommendations(force: true);
+      expect(controller.healthGoal.value, MealPlannerHealthGoal.loseWeight);
+      expect(lastRequestedGoal, 'LOSE_WEIGHT');
+      expect(
+        controller.adminRecommendations.first.recommendationNote,
+        contains('IBM Granite'),
+      );
+
+      await controller.setHealthGoal(MealPlannerHealthGoal.maintainHealth);
+      expect(controller.healthGoal.value, MealPlannerHealthGoal.loseWeight);
+      expect(lastRequestedGoal, 'LOSE_WEIGHT');
+    },
+  );
+
+  String testDateKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  test(
+    'resetAllMealsToPlanned resets eaten and skipped meals back to planned',
+    () async {
+      final updatedMealPayloads = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        if (request.method == 'PUT' &&
+            request.url.path.contains('/api/v1/meal-plans/')) {
+          updatedMealPayloads.add(
+            jsonDecode(request.body) as Map<String, dynamic>,
+          );
+          final planId = int.tryParse(request.url.pathSegments.last) ?? 1;
+          return http.Response(
+            jsonEncode({
+              'id': planId,
+              'planId': planId,
+              'mealId': 100 + planId,
+              'mealName': 'Mock Meal',
+              'slot': 'BREAKFAST',
+              'status': 'PLANNED',
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response('[]', 200);
+      });
+
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+      final controller = MealPlannerController(provider: provider);
+
+      final todayKey = testDateKey(controller.selectedDate);
+      final tomorrowKey = testDateKey(
+        controller.selectedDate.add(const Duration(days: 1)),
+      );
+
+      controller.plans[todayKey] = [
+        PlannedMeal(
+          id: 1,
+          planId: 1,
+          name: 'Breakfast Bowl',
+          slot: MealPlanSlot.breakfast,
+          calories: 300,
+          status: MealPlanStatus.eaten,
+          ingredients: ['Oats'],
+        ),
+        PlannedMeal(
+          id: 2,
+          planId: 2,
+          name: 'Chicken Salad',
+          slot: MealPlanSlot.lunch,
+          calories: 500,
+          status: MealPlanStatus.skipped,
+          ingredients: ['Chicken'],
+        ),
+        PlannedMeal(
+          id: 3,
+          planId: 3,
+          name: 'Fish Dinner',
+          slot: MealPlanSlot.dinner,
+          calories: 450,
+          status: MealPlanStatus.planned,
+          ingredients: ['Fish'],
+        ),
+      ];
+
+      controller.plans[tomorrowKey] = [
+        PlannedMeal(
+          id: 4,
+          planId: 4,
+          name: 'Avocado Toast',
+          slot: MealPlanSlot.breakfast,
+          calories: 280,
+          status: MealPlanStatus.eaten,
+          ingredients: ['Bread'],
+        ),
+      ];
+
+      // Reset today only
+      await controller.resetAllMealsToPlanned(currentDayOnly: true);
+
+      expect(controller.plans[todayKey]![0].status, MealPlanStatus.planned);
+      expect(controller.plans[todayKey]![1].status, MealPlanStatus.planned);
+      expect(controller.plans[todayKey]![2].status, MealPlanStatus.planned);
+      // Tomorrow should still be eaten
+      expect(controller.plans[tomorrowKey]![0].status, MealPlanStatus.eaten);
+      expect(updatedMealPayloads.length, 2); // only 2 were non-planned
+
+      // Now reset all week
+      await controller.resetAllMealsToPlanned(currentDayOnly: false);
+      expect(controller.plans[tomorrowKey]![0].status, MealPlanStatus.planned);
+      expect(updatedMealPayloads.length, 3);
+    },
+  );
+
+  test('clearAllMeals deletes meals for today or entire week', () async {
+    final deletedMealIds = <int>[];
+    final client = MockClient((request) async {
+      if (request.method == 'DELETE' &&
+          request.url.path.contains('/api/v1/meal-plans/')) {
+        final id = int.tryParse(request.url.pathSegments.last);
+        if (id != null) deletedMealIds.add(id);
+        return http.Response(jsonEncode({'success': true}), 200);
+      }
+      return http.Response('[]', 200);
+    });
+
+    final provider = MealPlannerProvider(
+      authService: _FakeAuthService(),
+      client: client,
+    );
+    final controller = MealPlannerController(provider: provider);
+
+    final todayKey = testDateKey(controller.selectedDate);
+    final tomorrowKey = testDateKey(
+      controller.selectedDate.add(const Duration(days: 1)),
+    );
+
+    controller.plans[todayKey] = [
+      PlannedMeal(
+        id: 10,
+        planId: 10,
+        name: 'Breakfast',
+        slot: MealPlanSlot.breakfast,
+        calories: 300,
+        status: MealPlanStatus.planned,
+        ingredients: ['Oats'],
+      ),
+      PlannedMeal(
+        id: 20,
+        planId: 20,
+        name: 'Lunch',
+        slot: MealPlanSlot.lunch,
+        calories: 500,
+        status: MealPlanStatus.planned,
+        ingredients: ['Chicken'],
+      ),
+    ];
+
+    controller.plans[tomorrowKey] = [
+      PlannedMeal(
+        id: 30,
+        planId: 30,
+        name: 'Dinner',
+        slot: MealPlanSlot.dinner,
+        calories: 450,
+        status: MealPlanStatus.planned,
+        ingredients: ['Fish'],
+      ),
+    ];
+
+    // Clear today only
+    await controller.clearAllMeals(currentDayOnly: true);
+
+    expect(controller.plans[todayKey], isEmpty);
+    expect(controller.plans[tomorrowKey]!.length, 1);
+    expect(deletedMealIds, containsAll([10, 20]));
+
+    // Clear all week
+    await controller.clearAllMeals(currentDayOnly: false);
+    expect(controller.plans[tomorrowKey], isEmpty);
+    expect(deletedMealIds, containsAll([10, 20, 30]));
+  });
 }

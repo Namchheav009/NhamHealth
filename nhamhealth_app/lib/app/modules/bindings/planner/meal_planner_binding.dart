@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
+import '../../controllers/planner/weight_loss_projection_controller.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 
 class MealPlannerBinding extends Bindings {
@@ -15,6 +16,12 @@ class MealPlannerBinding extends Bindings {
       () => MealPlannerController(
         provider: Get.find<MealPlannerProvider>(),
         authService: Get.find<AuthService>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<WeightLossProjectionController>(
+      () => WeightLossProjectionController(
+        provider: Get.find<MealPlannerProvider>(),
       ),
       fenix: true,
     );

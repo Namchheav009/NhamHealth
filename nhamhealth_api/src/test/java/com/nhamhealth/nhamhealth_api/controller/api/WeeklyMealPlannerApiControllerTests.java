@@ -1,132 +1,210 @@
 package com.nhamhealth.nhamhealth_api.controller.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.AiAutoFillPlanResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
+import com.nhamhealth.nhamhealth_api.service.meal.MealPlannerForecastService;
 
 class WeeklyMealPlannerApiControllerTests {
-    @Test
-    void returnsLocalizedActiveAdminPlannerMeals() {
-        WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
-        PlannerMeal meal = new PlannerMeal();
-        meal.setPlannerMealId(42);
-        meal.setNameEn("Grilled fish");
-        meal.setNameKm("ត្រីអាំង");
-        meal.setCategoryEn("Dinner");
-        MealCategory category = new MealCategory();
-        category.setCategoryId(7);
-        meal.setCategory(category);
-        meal.setCalories(new BigDecimal("510"));
-        meal.setProteinGrams(new BigDecimal("38"));
-        meal.setCarbsGrams(BigDecimal.ZERO);
-        meal.setFatGrams(BigDecimal.ZERO);
-        meal.setIngredientsText("Fish | 1 | piece | ត្រី");
-        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
-        recommendation.setPlannerMeal(meal);
-        recommendation.setDayOfWeek("FRIDAY");
-        recommendation.setMealSlot("DINNER");
-        recommendation.setSortOrder(1);
-        recommendation.setNote("High protein choice");
-        when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
-                .thenReturn(List.of(recommendation));
 
-        var response = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
-        assertEquals(1, response.getBody().size());
-        assertEquals(42, response.getBody().getFirst().plannerMealId());
-        assertEquals("ត្រីអាំង", response.getBody().getFirst().mealName());
-        assertEquals("ត្រី", response.getBody().getFirst().ingredients().getFirst().name());
-        assertEquals(BigDecimal.ONE, response.getBody().getFirst().ingredients().getFirst().quantity());
-        assertEquals("FRIDAY", response.getBody().getFirst().dayOfWeek());
-        assertEquals("DINNER", response.getBody().getFirst().mealSlot());
-    }
+        @Test
+        void returnsLocalizedActiveAdminPlannerMeals() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                PlannerMeal meal = new PlannerMeal();
+                meal.setPlannerMealId(42);
+                meal.setNameEn("Grilled fish");
+                meal.setNameKm("ត្រីអាំង");
+                meal.setCategoryEn("Dinner");
+                MealCategory category = new MealCategory();
+                category.setCategoryId(7);
+                meal.setCategory(category);
+                meal.setCalories(new BigDecimal("510"));
+                meal.setProteinGrams(new BigDecimal("38"));
+                meal.setCarbsGrams(BigDecimal.ZERO);
+                meal.setFatGrams(BigDecimal.ZERO);
+                meal.setIngredientsText("Fish | 1 | piece | ត្រី");
+                WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+                recommendation.setPlannerMeal(meal);
+                recommendation.setDayOfWeek("FRIDAY");
+                recommendation.setMealSlot("DINNER");
+                recommendation.setSortOrder(1);
+                recommendation.setNote("High protein choice");
+                when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
+                                .thenReturn(List.of(recommendation));
 
-    @Test
-    void filtersRecommendationsByDayOfWeek() {
-        WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
-        PlannerMeal meal = new PlannerMeal();
-        meal.setPlannerMealId(99);
-        meal.setNameEn("Chicken Salad");
-        meal.setNameKm("ញាំមាន់");
-        MealCategory category = new MealCategory();
-        category.setCategoryId(3);
-        meal.setCategory(category);
-        meal.setCalories(new BigDecimal("350"));
-        meal.setProteinGrams(new BigDecimal("30"));
-        meal.setCarbsGrams(BigDecimal.ZERO);
-        meal.setFatGrams(BigDecimal.ZERO);
-        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
-        recommendation.setPlannerMeal(meal);
-        recommendation.setDayOfWeek("MONDAY");
-        recommendation.setMealSlot("LUNCH");
-        recommendation.setSortOrder(1);
+                var response = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
+                assertEquals(1, response.getBody().size());
+                assertEquals(42, response.getBody().getFirst().plannerMealId());
+                assertEquals("ត្រីអាំង", response.getBody().getFirst().mealName());
+                assertEquals("ត្រី", response.getBody().getFirst().ingredients().getFirst().name());
+                assertEquals(BigDecimal.ONE, response.getBody().getFirst().ingredients().getFirst().quantity());
+                assertEquals("FRIDAY", response.getBody().getFirst().dayOfWeek());
+                assertEquals("DINNER", response.getBody().getFirst().mealSlot());
+        }
 
-        when(repository
-                .findAllByActiveTrueAndPlannerMealActiveTrueAndDayOfWeekInOrderBySortOrderAscRecommendationIdAsc(
-                        List.of("ALL", "MONDAY")))
-                .thenReturn(List.of(recommendation));
+        @Test
+        void filtersRecommendationsByDayOfWeek() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                PlannerMeal meal = new PlannerMeal();
+                meal.setPlannerMealId(99);
+                meal.setNameEn("Chicken Salad");
+                meal.setNameKm("ញាំមាន់");
+                MealCategory category = new MealCategory();
+                category.setCategoryId(3);
+                meal.setCategory(category);
+                meal.setCalories(new BigDecimal("350"));
+                meal.setProteinGrams(new BigDecimal("30"));
+                meal.setCarbsGrams(BigDecimal.ZERO);
+                meal.setFatGrams(BigDecimal.ZERO);
+                WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+                recommendation.setPlannerMeal(meal);
+                recommendation.setDayOfWeek("MONDAY");
+                recommendation.setMealSlot("LUNCH");
+                recommendation.setSortOrder(1);
 
-        var response = new WeeklyMealPlannerApiController(repository).recommendations("MONDAY", null, "en");
-        assertEquals(1, response.getBody().size());
-        assertEquals(99, response.getBody().getFirst().plannerMealId());
-        assertEquals("Chicken Salad", response.getBody().getFirst().mealName());
-    }
+                when(repository
+                                .findAllByActiveTrueAndPlannerMealActiveTrueAndDayOfWeekInOrderBySortOrderAscRecommendationIdAsc(
+                                                List.of("ALL", "MONDAY")))
+                                .thenReturn(List.of(recommendation));
 
-    @Test
-    void returnsDedicatedKhmerIngredientsInstructionsAndTagsWhenAvailable() {
-        WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
-        PlannerMeal meal = new PlannerMeal();
-        meal.setPlannerMealId(55);
-        meal.setNameEn("Steamed Chicken Rice");
-        meal.setNameKm("បាយមាន់ស្ងោរ");
-        meal.setCategoryEn("Lunch");
-        MealCategory category = new MealCategory();
-        category.setCategoryId(2);
-        meal.setCategory(category);
-        meal.setCalories(new BigDecimal("480"));
-        meal.setProteinGrams(new BigDecimal("35"));
-        meal.setCarbsGrams(new BigDecimal("50"));
-        meal.setFatGrams(new BigDecimal("12"));
+                var response = new WeeklyMealPlannerApiController(repository).recommendations("MONDAY", null, "en");
+                assertEquals(1, response.getBody().size());
+                assertEquals(99, response.getBody().getFirst().plannerMealId());
+                assertEquals("Chicken Salad", response.getBody().getFirst().mealName());
+        }
 
-        meal.setIngredientsText("Chicken | 150 | g\nRice | 100 | g");
-        meal.setIngredientsTextKm("សាច់មាន់ | 150 | g\nបាយ | 100 | g");
-        meal.setInstructionsText("Step 1: Boil chicken.\nStep 2: Cook rice.");
-        meal.setInstructionsTextKm("ជំហានទី ១៖ ស្ងោរសាច់មាន់។\nជំហានទី ២៖ ដាំបាយ។");
-        meal.setTagsText("High Protein, Balanced");
-        meal.setTagsTextKm("ប្រូតេអ៊ីនខ្ពស់, មានតុល្យភាព");
+        @Test
+        void recommendationWithoutPrimaryCategoryDoesNotCrash() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                PlannerMeal meal = new PlannerMeal();
+                meal.setPlannerMealId(100);
+                meal.setNameEn("Uncategorized meal");
+                meal.setCategoryEn("Other");
+                meal.setCalories(new BigDecimal("300"));
+                meal.setProteinGrams(BigDecimal.ZERO);
+                meal.setCarbsGrams(BigDecimal.ZERO);
+                meal.setFatGrams(BigDecimal.ZERO);
 
-        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
-        recommendation.setPlannerMeal(meal);
-        recommendation.setDayOfWeek("ALL");
-        recommendation.setMealSlot("LUNCH");
-        recommendation.setSortOrder(1);
+                WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+                recommendation.setPlannerMeal(meal);
+                recommendation.setDayOfWeek("ALL");
+                recommendation.setMealSlot("SNACK");
+                when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
+                                .thenReturn(List.of(recommendation));
 
-        when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
-                .thenReturn(List.of(recommendation));
+                var response = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "en");
 
-        // When requesting Khmer
-        var kmResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
-        var kmItem = kmResponse.getBody().getFirst();
-        assertEquals("បាយមាន់ស្ងោរ", kmItem.mealName());
-        assertEquals(List.of("សាច់មាន់", "បាយ"), kmItem.ingredients().stream().map(i -> i.name()).toList());
-        assertEquals(List.of("ជំហានទី ១៖ ស្ងោរសាច់មាន់។", "ជំហានទី ២៖ ដាំបាយ។"), kmItem.instructions());
-        assertEquals(List.of("ប្រូតេអ៊ីនខ្ពស់", "មានតុល្យភាព"), kmItem.tags());
+                assertEquals(1, response.getBody().size());
+                assertEquals(null, response.getBody().getFirst().categoryId());
+        }
 
-        // When requesting English
-        var enResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "en");
-        var enItem = enResponse.getBody().getFirst();
-        assertEquals("Steamed Chicken Rice", enItem.mealName());
-        assertEquals(List.of("Chicken", "Rice"), enItem.ingredients().stream().map(i -> i.name()).toList());
-        assertEquals(List.of("Step 1: Boil chicken.", "Step 2: Cook rice."), enItem.instructions());
-        assertEquals(List.of("High Protein", "Balanced"), enItem.tags());
-    }
+        @Test
+        void returnsDedicatedKhmerIngredientsInstructionsAndTagsWhenAvailable() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                PlannerMeal meal = new PlannerMeal();
+                meal.setPlannerMealId(55);
+                meal.setNameEn("Steamed Chicken Rice");
+                meal.setNameKm("បាយមាន់ស្ងោរ");
+                meal.setCategoryEn("Lunch");
+                MealCategory category = new MealCategory();
+                category.setCategoryId(2);
+                meal.setCategory(category);
+                meal.setCalories(new BigDecimal("480"));
+                meal.setProteinGrams(new BigDecimal("35"));
+                meal.setCarbsGrams(new BigDecimal("50"));
+                meal.setFatGrams(new BigDecimal("12"));
+                meal.setIngredientsText("Chicken | 150 | g\nRice | 100 | g");
+                meal.setIngredientsTextKm("សាច់មាន់ | 150 | g\nបាយ | 100 | g");
+                meal.setInstructionsText("Step 1: Boil chicken.\nStep 2: Cook rice.");
+                meal.setInstructionsTextKm("ជំហានទី ១៖ ស្ងោរសាច់មាន់។\nជំហានទី ២៖ ដាំបាយ។");
+                meal.setTagsText("High Protein, Balanced");
+                meal.setTagsTextKm("ប្រូតេអ៊ីនខ្ពស់, មានតុល្យភាព");
+
+                WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+                recommendation.setPlannerMeal(meal);
+                recommendation.setDayOfWeek("ALL");
+                recommendation.setMealSlot("LUNCH");
+                recommendation.setSortOrder(1);
+
+                when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
+                                .thenReturn(List.of(recommendation));
+
+                // When requesting Khmer
+                var kmResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "km");
+                var kmItem = kmResponse.getBody().getFirst();
+                assertEquals("បាយមាន់ស្ងោរ", kmItem.mealName());
+                assertEquals(List.of("សាច់មាន់", "បាយ"), kmItem.ingredients().stream().map(i -> i.name()).toList());
+                assertEquals(List.of("ជំហានទី ១៖ ស្ងោរសាច់មាន់។", "ជំហានទី ២៖ ដាំបាយ។"), kmItem.instructions());
+                assertEquals(List.of("ប្រូតេអ៊ីនខ្ពស់", "មានតុល្យភាព"), kmItem.tags());
+
+                // When requesting English
+                var enResponse = new WeeklyMealPlannerApiController(repository).recommendations(null, null, "en");
+                var enItem = enResponse.getBody().getFirst();
+                assertEquals("Steamed Chicken Rice", enItem.mealName());
+                assertEquals(List.of("Chicken", "Rice"), enItem.ingredients().stream().map(i -> i.name()).toList());
+                assertEquals(List.of("Step 1: Boil chicken.", "Step 2: Cook rice."), enItem.instructions());
+                assertEquals(List.of("High Protein", "Balanced"), enItem.tags());
+        }
+
+        @Test
+        void delegatesToForecastService() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                MealPlannerForecastService forecastService = mock(MealPlannerForecastService.class);
+
+                WeightLossForecastResponse mockForecast = new WeightLossForecastResponse(
+                                new BigDecimal("75.0"), new BigDecimal("72.0"), new BigDecimal("2.50"),
+                                new BigDecimal("72.5"), new BigDecimal("1650"), new BigDecimal("2400"),
+                                new BigDecimal("1800"), new BigDecimal("600"), 28, new BigDecimal("0.55"),
+                                "OPTIMAL", "Healthy pace", false, "", List.of(), List.of(), "Good progress", true);
+
+                when(forecastService.calculateForecast(null, 28, null, "en", "LOSE_WEIGHT"))
+                                .thenReturn(mockForecast);
+
+                var controller = new WeeklyMealPlannerApiController(repository, null, forecastService);
+                var response = controller.forecast(null, 28, null, "en", "LOSE_WEIGHT");
+
+                assertNotNull(response.getBody());
+                assertEquals(new BigDecimal("75.0"), response.getBody().currentWeightKg());
+                assertEquals(new BigDecimal("2.50"), response.getBody().projectedWeightLossKg());
+                assertEquals("OPTIMAL", response.getBody().paceStatus());
+        }
+
+        @Test
+        void delegatesToAiAutoFillService() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                MealPlannerForecastService forecastService = mock(MealPlannerForecastService.class);
+
+                AiAutoFillPlanRequest request = new AiAutoFillPlanRequest(
+                                LocalDate.of(2026, 9, 21), 7, "LOSE_WEIGHT", 28, true, true);
+
+                AiAutoFillPlanResponse mockResponse = new AiAutoFillPlanResponse(
+                                List.of(), 5, 1900.0, 500.0, 2400.0, 1600.0, 0.45, 28, 1.82,
+                                "IBM Granite auto-filled plan", "LOSE_WEIGHT", "ibm/granite-3-3-8b-instruct");
+
+                when(forecastService.generateAiAutoFillPlan(null, request, "en")).thenReturn(mockResponse);
+
+                var controller = new WeeklyMealPlannerApiController(repository, null, forecastService);
+                var response = controller.aiAutoFill(null, request, "en");
+
+                assertNotNull(response.getBody());
+                assertEquals(5, response.getBody().filledCount());
+                assertEquals(1900.0, response.getBody().dailyPlannedCalories());
+                assertEquals(500.0, response.getBody().dailyDeficit());
+                assertEquals("LOSE_WEIGHT", response.getBody().goal());
+        }
 }

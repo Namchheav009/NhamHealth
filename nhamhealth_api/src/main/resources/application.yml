@@ -45,6 +45,12 @@ app:
       max-requests: ${FOLLOW_CONNECTION_RATE_LIMIT_MAX:20}
       window: ${FOLLOW_CONNECTION_RATE_LIMIT_WINDOW:PT1M}
   ai:
+    ibm:
+      api-key: ${IBM_WATSONX_API_KEY:}
+      project-id: ${IBM_WATSONX_PROJECT_ID:}
+      base-url: ${IBM_WATSONX_BASE_URL:https://us-south.ml.cloud.ibm.com}
+      iam-url: ${IBM_WATSONX_IAM_URL:https://iam.cloud.ibm.com}
+      model: ${IBM_WATSONX_MODEL:ibm/granite-3-3-8b-instruct}
     gemini:
       api-key: ${GEMINI_API_KEY:${APP_AI_GEMINI_API_KEY:}}
       base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
@@ -61,6 +67,8 @@ app:
 
       recommendation-model: ${GEMINI_RECOMMENDATION_MODEL:gemini-3.5-flash-lite}
       recommendation-fallback-model: ${GEMINI_RECOMMENDATION_FALLBACK_MODEL:gemini-3.6-flash}
+      meal-planner-model: ${GEMINI_MEAL_PLANNER_MODEL:${GEMINI_RECOMMENDATION_MODEL:gemini-3.5-flash-lite}}
+      meal-planner-fallback-model: ${GEMINI_MEAL_PLANNER_FALLBACK_MODEL:${GEMINI_FALLBACK_MODEL:gemini-3.6-flash}}
 
       text-max-tokens: ${GEMINI_TEXT_MAX_TOKENS:8192}
       rate-limit-cooldown: ${GEMINI_RATE_LIMIT_COOLDOWN:PT1M}

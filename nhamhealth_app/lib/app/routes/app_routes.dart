@@ -16,6 +16,10 @@ abstract class AppRoutes {
   static const String mealPlannerDetail = '/meal-planner/detail';
   static const String mealPlannerWeek = '/meal-planner/week';
   static const String mealPlannerGrocery = '/meal-planner/grocery';
+  static const String mealPlannerWeightLossProjection =
+      '/meal-planner/weight-loss-projection';
+  static const String mealPlannerWeightLossAnalysis =
+      '/meal-planner/analysis/weight-loss';
   static const String foodDetail = '/meals/food-detail';
   static const String profile = '/profile';
   static const String settings = '/settings';
