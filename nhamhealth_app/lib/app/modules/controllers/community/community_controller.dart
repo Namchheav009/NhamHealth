@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
@@ -56,6 +57,8 @@ class CommunityController extends GetxController {
   bool _feedRefreshInFlight = false;
   static const notificationRefreshInterval = Duration(seconds: 5);
   static const feedRefreshInterval = Duration(seconds: 3);
+  final ScrollController feedScrollController = ScrollController();
+  final ScrollController peopleScrollController = ScrollController();
   final section = CommunitySection.feed.obs;
   final feedFilter = CommunityFeedFilter.forYou.obs;
   final friendsView = FriendsView.friends.obs;
@@ -403,10 +406,39 @@ class CommunityController extends GetxController {
   }
 
   void selectSection(CommunitySection value) {
-    if (section.value == value) return;
+    if (section.value == value) {
+      // Tap on the active tab: scroll to the top and refresh content
+      _scrollToTopAndRefresh(value);
+      return;
+    }
     section.value = value;
     searchQuery.value = '';
     displayedPostCount.value = pageSize;
+    _scrollToTop(value);
+  }
+
+  void _scrollToTop(CommunitySection targetSection) {
+    final controller = switch (targetSection) {
+      CommunitySection.feed => feedScrollController,
+      CommunitySection.people => peopleScrollController,
+    };
+    if (controller.hasClients) {
+      controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _scrollToTopAndRefresh(CommunitySection targetSection) {
+    _scrollToTop(targetSection);
+    switch (targetSection) {
+      case CommunitySection.feed:
+        unawaited(reload());
+      case CommunitySection.people:
+        unawaited(_refreshPeople());
+    }
   }
 
   void selectFeedFilter(CommunityFeedFilter value) {
@@ -984,6 +1016,8 @@ class CommunityController extends GetxController {
     _notificationTimer?.cancel();
     _feedRefreshTimer?.cancel();
     _realtimeSubscription?.cancel();
+    feedScrollController.dispose();
+    peopleScrollController.dispose();
     super.onClose();
   }
 }

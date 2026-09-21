@@ -29,12 +29,14 @@ class CommunityPostEditorPage extends StatefulWidget {
     required this.authorAvatarUrl,
     required this.onSubmit,
     this.post,
+    this.initialPickImage = false,
     super.key,
   });
   final CommunityPost? post;
   final String authorName;
   final String authorAvatarUrl;
   final Future<void> Function(CommunityPostDraft draft) onSubmit;
+  final bool initialPickImage;
   @override
   State<CommunityPostEditorPage> createState() =>
       _CommunityPostEditorPageState();
@@ -116,6 +118,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             : CommunityPostVisibility.public;
     _loadTags();
     _loadMealCategories();
+    if (widget.initialPickImage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _chooseImage();
+      });
+    }
   }
 
   Future<void> _loadTags() async {

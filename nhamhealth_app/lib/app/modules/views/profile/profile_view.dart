@@ -160,9 +160,11 @@ class ProfileView extends GetView<ProfileController> {
     children: [
       CommunityComposerCard(
         onTap: _showCreatePost,
+        onPhotoTap: () => _showCreatePost(pickPhoto: true),
         authorAvatarUrl:
             controller.authenticatedUser.value?.profileImageUrl ?? '',
       ),
+      const SizedBox(height: 12),
       Obx(() {
         final selectedIndex = controller.selectedProfileContentTab.value;
         return Column(
@@ -537,10 +539,11 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Future<void> _showCreatePost() async {
+  Future<void> _showCreatePost({bool pickPhoto = false}) async {
     final user = controller.authenticatedUser.value;
     await Get.to<void>(
       () => CommunityPostEditorPage(
+        initialPickImage: pickPhoto,
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
         onSubmit:

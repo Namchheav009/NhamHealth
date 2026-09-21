@@ -30,7 +30,7 @@ class CommunityPage extends GetView<CommunityController> {
 
   static const Color green = AppColors.primaryGreen;
 
-  static const double _mobileBreakpoint = 720;
+  static const double _mobileBreakpoint = 840;
   static const double _feedTwoColumnBreakpoint = 820;
   static const double _cardRadius = 18;
 
@@ -174,6 +174,7 @@ class CommunityPage extends GetView<CommunityController> {
         AppSpacing.pagePaddingWithNavigationFor(context).bottom + 28;
 
     return ListView(
+      controller: controller.peopleScrollController,
       // ignore: deprecated_member_use
       cacheExtent: 1400,
       physics: const AlwaysScrollableScrollPhysics(
@@ -858,6 +859,7 @@ class CommunityPage extends GetView<CommunityController> {
               final error = controller.errorMessage.value;
               final loadingMore = controller.isLoadingMore.value;
               return ListView.builder(
+                controller: controller.feedScrollController,
                 // ignore: deprecated_member_use
                 cacheExtent: 700,
                 physics: const AlwaysScrollableScrollPhysics(
@@ -910,6 +912,7 @@ class CommunityPage extends GetView<CommunityController> {
             });
           }
           return ListView(
+            controller: controller.feedScrollController,
             // ignore: deprecated_member_use
             cacheExtent: 1400,
             physics: const AlwaysScrollableScrollPhysics(
@@ -951,6 +954,7 @@ class CommunityPage extends GetView<CommunityController> {
       children: [
         CommunityComposerCard(
           onTap: _showCreatePost,
+          onPhotoTap: () => _showCreatePost(pickPhoto: true),
           authorAvatarUrl:
               controller.authenticatedUser.value?.profileImageUrl ?? '',
         ),
@@ -1620,11 +1624,12 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Future<void> _showCreatePost() async {
+  Future<void> _showCreatePost({bool pickPhoto = false}) async {
     final user = controller.authenticatedUser.value;
 
     await Get.to<void>(
       () => CommunityPostEditorPage(
+        initialPickImage: pickPhoto,
         authorName: user?.displayName ?? 'Community member',
         authorAvatarUrl: user?.profileImageUrl ?? '',
         onSubmit:
@@ -1744,6 +1749,7 @@ class CommunityPage extends GetView<CommunityController> {
           onSelect: (index) {
             if (index == 0) Get.offNamed<void>(AppRoutes.home);
             if (index == 1) Get.offNamed<void>(AppRoutes.meals);
+            if (index == 2) controller.selectSection(controller.section.value);
             if (index == 4) Get.offNamed<void>(AppRoutes.settings);
           },
         ),

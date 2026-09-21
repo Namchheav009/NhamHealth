@@ -6,161 +6,140 @@ import '../../../../theme/app_colors.dart';
 class CommunityComposerCard extends StatelessWidget {
   const CommunityComposerCard({
     required this.onTap,
+    this.onPhotoTap,
+    this.onAvatarTap,
     this.authorAvatarUrl = '',
     super.key,
   });
 
   final VoidCallback onTap;
+  final VoidCallback? onPhotoTap;
+  final VoidCallback? onAvatarTap;
   final String authorAvatarUrl;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onTap,
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: context.appBorder),
-                ),
-                child: ClipOval(
-                  child:
-                      authorAvatarUrl.isEmpty
-                          ? Container(
-                            color: context.appSoftGreen,
-                            child: const Icon(
-                              Icons.person_outline_rounded,
-                              size: 22,
-                              color: AppColors.primaryGreen,
+  Widget build(BuildContext context) {
+    final isDark = context.appIsDark;
+    final cardBg = isDark ? context.appElevatedSurface : Colors.white;
+    final borderColor = isDark ? context.appBorder : const Color(0xFFE5ECE7);
+    final innerBorderColor =
+        isDark ? context.appBorder : const Color(0xFFE2E8E3);
+    final mutedTextColor =
+        isDark ? context.appMutedText : const Color(0xFF757E8A);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: borderColor),
+        boxShadow:
+            isDark
+                ? null
+                : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onAvatarTap ?? onTap,
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: context.appSoftGreen,
+              ),
+              child: ClipOval(
+                child:
+                    authorAvatarUrl.isEmpty
+                        ? const Icon(
+                          Icons.person_outline_rounded,
+                          size: 22,
+                          color: AppColors.primaryGreen,
+                        )
+                        : Image.network(
+                          authorAvatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, _, _) => const Icon(
+                                Icons.person_outline_rounded,
+                                size: 22,
+                                color: AppColors.primaryGreen,
+                              ),
+                        ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              shape: StadiumBorder(
+                side: BorderSide(color: innerBorderColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onTap,
+                child: SizedBox(
+                  height: 44,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 8),
+                          child: Text(
+                            'community.composer_prompt'.tr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: mutedTextColor,
                             ),
-                          )
-                          : Image.network(
-                            authorAvatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder:
-                                (_, _, _) => Container(
-                                  color: context.appSoftGreen,
-                                  child: const Icon(
-                                    Icons.person_outline_rounded,
-                                    size: 22,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 5),
+                        child: Semantics(
+                          button: true,
+                          label: 'community.photo'.tr,
+                          child: Material(
+                            color: context.appSoftGreen,
+                            borderRadius: BorderRadius.circular(12),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: onPhotoTap ?? onTap,
+                              child: const SizedBox(
+                                width: 34,
+                                height: 34,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    size: 20,
                                     color: AppColors.primaryGreen,
                                   ),
                                 ),
+                              ),
+                            ),
                           ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Material(
-                color:
-                    context.appIsDark
-                        ? context.appColorScheme.surfaceContainerHigh
-                        : const Color(0xFFF3F6F3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  side: BorderSide(color: context.appBorder),
-                ),
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    height: 46,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: IgnorePointer(
-                      child: Text(
-                        'community.composer_prompt'.tr,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: context.appMutedText,
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _ComposerAction(
-              icon: Icons.image_outlined,
-              label: 'community.photo'.tr,
-              onTap: onTap,
-            ),
-            _ComposerAction(
-              icon: Icons.forum_outlined,
-              label: 'community.ask_community'.tr,
-              onTap: onTap,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-class _ComposerAction extends StatelessWidget {
-  const _ComposerAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color:
-        context.appIsDark
-            ? context.appColorScheme.surfaceContainer
-            : Colors.white,
-    shape: StadiumBorder(side: BorderSide(color: context.appBorder)),
-    child: InkWell(
-      onTap: onTap,
-      customBorder: const StadiumBorder(),
-      child: SizedBox(
-        height: 38,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: AppColors.primaryGreen),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
           ),
-        ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 }

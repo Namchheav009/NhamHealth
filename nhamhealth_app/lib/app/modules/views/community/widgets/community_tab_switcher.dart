@@ -40,11 +40,15 @@ class CommunityTabSwitcher extends StatelessWidget {
                   label: 'community.tab_label'.trParams({
                     'name': _labelKeys[section.index].tr,
                   }),
-                  child: InkWell(
-                    key: ValueKey('community-tab-${section.name}'),
-                    onTap: () => onChanged(section),
+                  child: Material(
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(24),
-                    child: AnimatedContainer(
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      key: ValueKey('community-tab-${section.name}'),
+                      onTap: () => onChanged(section),
+                      borderRadius: BorderRadius.circular(24),
+                      child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       curve: Curves.easeOutCubic,
                       alignment: Alignment.center,
@@ -83,8 +87,10 @@ class CommunityTabSwitcher extends StatelessWidget {
                     ),
                   ),
                 ),
-              );
-            }).toList(),
+
+              ),
+            );
+        }).toList(),
       ),
     );
   }
