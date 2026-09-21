@@ -41,8 +41,9 @@ void main() {
       find.byKey(const ValueKey('weight-loss-analysis-page')),
       findsOneWidget,
     );
-    expect(find.text('Calorie deficit'), findsOneWidget);
-    expect(find.text('Protein focus'), findsOneWidget);
+    expect(find.text('Calorie deficit'), findsNothing);
+    expect(find.text('Protein focus'), findsNothing);
+    expect(find.text('Safe pace'), findsNothing);
     expect(
       find.byKey(const ValueKey('maintain-health-analysis-page')),
       findsNothing,

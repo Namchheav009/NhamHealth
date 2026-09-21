@@ -209,6 +209,16 @@ void main() {
 
     expect(find.text('Meal Planner'), findsOneWidget);
     expect(find.textContaining('0/4'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('planner-daily-overview')),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<LinearProgressIndicator>(
+        find.byKey(const ValueKey('planner-daily-progress')),
+      ).value,
+      0,
+    );
 
     final breakfastSlot = find.byKey(const ValueKey('planner-slot-breakfast'));
     await tester.drag(find.byType(ListView), const Offset(0, -280));

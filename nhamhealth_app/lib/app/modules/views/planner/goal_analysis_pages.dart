@@ -13,12 +13,11 @@ class WeightLossAnalysisPage extends StatefulWidget {
   const WeightLossAnalysisPage({super.key});
 
   @override
-  State<WeightLossAnalysisPage> createState() =>
-      _WeightLossAnalysisPageState();
+  State<WeightLossAnalysisPage> createState() => _WeightLossAnalysisPageState();
 }
 
 class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
-  static const _accent = Color(0xFF2563EB);
+  static const _accent = AppColors.primaryGreen;
 
   WeightLossProjectionController get _controller =>
       Get.find<WeightLossProjectionController>();
@@ -77,12 +76,8 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _analysisHero(context),
-                              const SizedBox(height: 14),
-                              _goalFocusRow(context),
                               const SizedBox(height: 22),
-                              const WeightLossProjectionView(
-                                embedded: true,
-                              ),
+                              const WeightLossProjectionView(embedded: true),
                             ],
                           ),
                         ),
@@ -103,7 +98,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [_accent, Color(0xFF60A5FA)],
+          colors: [AppColors.darkGreen, _accent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -125,9 +120,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(17),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.28),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
             ),
             child: const Icon(
               Icons.trending_down_rounded,
@@ -162,7 +155,8 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                         Obx(
                           () => Text(
                             Get.find<MealPlannerController>()
-                                    .hasAnalyzedWeightLoss.value
+                                    .hasAnalyzedWeightLoss
+                                    .value
                                 ? 'planner.analysis_ready'.tr
                                 : 'planner.analysis_preview'.tr,
                             style: const TextStyle(
@@ -208,50 +202,6 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _goalFocusRow(BuildContext context) {
-    const items = [
-      (Icons.local_fire_department_rounded, 'planner.focus_deficit'),
-      (Icons.fitness_center_rounded, 'planner.focus_protein'),
-      (Icons.monitor_heart_rounded, 'planner.focus_safe_pace'),
-    ];
-
-    return Row(
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          if (index > 0) const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-              decoration: BoxDecoration(
-                color: context.appElevatedSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _accent.withValues(alpha: 0.18)),
-              ),
-              child: Column(
-                children: [
-                  Icon(items[index].$1, color: _accent, size: 20),
-                  const SizedBox(height: 6),
-                  Text(
-                    items[index].$2.tr,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 10.5,
-                      height: 1.2,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

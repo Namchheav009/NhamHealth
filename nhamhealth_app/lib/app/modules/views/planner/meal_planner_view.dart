@@ -405,13 +405,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                                             : context.appBackground,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color:
-                                          isSelected
-                                              ? AppColors.primaryGreen
-                                              : context.appBorder.withValues(
-                                                alpha: 0.65,
-                                              ),
-                                      width: 1.0,
+                                      color: context.appBorder.withValues(
+                                        alpha: 0.65,
+                                      ),
                                     ),
                                   ),
                                   child: Text(
@@ -595,12 +591,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                                           : context.appElevatedSurface,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color:
-                                        isSel
-                                            ? AppColors.primaryGreen
-                                            : context.appBorder.withValues(
-                                              alpha: 0.8,
-                                            ),
+                                    color: context.appBorder.withValues(
+                                      alpha: 0.8,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
@@ -778,7 +771,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(50),
-                        side: const BorderSide(color: AppColors.primaryGreen),
+                        side: BorderSide(color: context.appBorder),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -831,11 +824,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
           color: isSelected ? AppColors.primaryGreen : context.appBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color:
-                isSelected
-                    ? AppColors.primaryGreen
-                    : context.appBorder.withValues(alpha: 0.6),
-            width: 1.0,
+            color: context.appBorder.withValues(alpha: 0.6),
           ),
           boxShadow:
               isSelected
@@ -1185,10 +1174,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: accentColor.withValues(alpha: 0.35),
-            width: 1.5,
-          ),
+          border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1215,8 +1201,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       color: accentColor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: accentColor.withValues(alpha: 0.35),
-                        width: 0.8,
+                        color: context.appBorder.withValues(alpha: 0.7),
                       ),
                     ),
                     child: Text(
@@ -1467,7 +1452,8 @@ class _MealPlannerViewState extends State<MealPlannerView>
     BuildContext context, {
     required bool analyzed,
   }) {
-    const accent = Color(0xFF2563EB);
+    final accent =
+        context.appIsDark ? const Color(0xFF72DDA7) : AppColors.darkGreen;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1477,9 +1463,11 @@ class _MealPlannerViewState extends State<MealPlannerView>
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.065),
+            color: context.appSoftGreen,
             borderRadius: BorderRadius.circular(17),
-            border: Border.all(color: accent.withValues(alpha: 0.20)),
+            border: Border.all(
+              color: context.appBorder.withValues(alpha: 0.7),
+            ),
           ),
           child: Row(
             children: [
@@ -1490,7 +1478,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   color: accent.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.trending_down_rounded,
                   color: accent,
                   size: 22,
@@ -1523,7 +1511,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_rounded,
                 color: accent,
                 size: 20,
@@ -1540,18 +1528,14 @@ class _MealPlannerViewState extends State<MealPlannerView>
     final hasMeals = controller.selectedMeals.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      key: const ValueKey('planner-daily-overview'),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: context.appBorder.withValues(alpha: 0.8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: context.appBorder.withValues(alpha: 0.7),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1559,15 +1543,15 @@ class _MealPlannerViewState extends State<MealPlannerView>
           Row(
             children: [
               CircleAvatar(
-                radius: 18,
+                radius: 21,
                 backgroundColor: context.appSoftGreen,
                 child: const Icon(
                   Icons.eco_rounded,
-                  color: Color(0xFF43C756),
-                  size: 21,
+                  color: AppColors.primaryGreen,
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1576,7 +1560,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       'planner.daily_overview'.tr,
                       style: TextStyle(
                         color: context.appText,
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -1592,63 +1576,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
                           ),
                       style: TextStyle(
                         color: context.appMutedText,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(
-                width: 56,
-                height: 56,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 5,
-                      strokeCap: StrokeCap.round,
-                      backgroundColor: context.appBorder.withValues(alpha: 0.6),
-                      color: AppColors.primaryGreen,
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${(progress * 100).round()}%',
-                          style: const TextStyle(
-                            color: AppColors.primaryGreen,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            height: 1.1,
-                          ),
-                        ),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              _plannerLabel('planner.adherence', 'adherence'),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: context.appMutedText,
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w600,
-                                height: 1.25,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 22),
           Row(
             children: [
               _macroCard(
@@ -1684,17 +1621,43 @@ class _MealPlannerViewState extends State<MealPlannerView>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: context.appBorder.withValues(alpha: 0.6),
-              color: AppColors.primaryGreen,
+            child: SizedBox(
+              height: 12,
+              child: Stack(
+                children: [
+                  LinearProgressIndicator(
+                    key: const ValueKey('planner-daily-progress'),
+                    value: progress,
+                    minHeight: 12,
+                    backgroundColor: context.appSoftGreen,
+                    color: AppColors.primaryGreen,
+                  ),
+                  Positioned.fill(
+                    child: Row(
+                      children: List.generate(
+                        controller.dailyMealGoal,
+                        (index) => Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: index == controller.dailyMealGoal - 1
+                                ? const SizedBox.shrink()
+                                : Container(
+                                    width: 1.5,
+                                    color: context.appElevatedSurface,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             '${controller.eatenMeals}/${controller.dailyMealGoal} ${'planner.meals_eaten_short'.tr}'
             '${controller.skippedMeals == 0 ? '' : '  •  ${controller.skippedMeals} ${'planner.skipped'.tr}'}',
@@ -1730,12 +1693,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
           children: [
             Icon(icon, size: 16, color: iconColor),
             const SizedBox(width: 4),
-            Text(
-              value,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

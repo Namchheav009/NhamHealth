@@ -417,10 +417,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                   ? accentColor.withValues(alpha: 0.08)
                   : context.appSurfaceLow,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? accentColor : context.appBorder,
-            width: isSelected ? 1.8 : 1.0,
-          ),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,12 +428,17 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? accentColor : context.appMutedText,
-                  width: isSelected ? 6.5 : 1.5,
-                ),
-                color: isSelected ? Colors.white : Colors.transparent,
+                border: Border.all(color: context.appBorder, width: 1.5),
+                color: isSelected ? accentColor : Colors.transparent,
               ),
+              child:
+                  isSelected
+                      ? const Icon(
+                        Icons.check_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      )
+                      : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -467,12 +469,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                                     ? accentColor.withValues(alpha: 0.15)
                                     : context.appBorder.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color:
-                                  isRecommended
-                                      ? accentColor.withValues(alpha: 0.35)
-                                      : Colors.transparent,
-                            ),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Text(
                             badge,
@@ -625,10 +622,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFFF59E0B),
-                          width: 1.2,
-                        ),
+                        border: Border.all(color: context.appBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,11 +668,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF0F62FE).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: const Color(
-                          0xFF0F62FE,
-                        ).withValues(alpha: 0.25),
-                      ),
+                      border: Border.all(color: context.appBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -770,9 +760,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
-                      ),
+                      border: Border.all(color: context.appBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1254,9 +1242,7 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: accentColor.withValues(alpha: 0.30),
-                  ),
+                  border: Border.all(color: context.appBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1419,7 +1405,7 @@ class _AiAutoFillResultSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: accentColor.withValues(alpha: 0.18)),
+              border: Border.all(color: context.appBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

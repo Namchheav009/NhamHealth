@@ -23,6 +23,12 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
   final bool embedded;
   String get _pageTitle => 'planner.weight_loss_forecast'.tr;
 
+  Color _positiveText(BuildContext context) =>
+      context.appIsDark ? const Color(0xFF72DDA7) : AppColors.darkGreen;
+
+  Color _secondaryAccent(BuildContext context) =>
+      context.appIsDark ? const Color(0xFF78DCD0) : const Color(0xFF087F72);
+
   @override
   Widget build(BuildContext context) {
     if (embedded) {
@@ -212,9 +218,15 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [context.appSoftGreen, context.appElevatedSurface],
+        ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.20),
+        ),
         boxShadow: context.appTileShadow,
       ),
       child: Column(
@@ -268,8 +280,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   style: TextStyle(
                     color:
                         isSurplus
-                            ? AppColors.accentOrange
-                            : AppColors.primaryGreen,
+                            ? context.appOnWarningSurface
+                            : _positiveText(context),
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.0,
@@ -344,7 +356,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                         color:
                             isSurplus
                                 ? context.appText
-                                : AppColors.primaryGreen,
+                                : _positiveText(context),
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -420,7 +432,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                                   style: TextStyle(
                                     color:
                                         isSelected
-                                            ? Colors.white
+                                            ? context.appOnBrand
                                             : context.appText,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
@@ -446,32 +458,32 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
 
     switch (forecast.paceStatus.toUpperCase()) {
       case 'BALANCED':
-        badgeColor = AppColors.primaryGreen;
+        badgeColor = _positiveText(context);
         label = 'planner.pace_balanced'.tr;
         break;
       case 'BELOW_TARGET':
-        badgeColor = const Color(0xFF0284C7);
+        badgeColor = _secondaryAccent(context);
         label = 'planner.pace_below_target'.tr;
         break;
       case 'ABOVE_TARGET':
-        badgeColor = AppColors.accentOrange;
+        badgeColor = context.appOnWarningSurface;
         label = 'planner.pace_above_target'.tr;
         break;
       case 'SURPLUS':
-        badgeColor = AppColors.accentOrange;
+        badgeColor = context.appOnWarningSurface;
         label = 'planner.pace_surplus'.tr;
         break;
       case 'STEADY':
-        badgeColor = const Color(0xFF0284C7);
+        badgeColor = _secondaryAccent(context);
         label = 'planner.pace_steady'.tr;
         break;
       case 'OPTIMAL':
-        badgeColor = AppColors.primaryGreen;
+        badgeColor = _positiveText(context);
         label = 'planner.pace_optimal'.tr;
         break;
       case 'RAPID':
       default:
-        badgeColor = const Color(0xFFD97706);
+        badgeColor = context.appOnWarningSurface;
         label = 'planner.pace_rapid'.tr;
         break;
     }
@@ -511,7 +523,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
               Icon(
                 Icons.local_fire_department_rounded,
                 size: 18,
-                color: Colors.orange.shade700,
+                color: AppColors.accentOrange,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -532,8 +544,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                 style: TextStyle(
                   color:
                       forecast.isSurplus
-                          ? AppColors.accentOrange
-                          : AppColors.primaryGreen,
+                          ? context.appOnWarningSurface
+                          : _positiveText(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -553,7 +565,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   subtext:
                       '${'planner.bmr_baseline'.tr}: ${forecast.bmrCalories.round()}',
                   icon: Icons.bolt_rounded,
-                  color: Colors.orange.shade700,
+                  color: AppColors.accentOrange,
                 ),
               ),
               const SizedBox(width: 10),
@@ -576,9 +588,11 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
+                color: context.appWarningSurface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.amber.shade400),
+                border: Border.all(
+                  color: context.appOnWarningSurface.withValues(alpha: 0.24),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,7 +600,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   Icon(
                     Icons.warning_amber_rounded,
                     size: 18,
-                    color: Colors.amber.shade900,
+                    color: context.appOnWarningSurface,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -596,7 +610,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                         Text(
                           'planner.safe_floor_alert'.tr,
                           style: TextStyle(
-                            color: Colors.amber.shade900,
+                            color: context.appOnWarningSurface,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -605,7 +619,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                         Text(
                           forecast.calorieWarningMessage,
                           style: TextStyle(
-                            color: Colors.amber.shade900.withValues(
+                            color: context.appOnWarningSurface.withValues(
                               alpha: 0.85,
                             ),
                             fontSize: 11,
@@ -915,8 +929,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                       children: [
                         Text(
                           '${item.calories.round()} kcal',
-                          style: const TextStyle(
-                            color: AppColors.primaryGreen,
+                          style: TextStyle(
+                            color: _positiveText(context),
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -931,8 +945,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                           ),
                           Text(
                             '${item.proteinGrams.toStringAsFixed(0)}g pro',
-                            style: const TextStyle(
-                              color: Color(0xFF0F62FE),
+                            style: TextStyle(
+                              color: _secondaryAccent(context),
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -986,8 +1000,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                       : Icons.fitness_center_rounded;
               final analysisColor =
                   isBeverage
-                      ? const Color(0xFF0F62FE)
-                      : AppColors.primaryGreen;
+                      ? _secondaryAccent(context)
+                      : _positiveText(context);
 
               return Container(
                 padding: const EdgeInsets.symmetric(
@@ -1018,7 +1032,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                             ),
                           ),
                         ),
-                        if (source != null) _sourceBadge(source),
+                        if (source != null) _sourceBadge(context, source),
                       ],
                     ),
                     const SizedBox(height: 5),
@@ -1048,20 +1062,21 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     return null;
   }
 
-  Widget _sourceBadge(String source) {
+  Widget _sourceBadge(BuildContext context, String source) {
+    final accent = _secondaryAccent(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F62FE).withValues(alpha: 0.10),
+        color: accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: const Color(0xFF0F62FE).withValues(alpha: 0.30),
+          color: accent.withValues(alpha: 0.30),
         ),
       ),
       child: Text(
         source,
-        style: const TextStyle(
-          color: Color(0xFF0F62FE),
+        style: TextStyle(
+          color: accent,
           fontSize: 9.5,
           fontWeight: FontWeight.w700,
         ),
@@ -1072,7 +1087,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
   Widget _fallbackThumb(BuildContext context, ForecastRecommendationItem item) {
     return Container(
       color: (item.isBeverage
-              ? const Color(0xFF0F62FE)
+              ? _secondaryAccent(context)
               : AppColors.primaryGreen)
           .withValues(alpha: 0.12),
       child: Center(
@@ -1083,7 +1098,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
           size: 28,
           color:
               item.isBeverage
-                  ? const Color(0xFF0F62FE)
+                  ? _secondaryAccent(context)
                   : AppColors.primaryGreen,
         ),
       ),
