@@ -78,7 +78,3 @@ brevo:
   api-key: ${BREVO_API_KEY:${APP_BREVO_API_KEY:}}
   sender-email: ${BREVO_SENDER_EMAIL:${APP_MAIL_FROM:nhamhealth.info@gmail.com}}
   sender-name: ${BREVO_SENDER_NAME:NhamHealth}
-
-BREVO_API_KEY: ${BREVO_API_KEY:${APP_BREVO_API_KEY:}}
-BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:${APP_MAIL_FROM:nhamhealth.info@gmail.com}}
-BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:NhamHealth}
