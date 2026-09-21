@@ -82,6 +82,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('assistant reply displays approved core feature buttons', (
+    tester,
+  ) async {
+    Get.find<AssistantController>().messages.assignAll(const [
+      AssistantMessage(
+        role: 'assistant',
+        content: 'Open Daily Wellness to see today\'s progress.',
+        actions: ['daily_wellness', 'water'],
+      ),
+    ]);
+
+    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.byKey(const ValueKey('assistant-action-daily_wellness')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-action-water')),
+      findsOneWidget,
+    );
+    expect(find.text('Daily Wellness'), findsOneWidget);
+    expect(find.text('Log Water'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('assistant uses a persistent question sidebar on wide tablets', (
     tester,
   ) async {

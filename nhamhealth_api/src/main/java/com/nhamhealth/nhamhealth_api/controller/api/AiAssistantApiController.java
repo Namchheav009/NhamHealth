@@ -36,7 +36,8 @@ public class AiAssistantApiController {
         if (userId == null) throw new ResponseStatusException(UNAUTHORIZED, "The access token has no user ID.");
         try {
             return ResponseEntity.ok(new AssistantChatResponse(
-                    assistantService.chat(userId.intValue(), request)));
+                    assistantService.chat(userId.intValue(), request),
+                    AiAssistantService.suggestedActions(request.message())));
         } catch (RuntimeException error) {
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, error.getMessage(), error);
         }

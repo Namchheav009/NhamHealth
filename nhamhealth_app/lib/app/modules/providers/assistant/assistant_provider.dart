@@ -15,7 +15,7 @@ class AssistantProvider {
   final AuthService _authService;
   final http.Client _client;
 
-  Future<String> sendMessage({
+  Future<AssistantReply> sendMessage({
     required String message,
     required List<AssistantMessage> history,
   }) async {
@@ -38,10 +38,12 @@ class AssistantProvider {
             body: jsonEncode({
               'message': message,
               'date': _dateOnly(DateTime.now()),
+              'timezone': DateTime.now().timeZoneName,
+              'localTime': _timeOnly(DateTime.now()),
               'history': history.map((item) => item.toJson()).toList(),
             }),
           )
-          .timeout(const Duration(seconds: 70));
+          .timeout(const Duration(seconds: 40));
 
       Map<String, dynamic>? payload;
       try {
@@ -65,7 +67,18 @@ class AssistantProvider {
           'The AI assistant returned an incomplete response.',
         );
       }
-      return reply.trim();
+      final rawActions = payload?['actions'];
+      final actions =
+          rawActions is List
+              ? rawActions
+                  .whereType<String>()
+                  .map((action) => action.trim())
+                  .where((action) => action.isNotEmpty)
+                  .toSet()
+                  .take(3)
+                  .toList(growable: false)
+              : const <String>[];
+      return AssistantReply(reply: reply.trim(), actions: actions);
     } on AssistantException {
       rethrow;
     } on TimeoutException {
@@ -87,6 +100,17 @@ class AssistantProvider {
       '${date.year.toString().padLeft(4, '0')}-'
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
+
+  String _timeOnly(DateTime date) =>
+      '${date.hour.toString().padLeft(2, '0')}:'
+      '${date.minute.toString().padLeft(2, '0')}';
+}
+
+class AssistantReply {
+  const AssistantReply({required this.reply, this.actions = const []});
+
+  final String reply;
+  final List<String> actions;
 }
 
 class AssistantException implements Exception {

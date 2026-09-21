@@ -135,6 +135,7 @@ class AssistantView extends GetView<AssistantController> {
                                   canReload: index > 0 && !message.isUser,
                                   isReloading: controller.isSending.value,
                                   onReload: () => controller.reloadReply(index),
+                                  onAction: controller.openAction,
                                 );
                               },
                             ),
@@ -777,12 +778,14 @@ class _MessageBubble extends StatelessWidget {
     required this.canReload,
     required this.isReloading,
     required this.onReload,
+    required this.onAction,
   });
 
   final AssistantMessage message;
   final bool canReload;
   final bool isReloading;
   final VoidCallback onReload;
+  final ValueChanged<String> onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -884,6 +887,50 @@ class _MessageBubble extends StatelessWidget {
                             isError: message.isError,
                           ),
                 ),
+                if (!message.isUser &&
+                    !message.isError &&
+                    message.actions.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Wrap(
+                      key: const ValueKey<String>('assistant-action-buttons'),
+                      spacing: 8,
+                      runSpacing: 7,
+                      children: [
+                        for (final action in message.actions)
+                          OutlinedButton.icon(
+                            key: ValueKey<String>('assistant-action-$action'),
+                            onPressed: () => onAction(action),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primaryGreen,
+                              backgroundColor: context.appSoftGreen,
+                              side: BorderSide(
+                                color: AppColors.primaryGreen.withValues(
+                                  alpha: .35,
+                                ),
+                              ),
+                              minimumSize: const Size(0, 38),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: Icon(_actionIcon(action), size: 17),
+                            label: Text(
+                              _actionLabel(action),
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 if (!message.isUser)
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
@@ -962,6 +1009,34 @@ class _MessageBubble extends StatelessWidget {
     fontSize: 13,
     height: 1.45,
   );
+
+  String _actionLabel(String action) => switch (action) {
+    'scan_food' => 'assistant.action_scan_food'.tr,
+    'daily_wellness' => 'assistant.action_daily_wellness'.tr,
+    'water' => 'assistant.action_log_water'.tr,
+    'meal_planner' => 'assistant.action_meal_planner'.tr,
+    'meals' => 'assistant.action_browse_meals'.tr,
+    'favorites' => 'assistant.action_favorites'.tr,
+    'community' => 'assistant.action_community'.tr,
+    'notifications' => 'assistant.action_notifications'.tr,
+    'profile' => 'assistant.action_profile'.tr,
+    'settings' => 'assistant.action_settings'.tr,
+    _ => action,
+  };
+
+  IconData _actionIcon(String action) => switch (action) {
+    'scan_food' => Icons.camera_alt_rounded,
+    'daily_wellness' => Icons.monitor_heart_rounded,
+    'water' => Icons.water_drop_rounded,
+    'meal_planner' => Icons.calendar_month_rounded,
+    'meals' => Icons.restaurant_menu_rounded,
+    'favorites' => Icons.favorite_rounded,
+    'community' => Icons.groups_rounded,
+    'notifications' => Icons.notifications_rounded,
+    'profile' => Icons.person_rounded,
+    'settings' => Icons.settings_rounded,
+    _ => Icons.arrow_forward_rounded,
+  };
 }
 
 class _AssistantReplyText extends StatelessWidget {

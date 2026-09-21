@@ -28,6 +28,53 @@ class AiAssistantServiceTests {
                 .doesNotContain("unavailable");
     }
 
+    @Test
+    void rejectsQuestionsOutsideTheNhamHealthScopeInEnglish() {
+        String reply = AiAssistantService.outOfScopeReply("Who won the election?");
+
+        assertThat(reply)
+                .contains("limited to food, drinks")
+                .contains("NhamHealth");
+        assertThat(AiAssistantService.isSupportedMessage("Who won the election?"))
+                .isFalse();
+    }
+
+    @Test
+    void rejectsQuestionsOutsideTheNhamHealthScopeInKhmer() {
+        String reply = AiAssistantService.outOfScopeReply("តើអ្នកអាចសរសេរកូដឱ្យខ្ញុំបានទេ?");
+
+        assertThat(reply)
+                .contains("NhamHealth AI")
+                .contains("ម្ហូប")
+                .contains("ប៉ុណ្ណោះ");
+    }
+
+    @Test
+    void acceptsDynamicFoodDrinkAndAppQuestions() {
+        assertThat(AiAssistantService.isSupportedMessage("Is iced coffee high in sugar?"))
+                .isTrue();
+        assertThat(AiAssistantService.isSupportedMessage("ម្ហូបនេះមានប្រូតេអ៊ីនប៉ុន្មាន?"))
+                .isTrue();
+        assertThat(AiAssistantService.isSupportedMessage("How do I use the meal planner?"))
+                .isTrue();
+        assertThat(AiAssistantService.isSupportedMessage("How do I edit my account?"))
+                .isTrue();
+        assertThat(AiAssistantService.isSupportedMessage("តើខ្ញុំកែប្រែគណនីនៅកន្លែងណា?"))
+                .isTrue();
+    }
+
+    @Test
+    void suggestsSafeCoreFeatureActionsFromTheUsersQuestion() {
+        assertThat(AiAssistantService.suggestedActions(
+                "How can I scan my food and check Daily Wellness?"))
+                .containsExactly("scan_food", "daily_wellness");
+        assertThat(AiAssistantService.suggestedActions(
+                "ខ្ញុំចង់បើកគម្រោងអាហារ"))
+                .containsExactly("meal_planner");
+        assertThat(AiAssistantService.suggestedActions("Tell me a joke"))
+                .isEmpty();
+    }
+
     private ProfileDashboardResponse.Progress progress(String current, String goal) {
         return new ProfileDashboardResponse.Progress(new BigDecimal(current), new BigDecimal(goal));
     }

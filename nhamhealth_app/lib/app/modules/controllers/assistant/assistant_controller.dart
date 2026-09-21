@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../models/assistant/assistant_message.dart';
 import '../../providers/assistant/assistant_provider.dart';
 
 class AssistantController extends GetxController {
+  static const int _maximumHistoryMessages = 10;
+
   AssistantController({required AssistantProvider provider})
     : _provider = provider;
 
@@ -47,17 +50,27 @@ class AssistantController extends GetxController {
     if (userIndex < 0) return;
 
     final userMessage = messages[userIndex].content;
-    final history = messages
-        .skip(1)
-        .take(userIndex - 1)
-        .where((item) => !item.isError)
-        .toList(growable: false);
+    final history = _boundedHistory(
+      messages
+          .skip(1)
+          .take(userIndex - 1)
+          .where((item) => !item.isError)
+          .toList(growable: false),
+    );
     messages.removeAt(assistantIndex);
     await _requestReply(message: userMessage, history: history);
   }
 
-  List<AssistantMessage> _conversationHistory() =>
-      messages.skip(1).where((item) => !item.isError).toList(growable: false);
+  List<AssistantMessage> _conversationHistory() => _boundedHistory(
+    messages.skip(1).where((item) => !item.isError).toList(growable: false),
+  );
+
+  List<AssistantMessage> _boundedHistory(List<AssistantMessage> history) {
+    if (history.length <= _maximumHistoryMessages) return history;
+    return history
+        .sublist(history.length - _maximumHistoryMessages)
+        .toList(growable: false);
+  }
 
   Future<void> _requestReply({
     required String message,
@@ -66,11 +79,17 @@ class AssistantController extends GetxController {
     isSending.value = true;
     _scrollToBottom();
     try {
-      final reply = await _provider.sendMessage(
+      final response = await _provider.sendMessage(
         message: message,
         history: history,
       );
-      messages.add(AssistantMessage(role: 'assistant', content: reply));
+      messages.add(
+        AssistantMessage(
+          role: 'assistant',
+          content: response.reply,
+          actions: response.actions,
+        ),
+      );
     } on AssistantException catch (error) {
       messages.add(
         AssistantMessage(
@@ -83,6 +102,23 @@ class AssistantController extends GetxController {
       isSending.value = false;
       _scrollToBottom();
     }
+  }
+
+  void openAction(String action) {
+    final route = switch (action) {
+      'scan_food' => AppRoutes.aiFood,
+      'daily_wellness' => AppRoutes.wellness,
+      'water' => AppRoutes.water,
+      'meal_planner' => AppRoutes.mealPlanner,
+      'meals' => AppRoutes.meals,
+      'favorites' => AppRoutes.favorites,
+      'community' => AppRoutes.community,
+      'notifications' => AppRoutes.notifications,
+      'profile' => AppRoutes.profile,
+      'settings' => AppRoutes.settings,
+      _ => null,
+    };
+    if (route != null) Get.toNamed<void>(route);
   }
 
   void _scrollToBottom() {

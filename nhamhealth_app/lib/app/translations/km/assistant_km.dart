@@ -3,7 +3,7 @@ const Map<String, String> assistantKm = {
   'assistant.open_daily_wellness': 'បើកសុខភាពប្រចាំថ្ងៃ',
   'assistant.quick_questions': 'សំណួររហ័ស',
   'assistant.all_questions': 'សំណួរទាំងអស់',
-  'assistant.ask_about_your_wellness': 'សួរអំពីសុខភាពរបស់អ្នក...',
+  'assistant.ask_about_your_wellness': 'សួរអំពីម្ហូប ភេសជ្ជៈ ឬ NhamHealth...',
   'assistant.send_message': 'ផ្ញើសារ',
   'assistant.ask_nhamhealth_ai': 'សួរ NhamHealth AI',
   'assistant.choose_any_question_below': 'ជ្រើសរើសសំណួរណាមួយខាងក្រោម',
@@ -15,7 +15,7 @@ const Map<String, String> assistantKm = {
   'assistant.reply_copied': 'បានចម្លងចម្លើយ',
   'assistant.checking_your_wellness': 'កំពុងពិនិត្យទិន្នន័យសុខភាពរបស់អ្នក...',
   'assistant.hi_im_your_nhamhealth_ai_assistant_ask_me_about_the_app_or_your_wellness_dashboard_today':
-      'សួស្តី! ខ្ញុំជា AI ជំនួយការរបស់ NhamHealth។ អ្នកអាចសួរខ្ញុំអំពីកម្មវិធី ឬទិន្នន័យសុខភាពរបស់អ្នកថ្ងៃនេះ។',
+      'សួស្តី! ខ្ញុំជា AI ជំនួយការរបស់ NhamHealth។ អ្នកអាចសួរខ្ញុំអំពីម្ហូប ភេសជ្ជៈ អាហារូបត្ថម្ភ ទិន្នន័យសុខភាព ឬមុខងារ NhamHealth។',
   'assistant.how_is_my_wellness_progress_today':
       'ថ្ងៃនេះវឌ្ឍនភាពសុខភាពរបស់ខ្ញុំយ៉ាងដូចម្តេច?',
   'assistant.what_can_i_do_in_nhamhealth':
@@ -59,4 +59,14 @@ const Map<String, String> assistantKm = {
   'assistant.open': 'បើកជំនួយការ AI',
   'assistant.chat_with': 'ជជែកជាមួយជំនួយការ AI',
   'assistant.coming_soon': 'មុខងារជជែកនឹងមកដល់ឆាប់ៗនេះ។',
+  'assistant.action_scan_food': 'ស្កេនអាហារ',
+  'assistant.action_daily_wellness': 'សុខភាពប្រចាំថ្ងៃ',
+  'assistant.action_log_water': 'កត់ត្រាទឹក',
+  'assistant.action_meal_planner': 'គម្រោងអាហារ',
+  'assistant.action_browse_meals': 'មើលមុខម្ហូប',
+  'assistant.action_favorites': 'ចំណូលចិត្ត',
+  'assistant.action_community': 'សហគមន៍',
+  'assistant.action_notifications': 'ការជូនដំណឹង',
+  'assistant.action_profile': 'បើកប្រវត្តិរូប',
+  'assistant.action_settings': 'បើកការកំណត់',
 };

@@ -43,11 +43,20 @@ void main() {
       authService: _TokenAuthService(),
       client: MockClient((request) async {
         requestBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response(jsonEncode({'reply': 'Your data is ready.'}), 200);
+        return http.Response(
+          jsonEncode({
+            'reply': 'Your data is ready.',
+            'actions': ['daily_wellness'],
+          }),
+          200,
+        );
       }),
     );
 
-    await provider.sendMessage(message: 'Show my wellness', history: const []);
+    final response = await provider.sendMessage(
+      message: 'Show my wellness',
+      history: const [],
+    );
 
     final now = DateTime.now();
     final expected =
@@ -55,6 +64,22 @@ void main() {
         '${now.month.toString().padLeft(2, '0')}-'
         '${now.day.toString().padLeft(2, '0')}';
     expect(requestBody?['date'], expected);
+    expect(response.actions, ['daily_wellness']);
+  });
+
+  test('long conversations send a bounded window of recent messages', () async {
+    final provider = _FakeAssistantProvider();
+    final controller = AssistantController(provider: provider);
+    addTearDown(controller.onClose);
+
+    for (var index = 1; index <= 7; index++) {
+      await controller.send('Food question $index');
+    }
+
+    final history = provider.requests.last.history;
+    expect(history, hasLength(10));
+    expect(history.first.content, 'Food question 2');
+    expect(history.last.content, 'Reply 6');
   });
 }
 
@@ -69,12 +94,12 @@ class _FakeAssistantProvider extends AssistantProvider {
   final List<_Request> requests = [];
 
   @override
-  Future<String> sendMessage({
+  Future<AssistantReply> sendMessage({
     required String message,
     required List<AssistantMessage> history,
   }) async {
     requests.add(_Request(message: message, history: history));
-    return 'Reply ${requests.length}';
+    return AssistantReply(reply: 'Reply ${requests.length}');
   }
 }
 

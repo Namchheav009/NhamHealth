@@ -3,7 +3,7 @@ const Map<String, String> assistantEn = {
   'assistant.open_daily_wellness': 'Open Daily Wellness',
   'assistant.quick_questions': 'Quick questions',
   'assistant.all_questions': 'All questions',
-  'assistant.ask_about_your_wellness': 'Ask about your wellness...',
+  'assistant.ask_about_your_wellness': 'Ask about food, drinks, or NhamHealth...',
   'assistant.send_message': 'Send message',
   'assistant.ask_nhamhealth_ai': 'Ask NhamHealth AI',
   'assistant.choose_any_question_below': 'Choose any question below',
@@ -15,7 +15,7 @@ const Map<String, String> assistantEn = {
   'assistant.reply_copied': 'Reply copied',
   'assistant.checking_your_wellness': 'Checking your wellness...',
   'assistant.hi_im_your_nhamhealth_ai_assistant_ask_me_about_the_app_or_your_wellness_dashboard_today':
-      'Hi! I\'m your NhamHealth AI Assistant. Ask me about the app or your wellness dashboard today.',
+      'Hi! I\'m your NhamHealth AI Assistant. Ask me about food, drinks, nutrition, your wellness data, or NhamHealth features.',
   'assistant.how_is_my_wellness_progress_today':
       'How is my wellness progress today?',
   'assistant.what_can_i_do_in_nhamhealth': 'What can I do in NhamHealth?',
@@ -59,4 +59,14 @@ const Map<String, String> assistantEn = {
   'assistant.open': 'Open AI Assistant',
   'assistant.chat_with': 'Chat with AI Assistant',
   'assistant.coming_soon': 'Chat is coming soon.',
+  'assistant.action_scan_food': 'Scan Food',
+  'assistant.action_daily_wellness': 'Daily Wellness',
+  'assistant.action_log_water': 'Log Water',
+  'assistant.action_meal_planner': 'Meal Planner',
+  'assistant.action_browse_meals': 'Browse Meals',
+  'assistant.action_favorites': 'Favorites',
+  'assistant.action_community': 'Community',
+  'assistant.action_notifications': 'Notifications',
+  'assistant.action_profile': 'Open Profile',
+  'assistant.action_settings': 'Open Settings',
 };
