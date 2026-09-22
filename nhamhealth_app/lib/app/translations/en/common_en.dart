@@ -64,6 +64,7 @@ const Map<String, String> commonEn = {
   'common.post_options': 'Post options',
   'common.navigation_home': 'Home',
   'common.navigation_meals': 'Meals',
+  'common.navigation_planner': 'Planner',
   'common.navigation_post': 'Post',
   'common.navigation_community': 'Community',
   'common.navigation_chat': 'Chat',

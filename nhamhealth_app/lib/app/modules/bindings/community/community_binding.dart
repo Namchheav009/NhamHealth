@@ -13,16 +13,20 @@ class CommunityBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<CommunityRepository>(
       () => CommunityRepository(authService: Get.find()),
+      fenix: true,
     );
     Get.lazyPut<FollowConnectionsProvider>(
       () => FollowConnectionsProvider(authService: Get.find<AuthService>()),
+      fenix: true,
     );
     Get.lazyPut<FollowConnectionsRepository>(
       () => FollowConnectionsRepository(provider: Get.find()),
+      fenix: true,
     );
     if (!Get.isRegistered<NotificationsProvider>()) {
       Get.lazyPut(
         () => NotificationsProvider(authService: Get.find<AuthService>()),
+        fenix: true,
       );
     }
     if (!Get.isRegistered<NotificationsRepository>()) {
@@ -30,6 +34,7 @@ class CommunityBinding extends Bindings {
         () => NotificationsRepository(
           provider: Get.find<NotificationsProvider>(),
         ),
+        fenix: true,
       );
     }
     Get.lazyPut<CommunityController>(
@@ -39,6 +44,7 @@ class CommunityBinding extends Bindings {
         notificationsRepository: Get.find<NotificationsRepository>(),
         realtimeEvents: PushNotificationService.instance?.events,
       ),
+      fenix: true,
     );
   }
 }

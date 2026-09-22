@@ -146,6 +146,30 @@ void main() {
     );
   });
 
+  testWidgets('Meal Planner keeps loaded content visible while refreshing', (
+    tester,
+  ) async {
+    final planner = Get.put(MealPlannerController());
+    planner.hasLoadedOnce.value = true;
+    planner.isLoading.value = true;
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealPlannerView(),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('meal-planner-skeleton')), findsNothing);
+    expect(find.byKey(const ValueKey('planner-week-card')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('planner-daily-overview')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Auto Fill success sheet works without an AI result', (
     tester,
   ) async {
@@ -489,86 +513,36 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'user can customize plan duration (3-7 days) and open custom plan modal',
-    (tester) async {
-      final controller = Get.put(MealPlannerController());
-      await tester.pumpWidget(
-        GetMaterialApp(
-          theme: AppTheme.light,
-          translations: AppTranslations(),
-          locale: const Locale('en', 'US'),
-          home: const MealPlannerView(),
-        ),
-      );
+  testWidgets('selected week opens a seven-day week sheet', (tester) async {
+    final controller = Get.put(MealPlannerController());
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealPlannerView(),
+      ),
+    );
 
-      // Initial state: "Selected week" and 7 days
-      expect(find.text('Selected week'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('planner-week-picker-button')),
-        findsOneWidget,
-      );
-      expect(
-        tester.getSize(find.byKey(const ValueKey('planner-week-card'))).height,
-        lessThan(205),
-      );
-      expect(
-        find.byKey(const ValueKey('planner-week-today-button')),
-        findsOneWidget,
-      );
-      expect(find.byKey(const ValueKey('planner-day-6')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('planner-week-picker-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('planner-week-today-button')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('planner-day-0')), findsNothing);
+    expect(find.byKey(const ValueKey('planner-duration-3')), findsNothing);
 
-      // Tap the date form / Detail button to open the custom plan sheet
-      await tester.tap(
-        find.byKey(const ValueKey('planner-week-picker-button')),
-      );
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('planner-week-picker-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Start date'), findsOneWidget);
+    expect(find.text('Apply'), findsOneWidget);
+    expect(find.byType(DatePickerDialog), findsNothing);
 
-      // Verify modal is open with duration choices (3 to 7 days)
-      expect(find.text('Customize plan'), findsOneWidget);
-      expect(find.byKey(const ValueKey('modal-duration-3')), findsOneWidget);
-      expect(find.byKey(const ValueKey('modal-duration-4')), findsOneWidget);
-      expect(find.byKey(const ValueKey('modal-duration-5')), findsOneWidget);
-
-      // Select 3 days inside modal and apply
-      await tester.tap(find.byKey(const ValueKey('modal-duration-3')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Apply'));
-      await tester.pumpAndSettle();
-
-      expect(controller.planDaysCount.value, 3);
-      expect(find.byKey(const ValueKey('planner-day-0')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-1')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-2')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-3')), findsNothing);
-
-      // Now open modal again and select 4 days
-      await tester.tap(
-        find.byKey(const ValueKey('planner-week-picker-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('modal-duration-4')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Apply'));
-      await tester.pumpAndSettle();
-
-      expect(controller.planDaysCount.value, 4);
-      expect(find.byKey(const ValueKey('planner-day-0')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-1')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-2')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-3')), findsOneWidget);
-      expect(find.byKey(const ValueKey('planner-day-4')), findsNothing);
-
-      // Change week to +1
-      controller.changeWeek(1);
-      await tester.pumpAndSettle();
-      expect(find.text('Today'), findsOneWidget);
-
-      // Tapping "Today" brings back to today
-      await tester.tap(find.byKey(const ValueKey('planner-week-today-button')));
-      await tester.pumpAndSettle();
-      expect(controller.weekOffset.value, 0);
-      expect(find.text('Customize plan'), findsNothing);
-    },
-  );
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(controller.planDaysCount.value, 7);
+  });
 }

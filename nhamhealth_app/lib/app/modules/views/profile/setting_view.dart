@@ -5,11 +5,9 @@ import 'package:get/get.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
-import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/forest_glow_background.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/page_skeleton.dart';
-import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/profile/setting_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
@@ -25,7 +23,7 @@ class SettingsView extends GetView<SettingsController> {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
-      child: ScrollAwareScaffold(
+      child: Scaffold(
         // Let the shared forest background remain visible in dark mode.
         // Painting an opaque scaffold here previously hid it completely.
         backgroundColor:
@@ -154,15 +152,11 @@ class SettingsView extends GetView<SettingsController> {
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
-                        padding: AppSpacing.pagePaddingWithNavigationFor(
-                          context,
-                        ).copyWith(
-                          top: 20,
-                          bottom:
-                              AppSpacing.pagePaddingWithNavigationFor(
-                                context,
-                              ).bottom +
-                              20,
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontalFor(context),
+                          20,
+                          AppSpacing.pageHorizontalFor(context),
+                          AppSpacing.pageBottom,
                         ),
                         child: Center(
                           child: ConstrainedBox(
@@ -191,22 +185,6 @@ class SettingsView extends GetView<SettingsController> {
             ],
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          top: false,
-          minimum: AppSpacing.navigationMargin,
-          child: Center(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppSpacing.maxNavigationWidth,
-              ),
-              child: AppBottomNavigation(
-                selectedIndex: 4,
-                onSelect: controller.selectBottomMenu,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -229,10 +207,7 @@ class SettingsView extends GetView<SettingsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle(
-                      context,
-                      'profile.settings_account'.tr,
-                    ),
+                    _buildSectionTitle(context, 'profile.settings_account'.tr),
                     const SizedBox(height: 10),
                     _buildAccountCard(context),
                     const SizedBox(height: 24),
@@ -250,10 +225,7 @@ class SettingsView extends GetView<SettingsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle(
-                      context,
-                      'profile.settings_support'.tr,
-                    ),
+                    _buildSectionTitle(context, 'profile.settings_support'.tr),
                     const SizedBox(height: 10),
                     _buildSupportCard(context),
                     const SizedBox(height: 24),
@@ -269,24 +241,15 @@ class SettingsView extends GetView<SettingsController> {
           key: const ValueKey('settings-single-column'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle(
-              context,
-              'profile.settings_account'.tr,
-            ),
+            _buildSectionTitle(context, 'profile.settings_account'.tr),
             const SizedBox(height: 10),
             _buildAccountCard(context),
             const SizedBox(height: 21),
-            _buildSectionTitle(
-              context,
-              'profile.settings_preferences'.tr,
-            ),
+            _buildSectionTitle(context, 'profile.settings_preferences'.tr),
             const SizedBox(height: 10),
             _buildPreferenceCard(context),
             const SizedBox(height: 21),
-            _buildSectionTitle(
-              context,
-              'profile.settings_support'.tr,
-            ),
+            _buildSectionTitle(context, 'profile.settings_support'.tr),
             const SizedBox(height: 10),
             _buildSupportCard(context),
             const SizedBox(height: 13),
@@ -546,9 +509,7 @@ class _SettingsItem extends StatelessWidget {
           width: double.infinity,
           height: itemHeight,
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 16 : 13,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: isTablet ? 16 : 13),
             child: Row(
               children: [
                 // ----------------------------------------

@@ -4,11 +4,15 @@ import 'package:get/get.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
+import '../../bindings/community/community_report_binding.dart';
+import '../../bindings/favorites/favorites_binding.dart';
 import '../../bindings/profile/appearance_binding.dart';
 import '../../bindings/profile/help_support_binding.dart';
 import '../../bindings/profile/language_binding.dart';
 import '../../bindings/profile/terms_privacy_binding.dart';
 import '../../services/auth/google_auth_service.dart';
+import '../../views/community/community_report_page.dart';
+import '../../views/favorites/favorites_view.dart';
 import '../../views/profile/appearance_view.dart';
 import '../../views/profile/help_support_view.dart';
 import '../../views/profile/language_view.dart';
@@ -39,7 +43,11 @@ class SettingsController extends GetxController {
   }
 
   void openFavorites() {
-    Get.toNamed<void>(AppRoutes.favorites);
+    Get.to<void>(
+      () => const FavoritesView(),
+      binding: FavoritesBinding(),
+      transition: Transition.rightToLeft,
+    );
   }
 
   void selectBottomMenu(int index) {
@@ -51,9 +59,10 @@ class SettingsController extends GetxController {
         Get.offNamed<void>(AppRoutes.meals);
         return;
       case 2:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.offNamed<void>(AppRoutes.mealPlanner);
         return;
-      case 4:
+      case 3:
+        Get.offNamed<void>(AppRoutes.community);
         return;
     }
   }
@@ -83,7 +92,11 @@ class SettingsController extends GetxController {
   }
 
   void openMyReports() {
-    Get.toNamed<void>(AppRoutes.myReports);
+    Get.to<void>(
+      () => const CommunityMyReportsPage(),
+      binding: CommunityReportBinding(),
+      transition: Transition.rightToLeft,
+    );
   }
 
   void openTermsPrivacy() {

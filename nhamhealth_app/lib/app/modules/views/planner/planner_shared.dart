@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../routes/app_routes.dart';
@@ -37,6 +38,99 @@ String plannerImageUrl(String value) {
 }
 
 String plannerMealName(PlannedMeal meal) => meal.name.tr;
+
+class PlannerWeekDateStrip extends StatelessWidget {
+  const PlannerWeekDateStrip({
+    super.key,
+    required this.selectedDate,
+    required this.onDateSelected,
+  });
+
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final monday = selectedDate.subtract(
+      Duration(days: selectedDate.weekday - DateTime.monday),
+    );
+    const weekdayKeys = [
+      'planner.mon',
+      'planner.tue',
+      'planner.wed',
+      'planner.thu',
+      'planner.fri',
+      'planner.sat',
+      'planner.sun',
+    ];
+
+    return Row(
+      children: List.generate(7, (index) {
+        final date = monday.add(Duration(days: index));
+        final selected = DateUtils.isSameDay(date, selectedDate);
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index == 6 ? 0 : 4),
+            child: InkWell(
+              key: ValueKey(
+                'planner-week-date-${date.year}-${date.month}-${date.day}',
+              ),
+              onTap: () => onDateSelected(date),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 54,
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                decoration: BoxDecoration(
+                  color:
+                      selected
+                          ? AppColors.primaryGreen
+                          : context.appElevatedSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        selected ? AppColors.primaryGreen : context.appBorder,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        weekdayKeys[index].tr,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: selected ? Colors.white : context.appText,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      DateFormat('d').format(date),
+                      style: TextStyle(
+                        color: selected ? Colors.white : context.appText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Container(
+                      width: 3,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: selected ? Colors.white : AppColors.primaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
 
 class PlannerSlotTheme {
   const PlannerSlotTheme({

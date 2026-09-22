@@ -2074,19 +2074,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
     final progress = controller.weeklyProgress.clamp(0.0, 1.0);
     final eatenCount = controller.weeklyEatenMeals;
 
-    int totalWeekCalories = 0;
-    double totalWeekProtein = 0.0;
-    for (final day in controller.weekDays) {
-      for (final meal in controller.mealsFor(day)) {
-        totalWeekCalories += (meal.calories * meal.servings).round();
-        totalWeekProtein += (meal.proteinGrams * meal.servings);
-      }
-    }
-    final daysCount =
-        controller.planDaysCount.value > 0 ? controller.planDaysCount.value : 7;
-    final avgCalories = (totalWeekCalories / daysCount).round();
-    final avgProtein = (totalWeekProtein / daysCount).round();
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2102,58 +2089,26 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Row: Goal pill + tap hint
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 3.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F62FE).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.trending_down_rounded,
-                          size: 13,
-                          color: Color(0xFF0F62FE),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'planner.goal_lose_weight'.tr,
-                          style: const TextStyle(
-                            color: Color(0xFF0F62FE),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'planner.weekly_progress'.tr,
-                        style: const TextStyle(
-                          color: AppColors.primaryGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'planner.weekly_progress'.tr,
+                      style: const TextStyle(
                         color: AppColors.primaryGreen,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -2242,70 +2197,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
                   ),
                 ],
               ),
-
-              // Bottom Nutritional Daily Averages Row
-              if (totalPlannedMeals > 0) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: context.appBorder.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_fire_department_rounded,
-                            size: 15,
-                            color: Colors.orange.shade700,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'planner.avg_daily_calories'.trParams({
-                              'kcal': '$avgCalories',
-                            }),
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(width: 1, height: 14, color: context.appBorder),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.fitness_center_rounded,
-                            size: 14,
-                            color: Color(0xFF0F62FE),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'planner.avg_daily_protein'.trParams({
-                              'protein': '$avgProtein',
-                            }),
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -2435,6 +2326,8 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _PlannerFlowWeekCard(controller: controller),
+              const SizedBox(height: 16),
               _groceryScopeSelector(context),
               const SizedBox(height: 18),
               if (grouped.isEmpty)
@@ -3477,297 +3370,13 @@ class _PlannerFlowWeekCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.tune_rounded, size: 14, color: context.appMutedText),
-                const SizedBox(width: 5),
-                Text(
-                  'planner.duration'.tr,
-                  style: TextStyle(
-                    color: context.appMutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children:
-                        [3, 4, 5, 6, 7].map((days) {
-                          final isSelected =
-                              controller.planDaysCount.value == days;
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: InkWell(
-                              key: ValueKey('flow-duration-$days'),
-                              onTap: () => controller.setPlanDaysCount(days),
-                              borderRadius: BorderRadius.circular(10),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                constraints: const BoxConstraints(minWidth: 30),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      isSelected
-                                          ? AppColors.primaryGreen
-                                          : context.appBackground,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: context.appBorder.withValues(
-                                      alpha: 0.65,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  '$days${'planner.days_short'.tr}',
-                                  style: TextStyle(
-                                    color:
-                                        isSelected
-                                            ? Colors.white
-                                            : context.appText,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 64,
-          child:
-              controller.weekDays.length <= 5
-                  ? Row(
-                    children: List.generate(controller.weekDays.length, (
-                      index,
-                    ) {
-                      final date = controller.weekDays[index];
-                      final selected =
-                          index == controller.selectedDayIndex.value;
-                      final hasMeals = controller.mealsFor(date).isNotEmpty;
-                      const weekDayKeys = [
-                        'planner.mon',
-                        'planner.tue',
-                        'planner.wed',
-                        'planner.thu',
-                        'planner.fri',
-                        'planner.sat',
-                        'planner.sun',
-                      ];
-                      final gap = controller.weekDays.length <= 3 ? 12.0 : 8.0;
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right:
-                                index == controller.weekDays.length - 1
-                                    ? 0
-                                    : gap,
-                          ),
-                          child: InkWell(
-                            onTap: () => controller.selectDay(index),
-                            borderRadius: BorderRadius.circular(18),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              decoration: BoxDecoration(
-                                color:
-                                    selected
-                                        ? AppColors.primaryGreen
-                                        : context.appBackground,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: context.appBorder.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                ),
-                                boxShadow:
-                                    selected
-                                        ? [
-                                          BoxShadow(
-                                            color: AppColors.primaryGreen
-                                                .withValues(alpha: 0.28),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
-                                        : null,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    weekDayKeys[date.weekday - 1].tr,
-                                    style: TextStyle(
-                                      color:
-                                          selected
-                                              ? Colors.white
-                                              : context.appMutedText,
-                                      fontSize: 11,
-                                      fontWeight:
-                                          selected
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                      height: 1.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    '${date.day}',
-                                    style: TextStyle(
-                                      color:
-                                          selected
-                                              ? Colors.white
-                                              : context.appText,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Container(
-                                    width: 4.5,
-                                    height: 4.5,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          hasMeals
-                                              ? (selected
-                                                  ? Colors.white
-                                                  : AppColors.primaryGreen)
-                                              : Colors.transparent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  )
-                  : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: controller.weekDays.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (_, index) {
-                      final date = controller.weekDays[index];
-                      final selected =
-                          index == controller.selectedDayIndex.value;
-                      final hasMeals = controller.mealsFor(date).isNotEmpty;
-                      const weekDayKeys = [
-                        'planner.mon',
-                        'planner.tue',
-                        'planner.wed',
-                        'planner.thu',
-                        'planner.fri',
-                        'planner.sat',
-                        'planner.sun',
-                      ];
-                      return InkWell(
-                        onTap: () => controller.selectDay(index),
-                        borderRadius: BorderRadius.circular(18),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: 60,
-                          decoration: BoxDecoration(
-                            color:
-                                selected
-                                    ? AppColors.primaryGreen
-                                    : context.appBackground,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: context.appBorder.withValues(alpha: 0.6),
-                            ),
-                            boxShadow:
-                                selected
-                                    ? [
-                                      BoxShadow(
-                                        color: AppColors.primaryGreen
-                                            .withValues(alpha: 0.28),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                    : null,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                weekDayKeys[date.weekday - 1].tr,
-                                style: TextStyle(
-                                  color:
-                                      selected
-                                          ? Colors.white
-                                          : context.appMutedText,
-                                  fontSize: 11,
-                                  fontWeight:
-                                      selected
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                  height: 1.2,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${date.day}',
-                                style: TextStyle(
-                                  color:
-                                      selected ? Colors.white : context.appText,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.15,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Container(
-                                width: 4.5,
-                                height: 4.5,
-                                decoration: BoxDecoration(
-                                  color:
-                                      hasMeals
-                                          ? (selected
-                                              ? Colors.white
-                                              : AppColors.primaryGreen)
-                                          : Colors.transparent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-        ),
       ],
     ),
   );
 
   Future<void> _pickWeekDate(BuildContext context) async {
     DateTime selectedStart = controller.planStartDate;
-    int selectedDays = controller.planDaysCount.value;
+    int selectedDays = controller.planDaysCount.value.clamp(3, 7);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -3801,7 +3410,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'planner.custom_plan'.tr,
+                      'planner.selected_week'.tr,
                       style: TextStyle(
                         color: context.appText,
                         fontSize: 18,
@@ -3817,57 +3426,46 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'planner.duration'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children:
-                          [3, 4, 5, 6, 7].map((days) {
-                            final isSel = selectedDays == days;
-                            return InkWell(
-                              onTap:
+                      children: List.generate(5, (index) {
+                        final days = index + 3;
+                        final selected = days == selectedDays;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: index == 4 ? 0 : 6),
+                            child: OutlinedButton(
+                              onPressed:
                                   () =>
                                       setSheetState(() => selectedDays = days),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
+                              style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 9,
+                                  vertical: 12,
+                                  horizontal: 0,
                                 ),
-                                decoration: BoxDecoration(
+                                backgroundColor:
+                                    selected
+                                        ? AppColors.primaryGreen
+                                        : context.appElevatedSurface,
+                                foregroundColor:
+                                    selected ? Colors.white : context.appText,
+                                side: BorderSide(
                                   color:
-                                      isSel
+                                      selected
                                           ? AppColors.primaryGreen
-                                          : context.appElevatedSurface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: context.appBorder.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  '$days${'planner.days_short'.tr}',
-                                  style: TextStyle(
-                                    color:
-                                        isSel ? Colors.white : context.appText,
-                                    fontSize: 13,
-                                    fontWeight:
-                                        isSel
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                  ),
+                                          : context.appBorder,
                                 ),
                               ),
-                            );
-                          }).toList(),
+                              child: FittedBox(
+                                child: Text(
+                                  '$days ${'planner.days_short'.tr.trim()}',
+                                  maxLines: 1,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                     const SizedBox(height: 18),
                     Text(
@@ -3957,6 +3555,12 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    PlannerWeekDateStrip(
+                      selectedDate: selectedStart,
+                      onDateSelected:
+                          (date) => setSheetState(() => selectedStart = date),
                     ),
                     const SizedBox(height: 16),
                     Container(

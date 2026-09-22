@@ -13,7 +13,6 @@ import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_input_dialog.dart';
-import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_report_controller.dart';
 import '../../models/community/community_report.dart';
 import '../../repositories/community/community_repository.dart';
@@ -691,10 +690,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
       scrollable: false,
       child: Obx(() {
         if (controller.isLoading.value && controller.myReports.isEmpty) {
-          return SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            padding: contentPadding,
-            child: const PageSkeleton.reports(),
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            ),
           );
         }
         if (controller.errorMessage.value != null &&
@@ -766,9 +766,7 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
               SizedBox(height: isTablet ? 18 : 14),
               if (filtered.isEmpty)
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    vertical: isTablet ? 56 : 40,
-                  ),
+                  padding: EdgeInsets.symmetric(vertical: isTablet ? 56 : 40),
                   child: Center(
                     child: Column(
                       children: [
@@ -873,7 +871,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
               shape: BoxShape.circle,
               color: _green.withValues(alpha: 0.15),
             ),
-            child: Icon(Icons.shield_outlined, color: _green, size: shieldIconSize),
+            child: Icon(
+              Icons.shield_outlined,
+              color: _green,
+              size: shieldIconSize,
+            ),
           ),
           SizedBox(width: isTablet ? 15 : 12),
           Expanded(
@@ -927,36 +929,36 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     bool isTablet = false,
   }) {
     final chips = <Widget>[
-        _FilterChipItem(
-          label: 'community.report_filter_all'.tr,
-          count: allCount,
-          selected: _selectedFilter == _ReportFilter.all,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_pending'.tr,
-          count: pendingCount,
-          selected: _selectedFilter == _ReportFilter.pending,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_resolved'.tr,
-          count: resolvedCount,
-          selected: _selectedFilter == _ReportFilter.resolved,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_no_violation'.tr,
-          count: noViolationCount,
-          selected: _selectedFilter == _ReportFilter.noViolation,
-          onTap:
-              () => setState(() => _selectedFilter = _ReportFilter.noViolation),
-          isTablet: isTablet,
-        ),
-      ];
+      _FilterChipItem(
+        label: 'community.report_filter_all'.tr,
+        count: allCount,
+        selected: _selectedFilter == _ReportFilter.all,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_pending'.tr,
+        count: pendingCount,
+        selected: _selectedFilter == _ReportFilter.pending,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_resolved'.tr,
+        count: resolvedCount,
+        selected: _selectedFilter == _ReportFilter.resolved,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_no_violation'.tr,
+        count: noViolationCount,
+        selected: _selectedFilter == _ReportFilter.noViolation,
+        onTap:
+            () => setState(() => _selectedFilter = _ReportFilter.noViolation),
+        isTablet: isTablet,
+      ),
+    ];
 
     if (isTablet) {
       return Wrap(spacing: 8, runSpacing: 8, children: chips);
@@ -1067,7 +1069,12 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
     scrollable: true,
     child: Obx(() {
       if (controller.isLoading.value) {
-        return const PageSkeleton.reportDetail();
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          ),
+        );
       }
       if (controller.errorMessage.value case final error?) {
         return _Message(
@@ -1078,7 +1085,12 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
       }
       final report = controller.selectedReport.value;
       if (report == null || report.id != widget.reportId) {
-        return const PageSkeleton.reportDetail();
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          ),
+        );
       }
 
       return Column(
@@ -1827,9 +1839,7 @@ class _Page extends StatelessWidget {
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: maxWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: maxWidth),
                       child: AppBackHeader(
                         title: title,
                         onBack: Get.back,
@@ -1863,18 +1873,14 @@ class _Page extends StatelessWidget {
                             ),
                             child: Center(
                               child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: maxWidth,
-                                ),
+                                constraints: BoxConstraints(maxWidth: maxWidth),
                                 child: child,
                               ),
                             ),
                           )
                           : Center(
                             child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: maxWidth,
-                              ),
+                              constraints: BoxConstraints(maxWidth: maxWidth),
                               child: child,
                             ),
                           ),

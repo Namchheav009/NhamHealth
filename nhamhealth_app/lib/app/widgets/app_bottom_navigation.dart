@@ -5,11 +5,12 @@ import 'package:lottie/lottie.dart';
 import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/views/assistant/assistant_view.dart';
 import '../theme/app_spacing.dart';
+import 'main_tab_scope.dart';
 import 'scroll_aware_scaffold.dart';
 
 /// Shared four-destination navigation used by the main app pages.
 ///
-/// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
+/// Indexes are Home (0), Meals (1), Planner (2), and Community (3). The
 /// AI assistant is a separate action positioned to the right of the bar.
 class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
@@ -43,9 +44,13 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
   }
 
   void _select(int index) {
-    if (_visualSelectedIndex != index) {
-      setState(() => _visualSelectedIndex = index);
+    if (_visualSelectedIndex == index) return;
+    final mainTabs = MainTabScope.maybeOf(context);
+    if (mainTabs != null) {
+      mainTabs.selectTab(index);
+      return;
     }
+    setState(() => _visualSelectedIndex = index);
     widget.onSelect(index);
   }
 
@@ -139,22 +144,22 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                                 ),
                                 _NavSlot(
                                   child: _NavItem(
-                                    id: 'community',
-                                    icon: Icons.people_outline_rounded,
-                                    selectedIcon: Icons.people_rounded,
-                                    label: 'common.navigation_community'.tr,
+                                    id: 'planner',
+                                    icon: Icons.calendar_month_outlined,
+                                    selectedIcon: Icons.calendar_month_rounded,
+                                    label: 'common.navigation_planner'.tr,
                                     selected: _visualSelectedIndex == 2,
                                     onTap: () => _select(2),
                                   ),
                                 ),
                                 _NavSlot(
                                   child: _NavItem(
-                                    id: 'settings',
-                                    icon: Icons.settings_outlined,
-                                    selectedIcon: Icons.settings_rounded,
-                                    label: 'settings.title'.tr,
-                                    selected: _visualSelectedIndex == 4,
-                                    onTap: () => _select(4),
+                                    id: 'community',
+                                    icon: Icons.people_outline_rounded,
+                                    selectedIcon: Icons.people_rounded,
+                                    label: 'common.navigation_community'.tr,
+                                    selected: _visualSelectedIndex == 3,
+                                    onTap: () => _select(3),
                                   ),
                                 ),
                               ],
@@ -314,12 +319,15 @@ class _NavItemState extends State<_NavItem> {
           color: Colors.transparent,
           child: InkWell(
             key: ValueKey<String>('nav-${widget.id}'),
-            onTapDown: (_) => _setPressed(true),
-            onTapCancel: () => _setPressed(false),
-            onTap: () {
-              _setPressed(false);
-              widget.onTap();
-            },
+            onTapDown: widget.selected ? null : (_) => _setPressed(true),
+            onTapCancel: widget.selected ? null : () => _setPressed(false),
+            onTap:
+                widget.selected
+                    ? null
+                    : () {
+                      _setPressed(false);
+                      widget.onTap();
+                    },
             customBorder: const StadiumBorder(),
             child: AnimatedScale(
               scale: _isPressed ? .92 : 1,

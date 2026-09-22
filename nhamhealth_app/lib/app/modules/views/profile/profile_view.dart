@@ -84,7 +84,9 @@ class ProfileView extends GetView<ProfileController> {
                           children: [
                             Obx(() {
                               final message = controller.errorMessage.value;
-                              if (message == null) return const SizedBox.shrink();
+                              if (message == null) {
+                                return const SizedBox.shrink();
+                              }
                               return _ProfileErrorBanner(
                                 message: message,
                                 onRetry: controller.loadProfile,
@@ -119,6 +121,12 @@ class ProfileView extends GetView<ProfileController> {
       title: 'profile.title'.tr,
       backButtonKey: const ValueKey('profile-back-button'),
       onBack: controller.goBack,
+      trailing: IconButton(
+        key: const ValueKey('profile-settings-button'),
+        icon: const Icon(Icons.settings_outlined),
+        onPressed: () => Get.toNamed<void>(AppRoutes.settings),
+        tooltip: 'settings.title'.tr,
+      ),
     );
   }
 

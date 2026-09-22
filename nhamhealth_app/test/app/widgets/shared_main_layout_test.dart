@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
+import 'package:nhamhealth_flutter/app/modules/bindings/community/community_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/assistant/assistant_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/assistant/assistant_message.dart';
-import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
-import 'package:nhamhealth_flutter/app/modules/bindings/community/community_binding.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/authenticated_user_model.dart';
+import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_page.dart';
+import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
 import 'package:nhamhealth_flutter/app/theme/app_spacing.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/app/widgets/app_bottom_navigation.dart';
@@ -43,16 +43,35 @@ void main() {
       ),
     );
 
-    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
+    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 82);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Meals'), findsOneWidget);
+    expect(find.text('Planner'), findsOneWidget);
     expect(find.text('Community'), findsOneWidget);
     expect(find.text('Favorites'), findsNothing);
     expect(find.text('Chat'), findsNothing);
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Settings'), findsNothing);
     expect(find.byKey(const ValueKey<String>('nav-chatbot')), findsOneWidget);
+    expect(
+      tester
+          .widget<InkWell>(find.byKey(const ValueKey<String>('nav-home')))
+          .onTap,
+      isNull,
+    );
     await tester.tap(find.byKey(const ValueKey<String>('nav-home')));
-    expect(selected, 0);
+    expect(selected, -1);
+    await tester.tap(find.byKey(const ValueKey<String>('nav-meals')));
+    expect(selected, 1);
+    await tester.pump();
+    expect(
+      tester
+          .widget<InkWell>(find.byKey(const ValueKey<String>('nav-meals')))
+          .onTap,
+      isNull,
+    );
+    selected = -1;
+    await tester.tap(find.byKey(const ValueKey<String>('nav-meals')));
+    expect(selected, -1);
     expect(tester.takeException(), isNull);
   });
 
@@ -86,8 +105,8 @@ void main() {
     const keys = [
       ValueKey<String>('nav-home'),
       ValueKey<String>('nav-meals'),
+      ValueKey<String>('nav-planner'),
       ValueKey<String>('nav-community'),
-      ValueKey<String>('nav-settings'),
     ];
 
     await pumpBar(0);
@@ -95,13 +114,13 @@ void main() {
       for (final key in keys) tester.getCenter(find.byKey(key)),
     ];
 
-    await pumpBar(4);
+    await pumpBar(3);
     final updatedCenters = [
       for (final key in keys) tester.getCenter(find.byKey(key)),
     ];
 
     expect(updatedCenters, initialCenters);
-    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
+    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 82);
     expect(tester.takeException(), isNull);
   });
 
@@ -173,12 +192,12 @@ void main() {
     final mealsSize = await communitySize(textScale: 1, selectedIndex: 1);
     final selectedCommunitySize = await communitySize(
       textScale: 1.5,
-      selectedIndex: 2,
+      selectedIndex: 3,
     );
 
     expect(mealsSize, homeSize);
     expect(selectedCommunitySize, homeSize);
-    expect(mealsSize.height, 72);
+    expect(mealsSize.height, 70);
     expect(tester.takeException(), isNull);
   });
 
@@ -204,12 +223,12 @@ void main() {
     );
 
     final chatbot = find.byKey(const ValueKey<String>('nav-chatbot'));
-    final settings = find.byKey(const ValueKey<String>('nav-settings'));
+    final community = find.byKey(const ValueKey<String>('nav-community'));
 
-    expect(tester.getSize(chatbot), const Size(72, 72));
+    expect(tester.getSize(chatbot), const Size(70, 70));
     expect(
       tester.getCenter(chatbot).dx,
-      greaterThan(tester.getCenter(settings).dx),
+      greaterThan(tester.getCenter(community).dx),
     );
     expect(tester.takeException(), isNull);
   });
@@ -411,7 +430,7 @@ void main() {
 
     expect(find.byType(AppBottomNavigation), findsOneWidget);
     expect(find.byType(PageSkeleton), findsOneWidget);
-    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 84);
+    expect(tester.getSize(find.byType(AppBottomNavigation)).height, 82);
 
     expect(tester.takeException(), isNull);
 
