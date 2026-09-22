@@ -328,8 +328,8 @@ Future<void> showAutoFillConfirmDialog(
   BuildContext context,
   MealPlannerController controller,
 ) async {
+  if (controller.isAutoFilling.value) return;
   var preferences = controller.dietaryPreferences.value;
-  bool fillEmptyOnly = true;
 
   final confirmed = await showModalBottomSheet<bool>(
     context: context,
@@ -339,7 +339,7 @@ Future<void> showAutoFillConfirmDialog(
     builder: (dialogContext) {
       return _AiAutoFillBottomSheet(
         controller: controller,
-        initialFillEmptyOnly: fillEmptyOnly,
+        initialFillEmptyOnly: true,
         initialPreferences: preferences,
         onPreferencesChanged: (p) => preferences = p,
       );
@@ -347,17 +347,40 @@ Future<void> showAutoFillConfirmDialog(
   );
 
   if (confirmed != null) {
-    await controller.setHealthGoal(MealPlannerHealthGoal.loseWeight);
-    await controller.setDietaryPreferences(preferences);
-    final filled = await controller.autoFillPlan(fillEmptyOnly: confirmed);
-    final res = controller.lastAiAutoFillResult.value;
-    if (filled > 0 && Get.isRegistered<WeightLossProjectionController>()) {
-      await Get.find<WeightLossProjectionController>().loadForecast(
-        forceRefresh: true,
-      );
+    var filled = 0;
+    AiAutoFillPlanResponse? result;
+    controller.autoFillStatusKey.value = 'planner.autofill_loading_preparing';
+    controller.isAutoFilling.value = true;
+    try {
+      await controller.setHealthGoal(MealPlannerHealthGoal.loseWeight);
+      await controller.setDietaryPreferences(preferences);
+      controller.autoFillStatusKey.value =
+          'planner.autofill_loading_generating';
+      filled = await controller.autoFillPlan(fillEmptyOnly: confirmed);
+      result = controller.lastAiAutoFillResult.value;
+      if (filled > 0) {
+        controller.autoFillStatusKey.value =
+            'planner.autofill_loading_refreshing';
+        await controller.loadWeek(force: true);
+        if (Get.isRegistered<WeightLossProjectionController>()) {
+          try {
+            await Get.find<WeightLossProjectionController>().loadForecast(
+              forceRefresh: true,
+            );
+          } catch (_) {
+            // The saved meal plan is still a success if forecast refresh fails.
+          }
+        }
+      }
+    } finally {
+      controller.isAutoFilling.value = false;
     }
-    if (filled > 0 && res != null && context.mounted) {
-      await showAiAutoFillResultSheet(context, res);
+    if (filled > 0 && context.mounted) {
+      await showAiAutoFillResultSheet(
+        context,
+        filledCount: filled,
+        result: result,
+      );
     }
   }
 }
@@ -383,6 +406,14 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
   late bool _fillEmptyOnly = widget.initialFillEmptyOnly;
   late MealPlannerDietaryPreferences _preferences = widget.initialPreferences;
 
+  @override
+  void initState() {
+    super.initState();
+    if (_emptySlotsCount == 0 && widget.controller.planMealCount > 0) {
+      _fillEmptyOnly = false;
+    }
+  }
+
   int get _emptySlotsCount {
     int count = 0;
     for (final date in widget.controller.planDays) {
@@ -392,6 +423,34 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
       }
     }
     return count;
+  }
+
+  Future<void> _submit() async {
+    if (_preferences.medicalFlags.contains('PREGNANT_OR_BREASTFEEDING')) {
+      return;
+    }
+    if (!_fillEmptyOnly && widget.controller.planMealCount > 0) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder:
+            (dialogContext) => AlertDialog(
+              title: Text('planner.autofill_replace_title'.tr),
+              content: Text('planner.autofill_replace_message'.tr),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text('common.cancel'.tr),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text('planner.autofill_replace_confirm'.tr),
+                ),
+              ],
+            ),
+      );
+      if (replace != true || !mounted) return;
+    }
+    if (mounted) Navigator.of(context).pop(_fillEmptyOnly);
   }
 
   Widget _buildStrategyCard(
@@ -447,6 +506,8 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                 children: [
                   Row(
                     children: [
+                      Icon(icon, size: 18, color: accentColor),
+                      const SizedBox(width: 7),
                       Expanded(
                         child: Text(
                           title,
@@ -513,9 +574,8 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
 
     final accentColor =
         hasPregnancyConflict
-            ? const Color(0xFFD97706)
-            : const Color(0xFF0F62FE);
-    const goalIcon = Icons.directions_run_rounded;
+            ? context.appOnWarningSurface
+            : AppColors.primaryGreen;
 
     return Container(
       constraints: BoxConstraints(
@@ -585,7 +645,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                       Text(
                         'planner.autofill_target_preview'.tr,
                         style: TextStyle(
-                          color: const Color(0xFF0F62FE),
+                          color: context.appMutedText,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -620,7 +680,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                       margin: const EdgeInsets.only(bottom: 14),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
+                        color: context.appWarningSurface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: context.appBorder),
                       ),
@@ -629,17 +689,17 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                         children: [
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.health_and_safety_rounded,
-                                color: Color(0xFFD97706),
+                                color: context.appOnWarningSurface,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'planner.medical_review_required'.tr,
-                                  style: const TextStyle(
-                                    color: Color(0xFF92400E),
+                                  style: TextStyle(
+                                    color: context.appOnWarningSurface,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13,
                                   ),
@@ -650,8 +710,8 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                           const SizedBox(height: 6),
                           Text(
                             'planner.pregnancy_weight_loss_warning'.tr,
-                            style: const TextStyle(
-                              color: Color(0xFF78350F),
+                            style: TextStyle(
+                              color: context.appOnWarningSurface,
                               fontSize: 11.5,
                               height: 1.35,
                             ),
@@ -661,72 +721,36 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     ),
                   ],
 
-                  // Goal strategy insight card
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F62FE).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: context.appBorder),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          goalIcon,
-                          color: const Color(0xFF0F62FE),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'planner.goal_loss_card_desc'.tr,
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 11.5,
-                              height: 1.35,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   // Step 1: Choose how to fill
-                  _AutoFillStepLabel(
-                    label: 'planner.autofill_step_mode_1'.tr,
-                  ),
+                  _AutoFillStepLabel(label: 'planner.autofill_step_mode_1'.tr),
                   const SizedBox(height: 8),
 
-                  // Mode 1: Fill Empty Slots Only
-                  _buildStrategyCard(
-                    context,
-                    isSelected: _fillEmptyOnly,
-                    accentColor: const Color(0xFF0F62FE),
-                    icon: Icons.playlist_add_check_rounded,
-                    title: 'planner.autofill_mode_empty_only'.tr,
-                    description: 'planner.autofill_mode_empty_only_desc'.tr,
-                    badge:
-                        _emptySlotsCount > 0
-                            ? 'planner.empty_slots_badge'.trParams({
-                              'count': '$_emptySlotsCount',
-                            })
-                            : 'planner.recommended'.tr,
-                    isRecommended: true,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _fillEmptyOnly = true);
-                    },
-                  ),
-                  const SizedBox(height: 8),
+                  // Don't offer a no-op when every meal slot is already filled.
+                  if (_emptySlotsCount > 0) ...[
+                    _buildStrategyCard(
+                      context,
+                      isSelected: _fillEmptyOnly,
+                      accentColor: AppColors.primaryGreen,
+                      icon: Icons.playlist_add_check_rounded,
+                      title: 'planner.autofill_mode_empty_only'.tr,
+                      description: 'planner.autofill_mode_empty_only_desc'.tr,
+                      badge: 'planner.empty_slots_badge'.trParams({
+                        'count': '$_emptySlotsCount',
+                      }),
+                      isRecommended: true,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _fillEmptyOnly = true);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Mode 2: Rebalance Entire Week
                   _buildStrategyCard(
                     context,
                     isSelected: !_fillEmptyOnly,
-                    accentColor: const Color(0xFF0F62FE),
+                    accentColor: AppColors.primaryGreen,
                     icon: Icons.auto_mode_rounded,
                     title: 'planner.autofill_mode_rebalance'.tr,
                     description: 'planner.autofill_mode_rebalance_desc'.tr,
@@ -758,16 +782,16 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                      color: context.appWarningSurface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: context.appBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.health_and_safety_outlined,
-                          color: Color(0xFFD97706),
+                          color: context.appOnWarningSurface,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -830,10 +854,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                   child: SizedBox(
                     height: 50,
                     child: FilledButton.icon(
-                      onPressed:
-                          hasPregnancyConflict
-                              ? null
-                              : () => Navigator.of(context).pop(_fillEmptyOnly),
+                      onPressed: hasPregnancyConflict ? null : _submit,
                       icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: Text(
                         hasPregnancyConflict
@@ -847,12 +868,9 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                         ),
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F62FE),
-                        foregroundColor: Colors.white,
-                        elevation: 3,
-                        shadowColor: const Color(
-                          0xFF0F62FE,
-                        ).withValues(alpha: 0.35),
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: context.appOnBrand,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -920,10 +938,16 @@ class _DietaryPreferencesEditorState extends State<_DietaryPreferencesEditor> {
     );
     final count = _allergens.length + _excludedIngredients.length;
     if (count > 0) {
-      list.add('$count exclusions');
+      list.add(
+        'planner.autofill_exclusions_count'.trParams({'count': '$count'}),
+      );
     }
     if (_medicalFlags.isNotEmpty) {
-      list.add('${_medicalFlags.length} health flags');
+      list.add(
+        'planner.autofill_health_flags_count'.trParams({
+          'count': '${_medicalFlags.length}',
+        }),
+      );
     }
     return list.join(' • ');
   }
@@ -1189,9 +1213,10 @@ class _AutoFillStepLabel extends StatelessWidget {
 }
 
 Future<void> showAiAutoFillResultSheet(
-  BuildContext context,
-  AiAutoFillPlanResponse result,
-) async {
+  BuildContext context, {
+  required int filledCount,
+  AiAutoFillPlanResponse? result,
+}) async {
   await showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
@@ -1200,24 +1225,35 @@ Future<void> showAiAutoFillResultSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (sheetContext) => _AiAutoFillResultSheet(result: result),
+    builder:
+        (sheetContext) => SingleChildScrollView(
+          child: _AiAutoFillResultSheet(
+            filledCount: filledCount,
+            result: result,
+          ),
+        ),
   );
 }
 
 class _AiAutoFillResultSheet extends StatelessWidget {
-  const _AiAutoFillResultSheet({required this.result});
+  const _AiAutoFillResultSheet({required this.filledCount, this.result});
 
-  final AiAutoFillPlanResponse result;
+  final int filledCount;
+  final AiAutoFillPlanResponse? result;
 
   @override
   Widget build(BuildContext context) {
-    const accentColor = Color(0xFF0F62FE);
+    const accentColor = AppColors.primaryGreen;
+    final planResult = result;
     final engineLabel =
-        result.modelName == 'clinical-rule-fallback'
+        planResult == null
+            ? 'planner.local_plan_ready'.tr
+            : planResult.modelName == 'clinical-rule-fallback'
             ? 'planner.clinical_fallback'.tr
             : 'planner.smart_plan_ready'.tr;
 
     return Padding(
+      key: const ValueKey('planner-autofill-success-sheet'),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1274,159 +1310,175 @@ class _AiAutoFillResultSheet extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'planner.view_weight_loss_analysis'.tr,
+            'planner.autofill_success_title'.tr,
             style: TextStyle(
               color: context.appText,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
-
-          // Metric row
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: context.appBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'planner.planned_intake'.tr,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${result.dailyPlannedCalories.round()} kcal',
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: context.appBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'planner.daily_deficit'.tr,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        result.dailyDeficit > 0
-                            ? '−${result.dailyDeficit.round()} kcal'
-                            : '${result.dailyDeficit.abs().round()} kcal',
-                        style: TextStyle(
-                          color:
-                              result.dailyDeficit > 0
-                                  ? AppColors.primaryGreen
-                                  : Colors.orange.shade700,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: context.appBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${result.timeframeDays}d Loss',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '−${result.totalProjectedLossKg.toStringAsFixed(1)} kg',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: accentColor,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            'planner.auto_fill_success'.trParams({'count': '$filledCount'}),
+            style: TextStyle(color: context.appMutedText, fontSize: 13),
           ),
           const SizedBox(height: 14),
 
-          // Rationale
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.appBorder),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (planResult != null) ...[
+            // Metric row
+            Row(
               children: [
-                Icon(Icons.psychology_rounded, size: 18, color: accentColor),
-                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    result.aiRationale,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 12.5,
-                      height: 1.4,
-                      fontWeight: FontWeight.w500,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: context.appElevatedSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'planner.planned_intake'.tr,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${planResult.dailyPlannedCalories.round()} kcal',
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: context.appElevatedSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'planner.daily_deficit'.tr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          planResult.dailyDeficit > 0
+                              ? '−${planResult.dailyDeficit.round()} kcal'
+                              : '${planResult.dailyDeficit.abs().round()} kcal',
+                          style: TextStyle(
+                            color:
+                                planResult.dailyDeficit > 0
+                                    ? AppColors.primaryGreen
+                                    : Colors.orange.shade700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: context.appElevatedSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${planResult.timeframeDays}d Loss',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '−${planResult.totalProjectedLossKg.toStringAsFixed(1)} kg',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: accentColor,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 14),
+
+            // Rationale
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.appBorder),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.psychology_rounded, size: 18, color: accentColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      planResult.aiRationale,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 12.5,
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: context.appBorder),
+              minimumSize: const Size.fromHeight(44),
+            ),
+            child: Text('common.done'.tr),
+          ),
+          const SizedBox(height: 8),
           SizedBox(
             height: 48,
             child: FilledButton.icon(

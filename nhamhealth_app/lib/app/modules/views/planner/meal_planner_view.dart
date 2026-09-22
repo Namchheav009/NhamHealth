@@ -112,57 +112,69 @@ class _MealPlannerViewState extends State<MealPlannerView>
                           child: LoadingContentTransition(
                             isLoading:
                                 !controller.hasLoadedOnce.value ||
-                                controller.isLoading.value,
+                                (controller.isLoading.value &&
+                                    !controller.isAutoFilling.value),
                             loading: const PageSkeleton.mealPlanner(),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _dateCard(context),
-                                if (controller.errorMessage.value.isNotEmpty ||
-                                    controller
-                                        .recommendationsError
-                                        .value
-                                        .isNotEmpty)
-                                  _error(context),
-                                const SizedBox(height: 14),
-                                _healthGoalCard(context),
-                                const SizedBox(height: 16),
-                                _tabSelector(context),
-                                const SizedBox(height: 6),
-                                if (_activePlannerTab == 0) ...[
-                                  _dailyOverview(context),
+                            content: IgnorePointer(
+                              ignoring: controller.isAutoFilling.value,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _dateCard(context),
+                                  if (controller
+                                          .errorMessage
+                                          .value
+                                          .isNotEmpty ||
+                                      controller
+                                          .recommendationsError
+                                          .value
+                                          .isNotEmpty)
+                                    _error(context),
+                                  const SizedBox(height: 14),
+                                  _healthGoalCard(context),
                                   const SizedBox(height: 16),
-                                  _aiAutoFillBanner(context),
-                                  _sectionHeading(context),
-                                  const SizedBox(height: 12),
-                                  LoadingContentTransition(
-                                    isLoading: controller.isLoadingDay.value,
-                                    loading: const PageSkeleton.plannerSlots(),
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children:
-                                          MealPlanSlot.values
-                                              .map(
-                                                (slot) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 12,
-                                                      ),
-                                                  child: _slotCard(
-                                                    context,
-                                                    slot,
+                                  _tabSelector(context),
+                                  const SizedBox(height: 6),
+                                  if (_activePlannerTab == 0) ...[
+                                    _dailyOverview(context),
+                                    const SizedBox(height: 16),
+                                    _aiAutoFillBanner(context),
+                                    _sectionHeading(context),
+                                    const SizedBox(height: 12),
+                                    LoadingContentTransition(
+                                      isLoading:
+                                          controller.isAutoFilling.value ||
+                                          controller.isLoadingDay.value,
+                                      loading:
+                                          controller.isAutoFilling.value
+                                              ? _autoFillLoadingView(context)
+                                              : const PageSkeleton.plannerSlots(),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children:
+                                            MealPlanSlot.values
+                                                .map(
+                                                  (slot) => Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          bottom: 12,
+                                                        ),
+                                                    child: _slotCard(
+                                                      context,
+                                                      slot,
+                                                    ),
                                                   ),
-                                                ),
-                                              )
-                                              .toList(),
+                                                )
+                                                .toList(),
+                                      ),
                                     ),
-                                  ),
-                                ] else ...[
-                                  _forecastAndWeekTab(context),
+                                  ] else ...[
+                                    _forecastAndWeekTab(context),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -190,11 +202,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
           constraints: const BoxConstraints(
             maxWidth: AppSpacing.maxContentWidth,
           ),
-          child: PlannerPrimaryButton(
-            label: 'planner.generate_grocery_list'.tr,
-            icon: Icons.shopping_bag_outlined,
-            trailingIcon: Icons.arrow_forward_rounded,
-            onPressed: () => _generate(context),
+          child: Obx(
+            () => PlannerPrimaryButton(
+              label: 'planner.generate_grocery_list'.tr,
+              icon: Icons.shopping_bag_outlined,
+              trailingIcon: Icons.arrow_forward_rounded,
+              onPressed:
+                  controller.isAutoFilling.value
+                      ? null
+                      : () => _generate(context),
+            ),
           ),
         ),
       ),
@@ -220,6 +237,68 @@ class _MealPlannerViewState extends State<MealPlannerView>
       ),
     );
   }
+
+  Widget _autoFillLoadingView(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Column(
+      key: const ValueKey('planner-autofill-skeleton'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: context.appBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: context.appSoftGreen,
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'planner.autofill_loading_title'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                controller.autoFillStatusKey.value.tr,
+                style: TextStyle(color: context.appMutedText, fontSize: 12.5),
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: const LinearProgressIndicator(
+                  minHeight: 5,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        const PageSkeleton.plannerSlots(),
+      ],
+    ),
+  );
 
   Future<void> _confirmAutoFill(BuildContext context) =>
       showAutoFillConfirmDialog(context, controller);
@@ -331,9 +410,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                 child: Container(
                   constraints: const BoxConstraints(minHeight: 36),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(9),
@@ -392,7 +469,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                                 borderRadius: BorderRadius.circular(10),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 160),
-                                  constraints: const BoxConstraints(minWidth: 30),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 30,
+                                  ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
                                     vertical: 3,
@@ -823,9 +902,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryGreen : context.appBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: context.appBorder.withValues(alpha: 0.6),
-          ),
+          border: Border.all(color: context.appBorder.withValues(alpha: 0.6)),
           boxShadow:
               isSelected
                   ? [
@@ -1277,11 +1354,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.check_circle_rounded,
-                  size: 11,
-                  color: accentColor,
-                ),
+                Icon(Icons.check_circle_rounded, size: 11, color: accentColor),
                 const SizedBox(width: 3),
                 Text(
                   'planner.current_goal'.tr,
@@ -1448,10 +1521,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
     });
   }
 
-  Widget _analysisPageCard(
-    BuildContext context, {
-    required bool analyzed,
-  }) {
+  Widget _analysisPageCard(BuildContext context, {required bool analyzed}) {
     final accent =
         context.appIsDark ? const Color(0xFF72DDA7) : AppColors.darkGreen;
     return Material(
@@ -1465,9 +1535,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
           decoration: BoxDecoration(
             color: context.appSoftGreen,
             borderRadius: BorderRadius.circular(17),
-            border: Border.all(
-              color: context.appBorder.withValues(alpha: 0.7),
-            ),
+            border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
           ),
           child: Row(
             children: [
@@ -1511,11 +1579,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: accent,
-                size: 20,
-              ),
+              Icon(Icons.arrow_forward_rounded, color: accent, size: 20),
             ],
           ),
         ),
@@ -1533,9 +1597,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.appBorder.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1642,12 +1704,13 @@ class _MealPlannerViewState extends State<MealPlannerView>
                         (index) => Expanded(
                           child: Align(
                             alignment: Alignment.centerRight,
-                            child: index == controller.dailyMealGoal - 1
-                                ? const SizedBox.shrink()
-                                : Container(
-                                    width: 1.5,
-                                    color: context.appElevatedSurface,
-                                  ),
+                            child:
+                                index == controller.dailyMealGoal - 1
+                                    ? const SizedBox.shrink()
+                                    : Container(
+                                      width: 1.5,
+                                      color: context.appElevatedSurface,
+                                    ),
                           ),
                         ),
                       ),
@@ -1959,7 +2022,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
       children: [
         Container(
           key: ValueKey('planner-meal-card-${slot.name}'),
-          constraints: const BoxConstraints(minHeight: 116),
+          constraints: const BoxConstraints(minHeight: 128),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: context.appElevatedSurface,

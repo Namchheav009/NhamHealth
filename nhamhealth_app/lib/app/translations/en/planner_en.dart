@@ -299,6 +299,13 @@ const Map<String, String> plannerEn = {
   'planner.auto_fill_confirm':
       'Do you want to automatically fill empty meal slots from recommendations?',
   'planner.auto_fill_success': 'Successfully filled @count meals!',
+  'planner.autofill_success_title': 'Your meal plan is ready',
+  'planner.autofill_loading_title': 'Creating your meal plan',
+  'planner.autofill_loading_preparing':
+      'Checking your goal and food preferences…',
+  'planner.autofill_loading_generating': 'Finding varied meals for your plan…',
+  'planner.autofill_loading_refreshing': 'Updating your saved meals…',
+  'planner.local_plan_ready': 'Meal plan ready',
   'planner.auto_fill_no_empty': 'All meal slots are already filled!',
   'planner.auto_fill_no_recommendations':
       'No recommendations available to fill!',
@@ -355,6 +362,16 @@ const Map<String, String> plannerEn = {
   'planner.grocery_selected_day': 'Selected day',
   'planner.grocery_full_week': 'Full week',
   'planner.grocery_checked_progress': '@checked of @total items checked',
+  'planner.grocery_total_amount': 'Total amount',
+  'planner.grocery_as_needed': 'As needed',
+  'planner.grocery_used_in': 'Used in',
+  'planner.grocery_meal_count': '@count meals',
+  'planner.grocery_servings': '@count servings',
+  'planner.grocery_meals_using': 'Meals using this ingredient',
+  'planner.grocery_no_meal_source': 'No linked meal details are available.',
+  'planner.grocery_mark_bought': 'Mark as bought',
+  'planner.grocery_mark_needed': 'Mark as needed',
+  'planner.grocery_analyze_nutrition': 'AI & database nutrition details',
   'planner.grocery_list_help':
       'Ingredients are combined from every meal in your weekly plan.',
   'planner.empty_grocery_list':
@@ -403,7 +420,13 @@ const Map<String, String> plannerEn = {
       'Keeps your already planned meals and fills remaining gaps.',
   'planner.autofill_mode_rebalance': 'Rebalance Entire Week',
   'planner.autofill_mode_rebalance_desc':
-      'Regenerates all slots to maximize calorie deficit & variety.',
+      'Replaces existing meals with a new, varied plan.',
+  'planner.autofill_replace_title': 'Replace your planned meals?',
+  'planner.autofill_replace_message':
+      'This will replace meals already in your plan. You can review the new plan afterward.',
+  'planner.autofill_replace_confirm': 'Replace meals',
+  'planner.autofill_exclusions_count': '@count exclusions',
+  'planner.autofill_health_flags_count': '@count health flags',
   'planner.autofill_target_preview':
       'Target Deficit: ~500 kcal/day (~0.5 kg/week)',
   'planner.autofill_target_maintain': 'Target: Calorie Balance (~0 kg change)',

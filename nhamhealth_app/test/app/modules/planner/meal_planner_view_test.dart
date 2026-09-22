@@ -30,6 +30,15 @@ void main() {
     tester.view.physicalSize = const Size(800, 1200);
     addTearDown(tester.view.reset);
     final planner = Get.put(MealPlannerController());
+    await planner.addMeal(
+      const PlannedMeal(
+        id: 901,
+        name: 'Saved breakfast',
+        calories: 320,
+        slot: MealPlanSlot.breakfast,
+        ingredients: ['Oats'],
+      ),
+    );
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -60,6 +69,114 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Peanut'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('2  Food preferences'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rebalance Entire Week'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Auto-Fill Weight Loss Plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Replace your planned meals?'), findsOneWidget);
+    await tester.tap(find.text('Cancel').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Replace your planned meals?'), findsNothing);
+    expect(find.text('Auto-Fill Weight Loss Plan'), findsOneWidget);
+
+    await tester.tap(find.text('2  Food preferences'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pregnant / breastfeeding'));
+    await tester.pumpAndSettle();
+    expect(find.text('Auto-Fill unavailable'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Auto-Fill unavailable'),
+          )
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('Meal Planner shows a skeleton during Auto Fill', (tester) async {
+    final planner = Get.put(MealPlannerController());
+    planner.hasLoadedOnce.value = true;
+    planner.isLoading.value = false;
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: const MealPlannerView(),
+      ),
+    );
+
+    planner.isAutoFilling.value = true;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.byKey(const ValueKey('planner-autofill-skeleton')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('planner-week-card')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('planner-daily-overview')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('planner-slots-skeleton')),
+      findsOneWidget,
+    );
+    expect(find.text('Creating your meal plan'), findsOneWidget);
+    expect(
+      find.text('Checking your goal and food preferences…'),
+      findsOneWidget,
+    );
+
+    planner.autoFillStatusKey.value = 'planner.autofill_loading_refreshing';
+    await tester.pump();
+    expect(find.text('Updating your saved meals…'), findsOneWidget);
+
+    planner.isAutoFilling.value = false;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.byKey(const ValueKey('planner-autofill-skeleton')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('Auto Fill success sheet works without an AI result', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          body: Builder(
+            builder:
+                (context) => TextButton(
+                  onPressed:
+                      () => showAiAutoFillResultSheet(context, filledCount: 4),
+                  child: const Text('Open result'),
+                ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open result'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your meal plan is ready'), findsOneWidget);
+    expect(find.text('Successfully filled 4 meals!'), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('planner-autofill-success-sheet')),
+      findsNothing,
+    );
   });
 
   testWidgets('keeps meal cards consistent without forecast suggestions', (
@@ -126,6 +243,12 @@ void main() {
     forecastController.isLoading.value = false;
     await tester.pump();
 
+    expect(
+      find.byKey(const ValueKey('planner-ingredient-analysis-banner')),
+      findsNothing,
+    );
+    expect(find.text('AI Ingredient Analysis'), findsNothing);
+
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('planner-meal-card-lunch')),
       500,
@@ -149,9 +272,9 @@ void main() {
     );
     expect(
       tester.getSize(lunchCard).height,
-      tester.getSize(
-        find.byKey(const ValueKey('planner-meal-card-breakfast')),
-      ).height,
+      tester
+          .getSize(find.byKey(const ValueKey('planner-meal-card-breakfast')))
+          .height,
     );
   });
 
@@ -214,9 +337,11 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.widget<LinearProgressIndicator>(
-        find.byKey(const ValueKey('planner-daily-progress')),
-      ).value,
+      tester
+          .widget<LinearProgressIndicator>(
+            find.byKey(const ValueKey('planner-daily-progress')),
+          )
+          .value,
       0,
     );
 
@@ -284,7 +409,27 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 250));
     await tester.tap(find.byKey(const ValueKey('grocery-page-item-oats|')));
-    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Meals using this ingredient'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('grocery-detail-image-oats|')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('grocery-detail-toggle-oats|')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('grocery-detail-analyze-oats|')),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('grocery-detail-toggle-oats|')),
+    );
+    await tester.tap(find.byKey(const ValueKey('grocery-detail-toggle-oats|')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('1 of 2 items checked'), findsOneWidget);
     await tester.ensureVisible(find.text('Full week'));
     await tester.pump(const Duration(milliseconds: 250));
