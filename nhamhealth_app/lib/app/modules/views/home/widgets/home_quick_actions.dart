@@ -9,410 +9,340 @@ import '../../../controllers/home/home_controller.dart';
 class HomeQuickActions extends GetView<HomeController> {
   const HomeQuickActions({super.key});
 
+  static const green = Color(0xFF00AE5B);
+
   @override
   Widget build(BuildContext context) {
+    const radius = 18.0;
     return Container(
+      height: 164,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: context.appIsDark ? Border.all(color: context.appBorder) : null,
-        boxShadow: context.appHomeCardShadow,
+        color: context.appIsDark
+            ? null
+            : context.appElevatedSurface.withValues(alpha: 0.96),
+        gradient: context.appIsDark
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF071712),
+                  Color(0xFF0B2118),
+                  Color(0xFF102B1D),
+                ],
+                stops: [0, 0.56, 1],
+              )
+            : null,
+        borderRadius: BorderRadius.circular(radius),
+        border: context.appIsDark
+            ? Border.all(color: const Color(0xFF4ADE80).withValues(alpha: 0.34))
+            : null,
+        boxShadow: context.appIsDark
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  spreadRadius: -3,
+                  offset: const Offset(0, 8),
+                ),
+                const BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 7),
+                ),
+              ]
+            : context.appHomeCardShadow,
       ),
       child: InnerShadow(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(radius),
         shadows: context.appIsDark ? context.appInnerShadow : const [],
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              _buildHeader(context),
-
-              const SizedBox(height: 16),
-
-              // Main / Primary Action
-              _PrimaryQuickAction(
-                key: const ValueKey('home-action-scan-food'),
-                icon: Icons.document_scanner_rounded,
-                color: AppColors.primaryGreen,
-                title: 'home.action_scan_food'.tr,
-                subtitle: 'home.action_scan_food_subtitle'.tr,
-                onTap: () {
-                  _lightImpact();
-                  controller.openFoodAnalyzer();
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              // Secondary Quick Actions
-              Row(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey('home-action-scan-food'),
+            onTap: () {
+              try {
+                HapticFeedback.lightImpact();
+              } catch (_) {}
+              controller.openFoodAnalyzer();
+            },
+            borderRadius: BorderRadius.circular(radius),
+            splashColor: green.withValues(alpha: 0.10),
+            highlightColor: green.withValues(alpha: 0.05),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(15, 14, 13, 14),
+              child: Row(
                 children: [
+                  const _FoodScannerPreview(),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: _SecondaryQuickAction(
-                      key: const ValueKey('home-action-log-water'),
-                      icon: Icons.water_drop_rounded,
-                      color: const Color(0xFF2196F3),
-                      title: 'home.action_log_water'.tr,
-                      subtitle: 'home.action_log_water_subtitle'.tr,
-                      badgeText: '+1',
-                      onTap: () {
-                        _lightImpact();
-                        controller.quickLogWater(1.0);
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _SecondaryQuickAction(
-                      key: const ValueKey('home-action-meal-plan'),
-                      icon: Icons.calendar_month_rounded,
-                      color: const Color(0xFFFF8A00),
-                      title: 'home.action_meal_plan'.tr,
-                      subtitle: 'home.action_meal_plan_subtitle'.tr,
-                      onTap: () {
-                        _lightImpact();
-                        controller.openMealPlanner();
-                      },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'home.action_scan_food'.tr,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontSize: 21,
+                                  height: 1.1,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: green,
+                              size: 27,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Row(
+                          children: [
+                            Expanded(
+                              child: _ScanBenefit(
+                                icon: Icons.bolt_rounded,
+                                labelKey: 'home.scan_quick',
+                                englishLabel: 'Quick',
+                                khmerLabel: 'រហ័ស',
+                              ),
+                            ),
+                            _BenefitDivider(),
+                            Expanded(
+                              child: _ScanBenefit(
+                                icon: Icons.my_location_rounded,
+                                labelKey: 'home.scan_accurate',
+                                englishLabel: 'Accurate',
+                                khmerLabel: 'ត្រឹមត្រូវ',
+                              ),
+                            ),
+                            _BenefitDivider(),
+                            Expanded(
+                              child: _ScanBenefit(
+                                icon: Icons.eco_rounded,
+                                labelKey: 'home.scan_nutritious',
+                                englishLabel: 'Nutritious',
+                                khmerLabel: 'សម្បូរជីវជាតិ',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppColors.primaryGreen.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
+class _FoodScannerPreview extends StatefulWidget {
+  const _FoodScannerPreview();
+
+  @override
+  State<_FoodScannerPreview> createState() => _FoodScannerPreviewState();
+}
+
+class _FoodScannerPreviewState extends State<_FoodScannerPreview>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _scanController;
+  late final Animation<double> _scanAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+    _scanAnimation = CurvedAnimation(
+      parent: _scanController,
+      curve: Curves.easeInOutCubic,
+    );
+    _scanController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _scanController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 112,
+      height: 112,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF155C35).withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          child: const Icon(
-            Icons.bolt_rounded,
-            color: AppColors.primaryGreen,
-            size: 18,
+        ],
+      ),
+      child: CustomPaint(
+        foregroundPainter: _ScannerFramePainter(_scanAnimation),
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: Image.asset(
+            'assets/images/homepage/Scan.png',
+            fit: BoxFit.contain,
           ),
         ),
+      ),
+    );
+  }
+}
 
-        const SizedBox(width: 10),
+class _ScannerFramePainter extends CustomPainter {
+  _ScannerFramePainter(this.animation) : super(repaint: animation);
 
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'home.quick_actions'.tr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
+  final Animation<double> animation;
 
-              const SizedBox(height: 2),
+  @override
+  void paint(Canvas canvas, Size size) {
+    final progress = animation.value;
+    final pulse = 0.78 + (0.22 * (1 - (progress - 0.5).abs() * 2));
+    final corner = Paint()
+      ..color = const Color(0xFF00A957).withValues(alpha: pulse)
+      ..strokeWidth = 3.5 + (pulse * 0.5)
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    const inset = 11.0;
+    const length = 27.0;
+    const radius = 14.0;
+    final path = Path()
+      ..moveTo(inset, inset + length)
+      ..lineTo(inset, inset + radius)
+      ..quadraticBezierTo(inset, inset, inset + radius, inset)
+      ..lineTo(inset + length, inset)
+      ..moveTo(size.width - inset - length, inset)
+      ..lineTo(size.width - inset - radius, inset)
+      ..quadraticBezierTo(size.width - inset, inset, size.width - inset, inset + radius)
+      ..lineTo(size.width - inset, inset + length)
+      ..moveTo(inset, size.height - inset - length)
+      ..lineTo(inset, size.height - inset - radius)
+      ..quadraticBezierTo(inset, size.height - inset, inset + radius, size.height - inset)
+      ..lineTo(inset + length, size.height - inset)
+      ..moveTo(size.width - inset - length, size.height - inset)
+      ..lineTo(size.width - inset - radius, size.height - inset)
+      ..quadraticBezierTo(size.width - inset, size.height - inset, size.width - inset, size.height - inset - radius)
+      ..lineTo(size.width - inset, size.height - inset - length);
+    canvas.drawPath(path, corner);
 
-              Text(
-                'home.quick_actions_subtitle'.tr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: context.appText.withValues(alpha: 0.55),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+    final scanY = inset + 12 + (size.height - (inset * 2) - 24) * progress;
+    final glowRect = Rect.fromLTRB(
+      inset + 2,
+      scanY - 13,
+      size.width - inset - 2,
+      scanY + 13,
+    );
+    final glow = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          Color(0x3300D66F),
+          Colors.transparent,
+        ],
+      ).createShader(glowRect);
+    canvas.drawRect(glowRect, glow);
+
+    final scanLine = Paint()
+      ..shader = const LinearGradient(
+        colors: [Colors.transparent, Color(0xFF00C968), Colors.transparent],
+        stops: [0, 0.5, 1],
+      ).createShader(Rect.fromLTWH(inset, scanY, size.width - inset * 2, 2))
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(inset + 2, scanY),
+      Offset(size.width - inset - 2, scanY),
+      scanLine,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScannerFramePainter oldDelegate) =>
+      oldDelegate.animation != animation;
+}
+
+class _ScanBenefit extends StatelessWidget {
+  const _ScanBenefit({
+    required this.icon,
+    required this.labelKey,
+    required this.englishLabel,
+    required this.khmerLabel,
+  });
+
+  final IconData icon;
+  final String labelKey;
+  final String englishLabel;
+  final String khmerLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final translatedLabel = labelKey.tr;
+    final label = translatedLabel == labelKey
+        ? (Get.locale?.languageCode == 'km' ? khmerLabel : englishLabel)
+        : translatedLabel;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Color(0xFFD9FAE7),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: HomeQuickActions.green, size: 23),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF006B38),
+            fontSize: 12,
+            height: 1,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
-
-  void _lightImpact() {
-    try {
-      HapticFeedback.lightImpact();
-    } catch (_) {}
-  }
 }
 
-// =====================================================
-// PRIMARY QUICK ACTION
-// =====================================================
-
-class _PrimaryQuickAction extends StatelessWidget {
-  const _PrimaryQuickAction({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+class _BenefitDivider extends StatelessWidget {
+  const _BenefitDivider();
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: context.appIsDark ? 0.13 : 0.07),
-      borderRadius: BorderRadius.circular(18),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        splashColor: color.withValues(alpha: 0.18),
-        highlightColor: color.withValues(alpha: 0.08),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: color.withValues(alpha: 0.16)),
-          ),
-          child: Row(
-            children: [
-              // Main Icon
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 27),
-              ),
-
-              const SizedBox(width: 14),
-
-              // Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appText.withValues(alpha: 0.55),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Arrow
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: color,
-                  size: 17,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =====================================================
-// SECONDARY QUICK ACTION
-// =====================================================
-
-class _SecondaryQuickAction extends StatelessWidget {
-  const _SecondaryQuickAction({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.badgeText,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final String? badgeText;
-
-  @override
-  Widget build(BuildContext context) {
-    // FIX:
-    // Ink doesn't support "constraints".
-    // SizedBox controls the card height instead.
-    return SizedBox(
-      height: 120,
-      child: Material(
-        color: color.withValues(alpha: context.appIsDark ? 0.10 : 0.045),
-        borderRadius: BorderRadius.circular(18),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          splashColor: color.withValues(alpha: 0.18),
-          highlightColor: color.withValues(alpha: 0.08),
-          child: Container(
-            padding: const EdgeInsets.all(13),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withValues(alpha: 0.13)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Icon row
-                Row(
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(13),
-                          ),
-                          child: Icon(icon, color: color, size: 21),
-                        ),
-
-                        // Badge
-                        if (badgeText != null)
-                          Positioned(
-                            top: -5,
-                            right: -7,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: context.appElevatedSurface,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.25),
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                badgeText!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 8,
-                                  height: 1,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    Icon(
-                      Icons.arrow_outward_rounded,
-                      color: context.appText.withValues(alpha: 0.30),
-                      size: 17,
-                    ),
-                  ],
-                ),
-
-                const Spacer(),
-
-                // Title
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 12.5,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                // Subtitle
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText.withValues(alpha: 0.50),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return Container(
+      width: 1,
+      height: 38,
+      margin: const EdgeInsets.only(bottom: 19),
+      color: HomeQuickActions.green.withValues(alpha: 0.16),
     );
   }
 }

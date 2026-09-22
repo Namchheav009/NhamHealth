@@ -36,6 +36,9 @@ const Map<String, String> homeEn = {
   'home.quick_actions_subtitle': 'Track your health faster',
   'home.action_scan_food': 'Scan Food',
   'home.action_scan_food_subtitle': 'Analyze your meal with AI',
+  'home.scan_quick': 'Quick',
+  'home.scan_accurate': 'Accurate',
+  'home.scan_nutritious': 'Nutritious',
   'home.action_ai_meal': 'AI Meal',
   'home.action_log_water': 'Log Water',
   'home.action_log_water_subtitle': 'Track intake',
@@ -43,6 +46,8 @@ const Map<String, String> homeEn = {
   'home.action_meal_plan_subtitle': 'Plan your week',
   'home.scan_or_log_meal': 'Scan or Log Meal with AI',
   'home.how_are_you_feeling_today': 'How are you feeling today?',
+  'home.slide_to_choose_your_mood': 'Slide to choose your mood',
+  'home.wellness_quote': 'A calmer mind builds a brighter tomorrow.',
   'home.no_moods_are_available_right_now': 'No moods are available right now.',
   'home.mood_mood': '@mood mood',
   'home.search_for_meals_tips_or_healthy_groceries':

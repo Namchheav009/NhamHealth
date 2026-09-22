@@ -643,9 +643,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
   void initState() {
     super.initState();
     controller = widget.controller ?? Get.find();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => controller.fetchMyReports(),
-    );
+    if (controller.myReports.isEmpty && !controller.isLoading.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) controller.fetchMyReports();
+      });
+    }
   }
 
   List<CommunityReport> _getFilteredReports(List<CommunityReport> list) {
@@ -809,13 +811,10 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
   }) {
     Widget reportCard(CommunityReport report) => _ReportList(
       report: report,
-      onTap:
-          () => Get.to<void>(
-            () => CommunityReportDetailPage(
-              reportId: report.id,
-              controller: controller,
-            ),
-          ),
+      onTap: () {
+        controller.selectedReport.value = report;
+        Get.toNamed<void>(AppRoutes.communityReportDetailsPath(report.id));
+      },
     );
 
     if (!isTablet || !isLandscape || reports.length < 2) {
@@ -1068,7 +1067,11 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
     title: 'community.report_details_title'.tr,
     scrollable: true,
     child: Obx(() {
-      if (controller.isLoading.value) {
+      final cachedReport = controller.selectedReport.value;
+      final hasCurrentReport =
+          cachedReport != null && cachedReport.id == widget.reportId;
+      final error = controller.errorMessage.value;
+      if (controller.isLoading.value && !hasCurrentReport) {
         return const Center(
           child: Padding(
             padding: EdgeInsets.all(48),
@@ -1076,15 +1079,14 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
           ),
         );
       }
-      if (controller.errorMessage.value case final error?) {
+      if (!hasCurrentReport && error != null) {
         return _Message(
           icon: Icons.error_outline,
           text: error,
           action: () => controller.fetchReportDetails(widget.reportId),
         );
       }
-      final report = controller.selectedReport.value;
-      if (report == null || report.id != widget.reportId) {
+      if (!hasCurrentReport) {
         return const Center(
           child: Padding(
             padding: EdgeInsets.all(48),
@@ -1092,6 +1094,7 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
           ),
         );
       }
+      final report = cachedReport;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

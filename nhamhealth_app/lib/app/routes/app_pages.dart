@@ -338,7 +338,7 @@ abstract class AppPages {
       name: AppRoutes.myReports,
       page: () => const CommunityMyReportsPage(),
       binding: CommunityReportBinding(),
-      transition: Transition.rightToLeft,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityReportDetails,
@@ -347,7 +347,7 @@ abstract class AppPages {
             reportId: int.tryParse(Get.parameters['reportId'] ?? '') ?? 0,
           ),
       binding: CommunityReportBinding(),
-      transition: Transition.rightToLeft,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityGuidelines,

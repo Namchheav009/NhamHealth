@@ -37,7 +37,7 @@ class DailySummaryCard extends GetView<HomeController> {
       return Container(
         constraints: const BoxConstraints(minHeight: 160),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(18),
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -52,10 +52,10 @@ class DailySummaryCard extends GetView<HomeController> {
           boxShadow: context.appHomeCardShadow,
         ),
         child: InnerShadow(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(18),
           shadows: context.appIsDark ? context.appInnerShadow : const [],
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
+            padding: const EdgeInsets.fromLTRB(15, 14, 15, 14),
             child: Column(
               children: [
                 Row(
@@ -106,9 +106,9 @@ class DailySummaryCard extends GetView<HomeController> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 9),
                 SizedBox(
-                  height: 52,
+                  height: 46,
                   child: Row(
                     children: List.generate(controller.recentDays.length, (
                       index,
@@ -183,10 +183,10 @@ class DailySummaryCard extends GetView<HomeController> {
                     }),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 SizedBox(
                   key: const ValueKey<String>('home-wellness-cards'),
-                  height: 96,
+                  height: 84,
                   child: Row(
                     children: [
                       for (

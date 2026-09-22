@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,7 +13,7 @@ import '../../bindings/profile/help_support_binding.dart';
 import '../../bindings/profile/language_binding.dart';
 import '../../bindings/profile/terms_privacy_binding.dart';
 import '../../services/auth/google_auth_service.dart';
-import '../../views/community/community_report_page.dart';
+import '../community/community_report_controller.dart';
 import '../../views/favorites/favorites_view.dart';
 import '../../views/profile/appearance_view.dart';
 import '../../views/profile/help_support_view.dart';
@@ -27,12 +29,17 @@ class SettingsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initializePage();
+    isLoading.value = false;
+    unawaited(_preloadReports());
   }
 
-  Future<void> _initializePage() async {
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    if (!isClosed) isLoading.value = false;
+  Future<void> _preloadReports() async {
+    CommunityReportBinding().dependencies();
+    final reportsController = Get.find<CommunityReportController>();
+    if (reportsController.myReports.isEmpty &&
+        !reportsController.isLoading.value) {
+      await reportsController.fetchMyReports();
+    }
   }
 
   void openPasswordSecurity() {
@@ -92,11 +99,7 @@ class SettingsController extends GetxController {
   }
 
   void openMyReports() {
-    Get.to<void>(
-      () => const CommunityMyReportsPage(),
-      binding: CommunityReportBinding(),
-      transition: Transition.rightToLeft,
-    );
+    Get.toNamed<void>(AppRoutes.myReports);
   }
 
   void openTermsPrivacy() {
