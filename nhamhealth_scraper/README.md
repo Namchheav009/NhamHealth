@@ -21,7 +21,7 @@ are checked using the existing authentication provider. The mobile login endpoin
 
 ## Update: photo-free draft imports
 
-`python main.py --input output/reviewed_recipes.json --import-api` now allows
+`python main.py --input output/recipes.json --import-api` now allows
 `localImagePath: null`. The backend stores `main_image_url = NULL`, skips storage
 upload and always saves `published=false`. Upload a photo in Admin before publishing.
 A supplied image must still be valid. Ingredient review flags, catalog matching and
@@ -42,9 +42,10 @@ Or, after installing `requirements.txt` into the virtual environment:
 ```
 
 Use `--skip` to continue past recipes already processed, for example
-`--all --skip 10 --limit 10`, or `--input output/normalized_recipes.json --skip 5`.
+`--all --skip 10 --limit 10`, or `--input output/recipes.json --skip 5`.
 
-Review `output/raw_recipes.json` and `output/normalized_recipes.json`.
+The complete normalized, translated and validated batch is written to the single
+canonical file `output/recipes.json` after processing finishes.
 The current source produces Bai Sach Chrouk, its Khmer title, Breakfast, 4 servings,
 20 minutes cooking time, EASY difficulty, 16 parsed ingredient entries and 5 steps.
 Cooking time excludes the source's preparation and overnight marinating time.
@@ -71,19 +72,18 @@ name in the ingredient catalog. Duplicate ingredient IDs must be combined during
 To validate the edited JSON and prepare your photo without scraping again:
 
 ```powershell
-.\venv\Scripts\python.exe main.py --input output/normalized_recipes.json --image-file "C:\path\to\real-bai-sach-chrouk.jpg"
+.\venv\Scripts\python.exe main.py --input output/recipes.json --image-file "C:\path\to\real-bai-sach-chrouk.jpg"
 ```
 
 Replace the example photo path with your real file. This writes:
 
 - `images/bai-sach-chrouk.webp`
-- `output/reviewed_recipes.json`
+- `output/recipes.json`
 
 Open the WebP and verify the dish visually. File validation checks format, size and
 readability; it cannot determine whether a photograph depicts the correct meal.
-The original input JSON is preserved when writing the separate reviewed file.
-When the input is `output/reviewed_recipes.json`, validation is written to
-`output/validated_recipes.json` so an interrupted import cannot truncate your reviewed input.
+The canonical file is written only after the whole batch finishes, so an interrupted
+validation run does not truncate the existing `output/recipes.json` input.
 Relative paths are resolved from `nhamhealth_scraper`, even when launched from VS Code.
 
 ## 3. Backend setup, after data review
@@ -138,7 +138,7 @@ An admin browser session cookie is not a bearer token. Never commit `.env`.
 Back in `nhamhealth_scraper`, after confirming the data and any supplied photo:
 
 ```powershell
-.\venv\Scripts\python.exe main.py --input output/reviewed_recipes.json --import-api
+.\venv\Scripts\python.exe main.py --input output/recipes.json --import-api
 ```
 
 This revalidates the saved data and imports exactly those edits. The URL form is

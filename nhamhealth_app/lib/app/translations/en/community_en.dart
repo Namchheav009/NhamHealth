@@ -129,6 +129,35 @@ const Map<String, String> communityEn = {
   'community.prefill_from_favorites_short': 'Prefill from favorites',
   'community.ingredients_help':
       'Optional — add them if you want to share the full recipe.',
+  'community.optional': 'Optional',
+  'community.ingredients_subtitle':
+      'Add ingredients for your recipe if you want. You can always skip this step.',
+  'community.ingredient_tip':
+      'Tip: Be as specific as possible (e.g. "brown rice" instead of just "rice").',
+  'community.search_ingredients_hint':
+      'Search ingredients (e.g. chicken, rice, onion)',
+  'community.ingredient_name': 'Ingredient name',
+  'community.ingredient_name_placeholder': 'e.g. Brown rice',
+  'community.amount_label': 'Amount',
+  'community.amount_placeholder': 'e.g. 200',
+  'community.unit_label': 'Unit',
+  'community.add_another_ingredient': 'Add another ingredient',
+  'community.skip_for_now': 'Skip for now',
+  'community.continue_to_steps': 'Continue to steps',
+  'community.how_to_cook_subtitle':
+      'Add clear and simple steps to guide others. You can always skip this step.',
+  'community.add_another_step': 'Add another step',
+  'community.tags_optional': 'Tags (optional)',
+  'community.tags_subtitle': 'Add tags to help others discover your meal.',
+  'community.add_tag_hint': 'Add a tag (e.g. healthy, low-carb)',
+  'community.who_can_see_it': 'Who can see it',
+  'community.who_can_see_it_subtitle': 'Choose the audience for this post.',
+  'community.public_audience_desc':
+      'Everyone in the Nham Health community',
+  'community.followers_audience_desc': 'Only people who follow you',
+  'community.edit_ingredient': 'Edit ingredient',
+  'community.edit_step': 'Edit step',
+  'community.tags_load_error': 'Tags could not be loaded.',
   'community.cooking_steps_help':
       'Optional — add steps only when they help explain your meal.',
   'community.clear_all': 'Clear all',

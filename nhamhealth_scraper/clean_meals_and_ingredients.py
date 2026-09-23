@@ -3,19 +3,26 @@ Utility script to clean meals and ingredients from the Supabase PostgreSQL datab
 and reset scraper output files so that recipes can be scraped and imported freshly.
 """
 import os
-import sys
 from pathlib import Path
 import psycopg2
 
-# Database connection credentials from nhamhealth_api
-DB_HOST = os.getenv("SPRING_DATASOURCE_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
+# Database credentials must be supplied by the environment; never keep them in source.
+DB_HOST = os.getenv("SPRING_DATASOURCE_HOST")
 DB_PORT = int(os.getenv("SPRING_DATASOURCE_PORT", "5432"))
-DB_USER = os.getenv("SPRING_DATASOURCE_USER", "postgres.ycblccnufpweredialmc")
-DB_PASSWORD = os.getenv("SPRING_DATASOURCE_PASSWORD", "Nhamhealth009")
+DB_USER = os.getenv("SPRING_DATASOURCE_USER")
+DB_PASSWORD = os.getenv("SPRING_DATASOURCE_PASSWORD")
 DB_NAME = os.getenv("SPRING_DATASOURCE_DB", "postgres")
 
 
 def clean_database():
+    missing = [name for name, value in {
+        "SPRING_DATASOURCE_HOST": DB_HOST,
+        "SPRING_DATASOURCE_USER": DB_USER,
+        "SPRING_DATASOURCE_PASSWORD": DB_PASSWORD,
+    }.items() if not value]
+    if missing:
+        raise RuntimeError("Missing required database environment variables: " + ", ".join(missing))
+
     print("Connecting to Supabase PostgreSQL database...")
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -123,13 +130,7 @@ def clean_output_files():
     output_dir = Path(__file__).resolve().parent / "output"
     if not output_dir.exists():
         return
-    files_to_remove = [
-        "raw_recipes.json",
-        "normalized_recipes.json",
-        "reviewed_recipes.json",
-        "validated_recipes.json",
-        "import_results.json"
-    ]
+    files_to_remove = ["recipes.json", "import_results.json"]
     for filename in files_to_remove:
         file_path = output_dir / filename
         if file_path.exists():
@@ -141,4 +142,3 @@ if __name__ == "__main__":
     clean_database()
     clean_output_files()
     print("All meals, ingredients, and scraper output files have been cleaned!")
-

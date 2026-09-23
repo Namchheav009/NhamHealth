@@ -150,6 +150,35 @@ const Map<String, String> communityKm = {
   'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',
   'community.ingredients_help':
       'ជាជម្រើស — បន្ថែមគ្រឿងផ្សំ ប្រសិនបើអ្នកចង់ចែករំលែករូបមន្តពេញលេញ។',
+  'community.optional': 'មិនទាមទារ',
+  'community.ingredients_subtitle':
+      'បន្ថែមគ្រឿងផ្សំសម្រាប់រូបមន្តរបស់អ្នកប្រសិនបើអ្នកចង់។ អ្នកអាចរំលងជំហាននេះបានជានិច្ច។',
+  'community.ingredient_tip':
+      'គន្លឹះ៖ សូមបញ្ជាក់ឱ្យបានច្បាស់លាស់តាមដែលអាចធ្វើទៅបាន (ឧ. "អង្ករសំរូប" ជំនួសឱ្យគ្រាន់តែ "អង្ករ")។',
+  'community.search_ingredients_hint':
+      'ស្វែងរកគ្រឿងផ្សំ (ឧ. សាច់មាន់, អង្ករ, ខ្ទឹមបារាំង)',
+  'community.ingredient_name': 'ឈ្មោះគ្រឿងផ្សំ',
+  'community.ingredient_name_placeholder': 'ឧ. អង្ករសំរូប',
+  'community.amount_label': 'បរិមាណ',
+  'community.amount_placeholder': 'ឧ. 200',
+  'community.unit_label': 'ខ្នាត',
+  'community.add_another_ingredient': 'បន្ថែមគ្រឿងផ្សំមួយទៀត',
+  'community.skip_for_now': 'រំលងពេលនេះ',
+  'community.continue_to_steps': 'បន្តទៅជំហាន',
+  'community.how_to_cook_subtitle':
+      'បន្ថែមជំហានច្បាស់លាស់ និងសាមញ្ញដើម្បីណែនាំអ្នកដទៃ។ អ្នកអាចរំលងជំហាននេះបានជានិច្ច។',
+  'community.add_another_step': 'បន្ថែមជំហានមួយទៀត',
+  'community.tags_optional': 'ស្លាក (មិនទាមទារ)',
+  'community.tags_subtitle': 'បន្ថែមស្លាកដើម្បីជួយអ្នកដទៃស្វែងរកអាហាររបស់អ្នក។',
+  'community.add_tag_hint': 'បន្ថែមស្លាក (ឧ. សុខភាព, កាបូអ៊ីដ្រាតទាប)',
+  'community.who_can_see_it': 'អ្នកដែលអាចមើលឃើញ',
+  'community.who_can_see_it_subtitle': 'ជ្រើសរើសទស្សនិកជនសម្រាប់ការបង្ហោះនេះ។',
+  'community.public_audience_desc':
+      'អ្នកគ្រប់គ្នានៅក្នុងសហគមន៍ Nham Health',
+  'community.followers_audience_desc': 'មានតែអ្នកដែលតាមដានអ្នកប៉ុណ្ណោះ',
+  'community.edit_ingredient': 'កែសម្រួលគ្រឿងផ្សំ',
+  'community.edit_step': 'កែសម្រួលជំហាន',
+  'community.tags_load_error': 'មិនអាចទាញយកស្លាកបានទេ។',
   'community.cooking_steps_help':
       'ជាជម្រើស — បន្ថែមជំហាននៅពេលវាជួយពន្យល់ពីអាហាររបស់អ្នក។',
   'community.clear_all': 'លុបទាំងអស់',

@@ -164,12 +164,9 @@ class ImportFlowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "photograph"):
             _rasterize_svg(b"<svg/>")
 
-    def test_reviewed_input_is_never_overwritten_during_import(self):
-        from main import review_output_path
-        source = Path("output/reviewed_recipes.json")
-        self.assertNotEqual(source.resolve(), review_output_path(source).resolve())
-        self.assertEqual(Path("output/reviewed_recipes.json"),
-                         review_output_path(Path("output/normalized_recipes.json")))
+    def test_scraper_has_one_canonical_recipe_output(self):
+        from main import RECIPES_OUTPUT
+        self.assertEqual(Path("output/recipes.json"), RECIPES_OUTPUT)
 
     def test_explicit_approval_clears_only_flagged_ingredients(self):
         from main import approve_flagged_ingredients

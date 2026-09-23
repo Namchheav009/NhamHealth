@@ -20,13 +20,7 @@ from scraper.validator import validate_recipe
 from translators import khmer_translator, validate_translation
 
 
-def review_output_path(input_path: Path | None) -> Path:
-    if input_path is None:
-        return Path("output/normalized_recipes.json")
-    output = Path("output/reviewed_recipes.json")
-    if input_path.resolve() == output.resolve():
-        output = Path("output/validated_recipes.json")
-    return output
+RECIPES_OUTPUT = Path("output/recipes.json")
 
 
 def scrape_one(url: str, download_image: bool = True):
@@ -103,7 +97,7 @@ def main():
     if args.image_file and args.all:
         parser.error("--image-file is only supported for a single recipe")
 
-    raw_recipes, normalized_recipes, results = [], [], []
+    processed_recipes, results = [], []
     seen_urls = set()
     has_failures = False
     try:
@@ -143,9 +137,7 @@ def main():
                     except Exception as exc:
                         recipe["imageDownloadError"] = str(exc)
             else:
-                raw, recipe = scrape_one(item, download_image=not args.no_image and not args.image_file)
-                raw_recipes.append(raw)
-                save_json(raw_recipes, "output/raw_recipes.json")
+                _, recipe = scrape_one(item, download_image=not args.no_image and not args.image_file)
             if args.image_file:
                 recipe["localImagePath"] = prepare_local_image(args.image_file, recipe["mealName"])
                 recipe["imageDownloadError"] = None
@@ -165,25 +157,13 @@ def main():
                 recipe["translationStatus"] = "FAILED"
                 recipe["translationError"] = trans_err
 
-            normalized_recipes.append(recipe)
-            # Preserve hand-edited input files; emit validation into a separate artifact.
-            destination = review_output_path(args.input)
-            save_json(normalized_recipes, destination)
+            processed_recipes.append(recipe)
             for warning in warnings:
                 print("  WARNING:", warning)
             if errors:
                 has_failures = True
                 for error in errors:
                     print("  ERROR:", error)
-                if args.import_api:
-                    result = {
-                        "mealName": recipe.get("mealName") or f"Recipe {index}",
-                        "sourceUrl": recipe.get("sourceUrl"),
-                        "failed": True,
-                        "error": "Validation error: " + "; ".join(errors),
-                    }
-                    results.append(result)
-                    save_json(results, "output/import_results.json")
                 continue
 
             image_status = "OK" if recipe.get("localImagePath") else "Missing"
@@ -207,42 +187,9 @@ def main():
             print("- English: OK")
             print(f"- Khmer translation: {trans_status}")
             print(f"- Image: {image_status}")
-            print(f"- Saved: {destination}")
+            print(f"- Final output: {RECIPES_OUTPUT}")
 
-            if args.import_api:
-                source_url = recipe.get("sourceUrl")
-                if source_url and source_url in seen_urls:
-                    result = {
-                        "mealName": recipe.get("mealName"),
-                        "sourceUrl": source_url,
-                        "skipped": True,
-                        "reason": "Duplicate source URL in batch.",
-                    }
-                    results.append(result)
-                    save_json(results, "output/import_results.json")
-                    print_import_result(result)
-                    continue
-
-                if source_url:
-                    seen_urls.add(source_url)
-
-                try:
-                    result = import_recipe(recipe)
-                    results.append(result)
-                    save_json(results, "output/import_results.json")
-                    print_import_result(result)
-                except Exception as exc:
-                    has_failures = True
-                    result = {
-                        "mealName": recipe.get("mealName"),
-                        "sourceUrl": recipe.get("sourceUrl"),
-                        "failed": True,
-                        "error": str(exc),
-                    }
-                    results.append(result)
-                    save_json(results, "output/import_results.json")
-                    print_import_result(result)
-            else:
+            if not args.import_api:
                 photo_note = f"Photo prepared at {recipe.get('localImagePath')}" if has_image else "No photo available"
                 print(f"  JSON and photo saved for review ({photo_note}). Run with --import-api to import.")
         except Exception as exc:
@@ -259,7 +206,52 @@ def main():
         if not args.input and index < len(work):
             time.sleep(settings.request_delay_seconds)
 
+    # Write one canonical artifact after the whole batch. If a validation run is
+    # interrupted, an existing recipes.json remains intact for a safe retry.
+    if processed_recipes:
+        save_json(processed_recipes, RECIPES_OUTPUT)
+
     if args.import_api:
+        print(f"\nImporting from finalized {RECIPES_OUTPUT}...")
+        for recipe in processed_recipes:
+            errors = recipe.get("validationErrors") or []
+            if errors:
+                result = {
+                    "mealName": recipe.get("mealName") or "Recipe",
+                    "sourceUrl": recipe.get("sourceUrl"),
+                    "failed": True,
+                    "error": "Validation error: " + "; ".join(errors),
+                }
+                results.append(result)
+                save_json(results, "output/import_results.json")
+                print_import_result(result)
+                continue
+
+            source_url = recipe.get("sourceUrl")
+            if source_url and source_url in seen_urls:
+                result = {
+                    "mealName": recipe.get("mealName"),
+                    "sourceUrl": source_url,
+                    "skipped": True,
+                    "reason": "Duplicate source URL in batch.",
+                }
+            else:
+                if source_url:
+                    seen_urls.add(source_url)
+                try:
+                    result = import_recipe(recipe)
+                except Exception as exc:
+                    has_failures = True
+                    result = {
+                        "mealName": recipe.get("mealName"),
+                        "sourceUrl": source_url,
+                        "failed": True,
+                        "error": str(exc),
+                    }
+            results.append(result)
+            save_json(results, "output/import_results.json")
+            print_import_result(result)
+
         added = sum(1 for r in results if not r.get("skipped") and not r.get("failed"))
         skipped = sum(1 for r in results if r.get("skipped"))
         failed_count = sum(1 for r in results if r.get("failed"))

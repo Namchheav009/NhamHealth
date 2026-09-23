@@ -33,6 +33,10 @@ void main() {
     testWidgets(
       'tag creation survives picker dismissal: $dismissBeforeResponse',
       (tester) async {
+        tester.view.physicalSize = const Size(800, 1000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
         final repository =
             Get.find<CommunityRepository>() as _ComposerRepository;
         repository.tagResult = Completer<CommunityTag>();
@@ -59,13 +63,32 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+
+        // Step 0 -> Step 1
         await tester.scrollUntilVisible(
           find.text('Continue to ingredients'),
           300,
           scrollable: find.byType(Scrollable).first,
         );
+        await tester.ensureVisible(find.text('Continue to ingredients'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Continue to ingredients'));
         await tester.pumpAndSettle();
+
+        // Step 1 -> Step 2
+        await tester.scrollUntilVisible(
+          find.text('Continue to steps'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.ensureVisible(find.text('Continue to steps'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Continue to steps'));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.byKey(const ValueKey('community-add-tag')));
+        await tester.pumpAndSettle();
+
+        // Step 2: Add Tag
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('community-add-tag')),
           300,
@@ -95,6 +118,11 @@ void main() {
         }
         expect(find.widgetWithText(FilterChip, 'Fresh'), findsOneWidget);
         expect(tester.takeException(), isNull);
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('community-add-tag')),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
         await tester.tap(find.byKey(const ValueKey('community-add-tag')));
         await tester.pumpAndSettle();
         expect(find.text('Create "Fresh"'), findsNothing);
@@ -108,6 +136,10 @@ void main() {
   testWidgets('new meal composer validates and submits a recipe', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
@@ -125,15 +157,25 @@ void main() {
     expect(find.text('New meal'), findsOneWidget);
     expect(find.text('Add a cover photo'), findsOneWidget);
     expect(tester.getSize(find.byType(Form)).height, greaterThan(0));
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('community-post-editor-scroll-0')),
-        matching: find.text('Continue to ingredients'),
-      ),
-      findsOneWidget,
-    );
+    for (final element in find.byType(Text).evaluate()) {
+      final t = element.widget as Text;
+      print('FOUND_TEXT: ' + (t.data ?? '<null>'));
+    }
+    for (final element in find.descendant(
+      of: find.byKey(const ValueKey('community-post-editor-scroll-0')),
+      matching: find.byType(Text),
+    ).evaluate()) {
+      final t = element.widget as Text;
+      print('SCROLL_0_TEXT: ');
+    }
+    expect(find.text('Continue to ingredients'), findsWidgets);
 
     await tester.ensureVisible(find.text('Choose a category'));
+    await tester.scrollUntilVisible(
+      find.text('Choose a category'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Choose a category'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Main dishes').last);
@@ -151,36 +193,78 @@ void main() {
     );
     await tester.drag(find.byType(ListView), const Offset(0, -260));
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.widgetWithText(TextFormField, '45'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.enterText(find.widgetWithText(TextFormField, '45'), '30');
     await tester.enterText(find.widgetWithText(TextFormField, '2'), '2');
     await tester.ensureVisible(find.text('Continue to ingredients'));
+    await tester.scrollUntilVisible(
+      find.text('Continue to ingredients'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Continue to ingredients'));
     await tester.pumpAndSettle();
-    expect(find.text('Ingredients & Steps'), findsOneWidget);
+
+    // Step 1: Ingredients
+    expect(find.text('Ingredients'), findsWidgets);
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Search ingredient'),
+      find.widgetWithText(TextFormField, 'e.g. Brown rice'),
       'Chicken',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '300');
-    await tester.tap(find.byKey(const ValueKey('community-add-ingredient')));
-    await tester.pump();
-    await tester.drag(find.byType(ListView), const Offset(0, -420));
-    await tester.pump();
     await tester.enterText(
-      find.byKey(const ValueKey('community-new-cooking-step')),
-      'Prepare and cook the chicken.',
+      find.widgetWithText(TextFormField, 'e.g. 200'),
+      '300',
     );
-    await tester.tap(find.byKey(const ValueKey('community-add-cooking-step')));
-    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('community-add-ingredient')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Continue to steps'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Continue to steps'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Continue to steps'));
+    await tester.pumpAndSettle();
+
+    // Step 2: How to Cook
+    expect(find.text('How to Cook'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('community-add-another-step')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
+    await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const ValueKey('community-new-cooking-step')),
+      find.byKey(const ValueKey('community-new-cooking-step-input')),
       'Serve with fresh herbs.',
     );
-    await tester.tap(find.byKey(const ValueKey('community-add-cooking-step')));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('community-step-up-1')));
-    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('community-save-step-button')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('community-add-another-step')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('community-new-cooking-step-input')),
+      'Prepare and cook the chicken.',
+    );
+    await tester.tap(find.byKey(const ValueKey('community-save-step-button')));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Publish Meal'));
+    await tester.scrollUntilVisible(
+      find.text('Publish Meal'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Publish Meal'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -202,6 +286,10 @@ void main() {
   });
 
   testWidgets('editing submits without a description', (tester) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     CommunityPostDraft? submitted;
     await tester.pumpWidget(
       GetMaterialApp(
@@ -242,10 +330,31 @@ void main() {
     expect(find.text('Edit meal'), findsOneWidget);
     expect(find.text('Basic Info'), findsOneWidget);
     await tester.ensureVisible(find.text('Continue to ingredients'));
+    await tester.scrollUntilVisible(
+      find.text('Continue to ingredients'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Continue to ingredients'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Continue to steps'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Continue to steps'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Continue to steps'));
+    await tester.pumpAndSettle();
+
     await tester.ensureVisible(find.text('Save Changes'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Save Changes'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Save Changes'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

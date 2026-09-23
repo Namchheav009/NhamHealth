@@ -66,7 +66,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   Timer? _ingredientSearchDebounce;
   int _ingredientSearchVersion = 0;
   late List<TextEditingController> _steps;
-  final _newStep = TextEditingController();
   String _difficulty = 'EASY';
   static const _maxImages = 5;
   final List<Uint8List> _images = [];
@@ -84,6 +83,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   String? _categoriesError;
   late int _currentStep;
   late CommunityPostVisibility _visibility;
+  late final TextEditingController _ingredientSearchController;
+  late final TextEditingController _tagInputController;
+  final FocusNode _ingredientNameFocusNode = FocusNode();
+  final FocusNode _ingredientAmountFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -94,6 +97,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       text: post?.cookingTimeMinutes?.toString() ?? '',
     );
     _servings = TextEditingController(text: post?.servings?.toString() ?? '');
+    _ingredientSearchController = TextEditingController();
+    _tagInputController = TextEditingController();
     _name.addListener(_refreshBasicInfoState);
     _time.addListener(_refreshBasicInfoState);
     _servings.addListener(_refreshBasicInfoState);
@@ -339,6 +344,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _name.dispose();
     _time.dispose();
     _servings.dispose();
+    _ingredientSearchController.dispose();
+    _tagInputController.dispose();
+    _ingredientNameFocusNode.dispose();
+    _ingredientAmountFocusNode.dispose();
     for (final item in _ingredients) {
       item.dispose();
     }
@@ -346,7 +355,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     for (final item in _steps) {
       item.dispose();
     }
-    _newStep.dispose();
     super.dispose();
   }
 
@@ -566,6 +574,52 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     });
   }
 
+  void _continueToSteps() {
+    final name = _newIngredient.name.text.trim();
+    final amount = num.tryParse(_newIngredient.amount.text.trim());
+    if (name.isNotEmpty && amount != null && amount > 0) {
+      _addIngredient();
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _currentStep = 2);
+  }
+
+  Future<void> _addTagFromInput(String text) async {
+    final cleanName = text.trim();
+    if (cleanName.isEmpty) {
+      _showTagPicker();
+      return;
+    }
+    _tagInputController.clear();
+    CommunityTag? match;
+    for (final tag in _tags) {
+      if (tag.name.toLowerCase() == cleanName.toLowerCase()) {
+        match = tag;
+        break;
+      }
+    }
+    if (match != null) {
+      setState(() => _selectedTags.add(match!.id));
+      return;
+    }
+    try {
+      final newTag = await Get.find<CommunityRepository>().createTag(cleanName);
+      if (mounted) {
+        setState(() {
+          if (!_tags.any((item) => item.id == newTag.id)) {
+            _tags = [..._tags, newTag]
+              ..sort((a, b) => a.name.compareTo(b.name));
+          }
+          _selectedTags.add(newTag.id);
+        });
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        Get.snackbar('community.could_not_create_tag'.tr, error.toString());
+      }
+    }
+  }
+
   void _addIngredient() {
     final name = _newIngredient.name.text.trim();
     final amount = num.tryParse(_newIngredient.amount.text.trim());
@@ -592,31 +646,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       _ingredientSuggestions = const [];
     });
     FocusScope.of(context).unfocus();
-  }
-
-  void _addStep() {
-    final instruction = _newStep.text.trim();
-    if (instruction.isEmpty) {
-      Get.snackbar(
-        'community.add_cooking_instructions'.tr,
-        'community.describe_step_first'.tr,
-      );
-      return;
-    }
-    setState(() {
-      _steps.add(TextEditingController(text: instruction));
-      _newStep.clear();
-    });
-    FocusScope.of(context).unfocus();
-  }
-
-  void _moveStep(int index, int offset) {
-    final target = index + offset;
-    if (target < 0 || target >= _steps.length) return;
-    setState(() {
-      final step = _steps.removeAt(index);
-      _steps.insert(target, step);
-    });
   }
 
   void _searchIngredients(String rawQuery) {
@@ -651,9 +680,361 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       if (ingredient.defaultUnit.isNotEmpty) {
         _newIngredient.unit = ingredient.defaultUnit;
       }
+      _ingredientSearchController.clear();
       _ingredientSuggestions = const [];
     });
     FocusScope.of(context).unfocus();
+    _ingredientAmountFocusNode.requestFocus();
+  }
+
+  Future<void> _editIngredient(int index) async {
+    final item = _ingredients[index];
+    final nameController = TextEditingController(text: item.name.text);
+    final amountController = TextEditingController(text: item.amount.text);
+    var selectedUnit = item.unit;
+    final formKey = GlobalKey<FormState>();
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => StatefulBuilder(
+            builder:
+                (context, setSheetState) => SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      16,
+                      20,
+                      MediaQuery.viewInsetsOf(sheetContext).bottom + 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: sheetContext.appSurfaceLow,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              height: 4,
+                              width: 38,
+                              decoration: BoxDecoration(
+                                color: sheetContext.appStrongBorder,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'community.edit_ingredient'.tr,
+                            style: TextStyle(
+                              color: sheetContext.appText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: nameController,
+                            autofocus: true,
+                            decoration: _decoration(
+                              hint: 'community.ingredient_name_placeholder'.tr,
+                            ),
+                            validator:
+                                (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                        ? 'community.ingredient_details_help'.tr
+                                        : null,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: amountController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  decoration: _decoration(
+                                    hint: 'community.amount_placeholder'.tr,
+                                  ),
+                                  validator: (v) {
+                                    final n = num.tryParse(v?.trim() ?? '');
+                                    if (n == null || n <= 0) {
+                                      return 'community.ingredient_details_help'
+                                          .tr;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: InkWell(
+                                  onTap: () async {
+                                    final chosen =
+                                        await _showIngredientUnitPicker(
+                                          selectedUnit,
+                                        );
+                                    if (chosen != null &&
+                                        sheetContext.mounted) {
+                                      setSheetState(
+                                        () => selectedUnit = chosen,
+                                      );
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: InputDecorator(
+                                    decoration: _decoration(),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            selectedUnit,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: sheetContext.appText,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: sheetContext.appMutedText,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.pop(sheetContext, false),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: sheetContext.appMutedText,
+                                ),
+                                child: Text('common.cancel'.tr),
+                              ),
+                              const SizedBox(width: 10),
+                              FilledButton(
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    Navigator.pop(sheetContext, true);
+                                  }
+                                },
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: green,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 11,
+                                  ),
+                                ),
+                                child: Text(
+                                  'common.save'.tr,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+          ),
+    );
+
+    if (saved == true && mounted) {
+      setState(() {
+        item.name.text = nameController.text.trim();
+        item.amount.text = amountController.text.trim();
+        item.unit = selectedUnit;
+      });
+    }
+  }
+
+  Future<void> _showAddOrEditStepSheet({int? index}) async {
+    final isEditing = index != null;
+    final controller = TextEditingController(
+      text: isEditing ? _steps[index].text : '',
+    );
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                MediaQuery.viewInsetsOf(sheetContext).bottom + 20,
+              ),
+              decoration: BoxDecoration(
+                color: sheetContext.appSurfaceLow,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        height: 4,
+                        width: 38,
+                        decoration: BoxDecoration(
+                          color: sheetContext.appStrongBorder,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: sheetContext.appSoftGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${isEditing ? index + 1 : _steps.length + 1}',
+                            style: const TextStyle(
+                              color: green,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isEditing
+                                ? 'community.edit_step'.tr
+                                : 'community.step_number'.trParams({
+                                  'number': '${_steps.length + 1}',
+                                }),
+                            style: TextStyle(
+                              color: sheetContext.appText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      key: const ValueKey('community-new-cooking-step-input'),
+                      controller: controller,
+                      autofocus: true,
+                      minLines: 3,
+                      maxLines: 5,
+                      validator:
+                          (v) =>
+                              (v == null || v.trim().isEmpty)
+                                  ? 'community.describe_step_first'.tr
+                                  : null,
+                      decoration: _decoration(
+                        hint: 'community.how_to_cook_subtitle'.tr,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          style: TextButton.styleFrom(
+                            foregroundColor: sheetContext.appMutedText,
+                          ),
+                          child: Text('common.cancel'.tr),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          key: const ValueKey('community-save-step-button'),
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              Navigator.pop(
+                                sheetContext,
+                                controller.text.trim(),
+                              );
+                            }
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 11,
+                            ),
+                          ),
+                          child: Text(
+                            isEditing
+                                ? 'common.save'.tr
+                                : 'community.add_step'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        if (isEditing) {
+          _steps[index].text = result;
+        } else {
+          _steps.add(TextEditingController(text: result));
+        }
+      });
+    }
   }
 
   Future<void> _createAndSelectTag(String name, StateSetter updateSheet) async {
@@ -908,7 +1289,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.fromLTRB(hPad, AppSpacing.pageTop, hPad, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    hPad,
+                    AppSpacing.pageTop,
+                    hPad,
+                    0,
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxWidth),
@@ -928,9 +1314,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                 : AutovalidateMode.disabled,
                         child: LayoutBuilder(
                           builder: (context, constraints) {
+                            final isLandscape =
+                                MediaQuery.orientationOf(context) ==
+                                Orientation.landscape;
                             final isWide =
+                                isLandscape &&
                                 constraints.maxWidth >=
-                                AppSpacing.twoColumnBreakpoint;
+                                    AppSpacing.twoColumnBreakpoint;
                             return ListView(
                               key: ValueKey(
                                 'community-post-editor-scroll-$_currentStep',
@@ -948,15 +1338,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                               children: [
                                 _progressHeader(),
                                 const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 if (_currentStep == 0)
                                   _buildStep1Content(context, isWide: isWide)
+                                else if (_currentStep == 1)
+                                  _buildIngredientsStep(context, isWide: isWide)
                                 else
-                                  _buildStep2Content(context, isWide: isWide),
-                                if (!isWide || _currentStep == 0) ...[
-                                  const SizedBox(height: 12),
-                                  _navigationButton(),
-                                  const SizedBox(height: 12),
-                                ],
+                                  _buildHowToCookStep(context, isWide: isWide),
+                                const SizedBox(height: 16),
+                                _bottomActions(context),
+                                const SizedBox(height: 16),
                               ],
                             );
                           },
@@ -973,18 +1364,109 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
+  Widget _bottomActions(BuildContext context) {
+    if (_currentStep == 0) {
+      return _navigationButton();
+    }
+    final isStep1 = _currentStep == 1;
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: OutlinedButton(
+            key: ValueKey('community-skip-button-$_currentStep'),
+            onPressed:
+                _submitting
+                    ? null
+                    : () {
+                      if (isStep1) {
+                        setState(() => _currentStep = 2);
+                      } else {
+                        _submit();
+                      }
+                    },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: green,
+              side: const BorderSide(color: green, width: 1.5),
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: Text(
+              'community.skip_for_now'.tr,
+              style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: FilledButton(
+            key: ValueKey('community-continue-button-$_currentStep'),
+            onPressed:
+                _submitting ? null : (isStep1 ? _continueToSteps : _submit),
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: context.appMutedSurface,
+              disabledForegroundColor: context.appMutedText,
+              minimumSize: const Size.fromHeight(50),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child:
+                _submitting
+                    ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                    : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            isStep1
+                                ? 'community.continue_to_steps'.tr
+                                : (widget.post == null
+                                    ? 'meals.publish_meal'.tr
+                                    : 'common.save_changes'.tr),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded, size: 19),
+                      ],
+                    ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _navigationButton() => ConstrainedBox(
     constraints: const BoxConstraints(minHeight: 50),
     child: SizedBox(
       width: double.infinity,
       child: FilledButton(
         key: ValueKey('community-navigation-button-$_currentStep'),
-        onPressed:
-            _submitting
-                ? null
-                : _currentStep == 0
-                ? _continueToRecipe
-                : _submit,
+        onPressed: _submitting ? null : _continueToRecipe,
         style: FilledButton.styleFrom(
           backgroundColor: green,
           foregroundColor: Colors.white,
@@ -992,7 +1474,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           disabledForegroundColor: context.appMutedText,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
         ),
         child:
             _submitting
@@ -1009,11 +1493,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                   children: [
                     Flexible(
                       child: Text(
-                        _currentStep == 0
-                            ? 'community.continue_to_ingredients'.tr
-                            : widget.post == null
-                            ? 'meals.publish_meal'.tr
-                            : 'common.save_changes'.tr,
+                        'community.continue_to_ingredients'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1060,6 +1540,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   );
 
   void _handleBack() {
+    if (_currentStep == 2) {
+      setState(() {
+        _currentStep = 1;
+        _showValidation = false;
+      });
+      return;
+    }
     if (_currentStep == 1) {
       setState(() {
         _currentStep = 0;
@@ -1070,79 +1557,168 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     Navigator.maybePop(context);
   }
 
-  Widget _progressHeader() => Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      _progressStep(
-        1,
-        'community.basic_info',
-        isActive: _currentStep == 0,
-        isComplete: _currentStep == 1,
-      ),
-      Expanded(
-        child: Container(
-          height: 3,
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(99),
-            color: _currentStep >= 1 ? green : context.appBorder,
+  Widget _progressHeader() {
+    final progress1 = _currentStep == 0 ? 0.0 : 1.0;
+    final progress2 = _currentStep <= 1 ? 0.0 : 1.0;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Flexible(
+          child: _progressStep(
+            1,
+            'community.basic_info',
+            isActive: _currentStep == 0,
+            isComplete: _currentStep >= 1,
+            onTap: () {
+              if (_currentStep > 0 && !_submitting) {
+                setState(() => _currentStep = 0);
+              }
+            },
           ),
         ),
-      ),
-      _progressStep(2, 'community.ingredients_and_steps', isActive: _currentStep == 1),
-    ],
-  );
+        Expanded(
+          child: Container(
+            height: 3.5,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(99),
+              color: context.appBorder,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AnimatedFractionallySizedBox(
+                duration: const Duration(milliseconds: 250),
+                widthFactor: progress1,
+                heightFactor: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(99),
+                    color: green,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Flexible(
+          child: _progressStep(
+            2,
+            'community.ingredients',
+            isActive: _currentStep == 1,
+            isComplete: _currentStep >= 2,
+            onTap: () {
+              if (_currentStep == 2 && !_submitting) {
+                setState(() => _currentStep = 1);
+              }
+            },
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 3.5,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(99),
+              color: context.appBorder,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AnimatedFractionallySizedBox(
+                duration: const Duration(milliseconds: 250),
+                widthFactor: progress2,
+                heightFactor: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(99),
+                    color: green,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Flexible(
+          child: _progressStep(
+            3,
+            'community.how_to_cook',
+            isActive: _currentStep == 2,
+            isComplete: false,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _progressStep(
     int number,
     String label, {
     required bool isActive,
     bool isComplete = false,
-  }) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 26,
-        height: 26,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color:
-              isActive || isComplete
-                  ? green
-                  : context.appMutedSurface,
-          border: Border.all(
-            color: isActive || isComplete ? green : context.appBorder,
-            width: 1.5,
-          ),
-        ),
-        child:
-            isComplete
-                ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-                : Text(
-                  '$number',
-                  style: TextStyle(
-                    color: isActive ? Colors.white : context.appMutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
+    VoidCallback? onTap,
+  }) {
+    final isHighlighted = isActive || isComplete;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isHighlighted ? green : context.appMutedSurface,
+                border: Border.all(
+                  color: isHighlighted ? green : context.appBorder,
+                  width: 1.5,
                 ),
-      ),
-      const SizedBox(height: 5),
-      Text(
-        label.tr,
-        style: TextStyle(
-          color:
-              isActive || isComplete
-                  ? (context.appIsDark ? const Color(0xFF86EFAC) : green)
-                  : context.appMutedText,
-          fontSize: 11.5,
-          fontWeight: isActive || isComplete ? FontWeight.w800 : FontWeight.w600,
+              ),
+              child:
+                  isComplete
+                      ? const Icon(
+                        Icons.check_rounded,
+                        size: 17,
+                        color: Colors.white,
+                      )
+                      : Text(
+                        '',
+                        style: TextStyle(
+                          color:
+                              isHighlighted
+                                  ? Colors.white
+                                  : context.appMutedText,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label.tr,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color:
+                    isHighlighted
+                        ? (context.appIsDark ? const Color(0xFF86EFAC) : green)
+                        : context.appMutedText,
+                fontSize: 11.5,
+                fontWeight: isHighlighted ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
-    ],
-  );
+    );
+  }
 
   Widget _buildStep1Content(BuildContext context, {required bool isWide}) {
     if (isWide) {
@@ -1241,10 +1817,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             onTap: _submitting ? null : _chooseFavoriteFood,
             borderRadius: BorderRadius.circular(20),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 7,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1348,8 +1921,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     hint: 'Khmer Fish Amok',
     icon: Icons.restaurant_menu_rounded,
     validator:
-        (v) =>
-            v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
+        (v) => v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
   );
 
   Widget _timeAndServingsRow() => Row(
@@ -1477,12 +2049,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _buildStep2Content(BuildContext context, {required bool isWide}) {
+  Widget _buildIngredientsStep(BuildContext context, {required bool isWide}) {
     if (isWide) {
       return Column(
         key: const ValueKey<String>('community-post-editor-step2-wide'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _sectionHeader(
+            title: 'community.ingredients'.tr,
+            subtitle: 'community.ingredients_subtitle'.tr,
+            icon: Icons.shopping_basket_outlined,
+            optional: true,
+          ),
+          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1491,50 +2070,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _heading(
-                      'community.ingredients'.tr,
-                      'community.ingredients_help'.tr,
-                      Icons.shopping_basket_outlined,
-                    ),
-                    _ingredientComposer(),
+                    _ingredientTipCard(),
+                    const SizedBox(height: 14),
+                    _ingredientSearchField(),
                     const SizedBox(height: 12),
-                    _ingredientList(),
-                    const SizedBox(height: 20),
-                    _heading(
-                      'community.how_to_cook'.tr,
-                      'community.cooking_steps_help'.tr,
-                      Icons.restaurant_menu_rounded,
-                    ),
-                    _stepComposer(),
-                    const SizedBox(height: 12),
-                    _stepList(),
+                    _ingredientInputCard(),
                   ],
                 ),
               ),
-              const SizedBox(width: 24),
-              Expanded(
-                flex: 5,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _heading(
-                      'Tags',
-                      'Help people discover your meal.',
-                      Icons.sell_outlined,
-                    ),
-                    _tagsField(),
-                    const SizedBox(height: 20),
-                    _heading(
-                      'Who can see it',
-                      'Choose the audience for this post.',
-                      Icons.visibility_outlined,
-                    ),
-                    _audienceField(),
-                    const SizedBox(height: 24),
-                    _navigationButton(),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 20),
+              Expanded(flex: 5, child: _ingredientsListSection()),
             ],
           ),
         ],
@@ -1545,31 +2090,968 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       key: const ValueKey<String>('community-post-editor-step2-single'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _heading(
-          'community.ingredients'.tr,
-          'community.ingredients_help'.tr,
-          Icons.shopping_basket_outlined,
+        _sectionHeader(
+          title: 'community.ingredients'.tr,
+          subtitle: 'community.ingredients_subtitle'.tr,
+          icon: Icons.shopping_basket_outlined,
+          optional: true,
         ),
-        _ingredientComposer(),
+        const SizedBox(height: 10),
+        _ingredientTipCard(),
+        const SizedBox(height: 14),
+        _ingredientSearchField(),
         const SizedBox(height: 12),
-        _ingredientList(),
-        _heading(
-          'community.how_to_cook'.tr,
-          'community.cooking_steps_help'.tr,
-          Icons.restaurant_menu_rounded,
-        ),
-        _stepComposer(),
-        const SizedBox(height: 12),
-        _stepList(),
-        _heading('Tags', 'Help people discover your meal.', Icons.sell_outlined),
-        _tagsField(),
-        _heading(
-          'Who can see it',
-          'Choose the audience for this post.',
-          Icons.visibility_outlined,
-        ),
-        _audienceField(),
+        _ingredientInputCard(),
+        const SizedBox(height: 16),
+        _ingredientsListSection(),
       ],
+    );
+  }
+
+  Widget _buildHowToCookStep(BuildContext context, {required bool isWide}) {
+    if (isWide) {
+      return Column(
+        key: const ValueKey<String>('community-post-editor-how-to-cook-wide'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sectionHeader(
+                      title: 'community.how_to_cook'.tr,
+                      subtitle: 'community.how_to_cook_subtitle'.tr,
+                      icon: Icons.menu_book_rounded,
+                      optional: true,
+                    ),
+                    const SizedBox(height: 10),
+                    _cookingStepsListSection(),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _tagsSection(),
+                    const SizedBox(height: 18),
+                    _audienceSection(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      key: const ValueKey<String>('community-post-editor-how-to-cook-single'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          title: 'community.how_to_cook'.tr,
+          subtitle: 'community.how_to_cook_subtitle'.tr,
+          icon: Icons.menu_book_rounded,
+          optional: true,
+        ),
+        const SizedBox(height: 10),
+        _cookingStepsListSection(),
+        const SizedBox(height: 18),
+        _tagsSection(),
+        const SizedBox(height: 18),
+        _audienceSection(),
+      ],
+    );
+  }
+
+  Widget _sectionHeader({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    bool optional = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(top: 6, bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: context.appSoftGreen,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 19, color: green),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (optional) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.appSoftGreen,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'community.optional'.tr,
+                        style: const TextStyle(
+                          color: green,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.appMutedText,
+                  fontSize: 11.5,
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _ingredientTipCard() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color:
+          context.appIsDark ? const Color(0xFF132A1C) : const Color(0xFFF0FDF4),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color:
+            context.appIsDark
+                ? const Color(0xFF1E4620)
+                : const Color(0xFFDCFCE7),
+      ),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color:
+                context.appIsDark
+                    ? const Color(0xFF1A3E26)
+                    : const Color(0xFFDCFCE7),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.lightbulb_outline_rounded,
+            color: green,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'community.ingredient_tip'.tr,
+            style: TextStyle(
+              color:
+                  context.appIsDark
+                      ? const Color(0xFF86EFAC)
+                      : const Color(0xFF15803D),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _ingredientSearchField() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      TextFormField(
+        controller: _ingredientSearchController,
+        onChanged: _searchIngredients,
+        decoration: _decoration(
+          hint: 'community.search_ingredients_hint'.tr,
+        ).copyWith(
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          suffixIcon:
+              _ingredientSearchController.text.isNotEmpty
+                  ? IconButton(
+                    icon: const Icon(Icons.clear_rounded, size: 18),
+                    onPressed: () {
+                      _ingredientSearchController.clear();
+                      setState(() => _ingredientSuggestions = const []);
+                    },
+                  )
+                  : null,
+        ),
+        textInputAction: TextInputAction.search,
+      ),
+      if (_ingredientSuggestions.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        _ingredientSuggestionPanel(),
+      ],
+    ],
+  );
+
+  Widget _ingredientInputCard() => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: context.appBorder),
+      boxShadow: context.appTileShadow,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'community.ingredient_name'.tr,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _newIngredient.name,
+          focusNode: _ingredientNameFocusNode,
+          decoration: _decoration(
+            hint: 'community.ingredient_name_placeholder'.tr,
+          ),
+          textInputAction: TextInputAction.next,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'community.amount_label'.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _newIngredient.amount,
+                    focusNode: _ingredientAmountFocusNode,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: _decoration(
+                      hint: 'community.amount_placeholder'.tr,
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onChanged: (_) => setState(() {}),
+                    onFieldSubmitted: (_) => _addIngredient(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'community.unit_label'.tr,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        final chosen = await _showIngredientUnitPicker(
+                          _newIngredient.unit,
+                        );
+                        if (chosen != null && mounted) {
+                          setState(() => _newIngredient.unit = chosen);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(15),
+                      child: InputDecorator(
+                        decoration: _decoration(),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _newIngredient.unit,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: context.appText,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: context.appMutedText,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 1),
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: FilledButton(
+                  key: const ValueKey('community-add-ingredient'),
+                  onPressed: _submitting ? null : _addIngredient,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: green,
+                    disabledBackgroundColor: context.appMutedSurface,
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: context.appMutedText,
+                    elevation: 0,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Icon(Icons.add_rounded, size: 24),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _ingredientsListSection() {
+    if (_ingredients.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'community.ingredients_list'.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.appSoftGreen,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '()',
+                      style: TextStyle(
+                        color: context.appColorScheme.primary,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton.icon(
+              onPressed: () {
+                for (final item in _ingredients) {
+                  item.dispose();
+                }
+                setState(_ingredients.clear);
+              },
+              icon: const Icon(Icons.delete_outline_rounded, size: 16),
+              label: Text('community.clear_all'.tr),
+              style: TextButton.styleFrom(
+                foregroundColor: green,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: _ingredients.length,
+          onReorderItem: (oldIndex, newIndex) {
+            setState(() {
+              final item = _ingredients.removeAt(oldIndex);
+              _ingredients.insert(newIndex, item);
+            });
+          },
+          itemBuilder: (context, index) {
+            final item = _ingredients[index];
+            return Container(
+              key: ValueKey('ingredient-row-${item.hashCode}-$index'),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: context.appElevatedSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.appBorder),
+                boxShadow: context.appTileShadow,
+              ),
+              child: Row(
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        Icons.drag_indicator_rounded,
+                        color: context.appMutedText,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      item.name.text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${item.amount.text} ${item.unit}',
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'community.edit_ingredient'.tr,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 34,
+                      height: 34,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _editIngredient(index),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    color: context.appMutedText,
+                  ),
+                  IconButton(
+                    tooltip: 'community.remove_item'.trParams({
+                      'name': item.name.text,
+                    }),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 34,
+                      height: 34,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      item.dispose();
+                      setState(() => _ingredients.removeAt(index));
+                    },
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    color: context.appMutedText,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 6),
+        _addAnotherIngredientButton(),
+      ],
+    );
+  }
+
+  Widget _addAnotherIngredientButton() => SizedBox(
+    width: double.infinity,
+    height: 48,
+    child: OutlinedButton.icon(
+      key: const ValueKey('community-add-another-ingredient'),
+      onPressed: () {
+        _ingredientNameFocusNode.requestFocus();
+      },
+      icon: const Icon(Icons.add_rounded, size: 20, color: green),
+      label: Text(
+        'community.add_another_ingredient'.tr,
+        style: const TextStyle(
+          color: green,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: green, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+  );
+
+  Widget _cookingStepsListSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_steps.isNotEmpty) ...[
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: _steps.length,
+          onReorderItem: (oldIndex, newIndex) {
+            setState(() {
+              final item = _steps.removeAt(oldIndex);
+              _steps.insert(newIndex, item);
+            });
+          },
+          itemBuilder: (context, index) {
+            final stepController = _steps[index];
+            return Container(
+              key: ValueKey('step-row-${stepController.hashCode}-$index'),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              decoration: BoxDecoration(
+                color: context.appElevatedSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.appBorder),
+                boxShadow: context.appTileShadow,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, right: 6),
+                    child: ReorderableDragStartListener(
+                      index: index,
+                      child: Icon(
+                        Icons.drag_indicator_rounded,
+                        color: context.appMutedText,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    margin: const EdgeInsets.only(top: 2, right: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.appSoftGreen,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        color: green,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        stepController.text,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'community.edit_step'.tr,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 34,
+                      height: 34,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showAddOrEditStepSheet(index: index),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    color: context.appMutedText,
+                  ),
+                  IconButton(
+                    tooltip: 'community.remove_step'.trParams({
+                      'number': '${index + 1}',
+                    }),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 34,
+                      height: 34,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      stepController.dispose();
+                      setState(() => _steps.removeAt(index));
+                    },
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    color: context.appMutedText,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 2),
+      ],
+      _addAnotherStepButton(),
+    ],
+  );
+
+  Widget _addAnotherStepButton() => SizedBox(
+    width: double.infinity,
+    height: 48,
+    child: OutlinedButton.icon(
+      key: const ValueKey('community-add-another-step'),
+      onPressed: () => _showAddOrEditStepSheet(),
+      icon: const Icon(Icons.add_rounded, size: 20, color: green),
+      label: Text(
+        'community.add_another_step'.tr,
+        style: const TextStyle(
+          color: green,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: green, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+  );
+
+  Widget _tagsSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionHeader(
+        title: 'community.tags_optional'.tr,
+        subtitle: 'community.tags_subtitle'.tr,
+        icon: Icons.sell_outlined,
+      ),
+      Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _tagInputController,
+              decoration: _decoration(hint: 'community.add_tag_hint'.tr),
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (v) => _addTagFromInput(v),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: FilledButton(
+              key: const ValueKey('community-submit-tag-button'),
+              onPressed: () => _addTagFromInput(_tagInputController.text),
+              style: FilledButton.styleFrom(
+                backgroundColor: green,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              child: const Icon(Icons.add_rounded, size: 24),
+            ),
+          ),
+        ],
+      ),
+      if (_selectedTags.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              _tags.where((tag) => _selectedTags.contains(tag.id)).map((tag) {
+                return FilterChip(
+                  label: Text(tag.name),
+                  selected: true,
+                  showCheckmark: false,
+                  deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                  onDeleted: () => setState(() => _selectedTags.remove(tag.id)),
+                  backgroundColor: context.appElevatedSurface,
+                  selectedColor: context.appSelectedSurface,
+                  labelStyle: TextStyle(
+                    color: context.appColorScheme.primary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  side: BorderSide(
+                    color: context.appColorScheme.primary.withValues(alpha: .5),
+                  ),
+                  shape: const StadiumBorder(),
+                  onSelected:
+                      _submitting
+                          ? null
+                          : (_) => setState(() => _selectedTags.remove(tag.id)),
+                );
+              }).toList(),
+        ),
+      ],
+      if (_tagsLoading) ...[
+        const SizedBox(height: 10),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox.square(
+            dimension: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ] else if (_tagsError != null) ...[
+        const SizedBox(height: 10),
+        _inlineError('community.tags_load_error'.tr, _loadTags),
+      ] else ...[
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ..._tags
+                .where((tag) => !_selectedTags.contains(tag.id))
+                .take(8)
+                .map(
+                  (tag) => ActionChip(
+                    label: Text(
+                      '+ ${tag.name}',
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    backgroundColor: context.appElevatedSurface,
+                    side: BorderSide(color: context.appBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    onPressed: () {
+                      setState(() => _selectedTags.add(tag.id));
+                    },
+                  ),
+                ),
+            ActionChip(
+              key: const ValueKey('community-add-tag'),
+              avatar: const Icon(Icons.sell_outlined, size: 16, color: green),
+              label: Text('community.search_tags'.tr),
+              backgroundColor: context.appElevatedSurface,
+              side: BorderSide(color: context.appBorder),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              onPressed: _submitting ? null : _showTagPicker,
+            ),
+          ],
+        ),
+      ],
+    ],
+  );
+
+  Widget _audienceSection() => Column(
+    key: const ValueKey<String>('community-post-audience'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionHeader(
+        title: 'community.who_can_see_it'.tr,
+        subtitle: 'community.who_can_see_it_subtitle'.tr,
+        icon: Icons.visibility_outlined,
+      ),
+      Row(
+        children: [
+          Expanded(
+            child: _audienceCard(
+              visibility: CommunityPostVisibility.public,
+              title: 'Public',
+              subtitle: 'community.public_audience_desc'.tr,
+              icon: Icons.public_rounded,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _audienceCard(
+              visibility: CommunityPostVisibility.followers,
+              title: 'Followers',
+              subtitle: 'community.followers_audience_desc'.tr,
+              icon: Icons.person_outline_rounded,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _audienceCard({
+    required CommunityPostVisibility visibility,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final selected = _visibility == visibility;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _visibility = visibility),
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 110,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? (context.appIsDark
+                        ? const Color(0xFF143020)
+                        : const Color(0xFFF0FDF4))
+                    : context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? green : context.appBorder,
+              width: selected ? 1.6 : 1.0,
+            ),
+            boxShadow: selected ? null : context.appTileShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: selected ? green : context.appSoftGreen,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 17,
+                      color: selected ? Colors.white : green,
+                    ),
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_off_rounded,
+                    color: selected ? green : context.appBorder,
+                    size: 20,
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 10.5,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -2080,140 +3562,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     return Icons.restaurant_rounded;
   }
 
-
-  Widget _tagsField() {
-    if (_tagsLoading) {
-      return const Align(
-        alignment: Alignment.centerLeft,
-        child: SizedBox.square(
-          dimension: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-    if (_tagsError != null) {
-      return _inlineError('Tags could not be loaded.', _loadTags);
-    }
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        ..._tags.where((tag) => _selectedTags.contains(tag.id)).map((tag) {
-          return FilterChip(
-            label: Text(tag.name),
-            selected: true,
-            showCheckmark: false,
-            backgroundColor: context.appElevatedSurface,
-            selectedColor: context.appSelectedSurface,
-            labelStyle: TextStyle(
-              color: context.appColorScheme.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-            side: BorderSide(
-              color: context.appColorScheme.primary.withValues(alpha: .5),
-            ),
-            shape: const StadiumBorder(),
-            onSelected:
-                _submitting
-                    ? null
-                    : (_) => setState(() => _selectedTags.remove(tag.id)),
-          );
-        }),
-        ActionChip(
-          key: const ValueKey('community-add-tag'),
-          avatar: const Icon(Icons.add_rounded, size: 17, color: green),
-          label: Text('community.add_tag'.tr),
-          backgroundColor: context.appElevatedSurface,
-          side: BorderSide(
-            color: context.appColorScheme.primary.withValues(alpha: .5),
-          ),
-          shape: const StadiumBorder(),
-          labelStyle: TextStyle(
-            color: context.appColorScheme.primary,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-          onPressed: _submitting ? null : _showTagPicker,
-        ),
-      ],
-    );
-  }
-
-  Widget _audienceField() => Container(
-    key: const ValueKey<String>('community-post-audience'),
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: context.appBorder),
-      boxShadow: context.appTileShadow,
-    ),
-    child: Column(
-      children: [
-        _audienceOption(CommunityPostVisibility.public),
-        Divider(height: 1, color: context.appBorder),
-        _audienceOption(CommunityPostVisibility.followers),
-      ],
-    ),
-  );
-
-  Widget _audienceOption(CommunityPostVisibility value) {
-    final selected = _visibility == value;
-    return Material(
-      color: selected ? context.appSelectedSurface : Colors.transparent,
-      child: InkWell(
-        onTap: _submitting ? null : () => setState(() => _visibility = value),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: selected ? green : context.appSoftGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  value.icon,
-                  size: 19,
-                  color: selected ? Colors.white : green,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value.label,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    Text(
-                      value.description,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_off_rounded,
-                color: selected ? green : context.appBorder,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _field(
     TextEditingController controller,
     String label, {
@@ -2322,156 +3670,14 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       ],
     ),
   );
-  Widget _heading(String title, String subtitle, IconData icon) => Padding(
-    padding: const EdgeInsets.only(top: 18, bottom: 9),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: context.appSoftGreen,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 18, color: green),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: context.appMutedText, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _ingredientComposer() {
-    final amount = num.tryParse(_newIngredient.amount.text.trim());
-    final isReady =
-        _newIngredient.name.text.trim().isNotEmpty &&
-        amount != null &&
-        amount > 0;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
-        boxShadow: context.appTileShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextFormField(
-            controller: _newIngredient.name,
-            onChanged: _searchIngredients,
-            decoration: _decoration(
-              hint: 'Search ingredient',
-            ).copyWith(prefixIcon: const Icon(Icons.search_rounded, size: 20)),
-            textInputAction: TextInputAction.next,
-          ),
-          if (_ingredientSuggestions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _ingredientSuggestionPanel(),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _newIngredient.amount,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: _decoration(hint: 'Amount'),
-                  textInputAction: TextInputAction.done,
-                  onChanged: (_) => setState(() {}),
-                  onFieldSubmitted: (_) {
-                    if (isReady) _addIngredient();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 92,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _submitting ? null : _showIngredientUnitPicker,
-                    borderRadius: BorderRadius.circular(14),
-                    child: InputDecorator(
-                      decoration: _decoration(),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _newIngredient.unit,
-                              style: TextStyle(
-                                color: context.appText,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: context.appMutedText,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filled(
-                key: const ValueKey('community-add-ingredient'),
-                tooltip: 'community.add_ingredient'.tr,
-                onPressed: _submitting ? null : _addIngredient,
-                icon: const Icon(Icons.add_rounded, size: 23),
-                style: IconButton.styleFrom(
-                  backgroundColor: green,
-                  disabledBackgroundColor: context.appMutedSurface,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: context.appMutedText,
-                  fixedSize: const Size.square(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showIngredientUnitPicker() async {
+  Future<String?> _showIngredientUnitPicker([String? initialUnit]) async {
     FocusScope.of(context).unfocus();
+    final currentUnit = (initialUnit ?? _newIngredient.unit).trim();
     final availableUnits =
         <String>{
           ..._ingredientUnits,
           if (_newIngredient.unit.trim().isNotEmpty) _newIngredient.unit.trim(),
+          if (currentUnit.isNotEmpty) currentUnit,
         }.toList();
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -2523,7 +3729,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     itemCount: availableUnits.length,
                     itemBuilder: (context, index) {
                       final unit = availableUnits[index];
-                      final isSelected = unit == _newIngredient.unit;
+                      final isSelected = unit == currentUnit;
                       return Material(
                         color:
                             isSelected
@@ -2577,9 +3783,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
           ),
     );
-    if (selected != null && mounted) {
+    if (initialUnit == null && selected != null && mounted) {
       setState(() => _newIngredient.unit = selected);
     }
+    return selected;
   }
 
   Widget _ingredientSuggestionPanel() => Container(
@@ -2613,390 +3820,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           onTap: () => _selectIngredient(ingredient),
         );
       },
-    ),
-  );
-
-  Widget _ingredientList() {
-    if (_ingredients.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          children: [
-            Icon(
-              Icons.checklist_rounded,
-              color: context.appMutedText,
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'community.empty_ingredients'.tr,
-                style: TextStyle(color: context.appMutedText, fontSize: 11),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 8),
-          child: Row(
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'community.ingredients_list'.tr,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: context.appSoftGreen,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${_ingredients.length}',
-                        style: TextStyle(
-                          color: context.appColorScheme.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () {
-                  for (final item in _ingredients) {
-                    item.dispose();
-                  }
-                  setState(_ingredients.clear);
-                },
-                icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                label: Text('community.clear_all'.tr),
-                style: TextButton.styleFrom(
-                  foregroundColor: green,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: context.appElevatedSurface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.appBorder),
-          ),
-          child: Column(
-            children: List.generate(_ingredients.length, (index) {
-              final item = _ingredients[index];
-              return Column(
-                children: [
-                  _ingredientListRow(index, item),
-                  if (index < _ingredients.length - 1)
-                    Divider(height: 1, color: context.appBorder),
-                ],
-              );
-            }),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _ingredientListRow(int index, _IngredientInput item) => Container(
-    height: 44,
-    margin: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-    padding: const EdgeInsets.only(left: 8),
-    decoration: BoxDecoration(
-      color: context.appSoftGreen,
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Row(
-      children: [
-        CircleAvatar(
-          radius: 10,
-          backgroundColor: green,
-          child: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            item.name.text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ),
-        SizedBox(
-          width: 38,
-          child: Text(
-            item.amount.text,
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
-        SizedBox(
-          width: 42,
-          child: Text(
-            item.unit,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: context.appMutedText),
-          ),
-        ),
-        IconButton(
-          tooltip: 'community.remove_item'.trParams({'name': item.name.text}),
-          visualDensity: VisualDensity.compact,
-          onPressed: () {
-            item.dispose();
-            setState(() => _ingredients.removeAt(index));
-          },
-          icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          color: context.appMutedText,
-        ),
-        const SizedBox(width: 2),
-      ],
-    ),
-  );
-
-  Widget _stepComposer() {
-    final isReady = _newStep.text.trim().isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: context.appTileShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: context.appSoftGreen,
-                child: Text(
-                  '${_steps.length + 1}',
-                  style: const TextStyle(
-                    color: green,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 9),
-              Text(
-                'community.step_number'.trParams({
-                  'number': '${_steps.length + 1}',
-                }),
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            key: const ValueKey('community-new-cooking-step'),
-            controller: _newStep,
-            minLines: 2,
-            maxLines: 4,
-            onChanged: (_) => setState(() {}),
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) {
-              if (isReady) _addStep();
-            },
-            decoration: _decoration(hint: 'Describe this cooking step'),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              key: const ValueKey('community-add-cooking-step'),
-              onPressed: _submitting ? null : _addStep,
-              icon: const Icon(Icons.add_rounded, size: 19),
-              label: Text('community.add_step'.tr),
-              style: FilledButton.styleFrom(
-                backgroundColor: green,
-                disabledBackgroundColor: context.appMutedSurface,
-                disabledForegroundColor: context.appMutedText,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size.fromHeight(44),
-                shape: const StadiumBorder(),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _stepList() {
-    if (_steps.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          children: [
-            Icon(
-              Icons.checklist_rounded,
-              color: context.appMutedText,
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'community.empty_steps'.tr,
-                style: TextStyle(color: context.appMutedText, fontSize: 11),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 8),
-          child: Row(
-            children: [
-              Text(
-                'meals.cooking_steps'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: context.appSoftGreen,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_steps.length}',
-                  style: TextStyle(
-                    color: context.appColorScheme.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: context.appElevatedSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: context.appBorder),
-          ),
-          child: Column(
-            children: List.generate(_steps.length, (index) {
-              return Column(
-                children: [
-                  _stepListRow(index),
-                  if (index < _steps.length - 1)
-                    Divider(height: 1, color: context.appBorder),
-                ],
-              );
-            }),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _stepListRow(int index) => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 7, 4, 7),
-    child: Row(
-      children: [
-        CircleAvatar(
-          radius: 13,
-          backgroundColor: context.appSoftGreen,
-          child: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              color: green,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            _steps[index].text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ),
-        IconButton(
-          key: ValueKey('community-step-up-$index'),
-          tooltip: 'community.move_step_up'.trParams({
-            'number': '${index + 1}',
-          }),
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
-          padding: EdgeInsets.zero,
-          onPressed: index == 0 ? null : () => _moveStep(index, -1),
-          icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
-          color: green,
-          disabledColor: context.appMutedText.withValues(alpha: .4),
-        ),
-        IconButton(
-          key: ValueKey('community-step-down-$index'),
-          tooltip: 'community.move_step_down'.trParams({
-            'number': '${index + 1}',
-          }),
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
-          padding: EdgeInsets.zero,
-          onPressed:
-              index == _steps.length - 1 ? null : () => _moveStep(index, 1),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
-          color: green,
-          disabledColor: context.appMutedText.withValues(alpha: .4),
-        ),
-        IconButton(
-          tooltip: 'community.remove_step'.trParams({'number': '${index + 1}'}),
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 38, height: 34),
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            _steps[index].dispose();
-            setState(() => _steps.removeAt(index));
-          },
-          icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          color: context.appMutedText,
-        ),
-      ],
     ),
   );
 }
