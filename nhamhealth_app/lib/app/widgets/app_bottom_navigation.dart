@@ -1,15 +1,19 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../modules/bindings/assistant/assistant_binding.dart';
 import '../modules/views/assistant/assistant_view.dart';
 import '../theme/app_spacing.dart';
+import 'main_tab_scope.dart';
 import 'scroll_aware_scaffold.dart';
 
 /// Shared four-destination navigation used by the main app pages.
 ///
-/// Indexes are Home (0), Meals (1), Community (2), and Settings (4). The
+/// Indexes are Home (0), Meals (1), Planner (2), and Community (3). The
 /// AI assistant is a separate action positioned to the right of the bar.
 class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
@@ -43,9 +47,13 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
   }
 
   void _select(int index) {
-    if (_visualSelectedIndex != index) {
-      setState(() => _visualSelectedIndex = index);
+    if (_visualSelectedIndex == index) return;
+    final mainTabs = MainTabScope.maybeOf(context);
+    if (mainTabs != null) {
+      mainTabs.selectTab(index);
+      return;
     }
+    setState(() => _visualSelectedIndex = index);
     widget.onSelect(index);
   }
 
@@ -87,77 +95,95 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                     opacity: showNavigationItems ? 1 : 0,
                     duration: animationDuration,
                     curve: Curves.easeOutCubic,
-                    child: PhysicalShape(
-                      clipper: const _NavigationBarClipper(),
-                      clipBehavior: Clip.antiAlias,
-                      color: colors.surface,
-                      shadowColor: Colors.black.withValues(alpha: 0.2),
-                      elevation: 4,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              colors.surface,
-                              colors.surfaceContainer,
-                              Color.alphaBlend(
-                                colors.primary.withValues(
-                                  alpha: isDark ? 0.12 : 0.06,
-                                ),
-                                colors.surface,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(36),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.30 : 0.14,
+                            ),
+                            blurRadius: 24,
+                            spreadRadius: -4,
+                            offset: const Offset(0, 9),
+                          ),
+                        ],
+                      ),
+                      child: ClipPath(
+                        clipper: const _NavigationBarClipper(),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  colors.surface.withValues(
+                                    alpha: isDark ? 0.64 : 0.56,
+                                  ),
+                                  Colors.white.withValues(
+                                    alpha: isDark ? 0.08 : 0.46,
+                                  ),
+                                  Color.alphaBlend(
+                                    colors.primary.withValues(
+                                      alpha: isDark ? 0.12 : 0.045,
+                                    ),
+                                    colors.surface.withValues(
+                                      alpha: isDark ? 0.60 : 0.50,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        child: CustomPaint(
-                          foregroundPainter: _NavigationInnerShadowPainter(
-                            isDark: isDark,
-                          ),
-                          child: Padding(
-                            // padding: const EdgeInsets.symmetric(horizontal: 8),
-                            padding: EdgeInsets.zero,
-                            child: Row(
-                              children: [
-                                _NavSlot(
-                                  child: _NavItem(
-                                    id: 'home',
-                                    icon: Icons.home_rounded,
-                                    label: 'common.navigation_home'.tr,
-                                    selected: _visualSelectedIndex == 0,
-                                    onTap: () => _select(0),
-                                  ),
+                            ),
+                            child: CustomPaint(
+                              foregroundPainter:
+                                  _NavigationInnerShadowPainter(isDark: isDark),
+                              child: Padding(
+                                padding: EdgeInsets.zero,
+                                child: Row(
+                                  children: [
+                                    _NavSlot(
+                                      child: _NavItem(
+                                        id: 'home',
+                                        icon: Icons.home_outlined,
+                                        selectedIcon: Icons.home_rounded,
+                                        label: 'common.navigation_home'.tr,
+                                        selected: _visualSelectedIndex == 0,
+                                        onTap: () => _select(0),
+                                      ),
+                                    ),
+                                    _NavSlot(
+                                      child: _NavItem(
+                                        id: 'meals',
+                                        icon: Icons.restaurant_menu_rounded,
+                                        label: 'common.navigation_meals'.tr,
+                                        selected: _visualSelectedIndex == 1,
+                                        onTap: () => _select(1),
+                                      ),
+                                    ),
+                                    _NavSlot(
+                                      child: _NavItem(
+                                        id: 'planner',
+                                        icon: Icons.calendar_month_rounded,
+                                        label: 'common.navigation_planner'.tr,
+                                        selected: _visualSelectedIndex == 2,
+                                        onTap: () => _select(2),
+                                      ),
+                                    ),
+                                    _NavSlot(
+                                      child: _NavItem(
+                                        id: 'community',
+                                        icon: Icons.groups_outlined,
+                                        selectedIcon: Icons.groups_rounded,
+                                        label: 'common.navigation_community'.tr,
+                                        selected: _visualSelectedIndex == 3,
+                                        onTap: () => _select(3),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                _NavSlot(
-                                  child: _NavItem(
-                                    id: 'meals',
-                                    icon: Icons.restaurant_menu_rounded,
-                                    label: 'common.navigation_meals'.tr,
-                                    selected: _visualSelectedIndex == 1,
-                                    onTap: () => _select(1),
-                                  ),
-                                ),
-                                _NavSlot(
-                                  child: _NavItem(
-                                    id: 'community',
-                                    icon: Icons.people_outline_rounded,
-                                    selectedIcon: Icons.people_rounded,
-                                    label: 'common.navigation_community'.tr,
-                                    selected: _visualSelectedIndex == 2,
-                                    onTap: () => _select(2),
-                                  ),
-                                ),
-                                _NavSlot(
-                                  child: _NavItem(
-                                    id: 'settings',
-                                    icon: Icons.settings_outlined,
-                                    selectedIcon: Icons.settings_rounded,
-                                    label: 'settings.title'.tr,
-                                    selected: _visualSelectedIndex == 4,
-                                    onTap: () => _select(4),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -314,12 +340,16 @@ class _NavItemState extends State<_NavItem> {
           color: Colors.transparent,
           child: InkWell(
             key: ValueKey<String>('nav-${widget.id}'),
-            onTapDown: (_) => _setPressed(true),
-            onTapCancel: () => _setPressed(false),
-            onTap: () {
-              _setPressed(false);
-              widget.onTap();
-            },
+            onTapDown: widget.selected ? null : (_) => _setPressed(true),
+            onTapCancel: widget.selected ? null : () => _setPressed(false),
+            onTap:
+                widget.selected
+                    ? null
+                    : () {
+                      _setPressed(false);
+                      HapticFeedback.selectionClick();
+                      widget.onTap();
+                    },
             customBorder: const StadiumBorder(),
             child: AnimatedScale(
               scale: _isPressed ? .92 : 1,
@@ -332,15 +362,15 @@ class _NavItemState extends State<_NavItem> {
                   duration: selectionDuration,
                   curve: Curves.easeOutCubic,
                   margin: EdgeInsets.fromLTRB(
-                    widget.selected ? 0 : 8,
-                    6,
-                    widget.selected ? 0 : 8,
-                    6,
+                    widget.selected ? 4 : 8,
+                    7,
+                    widget.selected ? 4 : 8,
+                    7,
                   ),
                   decoration: BoxDecoration(
                     color:
                         widget.selected
-                            ? colors.primaryContainer.withValues(alpha: 0.42)
+                            ? colors.primaryContainer.withValues(alpha: 0.34)
                             : Colors.transparent,
                     borderRadius: BorderRadius.circular(31),
                   ),
@@ -349,7 +379,7 @@ class _NavItemState extends State<_NavItem> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox.square(
-                        dimension: 30,
+                        dimension: 28,
                         child: Center(
                           child: AnimatedSwitcher(
                             duration: selectionDuration,
@@ -375,7 +405,7 @@ class _NavItemState extends State<_NavItem> {
                                   widget.selected
                                       ? colors.primary
                                       : colors.onSurfaceVariant,
-                              size: widget.selected ? 30 : 27,
+                              size: widget.selected ? 28 : 25,
                             ),
                           ),
                         ),
@@ -389,7 +419,7 @@ class _NavItemState extends State<_NavItem> {
                               widget.selected
                                   ? colors.primary
                                   : colors.onSurfaceVariant,
-                          fontSize: widget.selected ? 12 : 11,
+                          fontSize: widget.selected ? 11.5 : 10.5,
                           height: 1,
                           fontWeight:
                               widget.selected
@@ -471,8 +501,53 @@ class _ChatbotButtonState extends State<_ChatbotButton> {
                   clipBehavior: Clip.none,
                   children: [
                     Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? 0.28
+                                        : 0.14,
+                              ),
+                              blurRadius: 22,
+                              spreadRadius: -4,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: BackdropFilter(
+                            filter: ui.ImageFilter.blur(
+                              sigmaX: 24,
+                              sigmaY: 24,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: colors.surface.withValues(alpha: 0.54),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(
+                                    alpha:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? 0.18
+                                            : 0.72,
+                                  ),
+                                  width: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(6),
                         child: Transform.scale(
                           scale: 1.25,
                           child: RepaintBoundary(

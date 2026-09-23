@@ -22,7 +22,7 @@ class AiRecommendationCard extends GetView<HomeController> {
               constraints.maxWidth - 24,
             );
         return Container(
-          height: 188,
+          height: 164,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color:
@@ -42,7 +42,7 @@ class AiRecommendationCard extends GetView<HomeController> {
                       stops: [0, 0.56, 1],
                     )
                     : null,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(18),
             border:
                 context.appIsDark
                     ? Border.all(
@@ -67,14 +67,14 @@ class AiRecommendationCard extends GetView<HomeController> {
                     : context.appHomeCardShadow,
           ),
           child: InnerShadow(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(18),
             shadows: context.appIsDark ? context.appInnerShadow : const [],
             child: Stack(
               children: [
                 if (context.appIsDark) const _DarkRecommendationBackdrop(),
                 Positioned(
                   right: -4,
-                  top: (188 - animationSize) / 2,
+                  top: (164 - animationSize) / 2,
                   child: SizedBox(
                     width: animationSize,
                     height: animationSize,
@@ -90,8 +90,8 @@ class AiRecommendationCard extends GetView<HomeController> {
                 ),
                 Positioned(
                   left: 16,
-                  top: 18,
-                  bottom: 19,
+                  top: 13,
+                  bottom: 13,
                   width: contentWidth,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

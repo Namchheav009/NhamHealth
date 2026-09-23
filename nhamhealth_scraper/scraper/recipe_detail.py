@@ -19,8 +19,20 @@ CATEGORY_MAP = {
     "Grills & Street Food": "Lunch",
     "Salads & Pickles": "Lunch",
     "Sweets & Drinks": "Snacks",
+    "Beverages & Drinks": "Beverages",
+    "Drinks": "Beverages",
     "Foundations": "Other",
 }
+
+BEVERAGE_KEYWORDS = {
+    "smoothie", "shake", "juice", "tea", "drink", "beverage", "bubble tea",
+    "coffee", "cooler", "tonic", "detox", "water", "latte", "frappe",
+    "ក្រឡុក", "តែ", "ទឹកផ្លែឈើ", "ភេសជ្ជៈ", "ទឹកក្រឡុក"
+}
+
+def is_beverage_item(name: str = "", category: str = "", description: str = "") -> bool:
+    combined = f"{name or ''} {category or ''} {description or ''}".lower()
+    return any(kw in combined for kw in BEVERAGE_KEYWORDS)
 
 DIFFICULTY_MAP = {
     "beginner": "EASY",
@@ -239,6 +251,9 @@ def _extract_cambodian_cookbook_html(soup: BeautifulSoup, url: str):
             source_category = source
             category_name = mapped
             break
+
+    if is_beverage_item(meal_name, source_category or "", description or ""):
+        category_name = "Beverages"
 
     source_image_url = None
     for attrs in (

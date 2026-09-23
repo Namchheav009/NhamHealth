@@ -72,7 +72,9 @@ class CommunityPage extends GetView<CommunityController> {
                         AppSpacing.pageHorizontalFor(context),
                         6,
                         AppSpacing.pageHorizontalFor(context),
-                        AppSpacing.pagePaddingWithNavigationFor(context).bottom +
+                        AppSpacing.pagePaddingWithNavigationFor(
+                              context,
+                            ).bottom +
                             28,
                       ),
                       child: const PageSkeleton.community(),
@@ -690,7 +692,8 @@ class CommunityPage extends GetView<CommunityController> {
               ),
             );
 
-    final isFollowerView = view == FriendsView.followers && status.followsViewer;
+    final isFollowerView =
+        view == FriendsView.followers && status.followsViewer;
 
     return SizedBox(
       height: 40,
@@ -1021,7 +1024,8 @@ class CommunityPage extends GetView<CommunityController> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => controller.selectSection(CommunitySection.people),
+              onPressed:
+                  () => controller.selectSection(CommunitySection.people),
               icon: const Icon(Icons.explore_rounded, size: 16),
               label: Text('community.search_people'.tr),
               style: OutlinedButton.styleFrom(
@@ -1042,9 +1046,7 @@ class CommunityPage extends GetView<CommunityController> {
   Widget _feedIntro(BuildContext context) {
     final isTablet = AppSpacing.isTabletFor(context);
     final maxWidth =
-        isTablet
-            ? AppSpacing.maxWidePaddedContentWidth
-            : double.infinity;
+        isTablet ? AppSpacing.maxWidePaddedContentWidth : double.infinity;
 
     return Center(
       child: ConstrainedBox(
@@ -1370,9 +1372,7 @@ class CommunityPage extends GetView<CommunityController> {
       if (confirmed != true) return;
       await controller.togglePostAuthorFollow(post);
       AppAlert.toast(
-        message: 'community.unfollowed_success'.trParams({
-          'name': post.author,
-        }),
+        message: 'community.unfollowed_success'.trParams({'name': post.author}),
       );
       return;
     }
@@ -1745,12 +1745,12 @@ class CommunityPage extends GetView<CommunityController> {
           maxWidth: AppSpacing.maxNavigationWidth,
         ),
         child: AppBottomNavigation(
-          selectedIndex: 2,
+          selectedIndex: 3,
           onSelect: (index) {
             if (index == 0) Get.offNamed<void>(AppRoutes.home);
             if (index == 1) Get.offNamed<void>(AppRoutes.meals);
-            if (index == 2) controller.selectSection(controller.section.value);
-            if (index == 4) Get.offNamed<void>(AppRoutes.settings);
+            if (index == 2) Get.offNamed<void>(AppRoutes.mealPlanner);
+            if (index == 3) controller.selectSection(controller.section.value);
           },
         ),
       ),

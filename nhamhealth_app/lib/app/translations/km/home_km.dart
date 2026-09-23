@@ -37,6 +37,9 @@ const Map<String, String> homeKm = {
   'home.quick_actions_subtitle': 'តាមដានសុខភាពរបស់អ្នកកាន់តែលឿន',
   'home.action_scan_food': 'ស្កេនអាហារ',
   'home.action_scan_food_subtitle': 'វិភាគអាហាររបស់អ្នកជាមួយ AI',
+  'home.scan_quick': 'រហ័ស',
+  'home.scan_accurate': 'ត្រឹមត្រូវ',
+  'home.scan_nutritious': 'សម្បូរជីវជាតិ',
   'home.action_ai_meal': 'អាហារដោយ AI',
   'home.action_log_water': 'ថែមទឹក',
   'home.action_log_water_subtitle': 'កត់ត្រាបរិមាណទឹក',
@@ -44,6 +47,8 @@ const Map<String, String> homeKm = {
   'home.action_meal_plan_subtitle': 'រៀបចំគម្រោងប្រចាំសប្តាហ៍',
   'home.scan_or_log_meal': 'ស្កេន ឬកត់ត្រាអាហារ AI',
   'home.how_are_you_feeling_today': 'ថ្ងៃនេះអ្នកមានអារម្មណ៍យ៉ាងដូចម្តេច?',
+  'home.slide_to_choose_your_mood': 'អូសដើម្បីជ្រើសរើសអារម្មណ៍របស់អ្នក',
+  'home.wellness_quote': 'ចិត្តស្ងប់ស្ងាត់ បង្កើតថ្ងៃស្អែកដ៏ភ្លឺស្វាង។',
   'home.no_moods_are_available_right_now': 'មិនមានជម្រើសអារម្មណ៍នៅពេលនេះទេ។',
   'home.mood_mood': 'អារម្មណ៍ @mood',
   'home.search_for_meals_tips_or_healthy_groceries':

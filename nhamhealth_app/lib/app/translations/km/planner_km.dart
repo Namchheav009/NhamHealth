@@ -302,6 +302,14 @@ const Map<String, String> plannerKm = {
   'planner.auto_fill_confirm':
       'តើអ្នកចង់បំពេញអាហារដែលនៅទំនេរដោយស្វ័យប្រវត្តិតាមការណែនាំដែរឬទេ?',
   'planner.auto_fill_success': 'បានបំពេញអាហារចំនួន @count ពេលដោយជោគជ័យ!',
+  'planner.autofill_success_title': 'ផែនការអាហាររបស់អ្នករួចរាល់ហើយ',
+  'planner.autofill_loading_title': 'កំពុងបង្កើតផែនការអាហារ',
+  'planner.autofill_loading_preparing': 'កំពុងពិនិត្យគោលដៅ និងចំណូលចិត្តអាហារ…',
+  'planner.autofill_loading_generating':
+      'កំពុងស្វែងរកមុខម្ហូបចម្រុះសម្រាប់ផែនការ…',
+  'planner.autofill_loading_refreshing':
+      'កំពុងធ្វើបច្ចុប្បន្នភាពអាហារដែលបានរក្សាទុក…',
+  'planner.local_plan_ready': 'ផែនការអាហាររួចរាល់',
   'planner.auto_fill_no_empty': 'ពេលអាហារទាំងអស់ត្រូវបានរៀបចំរួចរាល់ហើយ!',
   'planner.auto_fill_no_recommendations': 'មិនមានអាហារណែនាំសម្រាប់បំពេញទេ!',
   'planner.desc_oatmeal': 'អាហារពេលព្រឹកមានស្រូវអូត ចេកស្រស់ និងទឹកដោះគោ។',
@@ -356,6 +364,16 @@ const Map<String, String> plannerKm = {
   'planner.grocery_selected_day': 'ថ្ងៃដែលបានជ្រើស',
   'planner.grocery_full_week': 'ពេញមួយសប្តាហ៍',
   'planner.grocery_checked_progress': 'បានគូស @checked ក្នុងចំណោម @total មុខ',
+  'planner.grocery_total_amount': 'បរិមាណសរុប',
+  'planner.grocery_as_needed': 'តាមតម្រូវការ',
+  'planner.grocery_used_in': 'ប្រើក្នុង',
+  'planner.grocery_meal_count': 'ម្ហូប @count មុខ',
+  'planner.grocery_servings': '@count ចំណែក',
+  'planner.grocery_meals_using': 'ម្ហូបដែលប្រើគ្រឿងផ្សំនេះ',
+  'planner.grocery_no_meal_source': 'មិនមានព័ត៌មានម្ហូបដែលភ្ជាប់ទេ។',
+  'planner.grocery_mark_bought': 'សម្គាល់ថាបានទិញ',
+  'planner.grocery_mark_needed': 'សម្គាល់ថាត្រូវទិញ',
+  'planner.grocery_analyze_nutrition': 'ព័ត៌មានជីវជាតិពី AI និង Database',
   'planner.grocery_list_help':
       'គ្រឿងផ្សំត្រូវបានប្រមូលពីអាហារទាំងអស់ក្នុងផែនការប្រចាំសប្ដាហ៍។',
   'planner.empty_grocery_list':
@@ -404,7 +422,13 @@ const Map<String, String> plannerKm = {
       'រក្សាទុកមុខម្ហូបដែលមានស្រាប់ ហើយបំពេញបន្ថែមចន្លោះដែលនៅសល់។',
   'planner.autofill_mode_rebalance': 'រៀបចំឡើងវិញពេញមួយសប្ដាហ៍',
   'planner.autofill_mode_rebalance_desc':
-      'បង្កើតមុខម្ហូបគ្រប់ពេលឡើងវិញ ដើម្បីបង្កើនឱនភាពកាឡូរី និងភាពសម្បូរបែប។',
+      'ជំនួសមុខម្ហូបដែលមានស្រាប់ ដោយផែនការថ្មីដែលមានភាពសម្បូរបែប។',
+  'planner.autofill_replace_title': 'ជំនួសមុខម្ហូបដែលបានរៀបចំ?',
+  'planner.autofill_replace_message':
+      'សកម្មភាពនេះនឹងជំនួសមុខម្ហូបក្នុងផែនការបច្ចុប្បន្ន។ អ្នកអាចពិនិត្យផែនការថ្មីបន្ទាប់ពីបង្កើតរួច។',
+  'planner.autofill_replace_confirm': 'ជំនួសមុខម្ហូប',
+  'planner.autofill_exclusions_count': 'ចៀសវាង @count មុខ',
+  'planner.autofill_health_flags_count': 'លក្ខខណ្ឌសុខភាព @count',
   'planner.autofill_target_preview':
       'ឱនភាពគោលដៅ៖ ~៥០០ kcal/ថ្ងៃ (~០.៥ គ.ក្រ/សប្ដាហ៍)',
   'planner.autofill_target_maintain':

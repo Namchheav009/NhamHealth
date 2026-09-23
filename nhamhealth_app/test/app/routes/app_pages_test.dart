@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nhamhealth_flutter/app/modules/views/home/home_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/main_tabs_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
@@ -17,12 +17,12 @@ void main() {
     expect(page.page(), isA<ChooseLanguageView>());
   });
 
-  test('authenticated home route builds HomeView', () {
+  test('authenticated home route builds the persistent main tabs', () {
     final homePage = AppPages.pages.singleWhere(
       (page) => page.name == AppRoutes.home,
     );
 
-    expect(homePage.page(), isA<HomeView>());
+    expect(homePage.page(), isA<MainTabsView>());
   });
 
   test('assistant route builds AssistantView', () {

@@ -4,22 +4,48 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhamhealth.nhamhealth_api.dto.request.*;
-import com.nhamhealth.nhamhealth_api.entity.*;
-import com.nhamhealth.nhamhealth_api.repository.catalog.*;
-import com.nhamhealth.nhamhealth_api.repository.meal.*;
-import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
-import jakarta.persistence.EntityManager;
-import jakarta.validation.Validator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhamhealth.nhamhealth_api.dto.request.AdminMealIngredientRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AdminRecipeStepRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.ScrapedMealImportRequest;
+import com.nhamhealth.nhamhealth_api.entity.Ingredient;
+import com.nhamhealth.nhamhealth_api.entity.Meal;
+import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.MealCategoryTranslation;
+import com.nhamhealth.nhamhealth_api.entity.MealNutrition;
+import com.nhamhealth.nhamhealth_api.entity.Nutrient;
+import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
+import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
+import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.NutrientRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealNutritionRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
+import com.nhamhealth.nhamhealth_api.repository.translation.MealCategoryTranslationRepository;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+
+import jakarta.persistence.EntityManager;
+import jakarta.validation.Validator;
 
 @Service
 public class ScrapedMealImportService {
@@ -34,12 +60,26 @@ public class ScrapedMealImportService {
     private final MealAdminService admin;
     private final ProfileImageStorageService images;
     private final EntityManager em;
+    private final PlannerMealRepository plannerMeals;
+    private final WeeklyMealRecommendationRepository weeklyRecommendations;
 
     public ScrapedMealImportService(Validator validator, MealCategoryRepository categories,
             MealCategoryTranslationRepository categoryTranslations,
             IngredientRepository ingredients, NutrientRepository nutrients,
             MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
             ProfileImageStorageService images, EntityManager em) {
+        this(validator, categories, categoryTranslations, ingredients, nutrients, nutrition, meals, admin, images, em,
+                null, null);
+    }
+
+    @Autowired
+    public ScrapedMealImportService(Validator validator, MealCategoryRepository categories,
+            MealCategoryTranslationRepository categoryTranslations,
+            IngredientRepository ingredients, NutrientRepository nutrients,
+            MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
+            ProfileImageStorageService images, EntityManager em,
+            PlannerMealRepository plannerMeals,
+            WeeklyMealRecommendationRepository weeklyRecommendations) {
         this.validator = validator;
         this.categories = categories;
         this.categoryTranslations = categoryTranslations;
@@ -50,6 +90,8 @@ public class ScrapedMealImportService {
         this.admin = admin;
         this.images = images;
         this.em = em;
+        this.plannerMeals = plannerMeals;
+        this.weeklyRecommendations = weeklyRecommendations;
     }
 
     @Transactional
@@ -63,7 +105,8 @@ public class ScrapedMealImportService {
         } catch (JsonProcessingException exception) {
             throw new IllegalArgumentException("Recipe must be valid import JSON");
         }
-        if (request == null) throw new IllegalArgumentException("Recipe is required");
+        if (request == null)
+            throw new IllegalArgumentException("Recipe is required");
         var violations = validator.validate(request);
         if (!violations.isEmpty()) {
             throw new IllegalArgumentException(violations.stream()
@@ -80,12 +123,14 @@ public class ScrapedMealImportService {
         }
 
         // Serialize imports so concurrent retries cannot create duplicate meals.
-        // This lock is scoped to the PostgreSQL transaction, not the application process.
+        // This lock is scoped to the PostgreSQL transaction, not the application
+        // process.
         em.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(781420091)").getSingleResult();
         if (!em.createNativeQuery("SELECT meal_id FROM scraped_meal_sources WHERE source_url = :url")
                 .setParameter("url", sourceUrl).getResultList().isEmpty()
                 || !em.createQuery("select m.mealId from Meal m where lower(trim(m.mealName)) = :name")
-                .setParameter("name", request.mealName().trim().toLowerCase(Locale.ROOT)).getResultList().isEmpty()) {
+                .setParameter("name", request.mealName().trim().toLowerCase(Locale.ROOT)).getResultList()
+                        .isEmpty()) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.CONFLICT, "This source URL or meal name is already imported");
         }
@@ -130,11 +175,12 @@ public class ScrapedMealImportService {
                 .sorted(Comparator.comparing(ScrapedMealImportRequest.IngredientInput::displayOrder)).toList();
         for (int i = 0; i < orderedIngredients.size(); i++) {
             var item = orderedIngredients.get(i);
-            if (item.displayOrder() != i + 1) throw new IllegalArgumentException("Ingredient displayOrder must be consecutive from 1");
+            if (item.displayOrder() != i + 1)
+                throw new IllegalArgumentException("Ingredient displayOrder must be consecutive from 1");
             String ingredientName = item.ingredientName().trim();
             String normalizedName = ingredientName.toLowerCase(Locale.ROOT);
-            Ingredient ingredient = catalogByName.computeIfAbsent(normalizedName, ignored ->
-                    ingredients.findByIngredientNameIgnoreCase(ingredientName)
+            Ingredient ingredient = catalogByName.computeIfAbsent(normalizedName,
+                    ignored -> ingredients.findByIngredientNameIgnoreCase(ingredientName)
                             .orElseGet(() -> createScrapedIngredient(
                                     ingredientName, item.unit(), request.sourceName(), warnings)));
             AdminMealIngredientRequest incoming = new AdminMealIngredientRequest(
@@ -147,7 +193,8 @@ public class ScrapedMealImportService {
         var orderedSteps = request.steps().stream()
                 .sorted(Comparator.comparing(ScrapedMealImportRequest.StepInput::stepNumber)).toList();
         for (int i = 0; i < orderedSteps.size(); i++) {
-            if (orderedSteps.get(i).stepNumber() != i + 1) throw new IllegalArgumentException("Step numbers must be consecutive from 1");
+            if (orderedSteps.get(i).stepNumber() != i + 1)
+                throw new IllegalArgumentException("Step numbers must be consecutive from 1");
         }
 
         Map<Nutrient, BigDecimal> amounts = new LinkedHashMap<>();
@@ -160,10 +207,14 @@ public class ScrapedMealImportService {
             warnings.add("Nutrition retained in source payload only: per-serving basis cannot be determined");
         }
         String imageUrl = image == null ? null : images.storeMealImage(image);
-        if (imageUrl == null) warnings.add("Draft has no image; upload a meal photo in Admin before publishing");
-        var saved = admin.createScrapedDraft(new AdminMealRequest(request.mealName(), request.khmerName(), category.getCategoryId(),
-                calories, request.servings(), request.description(), request.descriptionKm(), request.difficulty(), request.cookingTimeMinutes(),
-                false, imageUrl, resolved, orderedSteps.stream().map(s -> new AdminRecipeStepRequest(s.instruction(), s.instructionKm())).toList()));
+        if (imageUrl == null)
+            warnings.add("Draft has no image; upload a meal photo in Admin before publishing");
+        var saved = admin.createScrapedDraft(
+                new AdminMealRequest(request.mealName(), request.khmerName(), category.getCategoryId(),
+                        calories, request.servings(), request.description(), request.descriptionKm(),
+                        request.difficulty(), request.cookingTimeMinutes(),
+                        false, imageUrl, resolved, orderedSteps.stream()
+                                .map(s -> new AdminRecipeStepRequest(s.instruction(), s.instructionKm())).toList()));
         Meal meal = meals.findById(saved.mealId()).orElseThrow();
         meal.setProteinGramsCached(perServing(request.proteinGrams(), request));
         meals.save(meal);
@@ -177,10 +228,94 @@ public class ScrapedMealImportService {
         em.createNativeQuery("INSERT INTO scraped_meal_sources (meal_id, source_url, source_payload, review_status) "
                 + "VALUES (:id, :url, :payload, 'PENDING_REVIEW')")
                 .setParameter("id", saved.mealId()).setParameter("url", sourceUrl).setParameter("payload", payload).executeUpdate();
-        Map<String, Object> response = new LinkedHashMap<>(Map.of("mealId", saved.mealId(), "mealName", saved.mealName(),
-                "published", false, "reviewStatus", "PENDING_REVIEW", "warnings", warnings));
+        // Queue a hidden planner entry. Admin publication activates it for users and
+        // AI Auto-Fill.
+        PlannerMeal plannerMeal = new PlannerMeal();
+        plannerMeal.setLegacyMealId(saved.mealId());
+        plannerMeal.setNameEn(request.mealName());
+        plannerMeal.setNameKm(request.khmerName() != null ? request.khmerName() : request.mealName());
+        plannerMeal.setCategory(category);
+        plannerMeal.setCategories(Set.of(category));
+        plannerMeal.setCategoryEn(category.getCategoryName());
+        var kmCatTrans = categoryTranslations.findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(), "km");
+        plannerMeal.setCategoryKm(kmCatTrans.map(MealCategoryTranslation::getName).orElse(category.getCategoryName()));
+        plannerMeal.setDescriptionEn(request.description());
+        plannerMeal.setDescriptionKm(request.descriptionKm());
+        plannerMeal.setImageUrl(imageUrl);
+        plannerMeal.setCalories(calories != null ? calories : BigDecimal.ZERO);
+        plannerMeal
+                .setProteinGrams(meal.getProteinGramsCached() != null ? meal.getProteinGramsCached() : BigDecimal.ZERO);
+        plannerMeal.setCarbsGrams(perServing(request.carbohydrateGrams(), request) != null
+                ? perServing(request.carbohydrateGrams(), request)
+                : BigDecimal.ZERO);
+        plannerMeal
+                .setFatGrams(perServing(request.fatGrams(), request) != null ? perServing(request.fatGrams(), request)
+                        : BigDecimal.ZERO);
+        plannerMeal.setCookingTimeMinutes(request.cookingTimeMinutes());
+
+        String ingredientsEnText = orderedIngredients.stream()
+                .map(i -> (i.quantity() != null ? i.quantity().stripTrailingZeros().toPlainString() + " " : "")
+                        + (i.unit() != null ? i.unit() + " " : "") + i.ingredientName())
+                .collect(Collectors.joining("\n"));
+        String ingredientsKmText = orderedIngredients.stream()
+                .map(i -> (i.quantity() != null ? i.quantity().stripTrailingZeros().toPlainString() + " " : "")
+                        + (i.unit() != null ? i.unit() + " " : "")
+                        + (i.ingredientNameKm() != null ? i.ingredientNameKm() : i.ingredientName()))
+                .collect(Collectors.joining("\n"));
+        plannerMeal.setIngredientsText(ingredientsEnText);
+        plannerMeal.setIngredientsTextKm(ingredientsKmText);
+
+        String instructionsEnText = orderedSteps.stream().map(ScrapedMealImportRequest.StepInput::instruction)
+                .collect(Collectors.joining("\n"));
+        String instructionsKmText = orderedSteps.stream()
+                .map(s -> s.instructionKm() != null ? s.instructionKm() : s.instruction())
+                .collect(Collectors.joining("\n"));
+        plannerMeal.setInstructionsText(instructionsEnText);
+        plannerMeal.setInstructionsTextKm(instructionsKmText);
+
+        plannerMeal.setTagsText(request.sourceName() != null ? request.sourceName() : "Scraped Recipe");
+        plannerMeal.setTagsTextKm(request.sourceName() != null ? request.sourceName() : "រូបមន្តទាញយកពីអ៊ីនធឺណិត");
+        plannerMeal.setActive(false);
+
+        Map<String, Object> response = new LinkedHashMap<>(
+                Map.of("mealId", saved.mealId(), "mealName", saved.mealName(),
+                        "published", false, "reviewStatus", "PENDING_REVIEW", "warnings", warnings));
         response.put("mainImageUrl", imageUrl);
+
+        if (plannerMeals != null) {
+            PlannerMeal savedPlannerMeal = plannerMeals.save(plannerMeal);
+            response.put("plannerMealId", savedPlannerMeal.getPlannerMealId());
+
+            if (weeklyRecommendations != null) {
+                // Ensure a weekly recommendation entry exists for ALL days
+                String targetSlot = determinePlannerSlot(category.getCategoryName(), request.mealName());
+                WeeklyMealRecommendation rec = new WeeklyMealRecommendation();
+                rec.setPlannerMeal(savedPlannerMeal);
+                rec.setMeal(meal);
+                rec.setDayOfWeek("ALL");
+                rec.setMealSlot(targetSlot);
+                rec.setNote("Scraped & AI-curated: " + request.mealName());
+                rec.setActive(false);
+                rec.setSortOrder(500);
+                weeklyRecommendations.save(rec);
+                response.put("plannerSlot", targetSlot);
+            }
+        }
         return response;
+    }
+
+    private String determinePlannerSlot(String categoryName, String mealName) {
+        String cat = categoryName == null ? "" : categoryName.toUpperCase(Locale.ROOT);
+        String name = mealName == null ? "" : mealName.toUpperCase(Locale.ROOT);
+        if (cat.contains("BREAKFAST"))
+            return "BREAKFAST";
+        if (cat.contains("DINNER") || cat.contains("SOUP"))
+            return "DINNER";
+        if (cat.contains("SNACK") || cat.contains("BEVERAGE") || cat.contains("DRINK") || cat.contains("DESSERT")
+                || name.contains("SMOOTHIE") || name.contains("TEA") || name.contains("JUICE")
+                || name.contains("SHAKE"))
+            return "SNACK";
+        return "LUNCH";
     }
 
     private Ingredient createScrapedIngredient(String name, String unit, String sourceName, List<String> warnings) {
@@ -216,23 +351,28 @@ public class ScrapedMealImportService {
         }
 
         warnings.add("Combined repeated ingredient lines: " + name);
-        String khmerName = existing.ingredientNameKm() != null ? existing.ingredientNameKm() : repeated.ingredientNameKm();
+        String khmerName = existing.ingredientNameKm() != null ? existing.ingredientNameKm()
+                : repeated.ingredientNameKm();
         String khmerNote = joinNotes(existing.preparationNoteKm(), repeated.preparationNoteKm());
         return new AdminMealIngredientRequest(existing.ingredientId(), quantity, unit, note, khmerName, khmerNote);
     }
 
     private String describeAmount(AdminMealIngredientRequest item) {
         List<String> parts = new ArrayList<>();
-        if (item.quantity() != null) parts.add(item.quantity().stripTrailingZeros().toPlainString());
-        if (clean(item.unit()) != null) parts.add(clean(item.unit()));
-        if (clean(item.preparationNote()) != null) parts.add(clean(item.preparationNote()));
+        if (item.quantity() != null)
+            parts.add(item.quantity().stripTrailingZeros().toPlainString());
+        if (clean(item.unit()) != null)
+            parts.add(clean(item.unit()));
+        if (clean(item.preparationNote()) != null)
+            parts.add(clean(item.preparationNote()));
         return parts.isEmpty() ? "additional amount" : String.join(" ", parts);
     }
 
     private String joinNotes(String first, String second) {
         String left = clean(first);
         String right = clean(second);
-        String joined = left == null ? right : right == null ? left : left.equalsIgnoreCase(right) ? left : left + "; " + right;
+        String joined = left == null ? right
+                : right == null ? left : left.equalsIgnoreCase(right) ? left : left + "; " + right;
         return joined == null || joined.length() <= 150 ? joined : joined.substring(0, 150);
     }
 
@@ -243,14 +383,18 @@ public class ScrapedMealImportService {
     private void addNutrient(Map<Nutrient, BigDecimal> amounts, String name, BigDecimal value,
             ScrapedMealImportRequest request, List<String> warnings) {
         BigDecimal amount = perServing(value, request);
-        if (amount == null) return;
+        if (amount == null)
+            return;
         var nutrient = nutrients.findByNutrientNameIgnoreCase(name).filter(n -> "g".equalsIgnoreCase(n.getUnit()));
-        if (nutrient.isPresent()) amounts.put(nutrient.get(), amount);
-        else warnings.add(name + " retained in source payload; add a nutrient catalog entry with unit g");
+        if (nutrient.isPresent())
+            amounts.put(nutrient.get(), amount);
+        else
+            warnings.add(name + " retained in source payload; add a nutrient catalog entry with unit g");
     }
 
     static BigDecimal perServing(BigDecimal value, ScrapedMealImportRequest request) {
-        if (value == null || request.nutritionBasis() == null) return null;
+        if (value == null || request.nutritionBasis() == null)
+            return null;
         return switch (request.nutritionBasis().toUpperCase(Locale.ROOT)) {
             case "PER_SERVING" -> value;
             case "WHOLE_RECIPE" -> (request.servings() != null && request.servings() > 0)
@@ -263,7 +407,8 @@ public class ScrapedMealImportService {
     static String canonicalSourceUrl(String value) {
         try {
             URI uri = URI.create(value.trim());
-            if (!Set.of("https", "http").contains(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null) {
+            if (!Set.of("https", "http").contains(uri.getScheme()) || uri.getHost() == null
+                    || uri.getUserInfo() != null) {
                 throw new IllegalArgumentException();
             }
             String path = uri.normalize().getPath().replaceAll("/+$", "");

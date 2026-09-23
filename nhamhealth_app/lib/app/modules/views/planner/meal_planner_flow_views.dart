@@ -16,6 +16,7 @@ import '../../controllers/planner/meal_planner_controller.dart';
 import '../../models/planner/meal_plan.dart';
 import '../wellness/widgets/ingredient_avatar.dart';
 import 'planner_shared.dart';
+import 'widgets/ingredient_analysis_sheet.dart';
 
 Map<dynamic, dynamic> _plannerRouteArguments() {
   final arguments = Get.arguments;
@@ -647,11 +648,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                               0xFF0F62FE,
                             ).withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF0F62FE,
-                              ).withValues(alpha: 0.25),
-                            ),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1522,7 +1519,6 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
                   ],
                 ),
               ),
-
               // Cooking Instructions (if any)
               if (meal.instructions.isNotEmpty) ...[
                 const SizedBox(height: 22),
@@ -1764,7 +1760,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
               final dayIndex = entry.$1;
               final date = entry.$2;
               final meals = controller.mealsFor(date);
-              final isSelected = dayIndex == controller.selectedDayIndex.value;
               final now = DateTime.now();
               final isToday =
                   date.year == now.year &&
@@ -1794,13 +1789,7 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
                       color: context.appElevatedSurface,
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
-                        color:
-                            isSelected
-                                ? AppColors.primaryGreen.withValues(alpha: 0.85)
-                                : isToday
-                                ? AppColors.primaryGreen.withValues(alpha: 0.45)
-                                : context.appBorder.withValues(alpha: 0.8),
-                        width: isSelected ? 1.8 : (isToday ? 1.4 : 1.0),
+                        color: context.appBorder.withValues(alpha: 0.8),
                       ),
                       boxShadow: context.appTileShadow,
                     ),
@@ -1830,12 +1819,7 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
                                     alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: AppColors.primaryGreen.withValues(
-                                      alpha: 0.45,
-                                    ),
-                                    width: 1,
-                                  ),
+                                  border: Border.all(color: context.appBorder),
                                 ),
                                 child: Text(
                                   'planner.today'.tr,
@@ -2090,19 +2074,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
     final progress = controller.weeklyProgress.clamp(0.0, 1.0);
     final eatenCount = controller.weeklyEatenMeals;
 
-    int totalWeekCalories = 0;
-    double totalWeekProtein = 0.0;
-    for (final day in controller.weekDays) {
-      for (final meal in controller.mealsFor(day)) {
-        totalWeekCalories += (meal.calories * meal.servings).round();
-        totalWeekProtein += (meal.proteinGrams * meal.servings);
-      }
-    }
-    final daysCount =
-        controller.planDaysCount.value > 0 ? controller.planDaysCount.value : 7;
-    final avgCalories = (totalWeekCalories / daysCount).round();
-    final avgProtein = (totalWeekProtein / daysCount).round();
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2113,67 +2084,31 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
           decoration: BoxDecoration(
             color: context.appSoftGreen,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: AppColors.primaryGreen.withValues(alpha: 0.35),
-            ),
+            border: Border.all(color: context.appBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Row: Goal pill + tap hint
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 3.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(
-                        0xFF0F62FE,
-                      ).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.trending_down_rounded,
-                          size: 13,
-                          color: Color(0xFF0F62FE),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'planner.goal_lose_weight'.tr,
-                          style: const TextStyle(
-                            color: Color(0xFF0F62FE),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'planner.weekly_progress'.tr,
-                        style: const TextStyle(
-                          color: AppColors.primaryGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'planner.weekly_progress'.tr,
+                      style: const TextStyle(
                         color: AppColors.primaryGreen,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -2262,70 +2197,6 @@ class PlannerWeeklyView extends GetView<MealPlannerController> {
                   ),
                 ],
               ),
-
-              // Bottom Nutritional Daily Averages Row
-              if (totalPlannedMeals > 0) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appElevatedSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: context.appBorder.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_fire_department_rounded,
-                            size: 15,
-                            color: Colors.orange.shade700,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'planner.avg_daily_calories'.trParams({
-                              'kcal': '$avgCalories',
-                            }),
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(width: 1, height: 14, color: context.appBorder),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.fitness_center_rounded,
-                            size: 14,
-                            color: Color(0xFF0F62FE),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'planner.avg_daily_protein'.trParams({
-                              'protein': '$avgProtein',
-                            }),
-                            style: TextStyle(
-                              color: context.appText,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -2455,6 +2326,8 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _PlannerFlowWeekCard(controller: controller),
+              const SizedBox(height: 16),
               _groceryScopeSelector(context),
               const SizedBox(height: 18),
               if (grouped.isEmpty)
@@ -2594,11 +2467,9 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                                     ),
                                     borderRadius: BorderRadius.circular(16),
                                     onTap:
-                                        () => setState(
-                                          () =>
-                                              isItemChecked
-                                                  ? checked.remove(item.key)
-                                                  : checked.add(item.key),
+                                        () => _showGroceryItemDetails(
+                                          context,
+                                          item,
                                         ),
                                     child: Padding(
                                       padding: const EdgeInsets.all(10),
@@ -2606,8 +2477,8 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                                         children: [
                                           IngredientAvatar(
                                             name: item.name,
-                                            size: 48,
-                                            borderRadius: 12,
+                                            size: 54,
+                                            borderRadius: 14,
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
@@ -2679,6 +2550,12 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                                               ),
                                             ),
                                           ],
+                                          const SizedBox(width: 2),
+                                          Icon(
+                                            Icons.chevron_right_rounded,
+                                            size: 20,
+                                            color: context.appMutedText,
+                                          ),
                                           Checkbox(
                                             value: isItemChecked,
                                             activeColor: AppColors.primaryGreen,
@@ -2763,6 +2640,353 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
     );
   }
 
+  List<PlannedMeal> _sourceMealsFor(GroceryItem item) {
+    final plannedMeals =
+        _showWeek
+            ? controller.planDays.expand(controller.mealsFor)
+            : controller.mealsFor(controller.selectedDate);
+    final uniqueMeals = <String, PlannedMeal>{};
+    for (final meal in plannedMeals) {
+      if (item.sourceMeals.contains(meal.name)) {
+        uniqueMeals.putIfAbsent(meal.name.toLowerCase(), () => meal);
+      }
+    }
+    return uniqueMeals.values.toList(growable: false);
+  }
+
+  Future<void> _showGroceryItemDetails(
+    BuildContext context,
+    GroceryItem item,
+  ) async {
+    final sourceMeals = _sourceMealsFor(item);
+    final isChecked = checked.contains(item.key);
+    final ingredientImageUrl = controller.lookupIngredientImageUrl(item.name);
+    final shouldCheck = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => SizedBox(
+            height: MediaQuery.sizeOf(sheetContext).height * 0.86,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: sheetContext.appSurfaceLow,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                              width: 42,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: sheetContext.appBorder,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip:
+                              MaterialLocalizations.of(
+                                sheetContext,
+                              ).closeButtonTooltip,
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  sheetContext.appSoftGreen,
+                                  AppColors.primaryGreen.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: AppColors.primaryGreen.withValues(
+                                  alpha: 0.2,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                FutureBuilder<String?>(
+                                  future: ingredientImageUrl,
+                                  builder: (context, snapshot) {
+                                    final imageUrl = snapshot.data?.trim();
+                                    return IngredientAvatar(
+                                      key: ValueKey(
+                                        'grocery-detail-image-${item.key}',
+                                      ),
+                                      name: item.name,
+                                      imageUrl:
+                                          imageUrl == null || imageUrl.isEmpty
+                                              ? null
+                                              : plannerImageUrl(imageUrl),
+                                      size: 92,
+                                      borderRadius: 22,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name.tr,
+                                        style: TextStyle(
+                                          color: sheetContext.appText,
+                                          fontSize: 21,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              sheetContext.appElevatedSurface,
+                                          borderRadius: BorderRadius.circular(
+                                            99,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          item.category.tr,
+                                          style: const TextStyle(
+                                            color: AppColors.primaryGreen,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _GroceryDetailMetric(
+                                  icon: Icons.scale_outlined,
+                                  label: 'planner.grocery_total_amount'.tr,
+                                  value:
+                                      item.quantityLabel.isEmpty
+                                          ? 'planner.grocery_as_needed'.tr
+                                          : item.quantityLabel,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _GroceryDetailMetric(
+                                  icon: Icons.restaurant_menu_rounded,
+                                  label: 'planner.grocery_used_in'.tr,
+                                  value: 'planner.grocery_meal_count'.trParams({
+                                    'count': '${sourceMeals.length}',
+                                  }),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          Text(
+                            'planner.grocery_meals_using'.tr,
+                            style: TextStyle(
+                              color: sheetContext.appText,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (sourceMeals.isEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: sheetContext.appElevatedSurface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: sheetContext.appBorder,
+                                ),
+                              ),
+                              child: Text(
+                                'planner.grocery_no_meal_source'.tr,
+                                style: TextStyle(
+                                  color: sheetContext.appMutedText,
+                                ),
+                              ),
+                            )
+                          else
+                            ...sourceMeals.map(
+                              (meal) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: sheetContext.appElevatedSurface,
+                                    borderRadius: BorderRadius.circular(17),
+                                    border: Border.all(
+                                      color: sheetContext.appBorder,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      PlannerMealImage(
+                                        meal: meal,
+                                        width: 58,
+                                        height: 58,
+                                        radius: 14,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              plannerMealName(meal),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: sheetContext.appText,
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${meal.slot.labelKey.tr} • ${'planner.grocery_servings'.trParams({'count': meal.servings.toStringAsFixed(meal.servings == meal.servings.roundToDouble() ? 0 : 1)})}',
+                                              style: TextStyle(
+                                                color:
+                                                    sheetContext.appMutedText,
+                                                fontSize: 11.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        OutlinedButton.icon(
+                          key: ValueKey('grocery-detail-analyze-${item.key}'),
+                          onPressed: () async {
+                            Navigator.of(sheetContext).pop();
+                            await Future<void>.delayed(
+                              const Duration(milliseconds: 250),
+                            );
+                            if (mounted && context.mounted) {
+                              await IngredientAnalysisSheet.showForGroceryItem(
+                                context,
+                                item: item,
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.auto_awesome_rounded),
+                          label: Text('planner.grocery_analyze_nutrition'.tr),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(50),
+                            foregroundColor: AppColors.primaryGreen,
+                            side: const BorderSide(
+                              color: AppColors.primaryGreen,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        FilledButton.icon(
+                          key: ValueKey('grocery-detail-toggle-${item.key}'),
+                          onPressed:
+                              () => Navigator.of(sheetContext).pop(!isChecked),
+                          icon: Icon(
+                            isChecked
+                                ? Icons.remove_done_rounded
+                                : Icons.check_circle_outline_rounded,
+                          ),
+                          label: Text(
+                            isChecked
+                                ? 'planner.grocery_mark_needed'.tr
+                                : 'planner.grocery_mark_bought'.tr,
+                          ),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+
+    if (shouldCheck == null || !mounted) return;
+    setState(() {
+      if (shouldCheck) {
+        checked.add(item.key);
+      } else {
+        checked.remove(item.key);
+      }
+    });
+  }
+
   Widget _scopeButton(
     BuildContext context, {
     required bool selected,
@@ -2778,9 +3002,7 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
       backgroundColor:
           selected ? context.appSoftGreen : context.appElevatedSurface,
       foregroundColor: selected ? AppColors.primaryGreen : context.appMutedText,
-      side: BorderSide(
-        color: selected ? AppColors.primaryGreen : context.appBorder,
-      ),
+      side: BorderSide(color: context.appBorder),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
     ),
@@ -2922,6 +3144,52 @@ class _SectionTitle extends StatelessWidget {
       color: context.appText,
       fontSize: 16,
       fontWeight: FontWeight.w800,
+    ),
+  );
+}
+
+class _GroceryDetailMetric extends StatelessWidget {
+  const _GroceryDetailMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(17),
+      border: Border.all(color: context.appBorder),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primaryGreen, size: 21),
+        const SizedBox(height: 10),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: context.appMutedText, fontSize: 10.5),
+        ),
+      ],
     ),
   );
 }
@@ -3102,311 +3370,13 @@ class _PlannerFlowWeekCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.tune_rounded, size: 14, color: context.appMutedText),
-                const SizedBox(width: 5),
-                Text(
-                  'planner.duration'.tr,
-                  style: TextStyle(
-                    color: context.appMutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children:
-                        [3, 4, 5, 6, 7].map((days) {
-                          final isSelected =
-                              controller.planDaysCount.value == days;
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: InkWell(
-                              key: ValueKey('flow-duration-$days'),
-                              onTap: () => controller.setPlanDaysCount(days),
-                              borderRadius: BorderRadius.circular(10),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                constraints: const BoxConstraints(minWidth: 30),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      isSelected
-                                          ? AppColors.primaryGreen
-                                          : context.appBackground,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color:
-                                        isSelected
-                                            ? AppColors.primaryGreen
-                                            : context.appBorder.withValues(
-                                              alpha: 0.65,
-                                            ),
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: Text(
-                                  '$days${'planner.days_short'.tr}',
-                                  style: TextStyle(
-                                    color:
-                                        isSelected
-                                            ? Colors.white
-                                            : context.appText,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 64,
-          child:
-              controller.weekDays.length <= 5
-                  ? Row(
-                    children: List.generate(controller.weekDays.length, (
-                      index,
-                    ) {
-                      final date = controller.weekDays[index];
-                      final selected =
-                          index == controller.selectedDayIndex.value;
-                      final hasMeals = controller.mealsFor(date).isNotEmpty;
-                      const weekDayKeys = [
-                        'planner.mon',
-                        'planner.tue',
-                        'planner.wed',
-                        'planner.thu',
-                        'planner.fri',
-                        'planner.sat',
-                        'planner.sun',
-                      ];
-                      final gap = controller.weekDays.length <= 3 ? 12.0 : 8.0;
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right:
-                                index == controller.weekDays.length - 1
-                                    ? 0
-                                    : gap,
-                          ),
-                          child: InkWell(
-                            onTap: () => controller.selectDay(index),
-                            borderRadius: BorderRadius.circular(18),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              decoration: BoxDecoration(
-                                color:
-                                    selected
-                                        ? AppColors.primaryGreen
-                                        : context.appBackground,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color:
-                                      selected
-                                          ? AppColors.primaryGreen
-                                          : context.appBorder.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                  width: 1.0,
-                                ),
-                                boxShadow:
-                                    selected
-                                        ? [
-                                          BoxShadow(
-                                            color: AppColors.primaryGreen
-                                                .withValues(alpha: 0.28),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
-                                        : null,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    weekDayKeys[date.weekday - 1].tr,
-                                    style: TextStyle(
-                                      color:
-                                          selected
-                                              ? Colors.white
-                                              : context.appMutedText,
-                                      fontSize: 11,
-                                      fontWeight:
-                                          selected
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                      height: 1.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    '${date.day}',
-                                    style: TextStyle(
-                                      color:
-                                          selected
-                                              ? Colors.white
-                                              : context.appText,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Container(
-                                    width: 4.5,
-                                    height: 4.5,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          hasMeals
-                                              ? (selected
-                                                  ? Colors.white
-                                                  : AppColors.primaryGreen)
-                                              : Colors.transparent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  )
-                  : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: controller.weekDays.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (_, index) {
-                      final date = controller.weekDays[index];
-                      final selected =
-                          index == controller.selectedDayIndex.value;
-                      final hasMeals = controller.mealsFor(date).isNotEmpty;
-                      const weekDayKeys = [
-                        'planner.mon',
-                        'planner.tue',
-                        'planner.wed',
-                        'planner.thu',
-                        'planner.fri',
-                        'planner.sat',
-                        'planner.sun',
-                      ];
-                      return InkWell(
-                        onTap: () => controller.selectDay(index),
-                        borderRadius: BorderRadius.circular(18),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: 60,
-                          decoration: BoxDecoration(
-                            color:
-                                selected
-                                    ? AppColors.primaryGreen
-                                    : context.appBackground,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color:
-                                  selected
-                                      ? AppColors.primaryGreen
-                                      : context.appBorder.withValues(
-                                        alpha: 0.6,
-                                      ),
-                              width: 1.0,
-                            ),
-                            boxShadow:
-                                selected
-                                    ? [
-                                      BoxShadow(
-                                        color: AppColors.primaryGreen
-                                            .withValues(alpha: 0.28),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                    : null,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                weekDayKeys[date.weekday - 1].tr,
-                                style: TextStyle(
-                                  color:
-                                      selected
-                                          ? Colors.white
-                                          : context.appMutedText,
-                                  fontSize: 11,
-                                  fontWeight:
-                                      selected
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                  height: 1.2,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${date.day}',
-                                style: TextStyle(
-                                  color:
-                                      selected ? Colors.white : context.appText,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.15,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Container(
-                                width: 4.5,
-                                height: 4.5,
-                                decoration: BoxDecoration(
-                                  color:
-                                      hasMeals
-                                          ? (selected
-                                              ? Colors.white
-                                              : AppColors.primaryGreen)
-                                          : Colors.transparent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-        ),
       ],
     ),
   );
 
   Future<void> _pickWeekDate(BuildContext context) async {
     DateTime selectedStart = controller.planStartDate;
-    int selectedDays = controller.planDaysCount.value;
+    int selectedDays = controller.planDaysCount.value.clamp(3, 7);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -3440,7 +3410,7 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'planner.custom_plan'.tr,
+                      'planner.selected_week'.tr,
                       style: TextStyle(
                         color: context.appText,
                         fontSize: 18,
@@ -3456,60 +3426,46 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'planner.duration'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children:
-                          [3, 4, 5, 6, 7].map((days) {
-                            final isSel = selectedDays == days;
-                            return InkWell(
-                              onTap:
+                      children: List.generate(5, (index) {
+                        final days = index + 3;
+                        final selected = days == selectedDays;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: index == 4 ? 0 : 6),
+                            child: OutlinedButton(
+                              onPressed:
                                   () =>
                                       setSheetState(() => selectedDays = days),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
+                              style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 9,
+                                  vertical: 12,
+                                  horizontal: 0,
                                 ),
-                                decoration: BoxDecoration(
+                                backgroundColor:
+                                    selected
+                                        ? AppColors.primaryGreen
+                                        : context.appElevatedSurface,
+                                foregroundColor:
+                                    selected ? Colors.white : context.appText,
+                                side: BorderSide(
                                   color:
-                                      isSel
+                                      selected
                                           ? AppColors.primaryGreen
-                                          : context.appElevatedSurface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color:
-                                        isSel
-                                            ? AppColors.primaryGreen
-                                            : context.appBorder.withValues(
-                                              alpha: 0.8,
-                                            ),
-                                  ),
-                                ),
-                                child: Text(
-                                  '$days${'planner.days_short'.tr}',
-                                  style: TextStyle(
-                                    color:
-                                        isSel ? Colors.white : context.appText,
-                                    fontSize: 13,
-                                    fontWeight:
-                                        isSel
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                  ),
+                                          : context.appBorder,
                                 ),
                               ),
-                            );
-                          }).toList(),
+                              child: FittedBox(
+                                child: Text(
+                                  '$days ${'planner.days_short'.tr.trim()}',
+                                  maxLines: 1,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                     const SizedBox(height: 18),
                     Text(
@@ -3599,6 +3555,12 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    PlannerWeekDateStrip(
+                      selectedDate: selectedStart,
+                      onDateSelected:
+                          (date) => setSheetState(() => selectedStart = date),
                     ),
                     const SizedBox(height: 16),
                     Container(

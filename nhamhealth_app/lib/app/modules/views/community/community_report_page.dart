@@ -13,7 +13,6 @@ import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/app_input_dialog.dart';
-import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_report_controller.dart';
 import '../../models/community/community_report.dart';
 import '../../repositories/community/community_repository.dart';
@@ -644,9 +643,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
   void initState() {
     super.initState();
     controller = widget.controller ?? Get.find();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => controller.fetchMyReports(),
-    );
+    if (controller.myReports.isEmpty && !controller.isLoading.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) controller.fetchMyReports();
+      });
+    }
   }
 
   List<CommunityReport> _getFilteredReports(List<CommunityReport> list) {
@@ -691,10 +692,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
       scrollable: false,
       child: Obx(() {
         if (controller.isLoading.value && controller.myReports.isEmpty) {
-          return SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            padding: contentPadding,
-            child: const PageSkeleton.reports(),
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            ),
           );
         }
         if (controller.errorMessage.value != null &&
@@ -766,9 +768,7 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
               SizedBox(height: isTablet ? 18 : 14),
               if (filtered.isEmpty)
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    vertical: isTablet ? 56 : 40,
-                  ),
+                  padding: EdgeInsets.symmetric(vertical: isTablet ? 56 : 40),
                   child: Center(
                     child: Column(
                       children: [
@@ -811,13 +811,10 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
   }) {
     Widget reportCard(CommunityReport report) => _ReportList(
       report: report,
-      onTap:
-          () => Get.to<void>(
-            () => CommunityReportDetailPage(
-              reportId: report.id,
-              controller: controller,
-            ),
-          ),
+      onTap: () {
+        controller.selectedReport.value = report;
+        Get.toNamed<void>(AppRoutes.communityReportDetailsPath(report.id));
+      },
     );
 
     if (!isTablet || !isLandscape || reports.length < 2) {
@@ -873,7 +870,11 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
               shape: BoxShape.circle,
               color: _green.withValues(alpha: 0.15),
             ),
-            child: Icon(Icons.shield_outlined, color: _green, size: shieldIconSize),
+            child: Icon(
+              Icons.shield_outlined,
+              color: _green,
+              size: shieldIconSize,
+            ),
           ),
           SizedBox(width: isTablet ? 15 : 12),
           Expanded(
@@ -927,36 +928,36 @@ class _MyReportsState extends State<CommunityMyReportsPage> {
     bool isTablet = false,
   }) {
     final chips = <Widget>[
-        _FilterChipItem(
-          label: 'community.report_filter_all'.tr,
-          count: allCount,
-          selected: _selectedFilter == _ReportFilter.all,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_pending'.tr,
-          count: pendingCount,
-          selected: _selectedFilter == _ReportFilter.pending,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_resolved'.tr,
-          count: resolvedCount,
-          selected: _selectedFilter == _ReportFilter.resolved,
-          onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
-          isTablet: isTablet,
-        ),
-        _FilterChipItem(
-          label: 'community.report_filter_no_violation'.tr,
-          count: noViolationCount,
-          selected: _selectedFilter == _ReportFilter.noViolation,
-          onTap:
-              () => setState(() => _selectedFilter = _ReportFilter.noViolation),
-          isTablet: isTablet,
-        ),
-      ];
+      _FilterChipItem(
+        label: 'community.report_filter_all'.tr,
+        count: allCount,
+        selected: _selectedFilter == _ReportFilter.all,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.all),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_pending'.tr,
+        count: pendingCount,
+        selected: _selectedFilter == _ReportFilter.pending,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.pending),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_resolved'.tr,
+        count: resolvedCount,
+        selected: _selectedFilter == _ReportFilter.resolved,
+        onTap: () => setState(() => _selectedFilter = _ReportFilter.resolved),
+        isTablet: isTablet,
+      ),
+      _FilterChipItem(
+        label: 'community.report_filter_no_violation'.tr,
+        count: noViolationCount,
+        selected: _selectedFilter == _ReportFilter.noViolation,
+        onTap:
+            () => setState(() => _selectedFilter = _ReportFilter.noViolation),
+        isTablet: isTablet,
+      ),
+    ];
 
     if (isTablet) {
       return Wrap(spacing: 8, runSpacing: 8, children: chips);
@@ -1066,20 +1067,34 @@ class _ReportDetailState extends State<CommunityReportDetailPage> {
     title: 'community.report_details_title'.tr,
     scrollable: true,
     child: Obx(() {
-      if (controller.isLoading.value) {
-        return const PageSkeleton.reportDetail();
+      final cachedReport = controller.selectedReport.value;
+      final hasCurrentReport =
+          cachedReport != null && cachedReport.id == widget.reportId;
+      final error = controller.errorMessage.value;
+      if (controller.isLoading.value && !hasCurrentReport) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          ),
+        );
       }
-      if (controller.errorMessage.value case final error?) {
+      if (!hasCurrentReport && error != null) {
         return _Message(
           icon: Icons.error_outline,
           text: error,
           action: () => controller.fetchReportDetails(widget.reportId),
         );
       }
-      final report = controller.selectedReport.value;
-      if (report == null || report.id != widget.reportId) {
-        return const PageSkeleton.reportDetail();
+      if (!hasCurrentReport) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          ),
+        );
       }
+      final report = cachedReport;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1827,9 +1842,7 @@ class _Page extends StatelessWidget {
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: maxWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: maxWidth),
                       child: AppBackHeader(
                         title: title,
                         onBack: Get.back,
@@ -1863,18 +1876,14 @@ class _Page extends StatelessWidget {
                             ),
                             child: Center(
                               child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: maxWidth,
-                                ),
+                                constraints: BoxConstraints(maxWidth: maxWidth),
                                 child: child,
                               ),
                             ),
                           )
                           : Center(
                             child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: maxWidth,
-                              ),
+                              constraints: BoxConstraints(maxWidth: maxWidth),
                               child: child,
                             ),
                           ),

@@ -50,6 +50,26 @@ The current source produces Bai Sach Chrouk, its Khmer title, Breakfast, 4 servi
 20 minutes cooking time, EASY difficulty, 16 parsed ingredient entries and 5 steps.
 Cooking time excludes the source's preparation and overnight marinating time.
 
+### AI extraction from another recipe website
+
+Pass the direct URL of a real recipe page. `https://example.com/recipe` is only a
+documentation placeholder and returns HTTP 404.
+
+```powershell
+.\venv\Scripts\python.exe main.py --ai-url "https://cambodiancookbook.com/recipes/bai-sach-chrouk/" --analyze-ingredients
+```
+
+This requires `GEMINI_API_KEY` in `.env`. Ingredient analysis also requires the
+Spring Boot API to be running and an ADMIN login or `SPRING_IMPORT_TOKEN`.
+Review the generated JSON before adding `--import-api`; imports are stored as hidden
+drafts until an Admin publishes them.
+
+To generate a new recipe or beverage from a topic instead of downloading a page:
+
+```powershell
+.\venv\Scripts\python.exe main.py --ai-query "healthy Cambodian avocado smoothie" --analyze-ingredients
+```
+
 **Meal photos are downloaded automatically.** The scraper extracts the high-resolution WebP meal photograph from the recipe, converts/optimizes it, and saves it to `images/<meal-name>.webp`. When importing with `--import-api`, the photo is uploaded directly to your storage (Supabase or local) and attached to the meal so it displays in NhamHealth immediately. If you wish to replace a photo with a custom file, you can still use `--image-file`.
 
 ## 2. Review and optionally provide a real meal photo

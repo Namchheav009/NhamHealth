@@ -345,21 +345,19 @@ class _MealPlannerPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Column(
     key: ValueKey<String>('meal-planner-skeleton'),
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _SkeletonCard(height: 142),
+      _SkeletonCard(height: 182),
       SizedBox(height: 16),
-      _SkeletonCard(height: 126),
+      _SkeletonBox(height: 48, radius: 16),
+      SizedBox(height: 6),
+      _SkeletonCard(height: 156),
+      SizedBox(height: 16),
+      _SkeletonCard(height: 76),
       SizedBox(height: 20),
-      _SkeletonBox(width: 150, height: 18, radius: 9),
+      _SkeletonBox(width: 164, height: 18, radius: 9),
       SizedBox(height: 12),
-      _SkeletonCard(height: 112),
-      SizedBox(height: 12),
-      _SkeletonCard(height: 112),
-      SizedBox(height: 12),
-      _SkeletonCard(height: 112),
-      SizedBox(height: 12),
-      _SkeletonCard(height: 112),
+      _PlannerSlotsPlaceholder(),
     ],
   );
 }

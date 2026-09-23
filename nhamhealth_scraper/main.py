@@ -12,6 +12,7 @@ os.chdir(ROOT)
 from scraper.config import settings
 from scraper.exporter import save_json
 from scraper.image_downloader import download_and_prepare_image, prepare_local_image
+from scraper.ai_web_ingester import AiWebRecipeIngester
 from scraper.importer import import_recipe
 from scraper.normalizer import normalize_recipe
 from scraper.recipe_detail import scrape_recipe
@@ -67,6 +68,11 @@ def main():
     source.add_argument("--url", help="Scrape one recipe URL.")
     source.add_argument("--all", action="store_true", help="Scrape the recipe index.")
     source.add_argument("--input", type=Path, help="Validate/import saved JSON without scraping again.")
+    source.add_argument(
+        "--ai-url",
+        help="Extract a recipe from a real public recipe page (example.com URLs are placeholders).",
+    )
+    source.add_argument("--ai-query", help="Ingest or generate a recipe/beverage directly using Gemini AI.")
     parser.add_argument("--limit", type=int, default=settings.max_recipes)
     parser.add_argument("--skip", type=int, default=0,
                         help="Skip recipes already processed at the start of an --all or --input batch.")
@@ -87,12 +93,17 @@ def main():
         action="store_true",
         help="Force retranslation to Khmer even if already translated.",
     )
+    parser.add_argument(
+        "--analyze-ingredients",
+        action="store_true",
+        help="Analyze ingredients against the backend database and Gemini AI before review.",
+    )
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be positive")
     if args.skip < 0:
         parser.error("--skip cannot be negative")
-    if args.url and args.skip:
+    if (args.url or args.ai_url or args.ai_query) and args.skip:
         parser.error("--skip is only supported with --all or --input")
     if args.image_file and args.all:
         parser.error("--image-file is only supported for a single recipe")
@@ -109,6 +120,14 @@ def main():
             if args.image_file and len(recipes) != 1:
                 parser.error("--image-file requires exactly one saved recipe")
             work = recipes[args.skip:]
+        elif args.ai_query:
+            ingester = AiWebRecipeIngester()
+            print(f"Ingesting via AI model: {args.ai_query}")
+            work = [normalize_recipe(ingester.parse_with_ai(args.ai_query))]
+        elif args.ai_url:
+            ingester = AiWebRecipeIngester()
+            print(f"Extracting website recipe with AI: {args.ai_url}")
+            work = [normalize_recipe(ingester.extract_from_url(args.ai_url))]
         else:
             work = [args.url] if args.url else get_recipe_links()[args.skip:args.skip + args.limit]
             if not work:
@@ -118,9 +137,10 @@ def main():
         return 1
 
     for index, item in enumerate(work, 1):
-        print(f"[{index}/{len(work)}] {'Reviewing saved recipe' if args.input else 'Scraping: ' + item}")
+        action_label = "Reviewing saved recipe" if args.input else ("AI Ingested" if args.ai_query or args.ai_url else "Scraping: " + str(item))
+        print(f"[{index}/{len(work)}] {action_label}")
         try:
-            if args.input:
+            if args.input or args.ai_query or args.ai_url:
                 recipe = item
                 if (
                     not args.no_image
@@ -166,7 +186,6 @@ def main():
                     print("  ERROR:", error)
                 continue
 
-            image_status = "OK" if recipe.get("localImagePath") else "Missing"
             has_image = bool(recipe.get("localImagePath") and Path(recipe["localImagePath"]).is_file())
             image_status = f"OK ({recipe.get('localImagePath')})" if has_image else "Missing"
             trans_status = (

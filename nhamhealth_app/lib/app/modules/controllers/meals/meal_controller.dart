@@ -5,13 +5,13 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../../widgets/app_alert.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
-import '../home/home_controller.dart';
 import '../../models/meals/meal_category_model.dart';
 import '../../models/meals/meal_model.dart';
 import '../../repositories/meals/meal_repository.dart';
+import '../home/home_controller.dart';
 
 class MealController extends GetxController with WidgetsBindingObserver {
   MealController({required this.repository, AppLocaleService? localeService})
@@ -383,10 +383,6 @@ class MealController extends GetxController with WidgetsBindingObserver {
   }
 
   void selectBottomMenu(int index) {
-    if (index == 4) {
-      openSettings();
-      return;
-    }
     if (index == selectedBottomIndex.value) return;
     selectedBottomIndex.value = index;
 
@@ -397,9 +393,10 @@ class MealController extends GetxController with WidgetsBindingObserver {
       case 1:
         break;
       case 2:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.offNamed<void>(AppRoutes.mealPlanner);
         break;
-      case 4:
+      case 3:
+        Get.offNamed<void>(AppRoutes.community);
         break;
     }
   }

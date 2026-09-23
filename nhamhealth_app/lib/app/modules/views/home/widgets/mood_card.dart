@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-
-import '../../../../theme/app_colors.dart';
-import '../../../../widgets/inner_shadow.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
+import '../../../../theme/app_colors.dart';
+
 class MoodCard extends StatefulWidget {
+  const MoodCard({
+    super.key,
+    required this.emoji,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.invalid = false,
+    this.validationPulse = 0,
+  });
+
   final String emoji;
   final String label;
   final bool selected;
   final bool invalid;
   final int validationPulse;
   final VoidCallback onTap;
-
-  const MoodCard({
-    super.key,
-    required this.emoji,
-    required this.label,
-    required this.selected,
-    this.invalid = false,
-    this.validationPulse = 0,
-    required this.onTap,
-  });
 
   @override
   State<MoodCard> createState() => _MoodCardState();
@@ -62,14 +61,11 @@ class _MoodCardState extends State<MoodCard>
         (!oldWidget.invalid ||
             widget.validationPulse != oldWidget.validationPulse)) {
       _playValidation();
-    } else if (!widget.invalid && oldWidget.invalid) {
-      _validationController.stop();
     }
   }
 
   void _playValidation() {
-    if (!mounted) return;
-    _validationController.forward(from: 0);
+    if (mounted) _validationController.forward(from: 0);
   }
 
   @override
@@ -80,145 +76,68 @@ class _MoodCardState extends State<MoodCard>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.appIsDark;
-    final content = Stack(
-      fit: StackFit.expand,
-      alignment: Alignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+    final accent = widget.invalid
+        ? _errorRed
+        : context.appColorScheme.primary;
+    final item = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          widget.onTap();
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          width: 56,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeOutBack,
-                  transitionBuilder:
-                      (child, animation) => ScaleTransition(
-                        scale: animation,
-                        child: RotationTransition(
-                          turns: Tween<double>(
-                            begin: -0.04,
-                            end: 0,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      ),
+              AnimatedScale(
+                scale: widget.selected ? 1.08 : 1,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutBack,
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
                   child: Center(
-                    key: ValueKey(
-                      '${widget.emoji}-${widget.selected}-${widget.invalid}',
-                    ),
-                    child:
-                        widget.emoji.isEmpty
-                            ? Icon(
-                              Icons.mood_rounded,
-                              color: const Color(0xFFFFB02E),
-                              size: 28,
-                            )
-                            : Text(
-                              widget.emoji,
-                              textScaler: TextScaler.noScaling,
-                              style: const TextStyle(fontSize: 28, height: 1),
-                            ),
+                    child: widget.emoji.isEmpty
+                        ? const Icon(
+                            Icons.mood_rounded,
+                            color: Color(0xFFFFB02E),
+                            size: 32,
+                          )
+                        : Text(
+                            widget.emoji,
+                            textScaler: TextScaler.noScaling,
+                            style: const TextStyle(fontSize: 32, height: 1),
+                          ),
                   ),
                 ),
               ),
-              const SizedBox(height: 2),
-              SizedBox(
-                height: 16,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    widget.label.trOrSelf,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color:
-                          widget.selected
-                              ? context.appColorScheme.primary
-                              : context.appColorScheme.secondary,
-                      fontWeight:
-                          widget.selected || widget.invalid
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                    ),
-                  ),
+              const SizedBox(height: 5),
+              Text(
+                widget.label.trOrSelf,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: widget.selected ? accent : context.appText,
+                  fontSize: 10.5,
+                  fontWeight:
+                      widget.selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: widget.selected || widget.invalid ? 30 : 0,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-
-    final card = AnimatedContainer(
-      duration:
-          widget.invalid ? Duration.zero : const Duration(milliseconds: 200),
-      width: 70,
-      decoration: BoxDecoration(
-        gradient:
-            widget.selected
-                ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [context.appSoftGreen, context.appSoftPink],
-                )
-                : null,
-        color: widget.selected ? null : context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(12),
-        border:
-            widget.invalid
-                ? Border.all(color: _errorRed, width: 1.8)
-                : isDark
-                ? Border.all(
-                  color:
-                      widget.selected
-                          ? context.appColorScheme.primary
-                          : context.appBorder,
-                  width: widget.selected ? 1.6 : 1,
-                )
-                : null,
-        boxShadow:
-            !isDark
-                ? widget.selected
-                    ? [
-                      BoxShadow(
-                        color: context.appColorScheme.primary.withValues(
-                          alpha: 0.13,
-                        ),
-                        blurRadius: 11,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                    : context.appHomeTileShadow
-                : widget.selected
-                ? [
-                  BoxShadow(
-                    color: context.appColorScheme.primary.withValues(
-                      alpha: 0.18,
-                    ),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-                : context.appTileShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            widget.onTap();
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: InnerShadow(
-            borderRadius: BorderRadius.circular(12),
-            shadows: isDark ? context.appInnerShadow : const [],
-            child: content,
           ),
         ),
       ),
@@ -227,25 +146,18 @@ class _MoodCardState extends State<MoodCard>
     return Semantics(
       button: true,
       selected: widget.selected,
-      label:
-          widget.invalid
-              ? 'home.choose_mood_label'.trParams({
-                'mood': widget.label.trOrSelf,
-              })
-              : 'home.mood_mood'.trParams({'mood': widget.label.trOrSelf}),
+      label: widget.invalid
+          ? 'home.choose_mood_label'.trParams({
+              'mood': widget.label.trOrSelf,
+            })
+          : 'home.mood_mood'.trParams({'mood': widget.label.trOrSelf}),
       child: AnimatedBuilder(
         animation: _shake,
-        child: AnimatedScale(
-          scale: widget.selected ? 1.02 : 1,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutBack,
-          child: card,
+        child: item,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(_shake.value, 0),
+          child: child,
         ),
-        builder:
-            (context, child) => Transform.translate(
-              offset: Offset(_shake.value, 0),
-              child: child,
-            ),
       ),
     );
   }

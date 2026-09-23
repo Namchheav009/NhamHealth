@@ -273,6 +273,75 @@ class MealPlannerProvider {
     };
   }
 
+  Future<Map<String, dynamic>> analyzeIngredients({
+    required String mealName,
+    required List<String> ingredients,
+    int servings = 1,
+    String? lang,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-planner/ingredients/analyze',
+    );
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final body = {
+      'mealName': mealName,
+      'ingredients': ingredients,
+      'servings': servings,
+      'lang': lang ?? _lang,
+    };
+    final response = await _client
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        'Unable to analyze ingredients with AI & database.',
+        statusCode: response.statusCode,
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! Map<String, dynamic>) {
+      throw const MealPlannerProviderException(
+        'Ingredient analysis response is invalid.',
+      );
+    }
+    return payload;
+  }
+
+  Future<String?> lookupIngredientImageUrl(String ingredientName) async {
+    final name = ingredientName.trim();
+    if (name.isEmpty) return null;
+
+    try {
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/ingredients',
+      ).replace(queryParameters: {'query': name, 'lang': _lang});
+      final response = await _client
+          .get(uri, headers: await _headers())
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode < 200 || response.statusCode >= 300) return null;
+
+      final payload = jsonDecode(response.body);
+      if (payload is! List) return null;
+      final candidates = payload
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .where((item) => '${item['imageUrl'] ?? ''}'.trim().isNotEmpty)
+          .toList(growable: false);
+      if (candidates.isEmpty) return null;
+
+      final normalizedName = name.toLowerCase();
+      final exact = candidates.where(
+        (item) =>
+            '${item['name'] ?? ''}'.trim().toLowerCase() == normalizedName,
+      );
+      final selected = exact.isNotEmpty ? exact.first : candidates.first;
+      return '${selected['imageUrl']}'.trim();
+    } catch (_) {
+      return null;
+    }
+  }
+
   String _date(DateTime value) =>
       '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 }

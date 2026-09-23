@@ -77,7 +77,7 @@ def normalize_recipe(recipe: dict) -> dict:
     if recipe.get("calories") is None or recipe.get("proteinGrams") is None:
         estimate_recipe_nutrition(recipe)
 
-    return {
+    normalized = {
         "mealName": " ".join((recipe.get("mealName") or "").split()),
         "khmerName": recipe.get("khmerName"),
         "description": (
@@ -146,3 +146,25 @@ def normalize_recipe(recipe: dict) -> dict:
         # Important: imported meals should not be public before review.
         "published": False,
     }
+    source_ingredients = recipe.get("ingredients") or []
+    source_steps = recipe.get("steps") or []
+    if (recipe.get("khmerName") and recipe.get("categoryNameKm")
+            and (not recipe.get("description") or recipe.get("descriptionKm"))
+            and len(source_ingredients) == len(normalized_ingredients)
+            and len(source_steps) == len(normalized_steps)
+            and all(item.get("ingredientNameKm") for item in source_ingredients)
+            and all(step.get("instructionKm") for step in source_steps)):
+        normalized["translations"]["km"] = {
+            "mealName": recipe["khmerName"],
+            "description": recipe.get("descriptionKm"),
+            "category": recipe["categoryNameKm"],
+            "ingredients": [
+                {"name": item["ingredientNameKm"], "quantity": item.get("quantity"),
+                 "unit": item.get("unit"), "note": item.get("preparationNoteKm")}
+                for item in source_ingredients
+            ],
+            "steps": [step["instructionKm"] for step in source_steps],
+        }
+        normalized["categoryNameKm"] = recipe["categoryNameKm"]
+        normalized["translationStatus"] = "COMPLETED"
+    return normalized

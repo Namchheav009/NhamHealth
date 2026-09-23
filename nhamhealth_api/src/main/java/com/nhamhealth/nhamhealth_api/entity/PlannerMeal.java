@@ -102,6 +102,10 @@ public class PlannerMeal {
         return legacyMealId;
     }
 
+    public void setLegacyMealId(Integer v) {
+        legacyMealId = v;
+    }
+
     public String getNameEn() {
         return nameEn;
     }

@@ -217,6 +217,7 @@ public class MealAdminService {
         saveMealIngredients(savedMeal, request);
         saveRecipeSteps(savedMeal, request);
         saveMealTranslation(savedMeal, request);
+        syncImportedPlannerPublication(savedMeal);
         return toAdminRow(savedMeal);
     }
 
@@ -228,6 +229,12 @@ public class MealAdminService {
     })
     public void deleteMeal(Integer mealId) {
         findMeal(mealId);
+        // Keep existing user plans intact, but stop recommending a deleted source meal.
+        entityManager.createNativeQuery("UPDATE weekly_meal_recommendations SET is_active = false WHERE planner_meal_id IN "
+                + "(SELECT planner_meal_id FROM planner_meals WHERE legacy_meal_id = :mealId)")
+                .setParameter("mealId", mealId).executeUpdate();
+        entityManager.createNativeQuery("UPDATE planner_meals SET is_active = false WHERE legacy_meal_id = :mealId")
+                .setParameter("mealId", mealId).executeUpdate();
         deleteRelatedRows("ai_recommendation_items", mealId);
         deleteRelatedRows("recipe_steps", mealId);
         deleteRelatedRows("meal_tags", mealId);
@@ -235,6 +242,32 @@ public class MealAdminService {
         deleteRelatedRows("meal_ingredients", mealId);
         deleteRelatedRows("meal_nutrition", mealId);
         mealRepository.deleteById(mealId);
+    }
+
+    private void syncImportedPlannerPublication(Meal meal) {
+        Integer mealId = meal.getMealId();
+        entityManager.createNativeQuery("UPDATE planner_meals SET is_active = :active, name_en = :name, "
+                + "image_url = :image, category_id = :categoryId, category_en = :categoryName, "
+                + "description_en = :description, calories = COALESCE(:calories, 0), "
+                + "cooking_time_minutes = :minutes, updated_at = CURRENT_TIMESTAMP WHERE legacy_meal_id = :mealId")
+                .setParameter("active", Boolean.TRUE.equals(meal.getIsPublished()))
+                .setParameter("name", meal.getMealName())
+                .setParameter("image", meal.getMainImageUrl())
+                .setParameter("categoryId", meal.getCategory().getCategoryId())
+                .setParameter("categoryName", meal.getCategory().getCategoryName())
+                .setParameter("description", meal.getDescription())
+                .setParameter("calories", meal.getCaloriesCached())
+                .setParameter("minutes", meal.getCookingTimeMinutes())
+                .setParameter("mealId", mealId).executeUpdate();
+        entityManager.createNativeQuery("UPDATE weekly_meal_recommendations SET is_active = :active "
+                + "WHERE planner_meal_id IN (SELECT planner_meal_id FROM planner_meals WHERE legacy_meal_id = :mealId)")
+                .setParameter("active", Boolean.TRUE.equals(meal.getIsPublished()))
+                .setParameter("mealId", mealId).executeUpdate();
+        if (Boolean.TRUE.equals(meal.getIsPublished())) {
+            entityManager.createNativeQuery("UPDATE scraped_meal_sources SET review_status = 'APPROVED' "
+                    + "WHERE meal_id = :mealId")
+                    .setParameter("mealId", mealId).executeUpdate();
+        }
     }
 
     private void applyMealRequest(Meal meal, AdminMealRequest request) {

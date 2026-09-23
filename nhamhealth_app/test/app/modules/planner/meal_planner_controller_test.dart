@@ -389,6 +389,38 @@ void main() {
     },
   );
 
+  test('ingredient image lookup prefers the exact database match', () async {
+    final client = MockClient((request) async {
+      expect(request.url.path, '/api/v1/ingredients');
+      expect(request.url.queryParameters['query'], 'Greek yogurt');
+      expect(request.url.queryParameters['lang'], 'en');
+      return http.Response(
+        jsonEncode([
+          {
+            'id': 2,
+            'name': 'Yogurt drink',
+            'imageUrl': 'https://cdn.example.com/yogurt-drink.jpg',
+          },
+          {
+            'id': 1,
+            'name': 'Greek yogurt',
+            'imageUrl': 'https://cdn.example.com/greek-yogurt.jpg',
+          },
+        ]),
+        200,
+      );
+    });
+    final provider = MealPlannerProvider(
+      authService: _FakeAuthService(),
+      client: client,
+    );
+
+    expect(
+      await provider.lookupIngredientImageUrl('Greek yogurt'),
+      'https://cdn.example.com/greek-yogurt.jpg',
+    );
+  });
+
   test(
     'controller dynamically fetches range and day meals from provider',
     () async {

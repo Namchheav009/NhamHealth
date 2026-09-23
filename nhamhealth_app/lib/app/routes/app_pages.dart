@@ -8,9 +8,8 @@ import '../modules/bindings/community/community_binding.dart';
 import '../modules/bindings/community/community_post_detail_binding.dart';
 import '../modules/bindings/community/community_report_binding.dart';
 import '../modules/bindings/favorites/favorites_binding.dart';
-import '../modules/bindings/home/home_binding.dart';
+import '../modules/bindings/main_tabs_binding.dart';
 import '../modules/bindings/meals/food_detail_binding.dart';
-import '../modules/bindings/meals/meal_binding.dart';
 import '../modules/bindings/notifications/notifications_binding.dart';
 import '../modules/bindings/onboarding/choose_language_binding.dart';
 import '../modules/bindings/onboarding/onboarding_binding.dart';
@@ -32,20 +31,17 @@ import '../modules/views/assistant/assistant_view.dart';
 import '../modules/views/auth/account_created_view.dart';
 import '../modules/views/auth/login_view.dart';
 import '../modules/views/auth/register_view.dart';
-import '../modules/views/community/community_page.dart';
 import '../modules/views/community/community_person_profile_view.dart';
 import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/views/community/community_report_page.dart';
 import '../modules/views/favorites/favorites_view.dart';
-import '../modules/views/home/home_view.dart';
+import '../modules/views/main_tabs_view.dart';
 import '../modules/views/meals/food_detail_view.dart';
-import '../modules/views/meals/meal_view.dart';
 import '../modules/views/notifications/notifications_view.dart';
 import '../modules/views/onboarding/choose_language_view.dart';
 import '../modules/views/onboarding/onboarding_view.dart';
-import '../modules/views/planner/meal_planner_flow_views.dart';
-import '../modules/views/planner/meal_planner_view.dart';
 import '../modules/views/planner/goal_analysis_pages.dart';
+import '../modules/views/planner/meal_planner_flow_views.dart';
 import '../modules/views/profile/change_password_view.dart';
 import '../modules/views/profile/language_view.dart';
 import '../modules/views/profile/profile_view.dart';
@@ -112,10 +108,9 @@ abstract class AppPages {
     ),
     GetPage<dynamic>(
       name: AppRoutes.home,
-      page: () => const HomeView(),
-      binding: HomeBinding(),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 220),
+      page: () => const MainTabsView(initialIndex: 0),
+      binding: MainTabsBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.assistant,
@@ -125,18 +120,15 @@ abstract class AppPages {
     ),
     GetPage<dynamic>(
       name: AppRoutes.meals,
-      page: () => const MealView(),
-      binding: MealBinding(),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 220),
+      page: () => const MainTabsView(initialIndex: 1),
+      binding: MainTabsBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.mealPlanner,
-      page: () => const MealPlannerView(),
-      binding: MealPlannerBinding(),
-      transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
+      page: () => const MainTabsView(initialIndex: 2),
+      binding: MainTabsBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.mealPlannerCategories,
@@ -220,8 +212,8 @@ abstract class AppPages {
       binding: BindingsBuilder(
         () => Get.lazyPut<SettingsController>(() => SettingsController()),
       ),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 220),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 260),
     ),
     GetPage<dynamic>(
       name: AppRoutes.language,
@@ -311,10 +303,9 @@ abstract class AppPages {
 
     GetPage<dynamic>(
       name: AppRoutes.community,
-      page: () => const CommunityPage(),
-      binding: CommunityBinding(),
-      transition: Transition.fadeIn,
-      transitionDuration: const Duration(milliseconds: 220),
+      page: () => const MainTabsView(initialIndex: 3),
+      binding: MainTabsBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityPost,
@@ -347,7 +338,7 @@ abstract class AppPages {
       name: AppRoutes.myReports,
       page: () => const CommunityMyReportsPage(),
       binding: CommunityReportBinding(),
-      transition: Transition.rightToLeft,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityReportDetails,
@@ -356,7 +347,7 @@ abstract class AppPages {
             reportId: int.tryParse(Get.parameters['reportId'] ?? '') ?? 0,
           ),
       binding: CommunityReportBinding(),
-      transition: Transition.rightToLeft,
+      transition: Transition.noTransition,
     ),
     GetPage<dynamic>(
       name: AppRoutes.communityGuidelines,

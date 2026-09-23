@@ -50,7 +50,7 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.topBarBottom),
+                const SizedBox(height: 10),
                 Expanded(
                   child: RefreshIndicator(
                     color: AppColors.primaryGreen,
@@ -117,13 +117,13 @@ class _HomeDashboardContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               RepaintBoundary(child: TimeGreeting()),
-              SizedBox(height: 16),
+              SizedBox(height: 12),
               RepaintBoundary(child: GreetingSection()),
               SizedBox(height: 16),
               RepaintBoundary(child: AiRecommendationCard()),
-              SizedBox(height: 16),
+              SizedBox(height: 12),
               RepaintBoundary(child: HomeQuickActions()),
-              SizedBox(height: 16),
+              SizedBox(height: 12),
               RepaintBoundary(child: DailySummaryCard()),
               RepaintBoundary(child: _RecommendedMealsSection()),
             ],
@@ -135,7 +135,7 @@ class _HomeDashboardContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RepaintBoundary(child: TimeGreeting()),
-            SizedBox(height: 18),
+            SizedBox(height: 16),
             RepaintBoundary(child: GreetingSection()),
             SizedBox(height: 18),
             RepaintBoundary(child: AiRecommendationCard()),
@@ -171,7 +171,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
       final meals = controller.dashboard.value?.recommendedMeals ?? const [];
 
       return Padding(
-        padding: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.only(top: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -179,19 +179,19 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: context.appSoftGreen,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.restaurant_menu_rounded,
-                    size: 20,
+                    size: 18,
                     color: AppColors.primaryGreen,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 9),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +202,7 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: context.appText,
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
                         ),
@@ -247,12 +247,12 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               ],
             ),
             if (meals.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 600;
-                  final cardWidth = isWide ? 250.0 : 156.0;
-                  final cardHeight = isWide ? 246.0 : 190.0;
+                  final cardWidth = isWide ? 240.0 : 150.0;
+                  final cardHeight = isWide ? 236.0 : 184.0;
                   final itemGap = isWide ? 14.0 : 10.0;
                   return SizedBox(
                     height: cardHeight,

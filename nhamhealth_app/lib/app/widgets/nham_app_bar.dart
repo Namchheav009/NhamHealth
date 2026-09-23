@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../modules/models/auth/authenticated_user_model.dart';
@@ -25,7 +26,6 @@ class NhamAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
       child: SizedBox(
@@ -67,39 +67,22 @@ class NhamAppBar extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Container(
-                height: 46,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: colors.surface.withValues(alpha: 0.86),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: colors.outline),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // const _ChatButton(),
-                    _FavoritesButton(
-                      onTap:
-                          onFavorites ??
-                          () => Get.toNamed<void>(AppRoutes.favorites),
-                    ),
-                    const SizedBox(width: 2),
-                    _NotificationButton(
-                      count: unreadNotificationCount,
-                      onTap: onNotifications,
-                    ),
-                    const SizedBox(width: 2),
-                    _ProfileButton(user: user, onTap: onProfile),
-                  ],
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _FavoritesButton(
+                    onTap:
+                        onFavorites ??
+                        () => Get.toNamed<void>(AppRoutes.favorites),
+                  ),
+                  const SizedBox(width: 2),
+                  _NotificationButton(
+                    count: unreadNotificationCount,
+                    onTap: onNotifications,
+                  ),
+                  const SizedBox(width: 4),
+                  _ProfileButton(user: user, onTap: onProfile),
+                ],
               ),
             ],
           ),
@@ -116,23 +99,19 @@ class _FavoritesButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final color = Theme.of(context).colorScheme.onSurface;
     return _Button(
       key: const ValueKey('favorites-button'),
       tooltip: 'profile.favorites'.tr,
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHighest,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: _TopActionSurface(
+        child: Icon(
           Icons.favorite_outline_rounded,
-          size: 22,
-          color: AppColors.favoriteRed,
+          size: 23,
+          color: color.withValues(alpha: 0.84),
         ),
       ),
     );
@@ -152,41 +131,41 @@ class _NotificationButton extends StatelessWidget {
         _Button(
           key: const ValueKey('notifications-button'),
           tooltip: 'common.notifications'.tr,
-          onTap: onTap,
-          child: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
-              shape: BoxShape.circle,
-            ),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: _TopActionSurface(
             child: Icon(
               count > 0
-                  ? Icons.notifications_rounded
+                  ? Icons.notifications_active_rounded
                   : Icons.notifications_none_rounded,
               size: 23,
-              color: colors.onSurface,
+              color: colors.onSurface.withValues(alpha: 0.84),
             ),
           ),
         ),
         if (count > 0)
           Positioned(
-            right: 1,
-            top: -1,
+            right: 0,
+            top: 0,
             child: Container(
-              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 3),
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFD32F2F),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD93838),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 1.5,
+                ),
               ),
               child: Text(
                 count > 99 ? '99+' : '${count.clamp(1, 99)}',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -196,31 +175,6 @@ class _NotificationButton extends StatelessWidget {
     );
   }
 }
-
-// class _ChatButton extends StatelessWidget {
-//   const _ChatButton();
-
-//   @override
-//   Widget build(BuildContext context) => _Button(
-//     key: const ValueKey('chat-button'),
-//     tooltip: 'common.navigation_chat'.tr,
-//     onTap: () => Get.snackbar('common.navigation_chat'.tr, 'assistant.coming_soon'.tr),
-//     child: Container(
-//       width: 36,
-//       height: 36,
-//       alignment: Alignment.center,
-//       decoration: const BoxDecoration(
-//         color: Color(0xFFF2F7F3),
-//         shape: BoxShape.circle,
-//       ),
-//       child: const Icon(
-//         Icons.chat_bubble_outline_rounded,
-//         size: 22,
-//         color: Color(0xFF333333),
-//       ),
-//     ),
-//   );
-// }
 
 class _ProfileButton extends StatelessWidget {
   const _ProfileButton({required this.user, required this.onTap});
@@ -236,15 +190,70 @@ class _ProfileButton extends StatelessWidget {
             : 'common.user_profile'.trParams({'name': user!.displayName}),
     child: InkResponse(
       key: const ValueKey('profile-button'),
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       radius: 22,
       child: SizedBox(
         width: 42,
         height: 44,
-        child: Center(child: AuthenticatedUserAvatar(user: user, size: 36)),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.72),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: AuthenticatedUserAvatar(user: user, size: 34),
+          ),
+        ),
       ),
     ),
   );
+}
+
+class _TopActionSurface extends StatelessWidget {
+  const _TopActionSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: 38,
+      height: 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.surface.withValues(alpha: 0.90),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.68),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
 class _Button extends StatelessWidget {

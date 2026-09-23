@@ -83,6 +83,29 @@ class ScrapedMealImportServiceTests {
         verifyNoInteractions(nutrition);
     }
 
+    @Test void importedPlannerMealAndRecommendationStayHiddenUntilAdminPublishes() {
+        PlannerMealRepository plannerRepo = mock(PlannerMealRepository.class);
+        WeeklyMealRecommendationRepository recommendationRepo = mock(WeeklyMealRecommendationRepository.class);
+        when(plannerRepo.save(any(PlannerMeal.class))).thenAnswer(call -> {
+            PlannerMeal plannerMeal = call.getArgument(0);
+            plannerMeal.setPlannerMealId(11);
+            return plannerMeal;
+        });
+        service = new ScrapedMealImportService(factory.getValidator(), categories, categoryTranslations,
+                ingredients, nutrients, nutrition, meals, admin, images, em, plannerRepo, recommendationRepo);
+
+        var result = service.importMeal(PAYLOAD.replace("UNKNOWN", "PER_SERVING"), photo);
+
+        ArgumentCaptor<PlannerMeal> planner = ArgumentCaptor.forClass(PlannerMeal.class);
+        ArgumentCaptor<WeeklyMealRecommendation> recommendation = ArgumentCaptor.forClass(WeeklyMealRecommendation.class);
+        verify(plannerRepo).save(planner.capture());
+        verify(recommendationRepo).save(recommendation.capture());
+        assertEquals(false, planner.getValue().getActive());
+        assertEquals(false, recommendation.getValue().getActive());
+        assertEquals(7, planner.getValue().getLegacyMealId());
+        assertEquals(11, result.get("plannerMealId"));
+    }
+
     @Test void missingIngredientsAreCreatedAndMarkedForCatalogReview() {
         when(ingredients.findByIngredientNameIgnoreCase("Pork")).thenReturn(Optional.empty());
         when(ingredients.save(any(Ingredient.class))).thenAnswer(call -> {

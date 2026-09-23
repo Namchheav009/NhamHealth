@@ -53,6 +53,8 @@ class MealPlannerController extends GetxController {
   final isLoadingRecommendations = true.obs;
   final isLoadingDay = false.obs;
   final isSaving = false.obs;
+  final isAutoFilling = false.obs;
+  final autoFillStatusKey = 'planner.autofill_loading_preparing'.obs;
   final errorMessage = ''.obs;
   final recommendationsError = ''.obs;
   final hasLoadedOnce = false.obs;
@@ -280,6 +282,10 @@ class MealPlannerController extends GetxController {
   bool get weekIsEmpty => planIsEmpty;
 
   List<GroceryItem> get groceryItems => _groceryItemsFor(_currentPlanMeals);
+
+  Future<String?> lookupIngredientImageUrl(String ingredientName) =>
+      _provider?.lookupIngredientImageUrl(ingredientName) ??
+      Future<String?>.value();
 
   /// Ingredients for the four saved slots on the selected day only.
   List<GroceryItem> groceryItemsForDate(DateTime date) =>
@@ -978,10 +984,7 @@ class MealPlannerController extends GetxController {
         key: lossKey,
         value: hasAnalyzedWeightLoss.value ? 'true' : 'false',
       );
-      await _storage.write(
-        key: maintainKey,
-        value: 'false',
-      );
+      await _storage.write(key: maintainKey, value: 'false');
     } catch (_) {}
   }
 
@@ -991,9 +994,11 @@ class MealPlannerController extends GetxController {
   }) async {
     if (isSaving.value) return 0;
 
+    lastAiAutoFillResult.value = null;
+
     if (dietaryPreferences.value.medicalFlags.contains(
-          'PREGNANT_OR_BREASTFEEDING',
-        )) {
+      'PREGNANT_OR_BREASTFEEDING',
+    )) {
       await AppAlert.actionError(
         title: 'planner.medical_review_required'.tr,
         message: 'planner.pregnancy_weight_loss_warning'.tr,
@@ -1017,11 +1022,6 @@ class MealPlannerController extends GetxController {
 
           if (response.filledCount > 0) {
             HapticFeedback.mediumImpact();
-            AppAlert.toast(
-              message: 'planner.auto_fill_success'.trParams({
-                'count': '${response.filledCount}',
-              }),
-            );
           } else {
             AppAlert.toast(message: 'planner.auto_fill_no_empty'.tr);
           }
@@ -1182,11 +1182,6 @@ class MealPlannerController extends GetxController {
       }
 
       HapticFeedback.mediumImpact();
-      AppAlert.toast(
-        message: 'planner.auto_fill_success'.trParams({
-          'count': '$filledCount',
-        }),
-      );
       return filledCount;
     } finally {
       isSaving.value = false;

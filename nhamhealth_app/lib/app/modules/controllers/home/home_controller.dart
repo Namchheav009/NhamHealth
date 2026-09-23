@@ -353,10 +353,6 @@ class HomeController extends GetxController {
   }
 
   void selectBottomMenu(int index) {
-    if (index == 4) {
-      openSettings();
-      return;
-    }
     if (index == selectedBottomIndex.value) return;
     selectedBottomIndex.value = index;
 
@@ -367,9 +363,10 @@ class HomeController extends GetxController {
         Get.offNamed<void>(AppRoutes.meals);
         break;
       case 2:
-        Get.offNamed<void>(AppRoutes.community);
+        Get.offNamed<void>(AppRoutes.mealPlanner);
         break;
-      case 4:
+      case 3:
+        Get.offNamed<void>(AppRoutes.community);
         break;
     }
   }

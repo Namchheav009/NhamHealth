@@ -33,22 +33,22 @@ class NutritionProgressCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 19, color: iconColor),
-                  const SizedBox(width: 6),
+                  Icon(icon, size: 17, color: iconColor),
+                  const SizedBox(width: 5),
                   Flexible(
                     child: Text(
                       data.title.trOrSelf,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w600,
                         color: context.appMutedText,
                       ),
@@ -56,21 +56,21 @@ class NutritionProgressCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(
                 '${data.value} / ${data.target}',
                 maxLines: 1,
                 style: TextStyle(
                   color: context.appText,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: Container(
-                  height: 6,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: context.appColorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(10),

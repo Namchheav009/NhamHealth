@@ -64,6 +64,7 @@ const Map<String, String> commonKm = {
   'common.post_options': 'ជម្រើសការបង្ហោះ',
   'common.navigation_home': 'ទំព័រដើម',
   'common.navigation_meals': 'អាហារ',
+  'common.navigation_planner': 'ផែនការ',
   'common.navigation_post': 'បង្ហោះ',
   'common.navigation_community': 'សហគមន៍',
   'common.navigation_chat': 'ជជែក',
