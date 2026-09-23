@@ -63,6 +63,18 @@ public class Meal {
     @Column(name = "cooking_time_minutes")
     private Integer cookingTimeMinutes;
 
+    @Column(name = "prep_time_minutes")
+    private Integer prepTimeMinutes;
+
+    @Column(name = "resting_time_minutes")
+    private Integer restingTimeMinutes;
+
+    @Column(name = "total_time_minutes")
+    private Integer totalTimeMinutes;
+
+    @Column(name = "is_nutrition_estimated", nullable = false)
+    private Boolean isNutritionEstimated = false;
+
     @Column(name = "difficulty", length = 20)
     private String difficulty;
 
@@ -164,6 +176,38 @@ public class Meal {
 
     public void setCookingTimeMinutes(Integer cookingTimeMinutes) {
         this.cookingTimeMinutes = cookingTimeMinutes;
+    }
+
+    public Integer getPrepTimeMinutes() {
+        return prepTimeMinutes;
+    }
+
+    public void setPrepTimeMinutes(Integer prepTimeMinutes) {
+        this.prepTimeMinutes = prepTimeMinutes;
+    }
+
+    public Integer getRestingTimeMinutes() {
+        return restingTimeMinutes;
+    }
+
+    public void setRestingTimeMinutes(Integer restingTimeMinutes) {
+        this.restingTimeMinutes = restingTimeMinutes;
+    }
+
+    public Integer getTotalTimeMinutes() {
+        return totalTimeMinutes;
+    }
+
+    public void setTotalTimeMinutes(Integer totalTimeMinutes) {
+        this.totalTimeMinutes = totalTimeMinutes;
+    }
+
+    public Boolean getIsNutritionEstimated() {
+        return isNutritionEstimated;
+    }
+
+    public void setIsNutritionEstimated(Boolean isNutritionEstimated) {
+        this.isNutritionEstimated = isNutritionEstimated != null && isNutritionEstimated;
     }
 
     public String getDifficulty() {

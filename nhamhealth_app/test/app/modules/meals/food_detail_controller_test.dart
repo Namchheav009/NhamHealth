@@ -298,4 +298,65 @@ void main() {
     // No RenderFlex overflow or layout error
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('FoodDetailView renders prep time, cook time, total time, and estimated nutrition', (tester) async {
+    final localeService = AppLocaleService();
+    localeService.currentLocale.value = AppLocaleService.englishLocale;
+    final fakeRepo = FakeMealRepository();
+
+    final testMeal = MealModel(
+      id: 25,
+      name: 'Bai Sach Chrouk',
+      calories: 480,
+      image: 'assets/images/meals/salad.png',
+      category: 'Breakfast',
+      categoryId: 1,
+      languageCode: 'en',
+      prepTimeMinutes: 15,
+      cookingTimeMinutes: 30,
+      totalTimeMinutes: 45,
+      servings: 4,
+      isNutritionEstimated: true,
+      ingredients: const [
+        MealIngredientModel(
+          name: 'Pork',
+          description: '',
+          image: 'https://example.com/pork.webp',
+          quantity: 300,
+          unit: 'g',
+        ),
+      ],
+      steps: const [
+        MealStepModel(number: 1, instruction: 'Grill the pork slices.')
+      ],
+    );
+    fakeRepo.nextMealDetail = testMeal;
+
+    final controller = FoodDetailController(
+      repository: fakeRepo,
+      localeService: localeService,
+      initialMeal: testMeal,
+    );
+    Get.put<FoodDetailController>(controller);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        locale: AppLocaleService.englishLocale,
+        home: const FoodDetailView(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify prep time, cook time, and total time widgets render
+    expect(find.text('15 mins'), findsOneWidget);
+    expect(find.text('30 mins'), findsOneWidget);
+    expect(find.text('45 mins'), findsOneWidget);
+    expect(find.text('4 people'), findsOneWidget);
+
+    // Verify estimated nutrition label renders
+    expect(find.text('Estimated nutrition'), findsOneWidget);
+
+    expect(tester.takeException(), isNull);
+  });
 }

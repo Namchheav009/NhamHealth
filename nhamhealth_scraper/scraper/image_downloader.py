@@ -79,17 +79,24 @@ def download_and_prepare_image(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    response = requests.get(
-        image_url,
-        headers=HEADERS,
-        timeout=settings.request_timeout_seconds,
-    )
-    response.raise_for_status()
+    response = None
+    last_error = None
+    for _ in range(3):
+        try:
+            response = requests.get(image_url, headers=HEADERS, timeout=settings.request_timeout_seconds)
+            response.raise_for_status()
+            break
+        except requests.RequestException as exc:
+            last_error = exc
+    if response is None or not response.ok:
+        raise last_error or ValueError("Image download failed")
 
     content = response.content
     content_type = (response.headers.get("content-type") or "").lower()
     extension = Path(urlparse(image_url).path).suffix.lower()
 
+    if not content or "text/html" in content_type or "application/json" in content_type:
+        raise ValueError("Image response is empty or not an image")
     if "svg" in content_type or extension == ".svg":
         content = _rasterize_svg(content)
 

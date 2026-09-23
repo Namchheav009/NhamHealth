@@ -81,4 +81,7 @@ const Map<String, String> mealsKm = {
   'meals.refresh_ai_ideas': 'ផ្ទុកគំនិតពី AI ឡើងវិញ',
   'meals.healthy': 'ល្អសម្រាប់សុខភាព',
   'meals.explore_now': 'ស្វែងយល់ឥឡូវនេះ',
+  'meals.prep_time': 'ពេលរៀបចំ',
+  'meals.total_time': 'ពេលសរុប',
+  'meals.estimated_nutrition': 'អាហារូបត្ថម្ភប៉ាន់ស្មាន',
 };

@@ -395,12 +395,16 @@ def estimate_recipe_nutrition(recipe: dict[str, Any]) -> dict[str, float]:
     recipe["carbohydrateGrams"] = carb_per_serving
     recipe["fatGrams"] = fat_per_serving
     recipe["nutritionBasis"] = "PER_SERVING"
+    recipe["isNutritionEstimated"] = True
+    recipe["nutritionSource"] = "ESTIMATED_CALCULATED"
 
     recipe["nutrition"] = {
         "calories": float(cal_per_serving),
         "proteinGrams": pro_per_serving,
         "carbsGrams": carb_per_serving,
         "fatGrams": fat_per_serving,
+        "isNutritionEstimated": True,
+        "nutritionSource": "ESTIMATED_CALCULATED",
     }
 
     return {
@@ -408,5 +412,7 @@ def estimate_recipe_nutrition(recipe: dict[str, Any]) -> dict[str, float]:
         "proteinGrams": pro_per_serving,
         "carbohydrateGrams": carb_per_serving,
         "fatGrams": fat_per_serving,
+        "isNutritionEstimated": True,
+        "nutritionSource": "ESTIMATED_CALCULATED",
     }
 

@@ -389,6 +389,23 @@ class _Nutrition extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (meal.isNutritionEstimated)
+              Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'meals.estimated_nutrition'.tr,
+                  style: TextStyle(
+                    color: context.appColorScheme.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             Text(
               '${meal.calories}',
               style: TextStyle(
@@ -508,41 +525,96 @@ class _Stats extends StatelessWidget {
   final MealModel meal;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 16),
-    decoration: BoxDecoration(
-      border: Border.symmetric(
-        horizontal: BorderSide(color: context.appBorder),
+  Widget build(BuildContext context) {
+    final hasPrepOrTotal =
+        meal.prepTimeMinutes != null || meal.totalTimeMinutes != null;
+
+    if (hasPrepOrTotal) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.symmetric(
+            horizontal: BorderSide(color: context.appBorder),
+          ),
+        ),
+        child: Row(
+          children: [
+            _Stat(
+              icon: Icons.hourglass_top_rounded,
+              label: 'meals.prep_time',
+              value:
+                  meal.prepTimeMinutes == null
+                      ? 'meals.not_specified'.tr
+                      : '${meal.prepTimeMinutes} ${'meals.minutes_short'.tr}',
+            ),
+            const _StatDivider(),
+            _Stat(
+              icon: Icons.schedule_rounded,
+              label: 'meals.cook_time',
+              value:
+                  meal.cookingTimeMinutes == null
+                      ? 'meals.not_specified'.tr
+                      : '${meal.cookingTimeMinutes} ${'meals.minutes_short'.tr}',
+            ),
+            const _StatDivider(),
+            _Stat(
+              icon: Icons.timer_outlined,
+              label: 'meals.total_time',
+              value:
+                  meal.totalTimeMinutes == null
+                      ? 'meals.not_specified'.tr
+                      : '${meal.totalTimeMinutes} ${'meals.minutes_short'.tr}',
+            ),
+            const _StatDivider(),
+            _Stat(
+              icon: Icons.people_outline_rounded,
+              label: 'common.servings',
+              value:
+                  meal.servings == null
+                      ? 'meals.not_specified'.tr
+                      : '${meal.servings} ${'meals.people'.tr}',
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(color: context.appBorder),
+        ),
       ),
-    ),
-    child: Row(
-      children: [
-        _Stat(
-          icon: Icons.schedule_rounded,
-          label: 'meals.cook_time',
-          value:
-              meal.cookingTimeMinutes == null
-                  ? 'meals.not_specified'.tr
-                  : '${meal.cookingTimeMinutes} ${'meals.minutes_short'.tr}',
-        ),
-        const _StatDivider(),
-        _Stat(
-          icon: Icons.local_fire_department_outlined,
-          label: 'common.difficulty',
-          value: localizeDifficulty(meal.difficulty),
-        ),
-        const _StatDivider(),
-        _Stat(
-          icon: Icons.people_outline_rounded,
-          label: 'common.servings',
-          value:
-              meal.servings == null
-                  ? 'meals.not_specified'.tr
-                  : '${meal.servings} ${'meals.people'.tr}',
-        ),
-      ],
-    ),
-  );
+      child: Row(
+        children: [
+          _Stat(
+            icon: Icons.schedule_rounded,
+            label: 'meals.cook_time',
+            value:
+                meal.cookingTimeMinutes == null
+                    ? 'meals.not_specified'.tr
+                    : '${meal.cookingTimeMinutes} ${'meals.minutes_short'.tr}',
+          ),
+          const _StatDivider(),
+          _Stat(
+            icon: Icons.local_fire_department_outlined,
+            label: 'common.difficulty',
+            value: localizeDifficulty(meal.difficulty),
+          ),
+          const _StatDivider(),
+          _Stat(
+            icon: Icons.people_outline_rounded,
+            label: 'common.servings',
+            value:
+                meal.servings == null
+                    ? 'meals.not_specified'.tr
+                    : '${meal.servings} ${'meals.people'.tr}',
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Stat extends StatelessWidget {
@@ -710,26 +782,40 @@ class _IngredientRow extends StatelessWidget {
   final MealIngredientModel item;
   final bool showDivider;
 
+  Widget _fallbackIcon(BuildContext context) => Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: context.appSoftGreen,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.check_rounded,
+          color: context.appColorScheme.primary,
+          size: 16,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
         child: Row(
           children: [
-            Container(
-              width: 26,
-              height: 26,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.appSoftGreen,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check_rounded,
-                color: context.appColorScheme.primary,
-                size: 15,
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: item.image.isNotEmpty
+                  ? Image.network(
+                      item.image,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _fallbackIcon(context),
+                    )
+                  : _fallbackIcon(context),
             ),
             const SizedBox(width: 12),
             Expanded(

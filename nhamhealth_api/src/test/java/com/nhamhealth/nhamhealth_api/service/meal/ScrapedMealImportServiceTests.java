@@ -83,27 +83,17 @@ class ScrapedMealImportServiceTests {
         verifyNoInteractions(nutrition);
     }
 
-    @Test void importedPlannerMealAndRecommendationStayHiddenUntilAdminPublishes() {
+    @Test void scrapedImportDoesNotCreatePlannerMealOrRecommendation() {
         PlannerMealRepository plannerRepo = mock(PlannerMealRepository.class);
         WeeklyMealRecommendationRepository recommendationRepo = mock(WeeklyMealRecommendationRepository.class);
-        when(plannerRepo.save(any(PlannerMeal.class))).thenAnswer(call -> {
-            PlannerMeal plannerMeal = call.getArgument(0);
-            plannerMeal.setPlannerMealId(11);
-            return plannerMeal;
-        });
         service = new ScrapedMealImportService(factory.getValidator(), categories, categoryTranslations,
                 ingredients, nutrients, nutrition, meals, admin, images, em, plannerRepo, recommendationRepo);
 
         var result = service.importMeal(PAYLOAD.replace("UNKNOWN", "PER_SERVING"), photo);
 
-        ArgumentCaptor<PlannerMeal> planner = ArgumentCaptor.forClass(PlannerMeal.class);
-        ArgumentCaptor<WeeklyMealRecommendation> recommendation = ArgumentCaptor.forClass(WeeklyMealRecommendation.class);
-        verify(plannerRepo).save(planner.capture());
-        verify(recommendationRepo).save(recommendation.capture());
-        assertEquals(false, planner.getValue().getActive());
-        assertEquals(false, recommendation.getValue().getActive());
-        assertEquals(7, planner.getValue().getLegacyMealId());
-        assertEquals(11, result.get("plannerMealId"));
+        verifyNoInteractions(plannerRepo, recommendationRepo);
+        assertFalse(result.containsKey("plannerMealId"));
+        assertFalse(result.containsKey("plannerSlot"));
     }
 
     @Test void missingIngredientsAreCreatedAndMarkedForCatalogReview() {
@@ -196,5 +186,44 @@ class ScrapedMealImportServiceTests {
     @Test void negativeProteinFailsValidation() {
         String invalid = PAYLOAD.replace("\"proteinGrams\":25,", "\"proteinGrams\":-5,");
         assertThrows(IllegalArgumentException.class, () -> service.importMeal(invalid, photo));
+    }
+
+    @Test void importsDurationsAndEstimatedNutritionFlag() {
+        String enrichedPayload = PAYLOAD.replace("\"cookingTimeMinutes\":20,",
+                "\"prepTimeMinutes\":15,\"cookingTimeMinutes\":30,\"restingTimeMinutes\":10,\"totalTimeMinutes\":55,\"isNutritionEstimated\":true,");
+        var result = service.importMeal(enrichedPayload, photo);
+        var request = ArgumentCaptor.forClass(AdminMealRequest.class);
+        verify(admin).createScrapedDraft(request.capture());
+        assertEquals(15, request.getValue().prepTimeMinutes());
+        assertEquals(30, request.getValue().cookingTimeMinutes());
+        assertEquals(10, request.getValue().restingTimeMinutes());
+        assertEquals(55, request.getValue().totalTimeMinutes());
+        assertTrue(request.getValue().isNutritionEstimated());
+    }
+
+    @Test void persistsIngredientImagesAndTranslationMemory() {
+        var ingredientImageRepo = mock(com.nhamhealth.nhamhealth_api.repository.catalog.IngredientImageRepository.class);
+        var translationMemoryRepo = mock(com.nhamhealth.nhamhealth_api.repository.translation.TranslationMemoryRepository.class);
+        PlannerMealRepository plannerRepo = mock(PlannerMealRepository.class);
+        when(plannerRepo.save(any(PlannerMeal.class))).thenAnswer(call -> {
+            PlannerMeal pm = call.getArgument(0);
+            pm.setPlannerMealId(11);
+            return pm;
+        });
+        WeeklyMealRecommendationRepository recRepo = mock(WeeklyMealRecommendationRepository.class);
+
+        service = new ScrapedMealImportService(factory.getValidator(), categories, categoryTranslations,
+                ingredients, nutrients, nutrition, meals, admin, images, em,
+                plannerRepo, recRepo, ingredientImageRepo, translationMemoryRepo);
+
+        String payloadWithImagesAndQA = PAYLOAD
+                .replace("\"mealName\":\"Test meal\",", "\"mealName\":\"Test meal\",\"khmerName\":\"ម្ហូបសាកល្បង\",")
+                .replace("\"displayOrder\":1}", "\"displayOrder\":1,\"imageUrl\":\"https://example.com/pork.webp\",\"imageSource\":\"LOCAL_LIBRARY\",\"imageLicense\":\"CC0\",\"imageReviewStatus\":\"APPROVED\"}")
+                .replace("\"reviewStatus\":\"APPROVED\"", "\"reviewStatus\":\"APPROVED\",\"translationStatus\":\"PASSED\",\"glossaryVersion\":\"2.0\",\"translationHash\":\"hash123\"");
+
+        var result = service.importMeal(payloadWithImagesAndQA, photo);
+        assertNotNull(result.get("mealId"));
+        verify(ingredientImageRepo, atLeastOnce()).save(any(IngredientImage.class));
+        verify(translationMemoryRepo, atLeastOnce()).save(any(TranslationMemory.class));
     }
 }

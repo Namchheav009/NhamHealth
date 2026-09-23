@@ -94,6 +94,13 @@ android {
     // ========================================================
 
     signingConfigs {
+    debug {
+        storeFile file("nhamhealth-test-debug.keystore")
+        storePassword "android"
+        keyAlias "nhamhealthdebug"
+        keyPassword "android"
+        }
+
     release {
         keyAlias = keystoreProperties["keyAlias"]
         keyPassword = keystoreProperties["keyPassword"]
@@ -112,6 +119,10 @@ android {
     // ========================================================
 
    buildTypes {
+    debug {
+        signingConfig signingConfigs.debug
+        }
+
     release {
         // Local/CI APKs remain installable when the private production key is
         // unavailable. Play Store builds should always provide key.properties

@@ -249,7 +249,7 @@ class KhmerTranslatorTests(unittest.TestCase):
 
         self.assertEqual(result["translationStatus"], "COMPLETED")
         self.assertEqual(result["translations"]["km"]["mealName"], "អាម៉ុកត្រី")
-        self.assertEqual(result["translations"]["km"]["category"], "អាហារថ្ងៃត្រង់")
+        self.assertEqual(result["translations"]["km"]["category"], "អាហារពេលថ្ងៃត្រង់")
         self.assertEqual(len(result["translations"]["km"]["ingredients"]), 2)
         # Verify strict preservation of quantities and units
         self.assertEqual(result["translations"]["km"]["ingredients"][0]["quantity"], 300)
@@ -282,8 +282,34 @@ class KhmerTranslatorTests(unittest.TestCase):
             with patch.object(self.translator, "_translate_to_khmer", return_value=fallback_result) as mock_fallback:
                 result = self.translator.translate(dict(self.sample_recipe))
                 mock_fallback.assert_called_once()
-                self.assertEqual(result["translationStatus"], "COMPLETED")
+                self.assertEqual(result["translationStatus"], "NEEDS_REVIEW")
                 self.assertEqual(result["translations"]["km"]["mealName"], "អាម៉ុកត្រី")
+
+    def test_rate_limit_cooldown_prevents_per_field_gemini_retries(self):
+        """A structured 429 must not trigger Gemini again for every fallback field."""
+        self.translator.gemini_api_key = "fake-gemini-key"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.ok = False
+        mock_resp.status_code = 429
+        mock_resp.json.return_value = {"error": {"message": "retry in 60s"}}
+        fallback_result = {
+            "mealName": "អាម៉ុកត្រី",
+            "description": "ការីត្រី",
+            "category": "អាហារថ្ងៃត្រង់",
+            "ingredients": [
+                {"name": "សាច់មាន់", "quantity": 300, "unit": "g", "note": None},
+                {"name": "ទឹកត្រី", "quantity": 2, "unit": "tbsp", "note": None},
+            ],
+            "steps": ["លាយគ្រឿង។", "ចំហុយ ២០ នាទី។"],
+            "tags": [],
+        }
+
+        with patch.object(self.translator.session, "post", return_value=mock_resp) as post, \
+             patch.object(self.translator, "_translate_to_khmer", return_value=fallback_result):
+            result = self.translator.translate(dict(self.sample_recipe))
+
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(result["translationStatus"], "NEEDS_REVIEW")
 
     def test_gemini_single_text_translation(self):
         """Verify _translate_gemini_text translates individual phrases."""

@@ -82,4 +82,7 @@ const Map<String, String> mealsEn = {
   'meals.refresh_ai_ideas': 'Refresh AI ideas',
   'meals.healthy': 'Healthy',
   'meals.explore_now': 'Explore now',
+  'meals.prep_time': 'Prep time',
+  'meals.total_time': 'Total time',
+  'meals.estimated_nutrition': 'Estimated nutrition',
 };

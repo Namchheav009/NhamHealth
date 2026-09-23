@@ -2,6 +2,7 @@ import html
 import json
 import os
 import re
+import time
 import urllib.parse
 from typing import Any
 import requests
@@ -9,20 +10,32 @@ from bs4 import BeautifulSoup
 
 try:
     from scraper.config import settings
+    from scraper.ai_usage_tracker import ai_tracker
+    from scraper.ingredient_ai_cache import ingredient_ai_cache
 except ImportError:
     settings = None
+    ai_tracker = None
+    ingredient_ai_cache = None
 
 from .culinary_glossary import (
     CATEGORIES,
     COOKING_ACTIONS,
     DISH_NAMES,
+    GLOSSARY_VERSION,
     INGREDIENTS,
+    MOODS,
     POST_TRANSLATION_FIXES,
     PREPARATION_NOTES,
     STANDARD_UNITS,
+    TAGS,
 )
-from .translation_cache import translation_cache
-from .validator import contains_khmer, validate_translation
+from .translation_cache import compute_recipe_hash, translation_cache
+from .validator import (
+    ValidationResult,
+    comprehensive_validate_translation,
+    contains_khmer,
+    validate_translation,
+)
 
 
 class KhmerTranslator:
@@ -32,7 +45,7 @@ class KhmerTranslator:
     Uses Google Gemini AI as primary culinary translator with model fallback and offline resilience.
     """
 
-    def __init__(self, timeout_seconds: int = 40):
+    def __init__(self, timeout_seconds: int = 25):
         self.timeout = timeout_seconds
         self.session = requests.Session()
         self.session.headers.update({
@@ -44,18 +57,29 @@ class KhmerTranslator:
         ) or os.getenv("GEMINI_API_KEY", "")
         self.gemini_model = (
             getattr(settings, "gemini_model", None) if settings else None
-        ) or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        ) or os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+        self.gemini_fallback_model = (
+            getattr(settings, "gemini_fallback_model", None) if settings else None
+        ) or os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+        self.ai_fallback_confidence = (
+            getattr(settings, "ai_fallback_confidence", None) if settings else None
+        ) or float(os.getenv("AI_FALLBACK_CONFIDENCE", "0.75"))
         self.gemini_base_url = (
             getattr(settings, "gemini_base_url", None) if settings else None
         ) or os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
+        self.glossary_version = (
+            getattr(settings, "glossary_version", None) if settings else None
+        ) or GLOSSARY_VERSION
+        configured_qa_retries = (
+            getattr(settings, "max_qa_retries", None) if settings else None
+        )
+        self.max_qa_retries = configured_qa_retries if configured_qa_retries is not None else 0
+        self._gemini_cooldown_until = 0.0
+        self._used_rate_limit_fallback = False
+        self._recipe_gemini_attempted = False
 
-        # Candidate models tried in sequence if one encounters 429 quota or 404
-        self.candidate_models = list(dict.fromkeys([
-            self.gemini_model,
-            "gemini-3.5-flash-lite",
-            "gemini-3.6-flash",
-            "gemini-2.5-flash",
-        ]))
+        # Valid candidate models
+        self.candidate_models = [self.gemini_model, self.gemini_fallback_model]
 
     def translate(self, recipe: dict, force: bool = False) -> dict:
         """
@@ -63,14 +87,16 @@ class KhmerTranslator:
         translations according to NhamHealth specifications.
 
         If already translated and valid, skips translation unless force=True.
-        If translation fails, records translationStatus='FAILED' and translationError,
-        keeping the original English recipe safely intact.
+        Supports translation memory cache by content hash + glossary version.
+        Retries correctable translation errors up to max_qa_retries times.
         """
         if not isinstance(recipe, dict):
             return recipe
+        self._used_rate_limit_fallback = False
+        self._recipe_gemini_attempted = False
 
         # 1. Check existing translation / skip logic
-        if not force and recipe.get("translationStatus") == "COMPLETED":
+        if not force and recipe.get("translationStatus") in ("COMPLETED", "PASSED"):
             translations = recipe.get("translations")
             if isinstance(translations, dict) and translations.get("km"):
                 is_valid, _ = validate_translation(recipe)
@@ -80,7 +106,6 @@ class KhmerTranslator:
         # 2. Build or extract the English translations container
         en_translation = self._build_english_translation(recipe)
 
-        # 3. Prepare initial structure
         recipe.setdefault("translations", {})
         recipe["translations"]["en"] = en_translation
 
@@ -90,50 +115,124 @@ class KhmerTranslator:
             "proteinGrams": recipe.get("proteinGrams"),
             "carbsGrams": recipe.get("carbohydrateGrams"),
             "fatGrams": recipe.get("fatGrams"),
+            "isNutritionEstimated": recipe.get("isNutritionEstimated", False),
+            "nutritionSource": recipe.get("nutritionSource", "SOURCE_ORIGINAL"),
         }
 
-        # 4. Attempt translation to Khmer
-        try:
-            km_translation = None
+        recipe_hash = compute_recipe_hash(
+            recipe,
+            glossary_version=self.glossary_version,
+            translation_version="2.0",
+        )
+        recipe["translationHash"] = recipe_hash
+        recipe["glossaryVersion"] = self.glossary_version
 
-            # Primary approach: translate entire recipe with Gemini AI in a single culinary pass
-            if self.gemini_api_key:
-                km_translation = self._translate_recipe_with_gemini(en_translation)
+        # 3. Check translation cache
+        if not force:
+            cached_km = translation_cache.get_recipe(recipe_hash)
+            if cached_km:
+                recipe["translations"]["km"] = cached_km
+                validation = comprehensive_validate_translation(recipe)
+                if validation.status == "PASSED":
+                    recipe["translationStatus"] = "COMPLETED"
+                    recipe["translationError"] = None
+                    recipe["qaReport"] = validation.to_report_string()
+                    self._sync_khmer_fields(recipe, cached_km)
+                    return recipe
 
-            # Fallback approach: translate field-by-field if Gemini was unavailable or failed
-            if not km_translation:
-                km_translation = self._translate_to_khmer(en_translation)
+        # 4. Translation attempts with QA validation and retry
+        km_translation = None
+        validation = None
 
-            # Override mealName with glossary entry if one exists (glossary takes priority over AI)
-            meal_name_en = en_translation.get("mealName", "")
-            glossary_name = self._lookup_dish_name_glossary(meal_name_en)
-            if glossary_name:
-                km_translation["mealName"] = glossary_name
+        for attempt in range(self.max_qa_retries + 1):
+            try:
+                # Primary: Gemini structured JSON
+                if self.gemini_api_key:
+                    km_translation = self._translate_recipe_with_gemini(en_translation)
 
-            recipe["translations"]["km"] = km_translation
+                # Fallback: rule-based glossary translation
+                if not km_translation:
+                    km_translation = self._translate_to_khmer(en_translation)
 
-            # Update top-level khmerName and categoryNameKm for backward compatibility with Spring Boot importer
-            if km_translation.get("mealName"):
-                recipe["khmerName"] = km_translation["mealName"]
-            if km_translation.get("category"):
-                recipe["categoryNameKm"] = km_translation["category"]
+                # Override dish name from canonical glossary
+                meal_name_en = en_translation.get("mealName", "")
+                glossary_name = self._lookup_dish_name_glossary(meal_name_en)
+                if glossary_name:
+                    km_translation["mealName"] = glossary_name
 
-            # Validate translation
-            is_valid, error_msg = validate_translation(recipe)
-            if is_valid:
-                recipe["translationStatus"] = "COMPLETED"
-                recipe["translationError"] = None
-            else:
-                recipe["translationStatus"] = "FAILED"
-                recipe["translationError"] = error_msg
-        except Exception as exc:
-            recipe["translations"]["km"] = None
+                recipe["translations"]["km"] = km_translation
+                self._sync_khmer_fields(recipe, km_translation)
+
+                # QA validation
+                validation = comprehensive_validate_translation(recipe)
+
+                if self._used_rate_limit_fallback and validation.status == "PASSED":
+                    validation.status = "NEEDS_REVIEW"
+                    validation.warnings.append(
+                        "Gemini was rate-limited; fallback Khmer translation requires review."
+                    )
+
+                if validation.status in ("PASSED", "NEEDS_REVIEW"):
+                    # Success
+                    break
+
+                if not validation.can_retry or attempt == self.max_qa_retries:
+                    # Cannot retry or reached maximum attempts
+                    break
+
+            except Exception as exc:
+                recipe["translations"]["km"] = None
+                validation = ValidationResult(
+                    status="FAILED",
+                    issues=[str(exc)],
+                    can_retry=False,
+                )
+                break
+
+        if validation:
+            recipe["translationStatus"] = "COMPLETED" if validation.status == "PASSED" else validation.status
+            recipe["translationError"] = "; ".join(validation.issues) if validation.issues else None
+            recipe["qaReport"] = validation.to_report_string()
+            if validation.status == "PASSED" and km_translation:
+                translation_cache.set_recipe(recipe_hash, km_translation)
+        else:
             recipe["translationStatus"] = "FAILED"
-            recipe["translationError"] = str(exc)
+            recipe["translationError"] = "Translation failed to execute."
 
-        # Save cache if updated
+        # Translate tags and moods
+        if recipe.get("tags"):
+            recipe["tagsKm"] = [TAGS.get(t.lower(), t) for t in recipe["tags"]]
+        if recipe.get("moods"):
+            recipe["moodsKm"] = [MOODS.get(m.lower(), m) for m in recipe["moods"]]
+
         translation_cache.save()
         return recipe
+
+    def _sync_khmer_fields(self, recipe: dict, km: dict) -> None:
+        """Synchronize translated Khmer fields to top-level and ingredient/step structures."""
+        if not km:
+            return
+        if km.get("mealName"):
+            recipe["khmerName"] = km["mealName"]
+        if km.get("category"):
+            recipe["categoryNameKm"] = km["category"]
+        if km.get("description"):
+            recipe["descriptionKm"] = km["description"]
+
+        km_ingredients = km.get("ingredients") or []
+        for i, item in enumerate(recipe.get("ingredients") or []):
+            if i < len(km_ingredients):
+                item["ingredientNameKm"] = km_ingredients[i].get("name")
+                item["preparationNoteKm"] = km_ingredients[i].get("note")
+
+        km_steps = km.get("steps") or []
+        for i, step in enumerate(recipe.get("steps") or []):
+            if i < len(km_steps):
+                step_text = km_steps[i]
+                if isinstance(step_text, dict):
+                    step_text = step_text.get("instruction")
+                if isinstance(step, dict):
+                    step["instructionKm"] = step_text
 
     def _build_english_translation(self, recipe: dict) -> dict:
         """Extract or normalize English text fields from the recipe."""
@@ -228,6 +327,10 @@ class KhmerTranslator:
         """
         if not self.gemini_api_key:
             return None
+        if time.monotonic() < self._gemini_cooldown_until:
+            self._used_rate_limit_fallback = True
+            return None
+        self._recipe_gemini_attempted = True
 
         # Prepare compact payload for Gemini
         payload_data = {
@@ -246,20 +349,46 @@ class KhmerTranslator:
         }
 
         system_instruction = (
-            "You are an expert Cambodian culinary chef and professional translator for NhamHealth, "
-            "a Cambodian nutrition and meal platform.\n"
-            "Translate the recipe from English into natural, authentic Cambodian Khmer (ភាសាខ្មែរ).\n\n"
+            "You are a master Cambodian culinary chef, food writer, and professional translator for NhamHealth (www.nhamhealth.com).\n"
+            "Translate the Cambodian recipe from English into authentic, natural, fluent Cambodian Khmer (ភាសាខ្មែរ) with correct Khmer culinary phrasing.\n\n"
             "Strict Translation Rules:\n"
-            "1. Script: Use ONLY standard Khmer Unicode script (U+1780 to U+17FF). Never output Greek, Thai, Lao, Latin or other foreign alphabets.\n"
-            "2. Dish names & Ingredients: Use authentic everyday Cambodian culinary terminology "
-            "(e.g. 'Fish Amok' -> 'អាម៉ុកត្រី', 'Papaya Salad' -> 'បុកល្ហុង', 'Pork Rice' -> 'បាយសាច់ជ្រូក', "
-            "'fish sauce' -> 'ទឹកត្រី', 'garlic' -> 'ខ្ទឹមស', 'shallots' -> 'ខ្ទឹមក្រហម', 'lime' -> 'ក្រូចឆ្មារ', "
-            "'tarantulas' -> 'អាពីង', 'crushed peanuts' -> 'សណ្តែកដីលីងបុក', 'squid' -> 'មឹក', 'steamed' -> 'ចំហុយ').\n"
-            "3. Cooking Steps: Translate into clear, natural Cambodian kitchen instructions, ending sentences with '។'. "
-            "Avoid stiff or literal translation.\n"
-            "4. Schema: Return strictly a JSON object with keys: mealName, description, category, "
-            "ingredients (list of objects with 'name' and 'note'), steps (list of strings), tags (list of strings).\n"
-            "5. Number of items: You MUST preserve the exact same number of ingredients and steps as the input."
+            "1. Script: Use ONLY standard Khmer Unicode script (U+1780 to U+17FF). Never output Thai, Lao, Latin, or romanized syllables.\n"
+            "2. Traditional Dish Names:\n"
+            "   - 'Bai — Perfect Jasmine Rice' -> 'បាយម្លិះឈ្ងុយឆ្ងាញ់'\n"
+            "   - 'Fish Amok' / 'Amok Trey' -> 'អាម៉ុកត្រី'\n"
+            "   - 'Bai Sach Chrouk' -> 'បាយសាច់ជ្រូក'\n"
+            "   - 'Ang Dtray Meuk' / 'Grilled Squid' -> 'មឹកអាំងទឹកត្រីកោះកុង'\n"
+            "   - 'A-Ping' / 'Fried Tarantulas' -> 'អាពីងបំពង'\n"
+            "3. Ingredients (Everyday Cambodian Culinary Terms):\n"
+            "   - 'broken rice' -> 'បាយពូត' (NEVER 'អង្ករខូច')\n"
+            "   - 'edible tarantulas' / 'tarantulas' -> 'អាពីង' (NEVER 'ត្រីធូណា')\n"
+            "   - 'whole small squid' / 'squid' -> 'មឹកស្រស់' / 'មឹក' (NEVER 'ត្រីកោណ')\n"
+            "   - 'kaffir lime' -> 'ក្រូចសើច', 'kaffir lime leaves' -> 'ស្លឹកក្រូចសើច' (NEVER 'កាហ្វេអ៊ីន')\n"
+            "   - 'pinch salt' / 'pinch of salt' -> 'អំបិលមួយចិប'\n"
+            "   - 'firm white freshwater fish' -> 'សាច់ត្រីទឹកសាបស្រស់'\n"
+            "   - 'slork ngor' -> 'ស្លឹកញ'\n"
+            "   - 'yellow kroeung' -> 'គ្រឿងលឿង'\n"
+            "   - 'tuk meric' -> 'ទឹកម្រេចក្រូចឆ្មារ'\n"
+            "   - 'thick coconut cream' -> 'ក្បាលខ្ទិះដូងខាប់'\n"
+            "   - 'prahok' -> 'ប្រហុក'\n"
+            "   - 'palm sugar' -> 'ស្ករត្នោត'\n"
+            "   - 'fresh coconut water' -> 'ទឹកដូងស្រស់'\n"
+            "   - 'squares banana leaf' -> 'ស្លឹកចេកកាត់បួនជ្រុង'\n"
+            "4. Cooking Instructions (Fluent Kitchen Khmer):\n"
+            "   - Translate into easy-to-understand, step-by-step Cambodian home kitchen instructions.\n"
+            "   - End each complete instruction sentence with Khmer full-stop '។'.\n"
+            "   - Example: 'Put the rice in the pot and rinse it with water, rubbing the grains gently with your fingers. Drain the water and repeat three or four times until the water runs mostly clear. If you don't rinse the rice, the cooked rice will be sticky and gummy.'\n"
+            "     -> 'ដួសអង្ករដាក់ចូលក្នុងឆ្នាំង រួចលាងជម្រះជាមួយទឹក ដោយយកដៃកូរអង្ករថ្នមៗ។ ចាក់ទឹកចេញ រួចលាងជម្រះសារឡើងវិញ ៣ ទៅ ៤ ដង រហូតដល់ទឹកថ្លា។ ប្រសិនបើមិនលាងជម្រះអង្ករទេ បាយដែលដាំរួចនឹងស្អិតខ្លាំង។'\n"
+            "5. Strict Output JSON Schema:\n"
+            "   {\n"
+            "     \"mealName\": \"<Khmer dish name>\",\n"
+            "     \"description\": \"<Khmer description or null>\",\n"
+            "     \"category\": \"<Khmer category>\",\n"
+            "     \"ingredients\": [{\"name\": \"<Khmer ingredient name>\", \"note\": \"<Khmer preparation note or null>\"}],\n"
+            "     \"steps\": [\"<Khmer step 1 instruction>\", \"<Khmer step 2 instruction>\"],\n"
+            "     \"tags\": [\"<Khmer tag 1>\"]\n"
+            "   }\n"
+            "6. Cardinality: You MUST return exactly the same number of ingredients and steps as received."
         )
 
         prompt = (
@@ -277,12 +406,43 @@ class KhmerTranslator:
 
         en_ingredients = en.get("ingredients") or []
         en_steps = en.get("steps") or []
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.gemini_api_key,
+        }
 
         for model in self.candidate_models:
+            if ai_tracker and not ai_tracker.can_call_ai():
+                break
+            if ai_tracker:
+                ai_tracker.record_request(model)
             url = f"{self.gemini_base_url}/models/{model}:generateContent?key={self.gemini_api_key}"
             try:
-                resp = self.session.post(url, json=req_body, timeout=self.timeout)
-                if not resp.ok:
+                resp = None
+                for retry in range(5):
+                    resp = self.session.post(url, headers=headers, json=req_body, timeout=self.timeout)
+                    if resp.status_code in (429, 503):
+                        wait_seconds = 12.0 * (retry + 1)
+                        try:
+                            err_data = resp.json()
+                            msg = err_data.get("error", {}).get("message", "")
+                            match = re.search(r"retry in ([0-9.]+)s", msg)
+                            if match:
+                                wait_seconds = float(match.group(1)) + 1.0
+                        except Exception:
+                            pass
+                        wait_seconds = min(max(wait_seconds, 15.0), 60.0)
+                        self._gemini_cooldown_until = time.monotonic() + wait_seconds
+                        self._used_rate_limit_fallback = True
+                        print(
+                            f"  [Gemini Rate-Limit] Using fallback translation; "
+                            f"Gemini paused for {wait_seconds:.1f}s."
+                        )
+                        return None
+                    break
+
+
+                if not resp or not resp.ok:
                     continue
                 data = resp.json()
                 candidates = data.get("candidates") or []
@@ -322,11 +482,21 @@ class KhmerTranslator:
                 km_ingredients = []
                 for en_item, km_item in zip(en_ingredients, raw_km_ingredients):
                     ing_name = str(km_item.get("name") or "").strip()
-                    if not ing_name or not contains_khmer(ing_name):
+                    canonical_name = INGREDIENTS.get(
+                        str(en_item.get("name") or "").strip().lower()
+                    )
+                    if canonical_name:
+                        ing_name = canonical_name
+                    elif not ing_name or not contains_khmer(ing_name):
                         ing_name = self.translate_ingredient_name(en_item.get("name") or "")
 
                     ing_note = km_item.get("note")
-                    if ing_note is not None:
+                    canonical_note = PREPARATION_NOTES.get(
+                        str(en_item.get("note") or "").strip().lower()
+                    )
+                    if canonical_note:
+                        ing_note = canonical_note
+                    elif ing_note is not None:
                         ing_note = str(ing_note).strip() or None
 
                     km_ingredients.append({
@@ -353,7 +523,10 @@ class KhmerTranslator:
                 if km_desc is not None:
                     km_desc = self._apply_post_fixes(str(km_desc).strip()) or None
 
-                km_cat = str(parsed.get("category") or "").strip()
+                canonical_category = CATEGORIES.get(
+                    str(en.get("category") or "").strip().lower()
+                )
+                km_cat = canonical_category or str(parsed.get("category") or "").strip()
                 if not km_cat or not contains_khmer(km_cat):
                     km_cat = self.translate_category(en.get("category") or "")
                 else:
@@ -583,7 +756,12 @@ class KhmerTranslator:
 
     def _translate_gemini_text(self, text: str) -> str | None:
         """Translate a single text string using Gemini AI with model fallback."""
-        if not self.gemini_api_key or not text.strip():
+        if (
+            not self.gemini_api_key
+            or not text.strip()
+            or self._recipe_gemini_attempted
+            or time.monotonic() < self._gemini_cooldown_until
+        ):
             return None
 
         prompt = (
@@ -600,24 +778,34 @@ class KhmerTranslator:
             "generationConfig": {"temperature": 0.2},
         }
 
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.gemini_api_key,
+        }
+
         for model in self.candidate_models:
             url = f"{self.gemini_base_url}/models/{model}:generateContent?key={self.gemini_api_key}"
-            try:
-                resp = self.session.post(url, json=req_body, timeout=self.timeout)
-                if not resp.ok:
-                    continue
-                data = resp.json()
-                candidates = data.get("candidates") or []
-                if not candidates:
-                    continue
-                parts = candidates[0].get("content", {}).get("parts") or []
-                if not parts or "text" not in parts[0]:
-                    continue
-                result = parts[0]["text"].strip()
-                if result and contains_khmer(result):
-                    return result
-            except Exception:
-                continue
+            for retry_attempt in range(2):
+                try:
+                    resp = self.session.post(url, headers=headers, json=req_body, timeout=self.timeout)
+                    if resp.status_code in (429, 503):
+                        self._gemini_cooldown_until = time.monotonic() + 60.0
+                        self._used_rate_limit_fallback = True
+                        return None
+                    if not resp.ok:
+                        break
+                    data = resp.json()
+                    candidates = data.get("candidates") or []
+                    if not candidates:
+                        break
+                    parts = candidates[0].get("content", {}).get("parts") or []
+                    if not parts or "text" not in parts[0]:
+                        break
+                    result = parts[0]["text"].strip()
+                    if result and contains_khmer(result):
+                        return result
+                except Exception:
+                    break
 
         return None
 
@@ -733,6 +921,241 @@ class KhmerTranslator:
         # Remove any stray non-Khmer alphabet characters (Greek, Thai, Cyrillic) if LLM slipped
         result = re.sub(r"[\u0370-\u03FF\u0E00-\u0E7F]+", "", result)
         return result.strip()
+
+
+    def translate_ingredients_batch(
+        self,
+        ingredient_names: list[str],
+        max_batch_size: int = 15,
+    ) -> list[dict[str, Any]]:
+        """
+        Batch translate and normalize ingredient names into authentic natural Khmer.
+        Batch size: up to 10-20 ingredients per Gemini request.
+        Uses primary model gemini-3.1-flash-lite, fallback to gemini-3.6-flash if confidence < 0.75.
+        Results are cached in translation memory and persistent ingredient_ai_cache.
+        """
+        results_by_name: dict[str, dict[str, Any]] = {}
+        unresolved: list[str] = []
+
+        for raw_name in ingredient_names:
+            name = (raw_name or "").strip()
+            if not name:
+                continue
+
+            # 1. Local Culinary Glossary (Free)
+            lower_name = name.lower()
+            if lower_name in INGREDIENTS:
+                km = INGREDIENTS[lower_name]
+                if ai_tracker:
+                    ai_tracker.record_avoided()
+                results_by_name[name] = {
+                    "original": name,
+                    "normalizedName": name,
+                    "preparationNote": None,
+                    "khmerName": km,
+                    "searchAliases": [name],
+                    "confidence": 1.0,
+                    "modelUsed": "glossary",
+                }
+                continue
+
+            # 2. Local Translation Memory Cache (Free)
+            cached_km = translation_cache.get(name, category="ingredients")
+            if cached_km:
+                if ai_tracker:
+                    ai_tracker.record_cache_hit()
+                results_by_name[name] = {
+                    "original": name,
+                    "normalizedName": name,
+                    "preparationNote": None,
+                    "khmerName": cached_km,
+                    "searchAliases": [name],
+                    "confidence": 1.0,
+                    "modelUsed": "cache",
+                }
+                continue
+
+            # 3. Persistent AI Cache (Free)
+            if ingredient_ai_cache:
+                ai_entry = ingredient_ai_cache.get(name)
+                if ai_entry and ai_entry.get("khmerTranslation"):
+                    if ai_tracker:
+                        ai_tracker.record_cache_hit()
+                    results_by_name[name] = {
+                        "original": name,
+                        "normalizedName": ai_entry.get("normalizedName", name),
+                        "preparationNote": None,
+                        "khmerName": ai_entry["khmerTranslation"],
+                        "searchAliases": ai_entry.get("searchAliases", [name]),
+                        "confidence": ai_entry.get("aiConfidence", 1.0),
+                        "modelUsed": ai_entry.get("modelUsed", "ai_cache"),
+                    }
+                    continue
+
+            unresolved.append(name)
+
+        # Batch unresolved ingredients in chunks (up to max_batch_size, e.g. 15)
+        for i in range(0, len(unresolved), max_batch_size):
+            chunk = unresolved[i:i + max_batch_size]
+
+            if not self.gemini_api_key or (ai_tracker and not ai_tracker.can_call_ai()):
+                # Fallback to local / engine translate for each item
+                for item in chunk:
+                    try:
+                        km = self._engine_translate(item)
+                    except Exception:
+                        km = self._fallback_substitute(item)
+                    results_by_name[item] = {
+                        "original": item,
+                        "normalizedName": item,
+                        "preparationNote": None,
+                        "khmerName": km,
+                        "searchAliases": [item],
+                        "confidence": 0.5,
+                        "modelUsed": "fallback_engine",
+                    }
+                continue
+
+            prompt = (
+                "You are an expert Cambodian culinary taxonomist and translator for NhamHealth (www.nhamhealth.com).\\n"
+                "Normalize and translate each ingredient into natural Cambodian Khmer (ភាសាខ្មែរ).\\n\\n"
+                "Strict Rules:\\n"
+                "1. Use ONLY standard Khmer Unicode script (U+1780 to U+17FF) for khmerName. Never use Thai, Lao, or Latin syllables.\\n"
+                "2. Standardize culinary terms (e.g. 'Pandan' -> 'ស្លឹកតើយ', 'Fresh Galangal' -> 'រំដេងស្រស់', 'Prahok' -> 'ប្រហុក', 'Snake Beans' -> 'សណ្តែកកួរ', 'Kampot Black Pepper' -> 'ម្រេចខ្មៅកំពត').\\n"
+                "3. Extract any preparation note if present (e.g., 'fresh', 'diced', 'minced', 'roasted') or null.\\n"
+                "4. Provide 2-3 alternate English searchAliases for each ingredient for image searching.\\n"
+                "5. Provide a confidence score between 0.0 and 1.0 for each item.\\n\\n"
+                f"Input Ingredients:\\n{json.dumps(chunk, ensure_ascii=False, indent=2)}\\n\\n"
+                "Return JSON array ONLY:\\n"
+                "[\\n"
+                "  {\\n"
+                '    "original": "Pandan",\\n'
+                '    "normalizedName": "Pandan Leaves",\\n'
+                '    "preparationNote": null,\\n'
+                '    "khmerName": "ស្លឹកតើយ",\\n'
+                '    "searchAliases": ["pandan", "pandan leaf", "screwpine leaves"],\\n'
+                '    "confidence": 0.95\\n'
+                "  }\\n"
+                "]"
+            )
+
+            req_body = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "responseMimeType": "application/json",
+                },
+            }
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": self.gemini_api_key,
+            }
+
+            parsed_list = None
+            model_used = self.gemini_model
+
+            # 1. Primary Model: gemini-3.1-flash-lite
+            if ai_tracker and ai_tracker.can_call_ai():
+                ai_tracker.record_request(self.gemini_model)
+                url = f"{self.gemini_base_url}/models/{self.gemini_model}:generateContent?key={self.gemini_api_key}"
+                try:
+                    resp = self.session.post(url, headers=headers, json=req_body, timeout=self.timeout)
+                    if resp.ok:
+                        data = resp.json()
+                        candidates = data.get("candidates") or []
+                        if candidates:
+                            text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                            if text.startswith("```"):
+                                lines = text.splitlines()
+                                if lines[0].startswith("```"):
+                                    lines = lines[1:]
+                                if lines and lines[-1].startswith("```"):
+                                    lines = lines[:-1]
+                                text = "\n".join(lines).strip()
+                            parsed_list = json.loads(text)
+                except Exception:
+                    parsed_list = None
+
+            # Check if primary model confidence is adequate
+            avg_conf = 0.0
+            if isinstance(parsed_list, list) and len(parsed_list) == len(chunk):
+                scores = [float(p.get("confidence", 0.0)) for p in parsed_list if isinstance(p, dict)]
+                avg_conf = sum(scores) / len(scores) if scores else 0.0
+
+            # 2. Fallback Model: gemini-3.6-flash (ONLY if Flash Lite failed or confidence < threshold)
+            if (not parsed_list or avg_conf < self.ai_fallback_confidence) and (ai_tracker and ai_tracker.can_call_ai()):
+                model_used = self.gemini_fallback_model
+                ai_tracker.record_request(self.gemini_fallback_model)
+                url = f"{self.gemini_base_url}/models/{self.gemini_fallback_model}:generateContent?key={self.gemini_api_key}"
+                try:
+                    resp = self.session.post(url, headers=headers, json=req_body, timeout=self.timeout)
+                    if resp.ok:
+                        data = resp.json()
+                        candidates = data.get("candidates") or []
+                        if candidates:
+                            text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                            if text.startswith("```"):
+                                lines = text.splitlines()
+                                if lines[0].startswith("```"):
+                                    lines = lines[1:]
+                                if lines and lines[-1].startswith("```"):
+                                    lines = lines[:-1]
+                                text = "\n".join(lines).strip()
+                            parsed_list = json.loads(text)
+                except Exception:
+                    pass
+
+            if isinstance(parsed_list, list):
+                for entry in parsed_list:
+                    if not isinstance(entry, dict):
+                        continue
+                    orig = entry.get("original") or ""
+                    norm = entry.get("normalizedName") or orig
+                    km = self._apply_post_fixes(entry.get("khmerName") or "")
+                    aliases = entry.get("searchAliases") or [norm]
+                    conf = float(entry.get("confidence", 0.8))
+
+                    results_by_name[orig] = {
+                        "original": orig,
+                        "normalizedName": norm,
+                        "preparationNote": entry.get("preparationNote"),
+                        "khmerName": km,
+                        "searchAliases": aliases,
+                        "confidence": conf,
+                        "modelUsed": model_used,
+                    }
+                    if km and contains_khmer(km):
+                        translation_cache.set(orig, km, category="ingredients")
+                        if ingredient_ai_cache:
+                            ingredient_ai_cache.set(
+                                name_or_key=orig,
+                                normalized_name=norm,
+                                khmer_translation=km,
+                                search_aliases=aliases,
+                                ai_confidence=conf,
+                                model_used=model_used,
+                                status="FOUND",
+                            )
+
+            # Any items still missing from this chunk get fallback translation
+            for item in chunk:
+                if item not in results_by_name:
+                    try:
+                        km = self._engine_translate(item)
+                    except Exception:
+                        km = self._fallback_substitute(item)
+                    results_by_name[item] = {
+                        "original": item,
+                        "normalizedName": item,
+                        "preparationNote": None,
+                        "khmerName": km,
+                        "searchAliases": [item],
+                        "confidence": 0.5,
+                        "modelUsed": "fallback_engine",
+                    }
+
+        translation_cache.save()
+        return [results_by_name[name] for name in ingredient_names if name in results_by_name]
 
 
     def _fallback_substitute(self, text: str) -> str:

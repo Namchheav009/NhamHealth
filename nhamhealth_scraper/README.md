@@ -72,6 +72,12 @@ To generate a new recipe or beverage from a topic instead of downloading a page:
 
 **Meal photos are downloaded automatically.** The scraper extracts the high-resolution WebP meal photograph from the recipe, converts/optimizes it, and saves it to `images/<meal-name>.webp`. When importing with `--import-api`, the photo is uploaded directly to your storage (Supabase or local) and attached to the meal so it displays in NhamHealth immediately. If you wish to replace a photo with a custom file, you can still use `--image-file`.
 
+**Ingredient photos are stored automatically during import.** For each resolved ingredient image, the scraper downloads and converts the image to WebP, sends it to the bearer-authenticated backend endpoint, and the backend validates and stores it in `ingredient-images/` in the configured Supabase bucket. The returned storage URL is saved on the ingredient. If an optional ingredient image cannot be downloaded or uploaded, the meal still imports as a draft and the ingredient is marked for an Admin image upload. The scraper never uses or stores a Supabase service key. Set `SPRING_INGREDIENT_IMAGE_UPLOAD_URL` only if your backend uses a non-default URL; its default is `http://localhost:8080/api/admin/ingredient-images`.
+
+Ingredient lookup uses TheMealDB's documented ingredient-image naming convention and saves verified WebP files in `images/ingredients/`. `output/ingredient_image_cache.json` prevents repeated downloads, including repeated known-missing entries. Cambodian-specific ingredients such as Prahok and Kroeung are deliberately left without a substitute image. Use `--no-ingredient-images` to skip this optional work, or `--refresh-ingredient-images` to retry cached results. Configure `THEMEALDB_API_KEY` (defaults to development key `1`), `INGREDIENT_IMAGES_DIR`, and `INGREDIENT_IMAGE_CACHE_FILE` only when you need non-default settings.
+
+Ingredient Khmer-translation repair is glossary-first and uses no Gemini credits by default. Set `INGREDIENT_TRANSLATION_AI_ENABLED=true` only for unknown terms that require an optional Flash Lite fallback. `GEMINI_MODEL` defaults to `gemini-2.5-flash-lite` for that low-cost fallback.
+
 ## 2. Review and optionally provide a real meal photo
 
 Review meal name, category, servings, cooking time, difficulty, ingredients,
@@ -181,6 +187,13 @@ roll back on failure; storage uploads are external to that transaction, so a dat
 failure after upload can leave an unused image object for later cleanup.
 
 ## Nutrition and translation
+
+Translation uses at most one structured Gemini request per recipe. Successful
+translations are cached, exact dish/category/ingredient/preparation terms are
+overridden by the curated Khmer culinary glossary, and batch requests are paced
+at 15 seconds by default for the free-tier 5 RPM limit. A rate-limited or invalid
+AI response falls back without making per-field Gemini calls and is marked
+`NEEDS_REVIEW`; only `PASSED` translations enter the cache.
 
 Missing nutrition stays null. PER_SERVING values populate the meal nutrition rows;
 WHOLE_RECIPE values are divided by servings. UNKNOWN and PER_100G values remain in

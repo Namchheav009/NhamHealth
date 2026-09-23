@@ -149,6 +149,14 @@ public class MealAdminService {
         meal.setDescription(blankToNull(request.description()));
         meal.setDifficulty(blankToNull(request.difficulty()));
         meal.setCookingTimeMinutes(request.cookingTimeMinutes());
+        meal.setPrepTimeMinutes(request.prepTimeMinutes());
+        meal.setRestingTimeMinutes(request.restingTimeMinutes());
+        meal.setTotalTimeMinutes(request.totalTimeMinutes() != null ? request.totalTimeMinutes()
+                : (request.prepTimeMinutes() != null && request.cookingTimeMinutes() != null
+                ? request.prepTimeMinutes() + request.cookingTimeMinutes() : request.cookingTimeMinutes()));
+        if (request.isNutritionEstimated() != null) {
+            meal.setIsNutritionEstimated(request.isNutritionEstimated());
+        }
         meal.setServings(request.servings());
         meal.setCaloriesCached(request.calories());
         meal.setIsPublished(false);
@@ -195,7 +203,8 @@ public class MealAdminService {
                 meal.getMealId(), meal.getMealName(), mealKm == null ? "" : mealKm.getMealName(),
                 meal.getCategory().getCategoryId(), meal.getCaloriesCached(),
                 meal.getServings(), meal.getDescription(), mealKm == null ? "" : nullToEmpty(mealKm.getDescription()),
-                meal.getDifficulty(), meal.getCookingTimeMinutes(),
+                meal.getDifficulty(), meal.getCookingTimeMinutes(), meal.getPrepTimeMinutes(),
+                meal.getRestingTimeMinutes(), meal.getTotalTimeMinutes(), meal.getIsNutritionEstimated(),
                 Boolean.TRUE.equals(meal.getIsPublished()), meal.getMainImageUrl(), ingredients, nutrition,
                 recipeSteps);
     }
@@ -276,12 +285,28 @@ public class MealAdminService {
         if (!profileImageStorageService.isStoredMealImageUrl(request.mainImageUrl())) {
             throw new IllegalArgumentException("Upload a meal image before saving the meal");
         }
+        if (request.published()) {
+            if (request.cookingTimeMinutes() == null) {
+                throw new IllegalArgumentException("Cooking time is required before publishing a meal");
+            }
+            if (request.mainImageUrl() == null || request.mainImageUrl().isBlank()) {
+                throw new IllegalArgumentException("Main meal image is required before publishing a meal");
+            }
+        }
         meal.setMealName(request.mealName().trim());
         meal.setCategory(category);
         meal.setMainImageUrl(request.mainImageUrl().trim());
         meal.setDescription(blankToNull(request.description()));
         meal.setDifficulty(blankToNull(request.difficulty()));
         meal.setCookingTimeMinutes(request.cookingTimeMinutes());
+        meal.setPrepTimeMinutes(request.prepTimeMinutes());
+        meal.setRestingTimeMinutes(request.restingTimeMinutes());
+        meal.setTotalTimeMinutes(request.totalTimeMinutes() != null ? request.totalTimeMinutes()
+                : (request.prepTimeMinutes() != null && request.cookingTimeMinutes() != null
+                ? request.prepTimeMinutes() + request.cookingTimeMinutes() : request.cookingTimeMinutes()));
+        if (request.isNutritionEstimated() != null) {
+            meal.setIsNutritionEstimated(request.isNutritionEstimated());
+        }
         meal.setServings(request.servings());
         meal.setCaloriesCached(request.calories());
         meal.setIsPublished(request.published());

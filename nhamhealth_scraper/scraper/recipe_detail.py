@@ -1,11 +1,13 @@
+import ipaddress
 import json
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup, Tag
 
 from .config import HEADERS, settings
+from .ingredient_image_resolver import enrich_recipe_with_ingredient_images
 from .ingredient_parser import parse_ingredient_line
 from .nutrition_estimator import estimate_recipe_nutrition
 
@@ -30,9 +32,11 @@ BEVERAGE_KEYWORDS = {
     "ក្រឡុក", "តែ", "ទឹកផ្លែឈើ", "ភេសជ្ជៈ", "ទឹកក្រឡុក"
 }
 
+
 def is_beverage_item(name: str = "", category: str = "", description: str = "") -> bool:
     combined = f"{name or ''} {category or ''} {description or ''}".lower()
     return any(kw in combined for kw in BEVERAGE_KEYWORDS)
+
 
 DIFFICULTY_MAP = {
     "beginner": "EASY",
@@ -41,18 +45,57 @@ DIFFICULTY_MAP = {
 }
 
 
+def is_safe_url(url: str) -> bool:
+    """Validate URL to prevent SSRF against loopback, link-local, and private IP ranges."""
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        parsed = urlparse(url.strip())
+        if parsed.scheme.lower() not in ("http", "https"):
+            return False
+        hostname = (parsed.hostname or "").strip().lower()
+        if not hostname or hostname in ("localhost", "127.0.0.1", "::1", "169.254.169.254"):
+            return False
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return False
+        except ValueError:
+            # Domain name is allowed
+            pass
+        return True
+    except Exception:
+        return False
+
+
 def _duration_to_minutes(value):
     if not value:
         return None
 
-    # Handles common ISO-8601 recipe durations such as PT30M / PT1H20M.
-    m = re.fullmatch(r"PT(?:(\d+)H)?(?:(\d+)M)?", str(value).strip())
-    if not m:
-        return None
+    val_str = str(value).strip()
 
-    hours = int(m.group(1) or 0)
-    minutes = int(m.group(2) or 0)
-    return hours * 60 + minutes
+    # Handles ISO-8601 durations like PT30M, PT1H20M, P0DT45M
+    m = re.fullmatch(r"P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", val_str, flags=re.I)
+    if m:
+        days = int(m.group(1) or 0)
+        hours = int(m.group(2) or 0)
+        minutes = int(m.group(3) or 0)
+        seconds = int(m.group(4) or 0)
+        total = days * 1440 + hours * 60 + minutes + (1 if seconds >= 30 else 0)
+        return total if total > 0 else None
+
+    # Text patterns: "1 hr 30 mins", "45 min", "1 hour", "25 minutes"
+    m_text = re.search(r"(?:(\d+)\s*(?:hours?|hrs?|h))?\s*(?:(\d+)\s*(?:minutes?|mins?|m))?", val_str, flags=re.I)
+    if m_text and (m_text.group(1) or m_text.group(2)):
+        hours = int(m_text.group(1) or 0)
+        minutes = int(m_text.group(2) or 0)
+        total = hours * 60 + minutes
+        return total if total > 0 else None
+
+    if val_str.isdigit():
+        return int(val_str)
+
+    return None
 
 
 def _image_from_jsonld(image):
@@ -167,6 +210,8 @@ def _parse_jsonld_recipe(soup: BeautifulSoup, url: str):
         "sourceImageUrl": _image_from_jsonld(data.get("image")),
         "prepTimeMinutes": _duration_to_minutes(data.get("prepTime")),
         "cookingTimeMinutes": _duration_to_minutes(data.get("cookTime")),
+        "restingTimeMinutes": _duration_to_minutes(data.get("performTime") or data.get("restingTime")),
+        "totalTimeMinutes": _duration_to_minutes(data.get("totalTime")),
         "difficulty": None,
         "servings": servings,
         "calories": calories,
@@ -233,6 +278,8 @@ def _extract_cambodian_cookbook_html(soup: BeautifulSoup, url: str):
 
     prep_minutes = int_after("Prep")
     cook_minutes = int_after("Cook")
+    resting_minutes = int_after("Rest") or int_after("Marinate") or int_after("Chill")
+    total_minutes = int_after("Total")
 
     servings = None
     m = re.search(r"Serves\s*(\d+)", full_text, flags=re.I)
@@ -341,9 +388,7 @@ def _extract_cambodian_cookbook_html(soup: BeautifulSoup, url: str):
                             steps.append(
                                 {
                                     "stepNumber": len(steps) + 1,
-                                    # Current NhamHealth Admin UI only needs instruction.
                                     "instruction": instruction,
-                                    # Preserved for review but importer may ignore it.
                                     "originalStepTitle": pending_title or None,
                                 }
                             )
@@ -358,10 +403,10 @@ def _extract_cambodian_cookbook_html(soup: BeautifulSoup, url: str):
         "sourceImageUrl": source_image_url,
         "prepTimeMinutes": prep_minutes,
         "cookingTimeMinutes": cook_minutes,
+        "restingTimeMinutes": resting_minutes,
+        "totalTimeMinutes": total_minutes,
         "difficulty": difficulty,
         "servings": servings,
-        # This site does not show nutrition on the inspected recipe page.
-        # Do not invent zeros.
         "calories": None,
         "proteinGrams": None,
         "carbohydrateGrams": None,
@@ -376,6 +421,9 @@ def _extract_cambodian_cookbook_html(soup: BeautifulSoup, url: str):
 
 
 def scrape_recipe(url: str) -> dict:
+    if not is_safe_url(url):
+        raise ValueError(f"Blocked unsafe/internal URL: {url}")
+
     response = requests.get(
         url,
         headers=HEADERS,
@@ -400,5 +448,8 @@ def scrape_recipe(url: str) -> dict:
 
     if recipe.get("calories") is None or recipe.get("proteinGrams") is None:
         estimate_recipe_nutrition(recipe)
+
+    # Enrich each ingredient with images from 4-tier resolution
+    enrich_recipe_with_ingredient_images(recipe)
 
     return recipe

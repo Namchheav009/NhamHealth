@@ -55,7 +55,7 @@ class AuthFlowScaffold extends StatelessWidget {
                           (constraints.maxWidth >=
                                   AppSpacing.twoColumnBreakpoint &&
                               isLandscape) ||
-                          constraints.maxWidth >= 900;
+                          constraints.maxWidth >= 840;
 
                       if (isWide) {
                         return Center(
@@ -76,37 +76,38 @@ class AuthFlowScaffold extends StatelessWidget {
                                     flex: 5,
                                     child: Padding(
                                       padding: const EdgeInsets.only(right: 36),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (showBackButton)
-                                            AppBackButton(onPressed: Get.back),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            title.trOrSelf,
-                                            style: TextStyle(
-                                              color: context.appText,
-                                              fontSize: 28,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: -0.3,
+                                      child: SingleChildScrollView(
+                                        physics: const BouncingScrollPhysics(),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (showBackButton)
+                                              AppBackButton(onPressed: Get.back),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              title.trOrSelf,
+                                              style: TextStyle(
+                                                color: context.appText,
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: -0.3,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            subtitle.trOrSelf,
-                                            style: TextStyle(
-                                              color: context.appMutedText,
-                                              fontSize: 14,
-                                              height: 1.4,
-                                              fontWeight: FontWeight.w500,
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              subtitle.trOrSelf,
+                                              style: TextStyle(
+                                                color: context.appMutedText,
+                                                fontSize: 14,
+                                                height: 1.4,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Flexible(
-                                            child: ConstrainedBox(
+                                            const SizedBox(height: 20),
+                                            ConstrainedBox(
                                               constraints: const BoxConstraints(
                                                 maxHeight: 240,
                                               ),
@@ -124,8 +125,8 @@ class AuthFlowScaffold extends StatelessWidget {
                                                     ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -166,126 +167,27 @@ class AuthFlowScaffold extends StatelessWidget {
                         );
                       }
 
-                      if (isTablet) {
-                        final illustrationHeight = (constraints.maxHeight * 0.22)
-                            .clamp(160.0, 240.0);
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                AppSpacing.pageHorizontalFor(context),
-                                AppSpacing.pageTop,
-                                AppSpacing.pageHorizontalFor(context),
-                                0,
-                              ),
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 600.0),
-                                  child: SizedBox(
-                                    height: AppBackButton.layoutSize,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: showBackButton
-                                          ? AppBackButton(onPressed: Get.back)
-                                          : null,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 600.0),
-                                  child: SingleChildScrollView(
-                                    keyboardDismissBehavior:
-                                        ScrollViewKeyboardDismissBehavior
-                                            .onDrag,
-                                    physics: const BouncingScrollPhysics(),
-                                    padding: EdgeInsets.fromLTRB(
-                                      AppSpacing.pageHorizontalFor(context),
-                                      8,
-                                      AppSpacing.pageHorizontalFor(context),
-                                      32,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Text(
-                                          title.trOrSelf,
-                                          style: TextStyle(
-                                            color: context.appText,
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: -0.3,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          subtitle.trOrSelf,
-                                          style: TextStyle(
-                                            color: context.appMutedText,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 18),
-                                        SizedBox(
-                                          height: illustrationHeight,
-                                          child: Image.asset(
-                                            illustrationAsset,
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (_, _, _) => const Icon(
-                                                  Icons
-                                                      .health_and_safety_outlined,
-                                                  size: 96,
-                                                  color:
-                                                      AppColors.primaryGreen,
-                                                ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: context.appSurfaceLow,
-                                            borderRadius:
-                                                BorderRadius.circular(28),
-                                            boxShadow: context.appCardShadow,
-                                          ),
-                                          padding: const EdgeInsets.all(28),
-                                          child: child,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
                       final compact = constraints.maxHeight < 720;
+                      final maxContentWidth = isTablet ? 540.0 : 480.0;
+                      final contentPadding = isTablet
+                          ? const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.tabletPageHorizontal,
+                              vertical: AppSpacing.pageTop,
+                            )
+                          : AppSpacing.pagePadding;
                       final illustrationHeight = (constraints.maxHeight *
-                              (compact ? 0.22 : 0.27))
-                          .clamp(130.0, 220.0);
+                              (compact ? 0.22 : (isTablet ? 0.25 : 0.27)))
+                          .clamp(130.0, isTablet ? 240.0 : 220.0);
 
                       return Align(
                         alignment: Alignment.topCenter,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 480.0,
-                          ),
+                          constraints: BoxConstraints(maxWidth: maxContentWidth),
                           child: SingleChildScrollView(
                             keyboardDismissBehavior:
                                 ScrollViewKeyboardDismissBehavior.onDrag,
                             physics: const BouncingScrollPhysics(),
-                            padding: AppSpacing.pagePadding,
+                            padding: contentPadding,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -293,32 +195,32 @@ class AuthFlowScaffold extends StatelessWidget {
                                   height: AppBackButton.layoutSize,
                                   child: Align(
                                     alignment: Alignment.centerLeft,
-                                    child:
-                                        showBackButton
-                                            ? AppBackButton(onPressed: Get.back)
-                                            : null,
+                                    child: showBackButton
+                                        ? AppBackButton(onPressed: Get.back)
+                                        : null,
                                   ),
                                 ),
-                                SizedBox(height: compact ? 4 : 10),
+                                SizedBox(height: isTablet ? 14 : (compact ? 4 : 10)),
                                 Text(
                                   title.trOrSelf,
                                   style: TextStyle(
                                     color: context.appText,
-                                    fontSize: 24,
+                                    fontSize: isTablet ? 28 : 24,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: -0.3,
                                   ),
                                 ),
-                                const SizedBox(height: 5),
+                                const SizedBox(height: 6),
                                 Text(
                                   subtitle.trOrSelf,
                                   style: TextStyle(
                                     color: context.appMutedText,
-                                    fontSize: 13,
+                                    fontSize: isTablet ? 15 : 13,
                                     fontWeight: FontWeight.w500,
+                                    height: 1.4,
                                   ),
                                 ),
-                                SizedBox(height: compact ? 10 : 16),
+                                SizedBox(height: isTablet ? 20 : (compact ? 10 : 16)),
                                 SizedBox(
                                   height: illustrationHeight,
                                   child: Image.asset(
@@ -332,7 +234,7 @@ class AuthFlowScaffold extends StatelessWidget {
                                         ),
                                   ),
                                 ),
-                                SizedBox(height: compact ? 16 : 22),
+                                SizedBox(height: isTablet ? 24 : (compact ? 16 : 22)),
                                 child,
                               ],
                             ),

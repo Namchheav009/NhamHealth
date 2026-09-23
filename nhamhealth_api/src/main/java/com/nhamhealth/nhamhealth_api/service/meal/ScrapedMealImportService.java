@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.AdminMealRequest;
@@ -32,8 +33,6 @@ import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.MealCategoryTranslation;
 import com.nhamhealth.nhamhealth_api.entity.MealNutrition;
 import com.nhamhealth.nhamhealth_api.entity.Nutrient;
-import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
-import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.IngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.NutrientRepository;
@@ -49,7 +48,8 @@ import jakarta.validation.Validator;
 
 @Service
 public class ScrapedMealImportService {
-    private final ObjectMapper json = new ObjectMapper();
+    private final ObjectMapper json = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final Validator validator;
     private final MealCategoryRepository categories;
     private final MealCategoryTranslationRepository categoryTranslations;
@@ -62,6 +62,8 @@ public class ScrapedMealImportService {
     private final EntityManager em;
     private final PlannerMealRepository plannerMeals;
     private final WeeklyMealRecommendationRepository weeklyRecommendations;
+    private final com.nhamhealth.nhamhealth_api.repository.catalog.IngredientImageRepository ingredientImages;
+    private final com.nhamhealth.nhamhealth_api.repository.translation.TranslationMemoryRepository translationMemories;
 
     public ScrapedMealImportService(Validator validator, MealCategoryRepository categories,
             MealCategoryTranslationRepository categoryTranslations,
@@ -69,7 +71,18 @@ public class ScrapedMealImportService {
             MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
             ProfileImageStorageService images, EntityManager em) {
         this(validator, categories, categoryTranslations, ingredients, nutrients, nutrition, meals, admin, images, em,
-                null, null);
+                null, null, null, null);
+    }
+
+    public ScrapedMealImportService(Validator validator, MealCategoryRepository categories,
+            MealCategoryTranslationRepository categoryTranslations,
+            IngredientRepository ingredients, NutrientRepository nutrients,
+            MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
+            ProfileImageStorageService images, EntityManager em,
+            PlannerMealRepository plannerMeals,
+            WeeklyMealRecommendationRepository weeklyRecommendations) {
+        this(validator, categories, categoryTranslations, ingredients, nutrients, nutrition, meals, admin, images, em,
+                plannerMeals, weeklyRecommendations, null, null);
     }
 
     @Autowired
@@ -79,7 +92,9 @@ public class ScrapedMealImportService {
             MealNutritionRepository nutrition, MealRepository meals, MealAdminService admin,
             ProfileImageStorageService images, EntityManager em,
             PlannerMealRepository plannerMeals,
-            WeeklyMealRecommendationRepository weeklyRecommendations) {
+            WeeklyMealRecommendationRepository weeklyRecommendations,
+            @Autowired(required = false) com.nhamhealth.nhamhealth_api.repository.catalog.IngredientImageRepository ingredientImages,
+            @Autowired(required = false) com.nhamhealth.nhamhealth_api.repository.translation.TranslationMemoryRepository translationMemories) {
         this.validator = validator;
         this.categories = categories;
         this.categoryTranslations = categoryTranslations;
@@ -92,6 +107,8 @@ public class ScrapedMealImportService {
         this.em = em;
         this.plannerMeals = plannerMeals;
         this.weeklyRecommendations = weeklyRecommendations;
+        this.ingredientImages = ingredientImages;
+        this.translationMemories = translationMemories;
     }
 
     @Transactional
@@ -103,7 +120,7 @@ public class ScrapedMealImportService {
         try {
             request = json.readValue(payload, ScrapedMealImportRequest.class);
         } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("Recipe must be valid import JSON");
+            throw new IllegalArgumentException("Recipe must be valid import JSON: " + exception.getMessage());
         }
         if (request == null)
             throw new IllegalArgumentException("Recipe is required");
@@ -181,8 +198,17 @@ public class ScrapedMealImportService {
             String normalizedName = ingredientName.toLowerCase(Locale.ROOT);
             Ingredient ingredient = catalogByName.computeIfAbsent(normalizedName,
                     ignored -> ingredients.findByIngredientNameIgnoreCase(ingredientName)
+                            .map(existing -> {
+                                if ((existing.getImageUrl() == null || existing.getImageUrl().isBlank())
+                                        && item.imageUrl() != null && !item.imageUrl().isBlank()) {
+                                    existing.setImageUrl(item.imageUrl().trim());
+                                    Ingredient saved = ingredients.save(existing);
+                                    return saved != null ? saved : existing;
+                                }
+                                return existing;
+                            })
                             .orElseGet(() -> createScrapedIngredient(
-                                    ingredientName, item.unit(), request.sourceName(), warnings)));
+                                    ingredientName, item.unit(), item.imageUrl(), request.sourceName(), warnings)));
             AdminMealIngredientRequest incoming = new AdminMealIngredientRequest(
                     ingredient.getIngredientId(), item.quantity(), item.unit(), item.preparationNote(),
                     item.ingredientNameKm(), item.preparationNoteKm());
@@ -206,18 +232,61 @@ public class ScrapedMealImportService {
                 || request.fatGrams() != null) && Set.of("UNKNOWN", "PER_100G").contains(request.nutritionBasis())) {
             warnings.add("Nutrition retained in source payload only: per-serving basis cannot be determined");
         }
+        if (request.cookingTimeMinutes() == null) {
+            warnings.add("Cooking time is missing; requires admin confirmation before publishing");
+        }
+        if ("NEEDS_REVIEW".equalsIgnoreCase(request.translationStatus())) {
+            warnings.add("Khmer translation flagged for admin review: " + (request.translationError() != null ? request.translationError() : "QA review required"));
+        } else if ("FAILED".equalsIgnoreCase(request.translationStatus())) {
+            warnings.add("Khmer translation failed: " + (request.translationError() != null ? request.translationError() : "Translation rejected"));
+        }
         String imageUrl = image == null ? null : images.storeMealImage(image);
         if (imageUrl == null)
             warnings.add("Draft has no image; upload a meal photo in Admin before publishing");
         var saved = admin.createScrapedDraft(
                 new AdminMealRequest(request.mealName(), request.khmerName(), category.getCategoryId(),
                         calories, request.servings(), request.description(), request.descriptionKm(),
-                        request.difficulty(), request.cookingTimeMinutes(),
+                        request.difficulty(), request.cookingTimeMinutes(), request.prepTimeMinutes(),
+                        request.restingTimeMinutes(), request.totalTimeMinutes(), request.isNutritionEstimated(),
                         false, imageUrl, resolved, orderedSteps.stream()
                                 .map(s -> new AdminRecipeStepRequest(s.instruction(), s.instructionKm())).toList()));
         Meal meal = meals.findById(saved.mealId()).orElseThrow();
         meal.setProteinGramsCached(perServing(request.proteinGrams(), request));
+        meal.setPrepTimeMinutes(request.prepTimeMinutes());
+        meal.setRestingTimeMinutes(request.restingTimeMinutes());
+        meal.setTotalTimeMinutes(request.totalTimeMinutes() != null ? request.totalTimeMinutes()
+                : (request.prepTimeMinutes() != null && request.cookingTimeMinutes() != null
+                ? request.prepTimeMinutes() + request.cookingTimeMinutes() : request.cookingTimeMinutes()));
+        if (request.isNutritionEstimated() != null) {
+            meal.setIsNutritionEstimated(request.isNutritionEstimated());
+        }
         meals.save(meal);
+
+        for (var item : orderedIngredients) {
+            String normalizedName = item.ingredientName().trim().toLowerCase(Locale.ROOT);
+            Ingredient ing = catalogByName.get(normalizedName);
+            if (ing != null && item.imageUrl() != null && !item.imageUrl().isBlank()) {
+                if (ingredientImages != null) {
+                    boolean alreadyStored = ingredientImages.findByIngredientIngredientId(ing.getIngredientId()).stream()
+                            .anyMatch(existing -> item.imageUrl().trim().equals(existing.getImageUrl()));
+                    if (!alreadyStored) {
+                        com.nhamhealth.nhamhealth_api.entity.IngredientImage img = new com.nhamhealth.nhamhealth_api.entity.IngredientImage();
+                        img.setIngredient(ing);
+                        img.setImageUrl(item.imageUrl().trim());
+                        img.setSourceType(item.imageSource() != null ? item.imageSource() : "SCRAPED");
+                        img.setLicenseType(item.imageLicense() != null ? item.imageLicense() : "PROPRIETARY");
+                        img.setReviewStatus(item.imageReviewStatus() != null ? item.imageReviewStatus() : "APPROVED");
+                        img.setIsPrimary(true);
+                        ingredientImages.save(img);
+                    }
+                }
+                if (ing.getImageUrl() == null || ing.getImageUrl().isBlank()) {
+                    ing.setImageUrl(item.imageUrl().trim());
+                    ingredients.save(ing);
+                }
+            }
+        }
+
         for (var entry : amounts.entrySet()) {
             MealNutrition row = new MealNutrition();
             row.setMeal(meal);
@@ -225,105 +294,52 @@ public class ScrapedMealImportService {
             row.setAmountPerServing(entry.getValue());
             nutrition.save(row);
         }
-        em.createNativeQuery("INSERT INTO scraped_meal_sources (meal_id, source_url, source_payload, review_status) "
-                + "VALUES (:id, :url, :payload, 'PENDING_REVIEW')")
-                .setParameter("id", saved.mealId()).setParameter("url", sourceUrl).setParameter("payload", payload).executeUpdate();
-        // Queue a hidden planner entry. Admin publication activates it for users and
-        // AI Auto-Fill.
-        PlannerMeal plannerMeal = new PlannerMeal();
-        plannerMeal.setLegacyMealId(saved.mealId());
-        plannerMeal.setNameEn(request.mealName());
-        plannerMeal.setNameKm(request.khmerName() != null ? request.khmerName() : request.mealName());
-        plannerMeal.setCategory(category);
-        plannerMeal.setCategories(Set.of(category));
-        plannerMeal.setCategoryEn(category.getCategoryName());
-        var kmCatTrans = categoryTranslations.findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(), "km");
-        plannerMeal.setCategoryKm(kmCatTrans.map(MealCategoryTranslation::getName).orElse(category.getCategoryName()));
-        plannerMeal.setDescriptionEn(request.description());
-        plannerMeal.setDescriptionKm(request.descriptionKm());
-        plannerMeal.setImageUrl(imageUrl);
-        plannerMeal.setCalories(calories != null ? calories : BigDecimal.ZERO);
-        plannerMeal
-                .setProteinGrams(meal.getProteinGramsCached() != null ? meal.getProteinGramsCached() : BigDecimal.ZERO);
-        plannerMeal.setCarbsGrams(perServing(request.carbohydrateGrams(), request) != null
-                ? perServing(request.carbohydrateGrams(), request)
-                : BigDecimal.ZERO);
-        plannerMeal
-                .setFatGrams(perServing(request.fatGrams(), request) != null ? perServing(request.fatGrams(), request)
-                        : BigDecimal.ZERO);
-        plannerMeal.setCookingTimeMinutes(request.cookingTimeMinutes());
+        String transStatus = request.translationStatus() != null ? request.translationStatus() : "PENDING";
+        String transError = request.translationError();
+        String transHash = request.translationHash();
+        String glossaryVer = request.glossaryVersion() != null ? request.glossaryVersion() : "2.0";
+        String qaReport = request.qaReport();
+        em.createNativeQuery("INSERT INTO scraped_meal_sources (meal_id, source_url, source_payload, review_status, "
+                + "translation_status, translation_error, translation_hash, glossary_version, qa_report) "
+                + "VALUES (:id, :url, :payload, 'PENDING_REVIEW', :transStatus, :transError, :transHash, :glossaryVer, :qaReport)")
+                .setParameter("id", saved.mealId())
+                .setParameter("url", sourceUrl)
+                .setParameter("payload", payload)
+                .setParameter("transStatus", transStatus)
+                .setParameter("transError", transError)
+                .setParameter("transHash", transHash)
+                .setParameter("glossaryVer", glossaryVer)
+                .setParameter("qaReport", qaReport)
+                .executeUpdate();
 
-        String ingredientsEnText = orderedIngredients.stream()
-                .map(i -> (i.quantity() != null ? i.quantity().stripTrailingZeros().toPlainString() + " " : "")
-                        + (i.unit() != null ? i.unit() + " " : "") + i.ingredientName())
-                .collect(Collectors.joining("\n"));
-        String ingredientsKmText = orderedIngredients.stream()
-                .map(i -> (i.quantity() != null ? i.quantity().stripTrailingZeros().toPlainString() + " " : "")
-                        + (i.unit() != null ? i.unit() + " " : "")
-                        + (i.ingredientNameKm() != null ? i.ingredientNameKm() : i.ingredientName()))
-                .collect(Collectors.joining("\n"));
-        plannerMeal.setIngredientsText(ingredientsEnText);
-        plannerMeal.setIngredientsTextKm(ingredientsKmText);
-
-        String instructionsEnText = orderedSteps.stream().map(ScrapedMealImportRequest.StepInput::instruction)
-                .collect(Collectors.joining("\n"));
-        String instructionsKmText = orderedSteps.stream()
-                .map(s -> s.instructionKm() != null ? s.instructionKm() : s.instruction())
-                .collect(Collectors.joining("\n"));
-        plannerMeal.setInstructionsText(instructionsEnText);
-        plannerMeal.setInstructionsTextKm(instructionsKmText);
-
-        plannerMeal.setTagsText(request.sourceName() != null ? request.sourceName() : "Scraped Recipe");
-        plannerMeal.setTagsTextKm(request.sourceName() != null ? request.sourceName() : "រូបមន្តទាញយកពីអ៊ីនធឺណិត");
-        plannerMeal.setActive(false);
-
+        if (translationMemories != null && request.khmerName() != null && !request.khmerName().isBlank()) {
+            try {
+                String dishNameEn = request.mealName().trim();
+                String dishNameKm = request.khmerName().trim();
+                String hash = Integer.toHexString(dishNameEn.toLowerCase(Locale.ROOT).hashCode());
+                if (translationMemories.findBySourceHashAndLanguageCode(hash, "km").isEmpty()) {
+                    translationMemories.save(new com.nhamhealth.nhamhealth_api.entity.TranslationMemory(
+                            dishNameEn, dishNameKm, "meal_name", "km", hash));
+                }
+            } catch (Exception ignored) {
+            }
+        }
         Map<String, Object> response = new LinkedHashMap<>(
                 Map.of("mealId", saved.mealId(), "mealName", saved.mealName(),
                         "published", false, "reviewStatus", "PENDING_REVIEW", "warnings", warnings));
         response.put("mainImageUrl", imageUrl);
-
-        if (plannerMeals != null) {
-            PlannerMeal savedPlannerMeal = plannerMeals.save(plannerMeal);
-            response.put("plannerMealId", savedPlannerMeal.getPlannerMealId());
-
-            if (weeklyRecommendations != null) {
-                // Ensure a weekly recommendation entry exists for ALL days
-                String targetSlot = determinePlannerSlot(category.getCategoryName(), request.mealName());
-                WeeklyMealRecommendation rec = new WeeklyMealRecommendation();
-                rec.setPlannerMeal(savedPlannerMeal);
-                rec.setMeal(meal);
-                rec.setDayOfWeek("ALL");
-                rec.setMealSlot(targetSlot);
-                rec.setNote("Scraped & AI-curated: " + request.mealName());
-                rec.setActive(false);
-                rec.setSortOrder(500);
-                weeklyRecommendations.save(rec);
-                response.put("plannerSlot", targetSlot);
-            }
-        }
         return response;
     }
 
-    private String determinePlannerSlot(String categoryName, String mealName) {
-        String cat = categoryName == null ? "" : categoryName.toUpperCase(Locale.ROOT);
-        String name = mealName == null ? "" : mealName.toUpperCase(Locale.ROOT);
-        if (cat.contains("BREAKFAST"))
-            return "BREAKFAST";
-        if (cat.contains("DINNER") || cat.contains("SOUP"))
-            return "DINNER";
-        if (cat.contains("SNACK") || cat.contains("BEVERAGE") || cat.contains("DRINK") || cat.contains("DESSERT")
-                || name.contains("SMOOTHIE") || name.contains("TEA") || name.contains("JUICE")
-                || name.contains("SHAKE"))
-            return "SNACK";
-        return "LUNCH";
-    }
-
-    private Ingredient createScrapedIngredient(String name, String unit, String sourceName, List<String> warnings) {
+    private Ingredient createScrapedIngredient(String name, String unit, String imageUrl, String sourceName, List<String> warnings) {
         Ingredient ingredient = new Ingredient();
         ingredient.setIngredientName(name);
         ingredient.setIngredientType("SCRAPED_PENDING_REVIEW");
         ingredient.setDefaultUnit(unit == null || unit.isBlank() ? null : unit.trim());
         ingredient.setDescription(null);
+        if (imageUrl != null && !imageUrl.isBlank()) {
+            ingredient.setImageUrl(imageUrl.trim());
+        }
         Ingredient saved = ingredients.save(ingredient);
         warnings.add("Created ingredient catalog entry pending review: " + name);
         return saved;

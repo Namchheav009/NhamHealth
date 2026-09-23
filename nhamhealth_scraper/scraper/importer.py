@@ -87,10 +87,14 @@ def _api_recipe_payload(recipe: dict) -> dict:
             "quantity": item.get("quantity"),
             "unit": item.get("unit"),
             "preparationNote": item.get("preparationNote"),
-            "ingredientNameKm": km_item.get("name") or km_item.get("ingredientName"),
-            "preparationNoteKm": km_item.get("note") or km_item.get("preparationNote"),
+            "ingredientNameKm": km_item.get("name") or km_item.get("ingredientName") or item.get("ingredientNameKm"),
+            "preparationNoteKm": km_item.get("note") or km_item.get("preparationNote") or item.get("preparationNoteKm"),
             "originalIngredientText": item.get("originalIngredientText"),
             "displayOrder": item.get("displayOrder"),
+            "imageUrl": item.get("imageUrl"),
+            "imageSource": item.get("imageSource"),
+            "imageLicense": item.get("imageLicense"),
+            "imageReviewStatus": item.get("imageReviewStatus"),
         })
 
     payload_steps = []
@@ -98,7 +102,7 @@ def _api_recipe_payload(recipe: dict) -> dict:
         if not step.get("instruction"):
             continue
         km_step = km_steps[idx] if idx < len(km_steps) else None
-        instruction_km = km_step if isinstance(km_step, str) else (km_step.get("instruction") if isinstance(km_step, dict) else None)
+        instruction_km = km_step if isinstance(km_step, str) else (km_step.get("instruction") if isinstance(km_step, dict) else step.get("instructionKm"))
         payload_steps.append({
             "stepNumber": step.get("stepNumber"),
             "instruction": step.get("instruction"),
@@ -117,8 +121,12 @@ def _api_recipe_payload(recipe: dict) -> dict:
         "carbohydrateGrams": recipe.get("carbohydrateGrams"),
         "fatGrams": recipe.get("fatGrams"),
         "nutritionBasis": recipe.get("nutritionBasis"),
+        "isNutritionEstimated": recipe.get("isNutritionEstimated", False),
         "servings": recipe.get("servings"),
         "cookingTimeMinutes": recipe.get("cookingTimeMinutes"),
+        "prepTimeMinutes": recipe.get("prepTimeMinutes"),
+        "restingTimeMinutes": recipe.get("restingTimeMinutes"),
+        "totalTimeMinutes": recipe.get("totalTimeMinutes"),
         "difficulty": recipe.get("difficulty"),
         "ingredients": payload_ingredients,
         "steps": payload_steps,
@@ -129,6 +137,11 @@ def _api_recipe_payload(recipe: dict) -> dict:
         "scrapedAt": recipe.get("scrapedAt"),
         "reviewStatus": "PENDING_REVIEW",
         "published": False,
+        "translationStatus": recipe.get("translationStatus"),
+        "translationError": recipe.get("translationError"),
+        "translationHash": recipe.get("translationHash"),
+        "glossaryVersion": recipe.get("glossaryVersion"),
+        "qaReport": recipe.get("qaReport"),
     }
 
 

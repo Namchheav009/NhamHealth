@@ -10,14 +10,17 @@ import os
 os.chdir(ROOT)
 
 from scraper.config import settings
+from scraper.ai_usage_tracker import ai_tracker
 from scraper.exporter import save_json
 from scraper.image_downloader import download_and_prepare_image, prepare_local_image
+from scraper.ingredient_image_uploader import upload_recipe_ingredient_images
 from scraper.ai_web_ingester import AiWebRecipeIngester
 from scraper.importer import import_recipe
 from scraper.normalizer import normalize_recipe
 from scraper.recipe_detail import scrape_recipe
 from scraper.recipe_list import get_recipe_links
 from scraper.validator import validate_recipe
+from scraper.ingredient_image_resolver import enrich_recipe_with_ingredient_images
 from translators import khmer_translator, validate_translation
 
 
@@ -64,7 +67,7 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Scrape, review and import NhamHealth recipes.")
-    source = parser.add_mutually_exclusive_group(required=True)
+    source = parser.add_mutually_exclusive_group(required=False)
     source.add_argument("--url", help="Scrape one recipe URL.")
     source.add_argument("--all", action="store_true", help="Scrape the recipe index.")
     source.add_argument("--input", type=Path, help="Validate/import saved JSON without scraping again.")
@@ -73,6 +76,8 @@ def main():
         help="Extract a recipe from a real public recipe page (example.com URLs are placeholders).",
     )
     source.add_argument("--ai-query", help="Ingest or generate a recipe/beverage directly using Gemini AI.")
+    source.add_argument("--repair-ingredient-images", action="store_true", help="Find and repair catalog ingredients whose image is missing.")
+    source.add_argument("--repair-ingredient-translations", action="store_true", help="Repair normalized catalog names and invalid Khmer translations.")
     parser.add_argument("--limit", type=int, default=settings.max_recipes)
     parser.add_argument("--skip", type=int, default=0,
                         help="Skip recipes already processed at the start of an --all or --input batch.")
@@ -98,7 +103,32 @@ def main():
         action="store_true",
         help="Analyze ingredients against the backend database and Gemini AI before review.",
     )
+    parser.add_argument("--no-ingredient-images", action="store_true", help="Skip optional ingredient-image lookup/download.")
+    parser.add_argument("--refresh-ingredient-images", action="store_true", help="Refresh cached ingredient-image results.")
+    parser.add_argument("--retry-missing-images", action="store_true", help="Retry expired/missing image cache entries during catalog repair.")
+    parser.add_argument(
+        "--max-ai-requests",
+        type=int,
+        default=getattr(settings, "max_ai_requests", None),
+        help="Maximum AI requests allowed before safely stopping and saving progress.",
+    )
     args = parser.parse_args()
+    if args.max_ai_requests is not None:
+        ai_tracker.set_budget(args.max_ai_requests)
+    if args.repair_ingredient_translations:
+        from scraper.ingredient_translation_repair import repair_ingredient_translations
+        summary = repair_ingredient_translations(max_ai_requests=args.max_ai_requests)
+        print(f"\nFinished: {summary['checked']} checked, {summary['translated']} translated, {summary['normalized']} normalized, {summary['unchanged']} unchanged, {summary['failed']} failed.")
+        return 0
+    if args.repair_ingredient_images:
+        if args.url or args.all or args.input or args.ai_url or args.ai_query:
+            parser.error("--repair-ingredient-images cannot be combined with a recipe source")
+        from scraper.ingredient_image_service import IngredientImageService
+        summary = IngredientImageService(max_ai_requests=args.max_ai_requests).repair()
+        print(f"\nFinished: {summary['added']} images added; {summary['themealdb']} TheMealDB; {summary['ai_searched']} AI searched; {summary['missing']} still missing.")
+        return 0
+    if not (args.url or args.all or args.input or args.ai_url or args.ai_query):
+        parser.error("select a recipe source or use --repair-ingredient-images")
     if args.limit < 1:
         parser.error("--limit must be positive")
     if args.skip < 0:
@@ -177,7 +207,32 @@ def main():
                 recipe["translationStatus"] = "FAILED"
                 recipe["translationError"] = trans_err
 
+            # Resolve and attach ingredient images
+            image_counts = enrich_recipe_with_ingredient_images(
+                recipe, enabled=not args.no_ingredient_images, refresh=args.refresh_ingredient_images
+            )
+            if not args.no_ingredient_images:
+                print("  Ingredient images: " + ", ".join(f"{k.lower()}={v}" for k, v in image_counts.items() if v))
+
+            if args.analyze_ingredients:
+                analysis = AiWebRecipeIngester().analyze_ingredients_with_backend(recipe)
+                recipe["ingredientAnalysis"] = analysis
+                matched = analysis.get("databaseMatchedCount", 0)
+                total = analysis.get("totalIngredients", 0)
+                print(f"- Database Verified: {matched}/{total} ingredients matched")
+                if analysis.get("error"):
+                    print(f"- Ingredient analysis unavailable: {analysis['error']}")
+                ai_info = analysis.get("aiAnalysis")
+                if ai_info:
+                    print(f"- AI Health Grade: {ai_info.get('healthRating')} ({ai_info.get('healthScore')}/100)")
+                    print(f"- AI Summary: {ai_info.get('summary')}")
+
             processed_recipes.append(recipe)
+            normalized_recipes.append(recipe)
+            # Preserve hand-edited input files; emit validation into a separate artifact.
+            destination = review_output_path(args.input)
+            save_json(normalized_recipes, destination)
+            save_json(normalized_recipes, "output/staging_recipes.json")
             for warning in warnings:
                 print("  WARNING:", warning)
             if errors:
@@ -188,11 +243,9 @@ def main():
 
             has_image = bool(recipe.get("localImagePath") and Path(recipe["localImagePath"]).is_file())
             image_status = f"OK ({recipe.get('localImagePath')})" if has_image else "Missing"
-            trans_status = (
-                "OK"
-                if recipe.get("translationStatus") == "COMPLETED"
-                else f"FAILED ({recipe.get('translationError')})"
-            )
+            trans_status = recipe.get("translationStatus") or "UNKNOWN"
+            if recipe.get("translationError"):
+                trans_status += f" ({recipe.get('translationError')})"
             cal = recipe.get("calories")
             pro = recipe.get("proteinGrams")
             carb = recipe.get("carbohydrateGrams")
@@ -208,7 +261,44 @@ def main():
             print(f"- Image: {image_status}")
             print(f"- Final output: {RECIPES_OUTPUT}")
 
-            if not args.import_api:
+            if args.import_api:
+                source_url = recipe.get("sourceUrl")
+                if source_url and source_url in seen_urls:
+                    result = {
+                        "mealName": recipe.get("mealName"),
+                        "sourceUrl": source_url,
+                        "skipped": True,
+                        "reason": "Duplicate source URL in batch.",
+                    }
+                    results.append(result)
+                    save_json(results, "output/import_results.json")
+                    print_import_result(result)
+                    continue
+
+                if source_url:
+                    seen_urls.add(source_url)
+
+                try:
+                    for warning in upload_recipe_ingredient_images(recipe):
+                        print("  WARNING:", warning)
+                    result = import_recipe(recipe)
+                    results.append(result)
+                    save_json(results, "output/import_results.json")
+                    print_import_result(result)
+                except Exception as exc:
+                    has_failures = True
+                    result = {
+                        "mealName": recipe.get("mealName"),
+                        "sourceUrl": recipe.get("sourceUrl"),
+                        "failed": True,
+                        "error": str(exc),
+                    }
+                    results.append(result)
+                    save_json(results, "output/import_results.json")
+                    print_import_result(result)
+            else:
+                photo_note = f"Photo prepared at {recipe.get('localImagePath')}" if has_image else "No photo available"
+                print(f"  JSON and photo saved for review ({photo_note}). Run with --import-api to import.")
                 photo_note = f"Photo prepared at {recipe.get('localImagePath')}" if has_image else "No photo available"
                 print(f"  JSON and photo saved for review ({photo_note}). Run with --import-api to import.")
         except Exception as exc:
@@ -279,6 +369,8 @@ def main():
         print("Finished with errors. See the messages above.")
     else:
         print("Finished. JSON and meal images saved; no database import was requested.")
+    if ai_tracker.total_ai_requests > 0 or ai_tracker.cache_hits > 0 or ai_tracker.ai_calls_avoided > 0:
+        ai_tracker.print_summary()
     return 1 if has_failures else 0
 
 

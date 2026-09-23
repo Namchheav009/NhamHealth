@@ -21,8 +21,22 @@ public record AdminMealRequest(
         @Size(max = 1000) String descriptionKm,
         @Size(max = 20) String difficulty,
         @Min(0) @Max(1440) Integer cookingTimeMinutes,
+        @Min(0) @Max(1440) Integer prepTimeMinutes,
+        @Min(0) @Max(1440) Integer restingTimeMinutes,
+        @Min(0) @Max(1440) Integer totalTimeMinutes,
+        Boolean isNutritionEstimated,
         boolean published,
         @NotBlank @Size(max = 255) String mainImageUrl,
         @NotNull @Size(min = 1) List<@Valid AdminMealIngredientRequest> ingredients,
         @NotNull List<@Valid AdminRecipeStepRequest> recipeSteps) {
+
+    public AdminMealRequest(
+            String mealName, String mealNameKm, Integer categoryId, BigDecimal calories,
+            Integer servings, String description, String descriptionKm, String difficulty,
+            Integer cookingTimeMinutes, boolean published, String mainImageUrl,
+            List<AdminMealIngredientRequest> ingredients, List<AdminRecipeStepRequest> recipeSteps) {
+        this(mealName, mealNameKm, categoryId, calories, servings, description, descriptionKm,
+                difficulty, cookingTimeMinutes, null, null, cookingTimeMinutes, false, published,
+                mainImageUrl, ingredients, recipeSteps);
+    }
 }

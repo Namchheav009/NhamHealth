@@ -55,7 +55,52 @@ import com.nhamhealth.nhamhealth_api.repository.meal.*; import com.nhamhealth.nh
   var ingredientRows=ingredients.findByMealMealIdOrderByDisplayOrderAsc(meal.getMealId()); var stepRows=steps.findByMealMealIdOrderByStepNumberAsc(meal.getMealId()); var tagRows=mealTags.findByMealMealId(meal.getMealId()); var moodRows=mealMoods.findByMealMealId(meal.getMealId()); var mt=mealTranslations.findByMealMealIdAndLanguageCode(meal.getMealId(),lang).orElse(null);
   var it=index(ingredientTranslations.findByIngredientIngredientIdInAndLanguageCode(ingredientRows.stream().map(x->x.getIngredient().getIngredientId()).toList(),lang),x->x.getIngredient().getIngredientId()); var nt=index(noteTranslations.findByMealIngredientMealIngredientIdInAndLanguageCode(ingredientRows.stream().map(MealIngredient::getMealIngredientId).toList(),lang),x->x.getMealIngredient().getMealIngredientId()); var st=index(stepTranslations.findByRecipeStepStepIdInAndLanguageCode(stepRows.stream().map(RecipeStep::getStepId).toList(),lang),x->x.getRecipeStep().getStepId()); var tt=index(tagTranslations.findByTagTagIdInAndLanguageCode(tagRows.stream().map(x->x.getTag().getTagId()).toList(),lang),x->x.getTag().getTagId()); var mot=index(moodTranslations.findByMoodMoodIdInAndLanguageCode(moodRows.stream().map(x->x.getMood().getMoodId()).toList(),lang),x->x.getMood().getMoodId());
   MealCategory category=meal.getCategory(); var ct=category==null?null:categoryTranslations.findByCategoryCategoryIdAndLanguageCode(category.getCategoryId(),lang).orElse(null);
-  return new MealDetailResponse(meal.getMealId(),lang,prefer(mt==null?null:mt.getMealName(),meal.getMealName()),category==null?null:category.getCategoryId(),prefer(ct==null?null:ct.getName(),category==null?"Uncategorized":category.getCategoryName()),meal.getMainImageUrl(),meal.getCaloriesCached(),prefer(mt==null?null:mt.getDescription(),meal.getDescription()),meal.getCookingTimeMinutes(),meal.getDifficulty(),meal.getServings(),ingredientRows.stream().map(x->{var t=it.get(x.getIngredient().getIngredientId());var n=nt.get(x.getMealIngredientId());return new MealDetailResponse.IngredientItem(x.getIngredient().getIngredientId(),prefer(t==null?null:t.getName(),x.getIngredient().getIngredientName()),cleanIngredientDescription(prefer(t==null?null:t.getDescription(),x.getIngredient().getDescription())),x.getIngredient().getImageUrl(),x.getQuantity(),x.getUnit(),prefer(n==null?null:n.getPreparationNote(),x.getPreparationNote()));}).toList(),nutrition.findByMealMealIdOrderByNutrientDisplayOrderAsc(meal.getMealId()).stream().map(x->new MealDetailResponse.NutritionItem(x.getNutrient().getNutrientName(),x.getAmountPerServing(),x.getNutrient().getUnit())).toList(),stepRows.stream().map(x->new MealDetailResponse.StepItem(x.getStepNumber(),prefer(st.get(x.getStepId())==null?null:st.get(x.getStepId()).getInstruction(),x.getInstruction()))).toList(),tagRows.stream().map(x->new MealDetailResponse.LabelItem(x.getTag().getTagId(),prefer(tt.get(x.getTag().getTagId())==null?null:tt.get(x.getTag().getTagId()).getName(),x.getTag().getTagName()))).toList(),moodRows.stream().map(x->new MealDetailResponse.LabelItem(x.getMood().getMoodId(),prefer(mot.get(x.getMood().getMoodId())==null?null:mot.get(x.getMood().getMoodId()).getName(),x.getMood().getMoodName()))).toList());
+  Integer prepTime = meal.getPrepTimeMinutes();
+  Integer cookTime = meal.getCookingTimeMinutes();
+  Integer totalTime = meal.getTotalTimeMinutes() != null
+          ? meal.getTotalTimeMinutes()
+          : (prepTime != null && cookTime != null ? prepTime + cookTime : cookTime);
+  Boolean isEstimated = Boolean.TRUE.equals(meal.getIsNutritionEstimated());
+
+  return new MealDetailResponse(
+          meal.getMealId(),
+          lang,
+          prefer(mt == null ? null : mt.getMealName(), meal.getMealName()),
+          category == null ? null : category.getCategoryId(),
+          prefer(ct == null ? null : ct.getName(), category == null ? "Uncategorized" : category.getCategoryName()),
+          meal.getMainImageUrl(),
+          meal.getCaloriesCached(),
+          prefer(mt == null ? null : mt.getDescription(), meal.getDescription()),
+          cookTime,
+          prepTime,
+          totalTime,
+          isEstimated,
+          meal.getDifficulty(),
+          meal.getServings(),
+          ingredientRows.stream().map(x -> {
+              var t = it.get(x.getIngredient().getIngredientId());
+              var n = nt.get(x.getMealIngredientId());
+              return new MealDetailResponse.IngredientItem(
+                      x.getIngredient().getIngredientId(),
+                      prefer(t == null ? null : t.getName(), x.getIngredient().getIngredientName()),
+                      cleanIngredientDescription(prefer(t == null ? null : t.getDescription(), x.getIngredient().getDescription())),
+                      x.getIngredient().getImageUrl(),
+                      x.getQuantity(),
+                      x.getUnit(),
+                      prefer(n == null ? null : n.getPreparationNote(), x.getPreparationNote()));
+          }).toList(),
+          nutrition.findByMealMealIdOrderByNutrientDisplayOrderAsc(meal.getMealId()).stream()
+                  .map(x -> new MealDetailResponse.NutritionItem(x.getNutrient().getNutrientName(), x.getAmountPerServing(), x.getNutrient().getUnit()))
+                  .toList(),
+          stepRows.stream()
+                  .map(x -> new MealDetailResponse.StepItem(x.getStepNumber(), prefer(st.get(x.getStepId()) == null ? null : st.get(x.getStepId()).getInstruction(), x.getInstruction())))
+                  .toList(),
+          tagRows.stream()
+                  .map(x -> new MealDetailResponse.LabelItem(x.getTag().getTagId(), prefer(tt.get(x.getTag().getTagId()) == null ? null : tt.get(x.getTag().getTagId()).getName(), x.getTag().getTagName())))
+                  .toList(),
+          moodRows.stream()
+                  .map(x -> new MealDetailResponse.LabelItem(x.getMood().getMoodId(), prefer(mot.get(x.getMood().getMoodId()) == null ? null : mot.get(x.getMood().getMoodId()).getName(), x.getMood().getMoodName())))
+                  .toList());
  }
  public static String normalizeLanguage(String v){return "km".equalsIgnoreCase(v==null?"":v.trim())?"km":"en";} private static String prefer(String a,String b){return a==null||a.isBlank()?(b==null?"":b):a;} private static <T> Map<Integer,T> index(List<T> rows,Function<T,Integer> key){return rows.stream().collect(Collectors.toMap(key,Function.identity()));}
  private static String cleanIngredientDescription(String s){if(s==null||s.isBlank()||s.startsWith("Auto-created")||s.contains("scraped recipe source"))return "";return s.trim();}

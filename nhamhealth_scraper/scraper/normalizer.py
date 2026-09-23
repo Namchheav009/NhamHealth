@@ -2,6 +2,8 @@ import re
 from datetime import datetime, timezone
 
 from .nutrition_estimator import estimate_recipe_nutrition
+from .ingredient_image_resolver import canonical_ingredient_name
+from .ingredient_normalization_service import normalize_ingredient
 
 
 MAX_STEP_LENGTH = 255
@@ -49,15 +51,18 @@ def normalize_recipe(recipe: dict) -> dict:
     normalized_ingredients = []
 
     for index, item in enumerate(recipe.get("ingredients") or [], start=1):
+        identity = normalize_ingredient(item.get("ingredientName") or "")
         normalized_ingredients.append(
             {
-                "ingredientName": (item.get("ingredientName") or "").strip(),
+                "ingredientName": identity.canonicalName,
                 "quantity": item.get("quantity"),
                 "unit": item.get("unit"),
-                "preparationNote": item.get("preparationNote"),
+                "preparationNote": item.get("preparationNote") or identity.preparationNote,
                 "originalIngredientText": item.get("originalIngredientText"),
                 "displayOrder": item.get("displayOrder") or index,
-                "needsReview": bool(item.get("needsReview")),
+                "needsReview": bool(item.get("needsReview")) or identity.needsReview,
+                "searchAliases": identity.searchAliases,
+                "ingredientType": identity.ingredientType,
             }
         )
 

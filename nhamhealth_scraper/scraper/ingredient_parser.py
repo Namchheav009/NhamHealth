@@ -132,6 +132,12 @@ def parse_ingredient_line(original_text: str) -> list[dict]:
     for part in _split_multi_quantity_line(text):
         source_part = part
 
+        if part.strip().lower() == "squares banana":
+            results.append({"ingredientName": "Banana", "quantity": None, "unit": None,
+                            "preparationNote": "cut into squares", "originalIngredientText": original_text.strip(),
+                            "needsReview": True})
+            continue
+
         # Separate a long explanatory note after an em dash.
         explanation = None
         if "—" in part:
@@ -165,15 +171,11 @@ def parse_ingredient_line(original_text: str) -> list[dict]:
 
             results.append(
                 {
-                    "ingredientName": name.strip(),
-                    "quantity": _parse_quantity(m.group("qty")),
-                    "unit": UNIT_ALIASES.get(matched_unit, matched_unit),
                     "ingredientName": ing_name,
                     "quantity": qty,
                     "unit": unit_val,
                     "preparationNote": _clean_note(note if comma else explanation),
                     "originalIngredientText": original_text.strip(),
-                    "needsReview": False,
                     "needsReview": _is_ambiguous_ingredient(ing_name, unit_val, qty),
                 }
             )
@@ -200,15 +202,11 @@ def parse_ingredient_line(original_text: str) -> list[dict]:
 
             results.append(
                 {
-                    "ingredientName": m.group("name").strip(),
-                    "quantity": _parse_quantity(m.group("qty")),
-                    "unit": UNIT_ALIASES.get(m.group("unit").lower(), m.group("unit").lower()),
                     "ingredientName": ing_name,
                     "quantity": qty,
                     "unit": unit_val,
                     "preparationNote": _clean_note(tail or explanation),
                     "originalIngredientText": original_text.strip(),
-                    "needsReview": False,
                     "needsReview": _is_ambiguous_ingredient(ing_name, unit_val, qty),
                 }
             )

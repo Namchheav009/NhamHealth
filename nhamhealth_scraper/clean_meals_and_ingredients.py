@@ -59,7 +59,11 @@ def clean_database():
         # 2. Unlink any references from user posts to meals or ingredients (without deleting posts)
         print("\nUnlinking user posts and post ingredients from meals/ingredients...")
         cur.execute("UPDATE user_meal_posts SET meal_id = NULL WHERE meal_id IS NOT NULL;")
-        cur.execute("UPDATE posts SET tagged_meal_id = NULL WHERE tagged_meal_id IS NOT NULL;")
+        try:
+            cur.execute("UPDATE posts SET tagged_meal_id = NULL WHERE tagged_meal_id IS NOT NULL;")
+        except psycopg2.Error:
+            conn.rollback()
+            conn.autocommit = False
         cur.execute("UPDATE recipe_ingredients SET ingredient_id = NULL WHERE ingredient_id IS NOT NULL;")
 
         # 3. Delete dependent rows strictly belonging to meals and catalog ingredients

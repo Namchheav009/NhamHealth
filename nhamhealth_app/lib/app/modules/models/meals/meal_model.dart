@@ -9,6 +9,9 @@ class MealModel {
     this.proteinGrams,
     this.description = '',
     this.cookingTimeMinutes,
+    this.prepTimeMinutes,
+    this.totalTimeMinutes,
+    this.isNutritionEstimated = false,
     this.difficulty = '',
     this.servings,
     this.recommendationReason = '',
@@ -30,6 +33,9 @@ class MealModel {
   final num? proteinGrams;
   final String description;
   final int? cookingTimeMinutes;
+  final int? prepTimeMinutes;
+  final int? totalTimeMinutes;
+  final bool isNutritionEstimated;
   final String difficulty;
   final int? servings;
   final String recommendationReason;
@@ -88,6 +94,12 @@ class MealModel {
       proteinGrams: meal.proteinGrams ?? _nutritionAmount(nutrition, 'protein'),
       description: meal.description,
       cookingTimeMinutes: meal.cookingTimeMinutes,
+      prepTimeMinutes: (json['prepTimeMinutes'] as num?)?.toInt(),
+      totalTimeMinutes: (json['totalTimeMinutes'] as num?)?.toInt() ??
+          ((meal.cookingTimeMinutes != null && json['prepTimeMinutes'] != null)
+              ? (meal.cookingTimeMinutes! + (json['prepTimeMinutes'] as num).toInt())
+              : meal.cookingTimeMinutes),
+      isNutritionEstimated: json['isNutritionEstimated'] as bool? ?? false,
       difficulty: meal.difficulty,
       servings: meal.servings,
       ingredients: (json['ingredients'] as List<dynamic>? ?? const [])

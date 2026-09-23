@@ -17,8 +17,12 @@ public record ScrapedMealImportRequest(
         @DecimalMin("0") BigDecimal carbohydrateGrams,
         @DecimalMin("0") BigDecimal fatGrams,
         @NotNull @Pattern(regexp = "UNKNOWN|PER_SERVING|PER_100G|WHOLE_RECIPE") String nutritionBasis,
+        Boolean isNutritionEstimated,
         @NotNull @Min(1) @Max(100) Integer servings,
         @Min(0) @Max(1440) Integer cookingTimeMinutes,
+        @Min(0) @Max(1440) Integer prepTimeMinutes,
+        @Min(0) @Max(1440) Integer restingTimeMinutes,
+        @Min(0) @Max(1440) Integer totalTimeMinutes,
         @Pattern(regexp = "EASY|MEDIUM|HARD|NOT_SPECIFIED") String difficulty,
         @NotEmpty @Size(max = 200) List<@NotNull @Valid IngredientInput> ingredients,
         @NotEmpty @Size(max = 200) List<@NotNull @Valid StepInput> steps,
@@ -28,7 +32,12 @@ public record ScrapedMealImportRequest(
         @Size(max = 2000) String sourceImageUrl,
         @NotBlank @Size(max = 50) String scrapedAt,
         String reviewStatus,
-        Boolean published) {
+        Boolean published,
+        String translationStatus,
+        String translationError,
+        String translationHash,
+        String glossaryVersion,
+        String qaReport) {
 
     public record IngredientInput(
             @NotBlank @Size(max = 100) String ingredientName,
@@ -38,10 +47,15 @@ public record ScrapedMealImportRequest(
             @Size(max = 100) String ingredientNameKm,
             @Size(max = 150) String preparationNoteKm,
             @Size(max = 2000) String originalIngredientText,
-            @NotNull @Min(1) Integer displayOrder) {}
+            @NotNull @Min(1) Integer displayOrder,
+            @Size(max = 500) String imageUrl,
+            @Size(max = 50) String imageSource,
+            @Size(max = 50) String imageLicense,
+            @Size(max = 30) String imageReviewStatus) {}
 
     public record StepInput(
             @NotNull @Min(1) Integer stepNumber,
             @NotBlank @Size(max = 255) String instruction,
-            @Size(max = 4000) String instructionKm) {}
+            @Size(max = 4000) String instructionKm,
+            @Min(0) @Max(1440) Integer durationMinutes) {}
 }

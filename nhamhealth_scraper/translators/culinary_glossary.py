@@ -45,10 +45,16 @@ DISH_NAMES: dict[str, str] = {
     "amok trey — fish amok steamed in banana leaf": "អាម៉ុកត្រី",
     "amok trey - fish amok steamed in banana leaf": "អាម៉ុកត្រី",
     # Jasmine rice / Bai dishes
-    "bai — perfect jasmine rice": "បាយ — បាយម្លិះល្អឥតខ្ចោះ",
-    "bai - perfect jasmine rice": "បាយ — បាយម្លិះល្អឥតខ្ចោះ",
-    "perfect jasmine rice": "បាយម្លិះល្អឥតខ្ចោះ",
+    "bai — perfect jasmine rice": "បាយម្លិះឈ្ងុយឆ្ងាញ់",
+    "bai - perfect jasmine rice": "បាយម្លិះឈ្ងុយឆ្ងាញ់",
+    "perfect jasmine rice": "បាយម្លិះឈ្ងុយឆ្ងាញ់",
     "jasmine rice": "បាយម្លិះ",
+    # Squid dishes
+    "ang dtray meuk — grilled squid with fish sauce & lime": "មឹកអាំងទឹកត្រីកោះកុង",
+    "ang dtray meuk - grilled squid with fish sauce & lime": "មឹកអាំងទឹកត្រីកោះកុង",
+    "ang dtray meuk": "មឹកអាំង",
+    "grilled squid": "មឹកអាំង",
+    "grilled squid with fish sauce & lime": "មឹកអាំងទឹកត្រីកោះកុង",
     # Amok Trey short forms
     "amok trey — fish amok": "អាម៉ុកត្រី",
     "amok trey - fish amok": "អាម៉ុកត្រី",
@@ -80,6 +86,15 @@ CATEGORIES: dict[str, str] = {
 
 # Natural culinary translations for ingredients
 INGREDIENTS: dict[str, str] = {
+    "banana": "ចេក",
+    "thick coconut cream": "ខ្ទិះដូងខាប់",
+    "yellow kroeung": "គ្រឿងលឿង",
+    "coconut cream": "ខ្ទិះដូង",
+    "kaffir lime": "ក្រូចសើច",
+    "palm sugar": "ស្ករត្នោត",
+    "prahok": "ប្រហុក",
+    "red chilli": "ម្ទេសក្រហម",
+    "rice flour": "ម្សៅអង្ករ",
     # Poultry / Meat / Seafood
     "chicken breast": "សាច់ទ្រូងមាន់",
     "chicken breasts": "សាច់ទ្រូងមាន់",
@@ -280,6 +295,9 @@ INGREDIENTS: dict[str, str] = {
     "jasmine rice": "អង្ករផ្កាម្លិះ",
     "rice": "អង្ករ",
     "cooked rice": "បាយ",
+    "broken rice": "បាយពូត",
+    "broken rice (bai pou)": "បាយពូត",
+    "bai pou": "បាយពូត",
     "sticky rice": "អង្ករដំណើប",
     "glutinous rice": "អង្ករដំណើប",
     "rice noodles": "នំបញ្ចុក",
@@ -287,10 +305,30 @@ INGREDIENTS: dict[str, str] = {
     "tapioca flour": "ម្សៅមី",
     "rice flour": "ម្សៅអង្ករ",
     "cornstarch": "ម្សៅពោត",
+
+    # Seafood & Specialty Additions
+    "whole small squid": "មឹកស្រស់",
+    "small squid": "មឹក",
+    "firm white freshwater fish": "សាច់ត្រីទឹកសាបស្រស់",
+    "slork ngor": "ស្លឹកញ",
+    "slork ngor or young cabbage leaves": "ស្លឹកញ ឬស្លឹកស្ពៃក្តោប",
+    "squares banana": "ស្លឹកចេកកាត់បួនជ្រុង",
+    "squares banana leaf": "ស្លឹកចេកកាត់បួនជ្រុង",
+    "bamboo skewers per squid": "ចង្កាក់ឫស្សី",
+    "bamboo skewers": "ចង្កាក់ឫស្សី",
+    "cucumber, tomato and a fried egg": "ត្រសក់ ប៉េងប៉ោះ និងពងមាន់ចៀន",
+    "pinch salt": "អំបិលមួយចិប",
+    "a pinch of salt": "អំបិលមួយចិប",
+    "pinch of salt": "អំបិលមួយចិប",
+    "thick soy sauce": "ទឹកស៊ីអ៊ីវខាប់",
+    "fresh coconut water": "ទឹកដូងស្រស់",
+    "kaffir lime": "ក្រូចសើច",
 }
 
 # Natural culinary preparation notes
 PREPARATION_NOTES: dict[str, str] = {
+    "cut into squares": "កាត់ជាដុំការ៉េ",
+    "halved": "កាត់ជាពាក់កណ្តាល",
     "chop finely": "ហាន់ឲ្យម៉ត់",
     "finely chopped": "ហាន់ឲ្យម៉ត់",
     "chopped": "ហាន់",
@@ -381,6 +419,28 @@ POST_TRANSLATION_FIXES: list[tuple[str, str]] = [
     ("curry paste", "គ្រឿងការី"),
     ("ទឹក​ម្ទេស​", "គ្រឿងការី"),
     ("ទឹកម្ទេស", "គ្រឿងការី"),
+    # Machine translation hallucinates caffeine for kaffir lime
+    ("ក្រូចឆ្មារកាហ្វេអ៊ីន", "ក្រូចសើច"),
+    ("កាហ្វេអ៊ីន", "ក្រូចសើច"),
+    # Machine translation hallucinates triangle for squid
+    ("ត្រីកោណតូចទាំងមូល", "មឹកស្រស់"),
+    ("ត្រីកោណ", "មឹក"),
+    # Machine translation hallucinates tuna for tarantula
+    ("ត្រីធូណាឆ្អិននៃស្គន់", "អាពីងបំពងស្គន់"),
+    ("ត្រីធូណា", "អាពីង"),
+    # Machine translation broken rice
+    ("អង្ករដែលខូច", "បាយពូត"),
+    ("អង្ករខូច", "បាយពូត"),
+    # Salt pinch
+    ("អំបិល Pinch", "អំបិលមួយចិប"),
+    ("អំបិល pinch", "អំបិលមួយចិប"),
+    ("Pinch", "មួយចិប"),
+    ("pinch", "មួយចិប"),
+    # Cooking steps phrases
+    ("នឹងស្អិតបិទភ្ជាប់កាវ", "នឹងស្អិតខ្លាំង"),
+    ("ស្អិតបិទភ្ជាប់កាវ", "ស្អិតខ្លាំង"),
+    ("ធ្វើបែបនេះពីរសង្សៀវនៃជើងទាំងពីរដង", "ធ្វើបែបនេះ ៣ ទៅ ៤ ដង"),
+    ("ធ្វើបែបនេះពីរសង្សៀវ", "ធ្វើបែបនេះ ៣ ទៅ ៤ ដង"),
 ]
 
 # Standard cooking units to preserve untouched
@@ -389,4 +449,34 @@ STANDARD_UNITS: set[str] = {
     "piece", "pieces", "stalk", "stalks", "slice", "slices", "can", "cans",
     "pinch", "pinches", "sprig", "sprigs", "bunch", "bunches"
 }
+
+# Tags translation
+TAGS: dict[str, str] = {
+    "healthy": "សុខភាពល្អ",
+    "low carb": "កាបូអ៊ីដ្រាតទាប",
+    "high protein": "ប្រូតេអ៊ីនខ្ពស់",
+    "quick & easy": "រហ័ស និងងាយស្រួល",
+    "quick and easy": "រហ័s និងងាយស្រួល",
+    "authentic khmer": "ម្ហូបខ្មែរបុរាណ",
+    "street food": "អាហារតាមផ្លូវ",
+    "comfort food": "អាហារសម្រាលអារម្មណ៍",
+    "spicy": "ហឹរ",
+    "vegetarian": "បួស",
+    "traditional": "បុរាណ",
+    "family": "សម្រាប់គ្រួសារ",
+}
+
+# Moods translation
+MOODS: dict[str, str] = {
+    "energized": "មានថាមពល",
+    "comfort": "កក់ក្តៅ",
+    "comforting": "កក់ក្តៅ",
+    "relaxed": "ធូរស្រាល",
+    "refreshed": "ស្រស់ស្រាយ",
+    "happy": "សប្បាយរីករាយ",
+    "calm": "ស្ងប់អារម្មណ៍",
+}
+
+GLOSSARY_VERSION = "2.0"
+
 
