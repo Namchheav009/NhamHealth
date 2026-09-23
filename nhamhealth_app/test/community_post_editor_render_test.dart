@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/community_post_editor_page.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post_draft.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
 void main() {
   testWidgets('community post editor renders its basic information step', (
@@ -11,6 +13,8 @@ void main() {
     await tester.pumpWidget(
       GetMaterialApp(
         theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
         home: CommunityPostEditorPage(
           authorName: 'Test user',
           authorAvatarUrl: '',

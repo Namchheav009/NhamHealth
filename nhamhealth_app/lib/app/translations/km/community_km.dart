@@ -88,6 +88,7 @@ const Map<String, String> communityKm = {
   'community.post_load_failed': 'មិនអាចបង្ហាញការបង្ហោះក្នុងសហគមន៍បានទេ។',
   'community.friends': 'មិត្តភក្តិ',
   'community.followers': 'អ្នកតាមដាន',
+  'community.public': 'សាធារណៈ',
   'community.discover': 'ស្វែងរកថ្មី',
   'community.for_you': 'សម្រាប់អ្នក',
   'community.latest': 'ថ្មីបំផុត',
@@ -147,6 +148,8 @@ const Map<String, String> communityKm = {
   'community.ingredients_and_steps': 'គ្រឿងផ្សំ និងជំហាន',
   'community.share_your_meal': 'តោះចែករំលែកអាហាររបស់អ្នក!',
   'community.basic_info_help': 'បន្ថែមព័ត៌មានមូលដ្ឋានអំពីអាហាររបស់អ្នក',
+  'community.meal_name_required': 'ត្រូវការឈ្មោះអាហារ។',
+  'community.categories_load_error': 'មិនអាចផ្ទុកប្រភេទអាហារបានទេ។',
   'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',
   'community.ingredients_help':
       'ជាជម្រើស — បន្ថែមគ្រឿងផ្សំ ប្រសិនបើអ្នកចង់ចែករំលែករូបមន្តពេញលេញ។',

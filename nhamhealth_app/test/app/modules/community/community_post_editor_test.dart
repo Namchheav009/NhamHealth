@@ -370,6 +370,92 @@ void main() {
     expect(submitted!.tagIds, const [1]);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('submits a recipe with empty ingredients and empty cooking steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    CommunityPostDraft? submitted;
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: CommunityPostEditorPage(
+          authorName: 'Nham Member',
+          authorAvatarUrl: '',
+          onSubmit: (draft) async => submitted = draft,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Choose a category'));
+    await tester.scrollUntilVisible(
+      find.text('Choose a category'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Choose a category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Main dishes').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Khmer Fish Amok'),
+      'Simple Quick Meal',
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -260));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.widgetWithText(TextFormField, '45'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, '45'), '15');
+    await tester.enterText(find.widgetWithText(TextFormField, '2'), '1');
+
+    await tester.ensureVisible(find.text('Continue to ingredients'));
+    await tester.scrollUntilVisible(
+      find.text('Continue to ingredients'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Continue to ingredients'));
+    await tester.pumpAndSettle();
+
+    // Step 1: Ingredients - Skip for now without adding ingredients
+    expect(find.text('Ingredients'), findsWidgets);
+    await tester.ensureVisible(find.byKey(const ValueKey('community-skip-button-1')));
+    await tester.tap(find.byKey(const ValueKey('community-skip-button-1')));
+    await tester.pumpAndSettle();
+
+    // Step 2: How to Cook - Publish immediately without adding cooking steps
+    expect(find.text('How to Cook'), findsWidgets);
+    await tester.ensureVisible(find.text('Publish Meal'));
+    await tester.scrollUntilVisible(
+      find.text('Publish Meal'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Publish Meal'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Meal published'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('app-action-alert-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(submitted, isNotNull);
+    expect(submitted!.mealName, 'Simple Quick Meal');
+    expect(submitted!.ingredients, isEmpty);
+    expect(submitted!.steps, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _ComposerRepository extends CommunityRepository {

@@ -67,6 +67,7 @@ const Map<String, String> communityEn = {
   'community.post_load_failed': 'The community post could not be loaded.',
   'community.friends': 'Friends',
   'community.followers': 'Followers',
+  'community.public': 'Public',
   'community.discover': 'Discover',
   'community.for_you': 'For You',
   'community.latest': 'Latest',
@@ -126,6 +127,8 @@ const Map<String, String> communityEn = {
   'community.ingredients_and_steps': 'Ingredients & Steps',
   'community.share_your_meal': 'Let’s share your meal!',
   'community.basic_info_help': 'Add the basic information about your meal',
+  'community.meal_name_required': 'Meal name is required.',
+  'community.categories_load_error': 'Meal categories could not be loaded.',
   'community.prefill_from_favorites_short': 'Prefill from favorites',
   'community.ingredients_help':
       'Optional — add them if you want to share the full recipe.',
